@@ -1,0 +1,76 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>	
+	
+	<parent>
+		<groupId>org.planit.all</groupId>
+		<artifactId>PLANitAll</artifactId>
+		<version>0.1.1a1</version>
+	</parent>
+
+	<groupId>org.planit.osm</groupId>
+	<artifactId>PLANitOSM</artifactId>
+	<description>PLANit OSM  parses Open Street Map networks</description>
+	<packaging>jar</packaging>
+
+	<name>PLANitOSM</name>
+	<url>https://github.com/TrafficPLANit/planitosm</url>
+
+	<!-- license based on the one published on the website -->
+	<licenses>
+		<license>
+			<name>PLANit license based on modified BSD</name>
+			<url>${planit.website.url}/docs/licenses/LICENSE.txt</url>
+			<distribution>repo</distribution>
+			<comments>A slightly modified version of a modified BSD license</comments>
+		</license>
+	</licenses>
+	
+	<!-- versions inherited from parent -->
+	<dependencies>
+
+		<dependency>
+			<groupId>org.geotools</groupId>
+			<artifactId>gt-geometry</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<!-- only used locally for testing so not an actual dependency for using the API -->
+			<optional>true</optional>
+		</dependency>		
+	</dependencies>
+	
+	<build>
+	    <resources>
+	        <resource>
+	            <directory>src/main/resources</directory>
+	            <excludes>
+	            	<!-- only used for internal formatting of logging statements -->
+	                <exclude>*.properties</exclude>
+	            </excludes>
+	        </resource>
+	    </resources>
+	    
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>			
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>		
+		
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+			</plugin>
+		</plugins> 		    	
+	    
+	</build>	
+
+</project>
