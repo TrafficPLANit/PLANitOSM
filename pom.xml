@@ -29,11 +29,33 @@
 	
 	<!-- versions inherited from parent -->
 	<dependencies>
+	
+	   <dependency>
+        <groupId>org.planit</groupId>
+        <artifactId>PLANit</artifactId>
+    </dependency> 
 
 		<dependency>
 			<groupId>org.geotools</groupId>
 			<artifactId>gt-geometry</artifactId>
 		</dependency>
+		
+		<!-- https://mvnrepository.com/artifact/de.topobyte/osm4j-core -->
+		<dependency>
+		    <groupId>de.topobyte</groupId>
+		    <artifactId>osm4j-core</artifactId>
+		</dependency>		
+		
+		<!-- https://mvnrepository.com/artifact/de.topobyte/osm4j-xml -->
+		<dependency>
+		    <groupId>de.topobyte</groupId>
+		    <artifactId>osm4j-xml</artifactId>
+		</dependency>		
+		
+    <dependency>
+        <groupId>de.topobyte</groupId>
+        <artifactId>osm4j-pbf</artifactId>         
+    </dependency> 		
 		
 		<dependency>
 			<groupId>junit</groupId>
