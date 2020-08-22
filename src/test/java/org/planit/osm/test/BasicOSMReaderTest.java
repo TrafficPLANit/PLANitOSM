@@ -4,11 +4,13 @@ import static org.junit.Assert.*;
 
 import java.util.logging.Logger;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.planit.logging.Logging;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.reader.PLANitOSMReader;
 import org.planit.osm.reader.PLANitOSMReaderFactory;
-import org.planit.utils.id.IdGenerator;
 
 /**
  * basic *.osm and *.osm.pbf reader test
@@ -18,13 +20,25 @@ import org.planit.utils.id.IdGenerator;
  */
 public class BasicOSMReaderTest {
   
-  private static final Logger LOGGER = Logger.getLogger(BasicOSMReaderTest.class.getCanonicalName());
+  private static Logger LOGGER;
   
   private static final String RESOURCE_DIR = "./src/test/resources/";
   
   private static final String SYDNEYCBD_OSM = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm");
   
   private static final String SYDNEYCBD_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm.pbf");  
+  
+  @BeforeClass
+  public static void setUp() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(BasicOSMReaderTest.class);
+    } 
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    Logging.closeLogger(LOGGER);
+  }  
 
   /**
    * test *.osm format parsing on small network
