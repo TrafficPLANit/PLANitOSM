@@ -38,7 +38,7 @@ public class BasicOSMReaderTest {
 
   @AfterClass
   public static void tearDown() {
-    Logging.closeLogger(LOGGER);
+    Logging.closeLogger(LOGGER); 
   }  
 
   /**

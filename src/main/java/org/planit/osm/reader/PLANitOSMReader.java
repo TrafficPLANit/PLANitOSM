@@ -49,7 +49,7 @@ public class PlanitOsmReader {
    * @param inputFileName file name to create reader for
    * @return osmReader created, null if not possible
    */
-  private OsmReader createOSMReader(String inputFileName) {
+  private OsmReader createOsm4jReader(String inputFileName) {
     final boolean parseMetaData = false; 
     try{
       File inputFile = new File(inputFileName);
@@ -93,7 +93,7 @@ public class PlanitOsmReader {
     logInfo(inputFile);
         
     /* reader to parse the actual file */
-    OsmReader osmReader = createOSMReader(inputFile);
+    OsmReader osmReader = createOsm4jReader(inputFile);
     
     /* handler to deal with call backs from osm4j */
     PlanitOsmHandler osmHandler = new PlanitOsmHandler(osmNetwork, settings);
