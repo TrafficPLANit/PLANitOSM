@@ -1,14 +1,17 @@
 package org.planit.osm.physical.network.macroscopic;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
-import org.apache.commons.collections4.map.HashedMap;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
-import org.planit.osm.util.PlanitOSMTags;
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.util.PlanitOsmConstants;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
+import org.planit.utils.misc.Pair;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 
 /**
@@ -19,18 +22,28 @@ import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
  * @author markr
  *
  */
-public class PLANitOSMNetwork extends MacroscopicNetwork {
+public class PlanitOsmNetwork extends MacroscopicNetwork {
 
   /**
    * generated uid
    */
   private static final long serialVersionUID = -2227509715172627526L;
-  
+    
   /**
    * The logger
    */
-  @SuppressWarnings("unused")
-  private static final Logger LOGGER = Logger.getLogger(PLANitOSMNetwork.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetwork.class.getCanonicalName());
+  
+  /**
+   *  Create an OSM default link segment type (no mode properties)
+   * @param name name of the type
+   * @param capacityPcuPerhour capacity in pcu/h
+   * @param maxDensityPcuPerKm max density
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String name, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
+    return this.createAndRegisterNewMacroscopicLinkSegmentType(name, capacityPcuPerhour, maxDensityPcuPerKm, name);
+  }  
    
   /**
    *  Create an OSM default link segment type (no mode properties)
@@ -38,10 +51,10 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @param capacity capacity in pcu/h
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createDefaultLinkSegmentType(String name, double capacityPcuPerhour) throws PlanItException {
-    return this.createAndRegisterNewMacroscopicLinkSegmentType(
-        name, capacityPcuPerhour, PlanitOsmUtils.DEFAULT_MAX_DENSITY_LANE, -1);
+  protected MacroscopicLinkSegmentType createDefaultLinkSegmentType(String name, double capacityPcuPerhour) throws PlanItException {
+    return createOsmLinkSegmentType(name, capacityPcuPerhour, PlanitOsmConstants.DEFAULT_MAX_DENSITY_LANE);
   }
+  
   
   /**
    * Create motorway type with defaults
@@ -52,8 +65,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createMotorway() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.MOTORWAY, PlanitOsmUtils.MOTORWAY_CAPACITY);    
+  protected MacroscopicLinkSegmentType createMotorway() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.MOTORWAY, PlanitOsmConstants.MOTORWAY_CAPACITY);    
   }  
   
   /**
@@ -65,8 +78,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createMotorwayLink() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.MOTORWAY_LINK, PlanitOsmUtils.MOTORWAY_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createMotorwayLink() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.MOTORWAY_LINK, PlanitOsmConstants.MOTORWAY_LINK_CAPACITY);    
   }    
   
   /**
@@ -78,8 +91,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createTrunk() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.TRUNK, PlanitOsmUtils.TRUNK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createTrunk() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.TRUNK, PlanitOsmConstants.TRUNK_CAPACITY);    
   }  
   
   /**
@@ -91,8 +104,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createTrunkLink() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.TRUNK_LINK, PlanitOsmUtils.TRUNK_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createTrunkLink() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.TRUNK_LINK, PlanitOsmConstants.TRUNK_LINK_CAPACITY);    
   }   
   
   /**
@@ -103,8 +116,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createPrimary() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.PRIMARY, PlanitOsmUtils.PRIMARY_CAPACITY);    
+  protected MacroscopicLinkSegmentType createPrimary() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.PRIMARY, PlanitOsmConstants.PRIMARY_CAPACITY);    
   }  
   
   /**
@@ -116,8 +129,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createPrimaryLink() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.PRIMARY_LINK, PlanitOsmUtils.PRIMARY_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createPrimaryLink() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.PRIMARY_LINK, PlanitOsmConstants.PRIMARY_LINK_CAPACITY);    
   }   
   
   /**
@@ -129,8 +142,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createSecondary() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.SECONDARY, PlanitOsmUtils.SECONDARY_CAPACITY);    
+  protected MacroscopicLinkSegmentType createSecondary() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.SECONDARY, PlanitOsmConstants.SECONDARY_CAPACITY);    
   }  
   
   /**
@@ -141,8 +154,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createSecondaryLink() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.SECONDARY_LINK, PlanitOsmUtils.SECONDARY_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createSecondaryLink() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.SECONDARY_LINK, PlanitOsmConstants.SECONDARY_LINK_CAPACITY);    
   }   
   
   /**
@@ -153,8 +166,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createTertiary() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.TERTIARY, PlanitOsmUtils.TERTIARY_CAPACITY);    
+  protected MacroscopicLinkSegmentType createTertiary() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.TERTIARY, PlanitOsmConstants.TERTIARY_CAPACITY);    
   }  
   
   /**
@@ -165,8 +178,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createTertiaryLink() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.TERTIARY_LINK, PlanitOsmUtils.TERTIARY_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createTertiaryLink() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.TERTIARY_LINK, PlanitOsmConstants.TERTIARY_LINK_CAPACITY);    
   }   
   
   /**
@@ -177,8 +190,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createUnclassified() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.UNCLASSIFIED, PlanitOsmUtils.UNCLASSIFIED_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createUnclassified() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.UNCLASSIFIED, PlanitOsmConstants.UNCLASSIFIED_LINK_CAPACITY);    
   }   
   
   /**
@@ -189,8 +202,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createResidential() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.RESIDENTIAL, PlanitOsmUtils.RESIDENTIAL_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createResidential() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.RESIDENTIAL, PlanitOsmConstants.RESIDENTIAL_LINK_CAPACITY);    
   }    
   
   /**
@@ -201,8 +214,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createLivingStreet() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.LIVING_STREET, PlanitOsmUtils.LIVING_STREET_LINK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createLivingStreet() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.LIVING_STREET, PlanitOsmConstants.LIVING_STREET_LINK_CAPACITY);    
   }    
   
   /**
@@ -213,8 +226,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createService() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.SERVICE, PlanitOsmUtils.SERVICE_CAPACITY);    
+  protected MacroscopicLinkSegmentType createService() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.SERVICE, PlanitOsmConstants.SERVICE_CAPACITY);    
   }      
   
   /**
@@ -225,8 +238,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createPedestrian() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.PEDESTRIAN, PlanitOsmUtils.PEDESTRIAN_CAPACITY);    
+  protected MacroscopicLinkSegmentType createPedestrian() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.PEDESTRIAN, PlanitOsmConstants.PEDESTRIAN_CAPACITY);    
   }   
   
   /**
@@ -237,8 +250,8 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createTrack() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.TRACK, PlanitOsmUtils.TRACK_CAPACITY);    
+  protected MacroscopicLinkSegmentType createTrack() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.TRACK, PlanitOsmConstants.TRACK_CAPACITY);    
   }   
   
   /**
@@ -250,57 +263,146 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return created type
    * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType createRoad() throws PlanItException {
-    return createDefaultLinkSegmentType(PlanitOSMTags.ROAD, PlanitOsmUtils.ROAD_CAPACITY);    
+  protected MacroscopicLinkSegmentType createRoad() throws PlanItException {
+    return createDefaultLinkSegmentType(OsmHighwayTags.ROAD, PlanitOsmConstants.ROAD_CAPACITY);    
+  }
+  
+  /** Create a link segment type on the network based on the passed in OSM highway sub type tage
+   * @param activatedType osm highway subtag
+   * @return created link segment type if available
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createLinkSegmentTypeBasedOnOSMType(String activatedType) throws PlanItException {
+    /* create link segment type for the OSM type */
+    switch (activatedType) {
+    case OsmHighwayTags.MOTORWAY:
+      return createMotorway();
+    case OsmHighwayTags.MOTORWAY_LINK:
+      return createMotorwayLink();
+    case OsmHighwayTags.TRUNK:
+      return createTrunk();
+    case OsmHighwayTags.TRUNK_LINK:
+      return createTrunkLink();
+    case OsmHighwayTags.PRIMARY:
+      return createPrimary();
+    case OsmHighwayTags.PRIMARY_LINK:
+      return createPrimaryLink();
+    case OsmHighwayTags.SECONDARY:
+      return createSecondary();
+    case OsmHighwayTags.SECONDARY_LINK:
+      return createSecondaryLink();
+    case OsmHighwayTags.TERTIARY:
+      return createTertiary();
+    case OsmHighwayTags.TERTIARY_LINK:
+      return createTertiaryLink();
+    case OsmHighwayTags.UNCLASSIFIED:
+      return createUnclassified();
+    case OsmHighwayTags.RESIDENTIAL:
+      return createResidential();
+    case OsmHighwayTags.LIVING_STREET:
+      return createLivingStreet();
+    case OsmHighwayTags.SERVICE:
+      return createService();
+    case OsmHighwayTags.PEDESTRIAN:
+      return createPedestrian();
+    case OsmHighwayTags.TRACK:
+      return createTrack();
+    case OsmHighwayTags.ROAD:
+      return createRoad();          
+    default:
+      throw new PlanItException(
+          String.format("OSM type is supported but factory method is missing, unexpected for type highway:%s",activatedType));
+    }   
   }   
-   
   
   /**
-   * the link segment types that were created for all default OSM types
+   * the list of types for which we have default link segment type mapping available out of the box
+   * 
+   **/
+  protected static final Set<String> supportedOSMLinkSegmentTypes;
+  
+  /** the supported types for which we have default link segment type settings available */
+  static {
+    supportedOSMLinkSegmentTypes = new HashSet<String>();
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY_LINK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRUNK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRUNK_LINK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PRIMARY);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PRIMARY_LINK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TERTIARY);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TERTIARY_LINK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.UNCLASSIFIED);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.RESIDENTIAL);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.LIVING_STREET);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SERVICE);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PEDESTRIAN);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRACK);
+    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.ROAD);     
+  }
+     
+  /**
+   * the link segment types that are activated for this instance
    */
-  protected Map<String, MacroscopicLinkSegmentType> defaultOSMLinkSegmentTypes;  
-
+  protected final Map<String, MacroscopicLinkSegmentType> createdOSMLinkSegmentTypes;
+    
+  /**
+   * Create the link segment types that are marked in the passed in settings. As long as they have defaults that
+   * are supported, these will be created as indicated. If not available a warning is issued and a link segment type is created based on the default chosen in settings
+   * 
+   * @return the default created supported types 
+   * @throws PlanItException thrown when error
+   */
+  void createOSMCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
+    for(String activatedType : settings.supportedOSMLinkSegmentTypes) {
+      String osmTypeToUse = activatedType;
+      
+      MacroscopicLinkSegmentType linkSegmentType = null;  
+      boolean isOverwrite = false;
+      boolean isBackupDefault = false;
+      if(settings.isOSMHighwayTypeDefaultOverwritten(activatedType)) {
+        /* type is overwritten, so use overwrtten data instead of defaults */
+        final Pair<Double,Double> capacityDensityPair = settings.getOSMHighwayTypeOverwrite(activatedType);
+        linkSegmentType = createOsmLinkSegmentType(activatedType, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+        isOverwrite = true;
+      }else
+      {      
+        /* type is supposed to be included according to settings, continue...*/
+        if(!supportedOSMLinkSegmentTypes.contains(activatedType)) {        
+  
+          if(!settings.hasOSMHighwayTypeWhenUnsupported()) {
+            /* ... no replacement available skip type entirely*/
+            LOGGER.warning(String.format(
+                "Highway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing %s", activatedType));          
+            continue;
+          }
+          
+          /* ...use replacement type instead of activate type to still be able to process OSM ways of this type */
+          osmTypeToUse = settings.getOSMHighwayTypeWhenUnsupported();
+          isBackupDefault = true;
+          LOGGER.warning(String.format(
+              "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", activatedType, osmTypeToUse));        
+        }
+        linkSegmentType = createLinkSegmentTypeBasedOnOSMType(osmTypeToUse);        
+      }                
+      
+      /* create, register, and also store by osm tag */
+      createdOSMLinkSegmentTypes.put(activatedType, linkSegmentType);
+      
+      LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
+          isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", activatedType, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));      
+    }
+  }
+  
   /**
    * Constructor
    */
-  public PLANitOSMNetwork(IdGroupingToken groupId) {
-    super(groupId);
-    
-    try {
-      this.defaultOSMLinkSegmentTypes = createDefaultOSMLinkSegmentTypes();
-    } catch (PlanItException e) {
-      LOGGER.severe("unable to create default OSM link segment types for this network");
-    }
-  }
-
-  /**
-   * Since we are building a macroscopic network based on OSM, we provide a mapping from
-   * the common OSM highway types to macroscopic link segment types that go with it
-   * 
-   * @return the default created 
-   * @throws PlanItException thrown when error
-   */
-  protected Map<String, MacroscopicLinkSegmentType> createDefaultOSMLinkSegmentTypes() throws PlanItException {
-    Map<String, MacroscopicLinkSegmentType> types = new HashedMap<String, MacroscopicLinkSegmentType>();
-    types.put(PlanitOSMTags.MOTORWAY, createMotorway());
-    types.put(PlanitOSMTags.MOTORWAY_LINK, createMotorwayLink());
-    types.put(PlanitOSMTags.TRUNK, createTrunk());
-    types.put(PlanitOSMTags.TRUNK_LINK, createTrunkLink());
-    types.put(PlanitOSMTags.PRIMARY, createPrimary());
-    types.put(PlanitOSMTags.PRIMARY_LINK, createPrimaryLink());
-    types.put(PlanitOSMTags.SECONDARY, createSecondary());
-    types.put(PlanitOSMTags.SECONDARY_LINK, createSecondary());
-    types.put(PlanitOSMTags.SECONDARY_LINK, createSecondaryLink());
-    types.put(PlanitOSMTags.TERTIARY, createTertiary());
-    types.put(PlanitOSMTags.TERTIARY_LINK, createTertiaryLink());
-    types.put(PlanitOSMTags.UNCLASSIFIED, createUnclassified());
-    types.put(PlanitOSMTags.RESIDENTIAL, createResidential());
-    types.put(PlanitOSMTags.LIVING_STREET, createLivingStreet());
-    types.put(PlanitOSMTags.SERVICE, createService());
-    types.put(PlanitOSMTags.PEDESTRIAN, createPedestrian());
-    types.put(PlanitOSMTags.TRACK, createTrack());
-    types.put(PlanitOSMTags.ROAD, createRoad());
-    return types;
+  public PlanitOsmNetwork(IdGroupingToken groupId) {
+    super(groupId);    
+    this.createdOSMLinkSegmentTypes = new HashMap<String, MacroscopicLinkSegmentType>();
   }
 
   /**
@@ -310,7 +412,7 @@ public class PLANitOSMNetwork extends MacroscopicNetwork {
    * @return the link segment type that is registered
    */
   public MacroscopicLinkSegmentType getSegmentTypeByOSMTag(String osmHighwayTagValue) {
-    return defaultOSMLinkSegmentTypes.get(osmHighwayTagValue);
+    return this.createdOSMLinkSegmentTypes.get(osmHighwayTagValue);
   }
 
   

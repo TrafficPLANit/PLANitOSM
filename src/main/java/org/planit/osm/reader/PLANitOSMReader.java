@@ -3,7 +3,9 @@ package org.planit.osm.reader;
 import java.io.File;
 import java.util.logging.Logger;
 
-import org.planit.osm.physical.network.macroscopic.PLANitOSMNetwork;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.FileUtils;
 
@@ -18,20 +20,20 @@ import de.topobyte.osm4j.xml.dynsax.OsmXmlReader;
  * @author markr
  *
  */
-public class PLANitOSMReader {
+public class PlanitOsmReader {
   
   /** the logger */
-  private static final Logger LOGGER = Logger.getLogger(PLANitOSMReader.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmReader.class.getCanonicalName());
   
   public static final String OSM_XML_EXTENSION = "osm";
   
   public static final String OSM_PBF_EXTENSION = "pbf";  
   
   /* settings to use */
-  private final PLANitOSMReaderSettings settings;
+  private final PlanitOsmSettings settings;
   
   /* network to populate */
-  private final PLANitOSMNetwork osmNetwork;
+  private final PlanitOsmNetwork osmNetwork;
    
   /**
    * Log some information about this reader's configuration
@@ -72,9 +74,9 @@ public class PLANitOSMReader {
    * @param osmNetwork network to populate 
    * @param settings for populating the network
    */
-  PLANitOSMReader(PLANitOSMNetwork osmNetwork){
+  PlanitOsmReader(PlanitOsmNetwork osmNetwork){
     this.osmNetwork = osmNetwork; 
-    this.settings = new PLANitOSMReaderSettings();
+    this.settings = new PlanitOsmSettings();
   }
   
 
@@ -87,14 +89,15 @@ public class PLANitOSMReader {
    * @return macroscopic network that has been parsed
    * @throws PlanItException thrown if error
    */
-  public PLANitOSMNetwork parse(String inputFile) throws PlanItException {
+  public PlanitOsmNetwork parse(String inputFile) throws PlanItException {
     logInfo(inputFile);
-    
-    /* handler to deal with call backs from osm4j */
-    PLANitOSMHandler osmHandler = new PLANitOSMHandler(osmNetwork, settings);
-    
+        
     /* reader to parse the actual file */
     OsmReader osmReader = createOSMReader(inputFile);
+    
+    /* handler to deal with call backs from osm4j */
+    PlanitOsmHandler osmHandler = new PlanitOsmHandler(osmNetwork, settings);
+    osmHandler.initialiseBeforeParsing();
     
     /* register handler */
     osmReader.setHandler(osmHandler);
@@ -109,6 +112,15 @@ public class PLANitOSMReader {
     
     /* return result */
     return osmNetwork;
+  }
+  
+  /**
+   * Collect the settings which can be used to configure the reader
+   * 
+   * @return the setings
+   */
+  public PlanitOsmSettings getSettings() {
+    return settings;
   }
 
 }

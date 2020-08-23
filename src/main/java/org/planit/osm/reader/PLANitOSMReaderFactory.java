@@ -1,6 +1,6 @@
 package org.planit.osm.reader;
 
-import org.planit.osm.physical.network.macroscopic.PLANitOSMNetwork;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.id.IdGroupingToken;
 
 /**
@@ -14,8 +14,17 @@ public class PLANitOSMReaderFactory {
    * 
    * @return create osm reader
    */
-  public static PLANitOSMReader create() {
-    return new PLANitOSMReader(new PLANitOSMNetwork(IdGroupingToken.collectGlobalToken()));    
+  public static PlanitOsmReader create() {
+    return new PlanitOsmReader(new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));    
   }
+  
+  /** Create a PLANitOSMReader while providing an OSM network to populate
+   * 
+   * @param osmNetworkToPopulate the network to populate
+   * @return create osm reader
+   */
+  public static PlanitOsmReader create(PlanitOsmNetwork osmNetworkToPopulate) {
+    return new PlanitOsmReader(osmNetworkToPopulate);    
+  }  
   
 }
