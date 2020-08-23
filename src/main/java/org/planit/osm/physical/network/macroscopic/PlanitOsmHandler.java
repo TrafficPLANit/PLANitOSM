@@ -48,6 +48,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   /** utilities for geographic information */
   private final PlanitGeoUtils geoUtils;
   
+  /** temporary storage of osmNodes before converting the useful ones to actual nodes */
+  private final Map<Long, OsmNode> osmNodes;
+  
   /**
    * track the nodes by their external id so they can by looked up quickly while parsing ways
    */
@@ -57,7 +60,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * track a counter by highway tag of the encountered entities
    */
   private final Map<String, LongAdder> counterByHighwayTag;
-  
+    
   /**
    * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
    * while still providing information, hence the modulo use is dynamic
@@ -74,7 +77,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
    * while still providing information, hence the modulo use is dynamic
    */  
-  private long moduloLoggingCounterNodes = 1000;
+  private long moduloLoggingCounterNodes = 500;
    
   /**
    * Log all de-activated OSM highway types
@@ -122,6 +125,46 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     return linkSegmentType;
   }
   
+  /**
+   * Extract a PLANit node from the osmNode information
+   * 
+   * @param osmNodeId to convert
+   * @return created or retrieved node
+   * @throws PlanItException 
+   */
+  private Node extractNode(final long osmNodeId) throws PlanItException {
+    
+    Node node = nodesByExternalId.get(osmNodeId);
+    if(node == null) {
+      
+      /* not yet created */      
+      OsmNode osmNode = osmNodes.get(osmNodeId);
+      if(osmNode==null) {
+        throw new PlanItException(String.format("osmNodeId (%d) not provided by parser, unable to retrieve node",osmNodeId));
+      }
+      
+      /* location info */
+      DirectPosition geometry = null;
+      try {
+        geometry = geoUtils.createDirectPosition(osmNode.getLongitude(), osmNode.getLatitude());
+      } catch (PlanItException e) {
+        LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
+      }
+
+      /* create and register */
+      node = network.nodes.registerNewNode(osmNodeId);
+      node.setCentrePointGeometry(geometry);
+      nodesByExternalId.put(osmNodeId, node);
+      
+      if(network.nodes.getNumberOfNodes() >= moduloLoggingCounterNodes) {
+        LOGGER.info(String.format("Created %d nodes out of OSM nodes",network.nodes.getNumberOfNodes()));
+        moduloLoggingCounterNodes *=2;
+      }      
+    }
+   
+    return node;
+  }
+  
   /** extract a link from the way
    * @param osmWay the way to process
    * @param tags tags that belong to the way
@@ -131,16 +174,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private Link extractLink(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
     
     /* collect memory model nodes */
-    long nodeRefLast = osmWay.getNodeId(osmWay.getNumberOfNodes()-1);
-    long nodeRefFirst = osmWay.getNodeId(0);
-    Node nodeFirst = nodesByExternalId.get(nodeRefFirst);
-    Node nodeLast = nodesByExternalId.get(nodeRefLast);
-        
-    if(nodeFirst == null || nodeLast == null) {
-      PlanItException.throwIf(nodeFirst == null, String.format("node referenced in way (id:%d) not available in parsed network", nodeRefFirst));
-      PlanItException.throwIf(nodeLast == null, String.format("node referenced in way (id:%d) not available in parsed network", nodeLast));      
-    }
-    
+    Node nodeFirst = extractNode(osmWay.getNodeId(0));
+    Node nodeLast = extractNode(osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
+              
     /* osm way is directional, link is not, check existence */
     Link link = null;
     if(nodeFirst != null) {
@@ -222,7 +258,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     this.network = network;
     this.settings = settings;
     this.geoUtils = new PlanitGeoUtils(settings.getSourceCRS());
-    counterByHighwayTag = new HashMap<String, LongAdder>();
+    this.counterByHighwayTag = new HashMap<String, LongAdder>();
+    this.osmNodes = new HashMap<Long, OsmNode>();
   }
   
   /**
@@ -251,22 +288,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
-    /* location info */
-    DirectPosition geometry = null;
-    try {
-      geometry = geoUtils.createDirectPosition(osmNode.getLongitude(), osmNode.getLatitude());
-    } catch (PlanItException e) {
-      LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
-    }
-
-    Node node = network.nodes.registerNewNode(osmNode.getId());
-    node.setCentrePointGeometry(geometry);
-    nodesByExternalId.put(osmNode.getId(),node);
-    
-    if(network.nodes.getNumberOfNodes() == moduloLoggingCounterNodes) {
-      LOGGER.info(String.format("Created %d nodes out of OSM nodes",network.nodes.getNumberOfNodes()));
-      moduloLoggingCounterNodes *=2;
-    }
+    /* store for later processing */
+    osmNodes.put(osmNode.getId(), osmNode);   
   }
 
   /**
@@ -305,6 +328,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
 
   @Override
   public void complete() throws IOException {
+    
     /* stats of encountered way entities */
     counterByHighwayTag.forEach( 
         (type,counter) -> LOGGER.info(String.format(" [PROCESSED] highway:%s count:%d", type, counter.longValue())));

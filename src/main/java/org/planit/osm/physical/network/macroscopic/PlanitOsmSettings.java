@@ -49,7 +49,13 @@ public class PlanitOsmSettings {
   /**
    * track overwrite values for OSM highway types where we want different defaults for capacity and max density
    */
-  Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();  
+  protected Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();
+  
+  /**
+   * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
+   * (default is false). When set to true parsing will be somewhat slower 
+   */
+  protected boolean parseOsmWayGeometry = false; 
  
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
@@ -242,6 +248,23 @@ public class PlanitOsmSettings {
    */
   public final Pair<Double,Double> getOSMHighwayTypeOverwrite(String osmHighwayType) {
     return overwriteByOSMHighwayType.get(osmHighwayType);
+  }  
+  
+  /**
+   * Verify if we are parsing the line geometry of Osm ways into link segments
+   * @return true when parsing otherwise false
+   */
+  public boolean isParseOsmWayGeometry() {
+    return parseOsmWayGeometry;
+  }
+
+  /**
+   * indicate whether or not to parse the geometry of osm ways
+   * 
+   * @param parseOsmWayGeometry when set to true it will be parsed inot link segments
+   */
+  public void setParseOsmWayGeometry(boolean parseOsmWayGeometry) {
+    this.parseOsmWayGeometry = parseOsmWayGeometry;
   }  
 
 }
