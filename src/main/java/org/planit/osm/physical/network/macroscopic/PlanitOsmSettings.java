@@ -24,12 +24,18 @@ public class PlanitOsmSettings {
    * The logger
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmSettings.class.getCanonicalName());  
-  
- 
+   
   /**
    * the OSM highway types that are marked as supported OSM types, i.e., will be processed when parsing
    */
   protected final Set<String> supportedOSMLinkSegmentTypes = new HashSet<String>();
+  
+  /**
+   * track overwrite values for OSM highway types where we want different defaults for capacity and max density
+   */
+  protected Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();
+  
+  /* SETTINGS */
   
   /**
    * the OSM highway types that are marked as unsupported OSM types, i.e., will be ignored when parsing
@@ -45,12 +51,7 @@ public class PlanitOsmSettings {
    * set to PlanitOSMTags.TERTIARY. Note in case this is also not available on the reader, the type will be ignored altogether
    */
   protected String defaultOSMHighwayTypeWhenUnsupported = OsmHighwayTags.TERTIARY;  
-  
-  /**
-   * track overwrite values for OSM highway types where we want different defaults for capacity and max density
-   */
-  protected Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();
-  
+    
   /**
    * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
    * (default is false). When set to true parsing will be somewhat slower 

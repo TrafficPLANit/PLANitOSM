@@ -1,12 +1,16 @@
 package org.planit.osm.physical.network.macroscopic;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
 import org.opengis.geometry.DirectPosition;
+import org.opengis.geometry.coordinate.LineString;
+import org.opengis.geometry.coordinate.Position;
 import org.planit.geo.PlanitGeoUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
@@ -86,6 +90,24 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     settings.unsupportedOSMLinkSegmentTypes.forEach( 
         osmTag -> LOGGER.info(String.format("highway:%s DEACTIVATED", osmTag)));    
   }  
+  
+  /**
+   * collect x coordinate based on mapping between long/lat/ x/y
+   * @param osmNode node to collect from
+   * @return x coordinate
+   */
+  private static double getXCoordinate(OsmNode osmNode) {
+    return osmNode.getLongitude();
+  }
+  
+  /**
+   * collect x coordinate based on mapping between long/lat/ x/y
+   * @param osmNode node to collect from
+   * @return x coordinate
+   */
+  private static double getYCoordinate(OsmNode osmNode) {
+    return osmNode.getLatitude();
+  }  
     
   /**
    * @return the network
@@ -126,6 +148,25 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   }
   
   /**
+   * Extract the geometry for the passed in way
+   * @param osmWay way to extract geometry from
+   * @return line string instance representing the shape of the way
+   * @throws PlanItException 
+   */
+  private LineString extractLinkGeometry(OsmWay osmWay) throws PlanItException {
+    List<Position> positionList = new ArrayList<Position>(osmWay.getNumberOfNodes());
+    int numberOfNodes = osmWay.getNumberOfNodes();
+    for(int index = 0; index < numberOfNodes; ++index) {
+      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
+      if(osmNode == null) {
+        throw new PlanItException(String.format("referenced osmNode %d in osmWay %d not available in OSM parser",osmWay.getNodeId(index), osmWay.getId()));
+      }
+      positionList.add(geoUtils.createDirectPosition(getXCoordinate(osmNode),getYCoordinate(osmNode)));
+    }
+    return  geoUtils.createLineStringFromPositions(positionList);
+  }  
+  
+  /**
    * Extract a PLANit node from the osmNode information
    * 
    * @param osmNodeId to convert
@@ -146,7 +187,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       /* location info */
       DirectPosition geometry = null;
       try {
-        geometry = geoUtils.createDirectPosition(osmNode.getLongitude(), osmNode.getLatitude());
+        geometry = geoUtils.createDirectPosition(getXCoordinate(osmNode), getYCoordinate(osmNode));
       } catch (PlanItException e) {
         LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
       }
@@ -176,7 +217,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* collect memory model nodes */
     Node nodeFirst = extractNode(osmWay.getNodeId(0));
     Node nodeLast = extractNode(osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
-              
+                  
     /* osm way is directional, link is not, check existence */
     Link link = null;
     if(nodeFirst != null) {
@@ -186,6 +227,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     if(link == null) {
       link = network.links.registerNewLink(
           nodeFirst, nodeLast, geoUtils.getDistanceInKilometres(nodeFirst, nodeLast), true /*register on nodes */);
+    }    
+    
+    /* geometry of link */
+    if(settings.isParseOsmWayGeometry()) {
+      link.setGeometry(extractLinkGeometry(osmWay));
     }    
     
     if(network.links.getNumberOfLinks() == moduloLoggingCounterLinks) {
