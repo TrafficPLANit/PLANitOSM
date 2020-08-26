@@ -225,15 +225,26 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }
                
     if(link == null) {
-      link = network.links.registerNewLink(
-          nodeFirst, nodeLast, geoUtils.getDistanceInKilometres(nodeFirst, nodeLast), true /*register on nodes */);
+
+      /* length and geometry */
+      double linkLength = 0;      
+      LineString lineSring = null;
+      if(settings.isParseOsmWayGeometry()) {
+        lineSring = extractLinkGeometry(osmWay);
+        /* update the length based on the geometry */
+        linkLength = geoUtils.getDistanceInKilometres(lineSring);
+      }else {
+        /* update length based on start and end node only */
+        linkLength = geoUtils.getDistanceInKilometres(nodeFirst, nodeLast);
+      }
+      
+      /* create link */
+      link = network.links.registerNewLink(nodeFirst, nodeLast, linkLength, true);      
+      if(settings.isParseOsmWayGeometry()) {
+        link.setGeometry(lineSring);      
+      }
     }    
-    
-    /* geometry of link */
-    if(settings.isParseOsmWayGeometry()) {
-      link.setGeometry(extractLinkGeometry(osmWay));
-    }    
-    
+           
     if(network.links.getNumberOfLinks() == moduloLoggingCounterLinks) {
       LOGGER.info(String.format("Created %d links out of OSM ways",network.links.getNumberOfLinks()));
       moduloLoggingCounterLinks *=2;
