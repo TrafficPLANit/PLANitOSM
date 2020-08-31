@@ -111,14 +111,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private static double getYCoordinate(OsmNode osmNode) {
     return osmNode.getLatitude();
   }  
-    
-  /**
-   * @return the network
-   */
-  protected MacroscopicNetwork getNetwork() {
-    return network;
-  }
-  
+     
   
   /**
    * parse the maximum speed for the link segments
