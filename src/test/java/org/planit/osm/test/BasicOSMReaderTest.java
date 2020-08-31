@@ -55,6 +55,9 @@ public class BasicOSMReaderTest {
       /* test out setting different defaults for the highway:primary type*/
       osmReader.getSettings().overwriteOSMHighwayTypeDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
+      /* parse geometry of links */
+      osmReader.getSettings().setParseOsmWayGeometry(true);
+      
       MacroscopicNetwork network = osmReader.parse(SYDNEYCBD_OSM);
       assertNotNull(network);
       
