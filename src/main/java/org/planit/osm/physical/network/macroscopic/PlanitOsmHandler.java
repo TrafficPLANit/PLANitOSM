@@ -10,7 +10,10 @@ import org.opengis.geometry.DirectPosition;
 import org.planit.geo.PlanitGeoUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
+import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.OsmTags;
+import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
@@ -86,43 +89,68 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     settings.unsupportedOSMLinkSegmentTypes.forEach( 
         osmTag -> LOGGER.info(String.format("highway:%s DEACTIVATED", osmTag)));    
   }  
-    
-  /**
-   * @return the network
-   */
-  protected MacroscopicNetwork getNetwork() {
-    return network;
-  }
+  
   
   /**
-   * Collect the default settings for this way based on its highway type
+   * parse the maximum speed for the link segments
    * 
-   * @param way the way
-   * @param tags the tags of this way
-   * @return the link segment type if available, otherwise nullis returned
+   * @param link on which link segments reside
+   * @param direction osm direction information
+   * @param tags osm tags
+   * @throws PlanItException thrown if error
    */
-  protected MacroscopicLinkSegmentType getLinkSegmentType(OsmWay osmWay, Map<String, String> tags) {
-    MacroscopicLinkSegmentType linkSegmentType = null;
-    if (tags.containsKey(OsmTags.HIGHWAY)) {
-      
-      String highWayType = tags.get(OsmTags.HIGHWAY);
-      counterByHighwayTag.putIfAbsent(highWayType, new LongAdder());
-      counterByHighwayTag.get(highWayType).increment();
-            
-      linkSegmentType = network.getSegmentTypeByOSMTag(highWayType);            
-      if(linkSegmentType != null) {
-        return linkSegmentType;
+  private void populateLinkSegmentsSpeed(Link link, OsmDirection direction, Map<String, String> tags) throws PlanItException {
+    
+    double speedLimitAbKmh = -1;
+    double speedLimitBaKmh = -1;
+    
+    if(tags.containsKey(OsmSpeedTags.MAX_SPEED)) {
+      /* regular speed limit for all available directions and across all modes */
+      speedLimitAbKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED));
+      speedLimitBaKmh = speedLimitAbKmh;
+    }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_LANES)) {
+      /* check for lane specific speed limit */
+      double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_LANES));
+      /* Note: PLANit does not support lane specific speeds at the moment, maximum speed across lanes is selected */      
+      speedLimitAbKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);
+      speedLimitBaKmh = speedLimitAbKmh;
+    }else if( tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD) || tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)){
+      /* check for forward speed limit */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD)) {
+        speedLimitAbKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD));  
       }
-      
-      /* determine the reason why we couldn't find it */
-      if(!settings.isOSMHighwayTypeUnsupported(highWayType)) {
-        /*... not unsupported so something is not properly configured, or the osm file is corrupt or not conform the standard*/
-        LOGGER.warning(String.format(
-            "no link segment type available for OSM way: highway:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
-            highWayType, osmWay.getId()));              
-      }  
+      /* check for forward speed limit per lane */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)) {
+        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)); 
+        speedLimitAbKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);   
+      }
+    }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)|| tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
+      /* check for backward speed limit */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)) {
+        speedLimitBaKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD));        
+      }
+      /* check for backward speed limit per lane */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
+        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
+        speedLimitBaKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
+      }
     }
-    return linkSegmentType;
+    
+    /* we assume the direction information is consistent with the speed information in the tags */
+    
+    if(!direction.isOneWay() || direction.isReverseDirection()) {
+      ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setMaximumSpeed(speedLimitBaKmh);
+    }
+    if(!direction.isOneWay() || !direction.isReverseDirection()) {
+      ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setMaximumSpeed(speedLimitAbKmh);
+    }
+    
+    /* mode specific speed limits */
+    //TODO
+
+      
+       
+    
   }
   
   /**
@@ -239,16 +267,59 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     if(osmWay.getNodeId(0) == (long)link.getVertexB().getExternalId()) {
       directionAb = false;
     }
-    
+        
     directionAb = direction.isReverseDirection() ? !directionAb : directionAb;
     extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentType, directionAb);
     
     if(!direction.isOneWay()){
       directionAb = !directionAb;
       extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentType, directionAb);
-    }       
+    }
+    
+    populateLinkSegmentsSpeed(link, direction, tags);
+    
   }  
   
+  
+  /**
+   * @return the network
+   */
+  protected MacroscopicNetwork getNetwork() {
+    return network;
+  }
+  
+  /**
+   * Collect the default settings for this way based on its highway type
+   * 
+   * @param way the way
+   * @param tags the tags of this way
+   * @return the link segment type if available, otherwise nullis returned
+   */
+  protected MacroscopicLinkSegmentType getLinkSegmentType(OsmWay osmWay, Map<String, String> tags) {
+    MacroscopicLinkSegmentType linkSegmentType = null;
+    if (tags.containsKey(OsmTags.HIGHWAY)) {
+      
+      String highWayType = tags.get(OsmTags.HIGHWAY);
+      counterByHighwayTag.putIfAbsent(highWayType, new LongAdder());
+      counterByHighwayTag.get(highWayType).increment();
+            
+      linkSegmentType = network.getSegmentTypeByOSMTag(highWayType);            
+      if(linkSegmentType != null) {
+        return linkSegmentType;
+      }
+      
+      /* determine the reason why we couldn't find it */
+      if(!settings.isOSMHighwayTypeUnsupported(highWayType)) {
+        /*... not unsupported so something is not properly configured, or the osm file is corrupt or not conform the standard*/
+        LOGGER.warning(String.format(
+            "no link segment type available for OSM way: highway:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
+            highWayType, osmWay.getId()));              
+      }  
+    }
+    return linkSegmentType;
+  }  
+  
+
   /**
    * constructor
    * 
