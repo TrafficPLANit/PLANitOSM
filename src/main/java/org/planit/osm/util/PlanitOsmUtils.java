@@ -2,6 +2,9 @@ package org.planit.osm.util;
 
 import org.planit.utils.exceptions.PlanItException;
 
+import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.iface.OsmWay;
+
 /**
  * Utilities in relation to parsing osm data and constructing a PLANit model from it
  * 
@@ -64,6 +67,41 @@ public class PlanitOsmUtils {
     }
     return speedLimitKmh;
   }
+  
+  /**
+   * Verify if passed osmWay is in fact cicular in nature, i.e., a type of roundabout
+   * 
+   * @param osmWay the way to verify
+   * @return true if circular, false otherwise
+   */
+  public static boolean isCircularWay(OsmWay osmWay) {
+    /* a circular road, has:
+     * -  more than two nodes...
+     * -  ...an end node that is the same as its start node */
+    if(osmWay.getNumberOfNodes() > 2 && osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1)) {
+      return true;
+    }else {
+      return false; 
+    }
+  }  
+  
+  /**
+   * collect x coordinate based on mapping between long/lat/ x/y
+   * @param osmNode node to collect from
+   * @return x coordinate
+   */
+  public static double getXCoordinate(OsmNode osmNode) {
+    return osmNode.getLongitude();
+  }
+  
+  /**
+   * collect x coordinate based on mapping between long/lat/ x/y
+   * @param osmNode node to collect from
+   * @return x coordinate
+   */
+  public static double getYCoordinate(OsmNode osmNode) {
+    return osmNode.getLatitude();
+  }     
   
 
 }

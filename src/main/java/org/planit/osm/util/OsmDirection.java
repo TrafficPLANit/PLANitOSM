@@ -52,6 +52,25 @@ public class OsmDirection {
           LOGGER.warning(String.format("unknown value encountered oneway:%s",value));
         }
       }
+    }else {
+      boolean junctionTagPresent = tags.containsKey(OsmTags.JUNCTION);
+      if(junctionTagPresent) {
+        /* determine type of one way */
+        String value = tags.get(OsmTags.JUNCTION);
+        if(value.equals(OsmJunctionTags.ROUNDABOUT) || value.equals(OsmJunctionTags.CIRCULAR)) {
+          /* roundabout (or circular which is a roundabout with no right of way) implies one way */
+          oneWay = true;
+          
+          /* extract direction on roundabout way */
+          if(tags.containsKey(OsmTags.DIRECTION) && tags.get(OsmTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE)) {
+            reverseDirection = false;    
+          }else {
+            /* direction default is anti-clock-wise */
+            reverseDirection = true;
+          }
+          
+        }
+      }
     }
   }
   

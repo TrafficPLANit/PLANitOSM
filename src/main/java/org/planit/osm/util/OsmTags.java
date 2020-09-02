@@ -6,14 +6,12 @@ package org.planit.osm.util;
  */
 public class OsmTags {
   
-    /* main tag for roads */
+    /* key for roads */
   
     public static final String HIGHWAY = "highway";
     
     /*  tags related to nodes */
     
-    public static final String ROUNDABOUT = "roundabout";
-
     public static final String JUNCTION = "junction";
     
     public static final String TRAFFIC_SINGALS = "traffic_signals";
@@ -38,6 +36,10 @@ public class OsmTags {
     public static final String BICYCLE = "bicycle";    
 
     public final static String ONEWAYBICYCLE = "oneway:bicycle";
+    
+    /* other keys */
+    
+    public static final String DIRECTION = "direction";
 
     /* units related */
     

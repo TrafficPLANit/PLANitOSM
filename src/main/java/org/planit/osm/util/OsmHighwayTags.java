@@ -1,7 +1,9 @@
 package org.planit.osm.util;
 
 /**
- * OSM "highway" sub-tags
+ * OSM "highway" values, e.g. highway=<option>
+ * 
+ * @author markr
  *
  */
 public class OsmHighwayTags {
