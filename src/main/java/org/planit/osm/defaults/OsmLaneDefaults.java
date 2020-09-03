@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.util.OsmHighwayTags;
-import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 
 /**
@@ -15,7 +14,7 @@ import org.planit.utils.misc.Pair;
  * @author markr
  *
  */
-public class OsmLaneDefaults {
+public class OsmLaneDefaults implements Cloneable {
 
   /**
    * The logger for this class
@@ -24,7 +23,10 @@ public class OsmLaneDefaults {
   private static final Logger LOGGER = Logger.getLogger(OsmLaneDefaults.class.getCanonicalName());  
   
   /** store the defaults */
-  protected static Map<String, Integer> defaultLanesPerDirection;
+  protected static Map<String, Integer> defaultLanesPerDirection = new HashMap<String, Integer>();
+  
+  /** store the defaults  for class instance */
+  protected Map<String, Integer> lanesPerDirection;
   
   /** store all defaults per country by ISO2 code **/
   protected static Map<String, Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>> speedLimitDefaultsByCountry = new HashMap<String,Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>>();
@@ -57,6 +59,31 @@ public class OsmLaneDefaults {
     defaultLanesPerDirection.put(OsmHighwayTags.TRACK, 1);
     defaultLanesPerDirection.put(OsmHighwayTags.PATH, 1);
   }
+  
+  /**
+   * Constructor
+   */
+  public OsmLaneDefaults() {
+    /* clone so adjustments can be made locally if so desired */
+    this.lanesPerDirection = new HashMap<String, Integer>(defaultLanesPerDirection);
+  }
+  
+  /** Copy constructor
+   * 
+   * @param osmLaneDefaults to copy
+   */
+  public OsmLaneDefaults(OsmLaneDefaults osmLaneDefaults) {
+    this.lanesPerDirection = new HashMap<String, Integer>(osmLaneDefaults.lanesPerDirection);
+  }
+
+  /** Overwrite current default
+   * @param type highway type
+   * @param defaultNumberOfLanesPerDirection the new default
+   * @return old value if any, null if not present
+   */
+  public Integer setDefaultDirectionalLanesByHighwayType(String type, Integer defaultNumberOfLanesPerDirection) {
+    return lanesPerDirection.put(type,defaultNumberOfLanesPerDirection);
+  }
 
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total)
    * 
@@ -64,7 +91,7 @@ public class OsmLaneDefaults {
    * @return number of lanes for this type (if any), otherwise null is returned
    */
   public Integer getDefaultDirectionalLanesByHighwayType(String type) {
-    return defaultLanesPerDirection.get(type);
+    return lanesPerDirection.get(type);
   }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, in total (both directions)
@@ -73,8 +100,16 @@ public class OsmLaneDefaults {
    * @return number of lanes for this type (if any), otherwise null is returned
    */
   public Integer getDefaultTotalLanesByHighwayType(String type) {
-    return defaultLanesPerDirection.get(type)*2;
+    return lanesPerDirection.get(type)*2;
   }  
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OsmLaneDefaults clone() throws CloneNotSupportedException {
+    return new OsmLaneDefaults(this);
+  }
 
   
 }

@@ -219,23 +219,32 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param countryName
    */
   public OsmSpeedLimitDefaultsByCountry(String countryName) {
+    /* clone defaults so they can be adjusted without impacting actual defaults */
     try {
       this.currentCountrySpeedLimits = 
           new Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>(
-              getDefaultsByCountry(countryName).getFirst().clone(),
-              getDefaultsByCountry(countryName).getSecond().clone());
+              getDefaultsByCountry(countryName).getFirst().clone(), getDefaultsByCountry(countryName).getSecond().clone());
       
-      FIX THIS UP AS WELL -> COPY SO ANY CHANGES DO NOT AFFECT OTHER INSTANCES OF THIS CLASS -> THEN DO THE SAME FOR LANES
       if(currentCountrySpeedLimits==null) {
-        this.currentCountrySpeedLimits = defaultSpeedLimits; 
+        this.currentCountrySpeedLimits = 
+            new Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>(
+                defaultSpeedLimits.getFirst().clone(),defaultSpeedLimits.getSecond().clone()); 
         LOGGER.warning(String.format("No OSM speed limit defaults available for country %s, reverting to global defaults",countryName));
       }
       
     } catch (CloneNotSupportedException e) {
-      CONTINUE HERE --> 
-      LOGGER.severe("");
+      LOGGER.severe(String.format("Unable to copy default speed limits for indicated country %s",countryName));
     }
   }  
+  
+  /**
+   * Collect the speed limits that are used as defaults for this class instance 
+   * 
+   * @return speed limits for inside and outside urban areas
+   */
+  public  Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults> getSpeedLimits() {
+    return currentCountrySpeedLimits;
+  }
   
   /** collect the speed limit based on the highway type, e.g. highway=type. Speed limit is collected based on the chosen country. If either the country
    * is not defined or the highway type is not available on the country's defaults, the global defaults will be used
