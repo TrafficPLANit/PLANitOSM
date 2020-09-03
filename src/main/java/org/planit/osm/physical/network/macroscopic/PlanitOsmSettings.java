@@ -8,6 +8,8 @@ import java.util.logging.Logger;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.geo.PlanitGeoUtils;
+import org.planit.osm.defaults.OsmLaneDefaults;
+import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -30,10 +32,16 @@ public class PlanitOsmSettings {
    */
   protected final Set<String> supportedOSMLinkSegmentTypes = new HashSet<String>();
   
+  /** the default speed limits used in case no explicit information is available on the osmway's tags */
+  protected final OsmSpeedLimitDefaultsByCountry speedLimitConfiguration;
+  
+  /** the default number of lanes used in case no explicit information is available on the osmway's tags */
+  protected final OsmLaneDefaults laneConfiguration = new OsmLaneDefaults();
+   
   /**
    * track overwrite values for OSM highway types where we want different defaults for capacity and max density
    */
-  protected Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();
+  protected Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();    
   
   /* SETTINGS */
   
@@ -41,8 +49,7 @@ public class PlanitOsmSettings {
    * the OSM highway types that are marked as unsupported OSM types, i.e., will be ignored when parsing
    */
   protected final Set<String> unsupportedOSMLinkSegmentTypes = new HashSet<String>();
-    
-    
+        
   /** the crs of the OSM source */
   protected CoordinateReferenceSystem sourceCRS = PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS;
     
@@ -56,7 +63,24 @@ public class PlanitOsmSettings {
    * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
    * (default is false). When set to true parsing will be somewhat slower 
    */
-  protected boolean parseOsmWayGeometry = false; 
+  protected boolean parseOsmWayGeometry = false;
+  
+  /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area speed limits (or non-urban), default is true */
+  protected boolean speedLimitDefaultsBasedOnUrbanArea = true;  
+  
+  /**
+   * conduct general initialisation for any instance of this class
+   */
+  protected void initialise() {
+    try {
+      /* the highway types that will be parsed by default, i.e., supported. */
+      initialiseDefaultSupportedOSMHighwayTypes();
+      /* the highway types that will not be parsed by default, i.e., unsupported. */
+      initialiseDefaultUnsupportedOSMHighwayTypes();
+    } catch (PlanItException e) {
+      LOGGER.severe("unable to create default supported and/or unsupported OSM link segment types for this network");
+    }     
+  }
  
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
@@ -110,18 +134,24 @@ public class PlanitOsmSettings {
    
     
   /**
-   * Constructor
+   * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
+   * speed limits.
+   * 
    */
-  public PlanitOsmSettings() {    
-    try {
-      /* the highway types that will be parsed by default, i.e., supported. */
-      initialiseDefaultSupportedOSMHighwayTypes();
-      /* the highway types that will not be parsed by default, i.e., unsupported. */
-      initialiseDefaultUnsupportedOSMHighwayTypes();
-    } catch (PlanItException e) {
-      LOGGER.severe("unable to create default supported and/or unsupported OSM link segment types for this network");
-    }    
+  public PlanitOsmSettings() {
+    initialise();
+    this.speedLimitConfiguration = new OsmSpeedLimitDefaultsByCountry();
   }   
+  
+  /**
+   * Constructor with country to base default speed limits on for various osm highway types in case maximum speed limit information is missing
+   * 
+   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class 
+   */
+  public PlanitOsmSettings(String countryName) {
+    initialise();
+    speedLimitConfiguration = new OsmSpeedLimitDefaultsByCountry(countryName);
+  }    
 
   /**
    * chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
@@ -266,6 +296,56 @@ public class PlanitOsmSettings {
    */
   public void setParseOsmWayGeometry(boolean parseOsmWayGeometry) {
     this.parseOsmWayGeometry = parseOsmWayGeometry;
+  }
+  
+  /** collect state of flag indicating to use urban or non-urban default speed limits when speed limit information is missing
+   * 
+   * @return flag value
+   */
+  public boolean isSpeedLimitDefaultsBasedOnUrbanArea() {
+    return speedLimitDefaultsBasedOnUrbanArea;
+  }
+
+  /** set state of flag indicating to use urban or non-urban default speed limits when speed limit information is missing
+   * 
+   * @param speedLimitDefaultsBasedOnUrbanArea flag value
+   */  
+  public void setSpeedLimitDefaultsBasedOnUrbanArea(boolean speedLimitDefaultsBasedOnUrbanArea) {
+    this.speedLimitDefaultsBasedOnUrbanArea = speedLimitDefaultsBasedOnUrbanArea;
+  }  
+  
+  /** collect the current configuration setup for applying speed limits in case the maxspeed tag is not available on the parsed osmway
+   * @return speed limit configuration
+   */
+  public OsmSpeedLimitDefaultsByCountry getSpeedLimitConfiguration() {
+    return this.speedLimitConfiguration;
+  }
+  
+  /** collect the current configuration setup for applying number of lanes in case the lanes tag is not available on the parsed osmway
+   * @return lane configuration containing all defaults for various osm highway types
+   */
+  public OsmLaneDefaults getLaneConfiguration() {
+    return this.laneConfiguration;
+  }  
+
+  /** Collect the speed limit for a given highway tag value, e.g. highway=type, based on the defaults provided (typically set by country)
+   * 
+   * @param type highway type to collect default speed limit for
+   * @return speedLimit in km/h outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea
+   * @throws PlanItException thrown if error
+   */
+  public double getDefaultSpeedLimitByHighwayType(String type) throws PlanItException {
+    return isSpeedLimitDefaultsBasedOnUrbanArea() ? speedLimitConfiguration.getInsideSpeedLimitByHighwayType(type) : speedLimitConfiguration.getOutsideSpeedLimitByHighwayType(type);  
+  }
+
+  /** Collect the number of lanes for a given highway tag value for either direction (not total), e.g. highway=type, based on the defaults provided
+   * 
+   * @param type highway type to collect default lanes for
+   * @return number of default lanes
+   * @throws PlanItException thrown if error
+   */
+  public Integer getDefaultDirectionalLanesByHighwayType(String type) {
+    return laneConfiguration.getDefaultDirectionalLanesByHighwayType(type);
   }  
 
 }

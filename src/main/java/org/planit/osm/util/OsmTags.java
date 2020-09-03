@@ -5,11 +5,7 @@ package org.planit.osm.util;
  *
  */
 public class OsmTags {
-  
-    /* key for roads */
-  
-    public static final String HIGHWAY = "highway";
-    
+      
     /*  tags related to nodes */
     
     public static final String JUNCTION = "junction";
@@ -21,15 +17,6 @@ public class OsmTags {
     /* tags related to links of a certain type */
 
     public static final String MAXSPEED = "maxspeed";
-
-    public static final String ONEWAY = "oneway";
-
-    public static final String LANES = "lanes";
-
-    public static final String LANES_FORWARD = "lanes:forward";
-
-    public static final String LANES_BACKWARD = "lanes:backward";
-
     
     /* bicycle specific */
 

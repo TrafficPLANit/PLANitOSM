@@ -2,8 +2,11 @@ package org.planit.osm.physical.network.macroscopic;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
+
+import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 
 /**
  * Track statistics on Osm handler
@@ -22,6 +25,12 @@ public class PlanitOsmHandlerProfiler {
    * track a counter by highway tag of the encountered entities
    */
   private final Map<String, LongAdder> counterByHighwayTag = new HashMap<String, LongAdder>();
+  
+  /** track how many osmways have no explicit speed limit defined */
+  private LongAdder missingSpeedLimitCounter = new LongAdder();
+  
+  /** track how many osmways have no lane defined */
+  private LongAdder missingLaneCounter = new LongAdder();  
     
   /**
    * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
@@ -51,9 +60,27 @@ public class PlanitOsmHandlerProfiler {
     counterByHighwayTag.get(tagType).increment();    
   }
 
-  public void logTagCounters() {
-    counterByHighwayTag.forEach( 
-        (type,counter) -> LOGGER.info(String.format(" [PROCESSED] highway:%s count:%d", type, counter.longValue())));
+  /**
+   * log counters
+   * 
+   * @param network for which information  was tracked
+   */
+  public void logProfileInformation(MacroscopicNetwork network) {
+    for(Entry<String, LongAdder> entry : counterByHighwayTag.entrySet()) {
+      long count = entry.getValue().longValue();
+      LOGGER.info(String.format(" [STATS] processed highway:%s count:%d", entry.getKey(), count));
+    }
+    
+    /* stats on exact number of created PLANit network objects */
+    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",network.nodes.getNumberOfNodes()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links",network.links.getNumberOfLinks()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",network.linkSegments.getNumberOfLinkSegments()));    
+    
+    double numberOfParsedLinks = (double)network.links.getNumberOfLinks();
+    double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
+    double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
+    LOGGER.info(String.format(" [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
+    LOGGER.info(String.format(" [STATS] applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", percentageDefaultLanes, 100-percentageDefaultLanes));
   }
 
   /**
@@ -90,6 +117,20 @@ public class PlanitOsmHandlerProfiler {
       LOGGER.info(String.format("Created %d nodes out of OSM nodes",numberOfNodes));
       moduloLoggingCounterNodes *=2;
     }  
+  }
+
+  /**
+   * increment counter for missing speed limit information on parsed osmways/links
+   */
+  public void incrementMissingSpeedLimitCounter() {
+    missingSpeedLimitCounter.increment();    
+  }
+
+  /**
+   * increment counter for missing lane information on parsed osmways/links
+   */
+  public void incrementMissingLaneCounter() {
+    missingLaneCounter.increment();    
   }
 
 }

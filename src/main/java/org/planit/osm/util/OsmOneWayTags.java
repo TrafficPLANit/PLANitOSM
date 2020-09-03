@@ -6,6 +6,11 @@ package org.planit.osm.util;
  */
 public class OsmOneWayTags {
   
+  /* key */
+  public static final String ONEWAY = "oneway";
+  
+  /* values */
+  
   public static final String ONE_WAY_YES = "yes";
   
   public static final String ONE_WAY_REVERSE_DIRECTION = "-1";

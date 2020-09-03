@@ -33,10 +33,10 @@ public class OsmDirection {
    * @param tags
    */
   public OsmDirection(Map<String, String> tags) {
-    boolean oneWayTagPresent = tags.containsKey(OsmTags.ONEWAY);    
+    boolean oneWayTagPresent = tags.containsKey(OsmOneWayTags.ONEWAY);    
     if(oneWayTagPresent) {
      /* determine type of one way */
-      String value = tags.get(OsmTags.ONEWAY);
+      String value = tags.get(OsmOneWayTags.ONEWAY);
       
       if(!value.equals(OsmOneWayTags.ONE_WAY_NO)) {
         if( value.equals(OsmOneWayTags.ONE_WAY_YES)) {

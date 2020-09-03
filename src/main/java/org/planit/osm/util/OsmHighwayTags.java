@@ -8,6 +8,11 @@ package org.planit.osm.util;
  */
 public class OsmHighwayTags {
   
+    /* key */
+    public static final String HIGHWAY = "highway";
+  
+    /* values */
+    
     public static final String MOTORWAY = "motorway";
 
     public static final String MOTORWAY_LINK = "motorway_link";
@@ -44,7 +49,7 @@ public class OsmHighwayTags {
     
     /* (typically) non-vehicle highway types */
 
-       public static final String FOOTWAY = "footway";
+    public static final String FOOTWAY = "footway";
     
     public static final String BRIDLEWAY = "bridleway";
     

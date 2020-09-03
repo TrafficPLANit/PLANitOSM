@@ -47,6 +47,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    
   /**
    *  Create an OSM default link segment type (no mode properties)
+   *  
    * @param name name of the type
    * @param capacity capacity in pcu/h
    * @throws PlanItException thrown if error

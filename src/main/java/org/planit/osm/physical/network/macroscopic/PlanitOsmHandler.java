@@ -13,6 +13,8 @@ import org.opengis.geometry.coordinate.Position;
 import org.planit.geo.PlanitGeoUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
+import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.util.OsmLaneTags;
 import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.OsmTags;
 import org.planit.osm.util.PlanitOsmUtils;
@@ -86,8 +88,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   private void populateLinkSegmentsSpeed(Link link, OsmDirection direction, Map<String, String> tags) throws PlanItException {
     
-    double speedLimitAbKmh = -1;
-    double speedLimitBaKmh = -1;
+    Double speedLimitAbKmh = null;
+    Double speedLimitBaKmh = null;
     
     if(tags.containsKey(OsmSpeedTags.MAX_SPEED)) {
       /* regular speed limit for all available directions and across all modes */
@@ -119,24 +121,83 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
         speedLimitBaKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
       }
+    }else
+    {
+      /* no speed limit information, revert to defaults */
+      speedLimitAbKmh = settings.getDefaultSpeedLimitByHighwayType(tags.get(OsmHighwayTags.HIGHWAY));
+      speedLimitBaKmh = speedLimitAbKmh;
+      profiler.incrementMissingSpeedLimitCounter();
     }
     
     /* we assume the direction information is consistent with the speed information in the tags */
     
     if(!direction.isOneWay() || direction.isReverseDirection()) {
+      PlanItException.throwIfNull(speedLimitBaKmh, "speed limit not available as expected for link segment");
       ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setMaximumSpeed(speedLimitBaKmh);
     }
     if(!direction.isOneWay() || !direction.isReverseDirection()) {
+      PlanItException.throwIfNull(speedLimitAbKmh, "speed limit not available as expected for link segment");
       ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setMaximumSpeed(speedLimitAbKmh);
     }
     
     /* mode specific speed limits */
     //TODO
-
-      
-       
     
   }
+  
+  /**
+   * parse the number of lanes on the link and link segments
+   * 
+   * @param link for which lanes are specified (and its link segments)
+   * @param direction osm direction information for this link(segments)
+   * @param tags containing lane information
+   * @throws PlanItException 
+   */
+  private void populateLinkSegmentsLanes(Link link, OsmDirection direction, Map<String, String> tags) throws PlanItException {
+    Integer totalLanes = null;
+    Integer lanesAb = null;
+    Integer lanesBa = null;    
+
+    /* collect total and direction specific lane information */
+    if(tags.containsKey(OsmLaneTags.LANES)) {
+      totalLanes = Integer.parseInt(tags.get(OsmLaneTags.LANES));
+    }    
+    if(tags.containsKey(OsmLaneTags.LANES_FORWARD)) {
+      lanesAb = Integer.parseInt(tags.get(OsmLaneTags.LANES_FORWARD));
+    }
+    if(tags.containsKey(OsmLaneTags.LANES_BACKWARD)) {
+      lanesBa = Integer.parseInt(tags.get(OsmLaneTags.LANES_BACKWARD));
+    }
+    
+    if( totalLanes!=null && lanesAb==null && lanesBa==null) {
+        /* in case of one way link, total lanes = directional lanes, enforce this if explicit tag is missing */
+      if(direction.isOneWay()) {
+        lanesBa = direction.isReverseDirection() ? totalLanes : null;
+        lanesAb = direction.isReverseDirection() ? null : totalLanes;
+      }else if(totalLanes%2==0) {
+        /* two directions, with equal number of lanes does not require directional tags, simply split in two */
+        lanesBa = totalLanes/2;
+        lanesAb = lanesBa;
+      } 
+    }
+    
+    /* we assume that only when both are not set something went wrong, otherwise it is assumed it is a one-way link and it is properly configured */
+    if(lanesAb==null && lanesBa==null) {
+      lanesAb = settings.getDefaultDirectionalLanesByHighwayType(tags.get(OsmHighwayTags.HIGHWAY));
+      lanesBa = lanesAb;
+      profiler.incrementMissingLaneCounter();
+    }
+        
+    /* populate link segments */  
+    if(!direction.isOneWay() || direction.isReverseDirection()) {
+      PlanItException.throwIfNull(lanesBa, "number of lanes not available as expected for link segment");
+      ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setNumberOfLanes(lanesBa);
+    }
+    if(!direction.isOneWay() || !direction.isReverseDirection()) {
+      PlanItException.throwIfNull(lanesAb, "number of lanes not available as expected for link segment");
+      ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setNumberOfLanes(lanesAb);
+    }
+  }  
   
   /**
    * Extract the geometry for the passed in way
@@ -276,15 +337,20 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       directionAb = false;
     }
         
+    /* direction 1 */
     directionAb = direction.isReverseDirection() ? !directionAb : directionAb;
     extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentType, directionAb);
     
+    /* direction 2 */
     if(!direction.isOneWay()){
       directionAb = !directionAb;
       extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentType, directionAb);
     }
     
+    /* speed */
     populateLinkSegmentsSpeed(link, direction, tags);
+    /* lanes */
+    populateLinkSegmentsLanes(link, direction, tags);
     
   }  
   
@@ -315,9 +381,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   protected MacroscopicLinkSegmentType getLinkSegmentType(OsmWay osmWay, Map<String, String> tags) {
     MacroscopicLinkSegmentType linkSegmentType = null;
-    if (tags.containsKey(OsmTags.HIGHWAY)) {
+    if (tags.containsKey(OsmHighwayTags.HIGHWAY)) {
       
-      String highWayType = tags.get(OsmTags.HIGHWAY);
+      String highWayType = tags.get(OsmHighwayTags.HIGHWAY);
       profiler.incrementOsmTagCounter(highWayType);            
       linkSegmentType = network.getSegmentTypeByOSMTag(highWayType);            
       if(linkSegmentType != null) {
@@ -425,14 +491,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* process circular ways last */
     osmCircularWays.forEach((k,v) -> handleCircularWay(v));
     
-    /* stats of encountered way entities */
-    profiler.logTagCounters();
-    
-    /* stats on exact numbr of created PLANit network objects */
-    LOGGER.info(String.format(" [CREATED] PLANit %d nodes",network.nodes.getNumberOfNodes()));
-    LOGGER.info(String.format(" [CREATED] PLANit %d links",network.links.getNumberOfLinks()));
-    LOGGER.info(String.format(" [CREATED] PLANit %d links segments ",network.linkSegments.getNumberOfLinkSegments()));
-    
+    /* stats*/
+    profiler.logProfileInformation(network);
+        
     // not used
     LOGGER.info("DONE");
   }
