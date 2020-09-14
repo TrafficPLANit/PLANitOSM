@@ -1,8 +1,10 @@
-package org.planit.osm.reader;
+package org.planit.osm.converter;
 
 import java.io.File;
 import java.util.logging.Logger;
 
+import org.planit.network.converter.NetworkReader;
+import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
@@ -20,19 +22,24 @@ import de.topobyte.osm4j.xml.dynsax.OsmXmlReader;
  * @author markr
  *
  */
-public class PlanitOsmReader {
+public class PlanitOsmReader implements NetworkReader {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmReader.class.getCanonicalName());
   
+  /** osm XML extension string */
   public static final String OSM_XML_EXTENSION = "osm";
   
-  public static final String OSM_PBF_EXTENSION = "pbf";  
+  /** osm PBF extension string */
+  public static final String OSM_PBF_EXTENSION = "pbf";
   
-  /* settings to use */
+  /** input file to use */
+  private final String inputFile;
+  
+  /** settings to use */
   private final PlanitOsmSettings settings;
   
-  /* network to populate */
+  /** network to populate */
   private final PlanitOsmNetwork osmNetwork;
    
   /**
@@ -71,10 +78,13 @@ public class PlanitOsmReader {
   
   /**
    * Constructor 
+   * 
+   * @param inputFile
    * @param osmNetwork network to populate 
    * @param settings for populating the network
    */
-  PlanitOsmReader(PlanitOsmNetwork osmNetwork){
+  PlanitOsmReader(String inputFile, PlanitOsmNetwork osmNetwork){
+    this.inputFile = inputFile;
     this.osmNetwork = osmNetwork; 
     this.settings = new PlanitOsmSettings();
   }
@@ -89,7 +99,7 @@ public class PlanitOsmReader {
    * @return macroscopic network that has been parsed
    * @throws PlanItException thrown if error
    */
-  public PlanitOsmNetwork parse(String inputFile) throws PlanItException {
+  public PlanitOsmNetwork parse() throws PlanItException {
     logInfo(inputFile);
         
     /* reader to parse the actual file */
@@ -113,6 +123,12 @@ public class PlanitOsmReader {
     /* return result */
     return osmNetwork;
   }
+  
+  @Override
+  public MacroscopicNetwork read() {
+    // TODO Auto-generated method stub
+    return null;
+  }  
   
   /**
    * Collect the settings which can be used to configure the reader
