@@ -72,11 +72,11 @@ public class PlanitOsmHandlerProfiler {
     }
     
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",network.nodes.getNumberOfNodes()));
-    LOGGER.info(String.format(" [STATS] created PLANit %d links",network.links.getNumberOfLinks()));
-    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",network.linkSegments.getNumberOfLinkSegments()));    
+    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",network.nodes.size()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links",network.links.size()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",network.linkSegments.size()));    
     
-    double numberOfParsedLinks = (double)network.links.getNumberOfLinks();
+    double numberOfParsedLinks = (double)network.links.size();
     double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
     double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
     LOGGER.info(String.format(" [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
