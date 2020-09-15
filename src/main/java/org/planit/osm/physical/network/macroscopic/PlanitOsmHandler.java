@@ -132,11 +132,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     if(!direction.isOneWay() || direction.isReverseDirection()) {
       PlanItException.throwIfNull(speedLimitBaKmh, "speed limit not available as expected for link segment");
-      ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setMaximumSpeed(speedLimitBaKmh);
+      ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setMaximumSpeedKmH(speedLimitBaKmh);
     }
     if(!direction.isOneWay() || !direction.isReverseDirection()) {
       PlanItException.throwIfNull(speedLimitAbKmh, "speed limit not available as expected for link segment");
-      ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setMaximumSpeed(speedLimitAbKmh);
+      ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setMaximumSpeedKmH(speedLimitAbKmh);
     }
     
     /* mode specific speed limits */
@@ -290,6 +290,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       if(settings.isParseOsmWayGeometry()) {
         link.setGeometry(lineSring);      
       }
+      
+      /* external id */
+      link.setExternalId(osmWay.getId());
     }               
 
     profiler.logLinkStatus(network.links.size());
@@ -314,6 +317,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       LOGGER.warning(String.format(
           "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), osmWay.getId()));
     }
+    
+    /* link segment type */
+    linkSegment.setLinkSegmentType(defaultLinkSegmentType);
         
     profiler.logLinkSegmentStatus(network.linkSegments.size());      
     return linkSegment;
