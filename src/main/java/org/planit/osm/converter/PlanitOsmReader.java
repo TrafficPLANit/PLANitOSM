@@ -88,9 +88,7 @@ public class PlanitOsmReader implements NetworkReader {
     this.osmNetwork = osmNetwork; 
     this.settings = new PlanitOsmSettings();
   }
-  
-
-
+   
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
    * given the configuration options that have been set
@@ -98,10 +96,11 @@ public class PlanitOsmReader implements NetworkReader {
    * @param inputFile to parse
    * @return macroscopic network that has been parsed
    * @throws PlanItException thrown if error
-   */
-  public PlanitOsmNetwork parse() throws PlanItException {
+   */  
+  @Override
+  public MacroscopicNetwork read() throws PlanItException {
     logInfo(inputFile);
-        
+    
     /* reader to parse the actual file */
     OsmReader osmReader = createOsm4jReader(inputFile);
     
@@ -122,12 +121,6 @@ public class PlanitOsmReader implements NetworkReader {
     
     /* return result */
     return osmNetwork;
-  }
-  
-  @Override
-  public MacroscopicNetwork read() {
-    // TODO Auto-generated method stub
-    return null;
   }  
   
   /**

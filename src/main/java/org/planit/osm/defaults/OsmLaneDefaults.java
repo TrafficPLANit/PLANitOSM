@@ -30,6 +30,9 @@ public class OsmLaneDefaults implements Cloneable {
   
   /** store all defaults per country by ISO2 code **/
   protected static Map<String, Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>> speedLimitDefaultsByCountry = new HashMap<String,Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>>();
+  
+  /** lanes per direction if not configured */
+  protected int lanesPerDirectionIfUnspecified  = DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
       
   /* initialise */
   static {    
@@ -55,10 +58,14 @@ public class OsmLaneDefaults implements Cloneable {
     defaultLanesPerDirection.put(OsmHighwayTags.PRIMARY_LINK, 1);
     /* 1 lane for even smaller roads, while the specification also lists 1 lane in total, PLANit has no use for this, so it is ignored */
     defaultLanesPerDirection.put(OsmHighwayTags.UNCLASSIFIED, 1);
+    defaultLanesPerDirection.put(OsmHighwayTags.PEDESTRIAN, 1);
     defaultLanesPerDirection.put(OsmHighwayTags.SERVICE, 1);
     defaultLanesPerDirection.put(OsmHighwayTags.TRACK, 1);
     defaultLanesPerDirection.put(OsmHighwayTags.PATH, 1);
   }
+  
+  /** in case no mapping between highway type and number of lanes is present, use this */
+  public static final int DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED = 1;
   
   /**
    * Constructor
@@ -85,13 +92,20 @@ public class OsmLaneDefaults implements Cloneable {
     return lanesPerDirection.put(type,defaultNumberOfLanesPerDirection);
   }
 
-  /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total)
+  /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).
+   * In case no number of lanes is specified for the type, we revert to the missing default
    * 
    * @param type highway type value
    * @return number of lanes for this type (if any), otherwise null is returned
    */
   public Integer getDefaultDirectionalLanesByHighwayType(String type) {
-    return lanesPerDirection.get(type);
+    if(lanesPerDirection.containsKey(type)) {
+      return lanesPerDirection.get(type); 
+    }else {
+      LOGGER.warning(
+          String.format("highway type has no number of default lanes associated with it, reverting to missing default: %d",DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED));
+      return DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
+    }
   }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, in total (both directions)

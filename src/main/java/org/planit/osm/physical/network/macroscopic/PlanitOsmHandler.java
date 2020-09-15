@@ -312,7 +312,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       linkSegment = network.linkSegments.createAndRegisterNew(link, directionAb, true /*register on nodes and link*/);      
     }else{
       LOGGER.warning(String.format(
-          "Already exists link segment (id:%d) between start and end node of OSM way (%d), ignored entity",linkSegment.getId(),osmWay.getId()));
+          "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), osmWay.getId()));
     }
         
     profiler.logLinkSegmentStatus(network.linkSegments.size());      
@@ -459,7 +459,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       
       if(PlanitOsmUtils.isCircularWay(osmWay)) {
         /* postpone creation of link(s) for roundabouts */
-        /* Note: in OSM rondabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */
+        /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */
         osmCircularWays.put(osmWay.getId(), osmWay);        
       }else
       {
@@ -475,7 +475,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         }   
       }           
     } catch (PlanItException e) {
-      LOGGER.severe(String.format("Error during parsing of OSM way (id:%d)", osmWay.getId()));
+      if(e.getCause() != null && e.getCause() instanceof PlanItException) {
+        LOGGER.severe(e.getCause().getMessage());
+      }
+      LOGGER.severe(String.format("Error during parsing of OSM way (id:%d)", osmWay.getId())); 
     }         
   }
 
