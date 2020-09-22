@@ -1,5 +1,8 @@
 package org.planit.osm.util;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * OSM "highway" values, e.g. highway=<option>
  * 
@@ -7,6 +10,47 @@ package org.planit.osm.util;
  *
  */
 public class OsmHighwayTags {
+  
+    /** all currently available osm highway tags */
+    private static final Set<String> highwayTags = new HashSet<String>();
+    
+    /**
+     * populate the available highway tags
+     */
+    private static void populateHighwayTags() {
+      highwayTags.add(MOTORWAY);
+      highwayTags.add(MOTORWAY_LINK);
+      highwayTags.add(TRUNK);
+      highwayTags.add(TRUNK_LINK);
+      highwayTags.add(PRIMARY);
+      highwayTags.add(PRIMARY_LINK);
+      highwayTags.add(SECONDARY);
+      highwayTags.add(SECONDARY_LINK);
+      highwayTags.add(TERTIARY);
+      highwayTags.add(TERTIARY_LINK);
+      highwayTags.add(UNCLASSIFIED);
+      highwayTags.add(RESIDENTIAL);
+      highwayTags.add(LIVING_STREET);
+      highwayTags.add(PEDESTRIAN);
+      highwayTags.add(TRACK);
+      highwayTags.add(ROAD);
+      highwayTags.add(SERVICE);
+      highwayTags.add(FOOTWAY);
+      highwayTags.add(BRIDLEWAY);
+      highwayTags.add(STEPS);
+      highwayTags.add(CORRIDOR);
+      highwayTags.add(CYCLEWAY);
+      highwayTags.add(PATH);
+      highwayTags.add(ELEVATOR);
+      highwayTags.add(PLATFORM);
+      highwayTags.add(PROPOSED);
+      highwayTags.add(CONSTRUCTION);
+      highwayTags.add(TURNING_CIRCLE);
+    }
+    
+    static {
+      populateHighwayTags();      
+    }
   
     /* key */
     public static final String HIGHWAY = "highway";
@@ -72,5 +116,13 @@ public class OsmHighwayTags {
     public static final String CONSTRUCTION = "construction";
     
     public static final String TURNING_CIRCLE = "turning_circle";
+    
+    /** verify if passed in tag is indeed a highway tag
+     * @param highwayTag to verify
+     * @return true when valid tag, otherwise false
+     */
+    public static boolean isHighwayTag(String highwayTag) {
+      return highwayTags.contains(highwayTag);
+    }
 
 }

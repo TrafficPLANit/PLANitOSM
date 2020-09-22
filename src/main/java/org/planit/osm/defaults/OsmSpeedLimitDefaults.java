@@ -32,7 +32,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
     this.speedLimitDefaults =  new HashMap<String,Double>(defaults);
   }
   
-  /** set a speed dfault for a given highway=type
+  /** set a speed default for a given highway=type
    * 
    * @param type of road to set speed default for
    * @param speedLimit the physical speed limit (km/h)

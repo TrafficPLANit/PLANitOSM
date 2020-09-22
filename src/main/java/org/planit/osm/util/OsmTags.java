@@ -17,13 +17,7 @@ public class OsmTags {
     /* tags related to links of a certain type */
 
     public static final String MAXSPEED = "maxspeed";
-    
-    /* bicycle specific */
-
-    public static final String BICYCLE = "bicycle";    
-
-    public final static String ONEWAYBICYCLE = "oneway:bicycle";
-    
+         
     /* other keys */
     
     public static final String DIRECTION = "direction";
