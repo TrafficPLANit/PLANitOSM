@@ -10,7 +10,6 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.FileUtils;
-
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
 import de.topobyte.osm4j.pbf.seq.PbfReader;
@@ -26,13 +25,7 @@ public class PlanitOsmReader implements NetworkReader {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmReader.class.getCanonicalName());
-  
-  /** osm XML extension string */
-  public static final String OSM_XML_EXTENSION = "osm";
-  
-  /** osm PBF extension string */
-  public static final String OSM_PBF_EXTENSION = "pbf";
-  
+    
   /** input file to use */
   private final String inputFile;
   
@@ -41,7 +34,7 @@ public class PlanitOsmReader implements NetworkReader {
   
   /** network to populate */
   private final PlanitOsmNetwork osmNetwork;
-   
+     
   /**
    * Log some information about this reader's configuration
    * @param inputFile 
@@ -86,8 +79,14 @@ public class PlanitOsmReader implements NetworkReader {
   PlanitOsmReader(String inputFile, PlanitOsmNetwork osmNetwork){
     this.inputFile = inputFile;
     this.osmNetwork = osmNetwork; 
-    this.settings = new PlanitOsmSettings();
+    this.settings = new PlanitOsmSettings(osmNetwork.modes);
   }
+  
+  /** osm XML extension string */
+  public static final String OSM_XML_EXTENSION = "osm";
+  
+  /** osm PBF extension string */
+  public static final String OSM_PBF_EXTENSION = "pbf";  
    
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network

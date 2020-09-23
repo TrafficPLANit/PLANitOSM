@@ -4,13 +4,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Most OSM mode tags. Not included: water modes or very specialised modes. Based on list found on
+ * Most OSM road based mode tags. Not included: water modes or very specialised modes. Based on list found on
  * https://wiki.openstreetmap.org/wiki/Key:access  
  * 
  * @author markr
  *
  */
-public class OsmModeTags {
+public class OsmRoadModeTags {
   
   /** all currently available mode tags */
   private static final Set<String> modeTags = new HashSet<String>();
@@ -35,7 +35,6 @@ public class OsmModeTags {
     modeTags.add(COACH);
     modeTags.add(AGRICULTURAL);
     modeTags.add(GOLF_CART);
-    modeTags.add(AGRICULTURAL);
     modeTags.add(ATV);
     modeTags.add(GOODS);
     modeTags.add(HEAVY_GOODS);
@@ -44,7 +43,6 @@ public class OsmModeTags {
     modeTags.add(TAXI);
     modeTags.add(SHARE_TAXI);
     modeTags.add(MINI_BUS);
-    modeTags.add(TRAIN);
   }
   
   static {
@@ -130,15 +128,11 @@ public class OsmModeTags {
   /** smaller bus for public transport */
   public static final String MINI_BUS = "minibus";
   
-  /** train for public transport */
-  public static final String TRAIN = "train";
-
-
   /** verify if passed in tag is indeed a mode tag
    * @param modeTag to verify
    * @return true when valid tag, otherwise false
    */
-  public static boolean isModeTag(String modeTag) {
+  public static boolean isRoadModeTag(String modeTag) {
     return modeTags.contains(modeTag);
   }
   

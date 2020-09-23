@@ -34,246 +34,12 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetwork.class.getCanonicalName());
   
-  /**
-   *  Create an OSM default link segment type (no mode properties)
-   * @param name name of the type
-   * @param capacityPcuPerhour capacity in pcu/h
-   * @param maxDensityPcuPerKm max density
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String name, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
-    return this.createAndRegisterNewMacroscopicLinkSegmentType(name, capacityPcuPerhour, maxDensityPcuPerKm, name);
-  }  
-   
-  /**
-   *  Create an OSM default link segment type (no mode properties)
-   *  
-   * @param name name of the type
-   * @param capacity capacity in pcu/h
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createDefaultLinkSegmentType(String name, double capacityPcuPerhour) throws PlanItException {
-    return createOsmLinkSegmentType(name, capacityPcuPerhour, PlanitOsmConstants.DEFAULT_MAX_DENSITY_LANE);
-  }
-  
-  
-  /**
-   * Create motorway type with defaults
-   * 
-   * restricted access major divided highway, normally with 2 or more running lanes 
-   * plus emergency hard shoulder. Equivalent to the Freeway, Autobahn, etc.. 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createMotorway() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.MOTORWAY, PlanitOsmConstants.MOTORWAY_CAPACITY);    
-  }  
-  
-  /**
-   * Create motorway link type with defaults
-   * 
-   * The link roads (sliproads/ramps) leading to/from a motorway from/to a motorway or lower class highway.
-   *  Normally with the same motorway restrictions. 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createMotorwayLink() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.MOTORWAY_LINK, PlanitOsmConstants.MOTORWAY_LINK_CAPACITY);    
-  }    
-  
-  /**
-   * Create trunk type with defaults
-   * 
-   * The most important roads in a country's system that aren't motorways. 
-   * (Need not necessarily be a divided highway.) 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createTrunk() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.TRUNK, PlanitOsmConstants.TRUNK_CAPACITY);    
-  }  
-  
-  /**
-   * Create trunk link type with defaults
-   * 
-   * restricted access major divided highway, normally with 2 or more running lanes 
-   * plus emergency hard shoulder. Equivalent to the Freeway, Autobahn, etc.. 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createTrunkLink() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.TRUNK_LINK, PlanitOsmConstants.TRUNK_LINK_CAPACITY);    
-  }   
-  
-  /**
-   * Create primary type with defaults
-   * 
-   * The next most important roads in a country's system (after trunk). (Often link larger towns.)  
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createPrimary() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.PRIMARY, PlanitOsmConstants.PRIMARY_CAPACITY);    
-  }  
-  
-  /**
-   * Create primary link type with defaults
-   * 
-   * The link roads (sliproads/ramps) leading to/from a primary road from/to a primary road or 
-   * lower class highway. 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createPrimaryLink() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.PRIMARY_LINK, PlanitOsmConstants.PRIMARY_LINK_CAPACITY);    
-  }   
-  
-  /**
-   * Create secondary type with defaults
-   * 
-   * The link roads (sliproads/ramps) leading to/from a primary road from/to a primary road or 
-   * lower class highway.
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createSecondary() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.SECONDARY, PlanitOsmConstants.SECONDARY_CAPACITY);    
-  }  
-  
-  /**
-   * Create secondary link type with defaults
-   * 
-   * The link roads (sliproads/ramps) leading to/from a secondary road from/to a secondary road or lower class highway. 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createSecondaryLink() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.SECONDARY_LINK, PlanitOsmConstants.SECONDARY_LINK_CAPACITY);    
-  }   
-  
-  /**
-   * Create tertiary type with defaults
-   * 
-   * The next most important roads in a country's system (after secondary). (Often link smaller towns and villages) 
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createTertiary() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.TERTIARY, PlanitOsmConstants.TERTIARY_CAPACITY);    
-  }  
-  
-  /**
-   * Create tertiary link type with defaults
-   * 
-   * The link roads (sliproads/ramps) leading to/from a tertiary road from/to a tertiary road or lower class highway.  
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createTertiaryLink() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.TERTIARY_LINK, PlanitOsmConstants.TERTIARY_LINK_CAPACITY);    
-  }   
-  
-  /**
-   * Create unclassified type with defaults
-   * 
-   * The least important through roads in a country's system – i.e. minor roads of a lower classification than tertiary, but which serve a purpose other than access to properties. (Often link villages and hamlets.)   
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createUnclassified() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.UNCLASSIFIED, PlanitOsmConstants.UNCLASSIFIED_LINK_CAPACITY);    
-  }   
-  
-  /**
-   * Create residential type with defaults
-   * 
-   * Roads which serve as an access to housing, without function of connecting settlements. Often lined with housing.    
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createResidential() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.RESIDENTIAL, PlanitOsmConstants.RESIDENTIAL_LINK_CAPACITY);    
-  }    
-  
-  /**
-   * Create living street type with defaults
-   * 
-   * Roads which serve as an access to housing, without function of connecting settlements. Often lined with housing.    
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createLivingStreet() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.LIVING_STREET, PlanitOsmConstants.LIVING_STREET_LINK_CAPACITY);    
-  }    
-  
-  /**
-   * Create service type with defaults
-   * 
-   * For access roads to, or within an industrial estate, camp site, business park, car park, alleys, etc.     
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createService() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.SERVICE, PlanitOsmConstants.SERVICE_CAPACITY);    
-  }      
-  
-  /**
-   * Create pedestrian type with defaults
-   * 
-   * For roads used mainly/exclusively for pedestrians in shopping and some residential areas which may allow access by motorised vehicles only for very limited periods of the day.     
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createPedestrian() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.PEDESTRIAN, PlanitOsmConstants.PEDESTRIAN_CAPACITY);    
-  }   
-  
-  /**
-   * Create track type with defaults
-   * 
-   * Roads for mostly agricultural or forestry uses.    
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createTrack() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.TRACK, PlanitOsmConstants.TRACK_CAPACITY);    
-  }   
-  
-  /**
-   * Create road type with defaults
-   * 
-   * A road/way/street/motorway/etc. of unknown type. It can stand for anything ranging from a footpath to a 
-   * motorway. This tag should only be used temporarily until the road/way/etc. has been properly surveyed.     
-   * 
-   * @return created type
-   * @throws PlanItException thrown if error
-   */
-  protected MacroscopicLinkSegmentType createRoad() throws PlanItException {
-    return createDefaultLinkSegmentType(OsmHighwayTags.ROAD, PlanitOsmConstants.ROAD_CAPACITY);    
-  }
-  
   /** Create a link segment type on the network based on the passed in OSM highway sub type tage
    * @param activatedType osm highway subtag
    * @return created link segment type if available
    * @throws PlanItException thrown if error
    */
-  protected MacroscopicLinkSegmentType createLinkSegmentTypeBasedOnOSMType(String activatedType) throws PlanItException {
+  protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String activatedType) throws PlanItException {
     /* create link segment type for the OSM type */
     switch (activatedType) {
     case OsmHighwayTags.MOTORWAY:
@@ -314,8 +80,242 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       throw new PlanItException(
           String.format("OSM type is supported but factory method is missing, unexpected for type highway:%s",activatedType));
     }   
+  }     
+  
+  /**
+   *  Create an OSM default link segment type (no mode properties)
+   * @param name name of the type
+   * @param capacityPcuPerhour capacity in pcu/h
+   * @param maxDensityPcuPerKm max density
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String name, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
+    return this.createAndRegisterNewMacroscopicLinkSegmentType(name, capacityPcuPerhour, maxDensityPcuPerKm, name);
+  }  
+   
+  /**
+   *  Create an OSM default link segment type (no mode properties)
+   *  
+   * @param name name of the type
+   * @param capacity capacity in pcu/h
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createDefaultOsmLinkSegmentType(String name, double capacityPcuPerhour) throws PlanItException {
+    return createOsmLinkSegmentType(name, capacityPcuPerhour, PlanitOsmConstants.DEFAULT_MAX_DENSITY_LANE);
+  }
+  
+  
+  /**
+   * Create motorway type with defaults
+   * 
+   * restricted access major divided highway, normally with 2 or more running lanes 
+   * plus emergency hard shoulder. Equivalent to the Freeway, Autobahn, etc.. 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createMotorway() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.MOTORWAY, PlanitOsmConstants.MOTORWAY_CAPACITY);    
+  }  
+  
+  /**
+   * Create motorway link type with defaults
+   * 
+   * The link roads (sliproads/ramps) leading to/from a motorway from/to a motorway or lower class highway.
+   *  Normally with the same motorway restrictions. 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createMotorwayLink() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.MOTORWAY_LINK, PlanitOsmConstants.MOTORWAY_LINK_CAPACITY);    
+  }    
+  
+  /**
+   * Create trunk type with defaults
+   * 
+   * The most important roads in a country's system that aren't motorways. 
+   * (Need not necessarily be a divided highway.) 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createTrunk() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRUNK, PlanitOsmConstants.TRUNK_CAPACITY);    
+  }  
+  
+  /**
+   * Create trunk link type with defaults
+   * 
+   * restricted access major divided highway, normally with 2 or more running lanes 
+   * plus emergency hard shoulder. Equivalent to the Freeway, Autobahn, etc.. 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createTrunkLink() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRUNK_LINK, PlanitOsmConstants.TRUNK_LINK_CAPACITY);    
   }   
   
+  /**
+   * Create primary type with defaults
+   * 
+   * The next most important roads in a country's system (after trunk). (Often link larger towns.)  
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createPrimary() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PRIMARY, PlanitOsmConstants.PRIMARY_CAPACITY);    
+  }  
+  
+  /**
+   * Create primary link type with defaults
+   * 
+   * The link roads (sliproads/ramps) leading to/from a primary road from/to a primary road or 
+   * lower class highway. 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createPrimaryLink() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PRIMARY_LINK, PlanitOsmConstants.PRIMARY_LINK_CAPACITY);    
+  }   
+  
+  /**
+   * Create secondary type with defaults
+   * 
+   * The link roads (sliproads/ramps) leading to/from a primary road from/to a primary road or 
+   * lower class highway.
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createSecondary() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SECONDARY, PlanitOsmConstants.SECONDARY_CAPACITY);    
+  }  
+  
+  /**
+   * Create secondary link type with defaults
+   * 
+   * The link roads (sliproads/ramps) leading to/from a secondary road from/to a secondary road or lower class highway. 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createSecondaryLink() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SECONDARY_LINK, PlanitOsmConstants.SECONDARY_LINK_CAPACITY);    
+  }   
+  
+  /**
+   * Create tertiary type with defaults
+   * 
+   * The next most important roads in a country's system (after secondary). (Often link smaller towns and villages) 
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createTertiary() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TERTIARY, PlanitOsmConstants.TERTIARY_CAPACITY);    
+  }  
+  
+  /**
+   * Create tertiary link type with defaults
+   * 
+   * The link roads (sliproads/ramps) leading to/from a tertiary road from/to a tertiary road or lower class highway.  
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createTertiaryLink() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TERTIARY_LINK, PlanitOsmConstants.TERTIARY_LINK_CAPACITY);    
+  }   
+  
+  /**
+   * Create unclassified type with defaults
+   * 
+   * The least important through roads in a country's system – i.e. minor roads of a lower classification than tertiary, but which serve a purpose other than access to properties. (Often link villages and hamlets.)   
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createUnclassified() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.UNCLASSIFIED, PlanitOsmConstants.UNCLASSIFIED_LINK_CAPACITY);    
+  }   
+  
+  /**
+   * Create residential type with defaults
+   * 
+   * Roads which serve as an access to housing, without function of connecting settlements. Often lined with housing.    
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createResidential() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.RESIDENTIAL, PlanitOsmConstants.RESIDENTIAL_LINK_CAPACITY);    
+  }    
+  
+  /**
+   * Create living street type with defaults
+   * 
+   * Roads which serve as an access to housing, without function of connecting settlements. Often lined with housing.    
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createLivingStreet() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.LIVING_STREET, PlanitOsmConstants.LIVING_STREET_LINK_CAPACITY);    
+  }    
+  
+  /**
+   * Create service type with defaults
+   * 
+   * For access roads to, or within an industrial estate, camp site, business park, car park, alleys, etc.     
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createService() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SERVICE, PlanitOsmConstants.SERVICE_CAPACITY);    
+  }      
+  
+  /**
+   * Create pedestrian type with defaults
+   * 
+   * For roads used mainly/exclusively for pedestrians in shopping and some residential areas which may allow access by motorised vehicles only for very limited periods of the day.     
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createPedestrian() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PEDESTRIAN, PlanitOsmConstants.PEDESTRIAN_CAPACITY);    
+  }   
+  
+  /**
+   * Create track type with defaults
+   * 
+   * Roads for mostly agricultural or forestry uses.    
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createTrack() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRACK, PlanitOsmConstants.TRACK_CAPACITY);    
+  }   
+  
+  /**
+   * Create road type with defaults
+   * 
+   * A road/way/street/motorway/etc. of unknown type. It can stand for anything ranging from a footpath to a 
+   * motorway. This tag should only be used temporarily until the road/way/etc. has been properly surveyed.     
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createRoad() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.ROAD, PlanitOsmConstants.ROAD_CAPACITY);    
+  }
+   
   /**
    * the list of types for which we have default link segment type mapping available out of the box
    * 
@@ -359,13 +359,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   void createOSMCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
     for(String activatedType : settings.supportedOSMLinkSegmentTypes) {
-      String osmTypeToUse = activatedType;
+      String osmHighwayTypeToUse = activatedType;      
       
       MacroscopicLinkSegmentType linkSegmentType = null;  
       boolean isOverwrite = false;
       boolean isBackupDefault = false;
       if(settings.isOSMHighwayTypeDefaultOverwritten(activatedType)) {
-        /* type is overwritten, so use overwrtten data instead of defaults */
+        /* type is overwritten, so use overwritten data instead of defaults */
         final Pair<Double,Double> capacityDensityPair = settings.getOSMHighwayTypeOverwrite(activatedType);
         linkSegmentType = createOsmLinkSegmentType(activatedType, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
         isOverwrite = true;
@@ -382,12 +382,12 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           }
           
           /* ...use replacement type instead of activate type to still be able to process OSM ways of this type */
-          osmTypeToUse = settings.getOSMHighwayTypeWhenUnsupported();
+          osmHighwayTypeToUse = settings.getOSMHighwayTypeWhenUnsupported();
           isBackupDefault = true;
           LOGGER.warning(String.format(
-              "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", activatedType, osmTypeToUse));        
+              "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", activatedType, osmHighwayTypeToUse));        
         }
-        linkSegmentType = createLinkSegmentTypeBasedOnOSMType(osmTypeToUse);        
+        linkSegmentType = createOsmLinkSegmentType(osmHighwayTypeToUse);        
       }                
       
       /* create, register, and also store by osm tag */
