@@ -1,6 +1,5 @@
 package org.planit.osm.physical.network.macroscopic;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,6 +11,7 @@ import org.planit.geo.PlanitGeoUtils;
 import org.planit.osm.defaults.OsmLaneDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
+import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmRailModeTags;
@@ -41,7 +41,7 @@ public class PlanitOsmSettings {
   protected final Set<String> supportedOSMLinkSegmentTypes = new HashSet<String>();
   
   /** the default speed limits used in case no explicit information is available on the osmway's tags */
-  protected final OsmSpeedLimitDefaultsByCountry speedLimitConfiguration;
+  protected final OsmSpeedLimitDefaults speedLimitConfiguration;
   
   /** the default mode access configuration used in case no explicit access information is available on the osmway's tags */
   protected final OsmModeAccessDefaults modeAccessConfiguration;  
@@ -285,7 +285,7 @@ public class PlanitOsmSettings {
    * @param planitModes to populate based on (default) mapping
    */
   public PlanitOsmSettings(String countryName, Modes planitModes) {
-    this.speedLimitConfiguration = new OsmSpeedLimitDefaultsByCountry(countryName); <- ALSO MAKE FACTORY CONTINUE --> THEN PROCEED WITH CREATING MODE PROPERTIES
+    this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
     this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create(countryName);
     initialise(planitModes);    
   }    
@@ -298,7 +298,7 @@ public class PlanitOsmSettings {
    * 
    */  
   public PlanitOsmSettings(Modes planitModes) {
-    this.speedLimitConfiguration = new OsmSpeedLimitDefaultsByCountry();
+    this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create();
     this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create();
     initialise(planitModes);
   }
@@ -467,7 +467,7 @@ public class PlanitOsmSettings {
   /** collect the current configuration setup for applying speed limits in case the maxspeed tag is not available on the parsed osmway
    * @return speed limit configuration
    */
-  public OsmSpeedLimitDefaultsByCountry getSpeedLimitConfiguration() {
+  public OsmSpeedLimitDefaults getSpeedLimitConfiguration() {
     return this.speedLimitConfiguration;
   }
   
@@ -476,7 +476,7 @@ public class PlanitOsmSettings {
    * 
    * @return mode access configuration
    */
-  public OsmModeAccessDefaultsByCountry getModeAccessConfiguration() {
+  public OsmModeAccessDefaults getModeAccessConfiguration() {
     return this.modeAccessConfiguration;
   }  
   
@@ -494,7 +494,7 @@ public class PlanitOsmSettings {
    * @throws PlanItException thrown if error
    */
   public double getDefaultSpeedLimitByHighwayType(String type) throws PlanItException {
-    return isSpeedLimitDefaultsBasedOnUrbanArea() ? speedLimitConfiguration.getInsideSpeedLimitByHighwayType(type) : speedLimitConfiguration.getOutsideSpeedLimitByHighwayType(type);  
+    return speedLimitConfiguration.getSpeedLimit(type, !isSpeedLimitDefaultsBasedOnUrbanArea());  
   }
 
   /** Collect the number of lanes for a given highway tag value for either direction (not total), e.g. highway=type, based on the defaults provided
