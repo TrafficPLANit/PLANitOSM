@@ -1,5 +1,6 @@
 package org.planit.osm.util;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,5 +55,13 @@ public class OsmRailModeTags {
   public static boolean isRailModeTag(String modeTag) {
     return modeTags.contains(modeTag);
   }
-  
+
+  /**
+   * provide a copy of all supported rail mode tags
+   * @return all supported road modes
+   */
+  public static Collection<String> getSupportedRailModeTags() {
+    return new HashSet<String>(modeTags);
+  }
+    
 }

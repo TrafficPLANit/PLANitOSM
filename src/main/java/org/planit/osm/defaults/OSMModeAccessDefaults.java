@@ -1,15 +1,19 @@
 package org.planit.osm.defaults;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.util.OsmRailModeTags;
 import org.planit.osm.util.OsmRoadModeCategoryTags;
 import org.planit.osm.util.OsmRoadModeTags;
+import org.planit.utils.mode.Mode;
 
 /**
  * Class representing the default mode access restrictions/allowance for modes for a given
@@ -220,5 +224,18 @@ public class OsmModeAccessDefaults implements Cloneable {
       LOGGER.warning(String.format("unknown highway tag %s when checking if modes %s is allowed", highwayType, osmMode));
     } 
     return isAllowed;
+  }
+
+  /**
+   * Collect all Osm modes that are allowed for the given osmHighway type as configured by the user
+   * 
+   * @param osmHighwayType to use
+   * @return allowed OsmModes
+   */
+  public Collection<String> collectAllowedModes(String osmHighwayType) {
+    Set<String> allowedRoadModes =  OsmRoadModeTags.getSupportedRoadModeTags().stream().filter( roadModeTag -> this.isAllowed(osmHighwayType, roadModeTag)).collect(Collectors.toSet());
+    Set<String> allowedRailModes =  OsmRailModeTags.getSupportedRailModeTags().stream().filter( railModeTag -> this.isAllowed(osmHighwayType, railModeTag)).collect(Collectors.toSet());
+    allowedRoadModes.addAll(allowedRailModes);
+    return allowedRoadModes;
   }
 }

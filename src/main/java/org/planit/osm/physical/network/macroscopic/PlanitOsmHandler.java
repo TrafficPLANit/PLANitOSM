@@ -132,11 +132,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     if(!direction.isOneWay() || direction.isReverseDirection()) {
       PlanItException.throwIfNull(speedLimitBaKmh, "speed limit not available as expected for link segment");
-      ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setMaximumSpeedKmH(speedLimitBaKmh);
+      ((MacroscopicLinkSegment) link.getEdgeSegmentBa()).setPhysicalSpeedLimitKmH(speedLimitBaKmh);
     }
     if(!direction.isOneWay() || !direction.isReverseDirection()) {
       PlanItException.throwIfNull(speedLimitAbKmh, "speed limit not available as expected for link segment");
-      ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setMaximumSpeedKmH(speedLimitAbKmh);
+      ((MacroscopicLinkSegment) link.getEdgeSegmentAb()).setPhysicalSpeedLimitKmH(speedLimitAbKmh);
     }
     
     /* mode specific speed limits */

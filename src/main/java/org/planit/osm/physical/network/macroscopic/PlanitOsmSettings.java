@@ -1,5 +1,6 @@
 package org.planit.osm.physical.network.macroscopic;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -513,7 +514,7 @@ public class PlanitOsmSettings {
    * @param osmRoadMode to set
    * @param planitMode to map it to
    */
-  public void setOsmRoadModes2PlanitModeMapping(String osmRoadMode, Mode planitMode) {
+  public void setOsmRoadMode2PlanitModeMapping(String osmRoadMode, Mode planitMode) {
     if(!OsmRoadModeTags.isRoadModeTag(osmRoadMode)) {
       LOGGER.warning(String.format("osm road mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRoadMode));
       return;
@@ -530,7 +531,7 @@ public class PlanitOsmSettings {
    * 
    * @param osmRoadMode to remove
    */
-  public void removeOsmRoadModes2PlanitModeMapping(String osmRoadMode) {
+  public void removeOsmRoadModesPlanitModeMapping(String osmRoadMode) {
     if(!OsmRoadModeTags.isRoadModeTag(osmRoadMode)) {
       LOGGER.warning(String.format("osm road mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRoadMode));
       return;
@@ -543,7 +544,7 @@ public class PlanitOsmSettings {
    * @param osmRoadMode to set
    * @param planitMode to map it to
    */
-  public void setOsmRailModes2PlanitModeMapping(String osmRailMode, Mode planitMode) {
+  public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
     if(!OsmRailModeTags.isRailModeTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
@@ -560,12 +561,44 @@ public class PlanitOsmSettings {
    * 
    * @param osmRoadMode to remove
    */
-  public void removeOsmRailModes2PlanitModeMapping(String osmRailMode) {
+  public void removeOsmRailMode2PlanitModeMapping(String osmRailMode) {
     if(!OsmRailModeTags.isRailModeTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
     osmRailMode2PlanitModeMap.remove(osmRailMode);
+  }
+  
+  /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
+   * 
+   * @param osmMode to collect mapped mode for (if any)
+   * @return mapped PLANit mode, if not available null is returned
+   */
+  public Mode getMappedPlanitMode(final String osmMode) {
+    if(OsmRoadModeTags.isRoadModeTag(osmMode)) {
+      return this.osmRoadMode2PlanitModeMap.get(osmMode);
+    }else if(OsmRailModeTags.isRailModeTag(osmMode)) {
+      return this.osmRailMode2PlanitModeMap.get(osmMode);
+    }else {
+      LOGGER.warning(String.format("unknown osmMode tag %s found when collecting mapped PLANit modes, ignored",osmMode));
+    }
+    return null;
+  }  
+
+  /** convenience method that provides an overview of all PLANit modes that are currently mapped by any of the passed in OsmModes
+   * 
+   * @param osmModes to verify
+   * @return mapped PLANit modes
+   */
+  public Collection<Mode> collectMappedPlanitModes(Collection<String> osmModes) {
+    HashSet<Mode> mappedPlaniotModes = new HashSet<Mode>();
+    for (String osmMode : osmModes) {
+      Mode mappedMode = getMappedPlanitMode(osmMode);
+      if(mappedMode != null) {
+        mappedPlaniotModes.add(mappedMode);
+      }
+    }
+    return mappedPlaniotModes;
   }
  
 

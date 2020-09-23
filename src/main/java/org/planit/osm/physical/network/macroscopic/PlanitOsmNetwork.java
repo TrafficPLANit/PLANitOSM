@@ -1,5 +1,6 @@
 package org.planit.osm.physical.network.macroscopic;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -7,11 +8,13 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.osm.defaults.OsmModeAccessDefaults;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.PlanitOsmConstants;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
 import org.planit.utils.misc.Pair;
+import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 
 /**
@@ -359,7 +362,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   void createOSMCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
     for(String activatedType : settings.supportedOSMLinkSegmentTypes) {
-      String osmHighwayTypeToUse = activatedType;      
+      String osmHighwayTypeToUse = activatedType;
+      
+      /* find allowed OSM modes for this highway type, construct the mapped PLANit modes and properties for them */
+      OsmModeAccessDefaults modeAccessconfiguration = settings.getModeAccessConfiguration();
+      Collection<String> allowedOsmModes =  modeAccessconfiguration.collectAllowedModes(osmHighwayTypeToUse);
+      Collection<Mode> allowedPlanitModes = settings.collectMappedPlanitModes(allowedOsmModes);
+      CONTINUE TO CREAT THE MODE PROPERTIES
       
       MacroscopicLinkSegmentType linkSegmentType = null;  
       boolean isOverwrite = false;
