@@ -50,7 +50,7 @@ public class BasicOSMReaderTest {
       PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_OSM);
       
       /* test out excluding a particular type highway:road from parsing */
-      osmReader.getSettings().excludeOsmWayType(OsmHighwayTags.ROAD);
+      osmReader.getSettings().excludeOsmWayType(OsmHighwayTags.HIGHWAY, OsmHighwayTags.ROAD);
       
       /* test out setting different defaults for the highway:primary type*/
       osmReader.getSettings().overwriteOsmHighwayTypeDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);

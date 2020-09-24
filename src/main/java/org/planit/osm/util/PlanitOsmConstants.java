@@ -65,6 +65,9 @@ public class PlanitOsmConstants {
   public static final double TRACK_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 
   /** default for this type in pcu/h */
-  public static final double ROAD_CAPACITY = 0;  
+  public static final double ROAD_CAPACITY = 0;
+
+  /** default capacity in pcu/h for railways, not that this is generally not used so merely here for consistency */
+  public static final double RAILWAY_CAPACITY = 10000;  
     
 }

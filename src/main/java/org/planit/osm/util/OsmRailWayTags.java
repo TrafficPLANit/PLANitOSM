@@ -53,13 +53,21 @@ public class OsmRailWayTags {
   public static final String TRAM = "tram";  
   
 
-  /** verify if passed in tag is indeed a railway tag
+  /** verify if passed in tag is indeed a railway value tag
    * @param railwayTag to verify
    * @return true when valid tag, otherwise false
    */
-  public static boolean isRailWayTag(String railwayTag) {
+  public static boolean isRailwayValueTag(String railwayTag) {
     return railway.contains(railwayTag);
   }
+  
+  /** verify if passed in tag is indeed the railway key tag
+   * @param railwayTag to verify
+   * @return true when valid tag, otherwise false
+   */
+  public static boolean isRailwayKeyTag(String railwayTag) {
+    return RAILWAY.equals(railwayTag);
+  }  
 
   /**
    * provide a copy of all supported rail mode tags

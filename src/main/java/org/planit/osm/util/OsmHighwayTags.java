@@ -121,8 +121,16 @@ public class OsmHighwayTags {
      * @param highwayTag to verify
      * @return true when valid tag, otherwise false
      */
-    public static boolean isHighwayTag(String highwayTag) {
+    public static boolean isHighwayValueTag(String highwayTag) {
       return highwayTags.contains(highwayTag);
     }
+    
+    /** verify if passed in tag is indeed the highway key tag
+     * @param highwayTag to verify
+     * @return true when valid tag, otherwise false
+     */
+    public static boolean isHighwayKeyTag(String highwayTag) {
+      return HIGHWAY.equals(highwayTag);
+    }    
 
 }

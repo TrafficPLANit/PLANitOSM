@@ -611,12 +611,17 @@ public class PlanitOsmSettings {
 
   /** Collect the speed limit for a given highway tag value, e.g. highway=type, based on the defaults provided (typically set by country)
    * 
-   * @param type highway type to collect default speed limit for
-   * @return speedLimit in km/h outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea
+   * @param osmWaykey way key to collect default speed limit for the wayValue for
+   * @param osmWayValue way value type to collect default speed limit for
+   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
    * @throws PlanItException thrown if error
    */
-  public double getDefaultSpeedLimitByHighwayType(String type) throws PlanItException {
-    return speedLimitConfiguration.getSpeedLimit(type, !isSpeedLimitDefaultsBasedOnUrbanArea());  
+  public double getDefaultSpeedLimitByHighwayType(String osmWayKey, String osmWayValue) throws PlanItException {
+    if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
+      return speedLimitConfiguration.getHighwaySpeedLimit(osmWayValue, !isSpeedLimitDefaultsBasedOnUrbanArea());
+    }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey)){
+      return speedLimitConfiguration.getRailwaySpeedLimit(osmWayValue);
+    }
   }
 
   /** Collect the number of lanes for a given highway tag value for either direction (not total), e.g. highway=type, based on the defaults provided
@@ -666,7 +671,7 @@ public class PlanitOsmSettings {
    * @param planitMode to map it to
    */
   public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
-    if(!OsmRailWayTags.isRailWayTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailwayValueTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -683,7 +688,7 @@ public class PlanitOsmSettings {
    * @param osmRoadMode to remove
    */
   public void removeOsmRailMode2PlanitModeMapping(String osmRailMode) {
-    if(!OsmRailWayTags.isRailWayTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailwayValueTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -698,7 +703,7 @@ public class PlanitOsmSettings {
   public Mode getMappedPlanitMode(final String osmMode) {
     if(OsmRoadModeTags.isRoadModeTag(osmMode)) {
       return this.osmRoadMode2PlanitModeMap.get(osmMode);
-    }else if(OsmRailWayTags.isRailWayTag(osmMode)) {
+    }else if(OsmRailWayTags.isRailwayValueTag(osmMode)) {
       return this.osmRailMode2PlanitModeMap.get(osmMode);
     }else {
       LOGGER.warning(String.format("unknown osmMode tag %s found when collecting mapped PLANit modes, ignored",osmMode));

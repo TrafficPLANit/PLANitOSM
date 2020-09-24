@@ -31,6 +31,8 @@ public class OsmSpeedLimitDefaultsByCountry {
   /* initialise */
   static {    
     try {
+      TODO --> ADD RAILWAY DEFAULTS!
+      
       populateDefaultSpeedLimits();
     
       populateAustralianSpeedLimits();
@@ -54,23 +56,23 @@ public class OsmSpeedLimitDefaultsByCountry {
     OsmSpeedLimitDefaults globalSpeedLimits = new OsmSpeedLimitDefaults();
     
     /* GLOBAL -->                                                          URBAN,  NON_URBAN */
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.MOTORWAY,        100,  120);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,   100,  120);    
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.TRUNK,           80,   100);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,      80,   100);    
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.PRIMARY,         60,   100);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,    60,   100);    
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.SECONDARY,       50,   80);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,  50,   80);    
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.TERTIARY,        50,   80);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,   50,   80);    
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,    50,   80);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,     40,   80);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.LIVING_STREET,   20,   20);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.PEDESTRIAN,      20,   20);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.TRACK,           20,   40);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.ROAD,            20,   40);
-    globalSpeedLimits.setSpeedLimitDefault(OsmHighwayTags.SERVICE,         20,   40);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,        100,  120);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,   100,  120);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK,           80,   100);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,      80,   100);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY,         60,   100);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,    60,   100);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY,       50,   80);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,  50,   80);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY,        50,   80);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,   50,   80);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,    50,   80);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,     40,   80);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.LIVING_STREET,   20,   20);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PEDESTRIAN,      20,   20);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRACK,           20,   40);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.ROAD,            20,   40);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SERVICE,         20,   40);    
     
     setGlobalDefaults(globalSpeedLimits);
   }  
@@ -83,19 +85,19 @@ public class OsmSpeedLimitDefaultsByCountry {
     OsmSpeedLimitDefaults ausSpeedLimitDefaults = new OsmSpeedLimitDefaults();
     
     /* AUSTRALIA  -->                                           URBAN,  NON_URBAN */
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100, 100);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80,  80);    
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.TRUNK,            60,  100);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60,  60);    
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.PRIMARY,          60,  80);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60,  60);    
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.SECONDARY,        60,  80);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60,  60);    
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.TERTIARY,         50,  80);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    50,  60);    
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     50,  80);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      50,  80);
-    ausSpeedLimitDefaults.setSpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20,  20);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100, 100);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80,  80);    
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK,            60,  100);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60,  60);    
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY,          60,  80);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60,  60);    
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY,        60,  80);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60,  60);    
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY,         50,  80);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    50,  60);    
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     50,  80);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      50,  80);
+    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20,  20);
         
     setDefaultsByCountry("Australia", ausSpeedLimitDefaults);
   }
@@ -115,10 +117,10 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   protected static double getSpeedLimitByHighwayType(OsmSpeedLimitDefaults countryDefaults, boolean outside, String type) throws PlanItException {
     /* country limit */
-    Double speedLimit = countryDefaults.getSpeedLimit(type, outside);
+    Double speedLimit = countryDefaults.getHighwaySpeedLimit(type, outside);
     if(speedLimit == null) {
       /* global limit */
-      speedLimit = defaultSpeedLimits.getSpeedLimit(type, outside);
+      speedLimit = defaultSpeedLimits.getHighwaySpeedLimit(type, outside);
     }
     
     if(speedLimit==null) {
