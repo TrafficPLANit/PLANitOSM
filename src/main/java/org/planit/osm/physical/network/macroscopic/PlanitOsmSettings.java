@@ -15,7 +15,7 @@ import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
 import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.util.OsmHighwayTags;
-import org.planit.osm.util.OsmRailModeTags;
+import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -39,7 +39,22 @@ public class PlanitOsmSettings {
   /**
    * the OSM highway types that are marked as supported OSM types, i.e., will be processed when parsing
    */
-  protected final Set<String> supportedOSMLinkSegmentTypes = new HashSet<String>();
+  protected final Set<String> supportedOsmRoadLinkSegmentTypes = new HashSet<String>();
+  
+  /**
+   * the OSM highway types that are marked as unsupported OSM types, i.e., will be ignored when parsing
+   */
+  protected final Set<String> unsupportedOsmRoadLinkSegmentTypes = new HashSet<String>();  
+  
+  /**
+   * the OSM railway types that are marked as supported OSM types, i.e., will be processed when parsing
+   */
+  protected final Set<String> supportedOsmRailLinkSegmentTypes = new HashSet<String>();
+  
+  /**
+   * the OSM railway types that are marked as unsupported OSM types, i.e., will be ignored when parsing
+   */
+  protected final Set<String> unsupportedOsmRailLinkSegmentTypes = new HashSet<String>();   
   
   /** the default speed limits used in case no explicit information is available on the osmway's tags */
   protected final OsmSpeedLimitDefaults speedLimitConfiguration;
@@ -65,12 +80,7 @@ public class PlanitOsmSettings {
   
   /** the crs of the OSM source */
   protected CoordinateReferenceSystem sourceCRS = PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS;  
-  
-  /**
-   * the OSM highway types that are marked as unsupported OSM types, i.e., will be ignored when parsing
-   */
-  protected final Set<String> unsupportedOSMLinkSegmentTypes = new HashSet<String>();
-            
+              
   /**
    * When the user has activated a highway type for which the reader has no support, this alternative will be used, default is
    * set to PlanitOSMTags.TERTIARY. Note in case this is also not available on the reader, the type will be ignored altogether
@@ -94,9 +104,13 @@ public class PlanitOsmSettings {
   protected void initialise(Modes planitModes) {
     try {
       /* the highway types that will be parsed by default, i.e., supported. */
-      initialiseDefaultSupportedOSMHighwayTypes();
+      initialiseDefaultSupportedOsmHighwayTypes();
       /* the highway types that will not be parsed by default, i.e., unsupported. */
-      initialiseDefaultUnsupportedOSMHighwayTypes();
+      initialiseDefaultUnsupportedOsmHighwayTypes();
+      /* the railway types that will be parsed by default, i.e., supported. */
+      initialiseDefaultSupportedOsmRailwayTypes();
+      /* the railway types that will not be parsed by default, i.e., unsupported. */
+      initialiseDefaultUnsupportedOsmRailwayTypes();      
       /* the default mapping from OSM modes to PLANit modes */
       initialiseDefaultMappingFromOsmModes2PlanitModes(planitModes);
     } catch (PlanItException e) {
@@ -207,13 +221,13 @@ public class PlanitOsmSettings {
     
     /* add default mapping */
     {
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.FUNICULAR, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.LIGHT_RAIL, planitModes.getPredefinedMode(PredefinedModeType.LIGHTRAIL));
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.MONO_RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.NARROW_GAUGE, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.SUBWAY, planitModes.getPredefinedMode(PredefinedModeType.SUBWAY));
-      osmRailMode2PlanitModeMap.put(OsmRailModeTags.TRAM, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.FUNICULAR, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.LIGHT_RAIL, planitModes.getPredefinedMode(PredefinedModeType.LIGHTRAIL));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.MONO_RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.NARROW_GAUGE, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.SUBWAY, planitModes.getPredefinedMode(PredefinedModeType.SUBWAY));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.TRAM, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
     }           
   }  
   
@@ -233,50 +247,123 @@ public class PlanitOsmSettings {
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
    * the common OSM highway types to macroscopic link segment types that we explicitly do include, i.e., support.
    * 
+   * <ul>
+   * <li>MOTORWAY</li>
+   * <li>MOTORWAY_LINK</li>
+   * <li>TRUNK</li>
+   * <li>TRUNK_LINK</li>
+   * <li>PRIMARY</li>
+   * <li>PRIMARY_LINK</li>
+   * <li>SECONDARY</li>
+   * <li>SECONDARY_LINK</li>
+   * <li>TERTIARY</li>
+   * <li>TERTIARY_LINK</li>
+   * <li>UNCLASSIFIED</li>
+   * <li>RESIDENTIAL</li>
+   * <li>LIVING_STREET</li>
+   * <li>SERVICE</li>
+   * <li>PEDESTRIAN</li>
+   * <li>TRACK</li>
+   * <li>ROAD</li>
+   * </ul>
+   * 
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  protected void initialiseDefaultSupportedOSMHighwayTypes() throws PlanItException {
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRUNK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRUNK_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PRIMARY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PRIMARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TERTIARY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TERTIARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.UNCLASSIFIED);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.RESIDENTIAL);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.LIVING_STREET);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SERVICE);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PEDESTRIAN);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRACK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.ROAD);
+  protected void initialiseDefaultSupportedOsmHighwayTypes() throws PlanItException {
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRUNK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRUNK_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PRIMARY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PRIMARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SECONDARY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TERTIARY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TERTIARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.UNCLASSIFIED);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.RESIDENTIAL);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.LIVING_STREET);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SERVICE);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PEDESTRIAN);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRACK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.ROAD);
   }
   
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
    * the common OSM highway types to macroscopic link segment types that we explicitly do not include
    * 
+   * <ul>
+   * <li>FOOTWAY</li>
+   * <li>BRIDLEWAY</li>
+   * <li>STEPS</li>
+   * <li>CORRIDOR</li>
+   * <li>CYCLEWAY</li>
+   * <li>PATH</li>
+   * <li>ELEVATOR</li>
+   * <li>PLATFORM</li>
+   * <li>PROPOSED</li>
+   * <li>CONSTRUCTION</li>
+   * <li>TURNING_CIRCLE</li>
+   * </ul>
+   * 
    * @return the default created unsupported types
    * @throws PlanItException thrown when error
    */
-  protected void initialiseDefaultUnsupportedOSMHighwayTypes() throws PlanItException {
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.FOOTWAY);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.BRIDLEWAY);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.STEPS);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.CORRIDOR);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.CYCLEWAY);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.PATH);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.ELEVATOR);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.PLATFORM);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.PROPOSED);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.CONSTRUCTION);
-    unsupportedOSMLinkSegmentTypes.add(OsmHighwayTags.TURNING_CIRCLE);
+  protected void initialiseDefaultUnsupportedOsmHighwayTypes() throws PlanItException {
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.FOOTWAY);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.BRIDLEWAY);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.STEPS);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.CORRIDOR);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.CYCLEWAY);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PATH);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.ELEVATOR);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PLATFORM);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PROPOSED);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.CONSTRUCTION);
+    unsupportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TURNING_CIRCLE);
   }   
+  
+  /**
+   * Since we are building a macroscopic network based on OSM, we provide a mapping from
+   * the common OSM railway types to macroscopic link segment types that we explicitly do include, i.e., support.
+   * 
+   * <ul>
+   * <li>LIGHT_RAIL</li>
+   * <li>RAIL</li>
+   * <li>SUBWAY</li>
+   * <li>TRAM</li>
+   * </ul>
+   * 
+   * @return the default created supported types 
+   * @throws PlanItException thrown when error
+   */
+  protected void initialiseDefaultSupportedOsmRailwayTypes() throws PlanItException {
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.LIGHT_RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.SUBWAY);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.TRAM);    
+  }
+  
+  /**
+   * Since we are building a macroscopic network based on OSM, we provide a mapping from
+   * the common OSM railway types to macroscopic link segment types that we explicitly do not include
+   * 
+   * <ul>
+   * <li>FUNICULAR</li>
+   * <li>MONO_RAIL</li>
+   * <li>NARROW_GAUGE</li>
+   * </ul>
+   * 
+   * @return the default created unsupported types
+   * @throws PlanItException thrown when error
+   */
+  protected void initialiseDefaultUnsupportedOsmRailwayTypes() throws PlanItException {
+    unsupportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.FUNICULAR);
+    unsupportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.MONO_RAIL);
+    unsupportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.NARROW_GAUGE);
+  }     
     
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
@@ -323,7 +410,7 @@ public class PlanitOsmSettings {
   
   /**
    * 
-   * When the parsed way has a type that is not supported, this alternative will be used
+   * When the parsed way has a type that is not supported but also not explicitly excluded, this alternative will be used
    * @return chosen default
    * 
    **/
@@ -336,7 +423,7 @@ public class PlanitOsmSettings {
    * 
    * @param defaultOSMHighwayValueWhenUnsupported the default to use, should be a type that is supported.
    */
-  public void setDefaultOSMHighwayTypeeWhenUnsupported(String defaultOSMHighwayValueWhenUnsupported) {
+  public void setDefaultOSMHighwayTypeWhenUnsupported(String defaultOSMHighwayValueWhenUnsupported) {
     this.defaultOSMHighwayTypeWhenUnsupported = defaultOSMHighwayValueWhenUnsupported;
   } 
   
@@ -357,43 +444,80 @@ public class PlanitOsmSettings {
   }    
   
   /**
-   * Verify if the passed in OSM highway type is explicitly unsupported. Unsupported types will be ignored
+   * Verify if the passed in OSM way type is explicitly unsupported. Unsupported types will be ignored
    * when processing ways.
    * 
+   * @param osmWayKey way key, e.g. highway, railway, etc.
+   * @param osmWayValue, e.g. primary, road, rail
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
-  public boolean isOSMHighwayTypeUnsupported(String osmHighwayType) {
-    return unsupportedOSMLinkSegmentTypes.contains(osmHighwayType);
+  public boolean isOsmWayTypeUnsupported(String osmWayKey, String osmWayValue) {
+    switch (osmWayKey) {
+    case OsmHighwayTags.HIGHWAY:
+      return unsupportedOsmRoadLinkSegmentTypes.contains(osmWayValue);
+    case OsmRailWayTags.RAILWAY:
+      return unsupportedOsmRailLinkSegmentTypes.contains(osmWayValue);
+    default:
+      return true;
+    }    
   }
   
   /**
    * Verify if the passed in OSM highway type is explicitly supported. Supported types will be processed 
    * and converted into link(segments).
    * 
+   * @param osmWayKey way key, e.g. highway, railway, etc.
+   * @param osmWayValue, e.g. primary, road, rail
    * @return true when supported, false if not (which means it is unsupported, or not registered)
    */
-  public boolean isOSMHighwayTypeSupported(String osmHighwayType) {
-    return supportedOSMLinkSegmentTypes.contains(osmHighwayType);
+  public boolean isOsmWayTypeSupported(String osmWayKey, String osmWayValue) {
+    switch (osmWayKey) {
+    case OsmHighwayTags.HIGHWAY:
+      return supportedOsmRoadLinkSegmentTypes.contains(osmWayValue);
+    case OsmRailWayTags.RAILWAY:
+      return supportedOsmRailLinkSegmentTypes.contains(osmWayValue);
+    default:
+      return false;
+    }            
+  }
+  
+  
+  /**
+   * Choose to not parse the given combination of way and subtype, e.g. highway=road, railway=rail.
+   * 
+   * @param osmWayKey to use
+   * @param osmWayValue to use
+   */
+  public void excludeOsmWayType(String osmWayKey, String osmWayValue) {
+    switch (osmWayKey) {
+    case OsmHighwayTags.HIGHWAY:
+      supportedOsmRoadLinkSegmentTypes.remove(osmWayValue);
+      unsupportedOsmRoadLinkSegmentTypes.add(osmWayValue);
+    case OsmRailWayTags.RAILWAY:
+      supportedOsmRailLinkSegmentTypes.remove(osmWayValue);
+      unsupportedOsmRailLinkSegmentTypes.add(osmWayValue);
+    default:
+      LOGGER.fine(String.format("excluding osm way irrelevant, provided combination %s:%s was already unsupported",osmWayKey, osmWayValue));
+    }      
   }
   
   /**
-   * Choose to not parse the given highway type
+   * Choose to add given way type to parsed types on top of the defaults, e.g. highway=road, railway=rail.
    * 
-   * @param osmHighwayType
+   * @param osmWayKey to use
+   * @param osmWayValue to use
    */
-  public void excludeOSMHighwayType(String osmHighwayType) {
-    supportedOSMLinkSegmentTypes.remove(osmHighwayType);
-    unsupportedOSMLinkSegmentTypes.add(osmHighwayType);
-  }
-  
-  /**
-   * Choose to add given highway type to parsed types on top of the defaults
-   * 
-   * @param osmHighwayType
-   */
-  public void includeOSMHighwayType(String osmHighwayType) {
-    supportedOSMLinkSegmentTypes.add(osmHighwayType);
-    unsupportedOSMLinkSegmentTypes.remove(osmHighwayType);
+  public void includeOSMHighwayType(String osmWayKey, String osmWayValue) {
+    switch (osmWayKey) {
+    case OsmHighwayTags.HIGHWAY:
+      supportedOsmRoadLinkSegmentTypes.add(osmWayValue);
+      unsupportedOsmRoadLinkSegmentTypes.remove(osmWayValue);
+    case OsmRailWayTags.RAILWAY:
+      supportedOsmRailLinkSegmentTypes.add(osmWayValue);
+      unsupportedOsmRailLinkSegmentTypes.remove(osmWayValue);
+    default:
+      LOGGER.fine(String.format("excluding osm way irrelevant, provided combination %s:%s was already unsupported",osmWayKey, osmWayValue));
+    }          
   }  
   
   /**
@@ -404,11 +528,8 @@ public class PlanitOsmSettings {
    * @param maxDensityPerLane new value pcu/km/lane
    * @param modeProperties new values per mode
    */
-  public void overwriteOSMHighwayTypeDefaults(
-      String osmHighwayType, 
-      double capacityPerLanePerHour, 
-      double maxDensityPerLane) {
-    supportedOSMLinkSegmentTypes.add(osmHighwayType);
+  public void overwriteOsmHighwayTypeDefaults(String osmHighwayType, double capacityPerLanePerHour, double maxDensityPerLane) {
+    supportedOsmRoadLinkSegmentTypes.add(osmHighwayType);
     overwriteByOSMHighwayType.put(osmHighwayType, new Pair<Double,Double>(capacityPerLanePerHour,maxDensityPerLane));    
   }    
   
@@ -418,7 +539,7 @@ public class PlanitOsmSettings {
    * @param osmHighwayType
    * @return true when new defaults are provided, false otherwise
    */
-  public boolean isOSMHighwayTypeDefaultOverwritten(String osmHighwayType) {
+  public boolean isOsmHighwayTypeDefaultOverwritten(String osmHighwayType) {
     return overwriteByOSMHighwayType.containsKey(osmHighwayType);
   }
   
@@ -428,7 +549,7 @@ public class PlanitOsmSettings {
    * @param osmHighwayType to collect overwrite values for
    * @return the new values capacity (pcu/lane/h) and maxDensity (pcu/km/lane)
    */
-  public final Pair<Double,Double> getOSMHighwayTypeOverwrite(String osmHighwayType) {
+  public final Pair<Double,Double> getOsmHighwayTypeOverwrite(String osmHighwayType) {
     return overwriteByOSMHighwayType.get(osmHighwayType);
   }  
   
@@ -545,7 +666,7 @@ public class PlanitOsmSettings {
    * @param planitMode to map it to
    */
   public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
-    if(!OsmRailModeTags.isRailModeTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailWayTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -562,7 +683,7 @@ public class PlanitOsmSettings {
    * @param osmRoadMode to remove
    */
   public void removeOsmRailMode2PlanitModeMapping(String osmRailMode) {
-    if(!OsmRailModeTags.isRailModeTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailWayTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -577,7 +698,7 @@ public class PlanitOsmSettings {
   public Mode getMappedPlanitMode(final String osmMode) {
     if(OsmRoadModeTags.isRoadModeTag(osmMode)) {
       return this.osmRoadMode2PlanitModeMap.get(osmMode);
-    }else if(OsmRailModeTags.isRailModeTag(osmMode)) {
+    }else if(OsmRailWayTags.isRailWayTag(osmMode)) {
       return this.osmRailMode2PlanitModeMap.get(osmMode);
     }else {
       LOGGER.warning(String.format("unknown osmMode tag %s found when collecting mapped PLANit modes, ignored",osmMode));
@@ -591,14 +712,14 @@ public class PlanitOsmSettings {
    * @return mapped PLANit modes
    */
   public Collection<Mode> collectMappedPlanitModes(Collection<String> osmModes) {
-    HashSet<Mode> mappedPlaniotModes = new HashSet<Mode>();
+    HashSet<Mode> mappedPlanitModes = new HashSet<Mode>();
     for (String osmMode : osmModes) {
       Mode mappedMode = getMappedPlanitMode(osmMode);
       if(mappedMode != null) {
-        mappedPlaniotModes.add(mappedMode);
+        mappedPlanitModes.add(mappedMode);
       }
     }
-    return mappedPlaniotModes;
+    return mappedPlanitModes;
   }
  
 

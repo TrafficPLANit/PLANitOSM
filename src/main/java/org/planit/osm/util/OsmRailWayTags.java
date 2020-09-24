@@ -5,33 +5,38 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Most OSM rail mode tags that could be of value for a network. Based on list found on
+ * Most OSM rail way tags that could be of value for a network. Based on list found on
  * https://wiki.openstreetmap.org/wiki/Key:railway 
  * 
  * @author markr
  *
  */
-public class OsmRailModeTags {
+public class OsmRailWayTags {
   
-  /** all currently available rail mode tags */
-  private static final Set<String> modeTags = new HashSet<String>();
+  /** all currently available rail way tags */
+  private static final Set<String> railway = new HashSet<String>();
   
   /**
-   * populate the available mode tags
+   * populate the available railway mode tags
    */
   private static void populateModeTags() {
-    modeTags.add(FUNICULAR);
-    modeTags.add(LIGHT_RAIL);
-    modeTags.add(MONO_RAIL);
-    modeTags.add(NARROW_GAUGE);
-    modeTags.add(RAIL);
-    modeTags.add(SUBWAY);
-    modeTags.add(TRAM);
+    railway.add(FUNICULAR);
+    railway.add(LIGHT_RAIL);
+    railway.add(MONO_RAIL);
+    railway.add(NARROW_GAUGE);
+    railway.add(RAIL);
+    railway.add(SUBWAY);
+    railway.add(TRAM);
   }
   
   static {
     populateModeTags();
   }
+  
+  /* key */
+  public static final String RAILWAY = "railway";
+  
+  /* values */
   
   public static final String FUNICULAR = "funicular";
   
@@ -48,12 +53,12 @@ public class OsmRailModeTags {
   public static final String TRAM = "tram";  
   
 
-  /** verify if passed in tag is indeed a mode tag
-   * @param modeTag to verify
+  /** verify if passed in tag is indeed a railway tag
+   * @param railwayTag to verify
    * @return true when valid tag, otherwise false
    */
-  public static boolean isRailModeTag(String modeTag) {
-    return modeTags.contains(modeTag);
+  public static boolean isRailWayTag(String railwayTag) {
+    return railway.contains(railwayTag);
   }
 
   /**
@@ -61,7 +66,7 @@ public class OsmRailModeTags {
    * @return all supported road modes
    */
   public static Collection<String> getSupportedRailModeTags() {
-    return new HashSet<String>(modeTags);
+    return new HashSet<String>(railway);
   }
     
 }

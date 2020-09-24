@@ -4,12 +4,17 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
+import org.planit.network.physical.macroscopic.MacroscopicModePropertiesFactory;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
+import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.PlanitOsmConstants;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
@@ -320,38 +325,117 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   }
    
   /**
-   * the list of types for which we have default link segment type mapping available out of the box
+   * the list of road types for which we have default link segment type mapping available out of the box
    * 
    **/
-  protected static final Set<String> supportedOSMLinkSegmentTypes;
+  protected static final Set<String> supportedOsmRoadLinkSegmentTypes;
+
+  /**
+   * the list of rail types for which we have default link segment type mapping available out of the box
+   * 
+   **/  
+  protected static final Set<String> supportedOsmRailLinkSegmentTypes;
   
-  /** the supported types for which we have default link segment type settings available */
+  /** the supported types for which we have default road link segment type settings available */
   static {
-    supportedOSMLinkSegmentTypes = new HashSet<String>();
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRUNK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRUNK_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PRIMARY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PRIMARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TERTIARY);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TERTIARY_LINK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.UNCLASSIFIED);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.RESIDENTIAL);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.LIVING_STREET);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.SERVICE);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.PEDESTRIAN);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.TRACK);
-    supportedOSMLinkSegmentTypes.add(OsmHighwayTags.ROAD);     
+    supportedOsmRoadLinkSegmentTypes = new HashSet<String>();
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.MOTORWAY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRUNK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRUNK_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PRIMARY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PRIMARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SECONDARY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SECONDARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TERTIARY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TERTIARY_LINK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.UNCLASSIFIED);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.RESIDENTIAL);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.LIVING_STREET);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SERVICE);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PEDESTRIAN);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRACK);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.ROAD);     
   }
+  
+  /** the supported types for which we have default rail link segment type settings available */
+  static {
+    supportedOsmRailLinkSegmentTypes = new HashSet<String>();
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.FUNICULAR);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.LIGHT_RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.MONO_RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.NARROW_GAUGE);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.SUBWAY);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.TRAM);
+  }  
      
   /**
    * the link segment types that are activated for this instance
    */
   protected final Map<String, MacroscopicLinkSegmentType> createdOSMLinkSegmentTypes;
+  
+  /**
+   *  create the road based link segment type based on the setting
+   * @param osmWayValue to use
+   * @param settings to extract defaults from
+   * @return created (or already existing) default link segment type for the given OSM highway type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createOsmCompatibleRoadLinkSegmentType(final String osmWayValue, PlanitOsmSettings settings) throws PlanItException {
+    MacroscopicLinkSegmentType linkSegmentType = null; 
+    
+    boolean isOverwrite = false;
+    boolean isBackupDefault = false;
+        
+    String osmWayValueToUse = osmWayValue;
+    /* highway values can be overwritten, rail capacity is not relevant, so cannot be changed */
+    if(OsmHighwayTags.isHighwayTag(osmWayValue) && settings.isOsmHighwayTypeDefaultOverwritten(osmWayValue)) {
+      /* type is overwritten, so use overwritten data instead of defaults */
+      final Pair<Double,Double> capacityDensityPair = settings.getOsmHighwayTypeOverwrite(osmWayValue);
+      linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+      isOverwrite = true;
+    }else
+    {      
+      /* type is supposed to be included according to settings, continue...*/
+      if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue)) {        
+
+        if(!settings.hasOSMHighwayTypeWhenUnsupported()) {
+          /* ... no replacement available skip type entirely*/
+          LOGGER.warning(String.format(
+              "Highway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing %s", osmWayValue));          
+        }else {
+          /* ...use replacement type instead of activate type to still be able to process OSM ways of this type */
+          osmWayValueToUse = settings.getOSMHighwayTypeWhenUnsupported();
+          isBackupDefault = true;
+          LOGGER.warning(String.format(
+              "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
+          linkSegmentType = createOsmLinkSegmentType(osmWayValueToUse);          
+        }                
+      }  
+    }
+    
+    if(linkSegmentType != null) {
+      LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
+          isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
+    }
+    
+    return linkSegmentType;
+  }
+  
+  /**
+   *  create the rail based link segment type based on the setting
+   * @param osmWayValue to use
+   * @param settings to extract defaults from
+   * @return created (or already existing) default link segment type for the given OSM highway type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createOsmCompatibleRailLinkSegmentType(final String osmWayValue, PlanitOsmSettings settings) throws PlanItException {
+    MacroscopicLinkSegmentType linkSegmentType = null;
+    
+    return linkSegmentType;
+  }
     
   /**
    * Create the link segment types that are marked in the passed in settings. As long as they have defaults that
@@ -360,51 +444,58 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  void createOSMCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
-    for(String activatedType : settings.supportedOSMLinkSegmentTypes) {
-      String osmHighwayTypeToUse = activatedType;
-      
-      /* find allowed OSM modes for this highway type, construct the mapped PLANit modes and properties for them */
-      OsmModeAccessDefaults modeAccessconfiguration = settings.getModeAccessConfiguration();
-      Collection<String> allowedOsmModes =  modeAccessconfiguration.collectAllowedModes(osmHighwayTypeToUse);
-      Collection<Mode> allowedPlanitModes = settings.collectMappedPlanitModes(allowedOsmModes);
-      CONTINUE TO CREAT THE MODE PROPERTIES
-      
+  void createOsmCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
+    OsmSpeedLimitDefaults speedLimitConfiguration = settings.getSpeedLimitConfiguration();
+    
+    /* combine rail and highway */
+    Map<String,String> highwayKeyValueMap = 
+        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> OsmHighwayTags.HIGHWAY, value -> value));
+    Map<String,String> railwayKeyValueMap = 
+        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> OsmRailWayTags.RAILWAY, value -> value));
+    Map<String,String> combinedWayMap = new HashMap<String,String>();
+    combinedWayMap.putAll(highwayKeyValueMap);
+    combinedWayMap.putAll(railwayKeyValueMap);    
+    
+    /* ------------------ FOR EACH SUPPORTED OSM WAY TYPE ----------------------------------------- */   
+    for(Entry<String,String> entry : combinedWayMap.entrySet()) {
+      String osmWayKey = entry.getKey();
+      String osmWayValueToUse = entry.getValue();
+           
+      /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
       MacroscopicLinkSegmentType linkSegmentType = null;  
-      boolean isOverwrite = false;
-      boolean isBackupDefault = false;
-      if(settings.isOSMHighwayTypeDefaultOverwritten(activatedType)) {
-        /* type is overwritten, so use overwritten data instead of defaults */
-        final Pair<Double,Double> capacityDensityPair = settings.getOSMHighwayTypeOverwrite(activatedType);
-        linkSegmentType = createOsmLinkSegmentType(activatedType, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
-        isOverwrite = true;
-      }else
-      {      
-        /* type is supposed to be included according to settings, continue...*/
-        if(!supportedOSMLinkSegmentTypes.contains(activatedType)) {        
-  
-          if(!settings.hasOSMHighwayTypeWhenUnsupported()) {
-            /* ... no replacement available skip type entirely*/
-            LOGGER.warning(String.format(
-                "Highway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing %s", activatedType));          
-            continue;
-          }
-          
-          /* ...use replacement type instead of activate type to still be able to process OSM ways of this type */
-          osmHighwayTypeToUse = settings.getOSMHighwayTypeWhenUnsupported();
-          isBackupDefault = true;
-          LOGGER.warning(String.format(
-              "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", activatedType, osmHighwayTypeToUse));        
-        }
-        linkSegmentType = createOsmLinkSegmentType(osmHighwayTypeToUse);        
-      }                
+
+      
+      if(OsmHighwayTags.isHighwayTag(osmWayValueToUse)) {
+        linkSegmentType = createOsmCompatibleRoadLinkSegmentType(osmWayValueToUse, settings);
+      }else if(OsmRailWayTags.isRailWayTag(osmWayValueToUse)) {             
+        linkSegmentType = createOsmCompatibleRailLinkSegmentType(osmWayValueToUse, settings);
+      }else {
+        
+      }
+      /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
+      
+      /* ------------------ LINK SEGMENT TYPE's MODE PROPERTIES ------------------------------ */
+      CONTINUE HERE -> MAKE RAIL/ROAD SPECIFIC
+      if(!createdOSMLinkSegmentTypes.containsKey(osmWayValueToUse)) {
+        
+        /* find allowed OSM modes for this highway type, construct the mapped PLANit modes and properties for them */
+        OsmModeAccessDefaults modeAccessconfiguration = settings.getModeAccessConfiguration();
+        Collection<String> allowedOsmModes =  modeAccessconfiguration.collectAllowedModes(osmWayValueToUse);
+        Collection<Mode> allowedPlanitModes = settings.collectMappedPlanitModes(allowedOsmModes);
+        
+        /* determine the speed restriction for the mode on the given highway type */
+        for(Mode planitMode : allowedPlanitModes) {
+          double osmHighwayTypeMaxSpeed = speedLimitConfiguration.getSpeedLimit(osmWayValueToUse, !settings.isSpeedLimitDefaultsBasedOnUrbanArea());
+          linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(osmHighwayTypeMaxSpeed,osmHighwayTypeMaxSpeed));
+        }              
+      }
+      /* ------------------ LINK SEGMENT TYPE's MODE PROPERTIES ------------------------------ */      
       
       /* create, register, and also store by osm tag */
-      createdOSMLinkSegmentTypes.put(activatedType, linkSegmentType);
-      
-      LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
-          isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", activatedType, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));      
+      createdOSMLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);
+            
     }
+    /* ------------------ FOR EACH OSM HIGHWAY TYPE ----------------------------------------- */    
   }
   
   /**
@@ -421,7 +512,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param OSMHighwayTagValue the type of road to find
    * @return the link segment type that is registered
    */
-  public MacroscopicLinkSegmentType getSegmentTypeByOSMTag(String osmHighwayTagValue) {
+  public MacroscopicLinkSegmentType getSegmentTypeByOsmTag(String osmHighwayTagValue) {
     return this.createdOSMLinkSegmentTypes.get(osmHighwayTagValue);
   }
 

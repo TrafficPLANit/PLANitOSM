@@ -15,6 +15,7 @@ import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmLaneTags;
+import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
@@ -70,11 +71,13 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private final Map<Long,Node> nodesByExternalId = new HashMap<Long, Node>();
      
   /**
-   * Log all de-activated OSM highway types
+   * Log all de-activated OSM way types
    */  
-  private void logUnsupportedOSMHighwayTypes() {
-    settings.unsupportedOSMLinkSegmentTypes.forEach( 
-        osmTag -> LOGGER.info(String.format("highway:%s DEACTIVATED", osmTag)));    
+  private void logUnsupportedOsmWayTypes() {
+    settings.unsupportedOsmRoadLinkSegmentTypes.forEach( 
+        osmTag -> LOGGER.info(String.format("highway:%s DEACTIVATED", osmTag)));
+    settings.unsupportedOsmRailLinkSegmentTypes.forEach( 
+        osmTag -> LOGGER.info(String.format("railway:%s DEACTIVATED", osmTag)));    
   }         
   
   /**
@@ -386,23 +389,31 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   protected MacroscopicLinkSegmentType getLinkSegmentType(OsmWay osmWay, Map<String, String> tags) {
     MacroscopicLinkSegmentType linkSegmentType = null;
+    String osmTypeValueToUse = null;
+    String osmTypeKeyToUse = null;
     if (tags.containsKey(OsmHighwayTags.HIGHWAY)) {
-      
-      String highWayType = tags.get(OsmHighwayTags.HIGHWAY);
-      profiler.incrementOsmTagCounter(highWayType);            
-      linkSegmentType = network.getSegmentTypeByOSMTag(highWayType);            
+      osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;        
+    }else if(tags.containsKey(OsmRailWayTags.RAILWAY)) {
+      osmTypeKeyToUse = OsmRailWayTags.RAILWAY;            
+    }
+    
+    if(osmTypeKeyToUse != null) {  
+      osmTypeValueToUse = tags.get(osmTypeKeyToUse);
+      profiler.incrementOsmTagCounter(osmTypeValueToUse);            
+      linkSegmentType = network.getSegmentTypeByOsmTag(osmTypeValueToUse);            
       if(linkSegmentType != null) {
         return linkSegmentType;
       }
       
       /* determine the reason why we couldn't find it */
-      if(!settings.isOSMHighwayTypeUnsupported(highWayType)) {
+      if(!settings.isOsmWayTypeUnsupported(osmTypeKeyToUse, osmTypeValueToUse)) {
         /*... not unsupported so something is not properly configured, or the osm file is corrupt or not conform the standard*/
         LOGGER.warning(String.format(
-            "no link segment type available for OSM way: highway:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
-            highWayType, osmWay.getId()));              
-      }  
+            "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
+            osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));              
+      }
     }
+    
     return linkSegmentType;
   }  
   
@@ -432,8 +443,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     PlanItException.throwIf(network.nodes.size()>0,"network is expected to be empty at start of parsing OSM network, but it has nodes");
     
     /* create the supported link segment types on the network */
-    network.createOSMCompatibleLinkSegmentTypes(settings);
-    logUnsupportedOSMHighwayTypes();
+    network.createOsmCompatibleLinkSegmentTypes(settings);
+    logUnsupportedOsmWayTypes();
   }  
 
   @Override

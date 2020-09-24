@@ -10,10 +10,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.planit.osm.util.OsmHighwayTags;
-import org.planit.osm.util.OsmRailModeTags;
+import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmRoadModeCategoryTags;
 import org.planit.osm.util.OsmRoadModeTags;
-import org.planit.utils.mode.Mode;
 
 /**
  * Class representing the default mode access restrictions/allowance for modes for a given
@@ -234,7 +233,7 @@ public class OsmModeAccessDefaults implements Cloneable {
    */
   public Collection<String> collectAllowedModes(String osmHighwayType) {
     Set<String> allowedRoadModes =  OsmRoadModeTags.getSupportedRoadModeTags().stream().filter( roadModeTag -> this.isAllowed(osmHighwayType, roadModeTag)).collect(Collectors.toSet());
-    Set<String> allowedRailModes =  OsmRailModeTags.getSupportedRailModeTags().stream().filter( railModeTag -> this.isAllowed(osmHighwayType, railModeTag)).collect(Collectors.toSet());
+    Set<String> allowedRailModes =  OsmRailWayTags.getSupportedRailModeTags().stream().filter( railModeTag -> this.isAllowed(osmHighwayType, railModeTag)).collect(Collectors.toSet());
     allowedRoadModes.addAll(allowedRailModes);
     return allowedRoadModes;
   }
