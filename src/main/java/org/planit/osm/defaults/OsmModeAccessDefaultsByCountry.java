@@ -32,6 +32,12 @@ public class OsmModeAccessDefaultsByCountry {
   
   /** store all defaults per country by ISO2 code **/
   private static final Map<String,OsmModeAccessDefaults> allowedModeAccessDefaultsByCountry = new HashMap<String,OsmModeAccessDefaults>();
+  
+  /** store the global defaults as fall back option */
+  protected static OsmModeAccessDefaults globalModeAccessDefaults;
+  
+  /** store all defaults per country by ISO2 code **/
+  protected static Map<String, OsmModeAccessDefaults> modeAccessDefaultsByCountry = new HashMap<String,OsmModeAccessDefaults>();  
    
   /* initialise */
   static {    
@@ -47,11 +53,6 @@ public class OsmModeAccessDefaultsByCountry {
     }    
   }
   
-  /** store the global defaults as fall back option */
-  protected static OsmModeAccessDefaults globalModeAccessDefaults;
-  
-  /** store all defaults per country by ISO2 code **/
-  protected static Map<String, OsmModeAccessDefaults> modeAccessDefaultsByCountry = new HashMap<String,OsmModeAccessDefaults>();
   
   /**
    * populate the global defaults for highway types, i.e., roads

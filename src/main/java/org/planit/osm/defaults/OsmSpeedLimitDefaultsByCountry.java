@@ -30,7 +30,13 @@ public class OsmSpeedLimitDefaultsByCountry {
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaultsByCountry.class.getCanonicalName());  
+  private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaultsByCountry.class.getCanonicalName());
+  
+  /** store the global defaults as fall back option */
+  protected static OsmSpeedLimitDefaults defaultSpeedLimits;
+  
+  /** store all defaults per country by ISO2 code **/
+  protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountry = new HashMap<String, OsmSpeedLimitDefaults>();  
   
   /* initialise */
   static {    
@@ -43,13 +49,7 @@ public class OsmSpeedLimitDefaultsByCountry {
       LOGGER.severe("unable to initialise global and/or country specific OSM speed limit defaults");
     }    
   }  
-     
-  /** store the global defaults as fall back option */
-  protected static OsmSpeedLimitDefaults defaultSpeedLimits;
-  
-  /** store all defaults per country by ISO2 code **/
-  protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountry = new HashMap<String, OsmSpeedLimitDefaults>();
-        
+             
   /**
    * populate the global defaults for highway types in case the country is not available, or in case the road type for that country is not available
    * 

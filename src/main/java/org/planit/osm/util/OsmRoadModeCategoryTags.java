@@ -3,6 +3,7 @@ package org.planit.osm.util;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -21,14 +22,7 @@ public class OsmRoadModeCategoryTags {
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(OsmRoadModeCategoryTags.class.getCanonicalName());  
-  
-  /** initialise the grouping of modes to categories as it is currently outlined on 
-   * https://wiki.openstreetmap.org/wiki/Key:access */
-  static {
-    populateModesByCategory();
-    populateCategoriesByMode();   
-  }  
+  private static final Logger LOGGER = Logger.getLogger(OsmRoadModeCategoryTags.class.getCanonicalName());
   
   /**
    * track all modes by category
@@ -38,8 +32,15 @@ public class OsmRoadModeCategoryTags {
   /**
    * track all categories by modes
    */
-  private static final Map<String, Set<String> > osmMode2Categories = new HashMap<String, Set<String> >();
+  private static final Map<String, Set<String> > osmMode2Categories = new HashMap<String, Set<String> >();  
   
+  /** initialise the grouping of modes to categories as it is currently outlined on 
+   * https://wiki.openstreetmap.org/wiki/Key:access */
+  static {
+    populateModesByCategory();
+    populateCategoriesByMode();   
+  }  
+    
   /**
    * populate the modes by category
    */
@@ -98,12 +99,27 @@ public class OsmRoadModeCategoryTags {
    * populate the categories by mode
    */
   private static void populateCategoriesByMode() {
-    osmCategory2Modes.forEach( 
-        (category, modes) -> {
-          modes.forEach( 
-              mode -> osmMode2Categories.putIfAbsent(mode,new HashSet<String>()).add(category)
-          );
-        });
+    /* map<category, set<mode>> */
+    for(Entry<String,Set<String>> entry : osmCategory2Modes.entrySet()) {
+      String osmCategory = entry.getKey();
+      for(String osmMode: entry.getValue()) {
+        Set<String> osmCategories = null;
+        if(!osmMode2Categories.containsKey(osmMode)) {
+          osmCategories = new HashSet<String>();
+          osmMode2Categories.put(osmMode, osmCategories);
+        }else {
+          osmCategories = osmMode2Categories.get(osmMode);
+        }
+        osmCategories.add(osmCategory);
+      }
+    }
+//    osmCategory2Modes.forEach( 
+//        (category, modes) -> {
+//          if(modes != null) {
+//            modes.forEach( 
+//                mode -> osmMode2Categories.putIfAbsent(mode,new HashSet<String>()).add(category));
+//          }
+//        });
   }
  
   /** group indicating any vehicle type */

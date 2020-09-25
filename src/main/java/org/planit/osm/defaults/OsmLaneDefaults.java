@@ -19,7 +19,6 @@ public class OsmLaneDefaults implements Cloneable {
   /**
    * The logger for this class
    */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(OsmLaneDefaults.class.getCanonicalName());  
   
   /** store the defaults */

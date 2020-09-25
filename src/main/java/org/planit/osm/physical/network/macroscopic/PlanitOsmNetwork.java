@@ -638,17 +638,18 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
-        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> OsmHighwayTags.HIGHWAY, value -> value));
+        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
     Map<String,String> railwayKeyValueMap = 
-        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> OsmRailWayTags.RAILWAY, value -> value));
+        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
     Map<String,String> combinedWayMap = new HashMap<String,String>();
     combinedWayMap.putAll(highwayKeyValueMap);
     combinedWayMap.putAll(railwayKeyValueMap);    
     
     /* ------------------ FOR EACH SUPPORTED OSM WAY TYPE ----------------------------------------- */   
     for(Entry<String,String> entry : combinedWayMap.entrySet()) {
-      String osmWayKey = entry.getKey();
-      String osmWayValueToUse = entry.getValue();
+      /* osmway key is the value in the map, hence the swap */
+      String osmWayValueToUse = entry.getKey();
+      String osmWayKey = entry.getValue();      
            
       /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
       MacroscopicLinkSegmentType linkSegmentType = null;  

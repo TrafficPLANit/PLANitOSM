@@ -105,7 +105,7 @@ public class OsmModeAccessDefaults implements Cloneable {
   public void removeAllowedHighwayModeCategories(String highwayType, String... osmModeCategories) {
     if(OsmHighwayTags.isHighwayValueTag(highwayType)) {
       for(int index = 0; index < osmModeCategories.length ; ++index) {
-        if(OsmRoadModeCategoryTags.isRoadModeCategoryTag(osmModeCategories[index])){
+        if(allowedModeCategoriesByHighwayType.containsKey(highwayType) && OsmRoadModeCategoryTags.isRoadModeCategoryTag(osmModeCategories[index])){
           allowedModeCategoriesByHighwayType.get(highwayType).remove(osmModeCategories[index]); 
         }else {
           LOGGER.warning(String.format("unknown mode category tag %s, ignored when removing mode categories from allowed modes access defaults", osmModeCategories[index]));
@@ -128,6 +128,7 @@ public class OsmModeAccessDefaults implements Cloneable {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
         if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){
+          allowedModesByHighwayType.putIfAbsent(highwayType, new HashSet<String>());
           allowedModesByHighwayType.get(highwayType).add(osmModeValueTag); 
         }else if(OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
           /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can add an allowed rail mode to a highway type */
@@ -151,13 +152,15 @@ public class OsmModeAccessDefaults implements Cloneable {
     if(OsmHighwayTags.isHighwayValueTag(highwayType)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
-        if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){
-          allowedModesByHighwayType.get(highwayType).remove(osmModeValueTag); 
-        }else if(OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
-          /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can remove an allowed rail mode to a highway type */
-          allowedModeCategoriesByHighwayType.get(highwayType).add(osmModeValueTag); 
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from allowed modes access defaults", osmModes[index]));
+        if(allowedModesByHighwayType.containsKey(highwayType)) {
+          if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){
+            allowedModesByHighwayType.get(highwayType).remove(osmModeValueTag); 
+          }else if(OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
+            /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can remove an allowed rail mode to a highway type */
+            allowedModeCategoriesByHighwayType.get(highwayType).remove(osmModeValueTag); 
+          }else {
+            LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from allowed modes access defaults", osmModes[index]));
+          }
         }
       } 
     }else {
@@ -175,7 +178,8 @@ public class OsmModeAccessDefaults implements Cloneable {
     if(OsmRailWayTags.isRailwayValueTag(railwayType)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
-        if(OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
+        if( OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
+          allowedModesByRailwayType.putIfAbsent(railwayType, new HashSet<>());
           allowedModesByRailwayType.get(railwayType).add(osmModeValueTag); 
         }else {
           LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to allowed modes access defaults", osmModes[index]));
@@ -196,8 +200,8 @@ public class OsmModeAccessDefaults implements Cloneable {
     if(OsmRailWayTags.isRailwayValueTag(railwayType)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
-        if(OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
-          allowedModesByRailwayType.get(railwayType).add(osmModeValueTag); 
+        if(allowedModesByRailwayType.containsKey(railwayType) && OsmRailWayTags.isRailwayValueTag(osmModeValueTag)){
+          allowedModesByRailwayType.get(railwayType).remove(osmModeValueTag); 
         }else {
           LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from allowed modes access defaults", osmModes[index]));
         }
@@ -218,6 +222,7 @@ public class OsmModeAccessDefaults implements Cloneable {
     if(OsmHighwayTags.isHighwayValueTag(highwayType)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         if(OsmRoadModeTags.isRoadModeTag(osmModes[index])){
+          disallowedModesByHighwayType.putIfAbsent(highwayType, new HashSet<String>());
           disallowedModesByHighwayType.get(highwayType).add(osmModes[index]); 
         }else {
           LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to disallowed modes access defaults", osmModes[index]));
@@ -237,7 +242,7 @@ public class OsmModeAccessDefaults implements Cloneable {
   public void removeDisallowedHighwayModes(String highwayType, String... osmModes) {
     if(OsmHighwayTags.isHighwayValueTag(highwayType)) {
       for(int index = 0; index < osmModes.length ; ++index) {
-        if(OsmRoadModeTags.isRoadModeTag(osmModes[index])){
+        if(disallowedModesByHighwayType.containsKey(highwayType) && OsmRoadModeTags.isRoadModeTag(osmModes[index])){
           disallowedModesByHighwayType.get(highwayType).remove(osmModes[index]); 
         }else {
           LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from disallowed modes access defaults", osmModes[index]));
