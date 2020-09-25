@@ -500,29 +500,30 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * the link segment types that are activated for this instance
    */
   protected final Map<String, MacroscopicLinkSegmentType> createdOSMLinkSegmentTypes;
-  
-  /**
-   * create mode properties for the passed in link segment using the OSM way key and value information
-   * 
-   * @param linkSegmentType to populate mode properties for
-   * @param osmWayKey to use
-   * @param osmWayValue to use
-   * @param settings to draw configuration from
-   * @throws PlanItException thrown if error
+    
+  /** collect the PLANit mode that are mapped, i.e., are marked to be activated in the final network.
+   * @param osmWayKey to collect for
+   * @param osmWayValue to collect for
+   * @param settings to collect from
+   * @return mappedPLANitModes, empty if no modes are mapped
    */
-  private void populateOsmCompatibleModeProperties(MacroscopicLinkSegmentType linkSegmentType, final String osmWayKey, final String osmWayValue, final PlanitOsmSettings settings) throws PlanItException {
-
-    /* find allowed OSM modes for this highway type, construct the mapped PLANit modes and properties for them */
+  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmSettings settings) {
     OsmModeAccessDefaults modeAccessconfiguration = settings.getModeAccessConfiguration();
     Collection<String> allowedOsmModes =  modeAccessconfiguration.collectAllowedModes(osmWayKey, osmWayValue);
-    Collection<Mode> allowedPlanitModes = settings.collectMappedPlanitModes(allowedOsmModes);
-      
-    /* determine the speed restriction for the mode on the given highway type */      
-    for(Mode planitMode : allowedPlanitModes) {
-      double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimit(osmWayKey, osmWayValue);
-      linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(osmHighwayTypeMaxSpeed,osmHighwayTypeMaxSpeed));
-    }                 
-    
+    return settings.collectMappedPlanitModes(allowedOsmModes);
+  }  
+  
+  /** populate the mode properties for the allowed modes
+   * @param linkSegmentType to populate for
+   * @param activatedPlanitModes to add
+   * @param osmWayTypeMaxSpeed maxSpeed to set 
+   */
+  protected void populateLinkSegmentTypeModeProperties(MacroscopicLinkSegmentType linkSegmentType, Collection<Mode> activatedPlanitModes, double osmWayTypeMaxSpeed) {
+    /* apply the way type's maximum speed to all modes, but for clarity already cap it to the mode's max speed if needed */
+    for(Mode planitMode : activatedPlanitModes) {          
+      double cappedMaxSpeed = Math.min(osmWayTypeMaxSpeed, planitMode.getMaximumSpeed());
+      linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(cappedMaxSpeed,cappedMaxSpeed));
+    }
   }  
   
   /**
@@ -536,7 +537,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     MacroscopicLinkSegmentType linkSegmentType = null; 
     
     /* only when way type is marked as supported in settings we parse it */
-    if(settings.isOsmWayTypeSupported(OsmHighwayTags.HIGHWAY, osmWayValue)) {
+    if(settings.isOsmWayTypeSupported(OsmHighwayTags.HIGHWAY, osmWayValue)) {           
       
       boolean isOverwrite = settings.isOsmHighwayTypeDefaultOverwritten(osmWayValue);
       boolean isBackupDefault = false;          
@@ -554,20 +555,31 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       /* when valid osm value is found that not yet has been registered, continue */
       if(osmWayValueToUse != null && createdOSMLinkSegmentTypes.containsKey(osmWayValueToUse)) {
         
-        /* create the planit link segment type based on OSM tag */
-        if(isOverwrite) {
-          /* type is overwritten, so use overwritten data instead of defaults */
-          final Pair<Double,Double> capacityDensityPair = settings.getOsmHighwayTypeOverwrite(osmWayValue);
-          linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+        /* Only when one or more OSM modes are mapped to PLANit modes, the osm way type will be used, otherwise it is ignored */
+        Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(OsmHighwayTags.HIGHWAY, osmWayValueToUse, settings);          
+        if(!activatedPlanitModes.isEmpty()) {
+
+          /* create the planit link segment type based on OSM tag */
+          if(isOverwrite) {
+            /* type is overwritten, so use overwritten data instead of defaults */
+            final Pair<Double,Double> capacityDensityPair = settings.getOsmHighwayTypeOverwrite(osmWayValueToUse);
+            linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+          }else {
+            /* use default link segment type values */
+            linkSegmentType = createOsmLinkSegmentType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);            
+          }
+          
+          /* mode properties */
+          double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);
+          populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);     
+          
+          LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
+              isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
+          
         }else {
-          linkSegmentType = createOsmLinkSegmentType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);            
+          LOGGER.warning(String.format("highway:%s is supported but none of the default modes are mapped, type ignored", osmWayValueToUse));
         }
-        
-        populateOsmCompatibleModeProperties(linkSegmentType, OsmHighwayTags.HIGHWAY, osmWayValueToUse, settings);    
-        
-        LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
-            isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
-        
+                 
       }else {
         /* ... not supported and no replacement available skip type entirely*/
         LOGGER.info(String.format(
@@ -576,7 +588,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     }
     return linkSegmentType;
   }
-  
+ 
+
   /**
    *  create the rail based link segment type based on the setting
    * @param osmWayValue to use
@@ -590,14 +603,21 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     /* only when way type is marked as supported in settings we parse it */
     if(settings.isOsmWayTypeSupported(OsmRailWayTags.RAILWAY, osmWayValue)) {
       
-      /* create the PLANit link segment type based on OSM way tag */
-      linkSegmentType = createOsmLinkSegmentType(OsmRailWayTags.RAILWAY, osmWayValue);
-      
-      populateOsmCompatibleModeProperties(linkSegmentType, OsmRailWayTags.RAILWAY, osmWayValue, settings);                         
+      Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(OsmRailWayTags.RAILWAY, osmWayValue, settings);
+      if(!activatedPlanitModes.isEmpty()) {
         
-      LOGGER.info(String.format("%s railway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
-          "[DEFAULT]", osmWayValue, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
-
+        /* create the PLANit link segment type based on OSM way tag */
+        linkSegmentType = createOsmLinkSegmentType(OsmRailWayTags.RAILWAY, osmWayValue);
+        
+        /* mode properties */
+        double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmRailWayTags.RAILWAY, osmWayValue);
+        populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);                              
+          
+        LOGGER.info(String.format("[DEFAULT] railway:%s", osmWayValue));
+        
+      }else {
+        LOGGER.warning(String.format("railway:%s is supported but none of the default modes are mapped, type ignored", osmWayValue));
+      }
     }
     else {
         /* ... not supported and no replacement available skip type entirely*/
@@ -634,20 +654,22 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       MacroscopicLinkSegmentType linkSegmentType = null;  
 
       
-      if(OsmHighwayTags.isHighwayTag(osmWayValueToUse)) {
+      if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isHighwayValueTag(osmWayValueToUse)) {
         linkSegmentType = createOsmCompatibleRoadLinkSegmentType(osmWayValueToUse, settings);
-      }else if(OsmRailWayTags.isRailWayTag(osmWayValueToUse)) {             
+      }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailwayValueTag(osmWayValueToUse)) {             
         linkSegmentType = createOsmCompatibleRailLinkSegmentType(osmWayValueToUse, settings);
       }else {
-        
+        LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));
       }
       /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
       
-     
-      
-      /* create, register, and also store by osm tag */
-      createdOSMLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);
-            
+      if(linkSegmentType == null) {
+        LOGGER.warning(String.format("unable to create osm compatible PLANit link segment type for key:value combination %s:%s, ignored",osmWayKey, osmWayValueToUse));
+      }else {
+        /* create, register, and also store by osm tag */
+        createdOSMLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);        
+      }
+                  
     }
     /* ------------------ FOR EACH OSM HIGHWAY TYPE ----------------------------------------- */    
   }

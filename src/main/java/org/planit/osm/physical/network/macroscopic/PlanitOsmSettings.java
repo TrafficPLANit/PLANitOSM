@@ -609,20 +609,40 @@ public class PlanitOsmSettings {
     return this.laneConfiguration;
   }  
 
-  /** Collect the speed limit for a given highway tag value, e.g. highway=type, based on the defaults provided (typically set by country)
+  /** Collect the speed limit for a given highway or railway tag value, e.g. railway=typeValue, highway=typeValue, based on the defaults provided (typically set by country)
    * 
-   * @param osmWaykey way key to collect default speed limit for the wayValue for
+   * @param osmWaykey way key to collect default speed limit for the wayValue for (highway, railway)
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
    * @throws PlanItException thrown if error
    */
-  public double getDefaultSpeedLimitByHighwayType(String osmWayKey, String osmWayValue) throws PlanItException {
+  public double getDefaultSpeedLimitByOsmWayType(String osmWayKey, String osmWayValue) throws PlanItException {
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       return speedLimitConfiguration.getHighwaySpeedLimit(osmWayValue, !isSpeedLimitDefaultsBasedOnUrbanArea());
     }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey)){
       return speedLimitConfiguration.getRailwaySpeedLimit(osmWayValue);
+    }else {
+      throw new PlanItException(String.format("unknown osmWayKey %s provided", osmWayKey));
     }
   }
+  
+  /** Collect the default speed limit for a given highway or railway tag value, where we extract the key and value from the passed in tags, if available
+   * 
+   * @param tags to extract way key value pair from (highway,railway keys currently supported)
+   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
+   * @throws PlanItException thrown if error
+   */  
+  public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags) throws PlanItException {
+    String osmWayKey = null;
+    if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
+      osmWayKey = OsmHighwayTags.HIGHWAY;
+    }else if(tags.containsKey(OsmRailWayTags.RAILWAY)){
+      osmWayKey = OsmHighwayTags.HIGHWAY;      
+    }else {
+      throw new PlanItException("no osmWay key that is currently supported contained in provided osmTags when collecting default speed limit by OsmWayType");
+    }
+    return getDefaultSpeedLimitByOsmWayType(osmWayKey,tags.get(osmWayKey));
+  }  
 
   /** Collect the number of lanes for a given highway tag value for either direction (not total), e.g. highway=type, based on the defaults provided
    * 
@@ -726,6 +746,6 @@ public class PlanitOsmSettings {
     }
     return mappedPlanitModes;
   }
- 
+
 
 }

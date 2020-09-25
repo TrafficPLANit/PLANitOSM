@@ -34,6 +34,9 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   /** country name set to this string when global defaults are applied */ 
   public static final String GLOBAL = "global";
   
+  /** in absence of OSM defined defaults, we make a global rail way speed limit (km/h) available */
+  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
+  
   /**
    * Default constructor
    */

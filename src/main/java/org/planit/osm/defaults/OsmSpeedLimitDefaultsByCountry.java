@@ -5,18 +5,22 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.util.OsmRailWayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
 
 /**
  * Convenience class for quickly collecting the speed limits for various countries, where possible
- * based on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed.
+ * based on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed (highway types)
  * 
  * Note that a distinction is made between inside or outside a place, which refers to the road being
  * inside or outside an urban area. this signficantly impacts the speed limit.
  * 
  * Unfortunately, the link cannot judge if it is inside or outside. So, we leave it to the user
  * of this class to indicate which of the two values should be used (if there are two available).
+ * 
+ * Lastly, railway speed limits are not known in OSM, so we use a global default for all types, which the user
+ * may override if required. Also no distinction is made between insode or outside an urban area.
  * 
  * @author markr
  *
@@ -30,10 +34,8 @@ public class OsmSpeedLimitDefaultsByCountry {
   
   /* initialise */
   static {    
-    try {
-      TODO --> ADD RAILWAY DEFAULTS!
-      
-      populateDefaultSpeedLimits();
+    try {     
+      populateGlobalSpeedLimits();
     
       populateAustralianSpeedLimits();
       
@@ -49,11 +51,12 @@ public class OsmSpeedLimitDefaultsByCountry {
   protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountry = new HashMap<String, OsmSpeedLimitDefaults>();
         
   /**
-   * populate the global defaults in case the country is not available, or in case the road type for that country is not available
+   * populate the global defaults for highway types in case the country is not available, or in case the road type for that country is not available
+   * 
+   * @param globalSpeedLimits to populate
    * @throws PlanItException thrown if error
    */
-  protected static void populateDefaultSpeedLimits() throws PlanItException {
-    OsmSpeedLimitDefaults globalSpeedLimits = new OsmSpeedLimitDefaults();
+  protected static void populateGlobalDefaultHighwaySpeedLimits(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {
     
     /* GLOBAL -->                                                          URBAN,  NON_URBAN */
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,        100,  120);
@@ -73,9 +76,52 @@ public class OsmSpeedLimitDefaultsByCountry {
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRACK,           20,   40);
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.ROAD,            20,   40);
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SERVICE,         20,   40);    
-    
-    setGlobalDefaults(globalSpeedLimits);
   }  
+  
+  /**
+   * populate the defaults for railway types for given country (or global)
+   * 
+   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for all modes. This can overridden by the user if required 
+   * 
+   * 
+   * @param speedLimitsToPopulate to populate
+   * @throws PlanItException thrown if error
+   */  
+  protected static void populateDefaultRailwaySpeedLimits(OsmSpeedLimitDefaults speedLimitsToPopulate) {
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.FUNICULAR,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.LIGHT_RAIL,    OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.MONO_RAIL,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.NARROW_GAUGE,  OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.RAIL,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.SUBWAY,        OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.TRAM,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);   
+  }  
+  
+  /**
+   * populate the global defaults for railway types in case the country is not available, or in case the railway type for that country is not available.
+   * 
+   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for all modes. This can overridden by the user if required 
+   * 
+   * 
+   * @param globalSpeedLimits to populate
+   * @throws PlanItException thrown if error
+   */
+  protected static void populateGlobalDefaultRailwaySpeedLimits(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {        
+    /* GLOBAL */    
+    populateDefaultRailwaySpeedLimits(globalSpeedLimits);    
+  }   
+  
+  /**
+   * populate the global defaults for highway/railway types
+   * 
+   * @throws PlanItException thrown if error
+   */
+  protected static void populateGlobalSpeedLimits() throws PlanItException {
+    OsmSpeedLimitDefaults globalSpeedLimits = new OsmSpeedLimitDefaults();
+    populateGlobalDefaultHighwaySpeedLimits(globalSpeedLimits);
+    populateGlobalDefaultRailwaySpeedLimits(globalSpeedLimits);
+    setGlobalDefaults(globalSpeedLimits);
+  }   
   
   /**
    * populate the defaults for Australia
@@ -84,22 +130,27 @@ public class OsmSpeedLimitDefaultsByCountry {
   protected static void populateAustralianSpeedLimits() throws PlanItException {
     OsmSpeedLimitDefaults ausSpeedLimitDefaults = new OsmSpeedLimitDefaults();
     
-    /* AUSTRALIA  -->                                           URBAN,  NON_URBAN */
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100, 100);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80,  80);    
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK,            60,  100);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60,  60);    
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY,          60,  80);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60,  60);    
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY,        60,  80);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60,  60);    
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY,         50,  80);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    50,  60);    
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     50,  80);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      50,  80);
-    ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20,  20);
-        
-    setDefaultsByCountry("Australia", ausSpeedLimitDefaults);
+    /* AUSTRALIA */ 
+    {
+      /*        HIGHWAY -->                                                           URBAN,  NON_URBAN */
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100, 100);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80,  80);    
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK,            60,  100);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60,  60);    
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY,          60,  80);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60,  60);    
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY,        60,  80);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60,  60);    
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY,         50,  80);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    50,  60);    
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     50,  80);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      50,  80);
+      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20,  20);
+      /*        RAILWAY */
+      populateDefaultRailwaySpeedLimits(ausSpeedLimitDefaults); 
+      /*        REGISTER */    
+      setDefaultsByCountry("Australia", ausSpeedLimitDefaults);      
+    }
   }
   
   /** TODO: Add more countries *

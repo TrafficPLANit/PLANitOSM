@@ -126,7 +126,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }else
     {
       /* no speed limit information, revert to defaults */
-      speedLimitAbKmh = settings.getDefaultSpeedLimitByHighwayType(tags.get(OsmHighwayTags.HIGHWAY));
+      speedLimitAbKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
       speedLimitBaKmh = speedLimitAbKmh;
       profiler.incrementMissingSpeedLimitCounter();
     }
@@ -391,6 +391,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     MacroscopicLinkSegmentType linkSegmentType = null;
     String osmTypeValueToUse = null;
     String osmTypeKeyToUse = null;
+    
+    /* highway (road) or railway (rail) */
     if (tags.containsKey(OsmHighwayTags.HIGHWAY)) {
       osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;        
     }else if(tags.containsKey(OsmRailWayTags.RAILWAY)) {
