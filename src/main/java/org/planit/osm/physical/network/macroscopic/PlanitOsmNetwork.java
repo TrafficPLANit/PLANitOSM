@@ -583,7 +583,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       }else {
         /* ... not supported and no replacement available skip type entirely*/
         LOGGER.info(String.format(
-            "Highway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing %s", osmWayValue));
+            "Highway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing", osmWayValue));
       }     
     }
     return linkSegmentType;
@@ -640,7 +640,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<String,String> highwayKeyValueMap = 
         settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
     Map<String,String> railwayKeyValueMap = 
-        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
+        settings.supportedOsmRailLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
     Map<String,String> combinedWayMap = new HashMap<String,String>();
     combinedWayMap.putAll(highwayKeyValueMap);
     combinedWayMap.putAll(railwayKeyValueMap);    
