@@ -543,38 +543,43 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       boolean isBackupDefault = false;          
       
         
-      String osmWayValueToUse = null;
-      if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue) && settings.hasOSMHighwayTypeWhenUnsupported()){
-        /* ...use replacement type instead of activate type to still be able to process OSM ways of this type */
-        osmWayValueToUse = settings.getOSMHighwayTypeWhenUnsupported();
+      String osmWayValueToUse = osmWayValue;
+      if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue)){
+        /* ...use replacement type instead of activate type to still be able to process OSM ways of this type, if no replacement is set, we revert to null to indicate we cannot support this way type */
+        osmWayValueToUse = settings.hasOSMHighwayTypeWhenUnsupported() ? settings.getOSMHighwayTypeWhenUnsupported() : null ;
         isBackupDefault = true;
         LOGGER.info(String.format(
             "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
       }
       
-      /* when valid osm value is found that not yet has been registered, continue */
-      if(osmWayValueToUse != null && createdOSMLinkSegmentTypes.containsKey(osmWayValueToUse)) {
+      /* when valid osm value is found continue */
+      if(osmWayValueToUse != null) {
+        /* when way value has not been registered yet,duplicates may occur when way value is replaced with default when not supported */ 
+        if(!createdOSMLinkSegmentTypes.containsKey(osmWayValueToUse)) {
         
-        /* Only when one or more OSM modes are mapped to PLANit modes, the osm way type will be used, otherwise it is ignored */
-        Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(OsmHighwayTags.HIGHWAY, osmWayValueToUse, settings);          
-        if(!activatedPlanitModes.isEmpty()) {
-
-          /* create the planit link segment type based on OSM tag */
-          if(isOverwrite) {
-            /* type is overwritten, so use overwritten data instead of defaults */
-            final Pair<Double,Double> capacityDensityPair = settings.getOsmHighwayTypeOverwrite(osmWayValueToUse);
-            linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+          /* Only when one or more OSM modes are mapped to PLANit modes, the osm way type will be used, otherwise it is ignored */
+          Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(OsmHighwayTags.HIGHWAY, osmWayValueToUse, settings);          
+          if(!activatedPlanitModes.isEmpty()) {
+  
+            /* create the planit link segment type based on OSM tag */
+            if(isOverwrite) {
+              /* type is overwritten, so use overwritten data instead of defaults */
+              final Pair<Double,Double> capacityDensityPair = settings.getOsmHighwayTypeOverwrite(osmWayValueToUse);
+              linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+            }else {
+              /* use default link segment type values */
+              linkSegmentType = createOsmLinkSegmentType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);            
+            }
+            
+            /* mode properties */
+            double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);
+            populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);     
+            
+            LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
+                isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
           }else {
-            /* use default link segment type values */
-            linkSegmentType = createOsmLinkSegmentType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);            
+            linkSegmentType = createdOSMLinkSegmentTypes.get(osmWayValueToUse);
           }
-          
-          /* mode properties */
-          double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);
-          populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);     
-          
-          LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
-              isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
           
         }else {
           LOGGER.warning(String.format("highway:%s is supported but none of the default modes are mapped, type ignored", osmWayValueToUse));

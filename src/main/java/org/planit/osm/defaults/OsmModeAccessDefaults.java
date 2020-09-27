@@ -270,13 +270,21 @@ public class OsmModeAccessDefaults implements Cloneable {
         /* first verify if it is explicitly NOT allowed */
         if(disallowedModesByHighwayType.containsKey(osmWayValue) && disallowedModesByHighwayType.get(osmWayValue).contains(osmMode)) {
           isAllowed = Boolean.FALSE;
-        }else if( allowedModesByHighwayType.containsKey(osmWayValue) && allowedModeCategoriesByHighwayType.get(osmWayValue).contains(osmMode)){
-          /* verify if it is explicitly allowed */
-          isAllowed = Boolean.TRUE;
-        }else if( allowedModeCategoriesByHighwayType.containsKey(osmWayValue) && 
-            !Collections.disjoint(OsmRoadModeCategoryTags.getRoadModeCategoriesByMode(osmMode), allowedModeCategoriesByHighwayType.get(osmWayValue))) {
-          /* verify if any of the categories the mode belongs to is explicitly allowed*/
-          isAllowed = Boolean.TRUE;
+        }else if( allowedModesByHighwayType.containsKey(osmWayValue)) {
+          if(allowedModeCategoriesByHighwayType.get(osmWayValue).contains(osmMode)){
+            /* verify if it is explicitly allowed */
+            isAllowed = Boolean.TRUE;            
+          }else {
+            Set<String> roadModeCategoriesOfMode = OsmRoadModeCategoryTags.getRoadModeCategoriesByMode(osmMode);
+            Set<String> allowedRoadModeCategoriesOfHighwayType = allowedModeCategoriesByHighwayType.get(osmWayValue);
+            if(roadModeCategoriesOfMode != null && allowedRoadModeCategoriesOfHighwayType != null) {
+              /* verify if any of the categories the mode belongs to is explicitly allowed*/
+              isAllowed = !Collections.disjoint(OsmRoadModeCategoryTags.getRoadModeCategoriesByMode(osmMode), allowedModeCategoriesByHighwayType.get(osmWayValue));
+            }else {
+              /* either highway type or mode belongs to category with no allowed modes, or does not belong to a category at all */
+              isAllowed = Boolean.FALSE;    
+            }
+          }
         }else {
           /* mode is never explicitly allowed or disallowed for this highway type, then we assume it is not allowed */
           isAllowed = Boolean.FALSE;

@@ -185,7 +185,13 @@ public class OsmModeAccessDefaultsByCountry {
     
     /* FUNICULAR */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmRailWayTags.FUNICULAR, OsmRailWayTags.FUNICULAR);      
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.FUNICULAR, OsmRailWayTags.FUNICULAR);
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.LIGHT_RAIL, OsmRailWayTags.LIGHT_RAIL);
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.MONO_RAIL, OsmRailWayTags.MONO_RAIL);
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.NARROW_GAUGE, OsmRailWayTags.NARROW_GAUGE);
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.RAIL, OsmRailWayTags.RAIL);
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.SUBWAY, OsmRailWayTags.SUBWAY);
+      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.TRAM, OsmRailWayTags.TRAM);
     }
     
     
