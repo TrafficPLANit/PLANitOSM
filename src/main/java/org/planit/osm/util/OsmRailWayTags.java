@@ -36,8 +36,14 @@ public class OsmRailWayTags {
   /* key */
   public static final String RAILWAY = "railway";
   
-  /* values */
+  /* values of types of railways */
   
+  public static final String ABANDONED = "abandoned";
+  
+  public static final String CONSTRUCTION = "construction";
+  
+  public static final String DISUSED = "disused";
+    
   public static final String FUNICULAR = "funicular";
   
   public static final String LIGHT_RAIL = "light_rail";
@@ -46,12 +52,18 @@ public class OsmRailWayTags {
    
   public static final String NARROW_GAUGE = "narrow_gauge";
   
+  public static final String PRESERVED = "preserved";  
+  
   public static final String RAIL = "rail";
   
   public static final String SUBWAY = "subway";
   
   public static final String TRAM = "tram";  
   
+  /* other railway values that do not reflect a railway but are used as a way in combination with the railway key */
+  
+  /* a platform is a separate (disconnected) way to indicate a platform */
+  public static final String PLATFORM = "platform";      
 
   /** verify if passed in tag is indeed a railway value tag
    * @param railwayTag to verify

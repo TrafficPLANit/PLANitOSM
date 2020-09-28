@@ -15,6 +15,7 @@ import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmLaneTags;
+import org.planit.osm.util.OsmRailFeatureTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.PlanitOsmUtils;
@@ -75,9 +76,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */  
   private void logUnsupportedOsmWayTypes() {
     settings.unsupportedOsmRoadLinkSegmentTypes.forEach( 
-        osmTag -> LOGGER.info(String.format("highway:%s DEACTIVATED", osmTag)));
+        osmTag -> LOGGER.info(String.format("[DEACTIVATED] highway:%s", osmTag)));
     settings.unsupportedOsmRailLinkSegmentTypes.forEach( 
-        osmTag -> LOGGER.info(String.format("railway:%s DEACTIVATED", osmTag)));    
+        osmTag -> LOGGER.info(String.format("[DEACTIVATED] railway:%s", osmTag)));    
   }         
   
   /**
@@ -160,32 +161,43 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     Integer lanesAb = null;
     Integer lanesBa = null;    
 
-    /* collect total and direction specific lane information */
-    if(tags.containsKey(OsmLaneTags.LANES)) {
-      totalLanes = Integer.parseInt(tags.get(OsmLaneTags.LANES));
-    }    
-    if(tags.containsKey(OsmLaneTags.LANES_FORWARD)) {
-      lanesAb = Integer.parseInt(tags.get(OsmLaneTags.LANES_FORWARD));
-    }
-    if(tags.containsKey(OsmLaneTags.LANES_BACKWARD)) {
-      lanesBa = Integer.parseInt(tags.get(OsmLaneTags.LANES_BACKWARD));
-    }
-    
-    if( totalLanes!=null && lanesAb==null && lanesBa==null) {
-        /* in case of one way link, total lanes = directional lanes, enforce this if explicit tag is missing */
-      if(direction.isOneWay()) {
-        lanesBa = direction.isReverseDirection() ? totalLanes : null;
-        lanesAb = direction.isReverseDirection() ? null : totalLanes;
-      }else if(totalLanes%2==0) {
-        /* two directions, with equal number of lanes does not require directional tags, simply split in two */
-        lanesBa = totalLanes/2;
-        lanesAb = lanesBa;
-      } 
+    /* collect total and direction specific road based lane information */
+    String osmWayKey = null;
+    if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
+      osmWayKey = OsmHighwayTags.HIGHWAY;
+      
+      if(tags.containsKey(OsmLaneTags.LANES)) {
+        totalLanes = Integer.parseInt(tags.get(OsmLaneTags.LANES));
+      }    
+      if(tags.containsKey(OsmLaneTags.LANES_FORWARD)) {
+        lanesAb = Integer.parseInt(tags.get(OsmLaneTags.LANES_FORWARD));
+      }
+      if(tags.containsKey(OsmLaneTags.LANES_BACKWARD)) {
+        lanesBa = Integer.parseInt(tags.get(OsmLaneTags.LANES_BACKWARD));
+      }
+      
+      if( totalLanes!=null && lanesAb==null && lanesBa==null) {
+          /* in case of one way link, total lanes = directional lanes, enforce this if explicit tag is missing */
+        if(direction.isOneWay()) {
+          lanesBa = direction.isReverseDirection() ? totalLanes : null;
+          lanesAb = direction.isReverseDirection() ? null : totalLanes;
+        }else if(totalLanes%2==0) {
+          /* two directions, with equal number of lanes does not require directional tags, simply split in two */
+          lanesBa = totalLanes/2;
+          lanesAb = lanesBa;
+        } 
+      }
+    /* convert number of tracks to lanes */
+    }else if(tags.containsKey(OsmRailWayTags.RAILWAY)) {
+      osmWayKey = OsmRailWayTags.RAILWAY;
+      if(tags.containsKey(OsmRailFeatureTags.TRACKS)) {
+        totalLanes = Integer.parseInt(tags.get(OsmRailFeatureTags.TRACKS));
+      }   
     }
     
     /* we assume that only when both are not set something went wrong, otherwise it is assumed it is a one-way link and it is properly configured */
     if(lanesAb==null && lanesBa==null) {
-      lanesAb = settings.getDefaultDirectionalLanesByHighwayType(tags.get(OsmHighwayTags.HIGHWAY));
+      lanesAb = settings.getDefaultDirectionalLanesByWayType(osmWayKey, tags.get(osmWayKey));
       lanesBa = lanesAb;
       profiler.incrementMissingLaneCounter();
     }
@@ -400,10 +412,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }
     
     if(osmTypeKeyToUse != null) {  
-      osmTypeValueToUse = tags.get(osmTypeKeyToUse);
-      profiler.incrementOsmTagCounter(osmTypeValueToUse);            
+      osmTypeValueToUse = tags.get(osmTypeKeyToUse);           
       linkSegmentType = network.getSegmentTypeByOsmTag(osmTypeValueToUse);            
       if(linkSegmentType != null) {
+        profiler.incrementOsmTagCounter(osmTypeValueToUse);        
         return linkSegmentType;
       }
       

@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 
 import org.planit.network.physical.macroscopic.MacroscopicModePropertiesFactory;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
-import org.planit.osm.defaults.OsmModeAccessDefaults;
-import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.PlanitOsmConstants;
@@ -508,8 +506,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return mappedPLANitModes, empty if no modes are mapped
    */
   protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmSettings settings) {
-    OsmModeAccessDefaults modeAccessconfiguration = settings.getModeAccessConfiguration();
-    Collection<String> allowedOsmModes =  modeAccessconfiguration.collectAllowedModes(osmWayKey, osmWayValue);
+    Collection<String> allowedOsmModes =  settings.getModeAccessConfiguration().collectAllowedModes(osmWayKey, osmWayValue);
     return settings.collectMappedPlanitModes(allowedOsmModes);
   }  
   
@@ -575,8 +572,10 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
             double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);
             populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);     
             
-            LOGGER.info(String.format("%s %s highway:%s - capacity: %.2f (pcu/lane/h) max density %.2f (pcu/km/lane", 
-                isOverwrite ? "[OVERWRITE]" : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
+            /** convert to comma separated string by mode name */
+            String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
+            LOGGER.info(String.format("%s%s highway:%s - modes: %s speed: %.2f (km/h) capacity: %.2f (pcu/lane/h), max density %.2f (pcu/km/lane)", 
+                isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
           }else {
             linkSegmentType = createdOSMLinkSegmentTypes.get(osmWayValueToUse);
           }
@@ -618,7 +617,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmRailWayTags.RAILWAY, osmWayValue);
         populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);                              
           
-        LOGGER.info(String.format("[DEFAULT] railway:%s", osmWayValue));
+        String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
+        LOGGER.info(String.format("[DEFAULT] railway:%s - modes: %s speed: %s (km/h)", osmWayValue, csvModeString, osmHighwayTypeMaxSpeed));
         
       }else {
         LOGGER.warning(String.format("railway:%s is supported but none of the default modes are mapped, type ignored", osmWayValue));

@@ -1,6 +1,5 @@
 package org.planit.osm.defaults;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -11,11 +10,19 @@ import org.planit.osm.util.OsmRoadModeCategoryTags;
 import org.planit.osm.util.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
-import org.planit.utils.mode.Mode;
 
 /**
  * The defaults for the mode access in case no specific restrictions are indicated on the highway=type way.
  * Based on the information provided on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
+ * <p>
+ * Note: not all highway types have defaults following the references wiki page. Those missing types are listed below with the assigned defaults based on
+ * PLANit's own rules:
+ * <ul>
+ * <li>highway:service, same as road</li>
+ * <li>track, same as road</li>
+ * </ul>
+ * </ul>
+ * </p>
  * 
  * @author markr
  *
@@ -67,15 +74,15 @@ public class OsmModeAccessDefaultsByCountry {
     
     /* MOTORWAY */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories( OsmHighwayTags.MOTORWAY, OsmRoadModeCategoryTags.MOTOR_VEHICLE);
-      globalAllowedModeAccessDefaults.addDisallowedHighwayModes(
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories( OsmHighwayTags.MOTORWAY, OsmRoadModeCategoryTags.MOTOR_VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultDisallowedHighwayModes(
           OsmHighwayTags.MOTORWAY, OsmRoadModeTags.MOPED, OsmRoadModeTags.MOFA, OsmRoadModeTags.ATV, OsmRoadModeTags.GOLF_CART);      
     }  
     
     /* MOTORWAY_LINK */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories( OsmHighwayTags.MOTORWAY_LINK, OsmRoadModeCategoryTags.MOTOR_VEHICLE);
-      globalAllowedModeAccessDefaults.addDisallowedHighwayModes(
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories( OsmHighwayTags.MOTORWAY_LINK, OsmRoadModeCategoryTags.MOTOR_VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultDisallowedHighwayModes(
           OsmHighwayTags.MOTORWAY_LINK, OsmRoadModeTags.MOPED, OsmRoadModeTags.MOFA, OsmRoadModeTags.ATV, OsmRoadModeTags.GOLF_CART);      
     }  
     
@@ -87,94 +94,104 @@ public class OsmModeAccessDefaultsByCountry {
     
     /* TRUNK */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.TRUNK, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.TRUNK, OsmRoadModeTags.FOOT);      
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.TRUNK, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.TRUNK, OsmRoadModeTags.FOOT);      
     }      
     /* TRUNK_LINK */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.TRUNK_LINK, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.TRUNK_LINK, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.TRUNK_LINK, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.TRUNK_LINK, OsmRoadModeTags.FOOT);    
     }  
     /* PRIMARY */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.PRIMARY, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.PRIMARY, OsmRoadModeTags.FOOT);      
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.PRIMARY, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.PRIMARY, OsmRoadModeTags.FOOT);      
     }      
     /* PRIMARY_LINK */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.PRIMARY_LINK, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.PRIMARY_LINK, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.PRIMARY_LINK, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.PRIMARY_LINK, OsmRoadModeTags.FOOT);    
     }   
     /* SECONDARY */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.SECONDARY, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRoadModeTags.FOOT);      
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.SECONDARY, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRoadModeTags.FOOT);      
     }      
     /* SECONDARY_LINK */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.SECONDARY_LINK, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.SECONDARY_LINK, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.SECONDARY_LINK, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.SECONDARY_LINK, OsmRoadModeTags.FOOT);    
     }
     /* TERTIARY */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.TERTIARY, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.TERTIARY, OsmRoadModeTags.FOOT);      
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.TERTIARY, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.TERTIARY, OsmRoadModeTags.FOOT);      
     }      
     /* TERTIARY_LINK */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.TERTIARY_LINK, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.TERTIARY_LINK, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.TERTIARY_LINK, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.TERTIARY_LINK, OsmRoadModeTags.FOOT);    
     }
     /* UNCLASSIFIED */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.UNCLASSIFIED, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.UNCLASSIFIED, OsmRoadModeTags.FOOT);      
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.UNCLASSIFIED, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.UNCLASSIFIED, OsmRoadModeTags.FOOT);      
     }      
     /* RESIDENTIAL */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.RESIDENTIAL, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.RESIDENTIAL, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.RESIDENTIAL, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.RESIDENTIAL, OsmRoadModeTags.FOOT);    
     }
     /* LIVING_STREET */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.LIVING_STREET, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.LIVING_STREET, OsmRoadModeTags.FOOT);      
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.LIVING_STREET, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.LIVING_STREET, OsmRoadModeTags.FOOT);      
     }      
     /* ROAD */
     {
-      globalAllowedModeAccessDefaults.addAllowedHighwayModeCategories(OsmHighwayTags.ROAD, OsmRoadModeCategoryTags.VEHICLE);
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.ROAD, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.ROAD, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.ROAD, OsmRoadModeTags.FOOT);    
     }    
+    /* SERVICE */
+    {
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.SERVICE, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.SERVICE, OsmRoadModeTags.FOOT);    
+    }     
+    /* TRACK */
+    {
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModeCategories(OsmHighwayTags.TRACK, OsmRoadModeCategoryTags.VEHICLE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.TRACK, OsmRoadModeTags.FOOT);    
+    }     
     
     /* PEDESTRIAN */
     {
       /* pedestrian basically only allows foot based modes */
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.PEDESTRIAN, OsmRoadModeTags.FOOT,OsmRoadModeTags.DOG);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.PEDESTRIAN, OsmRoadModeTags.FOOT,OsmRoadModeTags.DOG);    
     }
     
     /* PATH */
     {
       /* a path only allows single track non_vehicular modes */
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.PATH, 
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.PATH, 
           OsmRoadModeTags.FOOT,OsmRoadModeTags.DOG, OsmRoadModeTags.HORSE, OsmRoadModeTags.BICYCLE);    
     }  
     
     /* BRIDLEWAY */
     {
       /* a bridleway is for horses */
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.BRIDLEWAY, OsmRoadModeTags.HORSE);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.BRIDLEWAY, OsmRoadModeTags.HORSE);    
     }
     
     /* CYCLEWAY*/
     {
       /* a cycleway is for bicycles */
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.CYCLEWAY, OsmRoadModeTags.BICYCLE);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.CYCLEWAY, OsmRoadModeTags.BICYCLE);    
     }
     
     /* FOOTWAY*/
     {
       /* same as pedestrian (only designated in SOM but we do not make this distinction */
-      globalAllowedModeAccessDefaults.addAllowedHighwayModes(OsmHighwayTags.FOOTWAY, OsmRoadModeTags.FOOT);    
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.FOOTWAY, OsmRoadModeTags.FOOT);    
     }         
   }
   
@@ -185,13 +202,13 @@ public class OsmModeAccessDefaultsByCountry {
     
     /* FUNICULAR */
     {
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.FUNICULAR, OsmRailWayTags.FUNICULAR);
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.LIGHT_RAIL, OsmRailWayTags.LIGHT_RAIL);
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.MONO_RAIL, OsmRailWayTags.MONO_RAIL);
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.NARROW_GAUGE, OsmRailWayTags.NARROW_GAUGE);
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.RAIL, OsmRailWayTags.RAIL);
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.SUBWAY, OsmRailWayTags.SUBWAY);
-      globalAllowedModeAccessDefaults.addAllowedRailwayModes(OsmRailWayTags.TRAM, OsmRailWayTags.TRAM);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.FUNICULAR, OsmRailWayTags.FUNICULAR);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.LIGHT_RAIL, OsmRailWayTags.LIGHT_RAIL);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.MONO_RAIL, OsmRailWayTags.MONO_RAIL);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.NARROW_GAUGE, OsmRailWayTags.NARROW_GAUGE);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.RAIL, OsmRailWayTags.RAIL);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.SUBWAY, OsmRailWayTags.SUBWAY);
+      globalAllowedModeAccessDefaults.addDefaultAllowedRailwayModes(OsmRailWayTags.TRAM, OsmRailWayTags.TRAM);
     }
     
     
@@ -219,9 +236,9 @@ public class OsmModeAccessDefaultsByCountry {
        * - bridleway has access to bicycle and foot
        * - cycleway has access to foot
        */    
-      australiaDefaults.addAllowedHighwayModes(OsmHighwayTags.PEDESTRIAN, OsmRoadModeTags.BICYCLE);
-      australiaDefaults.addAllowedHighwayModes(OsmHighwayTags.BRIDLEWAY, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.FOOT);
-      australiaDefaults.addAllowedHighwayModes(OsmHighwayTags.CYCLEWAY, OsmRoadModeTags.FOOT);
+      australiaDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.PEDESTRIAN, OsmRoadModeTags.BICYCLE);
+      australiaDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.BRIDLEWAY, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.FOOT);
+      australiaDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.CYCLEWAY, OsmRoadModeTags.FOOT);
       
       setDefaultsByCountry("Australia", australiaDefaults);    
     } catch (CloneNotSupportedException e) {
@@ -264,17 +281,5 @@ public class OsmModeAccessDefaultsByCountry {
     return theDefaults;       
   }  
 
-  
-  /** collect all PLANit modes that are allowed for any highway type. Note this method creates
-   * a new container every time it is invoked by searching the internal mode mapping settings.
-   * 
-   * TODO: 
-   * @param osmHighwayTypeToUse
-   * @return
-   */
-  public Map<String, Collection<Mode> > collectAllowedPlanitModesByHighwayType(String osmHighwayTypeToUse) {
-    // TODO Auto-generated method stub
-    return null;
-  }
-  
+    
 }

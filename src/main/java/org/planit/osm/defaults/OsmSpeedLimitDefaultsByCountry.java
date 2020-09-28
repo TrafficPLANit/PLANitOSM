@@ -12,15 +12,16 @@ import org.planit.utils.locale.LocaleUtils;
 /**
  * Convenience class for quickly collecting the speed limits for various countries, where possible
  * based on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed (highway types)
- * 
+ * <p>
  * Note that a distinction is made between inside or outside a place, which refers to the road being
  * inside or outside an urban area. this signficantly impacts the speed limit.
- * 
+ * </p><p>
  * Unfortunately, the link cannot judge if it is inside or outside. So, we leave it to the user
  * of this class to indicate which of the two values should be used (if there are two available).
- * 
- * Lastly, railway speed limits are not known in OSM, so we use a global default for all types, which the user
+ * </p><p>
+ * Note 1: railway speed limits are not known in OSM, so we use a global default for all types, which the user
  * may override if required. Also no distinction is made between insode or outside an urban area.
+ * </p>
  * 
  * @author markr
  *

@@ -12,6 +12,7 @@ import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.converter.PlanitOsmReader;
 import org.planit.osm.converter.PlanitOsmReaderFactory;
 import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.util.OsmRailWayTags;
 
 /**
  * basic *.osm and *.osm.pbf reader test
@@ -54,6 +55,9 @@ public class BasicOSMReaderTest {
       
       /* test out setting different defaults for the highway:primary type*/
       osmReader.getSettings().overwriteOsmHighwayTypeDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
+      
+      /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
+      osmReader.getSettings().getModeAccessConfiguration().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailWayTags.TRAM);
       
       /* parse geometry of links */
       osmReader.getSettings().setParseOsmWayGeometry(true);

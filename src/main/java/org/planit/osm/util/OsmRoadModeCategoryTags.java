@@ -61,6 +61,7 @@ public class OsmRoadModeCategoryTags {
     /** all motor vehicles */
     Set<String> motorVehicles = new HashSet<String>(publicServiceVehicles);
     {
+      motorVehicles.add(OsmRoadModeTags.MOTOR_CAR);
       /* single tracked */
       motorVehicles.add(OsmRoadModeTags.MOTOR_CYCLE);
       motorVehicles.add(OsmRoadModeTags.MOPED);
@@ -81,7 +82,7 @@ public class OsmRoadModeCategoryTags {
     }  
     osmCategory2Modes.put(MOTOR_VEHICLE, motorVehicles);    
     
-    /** all vehicles, train excluded*/
+    /** all vehicles*/
     Set<String> vehicles = new HashSet<String>(motorVehicles);
     {
       /* non-motorised single tracked */
@@ -170,9 +171,13 @@ public class OsmRoadModeCategoryTags {
   /** given the mode, find the related mode category
    * @param osmMode to get its categories for, null if not in a category
    */
-  public static Set<String> getRoadModeCategoriesByMode(String osmMode) {
+  public static Set<String> getRoadModeCategoriesByMode(String osmMode) {    
     if(!OsmRoadModeTags.isRoadModeTag(osmMode)) {
-      LOGGER.warning(String.format("mode %s is not a recognised OSM mode when obtaining its parent category, ignored", osmMode));
+      /* when rail mode, there are no categories, but if not, then the mode is invalid altogether */
+      if(!OsmRailWayTags.isRailwayValueTag(osmMode)) {
+        LOGGER.warning(String.format("mode %s is not a recognised OSM mode when obtaining its parent category, ignored", osmMode));
+      }
+      return null;
     } 
     return osmMode2Categories.get(osmMode);
   }   
