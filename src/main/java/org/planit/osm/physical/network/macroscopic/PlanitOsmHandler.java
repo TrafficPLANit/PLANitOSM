@@ -356,7 +356,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     if(!direction.isReverseDirection() && osmWay.getNodeId(0) == (long)link.getVertexB().getExternalId()) {
       directionAb = false;
     }
-        
+    
+    //TODO: process access restrictions + designated tags to activate/affirm foot,bicycle support
+    //      --> leads to (on-the-fly creation of) custom link segment type replacing the default link segment type
+    
     /* direction 1 */
     directionAb = direction.isReverseDirection() ? !directionAb : directionAb;
     extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentType, directionAb);
