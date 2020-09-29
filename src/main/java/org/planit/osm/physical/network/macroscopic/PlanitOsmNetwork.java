@@ -543,7 +543,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       String osmWayValueToUse = osmWayValue;
       if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue)){
         /* ...use replacement type instead of activate type to still be able to process OSM ways of this type, if no replacement is set, we revert to null to indicate we cannot support this way type */
-        osmWayValueToUse = settings.hasOSMHighwayTypeWhenUnsupported() ? settings.getOSMHighwayTypeWhenUnsupported() : null ;
+        osmWayValueToUse = settings.hasOSMHighwayTypeWhenUnsupported() ? settings.getOsmHighwayTypeWhenUnsupported() : null ;
         isBackupDefault = true;
         LOGGER.info(String.format(
             "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
@@ -659,23 +659,26 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
       MacroscopicLinkSegmentType linkSegmentType = null;  
 
-      
-      if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isHighwayValueTag(osmWayValueToUse)) {
-        linkSegmentType = createOsmCompatibleRoadLinkSegmentType(osmWayValueToUse, settings);
-      }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailwayValueTag(osmWayValueToUse)) {             
-        linkSegmentType = createOsmCompatibleRailLinkSegmentType(osmWayValueToUse, settings);
-      }else {
-        LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));
-      }
-      /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
-      
-      if(linkSegmentType == null) {
-        LOGGER.warning(String.format("unable to create osm compatible PLANit link segment type for key:value combination %s:%s, ignored",osmWayKey, osmWayValueToUse));
-      }else {
-        /* create, register, and also store by osm tag */
-        createdOSMLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);        
-      }
-                  
+      /* only create type when there are one or more activated modes for it */
+      Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(osmWayKey, osmWayValueToUse, settings);
+      if(activatedPlanitModes!=null && !activatedPlanitModes.isEmpty()) {
+        
+        if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isHighwayValueTag(osmWayValueToUse)) {         
+          linkSegmentType = createOsmCompatibleRoadLinkSegmentType(osmWayValueToUse, settings);
+        }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailwayValueTag(osmWayValueToUse)) {             
+          linkSegmentType = createOsmCompatibleRailLinkSegmentType(osmWayValueToUse, settings);
+        }else {
+          LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));
+        }
+        /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
+        
+        if(linkSegmentType == null) {
+          LOGGER.warning(String.format("unable to create osm compatible PLANit link segment type for key:value combination %s:%s, ignored",osmWayKey, osmWayValueToUse));
+        }else {
+          /* create, register, and also store by osm tag */
+          createdOSMLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);        
+        }
+      }                        
     }
     /* ------------------ FOR EACH OSM HIGHWAY TYPE ----------------------------------------- */    
   }

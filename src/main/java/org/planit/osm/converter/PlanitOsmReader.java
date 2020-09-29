@@ -1,6 +1,12 @@
 package org.planit.osm.converter;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.network.converter.NetworkReader;
@@ -9,7 +15,13 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.graph.Edge;
+import org.planit.utils.graph.Vertex;
 import org.planit.utils.misc.FileUtils;
+import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.physical.LinkSegment;
+import org.planit.utils.network.physical.Node;
+
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
 import de.topobyte.osm4j.pbf.seq.PbfReader;
@@ -69,6 +81,8 @@ public class PlanitOsmReader implements NetworkReader {
     return null;
   }
   
+
+
   /**
    * Constructor 
    * 
@@ -116,6 +130,11 @@ public class PlanitOsmReader implements NetworkReader {
     } catch (OsmInputException e) {
       LOGGER.severe(e.getMessage());
       throw new PlanItException("error during parsing of osm file",e);
+    }
+    
+    if(settings.isRemoveDanglingSubnetworks()) {
+      // CONTINUE HERE
+      osmNetwork.removeDanglingSubnetworks();
     }
     
     /* return result */

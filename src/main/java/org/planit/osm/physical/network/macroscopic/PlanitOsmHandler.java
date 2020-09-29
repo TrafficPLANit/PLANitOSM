@@ -2,6 +2,7 @@ package org.planit.osm.physical.network.macroscopic;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -461,8 +463,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     /* create the supported link segment types on the network */
     network.createOsmCompatibleLinkSegmentTypes(settings);
+    /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupport way types to avoid warnings during parsing */
+    settings.excludeOsmWayTypesWithoutActiveModes();
     logUnsupportedOsmWayTypes();
   }  
+
 
   @Override
   public void handle(OsmBounds bounds) throws IOException {

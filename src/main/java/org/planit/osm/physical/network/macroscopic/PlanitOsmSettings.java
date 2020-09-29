@@ -96,6 +96,12 @@ public class PlanitOsmSettings {
   /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area speed limits (or non-urban), default is true */
   protected boolean speedLimitDefaultsBasedOnUrbanArea = true;  
   
+  /** flag indicating if dangling subnetworks should be removed after parsing the network
+   * OSM network often have small roads that appear to be connected to larger roads, but in fact are not. 
+   * All subnetworks that are not part of the largest subnetwork that is parsed will be removed by default. 
+   * */
+  protected boolean removeDanglingSubNetworks = true;
+    
   /**
    * conduct general initialisation for any instance of this class
    * 
@@ -374,6 +380,26 @@ public class PlanitOsmSettings {
     unsupportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.CONSTRUCTION);
     unsupportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.DISUSED);
   }     
+  
+  /**
+   * explicitly exclude all osmWay type:value in case none of the passed in osmModes is marked as mapped
+   * 
+   * @param osmWayKey to check
+   * @param osmWayValue to check
+   * @param osmModes of which at least one should be active on the key:value pair
+   */
+  protected void excludeOsmWayTypesWithoutModes(String osmWayKey, String osmWayValue, Collection<String> osmModes) {
+    boolean hasMappedMode = false;
+    for(String osmMode : osmModes) {
+      if(hasMappedPlanitMode(osmMode)) {
+        hasMappedMode = true;
+        break;
+      }
+    }
+    if(!hasMappedMode) {
+      excludeOsmWayType(osmWayKey, osmWayValue);
+    } 
+  }   
     
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
@@ -424,7 +450,7 @@ public class PlanitOsmSettings {
    * @return chosen default
    * 
    **/
-  public final String getOSMHighwayTypeWhenUnsupported() {
+  public final String getOsmHighwayTypeWhenUnsupported() {
     return defaultOSMHighwayTypeWhenUnsupported;
   }
 
@@ -516,6 +542,24 @@ public class PlanitOsmSettings {
   }
   
   /**
+   * explicitly exclude all osmWay types that are included but have no more activated modes due to deactiavtoin of their default assigned modes.
+   * Doing so avoids the reader to log warnings that supported way types cannot be injected in the network because they
+   * have no viable modes attached
+   */
+  public void excludeOsmWayTypesWithoutActiveModes() {
+    Set<String> originallySupportedTypes = new HashSet<String>(supportedOsmRailLinkSegmentTypes);
+    for(String supportedRailWayType : originallySupportedTypes) {
+      Collection<String> allowedOsmModes = getModeAccessConfiguration().collectAllowedModes(OsmRailWayTags.RAILWAY, supportedRailWayType);
+      excludeOsmWayTypesWithoutModes(OsmRailWayTags.RAILWAY, supportedRailWayType, allowedOsmModes);      
+    }
+    originallySupportedTypes = new HashSet<String>(supportedOsmRoadLinkSegmentTypes);
+    for(String supportedHighWayType : originallySupportedTypes) {
+      Collection<String> allowedOsmModes = getModeAccessConfiguration().collectAllowedModes(OsmHighwayTags.HIGHWAY, supportedHighWayType);
+      excludeOsmWayTypesWithoutModes(OsmHighwayTags.HIGHWAY, supportedHighWayType, allowedOsmModes);      
+    }
+  }  
+  
+  /**
    * Choose to add given way type to parsed types on top of the defaults, e.g. highway=road, railway=rail.
    * 
    * @param osmWayKey to use
@@ -586,6 +630,21 @@ public class PlanitOsmSettings {
   public void setParseOsmWayGeometry(boolean parseOsmWayGeometry) {
     this.parseOsmWayGeometry = parseOsmWayGeometry;
   }
+  
+  /**
+   * indicate whether to remove dangling subnetworks or not
+   * @param removeDanglingSubnetworks yes or no
+   */
+  public void setRemoveDanglingSubnetworks(boolean removeDanglingSubnetworks) {
+    this.removeDanglingSubNetworks = removeDanglingSubnetworks;
+  }
+  
+  /** verify if dangling subnetworks are removed from the final network
+   * @return
+   */
+  public boolean isRemoveDanglingSubnetworks() {
+    return this.removeDanglingSubNetworks;
+  }  
   
   /** collect state of flag indicating to use urban or non-urban default speed limits when speed limit information is missing
    * 
@@ -695,11 +754,12 @@ public class PlanitOsmSettings {
    * 
    * @param osmRoadMode to remove
    */
-  public void removeOsmRoadModesPlanitModeMapping(String osmRoadMode) {
+  public void removeOsmRoadModePlanitModeMapping(String osmRoadMode) {
     if(!OsmRoadModeTags.isRoadModeTag(osmRoadMode)) {
       LOGGER.warning(String.format("osm road mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRoadMode));
       return;
     }
+    LOGGER.info(String.format("osm road mode %s is deactivated", osmRoadMode));
     osmRoadMode2PlanitModeMap.remove(osmRoadMode);
   }
   
@@ -730,8 +790,34 @@ public class PlanitOsmSettings {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
+    LOGGER.info(String.format("osm rail mode %s is deactivated", osmRailMode));
     osmRailMode2PlanitModeMap.remove(osmRailMode);
   }
+  
+  /** remove all rail modes from mapping
+   * 
+   */
+  public void removeAllRailModes() {
+    Collection<String> allRailModes = OsmRailWayTags.getSupportedRailModeTags();
+    for(String osmRailMode : allRailModes) {
+      removeOsmRailMode2PlanitModeMapping(osmRailMode);
+    }
+  }  
+  
+  /** remove all road modes from mapping except for the passed in ones
+   * 
+   * @param remainingOsmRoadModes to explicitly keep if present
+   */
+  public void removeAllRoadModesExcept(String... remainingOsmRoadModes) {
+    Collection<String> allRoadModes = OsmRoadModeTags.getSupportedRoadModeTags();
+    Set<String> remainingRoadModes = new HashSet<String>(Set.of(remainingOsmRoadModes));
+    for(String osmRoadMode: allRoadModes) {
+      /* remove when not retained */
+      if(!remainingRoadModes.contains(osmRoadMode)) {
+        removeOsmRoadModePlanitModeMapping(osmRoadMode);
+      }
+    }
+  }   
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
    * 
@@ -748,6 +834,14 @@ public class PlanitOsmSettings {
     }
     return null;
   }  
+  
+  /** Verify if the passed in osmMode is mapped, i.e., if it is actively included when reading the network
+   * @param osmMode to verify
+   * @return true if mapped, false otherwise
+   */
+  public boolean hasMappedPlanitMode(final String osmMode) {
+    return getMappedPlanitMode(osmMode) != null;
+  }
 
   /** convenience method that provides an overview of all PLANit modes that are currently mapped by any of the passed in OsmModes
    * 
@@ -764,5 +858,7 @@ public class PlanitOsmSettings {
     }
     return mappedPlanitModes;
   }
+
+
 
 }
