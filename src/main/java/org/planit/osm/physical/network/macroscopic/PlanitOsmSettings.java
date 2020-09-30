@@ -79,28 +79,34 @@ public class PlanitOsmSettings {
   /* SETTINGS */
   
   /** the crs of the OSM source */
-  protected CoordinateReferenceSystem sourceCRS = PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS;  
+  protected CoordinateReferenceSystem sourceCRS = DEFAULT_SOURCE_CRS;  
               
   /**
    * When the user has activated a highway type for which the reader has no support, this alternative will be used, default is
    * set to PlanitOSMTags.TERTIARY. Note in case this is also not available on the reader, the type will be ignored altogether
    */
-  protected String defaultOSMHighwayTypeWhenUnsupported = OsmHighwayTags.TERTIARY;  
+  protected String defaultOSMHighwayTypeWhenUnsupported = DEFAULT_HIGHWAY_TYPE_WHEN_UNSUPPORTED;  
     
   /**
    * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
    * (default is false). When set to true parsing will be somewhat slower 
    */
-  protected boolean parseOsmWayGeometry = false;
+  protected boolean parseOsmWayGeometry = DEFAULT_PARSE_OSMWAY_GEOMETRY;
   
   /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area speed limits (or non-urban), default is true */
-  protected boolean speedLimitDefaultsBasedOnUrbanArea = true;  
+  protected boolean speedLimitDefaultsBasedOnUrbanArea = DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA;  
   
   /** flag indicating if dangling subnetworks should be removed after parsing the network
    * OSM network often have small roads that appear to be connected to larger roads, but in fact are not. 
    * All subnetworks that are not part of the largest subnetwork that is parsed will be removed by default. 
    * */
-  protected boolean removeDanglingSubNetworks = true;
+  protected boolean removeDanglingSubNetworks = DEFAULT_REMOVE_DANGLING_SUBNETWORK;
+  
+  /**
+   * When dangling subnetworks are marked for removal, this threshold determines the minimum subnetwork size for it NOT to be removed.
+   * In other words, all subnetworks below this number will be removed;
+   */
+  protected int minimumSubNetworkSize = DEFAULT_MINIMUM_SUBNETWORK_SIZE;
     
   /**
    * conduct general initialisation for any instance of this class
@@ -400,6 +406,26 @@ public class PlanitOsmSettings {
       excludeOsmWayType(osmWayKey, osmWayValue);
     } 
   }   
+  
+  /** the default crs is set to {@code  PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS} */
+  public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS;  
+              
+  /**
+   * Default is OSM highway type when the type is not supported is set to PlanitOSMTags.TERTIARY.
+   */
+  public static String DEFAULT_HIGHWAY_TYPE_WHEN_UNSUPPORTED = OsmHighwayTags.TERTIARY;  
+    
+  /** default value for parsing OSM way geometry: false */
+  public static boolean DEFAULT_PARSE_OSMWAY_GEOMETRY = false;
+  
+  /**  default value whether or not speed limits are based on urban area defaults: true */
+  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;  
+  
+  /** Default whether or not we are removing dangling subnetworks after parsing: true */
+  public static boolean DEFAULT_REMOVE_DANGLING_SUBNETWORK = true;
+  
+  /** Default minimum size of subnetwork for it not to be removed when danlging subnetworks are removed, size indicates number of vertices: 20 */
+  public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE= 20;  
     
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
