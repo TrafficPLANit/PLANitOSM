@@ -2,7 +2,6 @@ package org.planit.osm.physical.network.macroscopic;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -64,6 +62,14 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   private final Map<Long, OsmNode> osmNodes;
+  
+  /** Mapping from internal Osm node id to the links they are internal to. When done parsing, we verify if any
+   * entry in the map contains more than one link in which case the two link intersect at a point other than the extremes
+   * and we must break the link. Also, in case any existin link's extreme node is internal to any other link, the link where
+   * this node is internal to must be split into two because a PLANit network requires all intersections of links to occur
+   * at the end or start of a link
+   */
+  private final Map<Long, List<Link>> linkInternalOsmNodes;  
   
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays;
@@ -279,9 +285,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private Link extractLink(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
     
     /* collect memory model nodes */
-    Node nodeFirst = extractNode(osmWay.getNodeId(0));
-    Node nodeLast = extractNode(osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
-                  
+    int firstNodeIndex = 0;
+    int lastNodeIndex = osmWay.getNumberOfNodes()-1;
+    Node nodeFirst = extractNode(osmWay.getNodeId(firstNodeIndex));
+    Node nodeLast = extractNode(osmWay.getNodeId(lastNodeIndex));
+                      
     /* osm way is directional, link is not, check existence */
     Link link = null;
     if(nodeFirst != null) {
@@ -310,6 +318,13 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       
       /* external id */
       link.setExternalId(osmWay.getId());
+      
+      /* lay index on internal nodes to this link to allow us to split the link after parsing is complete (if needed) */
+      for(int nodeIndex = firstNodeIndex+1; nodeIndex < lastNodeIndex-1;++nodeIndex) {
+        OsmNode internalNode = osmNodes.get(osmWay.getNodeId(nodeIndex));
+        linkInternalOsmNodes.putIfAbsent(internalNode.getId(), new ArrayList<Link>());
+        linkInternalOsmNodes.get(internalNode.getId()).add(link);
+      }      
     }               
 
     profiler.logLinkStatus(network.links.size());
@@ -329,7 +344,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType defaultLinkSegmentType, boolean directionAb) throws PlanItException {
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = network.linkSegments.createAndRegisterNew(link, directionAb, true /*register on nodes and link*/);      
+      linkSegment = network.linkSegments.registerNew(link, directionAb, true /*register on nodes and link*/);      
     }else{
       LOGGER.warning(String.format(
           "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), osmWay.getId()));
@@ -387,6 +402,35 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   protected void handleCircularWay(OsmWay circularOsmWay) {
     
+  }  
+  
+  /**
+   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
+   * on an existing link but also an internal link on another node, we break the links where this node
+   * is internal. the end result is a situations where all nodes used by more than one link are extreme 
+   * nodes, i.e., start/end nodes
+   */
+  protected void breakLinksWithInternalIntersections() {
+    // 1. break links where an existing link's extreme node is another link's internal node
+    for(Link link : this.network.links) {
+      Node nodeA = link.getNodeA();
+      if(nodeA!= null && linkInternalOsmNodes.containsKey(nodeA.getExternalId())) {
+        List<Link> linksToBreak = linkInternalOsmNodes.get(nodeA.getExternalId());
+        this.network.breakLinksAt(linksToBreak, nodeA);
+        linkInternalOsmNodes.remove(nodeA.getExternalId());
+      }
+      Node nodeB = link.getNodeB();      
+      if(nodeB!= null && linkInternalOsmNodes.containsKey(nodeB.getExternalId())) {
+        List<Link> linksToBreak = linkInternalOsmNodes.get(nodeB.getExternalId());
+        this.network.breakLinksAt(linksToBreak, nodeB);
+        linkInternalOsmNodes.remove(nodeB.getExternalId());
+      }      
+    }
+    
+    //2. break links where an internal node of multiple links is shared
+    //TODO
+    
+    linkInternalOsmNodes.clear();
   }  
   
   
@@ -449,6 +493,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     this.profiler  = new PlanitOsmHandlerProfiler();
     
     this.osmNodes = new HashMap<Long, OsmNode>();
+    this.linkInternalOsmNodes = new HashMap<Long, List<Link>>();
     this.osmCircularWays = new HashMap<Long, OsmWay>();
   }
   
@@ -529,14 +574,21 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   @Override
   public void complete() throws IOException {
     
-    /* process circular ways last */
+    /* process circular ways*/
     osmCircularWays.forEach((k,v) -> handleCircularWay(v));
+    
+    /* break all links that have internal nodes that are used by other links as well*/
+    breakLinksWithInternalIntersections();
     
     /* stats*/
     profiler.logProfileInformation(network);
         
-    // not used
     LOGGER.info("DONE");
+
+    /* free memory */
+    osmCircularWays.clear();    
+    osmNodes.clear();
+    nodesByExternalId.clear();
   }
 
 }
