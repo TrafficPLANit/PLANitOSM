@@ -19,6 +19,7 @@ import org.planit.osm.util.OsmLaneTags;
 import org.planit.osm.util.OsmRailFeatureTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmSpeedTags;
+import org.planit.osm.util.OsmTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
@@ -320,9 +321,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       /* external id */
       link.setExternalId(osmWay.getId());
       
-      if(link.getVertexA() == null || link.getVertexB()==null) {
-        int bla = 4;
-      }       
+      if(tags.containsKey(OsmTags.NAME)) {
+        link.setName(tags.get(OsmTags.NAME));
+      }
       
       /* lay index on internal nodes to this link to allow us to split the link after parsing is complete (if needed) */
       for(int nodeIndex = firstNodeIndex+1; nodeIndex < lastNodeIndex-1;++nodeIndex) {
