@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.opengis.geometry.DirectPosition;
@@ -289,11 +290,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     int lastNodeIndex = osmWay.getNumberOfNodes()-1;
     Node nodeFirst = extractNode(osmWay.getNodeId(firstNodeIndex));
     Node nodeLast = extractNode(osmWay.getNodeId(lastNodeIndex));
-                      
+                          
     /* osm way is directional, link is not, check existence */
     Link link = null;
     if(nodeFirst != null) {
-      link = (Link) nodeFirst.getEdge(nodeLast);           
+      link = (Link) nodeFirst.getEdge(nodeLast);      
     }
                
     if(link == null) {
@@ -318,6 +319,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       
       /* external id */
       link.setExternalId(osmWay.getId());
+      
+      if(link.getVertexA() == null || link.getVertexB()==null) {
+        int bla = 4;
+      }       
       
       /* lay index on internal nodes to this link to allow us to split the link after parsing is complete (if needed) */
       for(int nodeIndex = firstNodeIndex+1; nodeIndex < lastNodeIndex-1;++nodeIndex) {
@@ -409,10 +414,16 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * on an existing link but also an internal link on another node, we break the links where this node
    * is internal. the end result is a situations where all nodes used by more than one link are extreme 
    * nodes, i.e., start/end nodes
+   * @throws PlanItException  thrown if error
    */
-  protected void breakLinksWithInternalIntersections() {
-    // 1. break links where an existing link's extreme node is another link's internal node
-    for(Link link : this.network.links) {
+  protected void breakLinksWithInternalIntersections() throws PlanItException {
+    
+    long linkIndex = -1;
+    long originalNumberOfLinks = this.network.links.size();
+    while(++linkIndex<originalNumberOfLinks) {
+      Link link = this.network.links.get(linkIndex);
+      
+      // 1. break links where an existing link's extreme node is another link's internal node
       Node nodeA = link.getNodeA();
       if(nodeA!= null && linkInternalOsmNodes.containsKey(nodeA.getExternalId())) {
         List<Link> linksToBreak = linkInternalOsmNodes.get(nodeA.getExternalId());
@@ -424,11 +435,21 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         List<Link> linksToBreak = linkInternalOsmNodes.get(nodeB.getExternalId());
         this.network.breakLinksAt(linksToBreak, nodeB);
         linkInternalOsmNodes.remove(nodeB.getExternalId());
-      }      
+      }       
     }
     
-    //2. break links where an internal node of multiple links is shared
-    //TODO
+    //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
+    if(!linkInternalOsmNodes.isEmpty()) {
+      for(Entry<Long, List<Link>> entry : linkInternalOsmNodes.entrySet()) {
+        /* only intersection of links when at least two links are registered */
+        if(entry.getValue().size() > 1) {
+          List<Link> linksToBreak = entry.getValue();
+          /* node does not yet exist in PLANit network, so create it first */
+          Node planitIntersectionNode = extractNode(entry.getKey());
+          this.network.breakLinksAt(linksToBreak, planitIntersectionNode);
+        }
+      }
+    }
     
     linkInternalOsmNodes.clear();
   }  
@@ -577,8 +598,13 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* process circular ways*/
     osmCircularWays.forEach((k,v) -> handleCircularWay(v));
     
-    /* break all links that have internal nodes that are used by other links as well*/
-    breakLinksWithInternalIntersections();
+    /* break all links that have internal nodes that are extreme nodes of other links*/
+    try {
+      breakLinksWithInternalIntersections();
+    } catch (PlanItException e) {
+      LOGGER.severe(e.getMessage());
+      LOGGER.severe("unable to break OSM links with internal intersections");
+    }
     
     /* stats*/
     profiler.logProfileInformation(network);
