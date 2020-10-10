@@ -87,11 +87,6 @@ public class PlanitOsmSettings {
    */
   protected String defaultOSMHighwayTypeWhenUnsupported = OsmHighwayTags.TERTIARY;  
     
-  /**
-   * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
-   * (default is false). When set to true parsing will be somewhat slower 
-   */
-  protected boolean parseOsmWayGeometry = false;
   
   /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area speed limits (or non-urban), default is true */
   protected boolean speedLimitDefaultsBasedOnUrbanArea = true;  
@@ -613,24 +608,7 @@ public class PlanitOsmSettings {
   public final Pair<Double,Double> getOsmHighwayTypeOverwrite(String osmHighwayType) {
     return overwriteByOSMHighwayType.get(osmHighwayType);
   }  
-  
-  /**
-   * Verify if we are parsing the line geometry of Osm ways into link segments
-   * @return true when parsing otherwise false
-   */
-  public boolean isParseOsmWayGeometry() {
-    return parseOsmWayGeometry;
-  }
-
-  /**
-   * indicate whether or not to parse the geometry of osm ways
-   * 
-   * @param parseOsmWayGeometry when set to true it will be parsed inot link segments
-   */
-  public void setParseOsmWayGeometry(boolean parseOsmWayGeometry) {
-    this.parseOsmWayGeometry = parseOsmWayGeometry;
-  }
-  
+   
   /**
    * indicate whether to remove dangling subnetworks or not
    * @param removeDanglingSubnetworks yes or no

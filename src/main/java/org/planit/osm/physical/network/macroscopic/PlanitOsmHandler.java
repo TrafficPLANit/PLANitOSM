@@ -3,13 +3,17 @@ package org.planit.osm.physical.network.macroscopic;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.coordinate.LineString;
+import org.opengis.geometry.coordinate.PointArray;
 import org.opengis.geometry.coordinate.Position;
 import org.planit.geo.PlanitGeoUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
@@ -23,6 +27,7 @@ import org.planit.osm.util.OsmTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.math.Precision;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -90,6 +95,59 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     settings.unsupportedOsmRailLinkSegmentTypes.forEach( 
         osmTag -> LOGGER.info(String.format("[DEACTIVATED] railway:%s", osmTag)));    
   }         
+  
+  /** check if we should break the links on the passed in node and if so, do it
+   * @param theNode to verify
+   * @param linkInternalOsmNodes mapping which indicates which links have what internal nodes
+   * @return all broken links for the original link id, null when no break link was performed 
+   * @throws PlanItException thrown if error
+   */
+  private Map<Long, List<Link>> breakLinkIfNeededOnNode(Node theNode, Map<Long, List<Link>> brokenLinksByOriginalLinkId) throws PlanItException {
+    if(theNode!= null && linkInternalOsmNodes.containsKey(theNode.getExternalId())) {
+      List<Link> linksToBreak = linkInternalOsmNodes.get(theNode.getExternalId());
+      
+      /* find replacement links for the original link to break in case the original already has been broken and we should use 
+       * one of the split off broken links instead of the original for the correct breaking
+       */
+      Set<Link> replacementLinks = new HashSet<Link>();
+      Iterator<Link> linksToBreakIter = linksToBreak.iterator();
+      while(linksToBreakIter.hasNext()) {
+        Link orginalLinkToBreak = linksToBreakIter.next(); 
+        
+        if(brokenLinksByOriginalLinkId.containsKey(orginalLinkToBreak.getId())) {
+          
+          /* link has been broken before, find out in which of its broken links the node to break at resides on */
+          List<Link> earlierBrokenLinks = brokenLinksByOriginalLinkId.get(orginalLinkToBreak.getId());
+          double closestEarlierBrokenLinkDistance = Double.POSITIVE_INFINITY;
+          Link matchingEarlierBrokenLink = null;
+          for(Link link : earlierBrokenLinks) {
+            Position closestDirectPosition = geoUtils.getClosestSamplePointOnLineString(theNode.getCentrePointGeometry(),link.getGeometry());
+            double theDistance = geoUtils.getDistanceInMetres(closestDirectPosition, theNode.getCentrePointGeometry());
+            if(Precision.isSmaller(theDistance,closestEarlierBrokenLinkDistance)) {
+              closestEarlierBrokenLinkDistance = theDistance;
+              matchingEarlierBrokenLink = link;
+            }
+          }
+          
+          /* verify if match is valid (which it should be) */
+          if(matchingEarlierBrokenLink==null || Precision.isGreater(closestEarlierBrokenLinkDistance,Precision.EPSILON_6)) {
+            throw new PlanItException(
+                String.format("it is expected that broken link's internal nodes match exactly with original link's internal nodes, this seems not to be the case for link %s (id:%d",
+                orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
+          }
+          
+          /* remove original and mark found link as replacement link */
+          linksToBreakIter.remove();
+          replacementLinks.add(matchingEarlierBrokenLink);
+        }
+      }
+      linksToBreak.addAll(replacementLinks);
+      
+      /* now conduct the actual break links knowing that the links to break are consistent with preceding break link actions */
+      return this.network.breakLinksAt(linksToBreak, theNode);
+    }
+    return null;
+  }  
   
   /**
    * parse the maximum speed for the link segments
@@ -302,21 +360,13 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
 
       /* length and geometry */
       double linkLength = 0;      
-      LineString lineSring = null;
-      if(settings.isParseOsmWayGeometry()) {
-        lineSring = extractLinkGeometry(osmWay);
-        /* update the length based on the geometry */
-        linkLength = geoUtils.getDistanceInKilometres(lineSring);
-      }else {
-        /* update length based on start and end node only */
-        linkLength = geoUtils.getDistanceInKilometres(nodeFirst, nodeLast);
-      }
+      LineString lineSring = extractLinkGeometry(osmWay);
+      /* update the length based on the geometry */
+      linkLength = geoUtils.getDistanceInKilometres(lineSring);
       
       /* create link */
       link = network.links.registerNew(nodeFirst, nodeLast, linkLength, true);      
-      if(settings.isParseOsmWayGeometry()) {
-        link.setGeometry(lineSring);      
-      }
+      link.setGeometry(lineSring);      
       
       /* external id */
       link.setExternalId(osmWay.getId());
@@ -418,44 +468,47 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @throws PlanItException  thrown if error
    */
   protected void breakLinksWithInternalIntersections() throws PlanItException {
-    
+    /* track the broken links of each original link (id) */
+    Map<Long, List<Link>> brokenLinksByOriginalLinkId = new HashMap<Long, List<Link>>();
+        
     long linkIndex = -1;
     long originalNumberOfLinks = this.network.links.size();
     while(++linkIndex<originalNumberOfLinks) {
       Link link = this.network.links.get(linkIndex);
       
       // 1. break links where an existing link's extreme node is another link's internal node
-      Node nodeA = link.getNodeA();
-      if(nodeA!= null && linkInternalOsmNodes.containsKey(nodeA.getExternalId())) {
-        List<Link> linksToBreak = linkInternalOsmNodes.get(nodeA.getExternalId());
-        this.network.breakLinksAt(linksToBreak, nodeA);
-        linkInternalOsmNodes.remove(nodeA.getExternalId());
+      Map<Long, List<Link>> localBrokenLinks = breakLinkIfNeededOnNode(link.getNodeA(), brokenLinksByOriginalLinkId);
+      if(localBrokenLinks != null) {
+        //TODO can't use put all since if entry exists, we must merge the lists
+        brokenLinksByOriginalLinkId.putAll(localBrokenLinks);
       }
-      Node nodeB = link.getNodeB();      
-      if(nodeB!= null && linkInternalOsmNodes.containsKey(nodeB.getExternalId())) {
-        List<Link> linksToBreak = linkInternalOsmNodes.get(nodeB.getExternalId());
-        this.network.breakLinksAt(linksToBreak, nodeB);
-        linkInternalOsmNodes.remove(nodeB.getExternalId());
-      }       
+      localBrokenLinks = breakLinkIfNeededOnNode(link.getNodeB(), brokenLinksByOriginalLinkId);
+      if(localBrokenLinks != null) {
+        brokenLinksByOriginalLinkId.putAll(localBrokenLinks);
+      }
     }
     
     //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
     if(!linkInternalOsmNodes.isEmpty()) {
       for(Entry<Long, List<Link>> entry : linkInternalOsmNodes.entrySet()) {
+        //TODO can't loop and remove in breakLinkIfNeeded...
+        
         /* only intersection of links when at least two links are registered */
         if(entry.getValue().size() > 1) {
-          List<Link> linksToBreak = entry.getValue();
           /* node does not yet exist in PLANit network, so create it first */
           Node planitIntersectionNode = extractNode(entry.getKey());
-          this.network.breakLinksAt(linksToBreak, planitIntersectionNode);
+          Map<Long, List<Link>> localBrokenLinks = breakLinkIfNeededOnNode(planitIntersectionNode, brokenLinksByOriginalLinkId);
+          if(localBrokenLinks != null) {
+            brokenLinksByOriginalLinkId.putAll(localBrokenLinks);
+          }          
         }
       }
     }
     
     linkInternalOsmNodes.clear();
   }  
-  
-  
+    
+
   /**
    * @return the network
    */

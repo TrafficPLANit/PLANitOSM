@@ -58,10 +58,7 @@ public class BasicOSMReaderTest {
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
       osmReader.getSettings().getModeAccessConfiguration().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailWayTags.TRAM);
-      
-      /* parse geometry of links */
-      osmReader.getSettings().setParseOsmWayGeometry(true);
-      
+            
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
       
