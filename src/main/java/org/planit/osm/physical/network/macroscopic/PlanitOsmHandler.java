@@ -15,7 +15,7 @@ import org.opengis.geometry.DirectPosition;
 import org.opengis.geometry.coordinate.LineString;
 import org.opengis.geometry.coordinate.PointArray;
 import org.opengis.geometry.coordinate.Position;
-import org.planit.geo.PlanitGeoUtils;
+import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
 import org.planit.osm.util.OsmHighwayTags;
@@ -62,7 +62,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private final PlanitOsmSettings settings;
 
   /** utilities for geographic information */
-  private final PlanitGeoUtils geoUtils;
+  private final PlanitOpenGisUtils geoUtils;
   
   /** utility class for profiling this instance */
   private final PlanitOsmHandlerProfiler profiler;
@@ -121,8 +121,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
           double closestEarlierBrokenLinkDistance = Double.POSITIVE_INFINITY;
           Link matchingEarlierBrokenLink = null;
           for(Link link : earlierBrokenLinks) {
-            Position closestDirectPosition = geoUtils.getClosestSamplePointOnLineString(theNode.getCentrePointGeometry(),link.getGeometry());
-            double theDistance = geoUtils.getDistanceInMetres(closestDirectPosition, theNode.getCentrePointGeometry());
+            Position closestDirectPosition = geoUtils.getClosestSamplePointOnLineString(theNode.getPosition(),link.getGeometry());
+            double theDistance = geoUtils.getDistanceInMetres(closestDirectPosition, theNode.getPosition());
             if(Precision.isSmaller(theDistance,closestEarlierBrokenLinkDistance)) {
               closestEarlierBrokenLinkDistance = theDistance;
               matchingEarlierBrokenLink = link;
@@ -328,7 +328,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
 
       /* create and register */
       node = network.nodes.registerNew(osmNodeId);
-      node.setCentrePointGeometry(geometry);
+      node.setPosition(geometry);
       nodesByExternalId.put(osmNodeId, node);
      
       profiler.logNodeStatus(network.nodes.size());   
@@ -506,7 +506,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     for(Entry<Long, List<Link>> entry : linkInternalOsmNodes.entrySet()) {        
       /* only intersection of links when at least two links are registered */
       if(entry.getValue().size() > 1) {
-        /* node does not yet exist in PLANit network, so create it first */
+        /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
         Node planitIntersectionNode = extractNode(entry.getKey());
         Map<Long, Set<Link>> localBrokenLinks = breakLinksWithInternalNode(planitIntersectionNode, brokenLinksByOriginalLinkId);
         if(localBrokenLinks != null) {
@@ -579,7 +579,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   public PlanitOsmHandler(final PlanitOsmNetwork network, final PlanitOsmSettings settings) {
     this.network = network;
     this.settings = settings;
-    this.geoUtils = new PlanitGeoUtils(settings.getSourceCRS());
+    this.geoUtils = new PlanitOpenGisUtils(settings.getSourceCRS());
     this.profiler  = new PlanitOsmHandlerProfiler();
     
     this.osmNodes = new HashMap<Long, OsmNode>();

@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.planit.geo.PlanitGeoUtils;
+import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.osm.defaults.OsmLaneDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
@@ -79,7 +79,7 @@ public class PlanitOsmSettings {
   /* SETTINGS */
   
   /** the crs of the OSM source */
-  protected CoordinateReferenceSystem sourceCRS = PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS;  
+  protected CoordinateReferenceSystem sourceCRS = PlanitOpenGisUtils.DEFAULT_GEOGRAPHIC_CRS;  
               
   /**
    * When the user has activated a highway type for which the reader has no support, this alternative will be used, default is
