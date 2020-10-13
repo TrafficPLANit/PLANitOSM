@@ -88,7 +88,7 @@ public class PlanitOsmHandlerProfiler {
    * 
    * @param numberOfLinkSegments registered link segments so far
    */
-  public void logLinkSegmentStatus(int numberOfLinkSegments) {
+  public void logLinkSegmentStatus(long numberOfLinkSegments) {
     if(numberOfLinkSegments == moduloLoggingCounterLinkSegments) {
       LOGGER.info(String.format("Created %d linksegments out of OSM ways",numberOfLinkSegments));
       moduloLoggingCounterLinkSegments *=2;    

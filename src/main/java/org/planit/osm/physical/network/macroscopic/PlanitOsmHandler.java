@@ -8,14 +8,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.opengis.geometry.DirectPosition;
-import org.opengis.geometry.coordinate.LineString;
-import org.opengis.geometry.coordinate.PointArray;
-import org.opengis.geometry.coordinate.Position;
-import org.planit.geo.PlanitOpenGisUtils;
+import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.util.OsmDirection;
 import org.planit.osm.util.OsmHighwayTags;
@@ -27,11 +24,14 @@ import org.planit.osm.util.OsmTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.math.Precision;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LineString;
+import com.vividsolutions.jts.geom.Point;
 
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmBounds;
@@ -62,7 +62,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private final PlanitOsmSettings settings;
 
   /** utilities for geographic information */
-  private final PlanitOpenGisUtils geoUtils;
+  private final PlanitJtsUtils geoUtils;
   
   /** utility class for profiling this instance */
   private final PlanitOsmHandlerProfiler profiler;
@@ -118,25 +118,22 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
           
           /* link has been broken before, find out in which of its broken links the node to break at resides on */
           Set<Link> earlierBrokenLinks = brokenLinksByOriginalLinkId.get(orginalLinkToBreak.getId());
-          double closestEarlierBrokenLinkDistance = Double.POSITIVE_INFINITY;
           Link matchingEarlierBrokenLink = null;
           for(Link link : earlierBrokenLinks) {
-            Position closestDirectPosition = geoUtils.getClosestSamplePointOnLineString(theNode.getPosition(),link.getGeometry());
-            double theDistance = geoUtils.getDistanceInMetres(closestDirectPosition, theNode.getPosition());
-            if(Precision.isSmaller(theDistance,closestEarlierBrokenLinkDistance)) {
-              closestEarlierBrokenLinkDistance = theDistance;
+            Optional<Integer> coordinatePosition = geoUtils.findCoordinatePosition(theNode.getPosition().getCoordinate(),link.getGeometry());
+            if(coordinatePosition.isPresent()) {
               matchingEarlierBrokenLink = link;
             }
           }
           
           /* verify if match is valid (which it should be) */
-          if(matchingEarlierBrokenLink==null || Precision.isGreater(closestEarlierBrokenLinkDistance,Precision.EPSILON_6)) {
+          if(matchingEarlierBrokenLink==null) {
             throw new PlanItException(
                 String.format("it is expected that broken link's internal nodes match exactly with original link's internal nodes, this seems not to be the case for link %s (id:%d",
                 orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
           }
           
-          /* remove original and mark found link as replacement link */
+          /* remove original and mark found link as replacement link to break */
           linksToBreakIter.remove();
           replacementLinks.add(matchingEarlierBrokenLink);
         }
@@ -288,16 +285,16 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @throws PlanItException 
    */
   private LineString extractLinkGeometry(OsmWay osmWay) throws PlanItException {
-    List<Position> positionList = new ArrayList<Position>(osmWay.getNumberOfNodes());
+    Coordinate[] coordinates = new Coordinate[osmWay.getNumberOfNodes()];
     int numberOfNodes = osmWay.getNumberOfNodes();
     for(int index = 0; index < numberOfNodes; ++index) {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode == null) {
         throw new PlanItException(String.format("referenced osmNode %d in osmWay %d not available in OSM parser",osmWay.getNodeId(index), osmWay.getId()));
       }
-      positionList.add(geoUtils.createDirectPosition(PlanitOsmUtils.getXCoordinate(osmNode),PlanitOsmUtils.getYCoordinate(osmNode)));
+      coordinates[index] = new Coordinate(PlanitOsmUtils.getXCoordinate(osmNode),PlanitOsmUtils.getYCoordinate(osmNode));
     }
-    return  geoUtils.createLineStringFromPositions(positionList);
+    return  geoUtils.createLineStringFromCoordinates(coordinates);
   }  
   
   /**
@@ -319,9 +316,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       }
       
       /* location info */
-      DirectPosition geometry = null;
+      Point geometry = null;
       try {
-        geometry = geoUtils.createDirectPosition(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
+        geometry = geoUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
       } catch (PlanItException e) {
         LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
       }
@@ -578,8 +575,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   public PlanitOsmHandler(final PlanitOsmNetwork network, final PlanitOsmSettings settings) {
     this.network = network;
+    this.geoUtils = new PlanitJtsUtils(settings.getSourceCRS());
+    this.network.setCoordinateReferenceSystem(settings.getSourceCRS());
+    
     this.settings = settings;
-    this.geoUtils = new PlanitOpenGisUtils(settings.getSourceCRS());
     this.profiler  = new PlanitOsmHandlerProfiler();
     
     this.osmNodes = new HashMap<Long, OsmNode>();
