@@ -129,7 +129,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
           /* verify if match is valid (which it should be) */
           if(matchingEarlierBrokenLink==null) {
             throw new PlanItException(
-                String.format("it is expected that broken link's internal nodes match exactly with original link's internal nodes, this seems not to be the case for link %s (id:%d",
+                String.format("it is expected that broken link's internal nodes match exactly with original link's internal nodes, this seems not to be the case for link %s (id:%d)",
                 orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
           }
           
@@ -473,8 +473,22 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     while(++linkIndex<originalNumberOfLinks) {
       Link link = this.network.links.get(linkIndex);
       
+      if( link.getId() == 298l) {
+        int bla = 4;
+      }        
+            
       // 1. break links when a link's internal node is another existing link's extreme node 
       Map<Long, Set<Link>> localBrokenLinks = breakLinksWithInternalNode(link.getNodeA(), brokenLinksByOriginalLinkId);
+      
+      when once broken (id298 is split into 298 and 530), it is possible the new link gets broken again (530).
+      if so, the link gets replaced in breakLinksWithInternalNode and the returned localbroken links map has a key with 530.
+      this is not mappable back to 298 and we do not update the brokenLinksByOriginalLinkId properly as they should be added to 298 and not 530.
+      So they are registered under the wrong id.
+      solution -> in breakLinksWithInternalNode whenever we identify a replacement link, we should somehow track the result
+      of the affected links and use it to update the brokenLinksByOriginalLinkId mapping, i.e. track the original and replacement link id to do
+      so. Likely all of the below (for node A) should move into this method, this also reduces code for node b below.
+      
+      MOVE INTO breakLinksWithInternalNode AND IMPROVE MAPPING
       if(localBrokenLinks != null) {
         /* update known broken links */
         localBrokenLinks.forEach((id, links) -> {
@@ -485,6 +499,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
             }});
         linkInternalOsmNodes.remove(link.getNodeA().getExternalId());
       }
+      
       /* apply to node B as well */
       localBrokenLinks = breakLinksWithInternalNode(link.getNodeB(), brokenLinksByOriginalLinkId);
       if(localBrokenLinks != null) {
@@ -641,7 +656,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         if(linkSegmentType != null) {
     
           /* a link only consists of start and end node, no direction and has no model information */
-          Link link = extractLink(osmWay, tags);
+          Link link = extractLink(osmWay, tags);                
           
           /* a macroscopic link segment is directional and can have a shape, it also has model information */
           extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentType);          
