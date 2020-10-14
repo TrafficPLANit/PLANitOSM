@@ -10,6 +10,7 @@ import org.planit.osm.util.OsmRoadModeCategoryTags;
 import org.planit.osm.util.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
+import org.planit.utils.locale.CountryNames;
 
 /**
  * The defaults for the mode access in case no specific restrictions are indicated on the highway=type way.
@@ -230,6 +231,7 @@ public class OsmModeAccessDefaultsByCountry {
     try {    
       /* copy the global defaults and make adjustments */
       OsmModeAccessDefaults australiaDefaults = globalAllowedModeAccessDefaults.clone();
+      australiaDefaults.setCountry(CountryNames.AUSTRALIA);
       
       /* differences:
        * - pedestrian also has access to bicycle
@@ -240,7 +242,7 @@ public class OsmModeAccessDefaultsByCountry {
       australiaDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.BRIDLEWAY, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.FOOT);
       australiaDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.CYCLEWAY, OsmRoadModeTags.FOOT);
       
-      setDefaultsByCountry("Australia", australiaDefaults);    
+      setDefaultsByCountry(australiaDefaults);    
     } catch (CloneNotSupportedException e) {
       LOGGER.severe("cloning of global mode access settings failed");
       throw new PlanItException("unable to populate Australian default mode access");
@@ -262,7 +264,7 @@ public class OsmModeAccessDefaultsByCountry {
   }
   
   /**
-   * Factory method to create defaults based on a given country. If country cannot be found or cannot be cnoverted
+   * Factory method to create defaults based on a given country. If country cannot be found or cannot be converted
    * into ISO2 country code, we revert to global defaults
    */
   public static OsmModeAccessDefaults create(String countryName) {

@@ -8,7 +8,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.planit.geo.PlanitGeoUtils;
+import org.planit.geo.PlanitJtsUtils;
+import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.osm.defaults.OsmLaneDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
@@ -35,6 +36,9 @@ public class PlanitOsmSettings {
    * The logger
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmSettings.class.getCanonicalName());  
+  
+  /** the country we are importing for (if any) */
+  protected final String countryName;
    
   /**
    * the OSM highway types that are marked as supported OSM types, i.e., will be processed when parsing
@@ -79,7 +83,7 @@ public class PlanitOsmSettings {
   /* SETTINGS */
   
   /** the crs of the OSM source */
-  protected CoordinateReferenceSystem sourceCRS = DEFAULT_SOURCE_CRS;  
+  protected CoordinateReferenceSystem sourceCRS = PlanitOpenGisUtils.DEFAULT_GEOGRAPHIC_CRS;  
               
   /**
    * When the user has activated a highway type for which the reader has no support, this alternative will be used, default is
@@ -407,8 +411,8 @@ public class PlanitOsmSettings {
     } 
   }   
   
-  /** the default crs is set to {@code  PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS} */
-  public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS;  
+  /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
+  public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS;  
               
   /**
    * Default is OSM highway type when the type is not supported is set to PlanitOSMTags.TERTIARY.
@@ -435,6 +439,7 @@ public class PlanitOsmSettings {
    * @param planitModes to populate based on (default) mapping
    */
   public PlanitOsmSettings(String countryName, Modes planitModes) {
+    this.countryName = countryName;
     this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
     this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create(countryName);
     initialise(planitModes);    
@@ -448,9 +453,7 @@ public class PlanitOsmSettings {
    * 
    */  
   public PlanitOsmSettings(Modes planitModes) {
-    this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create();
-    this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create();
-    initialise(planitModes);
+    this( "", planitModes);
   }
 
   /**
@@ -639,24 +642,7 @@ public class PlanitOsmSettings {
   public final Pair<Double,Double> getOsmHighwayTypeOverwrite(String osmHighwayType) {
     return overwriteByOSMHighwayType.get(osmHighwayType);
   }  
-  
-  /**
-   * Verify if we are parsing the line geometry of Osm ways into link segments
-   * @return true when parsing otherwise false
-   */
-  public boolean isParseOsmWayGeometry() {
-    return parseOsmWayGeometry;
-  }
-
-  /**
-   * indicate whether or not to parse the geometry of osm ways
-   * 
-   * @param parseOsmWayGeometry when set to true it will be parsed inot link segments
-   */
-  public void setParseOsmWayGeometry(boolean parseOsmWayGeometry) {
-    this.parseOsmWayGeometry = parseOsmWayGeometry;
-  }
-  
+   
   /**
    * indicate whether to remove dangling subnetworks or not
    * @param removeDanglingSubnetworks yes or no
@@ -885,6 +871,12 @@ public class PlanitOsmSettings {
     return mappedPlanitModes;
   }
 
+  /** When country is set for settings this will return the chosen country
+   * @return countryName
+   */
+  public final String getCountryName() {
+    return this.countryName;
+  }
 
 
 }

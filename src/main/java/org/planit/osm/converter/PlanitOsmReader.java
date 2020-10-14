@@ -75,13 +75,15 @@ public class PlanitOsmReader implements NetworkReader {
    * Constructor 
    * 
    * @param inputFile
+   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
+   * based on a right hand driving approach
    * @param osmNetwork network to populate 
    * @param settings for populating the network
    */
-  PlanitOsmReader(String inputFile, PlanitOsmNetwork osmNetwork){
+  PlanitOsmReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork){
     this.inputFile = inputFile;
     this.osmNetwork = osmNetwork; 
-    this.settings = new PlanitOsmSettings(osmNetwork.modes);
+    this.settings = new PlanitOsmSettings(countryName, osmNetwork.modes);
   }
   
   /** osm XML extension string */

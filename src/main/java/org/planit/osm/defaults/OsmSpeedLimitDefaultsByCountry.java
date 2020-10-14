@@ -8,6 +8,7 @@ import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
+import org.planit.utils.locale.CountryNames;
 
 /**
  * Convenience class for quickly collecting the speed limits for various countries, where possible
@@ -37,7 +38,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   protected static OsmSpeedLimitDefaults defaultSpeedLimits;
   
   /** store all defaults per country by ISO2 code **/
-  protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountry = new HashMap<String, OsmSpeedLimitDefaults>();  
+  protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountryCode = new HashMap<String, OsmSpeedLimitDefaults>();  
   
   /* initialise */
   static {    
@@ -129,7 +130,7 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @throws PlanItException thrown if error
    */
   protected static void populateAustralianSpeedLimits() throws PlanItException {
-    OsmSpeedLimitDefaults ausSpeedLimitDefaults = new OsmSpeedLimitDefaults();
+    OsmSpeedLimitDefaults ausSpeedLimitDefaults = new OsmSpeedLimitDefaults(CountryNames.AUSTRALIA);
     
     /* AUSTRALIA */ 
     {
@@ -150,7 +151,7 @@ public class OsmSpeedLimitDefaultsByCountry {
       /*        RAILWAY */
       populateDefaultRailwaySpeedLimits(ausSpeedLimitDefaults); 
       /*        REGISTER */    
-      setDefaultsByCountry("Australia", ausSpeedLimitDefaults);      
+      setDefaultsByCountry(ausSpeedLimitDefaults);      
     }
   }
   
@@ -189,12 +190,12 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param countrySpeedLimits speed limits by highway type
    * @throws PlanItException thrown if error
    */
-  protected static void setDefaultsByCountry(String countryName, OsmSpeedLimitDefaults countrySpeedLimits) throws PlanItException {
-    String iso2Australia = LocaleUtils.getIso2CountryCodeByName(countryName);    
+  protected static void setDefaultsByCountry(OsmSpeedLimitDefaults countrySpeedLimits) throws PlanItException {
+    String iso2Australia = LocaleUtils.getIso2CountryCodeByName(countrySpeedLimits.getCountry());    
     PlanItException.throwIfNull(iso2Australia, "country name could not be converted into ISO2 code");
     
     try {
-      speedLimitDefaultsByCountry.put(iso2Australia, countrySpeedLimits.clone());
+      speedLimitDefaultsByCountryCode.put(iso2Australia, countrySpeedLimits.clone());
     } catch (CloneNotSupportedException e) {
       throw new PlanItException("unable to clone passed in country specific speed limit defaults", e);
     }
@@ -218,9 +219,18 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param countryName to collect for
    * @return speed limits, null if not presently available
    */
-  protected static OsmSpeedLimitDefaults getDefaultsByCountry(String countryName) {
-    return speedLimitDefaultsByCountry.get(countryName);
+  protected static OsmSpeedLimitDefaults getDefaultsByCountryName(String countryName) {    
+    return getDefaultsByCountryISO2(LocaleUtils.getIso2CountryCodeByName(countryName));
   }
+  
+  /** collect the (original) speed limit defaults (outside,inside urban areas) for a given country ISO2 code
+   * 
+   * @param countryISO2 to collect for
+   * @return speed limits, null if not presently available
+   */
+  protected static OsmSpeedLimitDefaults getDefaultsByCountryISO2(String countryISO2) {    
+    return speedLimitDefaultsByCountryCode.get(countryISO2);
+  }  
   
   /**
    * Factory method to create global defaults only. 
@@ -247,7 +257,10 @@ public class OsmSpeedLimitDefaultsByCountry {
     OsmSpeedLimitDefaults createdDefaults = null;
     /* clone defaults so they can be adjusted without impacting actual defaults */
     try {
-      createdDefaults = getDefaultsByCountry(countryName).clone();
+      
+      if(countryName != null && !countryName.isBlank()) {
+        createdDefaults = getDefaultsByCountryName(countryName).clone();
+      }
       
       if(createdDefaults==null) {
         createdDefaults = defaultSpeedLimits.clone(); 

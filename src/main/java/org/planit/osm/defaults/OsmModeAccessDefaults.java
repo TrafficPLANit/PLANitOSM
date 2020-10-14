@@ -41,7 +41,10 @@ public class OsmModeAccessDefaults implements Cloneable {
   private final Map<String, Set<String>> disallowedModesByHighwayType;
   
   /** store the allowed modes by railway type, railway modes must always be explicitly allowed on railways */
-  private final Map<String, Set<String>> allowedModesByRailwayType;  
+  private final Map<String, Set<String>> allowedModesByRailwayType;
+
+  the country name to use if set CONTINUE HERE FOLLOW APPROACH IN OSMSPEEDLImITSBYCOUNTRY -> THEN DEBUG IF ROUNDABOUTS ARE NO IN THE RIGHT DIRECTION
+  private String countryName;  
   
   
   /**
@@ -345,10 +348,23 @@ public class OsmModeAccessDefaults implements Cloneable {
   }
   
   /**
+   * Default constructor
+   */
+  public OsmModeAccessDefaults(String countryName) {
+    this.countryName = countryName;
+    this.allowedModeCategoriesByHighwayType = new TreeMap<String, Set<String>>();
+    this.allowedModesByHighwayType = new TreeMap<String, Set<String>>();
+    this.disallowedModesByHighwayType = new TreeMap<String, Set<String>>();
+    
+    this.allowedModesByRailwayType = new TreeMap<String, Set<String>>();
+  }  
+  
+  /**
    * Copy constructor
    */
   public OsmModeAccessDefaults(OsmModeAccessDefaults other) {
     this();
+    this.countryName = other.getcountryName();
     other.allowedModeCategoriesByHighwayType.forEach( (k,v) -> {this.allowedModeCategoriesByHighwayType.put(k, new HashSet<String>(v));});
     other.allowedModesByHighwayType.forEach(          (k,v) -> {this.allowedModesByHighwayType.put(         k, new HashSet<String>(v));});
     other.disallowedModesByHighwayType.forEach(       (k,v) -> {this.disallowedModesByHighwayType.put(      k, new HashSet<String>(v));});

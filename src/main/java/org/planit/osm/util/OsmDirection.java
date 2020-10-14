@@ -1,7 +1,10 @@
 package org.planit.osm.util;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 
 /**
  * Class that wraps the direction information captured in the tags of a way
@@ -14,25 +17,34 @@ import java.util.logging.Logger;
  */
 public class OsmDirection {
   
-  private static final Logger LOGGER = Logger.getLogger(OsmDirection.class.getCanonicalName());  
-  
+  private static final Logger LOGGER = Logger.getLogger(OsmDirection.class.getCanonicalName());
+    
   /** one way flag */
-  boolean oneWay = false;
+  protected boolean oneWay = false;
   
   /** reverse direction compared to geometry flag */
-  boolean reverseDirection = false;
+  protected boolean reverseDirection = false;
   
   /** is way reversible flag */
-  boolean reversible = false;
+  protected boolean reversible = false;
   
   /** is reversible lane often alternating in direction flag*/
-  boolean alternating = false;
+  protected boolean alternating = false;
+  
+  /** Constructor without Locale, assume a country with right-hand driving
+   * 
+   * @param tags
+   */
+  public OsmDirection(Map<String, String> tags) {  
+    this(tags,"");
+  }
 
   /** Constructor
    * 
    * @param tags
+   * @param countryName specific ountry we are dealing with which impacts default driving direction on roundabouts 
    */
-  public OsmDirection(Map<String, String> tags) {
+  public OsmDirection(Map<String, String> tags, String countryName) {
     boolean oneWayTagPresent = tags.containsKey(OsmOneWayTags.ONEWAY);    
     if(oneWayTagPresent) {
      /* determine type of one way */
@@ -65,8 +77,9 @@ public class OsmDirection {
           if(tags.containsKey(OsmTags.DIRECTION) && tags.get(OsmTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE)) {
             reverseDirection = false;    
           }else {
-            /* direction default is anti-clock-wise */
-            reverseDirection = true;
+            /* direction default is anti-clock-wise, unless we are in a left-hand drive country, in which case we would adopt
+             * a clock-wise direction */
+            reverseDirection = DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName) ? false : true;
           }
           
         }

@@ -31,4 +31,6 @@ public class OsmTags {
     public static final String TYPE = "type";
 
     public static final String RESTRICTION = "restriction";
+    
+    public static final String NAME = "name";
 }

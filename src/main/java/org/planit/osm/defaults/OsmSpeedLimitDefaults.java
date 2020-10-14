@@ -31,6 +31,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   /** chosen country for instance of this class */
   protected final String currentCountry;
   
+
   /** country name set to this string when global defaults are applied */ 
   public static final String GLOBAL = "global";
   
@@ -46,6 +47,18 @@ public class OsmSpeedLimitDefaults implements Cloneable {
     this.highwayNonUrbanSpeedLimitDefaults = new HashMap<String,Double>();
     this.railwaySpeedLimitDefaults = new HashMap<String,Double>();
   }
+  
+  /**
+   * constructor
+   * 
+   * @param countryName defaults specific to this country
+   */
+  public OsmSpeedLimitDefaults(String countryName) {
+    this.currentCountry = countryName;
+    this.highwayUrbanSpeedLimitDefaults = new HashMap<String,Double>();
+    this.highwayNonUrbanSpeedLimitDefaults = new HashMap<String,Double>();
+    this.railwaySpeedLimitDefaults = new HashMap<String,Double>();
+  }  
   
   /**
    * copy constructor
@@ -105,7 +118,14 @@ public class OsmSpeedLimitDefaults implements Cloneable {
    */
   public Double getHighwaySpeedLimit(String type, boolean outsideUrbanArea) {
     return outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.get(type) : highwayUrbanSpeedLimitDefaults.get(type);
-  } 
+  }
+  
+  /** Collect the country for which these defaults are meant. When not set "global" is returned
+   * @return country set
+   */
+  public String getCountry() {
+    return currentCountry;
+  }  
    
   
   /**
