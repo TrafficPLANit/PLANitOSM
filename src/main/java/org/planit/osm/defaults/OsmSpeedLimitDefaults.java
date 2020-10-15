@@ -3,6 +3,7 @@ package org.planit.osm.defaults;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.Pair;
 
 /**
@@ -30,11 +31,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   
   /** chosen country for instance of this class */
   protected final String currentCountry;
-  
-
-  /** country name set to this string when global defaults are applied */ 
-  public static final String GLOBAL = "global";
-  
+    
   /** in absence of OSM defined defaults, we make a global rail way speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
   
@@ -42,7 +39,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
    * Default constructor
    */
   public OsmSpeedLimitDefaults() {
-    this.currentCountry = GLOBAL;
+    this.currentCountry = CountryNames.GLOBAL;
     this.highwayUrbanSpeedLimitDefaults = new HashMap<String,Double>();
     this.highwayNonUrbanSpeedLimitDefaults = new HashMap<String,Double>();
     this.railwaySpeedLimitDefaults = new HashMap<String,Double>();
@@ -90,7 +87,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
    * @return the physical speed limit (km/h)
    */
   public Pair<Double,Double> getHighwaySpeedLimit(String type) {
-    return new Pair<Double,Double>(highwayUrbanSpeedLimitDefaults.get(type),highwayNonUrbanSpeedLimitDefaults.get(type));
+    return new Pair<Double,Double>(getHighwaySpeedLimit(type, false /* urban */ ), getHighwaySpeedLimit(type, true /* non-urban */ ));
   }
   
   /** set a speed default for a given railway=type
@@ -101,13 +98,17 @@ public class OsmSpeedLimitDefaults implements Cloneable {
     railwaySpeedLimitDefaults.put(type, speedLimit);
   }
   
-  /** get a speed limit default for a given highway=type
+  /** get a speed limit default for a given railway=type
    * 
    * @param type of road to get speed default for
    * @return the physical speed limit (km/h)
    */
   public Double getRailwaySpeedLimit(String type) {
-    return Double.valueOf(railwaySpeedLimitDefaults.get(type));
+    Double railWaySpeedLimit = railwaySpeedLimitDefaults.get(type);
+    if(railWaySpeedLimit == null) {
+      railWaySpeedLimit = OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().getRailwaySpeedLimit(type);
+    }        
+    return railWaySpeedLimit;
   }
   
   /** get a speed limit default for a given highway=type
@@ -117,7 +118,11 @@ public class OsmSpeedLimitDefaults implements Cloneable {
    * @return the physical speed limit (km/h)
    */
   public Double getHighwaySpeedLimit(String type, boolean outsideUrbanArea) {
-    return outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.get(type) : highwayUrbanSpeedLimitDefaults.get(type);
+    Double speedLimit = outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.get(type) : highwayUrbanSpeedLimitDefaults.get(type);
+    if(speedLimit == null) {
+      speedLimit = OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().getHighwaySpeedLimit(type, outsideUrbanArea);
+    }  
+    return speedLimit;    
   }
   
   /** Collect the country for which these defaults are meant. When not set "global" is returned

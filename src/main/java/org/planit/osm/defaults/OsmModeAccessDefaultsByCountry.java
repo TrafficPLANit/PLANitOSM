@@ -219,8 +219,12 @@ public class OsmModeAccessDefaultsByCountry {
    * @param countryName to set
    * @param modeAccessDefaults defaults to use
    */
-  protected static void setDefaultsByCountry(String countryName, OsmModeAccessDefaults modeAccessDefaults) {
-    allowedModeAccessDefaultsByCountry.put(LocaleUtils.getIso2CountryCodeByName(countryName), modeAccessDefaults);
+  protected static void setDefaultsByCountry(OsmModeAccessDefaults modeAccessDefaults) {
+    if(modeAccessDefaults.getCountry() != CountryNames.GLOBAL) {
+      allowedModeAccessDefaultsByCountry.put(LocaleUtils.getIso2CountryCodeByName(modeAccessDefaults.getCountry()), modeAccessDefaults);
+    }else {
+      LOGGER.warning("setting OSM mode access defaults by country, then the defaults should have a country specified, this is not the case, defaults, ignored");
+    }
   }    
 
   /**

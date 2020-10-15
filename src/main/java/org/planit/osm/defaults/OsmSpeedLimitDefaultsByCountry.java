@@ -8,6 +8,7 @@ import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
+import org.planit.utils.misc.Pair;
 import org.planit.utils.locale.CountryNames;
 
 /**
@@ -35,7 +36,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaultsByCountry.class.getCanonicalName());
   
   /** store the global defaults as fall back option */
-  protected static OsmSpeedLimitDefaults defaultSpeedLimits;
+  protected static OsmSpeedLimitDefaults globalDefaultSpeedLimits;
   
   /** store all defaults per country by ISO2 code **/
   protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountryCode = new HashMap<String, OsmSpeedLimitDefaults>();  
@@ -173,7 +174,7 @@ public class OsmSpeedLimitDefaultsByCountry {
     Double speedLimit = countryDefaults.getHighwaySpeedLimit(type, outside);
     if(speedLimit == null) {
       /* global limit */
-      speedLimit = defaultSpeedLimits.getHighwaySpeedLimit(type, outside);
+      speedLimit = globalDefaultSpeedLimits.getHighwaySpeedLimit(type, outside);
     }
     
     if(speedLimit==null) {
@@ -208,7 +209,7 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   protected static void setGlobalDefaults(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {
     try {
-      defaultSpeedLimits = globalSpeedLimits.clone();
+      globalDefaultSpeedLimits = globalSpeedLimits.clone();
     } catch (CloneNotSupportedException e) {
       throw new PlanItException("unable to clone passed in global speed limit defaults", e);
     }
@@ -222,7 +223,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   protected static OsmSpeedLimitDefaults getDefaultsByCountryName(String countryName) {    
     return getDefaultsByCountryISO2(LocaleUtils.getIso2CountryCodeByName(countryName));
   }
-  
+   
   /** collect the (original) speed limit defaults (outside,inside urban areas) for a given country ISO2 code
    * 
    * @param countryISO2 to collect for
@@ -239,7 +240,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   public static OsmSpeedLimitDefaults create() {
     OsmSpeedLimitDefaults createdDefaults = null;
     try {
-      createdDefaults = defaultSpeedLimits.clone();
+      createdDefaults = globalDefaultSpeedLimits.clone();
     } catch (CloneNotSupportedException e) {
       LOGGER.severe(e.getMessage());
       LOGGER.severe("unable to clone global speed limit defaults");
@@ -263,7 +264,7 @@ public class OsmSpeedLimitDefaultsByCountry {
       }
       
       if(createdDefaults==null) {
-        createdDefaults = defaultSpeedLimits.clone(); 
+        createdDefaults = globalDefaultSpeedLimits.clone(); 
         LOGGER.warning(String.format("No OSM speed limit defaults available for country %s, reverting to global defaults",countryName));
       }
       
@@ -274,6 +275,14 @@ public class OsmSpeedLimitDefaultsByCountry {
     
     return createdDefaults;
   }  
-     
+  
+  /** collect the (original) speed limit defaults (outside,inside urban areas) globally (non-country specific)
+   * 
+   * @return global speed limit defaults
+   */
+  public static OsmSpeedLimitDefaults getGlobalDefaults() {    
+    return globalDefaultSpeedLimits;
+  }    
+       
   
 }

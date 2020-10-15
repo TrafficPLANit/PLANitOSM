@@ -43,7 +43,7 @@ public class OsmModeAccessDefaults implements Cloneable {
   /** store the allowed modes by railway type, railway modes must always be explicitly allowed on railways */
   private final Map<String, Set<String>> allowedModesByRailwayType;
 
-  the country name to use if set CONTINUE HERE FOLLOW APPROACH IN OSMSPEEDLImITSBYCOUNTRY -> THEN DEBUG IF ROUNDABOUTS ARE NO IN THE RIGHT DIRECTION
+  /** country for which these defaults hold */
   private String countryName;  
   
   
@@ -364,7 +364,7 @@ public class OsmModeAccessDefaults implements Cloneable {
    */
   public OsmModeAccessDefaults(OsmModeAccessDefaults other) {
     this();
-    this.countryName = other.getcountryName();
+    this.countryName = other.getCountry();
     other.allowedModeCategoriesByHighwayType.forEach( (k,v) -> {this.allowedModeCategoriesByHighwayType.put(k, new HashSet<String>(v));});
     other.allowedModesByHighwayType.forEach(          (k,v) -> {this.allowedModesByHighwayType.put(         k, new HashSet<String>(v));});
     other.disallowedModesByHighwayType.forEach(       (k,v) -> {this.disallowedModesByHighwayType.put(      k, new HashSet<String>(v));});
@@ -372,6 +372,21 @@ public class OsmModeAccessDefaults implements Cloneable {
     other.allowedModesByRailwayType.forEach(          (k,v) -> {this.allowedModesByRailwayType.put(         k, new HashSet<String>(v));});
   }  
   
+  /** The country for which these defaults hold. In absence of a country, it should return CountryNames.GLOBAL
+   * 
+   * @return country name
+   */
+  public String getCountry() {
+    return this.countryName;
+  }
+  
+  /** set the country name that represents these defaults
+   * @param countryName
+   */
+  public void setCountry(String countryName) {
+    this.countryName = countryName;
+  }  
+
   /**
    * {@inheritDoc}
    */
@@ -538,4 +553,6 @@ public class OsmModeAccessDefaults implements Cloneable {
     }
     return allowedModes;
   }
+
+
 }
