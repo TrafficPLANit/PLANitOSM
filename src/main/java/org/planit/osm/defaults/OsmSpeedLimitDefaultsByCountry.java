@@ -8,7 +8,6 @@ import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
-import org.planit.utils.misc.Pair;
 import org.planit.utils.locale.CountryNames;
 
 /**

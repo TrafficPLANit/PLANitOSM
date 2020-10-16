@@ -360,20 +360,17 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     return node;
   }
   
-  /** extract a link from the way
-   * @param osmWay the way to process
-   * @param tags tags that belong to the way
-   * @return the link corresponding to this way
+  /** create and populate link if it does not already exists for the given two PLANit nodes based on the passed in osmWay information
+   * 
+   * @param nodeFirst extreme node of to be created link
+   * @param nodeLast extreme node of to be created link
+   * @param osmWay to populate link data with
+   * @param tags to populate link data with
+   * @return created or fetched link
    * @throws PlanItException thrown if error
    */
-  private Link extractLink(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
-    
-    /* collect memory model nodes */
-    int firstNodeIndex = 0;
-    int lastNodeIndex = osmWay.getNumberOfNodes()-1;
-    Node nodeFirst = extractNode(osmWay.getNodeId(firstNodeIndex));
-    Node nodeLast = extractNode(osmWay.getNodeId(lastNodeIndex));
-                          
+  private Link createAndPopulateLink(Node nodeFirst, Node nodeLast, OsmWay osmWay, Map<String, String> tags) throws PlanItException {
+
     /* osm way is directional, link is not, check existence */
     Link link = null;
     if(nodeFirst != null) {
@@ -398,16 +395,36 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       if(tags.containsKey(OsmTags.NAME)) {
         link.setName(tags.get(OsmTags.NAME));
       }
-      
-      /* lay index on internal nodes to this link to allow us to split the link after parsing is complete (if needed) */
+    }
+    return link;      
+  }  
+  
+  /** extract a link from the way
+   * @param osmWay the way to process
+   * @param tags tags that belong to the way
+   * @return the link corresponding to this way
+   * @throws PlanItException thrown if error
+   */
+  private Link extractLink(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
+    
+    /* collect memory model nodes */
+    int firstNodeIndex = 0;
+    int lastNodeIndex = osmWay.getNumberOfNodes()-1;
+    Node nodeFirst = extractNode(osmWay.getNodeId(firstNodeIndex));
+    Node nodeLast = extractNode(osmWay.getNodeId(lastNodeIndex));
+                          
+    Link link = createAndPopulateLink(nodeFirst, nodeLast, osmWay, tags);   
+    if(link != null) {
+ 
+      /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
       for(int nodeIndex = firstNodeIndex+1; nodeIndex < lastNodeIndex-1;++nodeIndex) {
         OsmNode internalNode = osmNodes.get(osmWay.getNodeId(nodeIndex));
         linkInternalOsmNodes.putIfAbsent(internalNode.getId(), new ArrayList<Link>());
         linkInternalOsmNodes.get(internalNode.getId()).add(link);
-      }      
-    }               
-
-    profiler.logLinkStatus(network.links.size());
+      }                       
+ 
+      profiler.logLinkStatus(network.links.size());
+    }
     return link;
   }
   
@@ -450,7 +467,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
             
     /* determine the direction of the way in terms of the PLANit link */
     boolean directionAb = true;
-    if(!direction.isReverseDirection() && osmWay.getNodeId(0) == (long)link.getVertexB().getExternalId()) {
+    if(!direction.isReverseDirection() && osmWay.getNodeId(0) != (long)link.getVertexA().getExternalId() && osmWay.getNodeId(0) == (long)link.getVertexB().getExternalId()) {
       directionAb = false;
     }
     
@@ -475,13 +492,42 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   }  
   
   /**
-   * now parse the remaining cicular osmWays, which by default are converted into multiple links/linksegments for each part of
-   * the circular way in between connecting in and outgoing links/linksegments
+   * now parse the remaining circular osmWays, which by default are converted into multiple links/linksegments for each part of
+   * the circular way in between connecting in and outgoing links/linksegments that were parsed during the regular parsing phase
    * 
    * @param circularOsmWay the circular osm way to parse 
+   * @throws PlanItException thrown if error
    */
-  protected void handleCircularWay(OsmWay circularOsmWay) {
+  protected void handleCircularWay(OsmWay circularOsmWay) throws PlanItException {
+    Map<String, String> osmWayTags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     
+    TEST IF THIS WORKS
+    MacroscopicLinkSegmentType linkSegmentType = getLinkSegmentType(circularOsmWay, osmWayTags);
+    if(linkSegmentType != null) {
+    
+      int firstNodeIndex = 0;
+      int lastNodeIndex = circularOsmWay.getNumberOfNodes()-1;
+      Node nodeFirst = extractNode(circularOsmWay.getNodeId(firstNodeIndex));
+      /* find first node on geometry that is part of an already parsed link (Exclude the last node since it is the same as the first*/
+      for(int index = 1 ; index <= lastNodeIndex ; ++index) {
+        long osmNodeId = circularOsmWay.getNodeId(index);
+        if(nodesByExternalId.containsKey(osmNodeId)) {
+          
+          Node nodeLast = extractNode(osmNodeId);
+          /* create link from start node to the intermediate node that attaches to an already existing planit link on the circular way */        
+          Link link = createAndPopulateLink(nodeFirst, nodeLast, circularOsmWay, osmWayTags);
+          TRUNCATE GEOMETRY TO FROM NODE FIRST TO NODE LAST SINCE ORIGINAL GOES ROUND
+          extractMacroscopicLinkSegments(circularOsmWay, osmWayTags, link, linkSegmentType);
+          
+          nodeFirst = nodeLast;
+        }
+      }
+      
+      /* last partial link should connect to final node of circular way, if not something went wrong */
+      if( ((Long)nodeFirst.getExternalId()) != circularOsmWay.getNodeId(lastNodeIndex)) {
+        throw new PlanItException(String.format("circular OSM way %s was not parsed correctly, attempt to break into separate PLANit links failed",circularOsmWay.getId()));
+      }
+    }
   }  
   
   /**
@@ -498,11 +544,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     long linkIndex = -1;
     long originalNumberOfLinks = this.network.links.size();
     while(++linkIndex<originalNumberOfLinks) {
-      Link link = this.network.links.get(linkIndex);
-      
-      if( link.getId() == 298l) {
-        int bla = 4;
-      }        
+      Link link = this.network.links.get(linkIndex);       
             
       // 1. break links when a link's internal node is another existing link's extreme node 
       breakLinksWithInternalNode(link.getNodeA(), brokenLinksByOriginalOsmLinkId);

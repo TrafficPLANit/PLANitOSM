@@ -822,7 +822,7 @@ public class PlanitOsmSettings {
    */
   public void removeAllRoadModesExcept(String... remainingOsmRoadModes) {
     Collection<String> allRoadModes = OsmRoadModeTags.getSupportedRoadModeTags();
-    Set<String> remainingRoadModes = new HashSet<String>(Set.of(remainingOsmRoadModes));
+    Set<String> remainingRoadModes = remainingOsmRoadModes==null ? new HashSet<String>() : Set.of(remainingOsmRoadModes);
     for(String osmRoadMode: allRoadModes) {
       /* remove when not retained */
       if(!remainingRoadModes.contains(osmRoadMode)) {
@@ -830,6 +830,13 @@ public class PlanitOsmSettings {
       }
     }
   }   
+  
+  /**
+   * remove all road modes from the network when parsing
+   */
+  public void removeAllRoadModes() {
+    removeAllRoadModesExcept((String[])null);
+  }  
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
    * 
@@ -878,5 +885,12 @@ public class PlanitOsmSettings {
     return this.countryName;
   }
 
+  /** the minimum size an identified dangling network must have for it to NOT be removed when danlging networks are removed
+   * 
+   * @param minimumSubNetworkSize
+   */
+  public void setKeepDanglingNetworkSize(int minimumSubNetworkSize) {
+    this.minimumSubNetworkSize = minimumSubNetworkSize;
+  }
 
 }
