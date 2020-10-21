@@ -1,5 +1,7 @@
 package org.planit.osm.util;
 
+import java.util.Map;
+
 import org.planit.utils.exceptions.PlanItException;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -72,17 +74,16 @@ public class PlanitOsmUtils {
    * Verify if passed osmWay is in fact cicular in nature, i.e., a type of roundabout
    * 
    * @param osmWay the way to verify
+   * @param tags of this OSM way
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularWay(OsmWay osmWay) {
+  public static boolean isCircularWay(OsmWay osmWay, Map<String, String> tags) {
     /* a circular road, has:
      * -  more than two nodes...
      * -  ...an end node that is the same as its start node */
-    if(osmWay.getNumberOfNodes() > 2 && osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1)) {
-      return true;
-    }else {
-      return false; 
-    }
+    return tags.containsKey(OsmHighwayTags.HIGHWAY) && 
+        osmWay.getNumberOfNodes() > 2 && 
+        osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1);
   }  
   
   /**
