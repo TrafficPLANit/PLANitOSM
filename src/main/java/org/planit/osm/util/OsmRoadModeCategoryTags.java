@@ -1,5 +1,6 @@
 package org.planit.osm.util;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -114,13 +115,6 @@ public class OsmRoadModeCategoryTags {
         osmCategories.add(osmCategory);
       }
     }
-//    osmCategory2Modes.forEach( 
-//        (category, modes) -> {
-//          if(modes != null) {
-//            modes.forEach( 
-//                mode -> osmMode2Categories.putIfAbsent(mode,new HashSet<String>()).add(category));
-//          }
-//        });
   }
  
   /** group indicating any vehicle type */
@@ -151,7 +145,7 @@ public class OsmRoadModeCategoryTags {
    * @param osmModeCategory to collect modes for
    * @return modes within given category, or empty set if not present
    */
-  public static Set<String> getRoadModesByCategory(String osmModeCategory){
+  public static Collection<String> getRoadModesByCategory(String osmModeCategory){
     if(!osmCategory2Modes.containsKey(osmModeCategory)) {
       LOGGER.warning(String.format("OSM mode category %s is not listed among available categories, ignored",osmModeCategory));
     }
@@ -195,4 +189,11 @@ public class OsmRoadModeCategoryTags {
     }
     return modeCategories.contains(osmModeCategory);
   }   
+  
+  /** Collect a copy of the currently registered road mode categories
+   * @return road mode categories available
+   */
+  public static final Collection<String> getRoadModeCategories(){
+    return (Collection<String>) Set.copyOf(osmCategory2Modes.keySet());
+  }
 }

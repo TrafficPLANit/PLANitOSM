@@ -2,6 +2,7 @@ package org.planit.osm.physical.network.macroscopic;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,17 +14,22 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.geo.PlanitJtsUtils;
+import org.planit.network.physical.PhysicalNetwork;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.osm.util.OsmAccessTags;
 import org.planit.osm.util.OsmDirection;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmLaneTags;
 import org.planit.osm.util.OsmRailFeatureTags;
 import org.planit.osm.util.OsmRailWayTags;
+import org.planit.osm.util.OsmRoadModeCategoryTags;
+import org.planit.osm.util.OsmRoadModeTags;
 import org.planit.osm.util.OsmSpeedTags;
 import org.planit.osm.util.OsmTags;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -170,6 +176,79 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         });        
       }  
     }     
+  }
+  
+  /** collect all OSM modes with key: <OSM mode name> value: the access value tag (YES/NO) passed in
+   * 
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTag used to filter the modes by (yes/no)
+   * @return modes found with specified value tag
+   */
+  private Collection<String> getOsmModesWithAccessValue(Map<String, String> tags, final String modeAccessValueTag){
+    Set<String> excludedModes = new HashSet<String>();
+    
+    /* osm modes extracted from road mode category */
+    Collection<String> roadModeCategories = OsmRoadModeCategoryTags.getRoadModeCategories();
+    for(String roadModeCategory : roadModeCategories) {
+      if(tags.containsKey(roadModeCategory) && tags.get(roadModeCategory).equals(modeAccessValueTag)){
+        excludedModes.addAll(OsmRoadModeCategoryTags.getRoadModesByCategory(roadModeCategory));
+      }
+    }
+    
+    /* osm road mode */
+    Collection<String> roadModes = OsmRoadModeTags.getSupportedRoadModeTags();
+    for(String roadMode : roadModes) {
+      if(tags.containsKey(roadMode) && tags.get(roadMode).equals(modeAccessValueTag)){
+        excludedModes.add(roadMode);
+      }
+    }    
+    return excludedModes;
+  }
+  
+  /** Collect explicitly excluded modes from the passed in tags
+   * @param tags to find explicitly excluded (planit) modes from
+   * @return the excluded planit modes supported by the parser
+   */
+  private Collection<Mode> getExplicitlyExcludedModes(Map<String, String> tags) {   
+    return settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.NO));
+  }  
+  
+  /** Collect explicitly included modes from the passed in tags
+   * @param tags to find explicitly included (planit) modes from
+   * @return the included planit modes supported by the parser
+   */
+  private Collection<Mode> getExplicitlyIncludedModes(Map<String, String> tags) {
+    return settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.YES));
+  }    
+  
+  /** given the OSM way tags we construct or find the appropriate link segment type, if no better alternative could be found
+   * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way  
+   * @param osmWay the tags belong to
+   * @param tags of the OSM way to extract the link segment type for
+   * @param linkSegmentType use thus far for this way
+   * @return to be used link segment type, which in case of an unsuccessful update based on the tags reverts to the passed in link segment type
+   */
+  private MacroscopicLinkSegmentType extractLinkSegmentTypeByOsmAccessTags(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType) {
+    
+    /* identify explicitly excluded and included modes */
+    Collection<Mode> excludedModes = getExplicitlyExcludedModes(tags);
+    Collection<Mode> includedModes = getExplicitlyIncludedModes(tags);
+        
+    /* supplement with implicitly included modes */
+    String accessValue = tags.get(OsmAccessTags.ACCESS);    
+    if(accessValue.equals(OsmAccessTags.YES)) {
+      includedModes.addAll(network.modes.getAll());             
+    }
+    
+    /* identify differences with default link segment type in terms of mode access */
+    Collection<Mode> toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(includedModes);
+    Collection<Mode> toBeRemovedModes = linkSegmentType.getAvailableModesFrom(excludedModes);    
+    
+    /* somehow quickly assess if such a custom link segment type already exists -> track differences from default efficiently somehow -> if so use it, otherwise create a new
+     * alternative custom type */
+     */
+    
+    return null;
   }  
   
 
@@ -482,8 +561,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       directionAb = false;
     }
     
-    //TODO: process access restrictions + designated tags to activate/affirm foot,bicycle support
-    //      --> leads to (on-the-fly creation of) custom link segment type replacing the default link segment type
+    if(tags.containsKey(OsmAccessTags.ACCESS)) {
+      linkSegmentType = extractLinkSegmentTypeByOsmAccessTags(osmWay, tags, linkSegmentType);
+    }
     
     /* direction 1 */
     directionAb = direction.isReverseDirection() ? !directionAb : directionAb;
@@ -512,7 +592,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   protected void handleCircularWay(OsmWay circularOsmWay) throws PlanItException {
     Map<String, String> osmWayTags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     
-    MacroscopicLinkSegmentType linkSegmentType = getLinkSegmentType(circularOsmWay, osmWayTags);
+    MacroscopicLinkSegmentType linkSegmentType = getDefaultLinkSegmentTypeByOsmHighwayType(circularOsmWay, osmWayTags);
     if(linkSegmentType != null) {
     
       int firstNodeIndex = 0;
@@ -606,7 +686,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @param tags the tags of this way
    * @return the link segment type if available, otherwise nullis returned
    */
-  protected MacroscopicLinkSegmentType getLinkSegmentType(OsmWay osmWay, Map<String, String> tags) {
+  protected MacroscopicLinkSegmentType getDefaultLinkSegmentTypeByOsmHighwayType(OsmWay osmWay, Map<String, String> tags) {
     MacroscopicLinkSegmentType linkSegmentType = null;
     String osmTypeValueToUse = null;
     String osmTypeKeyToUse = null;
@@ -702,7 +782,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     try {
       
       /* a default link segment type should be available as starting point*/
-      MacroscopicLinkSegmentType linkSegmentType = getLinkSegmentType(osmWay, tags);
+      MacroscopicLinkSegmentType linkSegmentType = getDefaultLinkSegmentTypeByOsmHighwayType(osmWay, tags);
       if(linkSegmentType != null) {      
       
         if(PlanitOsmUtils.isCircularWay(osmWay, tags)) {
