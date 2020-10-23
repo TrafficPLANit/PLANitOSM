@@ -497,7 +497,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   /**
    * the link segment types that are activated for this instance
    */
-  protected final Map<String, MacroscopicLinkSegmentType> createdOSMLinkSegmentTypes;
+  protected final Map<String, MacroscopicLinkSegmentType> defaultPlanitOsmLinkSegmentTypes;
     
   /** collect the PLANit mode that are mapped, i.e., are marked to be activated in the final network.
    * @param osmWayKey to collect for
@@ -508,20 +508,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmSettings settings) {
     Collection<String> allowedOsmModes =  settings.getModeAccessConfiguration().collectAllowedModes(osmWayKey, osmWayValue);
     return settings.collectMappedPlanitModes(allowedOsmModes);
-  }  
-  
-  /** populate the mode properties for the allowed modes
-   * @param linkSegmentType to populate for
-   * @param activatedPlanitModes to add
-   * @param osmWayTypeMaxSpeed maxSpeed to set 
-   */
-  protected void populateLinkSegmentTypeModeProperties(MacroscopicLinkSegmentType linkSegmentType, Collection<Mode> activatedPlanitModes, double osmWayTypeMaxSpeed) {
-    /* apply the way type's maximum speed to all modes, but for clarity already cap it to the mode's max speed if needed */
-    for(Mode planitMode : activatedPlanitModes) {          
-      double cappedMaxSpeed = Math.min(osmWayTypeMaxSpeed, planitMode.getMaximumSpeed());
-      linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(cappedMaxSpeed,cappedMaxSpeed));
-    }
-  }  
+  }     
   
   /**
    *  create the road based link segment type based on the setting
@@ -552,7 +539,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       /* when valid osm value is found continue */
       if(osmWayValueToUse != null) {
         /* when way value has not been registered yet,duplicates may occur when way value is replaced with default when not supported */ 
-        if(!createdOSMLinkSegmentTypes.containsKey(osmWayValueToUse)) {
+        if(!defaultPlanitOsmLinkSegmentTypes.containsKey(osmWayValueToUse)) {
         
           /* Only when one or more OSM modes are mapped to PLANit modes, the osm way type will be used, otherwise it is ignored */
           Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(OsmHighwayTags.HIGHWAY, osmWayValueToUse, settings);          
@@ -568,16 +555,19 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
               linkSegmentType = createOsmLinkSegmentType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);            
             }
             
+            /* name based on OSM highway= <value> */
+            linkSegmentType.setName(osmWayValueToUse);
+            
             /* mode properties */
             double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);
-            populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);     
+            addLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);     
             
             /** convert to comma separated string by mode name */
             String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
             LOGGER.info(String.format("%s%s highway:%s - modes: %s speed: %.2f (km/h) capacity: %.2f (pcu/lane/h), max density %.2f (pcu/km/lane)", 
                 isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));
           }else {
-            linkSegmentType = createdOSMLinkSegmentTypes.get(osmWayValueToUse);
+            linkSegmentType = defaultPlanitOsmLinkSegmentTypes.get(osmWayValueToUse);
           }
           
         }else {
@@ -613,9 +603,12 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         /* create the PLANit link segment type based on OSM way tag */
         linkSegmentType = createOsmLinkSegmentType(OsmRailWayTags.RAILWAY, osmWayValue);
         
+        /* name based on OSM railway= <value> */
+        linkSegmentType.setName(osmWayValue);
+        
         /* mode properties */
         double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(OsmRailWayTags.RAILWAY, osmWayValue);
-        populateLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);                              
+        addLinkSegmentTypeModeProperties(linkSegmentType, activatedPlanitModes, osmHighwayTypeMaxSpeed);                              
           
         String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
         LOGGER.info(String.format("[DEFAULT] railway:%s - modes: %s speed: %s (km/h)", osmWayValue, csvModeString, osmHighwayTypeMaxSpeed));
@@ -639,7 +632,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  void createOsmCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
+  protected void createOsmCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
@@ -676,7 +669,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           LOGGER.warning(String.format("unable to create osm compatible PLANit link segment type for key:value combination %s:%s, ignored",osmWayKey, osmWayValueToUse));
         }else {
           /* create, register, and also store by osm tag */
-          createdOSMLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);        
+          defaultPlanitOsmLinkSegmentTypes.put(osmWayValueToUse, linkSegmentType);        
         }
       }                        
     }
@@ -686,9 +679,9 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   /**
    * Constructor
    */
-  public PlanitOsmNetwork(IdGroupingToken groupId) {
+  public PlanitOsmNetwork(final IdGroupingToken groupId) {
     super(groupId);    
-    this.createdOSMLinkSegmentTypes = new HashMap<String, MacroscopicLinkSegmentType>();
+    this.defaultPlanitOsmLinkSegmentTypes = new HashMap<String, MacroscopicLinkSegmentType>();
   }
 
   /**
@@ -697,9 +690,23 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param OSMHighwayTagValue the type of road to find
    * @return the link segment type that is registered
    */
-  public MacroscopicLinkSegmentType getSegmentTypeByOsmTag(String osmHighwayTagValue) {
-    return this.createdOSMLinkSegmentTypes.get(osmHighwayTagValue);
+  public MacroscopicLinkSegmentType getDefaultLinkSegmentTypeByOsmTag(final String osmHighwayTagValue) {
+    return this.defaultPlanitOsmLinkSegmentTypes.get(osmHighwayTagValue);
   }
-
   
+  /** add  mode properties for the passed in modes to the passed in link segment type where we cap the max and critical speed based on the minimum of the mode's
+   * maximum speed and the osmway type's maximum speed
+   * 
+   * @param linkSegmentType to populate for
+   * @param modesToAdd to add
+   * @param osmWayTypeMaxSpeed maxSpeed to set 
+   */
+  public void addLinkSegmentTypeModeProperties(final MacroscopicLinkSegmentType linkSegmentType, final Collection<Mode> modesToAdd, double osmWayTypeMaxSpeed) {
+    /* apply the way type's maximum speed to all modes, but for clarity already cap it to the mode's max speed if needed */
+    for(Mode planitMode : modesToAdd) {       
+      double cappedMaxSpeed = Math.min(osmWayTypeMaxSpeed, planitMode.getMaximumSpeed());
+      linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(cappedMaxSpeed,cappedMaxSpeed));
+    }
+  }
+    
 }

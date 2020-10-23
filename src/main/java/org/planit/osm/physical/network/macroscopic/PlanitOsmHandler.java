@@ -3,6 +3,7 @@ package org.planit.osm.physical.network.macroscopic;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,10 +17,12 @@ import java.util.logging.Logger;
 import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.physical.PhysicalNetwork;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.osm.util.ModifiedLinkSegmentTypes;
 import org.planit.osm.util.OsmAccessTags;
 import org.planit.osm.util.OsmDirection;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmLaneTags;
+import org.planit.osm.util.OsmPedestrianTags;
 import org.planit.osm.util.OsmRailFeatureTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmRoadModeCategoryTags;
@@ -60,6 +63,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmHandler.class.getCanonicalName());
+  
+  /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
+  private static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
 
   /** the network to populate */
   private final PlanitOsmNetwork network;
@@ -86,6 +92,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays;
+  
+  /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of the PLANit link segment types while parsing */
+  private final ModifiedLinkSegmentTypes modifiedLinkSegmentTypes;
   
   /**
    * track the nodes by their external id so they can by looked up quickly while parsing ways
@@ -178,77 +187,214 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }     
   }
   
-  /** collect all OSM modes with key: <OSM mode name> value: the access value tag (YES/NO) passed in
+  /** verify from the passed in tags if a side walk or footway osmkey is present with any of these value tags
+   * 
+   * 
+   * @param tags to verify
+   * @return true when one or more of the tag values is found, false otherwise
+   */
+  private boolean hasExplicitSidewalkOrFootwayWithAccessValue(Map<String, String> tags, String... accessValueTags) {
+    Set<String> osmPedestrianKeyTags = OsmPedestrianTags.getOsmPedestrianKeyTags();
+    if(!Collections.disjoint(osmPedestrianKeyTags,tags.keySet())){           
+      for(String osmKey : osmPedestrianKeyTags) {
+        if(tags.containsKey(osmKey)) {
+          if(PlanitOsmUtils.matchesAnyValueTag(tags.get(osmKey).replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, ""), accessValueTags)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;    
+  }
+  
+  /** verify from the passed in tags if a side walk or footway is present that is accessible to pedestrians
+   * 
+   *  sidewalk=
+   * <ul>
+   * <li>yes</li>
+   * <li>both</li>
+   * <li>left</li>
+   * <li>right</li>
+   * </ul>
+   * or footway=sidewalk
+   * 
+   * @param tags to verify
+   * @return true when explicitly mentioned and available, false otherwise (could still support pedestrians if highway type suports it by default)
+   */
+  private boolean hasExplicitlyIncludedSidewalkOrFootway(Map<String, String> tags) {
+    return hasExplicitSidewalkOrFootwayWithAccessValue(tags, OsmPedestrianTags.SIDEWALK_YES, OsmPedestrianTags.BOTH, OsmPedestrianTags.RIGHT, OsmPedestrianTags.LEFT, OsmPedestrianTags.SIDEWALK);
+  }
+  
+  /** verify from the passed in tags if a side walk or footway is present that is not accesible to pedestrians based on
+   * 
+   *  sidewalk=
+   * <ul>
+   * <li>no</li>
+   * <li>none</li>
+   * <li>separate</li>
+   * </ul>
+   * 
+   * @param tags to verify
+   * @return true when explicitly mentioned and available, false otherwise (could still support pedestrians if highway type suports it by default)
+   */
+  private boolean hasExplicitlyExcludedSidewalkOrFootway(Map<String, String> tags) {
+    return hasExplicitSidewalkOrFootwayWithAccessValue(tags, OsmPedestrianTags.SIDEWALK_NONE, OsmPedestrianTags.SIDEWALK_NO, OsmPedestrianTags.SEPARATE);
+  }  
+    
+  
+  /** collect all OSM modes with key: <OSM mode name> value: the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
-   * @param modeAccessValueTag used to filter the modes by (yes/no)
+   * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */
-  private Collection<String> getOsmModesWithAccessValue(Map<String, String> tags, final String modeAccessValueTag){
-    Set<String> excludedModes = new HashSet<String>();
+  private Collection<String> getOsmModesWithAccessValue(Map<String, String> tags, final String... modeAccessValueTags){
+    Set<String> foundModes = new HashSet<String>();    
     
     /* osm modes extracted from road mode category */
     Collection<String> roadModeCategories = OsmRoadModeCategoryTags.getRoadModeCategories();
     for(String roadModeCategory : roadModeCategories) {
-      if(tags.containsKey(roadModeCategory) && tags.get(roadModeCategory).equals(modeAccessValueTag)){
-        excludedModes.addAll(OsmRoadModeCategoryTags.getRoadModesByCategory(roadModeCategory));
+      if(tags.containsKey(roadModeCategory)) {
+        String valueTag = tags.get(roadModeCategory).replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
+          if(modeAccessValueTags[index].equals(valueTag)){
+            foundModes.addAll(OsmRoadModeCategoryTags.getRoadModesByCategory(roadModeCategory));
+          }
+        }
       }
     }
     
     /* osm road mode */
     Collection<String> roadModes = OsmRoadModeTags.getSupportedRoadModeTags();
     for(String roadMode : roadModes) {
-      if(tags.containsKey(roadMode) && tags.get(roadMode).equals(modeAccessValueTag)){
-        excludedModes.add(roadMode);
+      if(tags.containsKey(roadMode)){
+        String valueTag = tags.get(roadMode).replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
+          if(modeAccessValueTags[index].equals(valueTag)){
+            foundModes.add(roadMode);
+          }
+        }
       }
     }    
-    return excludedModes;
+    return foundModes;
   }
   
-  /** Collect explicitly excluded modes from the passed in tags
+  /** Collect explicitly excluded modes from the passed in tags. Explicitly excluded is based on the following access mode specific tags are present:
+   * 
+   * mode_name=
+   * <ul>
+   * <li>no</li>
+   * <li>use_sidepath</li>
+   * <li>delivery</li>
+   * <li>customers</li>
+   * <li>private</li>
+   * <li>dismount</li>
+   * <li>discouraged</li>
+   * </ul>
+   * or pedestrian specific exclusions see {@code hasExplicitlyExcludedSidewalkOrFootway}
+   *  
    * @param tags to find explicitly excluded (planit) modes from
    * @return the excluded planit modes supported by the parser
    */
   private Collection<Mode> getExplicitlyExcludedModes(Map<String, String> tags) {   
-    return settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.NO));
+    Collection<Mode> excludedModes =  settings.collectMappedPlanitModes(
+        getOsmModesWithAccessValue(tags, 
+            OsmAccessTags.NO, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.DELIVERY, OsmAccessTags.CUSTOMERS, OsmAccessTags.PRIVATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED));
+    /* pedestrian modes can also be excluded by means of explicitly removed sidewalks, footways, etc. This is covered separately as they might not specifically mention the OSM mode foot=x */
+    if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && hasExplicitlyExcludedSidewalkOrFootway(tags)) {
+      excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
+    }  
+    return excludedModes;
   }  
   
-  /** Collect explicitly included modes from the passed in tags
+  /** Collect explicitly included modes from the passed in tags.Explicitly included is based on the following access mode specific tags are present:
+   * 
+   * mode_name=
+   * <ul>
+   * <li>yes</li>
+   * <li>designated</li>
+   * <li>permissive</li>
+   * </ul>
+   * 
+   * or pedestrian specific inclusions see {@code hasExplicitlyIncludedSidewalkOrFootway}
+   * 
    * @param tags to find explicitly included (planit) modes from
    * @return the included planit modes supported by the parser
    */
   private Collection<Mode> getExplicitlyIncludedModes(Map<String, String> tags) {
-    return settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.YES));
+    Collection<Mode> includedModes = settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.YES, OsmAccessTags.DESIGNATED, OsmAccessTags.PERMISSIVE));
+    /* pedestrian modes can also be added by means of defined sidewalks, footways, etc. This is covered separately as they might not specifically mention the OSM mode foot=x */
+    if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && hasExplicitlyIncludedSidewalkOrFootway(tags)) {
+      includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
+    }
+    return includedModes;
   }    
   
   /** given the OSM way tags we construct or find the appropriate link segment type, if no better alternative could be found
-   * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way  
+   * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way.
+   * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag is available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
+   * 
+   * The following access=X value tags correspond to a situation where all modes will be allowed unless specific exclusions are
+   * provided:
+   * 
+   * access=
+   *  <ul>
+   *  <li>yes</li>
+   *  <li>unkown</li>
+   *  </ul>
+   *  
+   *  If other access values are found it is assumed all modes are excluded unless specific inclusions are provided.
+   *  
    * @param osmWay the tags belong to
    * @param tags of the OSM way to extract the link segment type for
    * @param linkSegmentType use thus far for this way
    * @return to be used link segment type, which in case of an unsuccessful update based on the tags reverts to the passed in link segment type
+   * @throws PlanItException thrown if error
    */
-  private MacroscopicLinkSegmentType extractLinkSegmentTypeByOsmAccessTags(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType) {
+  private MacroscopicLinkSegmentType extractLinkSegmentTypeByOsmAccessTags(final OsmWay osmWay, final Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
     
     /* identify explicitly excluded and included modes */
     Collection<Mode> excludedModes = getExplicitlyExcludedModes(tags);
     Collection<Mode> includedModes = getExplicitlyIncludedModes(tags);
         
     /* supplement with implicitly included modes */
-    String accessValue = tags.get(OsmAccessTags.ACCESS);    
-    if(accessValue.equals(OsmAccessTags.YES)) {
-      includedModes.addAll(network.modes.getAll());             
+    if(tags.containsKey(OsmAccessTags.ACCESS)) {
+      String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, "");    
+      if(accessValue.equals(OsmAccessTags.YES) || accessValue.equals(OsmAccessTags.UNKNOWN)) {
+        includedModes.addAll(network.modes.getAll());
+        includedModes.removeAll(excludedModes);
+      }else {
+        excludedModes.addAll(network.modes.getAll());
+        excludedModes.removeAll(includedModes);
+      }
     }
     
     /* identify differences with default link segment type in terms of mode access */
-    Collection<Mode> toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(includedModes);
-    Collection<Mode> toBeRemovedModes = linkSegmentType.getAvailableModesFrom(excludedModes);    
+    Set<Mode> toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(includedModes);
+    Set<Mode> toBeRemovedModes = linkSegmentType.getAvailableModesFrom(excludedModes);    
     
-    /* somehow quickly assess if such a custom link segment type already exists -> track differences from default efficiently somehow -> if so use it, otherwise create a new
-     * alternative custom type */
-     */
+    MacroscopicLinkSegmentType finalLinkSegmentType = linkSegmentType;
+    if(!toBeAddedModes.isEmpty() || !toBeRemovedModes.isEmpty()) {
+      
+      finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
+      if(finalLinkSegmentType==null) {
+        /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
+        finalLinkSegmentType = network.registerUniqueCopyOf(linkSegmentType);
+        
+        /* update mode properties */
+        String roadTypeKey = tags.containsKey(OsmHighwayTags.HIGHWAY) ? OsmHighwayTags.HIGHWAY : OsmRailWayTags.RAILWAY; 
+        double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(roadTypeKey, tags.get(roadTypeKey));               
+        network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmHighwayTypeMaxSpeed);
+        finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
+        
+        /* register modification */
+        modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
+      }
+      
+    }
     
-    return null;
+    return finalLinkSegmentType;
   }  
   
 
@@ -560,10 +706,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     if(direction.isOneWay() && !direction.isReverseDirection() && !link.isGeometryInAbDirection()) {
       directionAb = false;
     }
-    
-    if(tags.containsKey(OsmAccessTags.ACCESS)) {
-      linkSegmentType = extractLinkSegmentTypeByOsmAccessTags(osmWay, tags, linkSegmentType);
-    }
+
+    /* in case tags indicate changes from the default, we update the link segment type */
+    linkSegmentType = extractLinkSegmentTypeByOsmAccessTags(osmWay, tags, linkSegmentType);
     
     /* direction 1 */
     directionAb = direction.isReverseDirection() ? !directionAb : directionAb;
@@ -700,7 +845,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     if(osmTypeKeyToUse != null) {  
       osmTypeValueToUse = tags.get(osmTypeKeyToUse);           
-      linkSegmentType = network.getSegmentTypeByOsmTag(osmTypeValueToUse);            
+      linkSegmentType = network.getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);            
       if(linkSegmentType != null) {
         profiler.incrementOsmTagCounter(osmTypeValueToUse);        
         return linkSegmentType;
@@ -735,6 +880,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     this.osmNodes = new HashMap<Long, OsmNode>();
     this.linkInternalOsmNodes = new HashMap<Long, List<Link>>();
     this.osmCircularWays = new HashMap<Long, OsmWay>();
+    
+    this.modifiedLinkSegmentTypes = new ModifiedLinkSegmentTypes();
   }
   
   /**
@@ -818,7 +965,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* process circular ways*/
     for(Entry<Long,OsmWay> entry : osmCircularWays.entrySet()) {
       try {        
-        handleCircularWay(entry.getValue());
+        handleCircularWay(entry.getValue());        
       }catch (PlanItException e) {
         LOGGER.severe(e.getMessage());
         LOGGER.severe(String.format("unable to process circular way OSM id: %d",entry.getKey()));

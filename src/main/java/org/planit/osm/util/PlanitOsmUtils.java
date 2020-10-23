@@ -104,5 +104,20 @@ public class PlanitOsmUtils {
     return osmNode.getLatitude();
   }     
   
+  /** verify if the passed in value tag is present in the list of value tags provided
+   * 
+   * @param valueTag to check
+   * @param valueTags to check against
+   * @return true when present, false otherwise
+   */
+  public static boolean matchesAnyValueTag(String valueTag, String... valueTags) {
+    for(int index=0; index < valueTags.length;++ index) {
+      if(valueTag.equals(valueTags[index])) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
 
 }

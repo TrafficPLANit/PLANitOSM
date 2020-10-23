@@ -48,7 +48,7 @@ public class OsmAccessTags {
   public static final String FORESTRY = "forestry";
   
   /** value: discouraged tag */
-  public static final String DISCOUNRAGED = "discouraged";
+  public static final String DISCOURAGED = "discouraged";
   
   /** value: unknown tag */
   public static final String UNKNOWN = "unknown";

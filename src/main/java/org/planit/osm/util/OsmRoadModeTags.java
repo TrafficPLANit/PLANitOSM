@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.planit.mode.PedestrianMode;
+
 /**
  * Most OSM road based mode tags. Not included: water modes or very specialised modes. Based on list found on
  * https://wiki.openstreetmap.org/wiki/Key:access  
@@ -52,7 +54,7 @@ public class OsmRoadModeTags {
 
   /* NO VEHICLE */
   
-  public static final String FOOT = "foot";
+  public static final String FOOT = OsmPedestrianTags.FOOT;
   
   public static final String DOG = "dog";
   
@@ -75,7 +77,7 @@ public class OsmRoadModeTags {
   /* MOTORISED VEHICLE  category */
   
   /** motor cycle part of motorised vehicle category type */
-  public static final String MOTOR_CYCLE = "motor_cycle";
+  public static final String MOTOR_CYCLE = "motorcycle";
   
   /** motorised bicycls with a speed restriction of 45km/h */
   public static final String MOPED = "moped";
@@ -84,10 +86,10 @@ public class OsmRoadModeTags {
   public static final String MOFA = "mofa";  
   
   /** motor car part of motorised vehicle category type */
-  public static final String MOTOR_CAR = "motor_car"; 
+  public static final String MOTOR_CAR = "motorcar"; 
   
   /** motor home part of motorised vehicle category type */
-  public static final String MOTOR_HOME = "motor_home";
+  public static final String MOTOR_HOME = "motorhome";
   
   /** tourist bus for long distance non public transport */
   public static final String TOURIST_BUS = "tourist_bus";
