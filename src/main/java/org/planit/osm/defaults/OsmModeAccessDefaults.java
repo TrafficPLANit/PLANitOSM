@@ -31,15 +31,15 @@ public class OsmModeAccessDefaults implements Cloneable {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmModeAccessDefaults.class.getCanonicalName());
   
-  /** store the allowed mode categories by highway type (least important, after disallowed and allowed modes) */
-  private final Map<String, Set<String>> allowedModeCategoriesByHighwayType;
-  
-  /** store the allowed modes by highway type  (after disallowed modes)*/
-  private final Map<String, Set<String>> allowedModesByHighwayType;
-  
   /** store the disallowed modes by highway type (most important)*/
   private final Map<String, Set<String>> disallowedModesByHighwayType;
   
+  /** store the allowed modes by highway type  (after disallowed modes)*/
+  private final Map<String, Set<String>> allowedModesByHighwayType;  
+  
+  /** store the allowed mode categories by highway type (least important, after disallowed and allowed modes) */
+  private final Map<String, Set<String>> allowedModeCategoriesByHighwayType;
+    
   /** store the allowed modes by railway type, railway modes must always be explicitly allowed on railways */
   private final Map<String, Set<String>> allowedModesByRailwayType;
 

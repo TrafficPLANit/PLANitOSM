@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.planit.mode.PedestrianMode;
-
 /**
  * Most OSM road based mode tags. Not included: water modes or very specialised modes. Based on list found on
  * https://wiki.openstreetmap.org/wiki/Key:access  

@@ -521,7 +521,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     MacroscopicLinkSegmentType linkSegmentType = null; 
     
     /* only when way type is marked as supported in settings we parse it */
-    if(settings.isOsmWayTypeSupported(OsmHighwayTags.HIGHWAY, osmWayValue)) {           
+    if(settings.isOsmWayTypeActivated(OsmHighwayTags.HIGHWAY, osmWayValue)) {           
       
       boolean isOverwrite = settings.isOsmHighwayTypeDefaultOverwritten(osmWayValue);
       boolean isBackupDefault = false;          
@@ -530,7 +530,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       String osmWayValueToUse = osmWayValue;
       if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue)){
         /* ...use replacement type instead of activate type to still be able to process OSM ways of this type, if no replacement is set, we revert to null to indicate we cannot support this way type */
-        osmWayValueToUse = settings.hasOSMHighwayTypeWhenUnsupported() ? settings.getOsmHighwayTypeWhenUnsupported() : null ;
+        osmWayValueToUse = settings.isApplyDefaultWhenOsmHighwayTypeDeactivated() ? settings.getDefaultOsmHighwayTypeWhenDeactivated() : null ;
         isBackupDefault = true;
         LOGGER.info(String.format(
             "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
@@ -595,7 +595,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     MacroscopicLinkSegmentType linkSegmentType = null;
   
     /* only when way type is marked as supported in settings we parse it */
-    if(settings.isOsmWayTypeSupported(OsmRailWayTags.RAILWAY, osmWayValue)) {
+    if(settings.isOsmWayTypeActivated(OsmRailWayTags.RAILWAY, osmWayValue)) {
       
       Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(OsmRailWayTags.RAILWAY, osmWayValue, settings);
       if(!activatedPlanitModes.isEmpty()) {
@@ -636,9 +636,9 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
-        settings.supportedOsmRoadLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
+        settings.highwayTypeConfiguration.setOfActivatedTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
     Map<String,String> railwayKeyValueMap = 
-        settings.supportedOsmRailLinkSegmentTypes.stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
+        settings.railwayTypeConfiguration.setOfActivatedTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
     Map<String,String> combinedWayMap = new HashMap<String,String>();
     combinedWayMap.putAll(highwayKeyValueMap);
     combinedWayMap.putAll(railwayKeyValueMap);    

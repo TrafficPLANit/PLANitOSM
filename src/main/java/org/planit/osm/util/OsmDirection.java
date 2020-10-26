@@ -73,7 +73,7 @@ public class OsmDirection {
           oneWay = true;
           
           /* extract direction on roundabout way */
-          if(tags.containsKey(OsmTags.DIRECTION) && tags.get(OsmTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE)) {
+          if(tags.containsKey(OsmDirectionTags.DIRECTION) && tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE)) {
             reverseDirection = false;    
           }else {
             /* direction default is anti-clock-wise, unless we are in a left-hand drive country, in which case we would adopt

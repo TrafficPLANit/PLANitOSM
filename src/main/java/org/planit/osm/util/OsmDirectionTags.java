@@ -7,6 +7,11 @@ package org.planit.osm.util;
  *
  */
 public class OsmDirectionTags {
+  
+  /** key */
+  public static final String DIRECTION = "direction";
+  
+  /* possible values */
 
   public static final String CLOCKWISE = "clockwise";
   
