@@ -124,7 +124,8 @@ public class PlanitOsmReader implements NetworkReader {
     
     if(settings.isRemoveDanglingSubnetworks()) {
       // CONTINUE HERE
-      osmNetwork.removeDanglingSubnetworks();
+      osmNetwork.removeDanglingSubnetworks(
+          settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
     }
     
     /* return result */

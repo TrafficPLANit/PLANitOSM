@@ -44,10 +44,10 @@ public class OsmPedestrianTags {
   public static final String SEPARATE = "separate";  
   
   /** value for sidewalk key , see also https://wiki.openstreetmap.org/wiki/Key:sidewalk*/ 
-  public static final String SIDEWALK_YES = "yes";
+  public static final String YES = OsmTags.YES;
   
   /** value for sidewalk key , see also https://wiki.openstreetmap.org/wiki/Key:sidewalk*/ 
-  public static final String SIDEWALK_NO = "no";
+  public static final String NO = OsmTags.NO;
   
   /** value for sidewalk key , see also https://wiki.openstreetmap.org/wiki/Key:sidewalk*/ 
   public static final String SIDEWALK_NONE = "none";  
@@ -58,8 +58,8 @@ public class OsmPedestrianTags {
     osmSideWalkValueTags.add(RIGHT);
     osmSideWalkValueTags.add(LEFT);
     osmSideWalkValueTags.add(SEPARATE);
-    osmSideWalkValueTags.add(SIDEWALK_YES);
-    osmSideWalkValueTags.add(SIDEWALK_NO);
+    osmSideWalkValueTags.add(YES);
+    osmSideWalkValueTags.add(NO);
     osmSideWalkValueTags.add(SIDEWALK_NONE);
     osmSideWalkValueTags = Collections.unmodifiableSet(osmSideWalkValueTags);
   }

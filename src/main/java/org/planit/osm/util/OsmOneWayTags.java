@@ -11,11 +11,11 @@ public class OsmOneWayTags {
   
   /* values */
   
-  public static final String ONE_WAY_YES = "yes";
+  public static final String YES = OsmTags.YES;
   
   public static final String ONE_WAY_REVERSE_DIRECTION = "-1";
   
-  public static final String ONE_WAY_NO = "no";
+  public static final String NO = OsmTags.NO;
   
   public static final String REVERSIBLE = "reversible";
   

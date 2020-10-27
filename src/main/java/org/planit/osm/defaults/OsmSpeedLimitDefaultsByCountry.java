@@ -59,6 +59,8 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @throws PlanItException thrown if error
    */
   protected static void populateGlobalDefaultHighwaySpeedLimits(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {
+    /* note that these are physical speed limits for the most unrestricted mode on the highway type, when a mode has a lower
+     * speed limit based on the mode, this will be applied, hence it is not needed to reduce the speed for a footway to 5 km/h */
     
     /* GLOBAL -->                                                          URBAN,  NON_URBAN */
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,        100,  120);
@@ -77,7 +79,14 @@ public class OsmSpeedLimitDefaultsByCountry {
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PEDESTRIAN,      20,   20);
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRACK,           20,   40);
     globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.ROAD,            20,   40);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SERVICE,         20,   40);    
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SERVICE,         20,   40);   
+    
+    /* other less common tags PLANit specific made up defaults, generally low speed limits */
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.FOOTWAY,         20,   20);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PATH,            20,   20);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.CYCLEWAY,        20,   20);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.STEPS,           10,   10);
+    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.BRIDLEWAY,       20,   20);
   }  
   
   /**

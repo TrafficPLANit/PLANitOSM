@@ -2,6 +2,7 @@ package org.planit.osm.defaults;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.Pair;
@@ -13,6 +14,9 @@ import org.planit.utils.misc.Pair;
  *
  */
 public class OsmSpeedLimitDefaults implements Cloneable {
+  
+  /** the Logger for this class */
+  private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaults.class.getCanonicalName());
   
   /**
    * store urban highway defaults in this map
@@ -31,6 +35,9 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   
   /** chosen country for instance of this class */
   protected final String currentCountry;
+  
+  /** in absence of OSM default, we create a global highway speed limit (km/h) available */
+  public static final double GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH = 50;  
     
   /** in absence of OSM defined defaults, we make a global rail way speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
@@ -120,11 +127,25 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   public Double getHighwaySpeedLimit(String type, boolean outsideUrbanArea) {
     Double speedLimit = outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.get(type) : highwayUrbanSpeedLimitDefaults.get(type);
     if(speedLimit == null) {
-      speedLimit = OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().getHighwaySpeedLimit(type, outsideUrbanArea);
-    }  
+      if(OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().containsHighwaySpeedLimit(type, outsideUrbanArea)) {
+        speedLimit = OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().getHighwaySpeedLimit(type, outsideUrbanArea);
+      }else {
+        LOGGER.severe(String.format("unable to obtain default speed limit for highway=%s, reverting to global default %.2f", type, GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH));
+        speedLimit = GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH;
+      }
+    }
     return speedLimit;    
   }
   
+  /** verify if a default speed limit is available for the given type
+   * @param type to verify
+   * @param outsideUrbanArea flag indicating outside urban area or not
+   * @return true when available false otherwise
+   */
+  public boolean containsHighwaySpeedLimit(String type, boolean outsideUrbanArea) {
+    return outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.containsKey(type) : highwayUrbanSpeedLimitDefaults.containsKey(type);
+  }
+
   /** Collect the country for which these defaults are meant. When not set "global" is returned
    * @return country set
    */

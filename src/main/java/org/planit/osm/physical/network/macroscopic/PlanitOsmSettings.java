@@ -100,9 +100,21 @@ public class PlanitOsmSettings {
   
   /**
    * When dangling subnetworks are marked for removal, this threshold determines the minimum subnetwork size for it NOT to be removed.
-   * In other words, all subnetworks below this number will be removed;
+   * In other words, all subnetworks below this number will be removed
    */
-  protected int minimumSubNetworkSize = DEFAULT_MINIMUM_SUBNETWORK_SIZE;
+  protected int discardSubNetworkBelowSize = DEFAULT_MINIMUM_SUBNETWORK_SIZE;
+  
+  /**
+   * When dangling subnetworks are marked for removal, this threshold determines the maximum subnetwork size for it NOT to be removed.
+   * In other words, all subnetworks above this number will be removed, including the largest one if it does not match the value
+   */  
+  protected int discardSubNetworkAbovesize = Integer.MAX_VALUE;
+  
+  /**
+   * indicate whether or not to keep the largest subnetwork when {@code removeDanglingSubNetworks} is set to true even when it does
+   * not adhere to the criteria of {@code discardSubNetworkBelowSize} and/or {@code discardSubNetworkAbovesize} 
+   */
+  protected boolean alwaysKeepLargestsubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
     
   /**
    * conduct general initialisation for any instance of this class
@@ -291,8 +303,11 @@ public class PlanitOsmSettings {
   /** Default whether or not we are removing dangling subnetworks after parsing: true */
   public static boolean DEFAULT_REMOVE_DANGLING_SUBNETWORK = true;
   
-  /** Default minimum size of subnetwork for it not to be removed when danlging subnetworks are removed, size indicates number of vertices: 20 */
+  /** Default minimum size of subnetwork for it not to be removed when dangling subnetworks are removed, size indicates number of vertices: 20 */
   public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE= 20;  
+  
+  /** by default we always keep the largest subnetwork */
+  public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
     
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
@@ -434,7 +449,7 @@ public class PlanitOsmSettings {
    * Doing so avoids the reader to log warnings that supported way types cannot be injected in the network because they
    * have no viable modes attached
    */
-  public void excludeOsmWayTypesWithoutActiveModes() {
+  public void excludeOsmWayTypesWithoutActivatedModes() {
     Set<String> originallySupportedTypes = railwayTypeConfiguration.setOfActivatedTypes();
     for(String supportedRailWayType : originallySupportedTypes) {
       Collection<String> allowedOsmModes = getModeAccessConfiguration().collectAllowedModes(OsmRailWayTags.RAILWAY, supportedRailWayType);
@@ -457,8 +472,10 @@ public class PlanitOsmSettings {
     switch (osmWayKey) {
     case OsmHighwayTags.HIGHWAY:
       highwayTypeConfiguration.activate(osmWayValue);
+      break;
     case OsmRailWayTags.RAILWAY:
-      railwayTypeConfiguration.activate(osmWayValue);      
+      railwayTypeConfiguration.activate(osmWayValue);
+      break;
     default:
       LOGGER.fine(String.format("excluding osm way irrelevant, provided combination %s:%s was already unsupported or unknown",osmWayKey, osmWayValue));
     }          
@@ -650,7 +667,7 @@ public class PlanitOsmSettings {
    * @param planitMode to map it to
    */
   public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
-    if(!OsmRailWayTags.isRailwayValueTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailwayModeValueTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -667,7 +684,7 @@ public class PlanitOsmSettings {
    * @param osmRoadMode to remove
    */
   public void removeOsmRailMode2PlanitModeMapping(String osmRailMode) {
-    if(!OsmRailWayTags.isRailwayValueTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailwayModeValueTag(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -715,7 +732,7 @@ public class PlanitOsmSettings {
   public Mode getMappedPlanitMode(final String osmMode) {
     if(OsmRoadModeTags.isRoadModeTag(osmMode)) {
       return this.osmRoadMode2PlanitModeMap.get(osmMode);
-    }else if(OsmRailWayTags.isRailwayValueTag(osmMode)) {
+    }else if(OsmRailWayTags.isRailwayModeValueTag(osmMode)) {
       return this.osmRailMode2PlanitModeMap.get(osmMode);
     }else {
       LOGGER.warning(String.format("unknown osmMode tag %s found when collecting mapped PLANit modes, ignored",osmMode));
@@ -756,10 +773,64 @@ public class PlanitOsmSettings {
 
   /** the minimum size an identified dangling network must have for it to NOT be removed when danlging networks are removed
    * 
-   * @param minimumSubNetworkSize
+   * @param discardBelow this number of vertices
    */
-  public void setKeepDanglingNetworkSize(int minimumSubNetworkSize) {
-    this.minimumSubNetworkSize = minimumSubNetworkSize;
+  public void setDiscardDanglingNetworksBelow(int discardBelow) {
+    this.discardSubNetworkBelowSize = discardBelow;
+  }
+  
+  /** allows you to set a maximum size for dangling subnetwork. Practically only useful for debugging purposes
+   * 
+   * @param discardAbove this number of vertices
+   */
+  public void setDiscardDanglingNetworksAbove(int discardAbove) {
+    this.discardSubNetworkAbovesize = discardAbove;
+  }  
+  
+  /** collect the size above which dangling networks are kept even if they are smaller than the largest connected network
+   * @return danlging network size
+   */
+  public Integer getDiscardDanglingNetworkBelowSize() {
+    return discardSubNetworkBelowSize;
+  }  
+  
+  /** collect the size below which networks are removed 
+   * @return dangling network size
+   */
+  public Integer getDiscardDanglingNetworkAboveSize() {
+    return discardSubNetworkAbovesize;
+  }    
+  
+  /** Verify if the largest subnetwork is always kept when we are removing dangling subnetworks
+   * 
+   * @return true when kept false otherwise
+   */
+  public boolean isAlwaysKeepLargestsubNetwork() {
+    return alwaysKeepLargestsubNetwork;
+  }
+
+  /** indicate to keep the largest subnetwork always even when removing dangling subnetworks and the largest one
+   * does not fit the set criteria
+   * 
+   * @param alwaysKeepLargestsubNetwork when true we always keep it, otherwise not
+   */
+  public void setAlwaysKeepLargestsubNetwork(boolean alwaysKeepLargestsubNetwork) {
+    this.alwaysKeepLargestsubNetwork = alwaysKeepLargestsubNetwork;
+  }  
+
+  /**
+   * deactivate all types for both rail and highway
+   */
+  public void deactivateAllOsmWayTypes() {
+    highwayTypeConfiguration.deactivateAll();
+    railwayTypeConfiguration.deactivateAll();
+  }
+
+  /** activate all passed in highway types
+   * @param osmHighwayValueType
+   */
+  public void activateOsmHighwayWayTypes(String... osmHighwayValueType) {
+    highwayTypeConfiguration.activate(osmHighwayValueType);
   }
  
 }

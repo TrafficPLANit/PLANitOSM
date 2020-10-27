@@ -79,10 +79,20 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         return createService();
       case OsmHighwayTags.PEDESTRIAN:
         return createPedestrian();
+      case OsmHighwayTags.PATH:
+        return createPath();
+      case OsmHighwayTags.STEPS:
+        return createSteps();
+      case OsmHighwayTags.FOOTWAY:
+        return createFootway();
+      case OsmHighwayTags.CYCLEWAY:
+        return createCycleway();        
       case OsmHighwayTags.TRACK:
         return createTrack();
       case OsmHighwayTags.ROAD:
-        return createRoad();          
+        return createRoad();
+      case OsmHighwayTags.BRIDLEWAY:
+        return createBridleway();           
       default:
         throw new PlanItException(
             String.format("OSM type is supported but factory method is missing, unexpected for type highway:%s",highwayTypeValue));
@@ -346,6 +356,66 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   }   
   
   /**
+   * Create path type with defaults
+   * 
+   * A non-specific path either multi-use or unspecified usage, open to all non-motorized vehicles and not intended for motorized vehicles unless tagged so separately    
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createPath() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PATH, PlanitOsmConstants.PATH_CAPACITY);    
+  }    
+  
+  /**
+   * Create step type with defaults
+   * 
+   * For flights of steps (stairs) on footways    
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createSteps() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.STEPS, PlanitOsmConstants.STEPS_CAPACITY);    
+  }   
+  
+  /**
+   * Create footway type with defaults
+   * 
+   * For designated footpaths; i.e., mainly/exclusively for pedestrians. This includes walking tracks and gravel paths.   
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createFootway() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.FOOTWAY, PlanitOsmConstants.FOOTWAY_CAPACITY);    
+  }   
+  
+  /**
+   * Create cycleway type with defaults
+   * 
+   * For designated cycleways   
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createCycleway() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.CYCLEWAY, PlanitOsmConstants.CYCLEWAY_CAPACITY);    
+  }  
+  
+  /**
+   * Create bridleway type with defaults
+   * 
+   * For horse riders.   
+   * 
+   * @return created type
+   * @throws PlanItException thrown if error
+   */
+  protected MacroscopicLinkSegmentType createBridleway() throws PlanItException {
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.BRIDLEWAY, PlanitOsmConstants.BRIDLEWAY_CAPACITY);    
+  }   
+  
+  /**
    * Create track type with defaults
    * 
    * Roads for mostly agricultural or forestry uses.    
@@ -478,8 +548,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.LIVING_STREET);
     supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.SERVICE);
     supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PEDESTRIAN);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.PATH); 
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.STEPS); 
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.FOOTWAY);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.CYCLEWAY);
     supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.TRACK);
-    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.ROAD);     
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.ROAD);
+    supportedOsmRoadLinkSegmentTypes.add(OsmHighwayTags.BRIDLEWAY);
   }
   
   /** the supported types for which we have default rail link segment type settings available */
@@ -529,11 +604,14 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         
       String osmWayValueToUse = osmWayValue;
       if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue)){
-        /* ...use replacement type instead of activate type to still be able to process OSM ways of this type, if no replacement is set, we revert to null to indicate we cannot support this way type */
+        /* ...use replacement type instead of activate type to still be able to process OSM ways of this type, if no replacement is set, we revert to null to indicate we cannot support this way type */        
         osmWayValueToUse = settings.isApplyDefaultWhenOsmHighwayTypeDeactivated() ? settings.getDefaultOsmHighwayTypeWhenDeactivated() : null ;
-        isBackupDefault = true;
-        LOGGER.info(String.format(
-            "Highway type (%s) chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
+        if(osmWayValueToUse != null) {
+          isBackupDefault = true;
+          LOGGER.info(String.format("Highway type %s chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
+        }else {
+          LOGGER.info(String.format("Highway type %s chosen to be included in network, but not activated in reader nor is a default fallback activated, ignored", osmWayValue, osmWayValueToUse));          
+        }
       }
       
       /* when valid osm value is found continue */
@@ -658,7 +736,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         
         if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isHighwayValueTag(osmWayValueToUse)) {         
           linkSegmentType = createOsmCompatibleRoadLinkSegmentType(osmWayValueToUse, settings);
-        }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailwayValueTag(osmWayValueToUse)) {             
+        }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailwayModeValueTag(osmWayValueToUse)) {             
           linkSegmentType = createOsmCompatibleRailLinkSegmentType(osmWayValueToUse, settings);
         }else {
           LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));

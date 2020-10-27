@@ -3,6 +3,7 @@ package org.planit.osm.util;
 import java.util.Map;
 
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -75,15 +76,42 @@ public class PlanitOsmUtils {
    * 
    * @param osmWay the way to verify
    * @param tags of this OSM way
+   * @param mustEndAtstart, when true only circular roads where the end node is the start node are identified, when false, any node that appears twice results in
+   * a positive result (true is returned)
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularWay(OsmWay osmWay, Map<String, String> tags) {
+  public static boolean isCircularRoad(OsmWay osmWay, Map<String, String> tags, boolean mustEndAtstart) {
     /* a circular road, has:
      * -  more than two nodes...
-     * -  ...an end node that is the same as its start node */
-    return tags.containsKey(OsmHighwayTags.HIGHWAY) && 
-        osmWay.getNumberOfNodes() > 2 && 
-        osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1);
+     * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
+     *    is only part of the geometry 
+     */
+    if(tags.containsKey(OsmHighwayTags.HIGHWAY) && osmWay.getNumberOfNodes() > 2) {
+      if(mustEndAtstart) {
+        return (osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
+      }else {
+        return findIndicesOfFirstCircle(osmWay, 0 /*consider entire way */)!=null;        
+      }
+    }
+    return false;
+  }  
+  
+  /** find the start and end index of the first circular component of the passed in way (if any).
+   * 
+   * @param circularOsmWay to check
+   * @param initialNodeIndex offset to use, when set it uses it as the starting point to start looking
+   * @return pair of indices demarcating the first two indices with the same node conditional on the offset, null if not found 
+   */
+  public static Pair<Integer, Integer> findIndicesOfFirstCircle(OsmWay osmWay, int initialNodeIndex) {
+    for(int index = initialNodeIndex ; index < osmWay.getNumberOfNodes() ; ++index) {
+      long nodeIdToCheck = osmWay.getNodeId(index);
+      for(int index2 = index+1 ; index2 < osmWay.getNumberOfNodes() ; ++index2) {
+        if(nodeIdToCheck == osmWay.getNodeId(index2)) {
+          return new Pair<Integer, Integer>(index, index2);
+        }
+      }
+    }
+    return null;
   }  
   
   /**

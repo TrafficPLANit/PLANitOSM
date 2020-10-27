@@ -98,12 +98,15 @@ public class OsmInfrastructureConfiguration {
   /**
    * Choose to add given highway way type to parsed types on top of the defaults, e.g. highway=road
    * 
-   * @param osmWayValue to use
+   * @param osmWayValues to activate
    */
-  public void activate(String osmWayValue) {
-    activatedOsmTypes.add(osmWayValue);
-    deactivatedOsmTypes.remove(osmWayValue);
-    LOGGER.info(String.format("activating OSM type %s=%s",osmWayKey, osmWayValue));            
+  public void activate(String... osmWayValues) {
+    for(int index=0;index<osmWayValues.length;++index) {
+      String osmWayValue = osmWayValues[index];
+      activatedOsmTypes.add(osmWayValue);
+      deactivatedOsmTypes.remove(osmWayValue);
+      LOGGER.info(String.format("activating OSM type %s=%s",osmWayKey, osmWayValue));
+    }
   }  
   
   /** create a copy of the currently supported highway types in set form
@@ -120,5 +123,19 @@ public class OsmInfrastructureConfiguration {
    */
   public Set<String> setOfDeactivatedTypes() {
     return new HashSet<String>(deactivatedOsmTypes);
+  }   
+  
+  /**
+   * deactivate all types explicitly
+   */
+  public void deactivateAll() {
+    setOfActivatedTypes().forEach( activatedType -> deactivate(activatedType));
+  }  
+  
+  /**
+   * activate all types explicitly
+   */
+  public void activateAll() {
+    setOfDeactivatedTypes().forEach( deactivatedType -> activate(deactivatedType));
   }   
 }

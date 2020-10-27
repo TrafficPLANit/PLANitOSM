@@ -49,8 +49,8 @@ public class OsmDirection {
      /* determine type of one way */
       String value = tags.get(OsmOneWayTags.ONEWAY);
       
-      if(!value.equals(OsmOneWayTags.ONE_WAY_NO)) {
-        if( value.equals(OsmOneWayTags.ONE_WAY_YES)) {
+      if(!value.equals(OsmOneWayTags.NO)) {
+        if( value.equals(OsmOneWayTags.YES)) {
           oneWay = true;
         }else if(value.equals(OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION)) {
           oneWay = true;

@@ -12,10 +12,10 @@ public class OsmAccessTags {
   public static final String ACCESS = "access";
   
   /** value: yes tag */
-  public static final String YES = "yes";
+  public static final String YES = OsmTags.YES;
   
   /** value: no tag */
-  public static final String NO = "no";
+  public static final String NO = OsmTags.NO;
   
   /** value: private tag */
   public static final String PRIVATE = "private";

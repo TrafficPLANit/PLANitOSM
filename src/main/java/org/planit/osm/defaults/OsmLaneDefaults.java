@@ -31,7 +31,7 @@ public class OsmLaneDefaults implements Cloneable {
   
   /** store all defaults per country by ISO2 code **/
   protected static Map<String, Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>> speedLimitDefaultsByCountry = new HashMap<String,Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>>();
-  
+    
   /** lanes per direction if not configured */
   protected int lanesPerDirectionIfUnspecified  = DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
   
@@ -53,26 +53,34 @@ public class OsmLaneDefaults implements Cloneable {
     defaultRoadLanesPerDirection.put(OsmHighwayTags.TRUNK, 2);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.TRUNK_LINK, 2);   
     /* 1 lane for not too large roads */
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.RESIDENTIAL, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.TERTIARY, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.TERTIARY_LINK, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.SECONDARY, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.SECONDARY_LINK, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.PRIMARY, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.PRIMARY_LINK, 1);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.RESIDENTIAL,    MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.TERTIARY,       MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.TERTIARY_LINK,  MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.SECONDARY,      MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.SECONDARY_LINK, MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.PRIMARY,        MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.PRIMARY_LINK,   MINIMUM_LANES_PER_DIRECTION);
     /* 1 lane for even smaller roads, while the specification also lists 1 lane in total, PLANit has no use for this, so it is ignored */
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.UNCLASSIFIED, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.PEDESTRIAN, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.SERVICE, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.TRACK, 1);
-    defaultRoadLanesPerDirection.put(OsmHighwayTags.PATH, 1);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.UNCLASSIFIED,   MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.PEDESTRIAN,     MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.FOOTWAY,        MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.STEPS,          MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.CYCLEWAY,       MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.SERVICE,        MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.TRACK,          MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.PATH,           MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.BRIDLEWAY,      MINIMUM_LANES_PER_DIRECTION);
   }
   
-  /** in case no mapping between highway type and number of lanes is present, use this */
-  public static final int DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED = 1;
   
-  /** store the rail default */
-  public static final int DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED = 1;  
+  /** minimum number of lanes per direction, default is 1*/
+  public static final int MINIMUM_LANES_PER_DIRECTION = 1;
+  
+  /** in case no mapping between highway type and number of lanes is present, use this. Default set to {@code  MINIMUM_LANES_PER_DIRECTION} */
+  public static final int DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;
+  
+  /** store the rail default. Default set to {@code  MINIMUM_LANES_PER_DIRECTION} */
+  public static final int DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;  
   
   /**
    * Constructor

@@ -170,6 +170,12 @@ public class OsmModeAccessDefaultsByCountry {
       globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.PEDESTRIAN, OsmRoadModeTags.FOOT,OsmRoadModeTags.DOG);    
     }
     
+    /* STEPS (same as PEDESTRIAN)*/
+    {
+      /* steps only allows foot based modes */
+      globalAllowedModeAccessDefaults.addDefaultAllowedHighwayModes(OsmHighwayTags.STEPS, OsmRoadModeTags.FOOT, OsmRoadModeTags.DOG);    
+    }    
+    
     /* PATH */
     {
       /* a path only allows single track non_vehicular modes */
