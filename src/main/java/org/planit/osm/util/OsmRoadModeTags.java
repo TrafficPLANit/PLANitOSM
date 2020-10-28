@@ -129,6 +129,26 @@ public class OsmRoadModeTags {
   /** smaller bus for public transport */
   public static final String MINI_BUS = "minibus";
   
+  /* Road mode sub tags, e.g. vehicle=yes, bicycle=separate */
+
+  /** when a mode is disallowed, e.g. x=no */
+  public static final String NO = OsmTags.NO;
+  
+  /** value: customers tag mainly used by vehicle mode*/
+  public static final String CUSTOMERS = "customers";
+  
+  /** value: designated tag */
+  public static final String DESIGNATED = "designated";
+  
+  /** value: use_sidepath tag mainly used by bicycle mode */
+  public static final String USE_SIDEPATH = "use_sidepath";
+  
+  /** value: separately mapped tag mainly used by bicycle/pedestrian mode*/
+  public static final String SEPARATE = "separate";  
+  
+  /** value: dismount tag mainly used by bicycle mode */
+  public static final String DISMOUNT = "dismount";  
+  
   /** verify if passed in tag is indeed a mode tag
    * @param modeTag to verify
    * @return true when valid tag, otherwise false

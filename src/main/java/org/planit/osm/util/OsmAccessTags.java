@@ -31,16 +31,7 @@ public class OsmAccessTags {
   
   /** value: customers tag */
   public static final String CUSTOMERS = "customers";
-  
-  /** value: designated tag */
-  public static final String DESIGNATED = "designated";
-  
-  /** value: use_sidepath tag */
-  public static final String USE_SIDEPATH = "use_sidepath";
-  
-  /** value: dismount tag */
-  public static final String DISMOUNT = "dismount";
-  
+    
   /** value: agricultural tag */
   public static final String AGRICULTURAL = "agricultural";
   
@@ -52,5 +43,6 @@ public class OsmAccessTags {
   
   /** value: unknown tag */
   public static final String UNKNOWN = "unknown";
+
 
 }

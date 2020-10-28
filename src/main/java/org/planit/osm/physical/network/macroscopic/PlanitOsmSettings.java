@@ -20,6 +20,7 @@ import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.util.OsmHighwayTags;
 import org.planit.osm.util.OsmRailWayTags;
 import org.planit.osm.util.OsmRoadModeTags;
+import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
@@ -747,13 +748,26 @@ public class PlanitOsmSettings {
   public boolean hasMappedPlanitMode(final String osmMode) {
     return getMappedPlanitMode(osmMode) != null;
   }
+  
+  /** Verify if any of the passed in osmModes are mapped, i.e., if it is actively included when reading the network
+   * @param osmModes to verify
+   * @return true if any is mapped, false otherwise
+   */  
+  public boolean hasAnyMappedPlanitMode(final String... osmModes) {
+    for(int index=0;index<osmModes.length;++index) {
+      if(hasMappedPlanitMode(osmModes[index])) {
+        return true;
+      }
+    }
+    return false;
+  }  
 
   /** convenience method that provides an overview of all PLANit modes that are currently mapped by any of the passed in OsmModes
    * 
    * @param osmModes to verify
    * @return mapped PLANit modes
    */
-  public Collection<Mode> collectMappedPlanitModes(Collection<String> osmModes) {
+  public Set<Mode> collectMappedPlanitModes(Collection<String> osmModes) {
     HashSet<Mode> mappedPlanitModes = new HashSet<Mode>();
     for (String osmMode : osmModes) {
       Mode mappedMode = getMappedPlanitMode(osmMode);

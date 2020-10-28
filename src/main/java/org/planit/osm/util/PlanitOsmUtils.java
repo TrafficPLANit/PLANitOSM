@@ -146,6 +146,22 @@ public class PlanitOsmUtils {
     }
     return false;
   }
+
+  /** construct composite key "currentKey:subTagCondition1:subTagCondition2:etc."
+   * @param currentKey the currentKey
+   * @param subTagConditions to add
+   * @return composite version separated by colons;
+   */
+  public static String createCompositeOsmKey(final String currentKey, final String... subTagConditions) {
+    String compositeKey = currentKey;
+    if(subTagConditions != null) {    
+      for(int index=0;index<subTagConditions.length;++index) {
+        String subTag = subTagConditions[index];
+        compositeKey  = !subTag.isBlank() ? compositeKey.concat(subTag) : compositeKey; 
+      }
+    }
+    return compositeKey;
+  }
   
 
 }
