@@ -6,7 +6,7 @@ import java.util.Set;
 
 /**
  * pedestrian related tags which are not really grouped in a logical way in OSM, hence we provide all of them here as well as some convenience methods
- * to quickly collect some of the most relevant ones
+ * to quickly collect some of the most relevant ones. For the mode "foot" see also {@code OsmRoadModeTags}
  * 
  * @author markr
  *
@@ -28,6 +28,9 @@ public class OsmPedestrianTags {
   
   /** can be used as key or value, e.g., footway=sidewalk, or sidewalk=x */ 
   public static final String SIDEWALK = "sidewalk";
+  
+  /** should not be used, but some legacy tags exist, so should be parseable, see https://wiki.openstreetmap.org/wiki/Key:foot */ 
+  public static final String PEDESTRIAN = "pedestrian";  
   
   /* sidewalk specific values */
   
@@ -66,13 +69,14 @@ public class OsmPedestrianTags {
   
   
   /** can be used as key to indicate access for the mode pedestrians , e.g., foot=yes*/ 
-  public static final String FOOT = "foot";
+  public static final String FOOT = OsmRoadModeTags.FOOT;
   
   /* populate pedestrian related key tags */
   static {
     osmPedestrianKeyTags.add(FOOT);
     osmPedestrianKeyTags.add(FOOTWAY);    
     osmPedestrianKeyTags.add(SIDEWALK);
+    osmPedestrianKeyTags.add(PEDESTRIAN);
     osmPedestrianKeyTags = Collections.unmodifiableSet(osmPedestrianKeyTags);
   }  
   

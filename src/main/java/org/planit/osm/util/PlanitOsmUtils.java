@@ -157,7 +157,7 @@ public class PlanitOsmUtils {
     if(subTagConditions != null) {    
       for(int index=0;index<subTagConditions.length;++index) {
         String subTag = subTagConditions[index];
-        compositeKey  = !subTag.isBlank() ? compositeKey.concat(subTag) : compositeKey; 
+        compositeKey  = !subTag.isBlank() ? compositeKey.concat(":").concat(subTag) : compositeKey; 
       }
     }
     return compositeKey;

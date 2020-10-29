@@ -243,23 +243,47 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @return modes found with specified value tag
    */
   private Collection<String> getOsmModesWithAccessValue(Map<String, String> tags, final String... modeAccessValueTags){
-    return getConditionedOsmModesWithAccessValue(null, tags, modeAccessValueTags);
+    return getPostfixedOsmModesWithAccessValue(null, tags, modeAccessValueTags);
   }
   
-  /** collect all OSM modes with key=<OSM mode name>:subTagCondition= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM modes with key=<OSM mode name>:postFix= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */  
-  private Collection<String> getConditionedOsmModesWithAccessValue(String subTagCondition, Map<String, String> tags, final String... modeAccessValueTags) {
+  private Collection<String> getPostfixedOsmModesWithAccessValue(String postFix, Map<String, String> tags, final String... modeAccessValueTags) {
+    return getPrefixedOrPostfixedOsmModesWithAccessValue(false, postFix, tags, modeAccessValueTags);
+  }  
+  
+  /** collect all OSM modes with key=preFix:<OSM mode name>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   * 
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTags used to filter the modes by
+   * @return modes found with specified value tag
+   */  
+  private Collection<String> getPrefixedOsmModesWithAccessValue(String prefix, Map<String, String> tags, final String... modeAccessValueTags) {
+    return getPrefixedOrPostfixedOsmModesWithAccessValue(true, prefix, tags, modeAccessValueTags);
+  }  
+  
+  /** collect all OSM modes with either preFix:<OSM mode name>= or postFix:<OSM mode name>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   * 
+   * @param isprefix when true prefix applied, when false, postfix
+   * @param alteration, the post or prefix alteration of the mode key
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTags used to filter the modes by
+   * @return modes found with specified value tag
+   */    
+  private Collection<String> getPrefixedOrPostfixedOsmModesWithAccessValue(boolean isprefix, String alteration, Map<String, String> tags, final String... modeAccessValueTags) {
     Set<String> foundModes = new HashSet<String>();    
     
     /* osm modes extracted from road mode category */
     Collection<String> roadModeCategories = OsmRoadModeCategoryTags.getRoadModeCategories();
     for(String roadModeCategory : roadModeCategories) {
-      String compositeKey = PlanitOsmUtils.createCompositeOsmKey(roadModeCategory,subTagCondition);      
+      String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadModeCategory) : PlanitOsmUtils.createCompositeOsmKey(roadModeCategory, alteration);      
       if(tags.containsKey(compositeKey)) {
         String valueTag = tags.get(roadModeCategory).replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
         for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
@@ -273,7 +297,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* osm road mode */
     Collection<String> roadModes = OsmRoadModeTags.getSupportedRoadModeTags();
     for(String roadMode : roadModes) {
-      String compositeKey = PlanitOsmUtils.createCompositeOsmKey(roadMode,subTagCondition);      
+      String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadMode) : PlanitOsmUtils.createCompositeOsmKey(roadMode, alteration);      
       if(tags.containsKey(compositeKey)){
         String valueTag = tags.get(roadMode).replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
         for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
@@ -307,56 +331,42 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @param mainDirection  flag indicating if we are conducting this method in the main direction (forward) or the contraflow direction (backward)
    * @return the excluded planit modes supported by the parser in the designated direction
    */
-  private Collection<Mode> getExplicitlyExcludedModes(Map<String, String> tags, OsmDirection direction, boolean mainDirection) {    
+  private Collection<Mode> getExplicitlyExcludedModes(Map<String, String> tags, boolean mainDirection) {    
     Set<Mode> excludedModes = null;
     
-    if( mainDirection && direction.isOneWay() && mainDirection==direction.isReverseDirection()){
-      /* explored direction is not the direction that is accessible on the one way way, all modes are marked as inaccessible */ 
-      excludedModes =  network.modes.setOf();
-    }else {
-      /* specific exclusions are explored since the explored direction is available as a viable direction */
+    /* exclusions can be implicitly tagged using the oneway tag so we must verify this first, i.e., oneway=yes equates to vehicle:backward=no and
+     * oneway=-1 equates to vehicle:forward=no. So, when we do not explore the main direction, then a oneway=yes implies that the other direction is closed, so we identify those modes and excluded from that direction*/
+    String osmDirectionValue = mainDirection ? OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION : OsmOneWayTags.YES;
+    if(tags.containsKey(OsmOneWayTags.ONEWAY) && tags.get(OsmOneWayTags.ONEWAY).equals(osmDirectionValue)) {
       
-      /* first check for general exclusions of all modes */
-      excludedModes =  settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmRoadModeTags.NO));
+      /* explored direction is not the oneway direction that is activated */
+      excludedModes = settings.collectMappedPlanitModes(OsmRoadModeCategoryTags.getRoadModesByCategory(OsmRoadModeCategoryTags.VEHICLE)); 
+    
+    }else {
+      
+      /* specific exclusions are explored since the explored direction is available as a viable direction */
+      final String[] accessTagsSignifyingExclusion = new String[]{OsmAccessTags.NO, OsmAccessTags.PRIVATE, OsmAccessTags.CUSTOMERS, OsmAccessTags.DISCOURAGED, OsmAccessTags.DELIVERY, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE};
+      /* first check for general exclusions of modes */
+      excludedModes =  settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, accessTagsSignifyingExclusion));
       
       /* now check direction specific exclusions of all modes
       /* see https://wiki.openstreetmap.org/wiki/Key:oneway */
       {
         /* check for exclusions in explicit directions matching our explored direction FORWARD/BACKWARD based*/    
         String osmDirectionCondition= mainDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
-        Set<Mode> additionalExcludedModes = settings.collectMappedPlanitModes(getConditionedOsmModesWithAccessValue(osmDirectionCondition, tags, OsmRoadModeTags.NO));
+        Set<Mode> additionalExcludedModes = settings.collectMappedPlanitModes(getPostfixedOsmModesWithAccessValue(osmDirectionCondition, tags, accessTagsSignifyingExclusion));
         excludedModes.addAll(additionalExcludedModes);
-        additionalExcludedModes = settings.collectMappedPlanitModes(getConditionedOsmModesWithAccessValue(OsmDirectionTags.BOTH, tags, OsmRoadModeTags.NO));
-        excludedModes.addAll(additionalExcludedModes);
-        
-        /* confusingly the same exclusions can be tagged using the <mode>:oneway tag so we must verify this as well, i.e., oneway=yes equates to vehicle:backward=no and
-         * oneway=-1 equates to vehicle:forward=no, so conduct the same exclusion only now based on oneway tags, e.g. vehicle:oneway= etc. 
-         * Example when we do not explore the main direction, then a vehicle:oneway=yes implies that the other direction is closed, so we identify those modes and excluded from that direction*/
-        String osmDirectionValue = mainDirection ? OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION : OsmOneWayTags.YES;
-        additionalExcludedModes = settings.collectMappedPlanitModes(getConditionedOsmModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, osmDirectionValue));
+        additionalExcludedModes = settings.collectMappedPlanitModes(getPostfixedOsmModesWithAccessValue(OsmDirectionTags.BOTH, tags, accessTagsSignifyingExclusion));
         excludedModes.addAll(additionalExcludedModes);
       }
       
-      /* no check specific exclusions for modes with specific tags that cannot be applied to all modes*/
-      //TODO -> see below, do the same for bicycle
-      //TODO: then do the same for the included modes
-      // TODO -> then change the rest of the link segment construction using the direction specific link segment types!
-      
-      /* pedestrian modes can also be excluded by means of explicitly removed sidewalks, footways, etc. This is covered separately as they might not specifically mention the OSM mode foot=x */
+      /* now check specific exclusions for modes with specific tags that cannot be applied to all modes*/
       if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && hasExplicitlyExcludedSidewalkOrFootway(tags)) {
         excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
       }
-
+       
     }
-
-    
-    /* OLD ONLY USE FOR REFERENCE */
-   
-// 
-//    Collection<Mode> excludedModes =  settings.collectMappedPlanitModes(
-//     getOsmModesWithAccessValue(tags, 
-//         OsmAccessTags.NO, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.DELIVERY,OsmAccessTags.SEPARATE, OsmAccessTags.CUSTOMERS, OsmAccessTags.PRIVATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED));
-    
+        
     return excludedModes;
   }  
   
@@ -378,13 +388,65 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @param mainDirection  flag indicating if we are conducting this method in the main direction or the contraflow direction
    * @return the included planit modes supported by the parser in the designated direction
    */
-  private Collection<Mode> getExplicitlyIncludedModes(Map<String, String> tags, OsmDirection direction, boolean mainDirection) {
-    Collection<Mode> includedModes = settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.YES, OsmAccessTags.DESIGNATED, OsmAccessTags.PERMISSIVE));
-    /* pedestrian modes can also be added by means of defined sidewalks, footways, etc. This is covered separately as they might not specifically mention the OSM mode foot=x */
-    if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && hasExplicitlyIncludedSidewalkOrFootway(tags)) {
-      includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
+  private Collection<Mode> getExplicitlyIncludedModes(Map<String, String> tags, boolean mainDirection) {
+    
+    Set<Mode> includedModes = null;
+    
+    /* inclusions can be implicitly related to the oneway tag so we verify this first, when oneway=yes, modes that are tagged with the "opposite" value indicate
+     * the mode is accessible even though the default is closed. */
+    String osmDirectionValue = mainDirection ? OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION : OsmOneWayTags.YES;
+    if(tags.containsKey(OsmOneWayTags.ONEWAY) && tags.get(OsmOneWayTags.ONEWAY).equals(osmDirectionValue)) {
+      /* exploring OPPOSITE direction of oneway OSM way*/ 
+      
+      /* all modes that are tagged with oneway:<mode> = no signify access in the non-oneway direction and should be included */
+      includedModes = settings.collectMappedPlanitModes(getPrefixedOsmModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
+    
+    }else {
+      
+      /* specific inclusions are explored since the explored direction is not generally tagged as one way, so it is considered only open to default modes unless indicated otherwise */
+      final String[] accessTagsSignifyingInclusion = new String[]{OsmAccessTags.YES, OsmAccessTags.DESIGNATED, OsmAccessTags.PERMISSIVE};
+      
+      /* first check for general exclusions of modes */
+      includedModes =  settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, accessTagsSignifyingInclusion));
+      
+      CONTINUE HERE!
+      
+      /* now check direction specific inclusions across supported modes
+      /* see https://wiki.openstreetmap.org/wiki/Key:oneway */
+      {
+        /* check for exclusions in explicit directions matching our explored direction FORWARD/BACKWARD based*/    
+        String osmDirectionCondition= mainDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
+        Set<Mode> additionalIncludedModes = settings.collectMappedPlanitModes(getConditionedOsmModesWithAccessValue(osmDirectionCondition, tags, accessTagsSignifyingInclusion));
+        includedModes.addAll(additionalIncludedModes);
+        additionalIncludedModes = settings.collectMappedPlanitModes(getConditionedOsmModesWithAccessValue(OsmDirectionTags.BOTH, tags, accessTagsSignifyingInclusion));
+        includedModes.addAll(additionalIncludedModes);
+      }
+      
+      /* pedestrian modes can also be added by means of defined sidewalks, footways, etc. This is covered separately as they might not specifically mention the OSM mode foot=x */
+      if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && hasExplicitlyIncludedSidewalkOrFootway(tags)) {
+        includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
+      }
+      
+      /* bicycle modes can also be explicitly added through oneway:bicycle tags or cycleway = x tags, which are 
+      if(settings.hasMappedPlanitMode(OsmRoadModeTags.BICYCLE)) {
+        oneway:bicycle = shoulder/no (no means it allows for both directons)
+        
+        cycleway = share_busway/lane/track
+          :left (lefthand drive)
+          :right (righthand drive)
+              :oneway = does not change anything
+      }      
+       
     }
-    return includedModes;
+        
+    return includedModes;           
+    
+    /* OLD ONLY USE FOR REFERENCE */
+    
+// 
+//    Collection<Mode> excludedModes =  settings.collectMappedPlanitModes(
+//     getOsmModesWithAccessValue(tags, 
+//         OsmAccessTags.NO, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.DELIVERY,OsmAccessTags.SEPARATE, OsmAccessTags.CUSTOMERS, OsmAccessTags.PRIVATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED));    
   }    
   
   /** given the OSM way tags we construct or find the appropriate link segment types for both directions, if no better alternative could be found
