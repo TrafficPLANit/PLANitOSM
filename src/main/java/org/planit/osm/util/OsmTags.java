@@ -22,9 +22,18 @@ public class OsmTags {
     
     public static final String NO = "no";
     
+    public static final String NONE = "none";    
+    
     public static final String YES = "yes";
 
     public static final Object AREA = "area";
+    
+    public static final String LEFT = "left";
+    
+    public static final String RIGHT = "right";
+    
+    public static final String BOTH = "both";
+
 
     /** check if tags indicate the entity is in fact an area
      * @param tags to verify

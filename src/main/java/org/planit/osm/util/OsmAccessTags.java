@@ -41,7 +41,7 @@ public class OsmAccessTags {
   /** value: separately mapped tag mainly used by bicycle/pedestrian mode*/
   public static final String SEPARATE = "separate";  
   
-  /** value: dismount tag mainly used by bicycle mode */
+  /** value: dismount tag mainly used by bicycle mode, possibly horse riders? */
   public static final String DISMOUNT = "dismount";  
   
     

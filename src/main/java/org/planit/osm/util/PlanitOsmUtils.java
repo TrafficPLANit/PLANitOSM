@@ -162,6 +162,21 @@ public class PlanitOsmUtils {
     }
     return compositeKey;
   }
+
+  /** determine if any of the potential keys is listed in the passed in tags
+   * @param tags to check
+   * @param potentialKeys to check
+   * @return true when present, false otherwise
+   */
+  public static boolean containsAnyKey(Map<String, String> tags, String... potentialKeys) {
+    for(int index=0;index<potentialKeys.length;++index) {
+      String potentialKey = potentialKeys[index];
+      if(tags.containsKey(potentialKey)) {
+        return true;
+      }
+    }
+    return false;
+  }
   
 
 }

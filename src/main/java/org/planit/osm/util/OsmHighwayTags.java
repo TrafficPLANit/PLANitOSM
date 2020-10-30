@@ -94,7 +94,7 @@ public class OsmHighwayTags {
     /* (typically) non-vehicle highway types */
 
     /** footway can be used as highway=footway, or footway=sidewalk/crossing */
-    public static final String FOOTWAY = OsmPedestrianTags.FOOTWAY;
+    public static final String FOOTWAY ="footway";
     
     public static final String BRIDLEWAY = "bridleway";
     

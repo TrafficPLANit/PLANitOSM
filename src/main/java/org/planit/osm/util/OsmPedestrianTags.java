@@ -19,9 +19,11 @@ public class OsmPedestrianTags {
   /** set of available pedestrian key tags */
   protected static Set<String> osmPedestrianKeyTags = new HashSet<String>();
   
+  /** can be used as key to indicate access for the mode pedestrians , e.g., foot=yes*/ 
+  public static final String FOOT = OsmRoadModeTags.FOOT;  
     
   /** can be used as key or value, e.g. highway=footway, or footway=x */
-  public static final String FOOTWAY = "footway";
+  public static final String FOOTWAY = OsmHighwayTags.FOOTWAY;
   
   /** value for footway to indicate crossing of a road, footway=crossing*/ 
   public static final String CROSSING = "crossing";  
@@ -44,7 +46,7 @@ public class OsmPedestrianTags {
   public static final String LEFT = "left";
   
   /** value for sidewalk key , see also https://wiki.openstreetmap.org/wiki/Key:sidewalk*/ 
-  public static final String SEPARATE = "separate";  
+  public static final String SEPARATE = OsmAccessTags.SEPARATE;  
   
   /** value for sidewalk key , see also https://wiki.openstreetmap.org/wiki/Key:sidewalk*/ 
   public static final String YES = OsmTags.YES;
@@ -53,7 +55,7 @@ public class OsmPedestrianTags {
   public static final String NO = OsmTags.NO;
   
   /** value for sidewalk key , see also https://wiki.openstreetmap.org/wiki/Key:sidewalk*/ 
-  public static final String SIDEWALK_NONE = "none";  
+  public static final String NONE = OsmTags.NONE;  
     
   /* populate sidewalk value options */
   static {
@@ -63,14 +65,11 @@ public class OsmPedestrianTags {
     osmSideWalkValueTags.add(SEPARATE);
     osmSideWalkValueTags.add(YES);
     osmSideWalkValueTags.add(NO);
-    osmSideWalkValueTags.add(SIDEWALK_NONE);
+    osmSideWalkValueTags.add(NONE);
     osmSideWalkValueTags = Collections.unmodifiableSet(osmSideWalkValueTags);
   }
   
-  
-  /** can be used as key to indicate access for the mode pedestrians , e.g., foot=yes*/ 
-  public static final String FOOT = OsmRoadModeTags.FOOT;
-  
+    
   /* populate pedestrian related key tags */
   static {
     osmPedestrianKeyTags.add(FOOT);
