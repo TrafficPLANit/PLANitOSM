@@ -24,7 +24,7 @@ public class PlanitOsmUtils {
    * @return multiplier the multiplier from x to km/h
    * @throws PlanItException thrown when conversion not available
    */
-  public static double determineMaxSpeedUnitMultiplierKmPerHour(String unitString) throws PlanItException {
+  public static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
     switch (unitString) {
     case OsmSpeedTags.MILES_PER_HOUR:
       return 0.621371;
@@ -41,7 +41,7 @@ public class PlanitOsmUtils {
    * @return parsed speed limit in km/h
    * @throws PlanItException thrown if error
    */
-  public static double parseMaxSpeedValueKmPerHour(String maxSpeedValue) throws PlanItException {
+  public static double parseMaxSpeedValueKmPerHour(final String maxSpeedValue) throws PlanItException {
     double speedLimitKmh = -1;
     String[] maxSpeedByUnit = maxSpeedValue.split(" ");
     if(maxSpeedByUnit.length>=1) {
@@ -62,7 +62,7 @@ public class PlanitOsmUtils {
    * @return parsed speed limit in km/h
    * @throws PlanItException thrown if error
    */
-  public static double[] parseMaxSpeedValueLanesKmPerHour(String maxSpeedLanes) throws PlanItException {    
+  public static double[] parseMaxSpeedValueLanesKmPerHour(final String maxSpeedLanes) throws PlanItException {    
     String[] maxSpeedByLane = maxSpeedLanes.split("|");
     double[] speedLimitKmh = new double[maxSpeedByLane.length];
     for(int index=0;index<maxSpeedByLane.length;++index) {
@@ -80,7 +80,7 @@ public class PlanitOsmUtils {
    * a positive result (true is returned)
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularRoad(OsmWay osmWay, Map<String, String> tags, boolean mustEndAtstart) {
+  public static boolean isCircularRoad(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtstart) {
     /* a circular road, has:
      * -  more than two nodes...
      * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
@@ -102,7 +102,7 @@ public class PlanitOsmUtils {
    * @param initialNodeIndex offset to use, when set it uses it as the starting point to start looking
    * @return pair of indices demarcating the first two indices with the same node conditional on the offset, null if not found 
    */
-  public static Pair<Integer, Integer> findIndicesOfFirstCircle(OsmWay osmWay, int initialNodeIndex) {
+  public static Pair<Integer, Integer> findIndicesOfFirstCircle(final OsmWay osmWay, final int initialNodeIndex) {
     for(int index = initialNodeIndex ; index < osmWay.getNumberOfNodes() ; ++index) {
       long nodeIdToCheck = osmWay.getNodeId(index);
       for(int index2 = index+1 ; index2 < osmWay.getNumberOfNodes() ; ++index2) {
@@ -119,7 +119,7 @@ public class PlanitOsmUtils {
    * @param osmNode node to collect from
    * @return x coordinate
    */
-  public static double getXCoordinate(OsmNode osmNode) {
+  public static double getXCoordinate(final OsmNode osmNode) {
     return osmNode.getLongitude();
   }
   
@@ -128,7 +128,7 @@ public class PlanitOsmUtils {
    * @param osmNode node to collect from
    * @return x coordinate
    */
-  public static double getYCoordinate(OsmNode osmNode) {
+  public static double getYCoordinate(final OsmNode osmNode) {
     return osmNode.getLatitude();
   }     
   
@@ -138,7 +138,7 @@ public class PlanitOsmUtils {
    * @param valueTags to check against
    * @return true when present, false otherwise
    */
-  public static boolean matchesAnyValueTag(String valueTag, String... valueTags) {
+  public static boolean matchesAnyValueTag(final String valueTag, final String... valueTags) {
     for(int index=0; index < valueTags.length;++ index) {
       if(valueTag.equals(valueTags[index])) {
         return true;
@@ -146,6 +146,23 @@ public class PlanitOsmUtils {
     }
     return false;
   }
+  
+  /** verify if any of the passed in keys matches and of the passed in values in the tags provided
+   * 
+   * @param tags to check existence from
+   * @param keyTags to check 
+   * @param valueTags to check
+   * @return true when match is present, false otherwise
+   */  
+  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
+    for(int index=0; index < keyTags.length;++ index) {
+      String currentKey = keyTags[index];
+      if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey), valueTags)) {
+        return true;
+      }
+    }
+    return false;
+  }  
 
   /** construct composite key "currentKey:subTagCondition1:subTagCondition2:etc."
    * @param currentKey the currentKey
@@ -168,7 +185,7 @@ public class PlanitOsmUtils {
    * @param potentialKeys to check
    * @return true when present, false otherwise
    */
-  public static boolean containsAnyKey(Map<String, String> tags, String... potentialKeys) {
+  public static boolean containsAnyKey(final Map<String, String> tags, final String... potentialKeys) {
     for(int index=0;index<potentialKeys.length;++index) {
       String potentialKey = potentialKeys[index];
       if(tags.containsKey(potentialKey)) {

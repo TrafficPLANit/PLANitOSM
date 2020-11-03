@@ -8,6 +8,12 @@ package org.planit.osm.util;
  */
 public class OsmBicycleTags {
   
+  protected static final String[] cycleWayValueTagsMainDirection = 
+    {OsmBicycleTags.LANE, OsmBicycleTags.SHARED_LANE, OsmBicycleTags.SHOULDER, OsmBicycleTags.TRACK, OsmBicycleTags.SHARE_BUSWAY};
+  
+  protected static final String[] cycleWayValueTagsOppositeDirection = 
+    {OsmBicycleTags.OPPOSITE_TRACK, OsmBicycleTags.OPPOSITE_LANE, OsmBicycleTags.OPPOSITE_SHARE_BUSWAY};  
+  
   /*keys*/
   
   /** mode bicycle, can be used as key bicycle=yes */
@@ -53,4 +59,11 @@ public class OsmBicycleTags {
   public static final String YES = OsmTags.YES;  
   
 
+  public static String[] getCycleWayValueTagsForMainDirection() {  
+   return cycleWayValueTagsMainDirection;
+  }
+  
+  public static String[] getCycleWayValueTagsForOppositeDirection() {  
+    return cycleWayValueTagsOppositeDirection;
+   }  
 }

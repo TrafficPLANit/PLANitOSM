@@ -8,6 +8,9 @@ package org.planit.osm.util;
  */
 public class OsmAccessTags {
   
+  protected static final String[] positiveAccessValueTags = 
+    {OsmAccessTags.YES,OsmAccessTags.PERMISSIVE, OsmAccessTags.DESIGNATED};
+  
   /** key: access tag */
   public static final String ACCESS = "access";
   
@@ -56,6 +59,10 @@ public class OsmAccessTags {
   
   /** value: unknown tag */
   public static final String UNKNOWN = "unknown";
+  
+  public static final String[] getPositiveAccessValueTags() {
+    return positiveAccessValueTags;
+  }
 
 
 }

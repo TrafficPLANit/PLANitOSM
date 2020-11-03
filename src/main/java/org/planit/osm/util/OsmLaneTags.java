@@ -16,9 +16,11 @@ public class OsmLaneTags {
 
   public static final String LANES_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmDirectionTags.BACKWARD);
   
-  public static final String LANES_PSV_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE,OsmDirectionTags.FORWARD);
+  public static String LANES_PSV = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
   
-  public static final String LANES_PSV_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE,OsmDirectionTags.BACKWARD);
+  public static final String LANES_PSV_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
+  
+  public static final String LANES_PSV_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
   
   /* value tags */
   
@@ -29,5 +31,6 @@ public class OsmLaneTags {
   public static final String OPPOSITE_LANE = "opposite_lane";
   
   /** e.g. cycleway = shared_lane */
-  public static final String SHARED_LANE = "shared_lane";  
+  public static final String SHARED_LANE = "shared_lane";
+  
 }
