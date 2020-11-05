@@ -1,15 +1,37 @@
 package org.planit.osm.util;
 
 /**
- * Access tags as described on https://wiki.openstreetmap.org/wiki/Key:access. 
+ * Access tags as described on https://wiki.openstreetmap.org/wiki/Key:access. And some related convenience methods related to these tags
  * 
  * @author markr
  *
  */
 public class OsmAccessTags {
   
-  protected static final String[] positiveAccessValueTags = 
-    {OsmAccessTags.YES,OsmAccessTags.PERMISSIVE, OsmAccessTags.DESIGNATED};
+  /**
+   * <ul>
+   * <li>yes</li>
+   * <li>permissive</li>
+   * <li>designated</li>
+   * </ul>
+   */
+  protected static final String[] POSTIVE_ACCESS_VALUE_TAGS = {OsmAccessTags.YES,OsmAccessTags.PERMISSIVE, OsmAccessTags.DESIGNATED};
+
+  /**
+   * <ul>
+   * <li>no</li>
+   * <li>private</li>
+   * <li>destination</li>
+   * <li>delivery</li>
+   * <li>customers</li>
+   * <li>use_sidepath</li>
+   * <li>separate</li>
+   * <li>dismount</li>
+   * <li>discouraged</li>
+   * </ul>
+   */  
+  protected static final String[] NEGATIVE_ACCESS_VALUE_TAGS = 
+    {OsmAccessTags.NO,OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY, OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED};
   
   /** key: access tag */
   public static final String ACCESS = "access";
@@ -60,9 +82,19 @@ public class OsmAccessTags {
   /** value: unknown tag */
   public static final String UNKNOWN = "unknown";
   
+  /** collect all positive related access value tags indicating an affirmative access. Based on {@code positiveAccessValueTags}
+   * @return postive access value tages
+   */
   public static final String[] getPositiveAccessValueTags() {
-    return positiveAccessValueTags;
+    return POSTIVE_ACCESS_VALUE_TAGS;
   }
+  
+  /** collect all nagtive related access value tags indicating no (general) access. Based on {@code NEGATIVE_ACCESS_VALUE_TAGS}
+   * @return postive access value tages
+   */
+  public static final String[] getNegativeAccessValueTags() {
+    return NEGATIVE_ACCESS_VALUE_TAGS;
+  }  
 
 
 }

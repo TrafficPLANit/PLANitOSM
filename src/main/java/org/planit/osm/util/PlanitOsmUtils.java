@@ -130,7 +130,7 @@ public class PlanitOsmUtils {
    */
   public static double getYCoordinate(final OsmNode osmNode) {
     return osmNode.getLatitude();
-  }     
+  }      
   
   /** verify if the passed in value tag is present in the list of value tags provided
    * 
@@ -155,10 +155,12 @@ public class PlanitOsmUtils {
    * @return true when match is present, false otherwise
    */  
   public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
-    for(int index=0; index < keyTags.length;++ index) {
-      String currentKey = keyTags[index];
-      if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey), valueTags)) {
-        return true;
+    if(containsAnyKey(tags, keyTags)) {
+      for(int index=0; index < keyTags.length;++ index) {
+        String currentKey = keyTags[index];
+        if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey), valueTags)) {
+          return true;
+        }
       }
     }
     return false;

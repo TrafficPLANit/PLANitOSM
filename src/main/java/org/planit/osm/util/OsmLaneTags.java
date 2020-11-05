@@ -1,7 +1,9 @@
 package org.planit.osm.util;
 
+import java.util.Map;
+
 /**
- * tags related to lanes
+ * tags related to lanes and some basic convenience methods to check for lane related OSM tags
  * 
  * @author markr
  *
@@ -18,9 +20,15 @@ public class OsmLaneTags {
   
   public static String LANES_PSV = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
   
+  public static String LANES_BUS = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeTags.BUS);
+  
   public static final String LANES_PSV_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
   
   public static final String LANES_PSV_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
+  
+public static final String LANES_BUS_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
+  
+  public static final String LANES_BUS_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);  
   
   /* value tags */
   
@@ -32,5 +40,25 @@ public class OsmLaneTags {
   
   /** e.g. cycleway = shared_lane */
   public static final String SHARED_LANE = "shared_lane";
+  
+  /** Verify if any of the eligible keys have a value that represents an OSMLaneTags.LANE for the given tags
+   * 
+   * @param tags to verify
+   * @param keys eligible keys
+   * @return true when <key>=lane is present, false otherwise
+   */
+  public static boolean isLanePresentForAnyOf(Map<String, String> tags, String... keys) {
+    return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.LANE);
+  }  
+  
+  /** Verify if any of the eligible keys have a value that represents an OSMLaneTags.LANE for the given tags
+   * 
+   * @param tags to verify
+   * @param keys eligible keys
+   * @return true when <key>=opposite_lane is present, false otherwise
+   */
+  public static boolean isOppositeLanePresentForAnyOf(Map<String, String> tags, String... keys) {
+    return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.OPPOSITE_LANE);
+  }    
   
 }
