@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 /**
  * common speed limit information tags

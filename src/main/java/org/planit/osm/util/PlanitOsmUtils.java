@@ -2,6 +2,8 @@ package org.planit.osm.util;
 
 import java.util.Map;
 
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 
@@ -15,6 +17,9 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class PlanitOsmUtils {
+  
+  /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
+  public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
   
  
   /**
@@ -107,7 +112,7 @@ public class PlanitOsmUtils {
       long nodeIdToCheck = osmWay.getNodeId(index);
       for(int index2 = index+1 ; index2 < osmWay.getNumberOfNodes() ; ++index2) {
         if(nodeIdToCheck == osmWay.getNodeId(index2)) {
-          return new Pair<Integer, Integer>(index, index2);
+          return Pair.create(index, index2);
         }
       }
     }
@@ -147,7 +152,18 @@ public class PlanitOsmUtils {
     return false;
   }
   
-  /** verify if any of the passed in keys matches and of the passed in values in the tags provided
+  /** verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+   * 
+   * @param tags to check existence from
+   * @param keyTags to check 
+   * @param valueTags to check
+   * @return true when match is present, false otherwise
+   */    
+  public static boolean keyMatchesAnyValueTag(Map<String, String> tags, String keyTag, String... valueTags) {
+    return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
+  }  
+  
+  /** verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
    * @param keyTags to check 
@@ -155,16 +171,28 @@ public class PlanitOsmUtils {
    * @return true when match is present, false otherwise
    */  
   public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
+    return anyKeyMatchesAnyValueTag(tags, VALUETAG_SPECIALCHAR_STRIP_REGEX, keyTags, valueTags);
+  }
+  
+  /** verify if any of the passed in keys matches and of the passed in values in the tags provided
+   * 
+   * @param tags to check existence from
+   * @param regexFilter filter each value tag in tags by applying this regular expressions and replace matches with "", can be used to strip whitespaces or unwanted characters that cause a mistmach
+   * @param keyTags to check 
+   * @param valueTags to check
+   * @return true when match is present, false otherwise
+   */  
+  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, String regEx, final String[] keyTags, final String... valueTags) {
     if(containsAnyKey(tags, keyTags)) {
       for(int index=0; index < keyTags.length;++ index) {
         String currentKey = keyTags[index];
-        if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey), valueTags)) {
+        if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey).replaceAll(regEx, ""), valueTags)) {
           return true;
         }
       }
     }
     return false;
-  }  
+  }       
 
   /** construct composite key "currentKey:subTagCondition1:subTagCondition2:etc."
    * @param currentKey the currentKey
@@ -195,7 +223,6 @@ public class PlanitOsmUtils {
       }
     }
     return false;
-  }
-  
+  } 
 
 }

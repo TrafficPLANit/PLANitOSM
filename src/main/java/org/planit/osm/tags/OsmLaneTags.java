@@ -1,6 +1,8 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 import java.util.Map;
+
+import org.planit.osm.util.PlanitOsmUtils;
 
 /**
  * tags related to lanes and some basic convenience methods to check for lane related OSM tags
@@ -47,9 +49,9 @@ public static final String LANES_BUS_FORWARD = PlanitOsmUtils.createCompositeOsm
    * @param keys eligible keys
    * @return true when <key>=lane is present, false otherwise
    */
-  public static boolean isLanePresentForAnyOf(Map<String, String> tags, String... keys) {
+  public static boolean isLaneIncludedForAnyOf(Map<String, String> tags, String... keys) {
     return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.LANE);
-  }  
+  }    
   
   /** Verify if any of the eligible keys have a value that represents an OSMLaneTags.LANE for the given tags
    * 
@@ -57,8 +59,10 @@ public static final String LANES_BUS_FORWARD = PlanitOsmUtils.createCompositeOsm
    * @param keys eligible keys
    * @return true when <key>=opposite_lane is present, false otherwise
    */
-  public static boolean isOppositeLanePresentForAnyOf(Map<String, String> tags, String... keys) {
+  public static boolean isOppositeLaneIncludedForAnyOf(Map<String, String> tags, String... keys) {
     return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.OPPOSITE_LANE);
-  }    
+  }
+
+   
   
 }

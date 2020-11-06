@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 /**
  * Access tags as described on https://wiki.openstreetmap.org/wiki/Key:access. And some related convenience methods related to these tags
@@ -20,6 +20,7 @@ public class OsmAccessTags {
   /**
    * <ul>
    * <li>no</li>
+   * <li>none</li>
    * <li>private</li>
    * <li>destination</li>
    * <li>delivery</li>
@@ -31,7 +32,7 @@ public class OsmAccessTags {
    * </ul>
    */  
   protected static final String[] NEGATIVE_ACCESS_VALUE_TAGS = 
-    {OsmAccessTags.NO,OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY, OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED};
+    {OsmAccessTags.NO, OsmAccessTags.NONE, OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY, OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED};
   
   /** key: access tag */
   public static final String ACCESS = "access";
@@ -41,6 +42,9 @@ public class OsmAccessTags {
   
   /** value: no tag */
   public static final String NO = OsmTags.NO;
+  
+  /** value: no tag */
+  public static final String NONE = OsmTags.NONE;  
   
   /** value: private tag */
   public static final String PRIVATE = "private";

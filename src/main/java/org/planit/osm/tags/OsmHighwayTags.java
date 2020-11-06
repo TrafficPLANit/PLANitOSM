@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 import java.util.HashSet;
 import java.util.Set;

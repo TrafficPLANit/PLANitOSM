@@ -4,10 +4,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.planit.osm.util.OsmHighwayTags;
-import org.planit.osm.util.OsmRailWayTags;
-import org.planit.osm.util.OsmRoadModeCategoryTags;
-import org.planit.osm.util.OsmRoadModeTags;
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRoadModeCategoryTags;
+import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
 import org.planit.utils.locale.CountryNames;

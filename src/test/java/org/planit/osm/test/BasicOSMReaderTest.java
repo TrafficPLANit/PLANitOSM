@@ -11,8 +11,8 @@ import org.planit.logging.Logging;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.converter.PlanitOsmReader;
 import org.planit.osm.converter.PlanitOsmReaderFactory;
-import org.planit.osm.util.OsmHighwayTags;
-import org.planit.osm.util.OsmRailWayTags;
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailWayTags;
 
 /**
  * basic *.osm and *.osm.pbf reader test

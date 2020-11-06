@@ -3,6 +3,10 @@ package org.planit.osm.util;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.planit.osm.tags.OsmDirectionTags;
+import org.planit.osm.tags.OsmJunctionTags;
+import org.planit.osm.tags.OsmOneWayTags;
+import org.planit.osm.tags.OsmTags;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 
 /**

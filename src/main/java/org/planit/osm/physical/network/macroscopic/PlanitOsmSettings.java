@@ -17,9 +17,9 @@ import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
 import org.planit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
-import org.planit.osm.util.OsmHighwayTags;
-import org.planit.osm.util.OsmRailWayTags;
-import org.planit.osm.util.OsmRoadModeTags;
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -506,7 +506,7 @@ public class PlanitOsmSettings {
    */
   public void overwriteOsmHighwayTypeDefaults(String osmHighwayType, double capacityPerLanePerHour, double maxDensityPerLane) {
     highwayTypeConfiguration.activate(osmHighwayType);
-    overwriteByOSMHighwayType.put(osmHighwayType, new Pair<Double,Double>(capacityPerLanePerHour,maxDensityPerLane));
+    overwriteByOSMHighwayType.put(osmHighwayType, Pair.create(capacityPerLanePerHour,maxDensityPerLane));
     LOGGER.info(String.format("overwriting defaults for osm road type highway:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmHighwayType, capacityPerLanePerHour, maxDensityPerLane));
   }  
   

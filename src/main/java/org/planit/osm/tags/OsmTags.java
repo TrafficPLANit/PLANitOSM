@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 import java.util.Map;
 
@@ -33,6 +33,8 @@ public class OsmTags {
     public static final String RIGHT = "right";
     
     public static final String BOTH = "both";
+
+    public static final String PROPOSED = "proposed";
 
 
     /** check if tags indicate the entity is in fact an area

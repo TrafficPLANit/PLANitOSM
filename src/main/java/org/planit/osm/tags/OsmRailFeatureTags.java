@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 /**
  * OSM rail feature tags that could be of value for a network. Based on

@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 /**
  * Tags related to directions, e.g. direction=<option>, or mode specific direction subtags, e.g. vehicle:backward=yes

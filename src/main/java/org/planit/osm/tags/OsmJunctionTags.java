@@ -1,4 +1,4 @@
-package org.planit.osm.util;
+package org.planit.osm.tags;
 
 /**
  * Tags related to junction values, e.g. junction=<option>

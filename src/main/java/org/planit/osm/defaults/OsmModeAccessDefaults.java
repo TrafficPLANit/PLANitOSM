@@ -9,10 +9,10 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.planit.osm.util.OsmHighwayTags;
-import org.planit.osm.util.OsmRailWayTags;
-import org.planit.osm.util.OsmRoadModeCategoryTags;
-import org.planit.osm.util.OsmRoadModeTags;
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRoadModeCategoryTags;
+import org.planit.osm.tags.OsmRoadModeTags;
 
 /**
  * Class representing the default mode access restrictions/allowance for modes for a given

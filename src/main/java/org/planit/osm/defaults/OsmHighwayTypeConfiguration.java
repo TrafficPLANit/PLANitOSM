@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.planit.osm.util.OsmHighwayTags;
+import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.utils.exceptions.PlanItException;
 
 /**

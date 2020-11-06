@@ -94,7 +94,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
    * @return the physical speed limit (km/h)
    */
   public Pair<Double,Double> getHighwaySpeedLimit(String type) {
-    return new Pair<Double,Double>(getHighwaySpeedLimit(type, false /* urban */ ), getHighwaySpeedLimit(type, true /* non-urban */ ));
+    return Pair.create(getHighwaySpeedLimit(type, false /* urban */ ), getHighwaySpeedLimit(type, true /* non-urban */ ));
   }
   
   /** set a speed default for a given railway=type
