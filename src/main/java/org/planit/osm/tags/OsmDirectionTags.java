@@ -2,8 +2,6 @@ package org.planit.osm.tags;
 
 import java.util.Map;
 
-import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
-
 /**
  * Tags related to directions, e.g. direction=<option>, or mode specific direction subtags, e.g. vehicle:backward=yes
  * 

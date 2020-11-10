@@ -13,28 +13,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.osm.tags.*;
+import org.planit.osm.util.*;
+
 import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
-import org.planit.osm.tags.OsmAccessTags;
-import org.planit.osm.tags.OsmBicycleTags;
-import org.planit.osm.tags.OsmBusTags;
-import org.planit.osm.tags.OsmDirectionTags;
-import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmJunctionTags;
-import org.planit.osm.tags.OsmLaneTags;
-import org.planit.osm.tags.OsmOneWayTags;
-import org.planit.osm.tags.OsmPedestrianTags;
-import org.planit.osm.tags.OsmRailFeatureTags;
-import org.planit.osm.tags.OsmRailWayTags;
-import org.planit.osm.tags.OsmRoadModeCategoryTags;
-import org.planit.osm.tags.OsmRoadModeTags;
-import org.planit.osm.tags.OsmSpeedTags;
-import org.planit.osm.tags.OsmTags;
-import org.planit.osm.util.ModifiedLinkSegmentTypes;
-import org.planit.osm.util.OsmDirection;
-import org.planit.osm.util.OsmLanesModeTaggingSchemeHelper;
-import org.planit.osm.util.OsmModeLanesTaggingSchemeHelper;
-import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.graph.Edge;
@@ -85,10 +68,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private final PlanitOsmHandlerProfiler profiler;
   
   /** helper class to deal with parsing tags under the lanesMode tagging scheme for eligible modes */
-  private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper;
+  private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper = null;
   
   /** helper class to deal with parsing tags under the modeLanes tagging scheme for eligible modes */
-  private OsmModeLanesTaggingSchemeHelper modeLanesSchemeHelper;
+  private OsmModeLanesTaggingSchemeHelper modeLanesSchemeHelper = null;
   
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   private final Map<Long, OsmNode> osmNodes;
@@ -647,8 +630,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* 3) mode inclusions for explored direction that is NOT ONE WAY OPPOSITE DIRECTION */
     if(!exploreOneWayOppositeDirection) {      
       /* ...all modes --> general inclusions in main or both directions <mode>= */
-      includedModes =  settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags()));
-          
+      includedModes.addAll(settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags())));          
     }
        
     return includedModes;                  
@@ -988,9 +970,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   private void extractMacroscopicLinkSegments(OsmWay osmWay, Map<String, String> tags, Link link, Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes) throws PlanItException {
-            
-    OsmDirection direction = new OsmDirection(tags, settings.getCountryName());//TODO
-    
+                
     /* match A->B of PLANit link to geometric forward/backward direction of OSM paradigm */
     boolean directionAbIsForward = link.isGeometryInAbDirection() ? true : false;
     if(!directionAbIsForward) {
@@ -1211,11 +1191,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     Map<String, String> osmWayTags = OsmModelUtil.getTagsAsMap(circularOsmWay);    
     Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = extractLinkSegmentTypes(circularOsmWay, osmWayTags);
-    if(linkSegmentTypes!=null && linkSegmentTypes.isExactlyOneNonNull()) {      
-      /* consider the entire circular way initially */
+    if(linkSegmentTypes!=null ) {      
+      /* consider the entire circular way initially, only one direction is assumed to be available, in the special case two directions are present, 
+       * it should only represent a pedestrian or bicycle accessible circular way in which case the link segment types for both directions are expected to 
+       * be identical so we pick the first available one */
       handleRawCircularWay(circularOsmWay, osmWayTags, (MacroscopicLinkSegmentType)linkSegmentTypes.getEarliestNonNull(), 0 /* start at initial index */);      
-    }else if(linkSegmentTypes!=null && linkSegmentTypes.bothNotNull()) {
-      throw new PlanItException(String.format("circular way %d is always one way and cannot have two directions defined",circularOsmWay.getId()));
     }
   }  
   

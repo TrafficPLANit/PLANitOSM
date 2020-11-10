@@ -1,5 +1,6 @@
 package org.planit.osm.util;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
 import org.planit.osm.tags.OsmDirectionTags;
@@ -21,16 +22,14 @@ import java.util.Set;
 public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
       
   /** lanes:<mode> tags */
-  protected Map<String,String> lanesModeKeyTags;
+  protected Map<String,String> lanesModeKeyTags = new HashMap<String, String>();
   
   /** lanes:<mode>:forward tags */
-  protected Map<String,String> lanesModeForwardKeyTags;
+  protected final Map<String,String> lanesModeForwardKeyTags = new HashMap<String, String>();
   
   /** lanes:<mode>:backward tags */
-  protected Map<String,String> lanesModeBackwardKeyTags;  
-  
-  /** lanes:<mode>:<direction> tags */
-  protected Map<String,String> lanesModeDirectionKeyTags;  
+  protected final Map<String,String> lanesModeBackwardKeyTags = new HashMap<String, String>();  
+   
     
   /**
    * initialise all the relevant keys for which to check that pertain to this scheme in combination with the chosen modes
@@ -43,9 +42,6 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
       lanesModeKeyTags.forEach( (osmMode, lanesModeTag) -> lanesModeForwardKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(lanesModeTag, OsmDirectionTags.FORWARD)));         
       /* lanes:<mode>:backward */
       lanesModeKeyTags.forEach( (osmMode, lanesModeTag) -> lanesModeBackwardKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(lanesModeTag, OsmDirectionTags.BACKWARD)));                     
-      /* lanes:<mode>:<direction> */
-      lanesModeDirectionKeyTags = Map.copyOf(lanesModeForwardKeyTags);
-      lanesModeDirectionKeyTags.putAll(lanesModeBackwardKeyTags);
     }
   }
   

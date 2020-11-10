@@ -1,13 +1,10 @@
 package org.planit.osm.util;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmLaneTags;
-import org.planit.osm.tags.OsmRoadModeCategoryTags;
-import org.planit.osm.tags.OsmRoadModeTags;
-
 import java.util.Set;
 
 /**
@@ -25,16 +22,13 @@ import java.util.Set;
 public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     
   /** /<mode/>:lanes tags */
-  protected Map<String,String> modeLanesKeyTags;
+  protected final Map<String,String> modeLanesKeyTags = new HashMap<String, String>();
   
   /** /<mode/>:lanes:forward tags */
-  protected Map<String,String> modeLanesForwardKeyTags;
+  protected final Map<String,String> modeLanesForwardKeyTags = new HashMap<String, String>();
   
   /**  /<mode/>:lanes:backward tags */
-  protected Map<String,String> modeLanesBackwardKeyTags;  
-  
-  /** /<mode/>:lanes:<direction> tags */
-  protected Map<String,String> modeLanesDirectionKeyTags;  
+  protected final Map<String,String> modeLanesBackwardKeyTags = new HashMap<String, String>();      
     
   /**
    * initialise all the relevant keys for which to check that pertain to this scheme in combination with the chosen modes
@@ -47,9 +41,6 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
       modeLanesKeyTags.forEach( (osmMode, modeLaneTag) -> modeLanesForwardKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(modeLaneTag, OsmDirectionTags.FORWARD)));         
       /* lanes:<mode>:backward */
       modeLanesKeyTags.forEach((osmMode, modeLaneTag) -> modeLanesBackwardKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(modeLaneTag, OsmDirectionTags.BACKWARD)));                     
-      /* lanes:<mode>:<direction> */
-      modeLanesDirectionKeyTags = Map.copyOf(modeLanesForwardKeyTags);
-      modeLanesDirectionKeyTags.putAll(modeLanesBackwardKeyTags);
     }
   }
   
