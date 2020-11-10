@@ -1,9 +1,13 @@
 package org.planit.osm.util;
 
+import java.util.HashSet;
 import java.util.Map;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmLaneTags;
+import org.planit.osm.tags.OsmRoadModeCategoryTags;
+import org.planit.osm.tags.OsmRoadModeTags;
+
 import java.util.Set;
 
 /**
@@ -18,7 +22,7 @@ import java.util.Set;
  * @author markr
  *
  */
-public class OsmModeLanesTaggingSchemeHelper extends OsmTaggingSchemeHelper{
+public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     
   /** /<mode/>:lanes tags */
   protected Map<String,String> modeLanesKeyTags;
@@ -60,10 +64,10 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmTaggingSchemeHelper{
    * @return yes, when these modes are activated, false otherwise
    */
   public static boolean requireLanesModeSchemeHelper(PlanitOsmSettings settings) {
-    return requireLanesModeSchemeHelper(settings);
+    return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings);
   }  
   
-  /** collect activated modes that can be identified via the /<mode/>:lanes tagging scheme are currently supported. currently we only consider:
+  /** collect activated modes(and their mode categories) that can be identified via the /<mode/>:lanes tagging scheme are currently supported. currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
@@ -72,7 +76,7 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmTaggingSchemeHelper{
    * @param settings to filter for activated modes only
    * @return list os OSM modes that would identify such modes */
   public static Set<String> getEligibleModeLanesSchemeHelperModes(PlanitOsmSettings settings) {
-    return getEligibleTaggingSchemeHelperModes(settings);
+    return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings);
   }   
   
   /** Constructor

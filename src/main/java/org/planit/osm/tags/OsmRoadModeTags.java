@@ -14,36 +14,36 @@ import java.util.Set;
 public class OsmRoadModeTags {
   
   /** all currently available mode tags */
-  private static final Set<String> modeTags = new HashSet<String>();
+  private static final Set<String> MODE_TAGS = new HashSet<String>();
   
   /**
    * populate the available mode tags
    */
   private static void populateModeTags() {
-    modeTags.add(FOOT);
-    modeTags.add(DOG);
-    modeTags.add(HORSE);
-    modeTags.add(BICYCLE);
-    modeTags.add(CARRIAGE);
-    modeTags.add(TRAILER);
-    modeTags.add(CARAVAN);
-    modeTags.add(MOTOR_CYCLE);
-    modeTags.add(MOPED);
-    modeTags.add(MOFA);
-    modeTags.add(MOTOR_CAR);
-    modeTags.add(MOTOR_HOME);
-    modeTags.add(TOURIST_BUS);
-    modeTags.add(COACH);
-    modeTags.add(AGRICULTURAL);
-    modeTags.add(GOLF_CART);
-    modeTags.add(ATV);
-    modeTags.add(GOODS);
-    modeTags.add(HEAVY_GOODS);
-    modeTags.add(HEAVY_GOODS_ARTICULATED);
-    modeTags.add(BUS);
-    modeTags.add(TAXI);
-    modeTags.add(SHARE_TAXI);
-    modeTags.add(MINI_BUS);
+    MODE_TAGS.add(FOOT);
+    MODE_TAGS.add(DOG);
+    MODE_TAGS.add(HORSE);
+    MODE_TAGS.add(BICYCLE);
+    MODE_TAGS.add(CARRIAGE);
+    MODE_TAGS.add(TRAILER);
+    MODE_TAGS.add(CARAVAN);
+    MODE_TAGS.add(MOTOR_CYCLE);
+    MODE_TAGS.add(MOPED);
+    MODE_TAGS.add(MOFA);
+    MODE_TAGS.add(MOTOR_CAR);
+    MODE_TAGS.add(MOTOR_HOME);
+    MODE_TAGS.add(TOURIST_BUS);
+    MODE_TAGS.add(COACH);
+    MODE_TAGS.add(AGRICULTURAL);
+    MODE_TAGS.add(GOLF_CART);
+    MODE_TAGS.add(ATV);
+    MODE_TAGS.add(GOODS);
+    MODE_TAGS.add(HEAVY_GOODS);
+    MODE_TAGS.add(HEAVY_GOODS_ARTICULATED);
+    MODE_TAGS.add(BUS);
+    MODE_TAGS.add(TAXI);
+    MODE_TAGS.add(SHARE_TAXI);
+    MODE_TAGS.add(MINI_BUS);
   }
   
   static {
@@ -52,7 +52,7 @@ public class OsmRoadModeTags {
 
   /* NO VEHICLE */
   
-  public static final String FOOT = OsmPedestrianTags.FOOT;
+  public static final String FOOT = "foot";
   
   public static final String DOG = "dog";
   
@@ -135,7 +135,7 @@ public class OsmRoadModeTags {
    * @return true when valid tag, otherwise false
    */
   public static boolean isRoadModeTag(String modeTag) {
-    return modeTags.contains(modeTag);
+    return MODE_TAGS.contains(modeTag);
   }
   
   /**
@@ -143,7 +143,7 @@ public class OsmRoadModeTags {
    * @return all supported road modes
    */
   public static Collection<String> getSupportedRoadModeTags(){
-    return new HashSet<String>(modeTags);
+    return new HashSet<String>(MODE_TAGS);
   }
   
 }

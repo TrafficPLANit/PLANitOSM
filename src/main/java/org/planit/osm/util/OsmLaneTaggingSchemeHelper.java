@@ -11,18 +11,15 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * The modeLanes tagging scheme is one of a number of tagging schemes used by OSM to identify dedicated lanes for specific modes. It allows
- * to identify which and how many lanes (and indirectly in what direction) are dedicated to a mode.
+ * The tagging scheme helper is the base class for different lane based tagging schemes. Currently there exist two different type of mode specific lane based tagging schemes
+ * namely a ModeLaneBased one and a LaneModeBased one. 
  * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
  * <p>
- * Methods that help identify modes specified using the /<mode/>:lanes:*=* scheme. since this scheme applies across a number of modes
- * it is useful to group the functionality in a separate class
- * </p>
  * 
  * @author markr
  *
  */
-public class OsmTaggingSchemeHelper{
+public class OsmLaneTaggingSchemeHelper{
   
   /** track the modes that we support as part of public service vehicle (psv) lanes, currently only bus */
   protected static final Set<String> publicServiceVehicleModes = new HashSet<String>();
@@ -98,7 +95,7 @@ public class OsmTaggingSchemeHelper{
   /** Constructor
    * @param eligibleOsmModes (or road mode categories) to consider for the lane modes scheme
    */
-  public OsmTaggingSchemeHelper(final Set<String> theEligibleOsmModes) {   
+  public OsmLaneTaggingSchemeHelper(final Set<String> theEligibleOsmModes) {   
     eligibleOsmModes = new HashSet<>(theEligibleOsmModes);
     /* track what supported psv modes are eligible and present, so we can map them when a psv based entry is encountered */
     eligiblePublicServiceVehicleModes = new HashSet<>(publicServiceVehicleModes);

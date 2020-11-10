@@ -68,25 +68,25 @@ public class OsmDirection {
         }
       }
     }else {
-      boolean junctionTagPresent = tags.containsKey(OsmTags.JUNCTION);
-      if(junctionTagPresent) {
-        /* determine type of one way */
-        String value = tags.get(OsmTags.JUNCTION);
-        if(value.equals(OsmJunctionTags.ROUNDABOUT) || value.equals(OsmJunctionTags.CIRCULAR)) {
-          /* roundabout (or circular which is a roundabout with no right of way) implies one way */
-          oneWay = true;
-          
-          /* extract direction on roundabout way */
-          if(tags.containsKey(OsmDirectionTags.DIRECTION) && tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE)) {
-            reverseDirection = false;    
-          }else {
-            /* direction default is anti-clock-wise, unless we are in a left-hand drive country, in which case we would adopt
-             * a clock-wise direction */
-            reverseDirection = DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName) ? false : true;
-          }
-          
-        }
-      }
+//      boolean junctionTagPresent = tags.containsKey(OsmTags.JUNCTION);
+//      if(junctionTagPresent) {
+//        /* determine type of one way */
+//        String value = tags.get(OsmTags.JUNCTION);
+//        if(value.equals(OsmJunctionTags.ROUNDABOUT) || value.equals(OsmJunctionTags.CIRCULAR)) {
+//          /* roundabout (or circular which is a roundabout with no right of way) implies one way */
+//          oneWay = true;
+//          
+//          /* extract direction on roundabout way */
+//          if(tags.containsKey(OsmDirectionTags.DIRECTION) && tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE)) {
+//            reverseDirection = false;    
+//          }else {
+//            /* direction default is anti-clock-wise, unless we are in a left-hand drive country, in which case we would adopt
+//             * a clock-wise direction */
+//            reverseDirection = DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName) ? false : true;
+//          }
+//          
+//        }
+//      }
     }
   }
   

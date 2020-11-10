@@ -1,6 +1,7 @@
 package org.planit.osm.tags;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -132,6 +133,15 @@ public class OsmHighwayTags {
      */
     public static boolean isHighwayKeyTag(String highwayTag) {
       return HIGHWAY.equals(highwayTag);
+    }
+
+    /** Verify if tags contain the highway key
+     * 
+     * @param tags to verify
+     * @return true if highway=* exists, false otherwise
+     */
+    public static boolean isHighway(Map<String, String> tags) {
+      return tags.containsKey(OsmHighwayTags.HIGHWAY);
     }    
 
 }

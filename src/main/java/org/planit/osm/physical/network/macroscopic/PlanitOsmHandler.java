@@ -3,7 +3,6 @@ package org.planit.osm.physical.network.macroscopic;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,13 +14,13 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.geo.PlanitJtsUtils;
-import org.planit.mode.BicycleMode;
 import org.planit.network.physical.macroscopic.MacroscopicNetwork;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmBicycleTags;
 import org.planit.osm.tags.OsmBusTags;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmJunctionTags;
 import org.planit.osm.tags.OsmLaneTags;
 import org.planit.osm.tags.OsmOneWayTags;
 import org.planit.osm.tags.OsmPedestrianTags;
@@ -266,8 +265,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     return foundModes;
   }
   
-  /** All modes that are explicitly made available in a particular direction (without any further details are identified via this method, e.g. bus:forward=yes
-   * @param tags to verfiy
+  /** All modes that are explicitly made (un)available in a particular direction (without any further details are identified via this method, e.g. bus:forward=yes
+   * @param tags to verify
    * @param isForwardDirection forward when true, backward otherwise
    * @param included when true included modes are identified, otherwise excluded modes
    * @return the mapped PLANitModes found
@@ -275,9 +274,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private Collection<? extends Mode> getModesForDirection(Map<String, String> tags, boolean isForwardDirection, boolean included) {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
     String[] accessValueTags = included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
-    /* activated in explored direction */
-    Set<Mode> allowedModes = settings.collectMappedPlanitModes(getPostfixedOsmModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
-    return allowedModes;
+    /* found modes with given access value tags in explored direction */
+    Set<Mode> foundModes = settings.collectMappedPlanitModes(getPostfixedOsmModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
+    return foundModes;
   }    
   
   /** equivalent to {@link getModesForDirection(tags, isForwardDirection, true) */
@@ -399,10 +398,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* LANE TAGGING SCHEMES - LANES:<MODE> and <MODE>:lanes */
     {
       /* see example of both lanes:mode and mode:lanes schemes specific for bus on https://wiki.openstreetmap.org/wiki/Bus_lanes, but works the same way for other modes */
-      if(lanesModeSchemeHelper.hasEligibleModes()) {
+      if(lanesModeSchemeHelper!=null && lanesModeSchemeHelper.hasEligibleModes()) {
         /* lanes:<mode>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
         lanesModeSchemeHelper.getModesWithLanesWithoutDirection(tags).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
-      }else if(modeLanesSchemeHelper.hasEligibleModes()) {
+      }else if(modeLanesSchemeHelper!=null && modeLanesSchemeHelper.hasEligibleModes()) {
         /* <mode>:lanes=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
         modeLanesSchemeHelper.getModesWithLanesWithoutDirection(tags).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
       }          
@@ -529,10 +528,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* LANE TAGGING SCHEMES - LANES:<MODE> and <MODE>:lanes */
     {
       /* see example of both lanes:mode and mode:lanes schemes specific for bus on https://wiki.openstreetmap.org/wiki/Bus_lanes, but works the same way for other modes */
-      if(lanesModeSchemeHelper.hasEligibleModes()) {
+      if(lanesModeSchemeHelper!=null && lanesModeSchemeHelper.hasEligibleModes()) {
         /* lanes:<mode>:<direction>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
         lanesModeSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
-      }else if(modeLanesSchemeHelper.hasEligibleModes()) {
+      }else if(modeLanesSchemeHelper!=null && modeLanesSchemeHelper.hasEligibleModes()) {
         /* <mode>:lanes:<direction>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
         modeLanesSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
       }
@@ -568,24 +567,32 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   private Set<Mode> getExplicitlyExcludedModesOneWayAgnostic(Map<String, String> tags, boolean isForwardDirection){
     Set<Mode> excludedModes = new HashSet<Mode>();
+    
+    /* ... roundabout is implicitly one way without being tagged as such, all modes in non-main direction are to be excluded */
+    if(OsmJunctionTags.isPartOfCircularWayJunction(tags) && PlanitOsmUtils.isCircularWayDirectionClosed(tags, isForwardDirection, settings.getCountryName())) {
+      excludedModes.addAll(network.modes.setOf());
+    }else {
 
-    /* ... all modes --> general exclusion of modes */
-    excludedModes =  settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
-    
-    /* ...all modes --> exclusions in explicit directions matching our explored direction, e.g. bicycle:forward=no, FORWARD/BACKWARD/BOTH based*/
-    excludedModes.addAll(getExplicitlyExcludedModesForDirection(tags, isForwardDirection));
-    
-    /*... busways are generaly not explicitly excluded when keys are present, hence no specific check */
-    
-    /*...bicycle --> cycleways explicitly tagged being not available at all*/
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayExcludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY,OsmBicycleTags.CYCLEWAY_BOTH)) {
-      excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));      
-    }
+      /* ... all modes --> general exclusion of modes */
+      excludedModes =  settings.collectMappedPlanitModes(getOsmModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
       
-    /* ...pedestrian modes can also be excluded by means of excluded sidewalks, footways, etc. Note that pedestrians can always move in both direction is any infrastructure is present */
-    if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && OsmPedestrianTags.hasExplicitlyExcludedSidewalkOrFootway(tags)) {
-      excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
-    }  
+      /* ...all modes --> exclusions in explicit directions matching our explored direction, e.g. bicycle:forward=no, FORWARD/BACKWARD/BOTH based*/
+      excludedModes.addAll(getExplicitlyExcludedModesForDirection(tags, isForwardDirection));
+      
+      /*... busways are generaly not explicitly excluded when keys are present, hence no specific check */
+      
+      /*...bicycle --> cycleways explicitly tagged being not available at all*/
+      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayExcludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY,OsmBicycleTags.CYCLEWAY_BOTH)) {
+        excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));      
+      }
+        
+      /* ...pedestrian modes can also be excluded by means of excluded sidewalks, footways, etc. Note that pedestrians can always move in both direction is any infrastructure is present */
+      if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && OsmPedestrianTags.hasExplicitlyExcludedSidewalkOrFootway(tags)) {
+        excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
+      }  
+      
+    }
+
     return excludedModes;
   }    
  
@@ -667,7 +674,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     excludedModes.addAll(getExplicitlyExcludedModesOneWayAgnostic(tags, isForwardDirection));               
     
     if(tags.containsKey(OsmOneWayTags.ONEWAY)){
-      /* mode inclusions for ONE WAY tagged way (RIGHT and LEFT on a oneway street DO NOT imply direction)*/     
+      /* mode exclusions for ONE WAY tagged way (RIGHT and LEFT on a oneway street DO NOT imply direction)*/     
       
       final String oneWayValueTag = tags.get(OsmOneWayTags.ONEWAY);
       String osmDirectionValue = isForwardDirection ? OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION : OsmOneWayTags.YES;
@@ -748,7 +755,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */  
   private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmAccessTags(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection) throws PlanItException {  
-    
+        
     /* identify explicitly excluded and included modes */
     Set<Mode> excludedModes = getExplicitlyExcludedModes(tags, forwardDirection);
     Set<Mode> includedModes = getExplicitlyIncludedModes(tags, forwardDirection);
@@ -784,10 +791,14 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         finalLinkSegmentType = network.registerUniqueCopyOf(linkSegmentType);
         
         /* update mode properties */
-        String roadTypeKey = tags.containsKey(OsmHighwayTags.HIGHWAY) ? OsmHighwayTags.HIGHWAY : OsmRailWayTags.RAILWAY; 
-        double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(roadTypeKey, tags.get(roadTypeKey));               
-        network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmHighwayTypeMaxSpeed);
-        finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
+        if(!toBeAddedModes.isEmpty()) {
+          String roadTypeKey = tags.containsKey(OsmHighwayTags.HIGHWAY) ? OsmHighwayTags.HIGHWAY : OsmRailWayTags.RAILWAY; 
+          double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(roadTypeKey, tags.get(roadTypeKey));               
+          network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmHighwayTypeMaxSpeed);
+        }
+        if(!toBeRemovedModes.isEmpty()) {
+          finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
+        }
         
         /* register modification */
         modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
@@ -1172,10 +1183,17 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       updatedGeometry = geoUtils.createCopyWithoutCoordinatesAfter(endNodeIndex-startNodeIndex, updatedGeometry);
     }
     link.setGeometry(updatedGeometry);
-    link.setLengthKm(geoUtils.getDistanceInKilometres(updatedGeometry));          
+    link.setLengthKm(geoUtils.getDistanceInKilometres(updatedGeometry));   
     
-    /* extract directed link segment */
-    extractMacroscopicLinkSegments(circularOsmWay, osmWayTags, link, linkSegmentType);
+    /* clockwise equates to forward direction while anticlockwise equates to backward direction */
+    MacroscopicLinkSegmentType forwardLinkSegmentType = null;
+    MacroscopicLinkSegmentType backwardLinkSegmentType = null;
+    if(PlanitOsmUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
+      forwardLinkSegmentType = linkSegmentType;
+    }else {
+      backwardLinkSegmentType = linkSegmentType;
+    }
+    extractMacroscopicLinkSegments(circularOsmWay, osmWayTags, link, Pair.create(forwardLinkSegmentType, backwardLinkSegmentType));
   }  
   
   /**
@@ -1187,7 +1205,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   protected void handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
     
-    if(circularOsmWay.getId()==824117639) {
+    if(circularOsmWay.getId()==547403315) {
       int bla = 4;
     }
     
@@ -1195,8 +1213,8 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = extractLinkSegmentTypes(circularOsmWay, osmWayTags);
     if(linkSegmentTypes!=null && linkSegmentTypes.isExactlyOneNonNull()) {      
       /* consider the entire circular way initially */
-      handleRawCircularWay(circularOsmWay, osmWayTags, linkSegmentTypes, 0 /* start at initial index */);      
-    }else {
+      handleRawCircularWay(circularOsmWay, osmWayTags, (MacroscopicLinkSegmentType)linkSegmentTypes.getEarliestNonNull(), 0 /* start at initial index */);      
+    }else if(linkSegmentTypes!=null && linkSegmentTypes.bothNotNull()) {
       throw new PlanItException(String.format("circular way %d is always one way and cannot have two directions defined",circularOsmWay.getId()));
     }
   }  
@@ -1207,17 +1225,14 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * 
    * @param circularOsmWay to process
    * @param osmWayTags tags of the way
-   * @param linkSegmentTypes to apply (only one for the appropriate direction)
+   * @param linkSegmentType to apply on the appropriate direction
    * @param initialNodeIndex offset for starting point, part of the recursion
    * @param finalNodeIndex offset of the final point, part of the recursion
    * @throws PlanItException thrown if error
    */
-  private void handleRawCircularWay(final OsmWay circularOsmWay, final Map<String, String> osmWayTags, Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes, int initialNodeIndex) throws PlanItException {
+  private void handleRawCircularWay(final OsmWay circularOsmWay, final Map<String, String> osmWayTags, MacroscopicLinkSegmentType linkSegmentType, int initialNodeIndex) throws PlanItException {
     int finalNodeIndex = (circularOsmWay.getNumberOfNodes()-1);
-    
-    CONTINUE WITH THE LINK SEGMENT TYPES TO EMBED HERE AS WELL
-    NOTE THAT WE NO LONGER PROPERLY ACCOUNT FOR THE CLOCKWISE/ANTI_CLOCKWISE ROUDNABOUTS THAT WE DEALT WITH USING THE DIRECTION -> NEEDS TO BE ADDRESSED DIFFERENTLY HERE SOMEHOW
-    
+        
     /* when circular road is not perfect, i.e., its end node is not the start node, we first split it
      * in a perfect circle and a regular non-circular osmWay */
     Pair<Integer,Integer> firstCircularIndices = PlanitOsmUtils.findIndicesOfFirstCircle(circularOsmWay, initialNodeIndex);            
@@ -1234,7 +1249,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       /* continue with the remainder (if any) starting at the end point of the circular component 
        * this is done first because we want all non-circular components to be available as regular links before processing the circular parts*/
       if(firstCircularIndices.getSecond() < finalNodeIndex) {
-        handleRawCircularWay(circularOsmWay, osmWayTags, linkSegmentTypes, firstCircularIndices.getSecond());
+        handleRawCircularWay(circularOsmWay, osmWayTags, linkSegmentType, firstCircularIndices.getSecond());
       }      
         
       /* extract the identified perfectly circular component */
@@ -1373,10 +1388,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     boolean isArea = false;
     
     /* highway (road) or railway (rail) */
-    if (tags.containsKey(OsmHighwayTags.HIGHWAY)) {
+    if (OsmHighwayTags.isHighway(tags)) {
       osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;
       isArea = OsmTags.isArea(tags);
-    }else if(tags.containsKey(OsmRailWayTags.RAILWAY)) {
+    }else if(OsmRailWayTags.isRailway(tags)) {
       osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
       isArea = OsmRailWayTags.isRailBasedArea(tags.get(osmTypeKeyToUse));
     }
@@ -1474,26 +1489,33 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       int bla = 4;
     }
     
-    /* ignore all ways that are in fact areas */
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);
-          
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
     try {              
       
-      Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = extractLinkSegmentTypes(osmWay,tags);
-      if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
-                
+      /* only parse actual ways */
+      if(OsmHighwayTags.isHighway(tags) || OsmRailWayTags.isRailway(tags)) {
+        
         if(PlanitOsmUtils.isCircularRoad(osmWay, tags, false)) {
+          
           /* postpone creation of link(s) for ways that have a circular component */
           /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */
-          osmCircularWays.put(osmWay.getId(), osmWay);        
-        }else{            
+          osmCircularWays.put(osmWay.getId(), osmWay);
           
-          /* a link only consists of start and end node, no direction and has no model information */
-          Link link = extractLink(osmWay, tags);                
-                    
-          /* a macroscopic link segment is directional and can have a shape, it also has model information */
-          extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentTypes);            
-        }                    
+        }else{
+          /* parse the way */
+          
+          Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = extractLinkSegmentTypes(osmWay,tags);
+          if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
+          
+            /* a link only consists of start and end node, no direction and has no model information */
+            Link link = extractLink(osmWay, tags);                
+                      
+            /* a macroscopic link segment is directional and can have a shape, it also has model information */
+            extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentTypes);            
+                               
+          }          
+                      
+        }
       }
       
     } catch (PlanItException e) {

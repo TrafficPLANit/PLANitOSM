@@ -2,9 +2,11 @@ package org.planit.osm.util;
 
 import java.util.Map;
 
+import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -194,17 +196,17 @@ public class PlanitOsmUtils {
     return false;
   }       
 
-  /** construct composite key "currentKey:subTagCondition1:subTagCondition2:etc."
+  /** construct composite key "currentKey:subTag1:subTag2:etc."
    * @param currentKey the currentKey
-   * @param subTagConditions to add
-   * @return composite version separated by colons;
+   * @param subTags to add
+   * @return composite version separated by colons
    */
   public static String createCompositeOsmKey(final String currentKey, final String... subTagConditions) {
-    String compositeKey = currentKey;
+    String compositeKey = (currentKey!=null && !currentKey.isBlank()) ? currentKey : "";
     if(subTagConditions != null) {    
       for(int index=0;index<subTagConditions.length;++index) {
         String subTag = subTagConditions[index];
-        compositeKey  = !subTag.isBlank() ? compositeKey.concat(":").concat(subTag) : compositeKey; 
+        compositeKey  = (subTag!=null && !subTag.isBlank()) ? compositeKey.concat(":").concat(subTag) : compositeKey; 
       }
     }
     return compositeKey;
@@ -223,6 +225,41 @@ public class PlanitOsmUtils {
       }
     }
     return false;
+  } 
+  
+  /** the OSM default driving direction on a roundabout is either anticlockwise (right hand drive countries) or
+   * clockwise (left hand drive countries), here we verify, based on the country name, if the default is
+   * clockwise or not (anticlockwise)
+   * 
+   * @param countryName to check
+   * @return true when lockwise direction is default, false otherwise
+   */
+  public static boolean isCircularWayDefaultDirectionClockwise(String countryName) {
+    return DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName) ? true : false;
+  }
+
+  /** assuming the tags represent an OSM way that is tagged as a junction=roundabout or circular, this method
+   * verifies the driving direction on this way based on the country it resides in or an explicit override
+   * of the clockwise or anticlockwise direction tags. Because OSM implicitly assumes these ways are one way and they
+   * comply with country specific direction defaults we must utilise this method to find out what the actual driving
+   * direction is
+   * 
+   * @param tags to use
+   * @param isForwardDirection the direction that we want to verify if it is closed
+   * @param countryName country name we determine the driving direction from in case it is not explicitly tagged
+   * @return true when isForwardDirection is closed, false otherwise
+   */
+  public static boolean isCircularWayDirectionClosed(Map<String, String> tags, boolean isForwardDirection, String countryName) {
+    Boolean isClockWise = null;
+    if(OsmDirectionTags.isDirectionExplicitClockwise(tags)) {
+      isClockWise = true;
+    }else if(OsmDirectionTags.isDirectionExplicitAntiClockwise(tags)) {
+      isClockWise = false;
+    }else {
+      isClockWise = PlanitOsmUtils.isCircularWayDefaultDirectionClockwise(countryName);
+    }
+    /* clockwise stands for forward direction, so when they do not match, all modes are to be excluded, the direction is closed */
+    return isClockWise!=isForwardDirection;
   } 
 
 }

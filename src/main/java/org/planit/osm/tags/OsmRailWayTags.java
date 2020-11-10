@@ -2,6 +2,7 @@ package org.planit.osm.tags;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -116,6 +117,15 @@ public class OsmRailWayTags {
    */
   public static Collection<String> getSupportedRailModeTags() {
     return new HashSet<String>(railway);
+  }
+
+  /**
+   * Verify if tags indicates this is a railway
+   * @param tags to verify
+   * @return true when railway=* is present, false otherwise
+   */
+  public static boolean isRailway(Map<String, String> tags) {
+    return tags.containsKey(OsmRailWayTags.RAILWAY);
   }
    
     

@@ -18,7 +18,7 @@ import java.util.Set;
  * @author markr
  *
  */
-public class OsmLanesModeTaggingSchemeHelper extends OsmTaggingSchemeHelper{
+public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
       
   /** lanes:<mode> tags */
   protected Map<String,String> lanesModeKeyTags;
@@ -61,7 +61,7 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmTaggingSchemeHelper{
    * @return yes, when these modes are activated, false otherwise
    */
   public static boolean requireLanesModeSchemeHelper(PlanitOsmSettings settings) {
-    return requireLanesModeSchemeHelper(settings);
+    return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings);
   }    
   
   /** collect activated modes that can be identified via the lanes:/<mode/> tagging scheme are currently supported. currently we only consider:
@@ -73,7 +73,7 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmTaggingSchemeHelper{
    * @param settings to filter for activated modes only
    * @return list os OSM modes that would identify such modes */
   public static Set<String> getEligibleLanesModeSchemeHelperModes(PlanitOsmSettings settings) {
-    return getEligibleTaggingSchemeHelperModes(settings);
+    return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings);
   } 
   
   /** Constructor

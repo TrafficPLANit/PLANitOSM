@@ -20,7 +20,6 @@ import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailWayTags;
 import org.planit.osm.tags.OsmRoadModeTags;
-import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
@@ -707,7 +706,7 @@ public class PlanitOsmSettings {
    * 
    * @param remainingOsmRoadModes to explicitly keep if present
    */
-  public void removeAllRoadModesExcept(String... remainingOsmRoadModes) {
+  public void removeAllRoadModesExcept(final String... remainingOsmRoadModes) {
     Collection<String> allRoadModes = OsmRoadModeTags.getSupportedRoadModeTags();
     Set<String> remainingRoadModes = remainingOsmRoadModes==null ? new HashSet<String>() : Set.of(remainingOsmRoadModes);
     for(String osmRoadMode: allRoadModes) {
