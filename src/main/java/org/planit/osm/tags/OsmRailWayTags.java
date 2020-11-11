@@ -34,11 +34,32 @@ public class OsmRailWayTags {
   }
   
   /**
-   * populate the available railway area tags
+   * populate the available railway area tags. These area tags are here to identify ways that are in fact NOT
+   * railways in the traditional sense, yet they are provided as such and have tags to indicate they represent something
+   * else than tracks
+   * 
+   * <ul>
+   * <li>platform</li>
+   * <li>station</li>
+   * <li>fuel</li>
+   * <li>traverser</li>
+   * <li>wash</li>
+   * <li>roundhouse</li>
+   * <li>yard</li>
+   * <li>signal_box</li>
+   * <li>tram_stop</li>
+   * </ul>
    */
   private static void populateRailwayAreaTags() {
     railwayArea.add(PLATFORM);
     railwayArea.add(STATION);
+    railwayArea.add(FUEL);
+    railwayArea.add(TRAVERSER);
+    railwayArea.add(WASH);
+    railwayArea.add(ROUNDHOUSE);
+    railwayArea.add(YARD);
+    railwayArea.add(SIGNAL_BOX);
+    railwayArea.add(TRAM_STOP);
   }  
   
   /**
@@ -57,6 +78,8 @@ public class OsmRailWayTags {
   public static final String ABANDONED = "abandoned";
   
   public static final String CONSTRUCTION = "construction";
+  
+  public static final String PROPOSED = "proposed";
   
   public static final String DISUSED = "disused";
     
@@ -78,11 +101,43 @@ public class OsmRailWayTags {
   
   /* other railway values that do not reflect a railway but are used as a way in combination with the railway key */
   
+  /** miniature railways, not actual railways */
+  public static final String MINIATURE = "miniature";
+  
+  /** turn table is a circular railway that we do not yet support */
+  public static final String TURNTABLE = "turntable";
+  
+  /** built on top of, no longer a real track */
+  public static final String RAZED = "razed";
+  
+  /* other ways that do not reflect tracks */
+  
+  public static final String PLATFORM_EDGE = "platform_edge";
+  
+  /* areas */
+  
   /** a platform is a separate (disconnected) way or area to indicate a platform */
   public static final String PLATFORM = "platform";
 
   /** a station is a separate (disconnected) area to indicate a public transport station*/
-  public static final String STATION = "station";      
+  public static final String STATION = "station";
+  
+  private static final String FUEL = "fuel";
+
+  private static final String TRAVERSER = "traverser";
+
+  private static final String WASH = "wash";
+
+  private static final String ROUNDHOUSE = "roundahouse";
+
+  private static final String YARD = "yard";
+  
+  private static final String SIGNAL_BOX = "signal_box";
+  
+  /** sometimes railways are tagged as tram_stop to indicate an area for stopping, i.e., a platform. sometimes used in conjunction with public_transport=platform, see https://wiki.openstreetmap.org/wiki/Key:public_transport */
+  private static final String TRAM_STOP = "tram_stop";  
+   
+      
 
   /** verify if passed in tag is indeed a railway mode value tag
    * @param railwayTag to verify

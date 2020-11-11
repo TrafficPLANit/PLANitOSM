@@ -66,9 +66,11 @@ public class OsmLaneDefaults implements Cloneable {
     defaultRoadLanesPerDirection.put(OsmHighwayTags.FOOTWAY,        MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.STEPS,          MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.CYCLEWAY,       MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.LIVING_STREET,  MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.SERVICE,        MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.TRACK,          MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.PATH,           MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.ROAD,           MINIMUM_LANES_PER_DIRECTION);    
     defaultRoadLanesPerDirection.put(OsmHighwayTags.BRIDLEWAY,      MINIMUM_LANES_PER_DIRECTION);
   }
   

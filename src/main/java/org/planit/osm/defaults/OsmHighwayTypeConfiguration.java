@@ -93,6 +93,7 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>PROPOSED</li>
    * <li>CONSTRUCTION</li>
    * <li>TURNING_CIRCLE</li>
+   * <li>RACE_WAY</li>
    * </ul>
    * 
    * @return the default created unsupported types
@@ -110,6 +111,7 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
     defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.PROPOSED);
     defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.CONSTRUCTION);
     defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.TURNING_CIRCLE);
+    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.RACEWAY);
   }   
   
   /**

@@ -118,6 +118,8 @@ public class OsmHighwayTags {
     public static final String CONSTRUCTION = "construction";
     
     public static final String TURNING_CIRCLE = "turning_circle";
+
+    public static final String RACEWAY = "raceway";
     
     /** verify if passed in tag is indeed a highway tag
      * @param highwayTag to verify

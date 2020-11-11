@@ -823,29 +823,32 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       
       /* not yet created */      
       OsmNode osmNode = osmNodes.get(osmNodeId);
-      if(osmNode==null) {
-        throw new PlanItException(String.format("osmNodeId (%d) not provided by parser, unable to retrieve node",osmNodeId));
-      }
-      
-      /* location info */
-      Point geometry = null;
-      try {
-        geometry = geoUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
-      } catch (PlanItException e) {
-        LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
-      }
-
-      /* create and register */
-      node = network.nodes.registerNew(osmNodeId);
-      node.setPosition(geometry);
-      nodesByExternalId.put(osmNodeId, node);
+      if(osmNode == null){
+        LOGGER.fine(String.format("referenced OSM node %s not available, likely outside bounding box",osmNodeId));
+      }else {
      
-      profiler.logNodeStatus(network.nodes.size());   
+        /* location info */
+        Point geometry = null;
+        try {
+          geometry = geoUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
+        } catch (PlanItException e) {
+          LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
+        }
+  
+        /* create and register */
+        node = network.nodes.registerNew(osmNodeId);
+        node.setPosition(geometry);
+        nodesByExternalId.put(osmNodeId, node);
+       
+        profiler.logNodeStatus(network.nodes.size());
+      }
     }
     return node;
   }
   
-  /** create and populate link if it does not already exists for the given two PLANit nodes based on the passed in osmWay information
+  /** create and populate link if it does not already exists for the given two PLANit nodes based on the passed in osmWay information. 
+   * In case a new link is to be created but internal nodes of the geometry are missing due to the meandering road falling outside the boundaing box that is being parsed, null is returned 
+   * and the link is not created
    * 
    * @param nodeFirst extreme node of to be created link
    * @param nodeLast extreme node of to be created link
@@ -856,32 +859,43 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   private Link createAndPopulateLink(Node nodeFirst, Node nodeLast, OsmWay osmWay, Map<String, String> tags) throws PlanItException {
 
-    LineString lineSring = extractLinkGeometry(osmWay);
+    Link link = null;        
+    LineString lineString = null;
     
+    /* parse geometry */
+    try {
+      lineString = extractLinkGeometry(osmWay);
+    }catch (PlanItException e) {
+      LOGGER.warning(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be created, likely outside bounding box",osmWay.getId()));
+    }    
+    if(lineString == null) {
+      return null;
+    }
+        
     /* osm way is directional, link is not, check existence */
-    Link link = null;
     if(nodeFirst != null) {
       Set<Edge> potentialEdges = nodeFirst.getEdges(nodeLast);
       for(Edge potentialEdge : potentialEdges) {
         Link potentialLink = ((Link)potentialEdge);
-        if(link != null && potentialLink.getGeometry().equals(lineSring)) {
+        if(link != null && potentialLink.getGeometry().equals(lineString)) {
           /* matching start/end nodes, and geometry, so they are in indeed the same link*/
           link = potentialLink;
           break;
         }        
       }
-    }
+    }      
                
+    /* when not present and valid geometry, create new link */
     if(link == null) {
 
       /* length and geometry */
       double linkLength = 0;      
       /* update the length based on the geometry */
-      linkLength = geoUtils.getDistanceInKilometres(lineSring);
+      linkLength = geoUtils.getDistanceInKilometres(lineString);
       
       /* create link */
       link = network.links.registerNew(nodeFirst, nodeLast, linkLength, true);      
-      link.setGeometry(lineSring);      
+      link.setGeometry(lineString);      
       
       /* external id */
       link.setExternalId(osmWay.getId());
@@ -910,11 +924,18 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     int lastNodeIndex = osmWay.getNumberOfNodes()-1;
     Node nodeFirst = extractNode(osmWay.getNodeId(firstNodeIndex));
     Node nodeLast = extractNode(osmWay.getNodeId(lastNodeIndex));
-                          
-    Link link = createAndPopulateLink(nodeFirst, nodeLast, osmWay, tags);   
-    if(link != null) {
-      registerLinkInternalOsmNodes(link,firstNodeIndex+1,lastNodeIndex-1, osmWay);                  
-      profiler.logLinkStatus(network.links.size());
+    
+    
+    Link link = null;
+    if(nodeFirst!=null && nodeLast!=null) {
+      
+      link = createAndPopulateLink(nodeFirst, nodeLast, osmWay, tags);   
+      if(link != null) {
+        registerLinkInternalOsmNodes(link,firstNodeIndex+1,lastNodeIndex-1, osmWay);                  
+        profiler.logLinkStatus(network.links.size());
+      }
+    }else {
+      LOGGER.warning(String.format("OSM way %s could not be parsed, one or more nodes could not be created, likely outside bounding box",osmWay.getId()));
     }
     return link;
   }
@@ -1381,34 +1402,40 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     MacroscopicLinkSegmentType linkSegmentType = null;
     String osmTypeValueToUse = null;
     String osmTypeKeyToUse = null;
-    boolean isArea = false;
     
-    /* highway (road) or railway (rail) */
-    if (OsmHighwayTags.isHighway(tags)) {
-      osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;
-      isArea = OsmTags.isArea(tags);
-    }else if(OsmRailWayTags.isRailway(tags)) {
-      osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
-      isArea = OsmRailWayTags.isRailBasedArea(tags.get(osmTypeKeyToUse));
-    }
-    
-    if(osmTypeKeyToUse != null && !isArea) {  
-      osmTypeValueToUse = tags.get(osmTypeKeyToUse);           
-      linkSegmentType = network.getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);            
-      if(linkSegmentType != null) {
-        profiler.incrementOsmTagCounter(osmTypeValueToUse);        
-        return linkSegmentType;
+    /* exclude ways that are areas and in fat not ways */
+    boolean isExplicitArea = OsmTags.isArea(tags);
+    if(!isExplicitArea) {
+      
+      /* highway (road) or railway (rail) */
+      boolean isImplicitArea = false;
+      if (OsmHighwayTags.isHighway(tags)) {
+        osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;
+        
+      }else if(OsmRailWayTags.isRailway(tags)) {
+        osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
+        isImplicitArea = OsmRailWayTags.isRailBasedArea(tags.get(osmTypeKeyToUse));
       }
       
-      /* determine the reason why we couldn't find it */
-      if(!settings.isOsmWayTypeDeactivated(osmTypeKeyToUse, osmTypeValueToUse)) {
-        /*... not unsupported so something is not properly configured, or the osm file is corrupt or not conform the standard*/
-        LOGGER.warning(String.format(
-            "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
-            osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));              
-      }
+      if(osmTypeKeyToUse!=null && !isImplicitArea) {
+        
+        osmTypeValueToUse = tags.get(osmTypeKeyToUse);           
+        linkSegmentType = network.getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);            
+        if(linkSegmentType != null) {
+          profiler.incrementOsmTagCounter(osmTypeValueToUse);        
+          return linkSegmentType;
+        }
+        
+        /* determine the reason why we couldn't find it */
+        if(!settings.isOsmWayTypeDeactivated(osmTypeKeyToUse, osmTypeValueToUse)) {
+          /*... not unsupported so something is not properly configured, or the osm file is corrupt or not conform the standard*/
+          LOGGER.warning(String.format(
+              "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
+              osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));              
+        }
+      }      
     }
-    
+        
     return linkSegmentType;
   }  
   
@@ -1481,7 +1508,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
     
-    if(osmWay.getId() == 824117639) {
+    if(osmWay.getId() == 445666199) {
       int bla = 4;
     }
     
@@ -1504,10 +1531,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
           if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
           
             /* a link only consists of start and end node, no direction and has no model information */
-            Link link = extractLink(osmWay, tags);                
-                      
-            /* a macroscopic link segment is directional and can have a shape, it also has model information */
-            extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentTypes);            
+            Link link = extractLink(osmWay, tags);                                      
+            if(link != null) {
+              /* a macroscopic link segment is directional and can have a shape, it also has model information */
+              extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentTypes);
+            }
                                
           }          
                       
@@ -1515,9 +1543,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       }
       
     } catch (PlanItException e) {
-      if(e.getCause() != null && e.getCause() instanceof PlanItException) {
-        LOGGER.severe(e.getCause().getMessage());
-      }
+      LOGGER.severe(e.getMessage());
       LOGGER.severe(String.format("Error during parsing of OSM way (id:%d)", osmWay.getId())); 
     }
         

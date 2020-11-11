@@ -61,7 +61,9 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
   
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
-   * the common OSM railway types to macroscopic link segment types that we explicitly do not activate
+   * the common OSM railway types to macroscopic link segment types that we explicitly do not activate either because
+   * they are not used in general assignment (miniature) or because we cannot properly convert them (turn tables, razed), or because
+   * they do not represent a railway as such (platform as a way)
    * 
    * <ul>
    * <li>FUNICULAR</li>
@@ -71,6 +73,11 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>ABANDONED</li>
    * <li>CONSTRUCTION</li> 
    * <li>DISUSED</li>
+   * <li>MINIATURE</li>
+   * <li>RAZED</li>
+   * <li>TURNTABLE</li>
+   * <li>PROPOSED</li>
+   * <li>PLATFORM_EDGE</li>
    * </ul>
    * 
    * @return the default created unsupported types
@@ -84,6 +91,11 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
     defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.ABANDONED);
     defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.CONSTRUCTION);
     defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.DISUSED);
+    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.MINIATURE);
+    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.RAZED);
+    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.TURNTABLE);
+    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.PROPOSED);
+    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.PLATFORM_EDGE);
   }
   
   /**
