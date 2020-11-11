@@ -1,6 +1,8 @@
 package org.planit.osm.util;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -23,6 +25,9 @@ public class PlanitOsmUtils {
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
   public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
   
+  /** regular expression pattern([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.* used to extract decimal values and unit (if any) where the decimal value is in group two 
+   * and the unit in group 3 (indicated by second section of round brackets)*/
+  public static final Pattern SPEED_LIMIT_PATTERN = Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");    
  
   /**
    * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)
@@ -49,17 +54,25 @@ public class PlanitOsmUtils {
    * @throws PlanItException thrown if error
    */
   public static double parseMaxSpeedValueKmPerHour(final String maxSpeedValue) throws PlanItException {
+    PlanItException.throwIfNull(maxSpeedValue, "max speed value is null");
+    
     double speedLimitKmh = -1;
-    String[] maxSpeedByUnit = maxSpeedValue.split(" ");
-    if(maxSpeedByUnit.length>=1) {
-      /* km/h */
-      speedLimitKmh = Double.parseDouble(maxSpeedByUnit[0]);
-      if(maxSpeedByUnit.length==2){
-        speedLimitKmh *= determineMaxSpeedUnitMultiplierKmPerHour(maxSpeedByUnit[1]);
-      }  
-      return speedLimitKmh;
+    /* split in parts where all that are not a valid numeric speed limit are removed and retained are the potential speed limits */
+    Matcher speedLimitMatcher = SPEED_LIMIT_PATTERN.matcher(maxSpeedValue);
+    if (!speedLimitMatcher.matches()){
+      throw new PlanItException(String.format("invalid value string encountered for maxSpeed: %s",maxSpeedValue));      
     }
-    throw new PlanItException(String.format("invalid value string encountered for maxSpeed: %s",maxSpeedValue));
+
+    /* speed limit decimal value parsed is in group 2 */
+    if(speedLimitMatcher.group(2) !=null) {
+      speedLimitKmh = Double.parseDouble(speedLimitMatcher.group(2));
+    }
+    
+    /* speed limit unit value parsed is in group 3 (if any) */
+    if(speedLimitMatcher.group(3) != null){
+        speedLimitKmh *= determineMaxSpeedUnitMultiplierKmPerHour(speedLimitMatcher.group(3));
+    }  
+    return speedLimitKmh;    
   }
 
   /**
@@ -69,7 +82,9 @@ public class PlanitOsmUtils {
    * @return parsed speed limit in km/h
    * @throws PlanItException thrown if error
    */
-  public static double[] parseMaxSpeedValueLanesKmPerHour(final String maxSpeedLanes) throws PlanItException {    
+  public static double[] parseMaxSpeedValueLanesKmPerHour(final String maxSpeedLanes) throws PlanItException {
+    PlanItException.throwIfNull(maxSpeedLanes, "max speed lanes value is null");
+    
     String[] maxSpeedByLane = maxSpeedLanes.split("|");
     double[] speedLimitKmh = new double[maxSpeedByLane.length];
     for(int index=0;index<maxSpeedByLane.length;++index) {

@@ -237,7 +237,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     for(String roadMode : roadModes) {
       String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadMode) : PlanitOsmUtils.createCompositeOsmKey(roadMode, alteration);      
       if(tags.containsKey(compositeKey)){
-        String valueTag = tags.get(roadMode).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        String valueTag = tags.get(compositeKey).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
         for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
           if(modeAccessValueTags[index].equals(valueTag)){
             foundModes.add(roadMode);
@@ -986,9 +986,14 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     MacroscopicLinkSegmentType linkSegmentTypeAb = directionAbIsForward ? linkSegmentTypes.getFirst() : linkSegmentTypes.getSecond();
     if(linkSegmentTypeAb!=null) {
       extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeAb, true /* A->B */);
-      link.getLinkSegmentAb().setPhysicalSpeedLimitKmH(directionAbIsForward ? speedLimits.getFirst() : speedLimits.getSecond());
+      Double speedLimit = directionAbIsForward ? speedLimits.getFirst() : speedLimits.getSecond();
+      if(speedLimit == null) {
+        int bla = 4;
+      }
+      link.getLinkSegmentAb().setPhysicalSpeedLimitKmH(speedLimit);
       link.getLinkSegmentAb().setNumberOfLanes(directionAbIsForward ? lanes.getFirst() : lanes.getSecond());
     }
+    /* create link segment B->A when eligible */
     MacroscopicLinkSegmentType linkSegmentTypeBa = directionAbIsForward ? linkSegmentTypes.getSecond() : linkSegmentTypes.getFirst();
     if(linkSegmentTypeBa!=null) {
       extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeBa, false /* B->A */);
@@ -1088,17 +1093,19 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     Double speedLimitForwardKmh = null;
     Double speedLimitBackwardKmh = null;
     
-    if(tags.containsKey(OsmSpeedTags.MAX_SPEED)) {
-      /* regular speed limit for all available directions and across all modes */
-      speedLimitForwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED));
-      speedLimitBackwardKmh = speedLimitForwardKmh;
-    }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_LANES)) {
-      /* check for lane specific speed limit */
-      double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_LANES));
-      /* Note: PLANit does not support lane specific speeds at the moment, maximum speed across lanes is selected */      
-      speedLimitForwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);
-      speedLimitBackwardKmh = speedLimitForwardKmh;
-    }else if( tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD) || tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)){
+    /* (lane specific) backward or forward speed limits */
+    if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)|| tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
+      /* check for backward speed limit */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)) {
+        speedLimitBackwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD));        
+      }
+      /* check for backward speed limit per lane */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
+        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
+        speedLimitBackwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
+      }
+    }
+    if( tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD) || tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)){
       /* check for forward speed limit */
       if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD)) {
         speedLimitForwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD));  
@@ -1108,25 +1115,34 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)); 
         speedLimitForwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);   
       }
-    }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)|| tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
-      /* check for backward speed limit */
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)) {
-        speedLimitBackwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD));        
-      }
-      /* check for backward speed limit per lane */
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
-        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
-        speedLimitBackwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
-      }
-    }else
-    {
-      /* no speed limit information, revert to defaults */
-      speedLimitForwardKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
-      speedLimitBackwardKmh = speedLimitForwardKmh;
-      profiler.incrementMissingSpeedLimitCounter();
     }
-        
-    /* mode specific speed limits */
+    
+    /* if any of the two are not yet found, find general speed limit information not tied to direction */
+    if(speedLimitBackwardKmh==null || speedLimitForwardKmh==null) {
+      Double nonDirectionalSpeedLimitKmh = null;
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED)) {
+        /* regular speed limit for all available directions and across all modes */
+        nonDirectionalSpeedLimitKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED));
+      }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_LANES)) {
+        /* check for lane specific speed limit */
+        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_LANES));
+        /* Note: PLANit does not support lane specific speeds at the moment, maximum speed across lanes is selected */      
+        nonDirectionalSpeedLimitKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);
+      }else
+      { /* no speed limit information, revert to defaults */
+        nonDirectionalSpeedLimitKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
+        profiler.incrementMissingSpeedLimitCounter();
+      }
+      
+      if(nonDirectionalSpeedLimitKmh!=null) {
+        speedLimitForwardKmh = (speedLimitForwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitForwardKmh;
+        speedLimitBackwardKmh = (speedLimitBackwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitBackwardKmh;
+      }else {
+        throw new PlanItException(String.format("no default speed limit available for OSM way %s",link.getExternalId()));
+      }
+    }
+            
+    /* mode specific speed limits*/
     //TODO
     
     return Pair.create(speedLimitForwardKmh,speedLimitBackwardKmh);
@@ -1552,7 +1568,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       LOGGER.severe("unable to break OSM links with internal intersections");
     }      
     
-    // useful for debugging
+    /* useful for debugging */
     network.validate();
     
     /* stats*/
