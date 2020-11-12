@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.planit.utils.exceptions.PlanItException;
+
 /**
  * OSM "highway" values, e.g. highway=<option>
  * 
@@ -12,45 +14,69 @@ import java.util.Set;
  */
 public class OsmHighwayTags {
   
-    /** all currently available osm highway tags */
-    private static final Set<String> highwayTags = new HashSet<String>();
+    /** all currently available osm highway tags that can represent a road link */
+    private static final Set<String> ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+    
+    /**
+     * the OSM highway values that are marked as non-road types, i.e., they can never be activated to be converted into links
+     */
+    protected static final Set<String> NON_ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();     
     
     /**
      * populate the available highway tags
      */
-    private static void populateHighwayTags() {
-      highwayTags.add(MOTORWAY);
-      highwayTags.add(MOTORWAY_LINK);
-      highwayTags.add(TRUNK);
-      highwayTags.add(TRUNK_LINK);
-      highwayTags.add(PRIMARY);
-      highwayTags.add(PRIMARY_LINK);
-      highwayTags.add(SECONDARY);
-      highwayTags.add(SECONDARY_LINK);
-      highwayTags.add(TERTIARY);
-      highwayTags.add(TERTIARY_LINK);
-      highwayTags.add(UNCLASSIFIED);
-      highwayTags.add(RESIDENTIAL);
-      highwayTags.add(LIVING_STREET);
-      highwayTags.add(PEDESTRIAN);
-      highwayTags.add(TRACK);
-      highwayTags.add(ROAD);
-      highwayTags.add(SERVICE);
-      highwayTags.add(FOOTWAY);
-      highwayTags.add(BRIDLEWAY);
-      highwayTags.add(STEPS);
-      highwayTags.add(CORRIDOR);
-      highwayTags.add(CYCLEWAY);
-      highwayTags.add(PATH);
-      highwayTags.add(ELEVATOR);
-      highwayTags.add(PLATFORM);
-      highwayTags.add(PROPOSED);
-      highwayTags.add(CONSTRUCTION);
-      highwayTags.add(TURNING_CIRCLE);
+    private static void populateRoadBasedOsmHighwayTags() {
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(MOTORWAY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(MOTORWAY_LINK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(TRUNK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(TRUNK_LINK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(PRIMARY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(PRIMARY_LINK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(SECONDARY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(SECONDARY_LINK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(TERTIARY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(TERTIARY_LINK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(UNCLASSIFIED);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(RESIDENTIAL);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(LIVING_STREET);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(PEDESTRIAN);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(TRACK);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(ROAD);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(SERVICE);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(FOOTWAY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(BRIDLEWAY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(STEPS);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(CORRIDOR);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(CYCLEWAY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(PATH);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(ELEVATOR);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(PROPOSED);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(CONSTRUCTION);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(TURNING_CIRCLE);
+      ROADBASED_HIGHWAY_VALUE_TAGS.add(RACEWAY);
     }
     
+    /**
+     * Since we are building a macroscopic network based on OSM, but some OSM highway types are in fact not roads at all we list such 
+     * non-road types as well so we can avoid generating warning messages in case a highway type cannot be matched to either an activated or
+     * deactivated type, i.e., when neither it is an unknown type or a non-road type, in the latter case these can be filtered out using this
+     * listing
+     * 
+     * <ul>
+     * <li>PLATFORM</li>
+     * <li>BUS_STOP</li>
+     * </ul>
+     * 
+     * @return the default created unsupported types
+     */
+    private static void populateNonRoadBasedOsmHighwayTags(){
+      NON_ROADBASED_HIGHWAY_VALUE_TAGS.add(OsmHighwayTags.PLATFORM);
+      NON_ROADBASED_HIGHWAY_VALUE_TAGS.add(OsmHighwayTags.BUS_STOP);
+    }      
+    
     static {
-      populateHighwayTags();      
+      populateRoadBasedOsmHighwayTags();  
+      populateNonRoadBasedOsmHighwayTags();
     }
   
     /* key */
@@ -92,7 +118,7 @@ public class OsmHighwayTags {
     
     public static final String SERVICE = "service";    
     
-    /* (typically) non-vehicle highway types */
+    /* (typically) non-vehicle highway types that still can be used as a link*/
 
     /** footway can be used as highway=footway, or footway=sidewalk/crossing */
     public static final String FOOTWAY ="footway";
@@ -109,25 +135,37 @@ public class OsmHighwayTags {
     
     public static final String ELEVATOR = "elevator";
     
-    public static final String PLATFORM = "platform";
-    
-    /* other highway types */
-    
     public static final String PROPOSED = "proposed";
     
     public static final String CONSTRUCTION = "construction";
     
     public static final String TURNING_CIRCLE = "turning_circle";
 
-    public static final String RACEWAY = "raceway";
+    public static final String RACEWAY = "raceway";    
+        
+    /* other highway types that do not signify a road or link but are valid values*/
     
-    /** verify if passed in tag is indeed a highway tag
+    public static final String PLATFORM =  OsmPublicTransportTags.PLATFORM;
+ 
+    public static final String BUS_STOP = OsmPublicTransportTags.BUS_STOP;
+    
+    /** verify if passed in tag is indeed a highway tag that represents a road like piece of infrastructure
+     * 
      * @param highwayTag to verify
      * @return true when valid tag, otherwise false
      */
-    public static boolean isHighwayValueTag(String highwayTag) {
-      return highwayTags.contains(highwayTag);
+    public static boolean isRoadBasedHighwayValueTag(String highwayTag) {
+      return ROADBASED_HIGHWAY_VALUE_TAGS.contains(highwayTag);
     }
+    
+    /** verify if passed in tag is indeed a highway tag that represents a non-road like piece of infrastructure
+     * 
+     * @param highwayTag to verify
+     * @return true when valid tag, otherwise false
+     */
+    public static boolean isNonRoadBasedHighwayValueTag(String highwayTag) {
+      return NON_ROADBASED_HIGHWAY_VALUE_TAGS.contains(highwayTag);
+    }    
     
     /** verify if passed in tag is indeed the highway key tag
      * @param highwayTag to verify
@@ -142,7 +180,7 @@ public class OsmHighwayTags {
      * @param tags to verify
      * @return true if highway=* exists, false otherwise
      */
-    public static boolean isHighway(Map<String, String> tags) {
+    public static boolean hasHighwayKeyTag(Map<String, String> tags) {
       return tags.containsKey(OsmHighwayTags.HIGHWAY);
     }    
 

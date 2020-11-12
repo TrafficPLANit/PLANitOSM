@@ -29,14 +29,15 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
   private static final Logger LOGGER = Logger.getLogger(OsmRailwayTypeConfiguration.class.getCanonicalName());  
   
   /**
-   * the OSM railway types that are marked as supported OSM types, i.e., will be processed when parsing
+   * the OSM railway types that are marked as activated OSM types, i.e., will be processed when parsing
    */
-  protected static final Set<String> defaultSupportedOsmRailWayTypes = new HashSet<String>();
+  protected static final Set<String> DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES = new HashSet<String>();
   
   /**
-   * the OSM railway types that are marked as unsupported OSM types, i.e., will be ignored when parsing
+   * the OSM railway types that are marked as deactivated OSM types, i.e., will be ignored when parsing
    */
-  protected static final Set<String> defaultUnsupportedOsmRailWayTypes = new HashSet<String>(); 
+  protected static final Set<String> DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES = new HashSet<String>(); 
+    
     
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
@@ -52,11 +53,11 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  protected static void initialiseDefaultSupportedOsmRailwayTypes() throws PlanItException {
-    defaultSupportedOsmRailWayTypes.add(OsmRailWayTags.LIGHT_RAIL);
-    defaultSupportedOsmRailWayTypes.add(OsmRailWayTags.RAIL);
-    defaultSupportedOsmRailWayTypes.add(OsmRailWayTags.SUBWAY);
-    defaultSupportedOsmRailWayTypes.add(OsmRailWayTags.TRAM);    
+  protected static void initialiseDefaultActivatedOsmRailwayTypes() throws PlanItException {
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.LIGHT_RAIL);
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.RAIL);
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.SUBWAY);
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.TRAM);    
   }
   
   /**
@@ -69,7 +70,6 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>FUNICULAR</li>
    * <li>MONO_RAIL</li>
    * <li>NARROW_GAUGE</li>
-   * <li>PLATFORM</li>
    * <li>ABANDONED</li>
    * <li>CONSTRUCTION</li> 
    * <li>DISUSED</li>
@@ -77,26 +77,24 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>RAZED</li>
    * <li>TURNTABLE</li>
    * <li>PROPOSED</li>
-   * <li>PLATFORM_EDGE</li>
    * </ul>
    * 
    * @return the default created unsupported types
    * @throws PlanItException thrown when error
    */
-  protected static void initialiseDefaultUnsupportedOsmRailwayTypes() throws PlanItException {
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.FUNICULAR);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.MONO_RAIL);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.NARROW_GAUGE);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.PLATFORM);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.ABANDONED);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.CONSTRUCTION);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.DISUSED);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.MINIATURE);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.RAZED);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.TURNTABLE);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.PROPOSED);
-    defaultUnsupportedOsmRailWayTypes.add(OsmRailWayTags.PLATFORM_EDGE);
+  protected static void initialiseDefaultDeactivatedOsmRailwayTypes() throws PlanItException {
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.FUNICULAR);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.MONO_RAIL);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.NARROW_GAUGE);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.ABANDONED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.CONSTRUCTION);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.DISUSED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.MINIATURE);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.RAZED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.TURNTABLE);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.PROPOSED);
   }
+    
   
   /**
    * conduct general initialisation for any instance of this class
@@ -106,9 +104,9 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
   static {
     try {
       /* the railway types that will be parsed by default, i.e., supported. */
-      initialiseDefaultSupportedOsmRailwayTypes();
+      initialiseDefaultActivatedOsmRailwayTypes();
       /* the railway types that will not be parsed by default, i.e., unsupported. */
-      initialiseDefaultUnsupportedOsmRailwayTypes();      
+      initialiseDefaultDeactivatedOsmRailwayTypes();      
     } catch (PlanItException e) {
       LOGGER.severe("unable to create default supported and/or unsupported OSM railway types for this network");
     }     
@@ -118,7 +116,7 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * Default constructor
    */
   public OsmRailwayTypeConfiguration(){
-    super(OsmRailWayTags.RAILWAY, defaultSupportedOsmRailWayTypes, defaultUnsupportedOsmRailWayTypes);    
+    super(OsmRailWayTags.RAILWAY, DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES, DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES);    
   }
 
 }

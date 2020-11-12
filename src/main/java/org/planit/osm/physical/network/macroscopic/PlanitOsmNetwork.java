@@ -734,9 +734,9 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(osmWayKey, osmWayValueToUse, settings);
       if(activatedPlanitModes!=null && !activatedPlanitModes.isEmpty()) {
         
-        if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isHighwayValueTag(osmWayValueToUse)) {         
+        if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayValueToUse)) {         
           linkSegmentType = createOsmCompatibleRoadLinkSegmentType(osmWayValueToUse, settings);
-        }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailwayModeValueTag(osmWayValueToUse)) {             
+        }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailBasedRailway(osmWayValueToUse)) {             
           linkSegmentType = createOsmCompatibleRailLinkSegmentType(osmWayValueToUse, settings);
         }else {
           LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));

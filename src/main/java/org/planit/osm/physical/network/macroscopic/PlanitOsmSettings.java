@@ -282,8 +282,8 @@ public class PlanitOsmSettings {
    * Log all de-activated OSM way types
    */  
   protected void logUnsupportedOsmWayTypes() {
-    highwayTypeConfiguration.logUnsupportedTypes();
-    railwayTypeConfiguration.logUnsupportedTypes();        
+    highwayTypeConfiguration.logDeactivatedTypes();
+    railwayTypeConfiguration.logDeactivatedTypes();        
   }  
   
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
@@ -397,9 +397,9 @@ public class PlanitOsmSettings {
   public boolean isOsmWayTypeDeactivated(String osmWayKey, String osmWayValue) {
     switch (osmWayKey) {
     case OsmHighwayTags.HIGHWAY:      
-      return highwayTypeConfiguration.isUnsupported(osmWayValue);
+      return highwayTypeConfiguration.isDeactivated(osmWayValue);
     case OsmRailWayTags.RAILWAY:
-      return railwayTypeConfiguration.isUnsupported(osmWayValue);
+      return railwayTypeConfiguration.isDeactivated(osmWayValue);
     default:
       return true;
     }    
@@ -416,9 +416,9 @@ public class PlanitOsmSettings {
   public boolean isOsmWayTypeActivated(String osmWayKey, String osmWayValue) {
     switch (osmWayKey) {
     case OsmHighwayTags.HIGHWAY:
-      return highwayTypeConfiguration.isSupported(osmWayValue);
+      return highwayTypeConfiguration.isActivated(osmWayValue);
     case OsmRailWayTags.RAILWAY:
-      return railwayTypeConfiguration.isSupported(osmWayValue);
+      return railwayTypeConfiguration.isActivated(osmWayValue);
     default:
       return false;
     }            
@@ -667,7 +667,7 @@ public class PlanitOsmSettings {
    * @param planitMode to map it to
    */
   public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
-    if(!OsmRailWayTags.isRailwayModeValueTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailBasedRailway(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -684,7 +684,7 @@ public class PlanitOsmSettings {
    * @param osmRoadMode to remove
    */
   public void removeOsmRailMode2PlanitModeMapping(String osmRailMode) {
-    if(!OsmRailWayTags.isRailwayModeValueTag(osmRailMode)) {
+    if(!OsmRailWayTags.isRailBasedRailway(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -732,7 +732,7 @@ public class PlanitOsmSettings {
   public Mode getMappedPlanitMode(final String osmMode) {
     if(OsmRoadModeTags.isRoadModeTag(osmMode)) {
       return this.osmRoadMode2PlanitModeMap.get(osmMode);
-    }else if(OsmRailWayTags.isRailwayModeValueTag(osmMode)) {
+    }else if(OsmRailWayTags.isRailBasedRailway(osmMode)) {
       return this.osmRailMode2PlanitModeMap.get(osmMode);
     }else {
       LOGGER.warning(String.format("unknown osmMode tag %s found when collecting mapped PLANit modes, ignored",osmMode));

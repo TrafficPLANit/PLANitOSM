@@ -15,22 +15,32 @@ import java.util.Set;
 public class OsmRailWayTags {
   
   /** all currently available rail way tags that represent tracks accessible to a rail mode*/
-  private static final Set<String> railway = new HashSet<String>();
+  private static final Set<String> RAILBASED_OSM_RIALWAY_VALUE_TAGS = new HashSet<String>();
   
-  /** all currently supported railway tags that represent stations, or platforms next or alongside tracks */
-  private static final Set<String> railwayArea = new HashSet<String>();
+  /** all currently supported railway tags that represent geographic areas, e.g. stations, or platforms next or alongside tracks, this is a subset of
+   * the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS} */
+  private static final Set<String> AREABASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();    
+    
+  /**
+   * the OSM railway values that are marked as non-rail types, i.e., they can never be activated to be converted into links
+   */
+  protected static final Set<String> NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();
+  
   
   /**
    * populate the available railway mode tags
    */
-  private static void populateRailwayModeTags() {
-    railway.add(FUNICULAR);
-    railway.add(LIGHT_RAIL);
-    railway.add(MONO_RAIL);
-    railway.add(NARROW_GAUGE);
-    railway.add(RAIL);
-    railway.add(SUBWAY);
-    railway.add(TRAM);
+  private static void populateRailBasedOsmRailwayValueTags() {
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(FUNICULAR);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(LIGHT_RAIL);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(MONO_RAIL);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(NARROW_GAUGE);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(MINIATURE);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(RAZED);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(TURNTABLE);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(RAIL);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(SUBWAY);
+    RAILBASED_OSM_RIALWAY_VALUE_TAGS.add(TRAM);
   }
   
   /**
@@ -48,26 +58,49 @@ public class OsmRailWayTags {
    * <li>yard</li>
    * <li>signal_box</li>
    * <li>tram_stop</li>
+   * <li>workshop</li>
    * </ul>
    */
-  private static void populateRailwayAreaTags() {
-    railwayArea.add(PLATFORM);
-    railwayArea.add(STATION);
-    railwayArea.add(FUEL);
-    railwayArea.add(TRAVERSER);
-    railwayArea.add(WASH);
-    railwayArea.add(ROUNDHOUSE);
-    railwayArea.add(YARD);
-    railwayArea.add(SIGNAL_BOX);
-    railwayArea.add(TRAM_STOP);
+  private static void populateAreaBasedOsmRailwayValueTags() {
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(PLATFORM);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(STATION);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(FUEL);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(TRAVERSER);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(WASH);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(ROUNDHOUSE);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(YARD);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(SIGNAL_BOX);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(TRAM_STOP);
+    AREABASED_OSM_RAILWAY_VALUE_TAGS.add(WORKSHOP);    
+  }  
+  
+  /**
+   * Since we are building a macroscopic network based on OSM, we provide a mapping from
+   * the common OSM railway types to macroscopic link segment types that we explicitly do include, i.e., support.
+   * 
+   * <ul>
+   * <li>LIGHT_RAIL</li>
+   * <li>RAIL</li>
+   * <li>SUBWAY</li>
+   * <li>TRAM</li>
+   * </ul>
+   * 
+   * @return the default created supported types 
+   */
+  private static void populateNonRailBasedOsmRailwayValueTags(){
+    /* copy area based */
+    NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS.addAll(AREABASED_OSM_RAILWAY_VALUE_TAGS);
+    /* add other non rail track based */
+    NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(PLATFORM_EDGE);
   }  
   
   /**
    * populate the available railway tags
    */
   static {
-    populateRailwayModeTags();
-    populateRailwayAreaTags();
+    populateRailBasedOsmRailwayValueTags();
+    populateAreaBasedOsmRailwayValueTags();
+    populateNonRailBasedOsmRailwayValueTags();
   }
   
   /* key */
@@ -98,9 +131,7 @@ public class OsmRailWayTags {
   public static final String SUBWAY = "subway";
   
   public static final String TRAM = "tram";  
-  
-  /* other railway values that do not reflect a railway but are used as a way in combination with the railway key */
-  
+    
   /** miniature railways, not actual railways */
   public static final String MINIATURE = "miniature";
   
@@ -109,11 +140,7 @@ public class OsmRailWayTags {
   
   /** built on top of, no longer a real track */
   public static final String RAZED = "razed";
-  
-  /* other ways that do not reflect tracks */
-  
-  public static final String PLATFORM_EDGE = "platform_edge";
-  
+    
   /* areas */
   
   /** a platform is a separate (disconnected) way or area to indicate a platform */
@@ -134,8 +161,14 @@ public class OsmRailWayTags {
   
   private static final String SIGNAL_BOX = "signal_box";
   
+  private static final String WORKSHOP = "workshop";
+  
   /** sometimes railways are tagged as tram_stop to indicate an area for stopping, i.e., a platform. sometimes used in conjunction with public_transport=platform, see https://wiki.openstreetmap.org/wiki/Key:public_transport */
-  private static final String TRAM_STOP = "tram_stop";  
+  private static final String TRAM_STOP = "tram_stop";
+  
+  /* other ways that do not reflect tracks (and are not areas) */
+  
+  public static final String PLATFORM_EDGE = "platform_edge";  
    
       
 
@@ -143,8 +176,8 @@ public class OsmRailWayTags {
    * @param railwayTag to verify
    * @return true when valid tag, otherwise false
    */
-  public static boolean isRailwayModeValueTag(String railwayTagValue) {
-    return railway.contains(railwayTagValue);
+  public static boolean isRailBasedRailway(String railwayTagValue) {
+    return RAILBASED_OSM_RIALWAY_VALUE_TAGS.contains(railwayTagValue);
   }
   
   /** some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
@@ -154,8 +187,19 @@ public class OsmRailWayTags {
    * @param tags the tags
    * @return is the way an area and not a line based railway
    */
-  public static boolean isRailBasedArea(String railwayTagValue) {
-    return railwayArea.contains(railwayTagValue);
+  public static boolean isAreaBasedRailway(String railwayTagValue) {
+    return AREABASED_OSM_RAILWAY_VALUE_TAGS.contains(railwayTagValue);
+  } 
+  
+  /** some railways are in fact valid railway value tags but do not represent a rail track. any such value tags that our parser is aware of can be verified through this method
+   * using the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS}
+   * 
+   * @param osmWay the way
+   * @param tags the tags
+   * @return is the way an area and not a line based railway
+   */
+  public static boolean isNonRailBasedRailway(String railwayTagValue) {
+    return NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS.contains(railwayTagValue);
   }   
   
   /** verify if passed in tag is indeed the railway key tag
@@ -171,7 +215,7 @@ public class OsmRailWayTags {
    * @return all supported road modes
    */
   public static Collection<String> getSupportedRailModeTags() {
-    return new HashSet<String>(railway);
+    return new HashSet<String>(RAILBASED_OSM_RIALWAY_VALUE_TAGS);
   }
 
   /**
@@ -179,7 +223,7 @@ public class OsmRailWayTags {
    * @param tags to verify
    * @return true when railway=* is present, false otherwise
    */
-  public static boolean isRailway(Map<String, String> tags) {
+  public static boolean hasRailwayKeyTag(Map<String, String> tags) {
     return tags.containsKey(OsmRailWayTags.RAILWAY);
   }
    

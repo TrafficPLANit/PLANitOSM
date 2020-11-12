@@ -21,14 +21,15 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
   private static final Logger LOGGER = Logger.getLogger(OsmHighwayTypeConfiguration.class.getCanonicalName());
   
   /**
-   * the OSM types that are marked as supported OSM types, i.e., will be processed when parsing
+   * the OSM highway types that are marked as activated OSM types, i.e., will be processed when parsing
    */
-  protected static final Set<String> defaultActivatedOsmHighwayTypes = new HashSet<String>();
+  protected static final Set<String> DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
   
   /**
-   * the OSM types that are marked as unsupported OSM types, i.e., will be ignored when parsing
+   * the OSM highway  types that are marked as deactivated OSM types, i.e., will be ignored when parsing
    */
-  protected static final Set<String> defaultDeactivatedOsmHighwayTypes = new HashSet<String>();  
+  protected static final Set<String> DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
+     
     
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
@@ -58,23 +59,23 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultActivatedOsmHighwayTypes() throws PlanItException {
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.MOTORWAY);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.MOTORWAY_LINK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.TRUNK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.TRUNK_LINK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.PRIMARY);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.PRIMARY_LINK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.SECONDARY);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.SECONDARY_LINK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.TERTIARY);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.TERTIARY_LINK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.UNCLASSIFIED);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.RESIDENTIAL);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.LIVING_STREET);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.SERVICE);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.PEDESTRIAN);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.TRACK);
-    defaultActivatedOsmHighwayTypes.add(OsmHighwayTags.ROAD);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.MOTORWAY);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.MOTORWAY_LINK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TRUNK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TRUNK_LINK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.PRIMARY);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.PRIMARY_LINK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.SECONDARY);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.SECONDARY_LINK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TERTIARY);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TERTIARY_LINK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.UNCLASSIFIED);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.RESIDENTIAL);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.LIVING_STREET);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.SERVICE);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.PEDESTRIAN);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TRACK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.ROAD);
   }
   
   /**
@@ -89,7 +90,6 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>CYCLEWAY</li>
    * <li>PATH</li>
    * <li>ELEVATOR</li>
-   * <li>PLATFORM</li>
    * <li>PROPOSED</li>
    * <li>CONSTRUCTION</li>
    * <li>TURNING_CIRCLE</li>
@@ -100,19 +100,20 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultDeactivatedOsmHighwayTypes() throws PlanItException {
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.FOOTWAY);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.BRIDLEWAY);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.STEPS);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.CORRIDOR);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.CYCLEWAY);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.PATH);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.ELEVATOR);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.PLATFORM);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.PROPOSED);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.CONSTRUCTION);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.TURNING_CIRCLE);
-    defaultDeactivatedOsmHighwayTypes.add(OsmHighwayTags.RACEWAY);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.FOOTWAY);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.BRIDLEWAY);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.STEPS);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.CORRIDOR);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.CYCLEWAY);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.PATH);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.ELEVATOR);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.PLATFORM);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.PROPOSED);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.CONSTRUCTION);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TURNING_CIRCLE);
+    DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.RACEWAY);
   }   
+  
   
   /**
    * conduct general initialisation for any instance of this class
@@ -134,7 +135,7 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * default constructor
    */
   public OsmHighwayTypeConfiguration() {
-    super(OsmHighwayTags.HIGHWAY, defaultActivatedOsmHighwayTypes, defaultDeactivatedOsmHighwayTypes);
+    super(OsmHighwayTags.HIGHWAY, DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES, DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES);
   }
    
 }

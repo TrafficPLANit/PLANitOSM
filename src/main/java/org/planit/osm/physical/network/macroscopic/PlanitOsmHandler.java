@@ -315,7 +315,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       }      
             
       /*... buses --> include when inclusion indicating tag is present for correct location [explored direction], see https://wiki.openstreetmap.org/wiki/Bus_lanes */
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBusTags.BUSWAY_LEFT : OsmBusTags.BUSWAY_LEFT)) {
+      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBusWayTags.BUSWAY_LEFT : OsmBusWayTags.BUSWAY_LEFT)) {
         includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BUS)); 
       }       
       
@@ -400,7 +400,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       }          
       
       /*... for buses adopting the busway scheme approach [main direction] */   
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, OsmBusTags.BUSWAY_LEFT, OsmBusTags.BUSWAY_RIGHT)) {
+      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_RIGHT)) {
           includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BUS));
       }            
     }  
@@ -458,7 +458,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }
     
     /*... buses for busway scheme [opposite direction], see https://wiki.openstreetmap.org/wiki/Bus_lanes */
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isOppositeLaneIncludedForAnyOf(tags, OsmBusTags.getBuswaySchemeKeyTags())) {
+    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isOppositeLaneIncludedForAnyOf(tags, OsmBusWayTags.getBuswaySchemeKeyTags())) {
       includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BUS));  
     }          
     
@@ -1399,41 +1399,47 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @return the link segment type if available, otherwise nullis returned
    */
   protected MacroscopicLinkSegmentType getDefaultLinkSegmentTypeByOsmHighwayType(OsmWay osmWay, Map<String, String> tags) {
-    MacroscopicLinkSegmentType linkSegmentType = null;
-    String osmTypeValueToUse = null;
     String osmTypeKeyToUse = null;
     
-    /* exclude ways that are areas and in fat not ways */
+    /* exclude ways that are areas and in fact not ways */
     boolean isExplicitArea = OsmTags.isArea(tags);
-    if(!isExplicitArea) {
+    if(isExplicitArea) {
+      return null;
+    }
       
-      /* highway (road) or railway (rail) */
-      boolean isImplicitArea = false;
-      if (OsmHighwayTags.isHighway(tags)) {
-        osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;
+    /* highway (road) or railway (rail) */
+    if (OsmHighwayTags.hasHighwayKeyTag(tags)) {
+      osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;         
+    }else if(OsmRailWayTags.hasRailwayKeyTag(tags)) {
+      osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
+    }
+    
+    /* without mapping no type */
+    if(osmTypeKeyToUse==null) {
+      return null;
+    }
         
-      }else if(OsmRailWayTags.isRailway(tags)) {
-        osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
-        isImplicitArea = OsmRailWayTags.isRailBasedArea(tags.get(osmTypeKeyToUse));
+    String osmTypeValueToUse = tags.get(osmTypeKeyToUse);        
+    MacroscopicLinkSegmentType linkSegmentType = network.getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);            
+    if(linkSegmentType != null) {
+      profiler.incrementOsmTagCounter(osmTypeValueToUse);        
+    }
+    /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/
+    else if(!settings.isOsmWayTypeDeactivated(osmTypeKeyToUse, osmTypeValueToUse)) {
+      
+      boolean typeConfigurationMissing = true;
+      if(osmTypeKeyToUse.equals(OsmHighwayTags.HIGHWAY) && OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse)) {
+        typeConfigurationMissing = false;         
+      }else if(osmTypeKeyToUse.equals(OsmRailWayTags.RAILWAY) && OsmRailWayTags.isNonRailBasedRailway(osmTypeValueToUse)) {
+        typeConfigurationMissing = false;
+      }  
+      
+      /*... not available event though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
+      if(typeConfigurationMissing) {            
+        LOGGER.warning(String.format(
+            "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
       }
       
-      if(osmTypeKeyToUse!=null && !isImplicitArea) {
-        
-        osmTypeValueToUse = tags.get(osmTypeKeyToUse);           
-        linkSegmentType = network.getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);            
-        if(linkSegmentType != null) {
-          profiler.incrementOsmTagCounter(osmTypeValueToUse);        
-          return linkSegmentType;
-        }
-        
-        /* determine the reason why we couldn't find it */
-        if(!settings.isOsmWayTypeDeactivated(osmTypeKeyToUse, osmTypeValueToUse)) {
-          /*... not unsupported so something is not properly configured, or the osm file is corrupt or not conform the standard*/
-          LOGGER.warning(String.format(
-              "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", 
-              osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));              
-        }
-      }      
     }
         
     return linkSegmentType;
@@ -1516,7 +1522,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     try {              
       
       /* only parse actual ways */
-      if(OsmHighwayTags.isHighway(tags) || OsmRailWayTags.isRailway(tags)) {
+      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailWayTags.hasRailwayKeyTag(tags)) {
         
         if(PlanitOsmUtils.isCircularRoad(osmWay, tags, false)) {
           
