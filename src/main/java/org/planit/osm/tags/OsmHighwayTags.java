@@ -4,8 +4,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.planit.utils.exceptions.PlanItException;
-
 /**
  * OSM "highway" values, e.g. highway=<option>
  * 
@@ -17,10 +15,15 @@ public class OsmHighwayTags {
     /** all currently available osm highway tags that can represent a road link */
     private static final Set<String> ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();
     
+    /** all currently supported highway tags that represent geographic areas, e.g. rest areas on top or alongside a road , this is a subset of
+     * the {@code NON_ROADBASED_HIGHWAY_VALUE_TAGS} */
+    private static final Set<String> AREABASED_OSM_HIGHWAY_VALUE_TAGS = new HashSet<String>();    
+    
     /**
      * the OSM highway values that are marked as non-road types, i.e., they can never be activated to be converted into links
      */
-    protected static final Set<String> NON_ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();     
+    protected static final Set<String> NON_ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+    
     
     /**
      * populate the available highway tags
@@ -57,25 +60,43 @@ public class OsmHighwayTags {
     }
     
     /**
+     * populate the available highway area tags. These area tags are here to identify ways that are in fact NOT
+     * highways in the traditional sense, yet they are provided as such and have tags to indicate they represent something
+     * else than a road. This is a subset of the non road based highway value tags
+     * 
+     * <ul>
+     * <li>platform</li>
+     * <li>services</li>
+     * <li>rest_area</li>
+     * </ul>
+     */
+    private static void populateAreaBasedOsmHighwayValueTags() {
+      AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(PLATFORM);
+      AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(SERVICES);
+      AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(REST_AREA);    
+    }      
+    
+    /**
      * Since we are building a macroscopic network based on OSM, but some OSM highway types are in fact not roads at all we list such 
      * non-road types as well so we can avoid generating warning messages in case a highway type cannot be matched to either an activated or
      * deactivated type, i.e., when neither it is an unknown type or a non-road type, in the latter case these can be filtered out using this
-     * listing
+     * listing. Note that area based highway value tags are a subset of the non road based highway tags.
      * 
      * <ul>
-     * <li>PLATFORM</li>
      * <li>BUS_STOP</li>
      * </ul>
      * 
      * @return the default created unsupported types
      */
     private static void populateNonRoadBasedOsmHighwayTags(){
-      NON_ROADBASED_HIGHWAY_VALUE_TAGS.add(OsmHighwayTags.PLATFORM);
+      NON_ROADBASED_HIGHWAY_VALUE_TAGS.addAll(AREABASED_OSM_HIGHWAY_VALUE_TAGS);
+      
       NON_ROADBASED_HIGHWAY_VALUE_TAGS.add(OsmHighwayTags.BUS_STOP);
     }      
     
     static {
       populateRoadBasedOsmHighwayTags();  
+      populateAreaBasedOsmHighwayValueTags();
       populateNonRoadBasedOsmHighwayTags();
     }
   
@@ -142,10 +163,16 @@ public class OsmHighwayTags {
     public static final String TURNING_CIRCLE = "turning_circle";
 
     public static final String RACEWAY = "raceway";    
-        
-    /* other highway types that do not signify a road or link but are valid values*/
     
-    public static final String PLATFORM =  OsmPublicTransportTags.PLATFORM;
+    /* area based highway value tags */
+    
+    private static final String SERVICES = "services";
+
+    private static final String REST_AREA = "rest_area";
+    
+    public static final String PLATFORM =  OsmPublicTransportTags.PLATFORM;    
+        
+    /* other highway types that do not signify a road or link but are valid values*/    
  
     public static final String BUS_STOP = OsmPublicTransportTags.BUS_STOP;
     
@@ -157,6 +184,17 @@ public class OsmHighwayTags {
     public static boolean isRoadBasedHighwayValueTag(String highwayTag) {
       return ROADBASED_HIGHWAY_VALUE_TAGS.contains(highwayTag);
     }
+    
+    /** some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
+     * although technically platforms can be ways, but since we do not model them (as ways), we regard them as areas in all cases for now
+
+     * @param osmWay the way
+     * @param tags the tags
+     * @return is the way an area and not a line based railway
+     */
+    public static boolean isAreaBasedHighway(String highwayTag) {
+      return AREABASED_OSM_HIGHWAY_VALUE_TAGS.contains(highwayTag);
+    }     
     
     /** verify if passed in tag is indeed a highway tag that represents a non-road like piece of infrastructure
      * 

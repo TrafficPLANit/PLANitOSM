@@ -144,7 +144,7 @@ public class OsmRailWayTags {
   /* areas */
   
   /** a platform is a separate (disconnected) way or area to indicate a platform */
-  public static final String PLATFORM = "platform";
+  public static final String PLATFORM = OsmPublicTransportTags.PLATFORM;
 
   /** a station is a separate (disconnected) area to indicate a public transport station*/
   public static final String STATION = "station";
