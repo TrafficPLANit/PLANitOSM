@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailWayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -94,25 +95,25 @@ public class PlanitOsmUtils {
   }
   
   /**
-   * Verify if passed osmWay is in fact cicular in nature, i.e., a type of roundabout
+   * Verify if passed osmWay is in fact circular in nature, e.g., , a type of roundabout. The way must be of type highway or railway as well
    * 
-   * @param osmWay the way to verify
+   * @param osmWay the way to verify 
    * @param tags of this OSM way
    * @param mustEndAtstart, when true only circular roads where the end node is the start node are identified, when false, any node that appears twice results in
    * a positive result (true is returned)
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularRoad(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtstart) {
+  public static boolean isCircularOsmWay(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtstart) {
     /* a circular road, has:
      * -  more than two nodes...
      * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
      *    is only part of the geometry 
      */
-    if(tags.containsKey(OsmHighwayTags.HIGHWAY) && osmWay.getNumberOfNodes() > 2) {
+    if(tags.containsKey(OsmHighwayTags.HIGHWAY) || tags.containsKey(OsmRailWayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
       if(mustEndAtstart) {
         return (osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
       }else {
-        return findIndicesOfFirstCircle(osmWay, 0 /*consider entire way */)!=null;        
+        return findIndicesOfFirstLoop(osmWay, 0 /*consider entire way */)!=null;        
       }
     }
     return false;
@@ -124,7 +125,7 @@ public class PlanitOsmUtils {
    * @param initialNodeIndex offset to use, when set it uses it as the starting point to start looking
    * @return pair of indices demarcating the first two indices with the same node conditional on the offset, null if not found 
    */
-  public static Pair<Integer, Integer> findIndicesOfFirstCircle(final OsmWay osmWay, final int initialNodeIndex) {
+  public static Pair<Integer, Integer> findIndicesOfFirstLoop(final OsmWay osmWay, final int initialNodeIndex) {
     for(int index = initialNodeIndex ; index < osmWay.getNumberOfNodes() ; ++index) {
       long nodeIdToCheck = osmWay.getNodeId(index);
       for(int index2 = index+1 ; index2 < osmWay.getNumberOfNodes() ; ++index2) {

@@ -627,7 +627,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
             if(isOverwrite) {
               /* type is overwritten, so use overwritten data instead of defaults */
               final Pair<Double,Double> capacityDensityPair = settings.getOsmHighwayTypeOverwrite(osmWayValueToUse);
-              linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.getFirst(), capacityDensityPair.getSecond());
+              linkSegmentType = createOsmLinkSegmentType(osmWayValue, capacityDensityPair.first(), capacityDensityPair.second());
             }else {
               /* use default link segment type values */
               linkSegmentType = createOsmLinkSegmentType(OsmHighwayTags.HIGHWAY, osmWayValueToUse);            
