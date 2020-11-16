@@ -102,6 +102,8 @@ public class PlanitOsmReader implements NetworkReader {
    */  
   @Override
   public MacroscopicNetwork read() throws PlanItException {
+    /* ensure that the network CRS is consistent with the chosen source CRS */
+    osmNetwork.transform(settings.getSourceCRS());    
     logInfo(inputFile);
     
     /* reader to parse the actual file */
@@ -133,6 +135,14 @@ public class PlanitOsmReader implements NetworkReader {
   }  
   
   /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getCountry() {
+    return settings.getCountryName();
+  }  
+  
+  /**
    * Collect the settings which can be used to configure the reader
    * 
    * @return the setings
@@ -140,5 +150,7 @@ public class PlanitOsmReader implements NetworkReader {
   public PlanitOsmSettings getSettings() {
     return settings;
   }
+
+
 
 }

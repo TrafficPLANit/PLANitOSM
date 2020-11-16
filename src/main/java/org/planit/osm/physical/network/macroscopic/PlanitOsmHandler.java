@@ -1586,9 +1586,16 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   public PlanitOsmHandler(final PlanitOsmNetwork network, final PlanitOsmSettings settings) {
     this.network = network;
-    this.geoUtils = new PlanitJtsUtils(settings.getSourceCRS());
-    this.network.setCoordinateReferenceSystem(settings.getSourceCRS());
     
+    /* gis initialisation */
+    this.geoUtils = new PlanitJtsUtils(settings.getSourceCRS());
+    try {
+      this.network.transform(settings.getSourceCRS());
+    }catch(PlanItException e) {
+      LOGGER.severe(String.format("unable to update network to CRS %s", settings.getSourceCRS().getName()));
+    }
+    
+    /* prep */
     this.settings = settings;
     this.profiler  = new PlanitOsmHandlerProfiler();   
     
