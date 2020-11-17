@@ -108,26 +108,30 @@ public class PlanitOsmReader implements NetworkReader {
     
     /* reader to parse the actual file */
     OsmReader osmReader = createOsm4jReader(inputFile);
+    if(osmReader == null) {
+      LOGGER.severe("unable to create OSM reader, aborting");
+    }else {
     
-    /* handler to deal with call backs from osm4j */
-    PlanitOsmHandler osmHandler = new PlanitOsmHandler(osmNetwork, settings);
-    osmHandler.initialiseBeforeParsing();
-    
-    /* register handler */
-    osmReader.setHandler(osmHandler);
-    
-    /* conduct parsing which will call back the handler*/
-    try {
-      osmReader.read();
-    } catch (OsmInputException e) {
-      LOGGER.severe(e.getMessage());
-      throw new PlanItException("error during parsing of osm file",e);
-    }
-    
-    if(settings.isRemoveDanglingSubnetworks()) {
-      // CONTINUE HERE
-      osmNetwork.removeDanglingSubnetworks(
-          settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
+      /* handler to deal with call backs from osm4j */
+      PlanitOsmHandler osmHandler = new PlanitOsmHandler(osmNetwork, settings);
+      osmHandler.initialiseBeforeParsing();
+      
+      /* register handler */
+      osmReader.setHandler(osmHandler);
+      
+      /* conduct parsing which will call back the handler*/
+      try {
+        osmReader.read();
+      } catch (OsmInputException e) {
+        LOGGER.severe(e.getMessage());
+        throw new PlanItException("error during parsing of osm file",e);
+      }
+      
+      if(settings.isRemoveDanglingSubnetworks()) {
+        // CONTINUE HERE
+        osmNetwork.removeDanglingSubnetworks(
+            settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
+      }
     }
     
     /* return result */

@@ -695,7 +695,7 @@ public class PlanitOsmSettings {
   /** remove all rail modes from mapping
    * 
    */
-  public void removeAllRailModes() {
+  public void deactivateAllRailModes() {
     Collection<String> allRailModes = OsmRailWayTags.getSupportedRailModeTags();
     for(String osmRailMode : allRailModes) {
       removeOsmRailMode2PlanitModeMapping(osmRailMode);
@@ -706,7 +706,7 @@ public class PlanitOsmSettings {
    * 
    * @param remainingOsmRoadModes to explicitly keep if present
    */
-  public void removeAllRoadModesExcept(final String... remainingOsmRoadModes) {
+  public void deactivateAllRoadModesExcept(final String... remainingOsmRoadModes) {
     Collection<String> allRoadModes = OsmRoadModeTags.getSupportedRoadModeTags();
     Set<String> remainingRoadModes = remainingOsmRoadModes==null ? new HashSet<String>() : Set.of(remainingOsmRoadModes);
     for(String osmRoadMode: allRoadModes) {
@@ -721,7 +721,7 @@ public class PlanitOsmSettings {
    * remove all road modes from the network when parsing
    */
   public void removeAllRoadModes() {
-    removeAllRoadModesExcept((String[])null);
+    deactivateAllRoadModesExcept((String[])null);
   }  
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
@@ -844,6 +844,15 @@ public class PlanitOsmSettings {
    */
   public void activateOsmHighwayWayTypes(String... osmHighwayValueType) {
     highwayTypeConfiguration.activate(osmHighwayValueType);
+  }
+
+  /** deactive all osm highway types except the ones indicated, meaning that if the ones passed in
+   * are not already active, they will be marked as activated afterwards
+   * @param osmHighwayTypes to mark as activated
+   */
+  public void deactivateAllOsmWayTypesExcept(String... osmHighwayTypes) {
+    deactivateAllOsmWayTypes();
+    activateOsmHighwayWayTypes(osmHighwayTypes);
   }
  
 }
