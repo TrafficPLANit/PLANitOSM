@@ -875,7 +875,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));       
     if(nodeFirst==null || nodeLast==null) {
-      LOGGER.warning(String.format("OSM way %s could not be parsed, one or more nodes could not be created, likely outside bounding box",osmWay.getId()));
+      LOGGER.fine(String.format("OSM way %s could not be parsed, one or more nodes could not be created, likely outside bounding box",osmWay.getId()));
       return null;
     }
       
@@ -884,7 +884,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     try {
       lineString = extractPartialLinkGeometry(osmWay, startNodeIndex, endNodeIndex);
     }catch (PlanItException e) {
-      LOGGER.warning(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be created, likely outside bounding box",osmWay.getId()));
+      LOGGER.fine(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be created, likely outside bounding box",osmWay.getId()));
       return null;
     }    
         
@@ -1340,14 +1340,14 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = extractLinkSegmentTypes(circularOsmWay, osmWayTags);
       if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull()) {
         /* issue warning when circular way is of a viable type, i.e., it has mapped link segment type(s), but not a single connection to currently parsed network exists, this may indicate a problem */
-        LOGGER.warning(String.format("circular way %d could not be split based on PLANit nodes, no connections to activated OSM way types were found to be present, way ignored", circularOsmWay.getId()));
+        LOGGER.fine(String.format("circular way %d appears to have has no connections to activated OSM way types ", circularOsmWay.getId()));
         /* still we continue parsing it by simply creating a new planit nodes, marked by setting partialLinkStartNodeIndex to 0  and continue */ 
         partialLinkStartNodeIndex = 0;
       }
     }
     
     Link createdLink = null;
-    if (partialLinkStartNodeIndex> 0) {   
+    if (partialLinkStartNodeIndex>= 0) {
       if (partialLinkEndNodeIndex < 0){        
         /* first partial link is not created either, only single connection point exists, so:
          * 1) when partialLinkStartNodeIndex = initial node -> take the halfway point as the dummy node, and the final node as the end point, if not then...
@@ -1516,7 +1516,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         }
       }
       
-      LOGGER.info(String.format("Broke %d OSM ways into multiple links",brokenLinksByOriginalOsmLinkId.size()));      
+      LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE",brokenLinksByOriginalOsmLinkId.size()));      
     
     } catch (PlanItException e) {
       LOGGER.severe(e.getMessage());
@@ -1658,32 +1658,35 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       int bla = 4;
     }
     
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
-    try {              
+    if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
-      /* only parse ways that are potentially road infrastructure */
-      if(isActivatedHighwayOrRailway(tags)) {
+      Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
+      try {              
         
-        /* circular ways special case filter */
-        if(PlanitOsmUtils.isCircularOsmWay(osmWay, tags, false)) {          
+        /* only parse ways that are potentially road infrastructure */
+        if(isActivatedHighwayOrRailway(tags)) {
           
-          /* postpone creation of link(s) for activated OSM highways that have a circular component and are not areas (areas cannot become roads) */
-          /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */
-          osmCircularWays.put(osmWay.getId(), osmWay);
-          
-        }else{
-          
-          /* extract regular OSM way; convert to PLANit infrastructure */          
-          extractOsmWay(osmWay, tags);                    
-                      
+          /* circular ways special case filter */
+          if(PlanitOsmUtils.isCircularOsmWay(osmWay, tags, false)) {          
+            
+            /* postpone creation of link(s) for activated OSM highways that have a circular component and are not areas (areas cannot become roads) */
+            /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */
+            osmCircularWays.put(osmWay.getId(), osmWay);
+            
+          }else{
+            
+            /* extract regular OSM way; convert to PLANit infrastructure */          
+            extractOsmWay(osmWay, tags);                    
+                        
+          }
         }
-      }
-      
-    } catch (PlanItException e) {
-      LOGGER.severe(e.getMessage());
-      LOGGER.severe(String.format("Error during parsing of OSM way (id:%d)", osmWay.getId())); 
-    }
         
+      } catch (PlanItException e) {
+        LOGGER.severe(e.getMessage());
+        LOGGER.severe(String.format("Error during parsing of OSM way (id:%d)", osmWay.getId())); 
+      }      
+    }
+            
   }
 
   /** extract the correct link segment type based on the configuration of supported modes, the defaults for the given osm way and any 

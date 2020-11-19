@@ -97,7 +97,7 @@ public class OsmInfrastructureConfiguration {
       return;
     }
     deactivatedOsmTypes.add(osmWayValue);
-    LOGGER.info(String.format("deactivating OSM type %s=%s", osmWayKey, osmWayValue));
+    LOGGER.fine(String.format("deactivating OSM type %s=%s", osmWayKey, osmWayValue));
   }
     
   /**
@@ -113,7 +113,7 @@ public class OsmInfrastructureConfiguration {
         LOGGER.warning(String.format("unable to activate OSM type %s=%s, either it is already active, or it is not yet supported by the parser",osmWayKey, osmWayValue));  
       }
       activatedOsmTypes.add(osmWayValue);      
-      LOGGER.info(String.format("activating OSM type %s=%s",osmWayKey, osmWayValue));
+      LOGGER.fine(String.format("activating OSM type %s=%s",osmWayKey, osmWayValue));
     }
   }  
   

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.geo.PlanitJtsUtils;
@@ -25,6 +26,8 @@ import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
 import org.planit.utils.mode.PredefinedModeType;
+
+import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
  * Settings for the OSM reader
@@ -70,7 +73,10 @@ public class PlanitOsmSettings {
   /**
    * track overwrite values for OSM highway types where we want different defaults for capacity and max density
    */
-  protected Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();    
+  protected final Map<String, Pair<Double,Double>> overwriteByOSMHighwayType = new HashMap<String, Pair<Double,Double>>();
+  
+  /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
+  protected final Set<Long>  excludedOsmWays = new HashSet<Long>();  
   
   /* SETTINGS */
   
@@ -657,7 +663,7 @@ public class PlanitOsmSettings {
       LOGGER.warning(String.format("osm road mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRoadMode));
       return;
     }
-    LOGGER.info(String.format("osm road mode %s is deactivated", osmRoadMode));
+    LOGGER.fine(String.format("osm road mode %s is deactivated", osmRoadMode));
     osmRoadMode2PlanitModeMap.remove(osmRoadMode);
   }
   
@@ -688,7 +694,7 @@ public class PlanitOsmSettings {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
-    LOGGER.info(String.format("osm rail mode %s is deactivated", osmRailMode));
+    LOGGER.fine(String.format("osm rail mode %s is deactivated", osmRailMode));
     osmRailMode2PlanitModeMap.remove(osmRailMode);
   }
   
@@ -853,6 +859,41 @@ public class PlanitOsmSettings {
   public void deactivateAllOsmWayTypesExcept(String... osmHighwayTypes) {
     deactivateAllOsmWayTypes();
     activateOsmHighwayWayTypes(osmHighwayTypes);
+  }
+  
+  /**
+   * exclude specific OSM ways from being parsed based on their id
+   * 
+   * @param osmWayId to mark as excluded
+   */
+  public void excludeOsmWayFromParsing(long osmWayId) {
+    if(osmWayId <= 0) {
+      LOGGER.warning(String.format("invalid OSM way id provided to be excluded, ignored", osmWayId));
+      return;
+    }
+    excludedOsmWays.add(osmWayId);
+  }
+  
+  /**
+   * exclude specific OSM ways from being parsed based on their id
+   * 
+   * @param osmWayId to mark as excluded
+   */
+  public void excludeOsmWaysFromParsing(Long... osmWayIds) {
+    if(osmWayIds==null) {
+      LOGGER.warning(String.format("OSM way ids are null, ignored excluding them"));
+      return;
+    }    
+    Stream.of(osmWayIds).forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId));
+  }  
+
+  /** Verify if provided way id is excluded or not
+   * 
+   * @param osmWayId to verify
+   * @return true if excluded, false otherwise
+   */
+  public boolean isOsmWayExcluded(Long osmWayId) {
+    return excludedOsmWays.contains(osmWayId);
   }
  
 }
