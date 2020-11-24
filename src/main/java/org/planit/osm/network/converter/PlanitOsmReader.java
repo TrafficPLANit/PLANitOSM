@@ -1,4 +1,4 @@
-package org.planit.osm.converter;
+package org.planit.osm.network.converter;
 
 import java.io.File;
 import java.util.logging.Logger;
@@ -137,15 +137,7 @@ public class PlanitOsmReader implements NetworkReader {
     /* return result */
     return osmNetwork;
   }  
-  
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public String getCountry() {
-    return settings.getCountryName();
-  }  
-  
+    
   /**
    * Collect the settings which can be used to configure the reader
    * 

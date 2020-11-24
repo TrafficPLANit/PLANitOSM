@@ -1,4 +1,4 @@
-package org.planit.osm.converter;
+package org.planit.osm.network.converter;
 
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.id.IdGroupingToken;

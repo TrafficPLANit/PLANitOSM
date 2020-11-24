@@ -27,8 +27,6 @@ import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
 import org.planit.utils.mode.PredefinedModeType;
 
-import de.topobyte.osm4j.core.model.iface.OsmWay;
-
 /**
  * Settings for the OSM reader
  * 
