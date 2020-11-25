@@ -154,7 +154,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String name, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
-    return this.createAndRegisterNewMacroscopicLinkSegmentType(name, capacityPcuPerhour, maxDensityPcuPerKm, name);
+    return this.linkSegmentTypes.createAndRegisterNew(name, capacityPcuPerhour, maxDensityPcuPerKm, name);
   }  
    
   /**

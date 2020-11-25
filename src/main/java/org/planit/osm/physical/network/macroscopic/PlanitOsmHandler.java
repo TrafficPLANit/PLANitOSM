@@ -775,7 +775,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
       if(finalLinkSegmentType==null) {
         /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = network.registerUniqueCopyOf(linkSegmentType);
+        finalLinkSegmentType = network.linkSegmentTypes.registerUniqueCopyOf(linkSegmentType);
         
         /* update mode properties */
         if(!toBeAddedModes.isEmpty()) {
