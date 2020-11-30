@@ -782,7 +782,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   public void addLinkSegmentTypeModeProperties(final MacroscopicLinkSegmentType linkSegmentType, final Collection<Mode> modesToAdd, double osmWayTypeMaxSpeed) {
     /* apply the way type's maximum speed to all modes, but for clarity already cap it to the mode's max speed if needed */
     for(Mode planitMode : modesToAdd) {       
-      double cappedMaxSpeed = Math.min(osmWayTypeMaxSpeed, planitMode.getMaximumSpeed());
+      double cappedMaxSpeed = Math.min(osmWayTypeMaxSpeed, planitMode.getMaximumSpeedKmH());
       linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(cappedMaxSpeed,cappedMaxSpeed));
     }
   }
