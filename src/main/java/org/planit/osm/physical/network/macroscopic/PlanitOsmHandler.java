@@ -91,23 +91,24 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private final ModifiedLinkSegmentTypes modifiedLinkSegmentTypes;
   
   /**
-   * track the nodes by their external id so they can by looked up quickly while parsing ways
+   * track the nodes by their original OSM id  so they can by looked up quickly while parsing ways
    */
-  private final Map<Long,Node> nodesByExternalId = new HashMap<Long, Node>();
+  private final Map<Long, Node> nodesByOsmId = new HashMap<Long, Node>();
            
   /** Identify which links we should break that have the node to break at as one of its internal nodes
    * 
    * @param theNodeToBreakAt the node to break at
-   * @param brokenLinksByOriginalExternalLinkId earlier broken links
+   * @param brokenLinksByOriginalOsmId earlier broken links
    * @return the link to break, null if none could be found
    * @throws PlanItException thrown if error
    */
-  private List<Link> findLinksToBreak(Node theNodeToBreakAt, Map<Long, Set<Link>> brokenLinksByOriginalExternalLinkId) throws PlanItException {
+  private List<Link> findLinksToBreak(Node theNodeToBreakAt, Map<Long, Set<Link>> brokenLinksByOriginalOsmId) throws PlanItException {
     List<Link> linksToBreak = null;
-    if(theNodeToBreakAt != null && linkInternalOsmNodes.containsKey(theNodeToBreakAt.getExternalId())) {
+    Long nodeToBreakAtOsmId = Long.parseLong(theNodeToBreakAt.getExternalId());
+    if(theNodeToBreakAt != null && linkInternalOsmNodes.containsKey(nodeToBreakAtOsmId)) {
       
       /* find the links to break assuming no links have been broken yet */
-      linksToBreak = linkInternalOsmNodes.get(theNodeToBreakAt.getExternalId());
+      linksToBreak = linkInternalOsmNodes.get(nodeToBreakAtOsmId);
       
       /* find replacement links for the original link to break in case the original already has been broken and we should use 
        * one of the split off broken links instead of the original for the correct breaking for the given node (since it now resides on one of the broken
@@ -117,13 +118,13 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       while(linksToBreakIter.hasNext()) {
         Link orginalLinkToBreak = linksToBreakIter.next(); 
         
-        if(brokenLinksByOriginalExternalLinkId.containsKey(orginalLinkToBreak.getExternalId())) {
+        if(brokenLinksByOriginalOsmId.containsKey(nodeToBreakAtOsmId)) {
           
           /* link has been broken before, find out in which of its broken links the node to break at resides on */
-          Set<Link> earlierBrokenLinks = brokenLinksByOriginalExternalLinkId.get(orginalLinkToBreak.getExternalId());
+          Set<Link> earlierBrokenLinks = brokenLinksByOriginalOsmId.get(nodeToBreakAtOsmId);
           Link matchingEarlierBrokenLink = null;
           for(Link link : earlierBrokenLinks) {
-            Optional<Integer> coordinatePosition = geoUtils.findFirstCoordinatePosition(theNodeToBreakAt.getPosition().getCoordinate(),link.getGeometry());
+            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(theNodeToBreakAt.getPosition().getCoordinate(),link.getGeometry());
             if(coordinatePosition.isPresent()) {
               matchingEarlierBrokenLink = link;
             }
@@ -149,15 +150,15 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   /** Check if we should break any links for the passed in node and if so, do it
    * 
    * @param theNode to verify
-   * @param brokenLinksByOriginalExternalLinkId track all broken links that originated from one original link, tracked by its external OSM id
+   * @param brokenLinksByOriginalOsmId track all broken links that originated from one original link, tracked by its external OSM id
    * @return number of link broken for this node
    *  
    * @throws PlanItException thrown if error
    */
-  private int breakLinksWithInternalNode(Node theNode, Map<Long, Set<Link>> brokenLinksByOriginalExternalLinkId) throws PlanItException {
+  private int breakLinksWithInternalNode(Node theNode, Map<Long, Set<Link>> brokenLinksByOriginalOsmId) throws PlanItException {
         
     /* find the link that we should break */
-    List<Link> linksToBreak = findLinksToBreak(theNode, brokenLinksByOriginalExternalLinkId);
+    List<Link> linksToBreak = findLinksToBreak(theNode, brokenLinksByOriginalOsmId);
     if(linksToBreak != null) {
       /* performing breaking of links, returns the broken links by the original link's PLANit edge id */
       Map<Long, Set<Link>> localBrokenLinks = this.network.breakLinksAt(linksToBreak, theNode);           
@@ -166,8 +167,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       if(localBrokenLinks != null) {
         localBrokenLinks.forEach((id, links) -> {
           links.forEach( brokenLink -> {
-            brokenLinksByOriginalExternalLinkId.putIfAbsent((Long) brokenLink.getExternalId(), new HashSet<Link>());
-            brokenLinksByOriginalExternalLinkId.get(brokenLink.getExternalId()).add(brokenLink);
+            Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
+            brokenLinksByOriginalOsmId.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
+            brokenLinksByOriginalOsmId.get(brokenLinkOsmId).add(brokenLink);
           });
         });        
       }  
@@ -811,7 +813,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       }
       coordinates[index] = new Coordinate(PlanitOsmUtils.getXCoordinate(osmNode),PlanitOsmUtils.getYCoordinate(osmNode));
     }
-    return  geoUtils.createLineStringFromCoordinates(coordinates);
+    return  PlanitJtsUtils.createLineStringFromCoordinates(coordinates);
   }  
   
   /**
@@ -823,7 +825,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   private Node extractNode(final long osmNodeId) throws PlanItException {
     
-    Node node = nodesByExternalId.get(osmNodeId);
+    Node node = nodesByOsmId.get(osmNodeId);
     if(node == null) {
       
       /* not yet created */      
@@ -835,15 +837,16 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         /* location info */
         Point geometry = null;
         try {
-          geometry = geoUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
+          geometry = PlanitJtsUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
         } catch (PlanItException e) {
           LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
         }
   
         /* create and register */
-        node = network.nodes.registerNew(osmNodeId);
+        node = network.nodes.registerNew();
+        node.setExternalId(String.valueOf(osmNodeId));
         node.setPosition(geometry);
-        nodesByExternalId.put(osmNodeId, node);
+        nodesByOsmId.put(osmNodeId, node);
        
         profiler.logNodeStatus(network.nodes.size());
       }
@@ -866,10 +869,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     PlanItException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
     PlanItException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
-    
-    if( osmWay.getId() == 52438419l) {
-      int bla = 4;
-    }     
+     
     
     /* collect memory model nodes */
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
@@ -915,7 +915,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       link.setGeometry(lineString);      
       
       /* external id */
-      link.setExternalId(osmWay.getId());
+      link.setExternalId(String.valueOf(osmWay.getId()));
       
       if(tags.containsKey(OsmTags.NAME)) {
         link.setName(tags.get(OsmTags.NAME));
@@ -938,17 +938,17 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     LineString lineString = extractLinkGeometry(osmWay);        
     if(startNodeIndex>0 || endNodeIndex < (osmWay.getNumberOfNodes()-1)) {          
       /* update geometry and length in case link represents only a subsection of the OSM way */
-      LineString updatedGeometry = geoUtils.createCopyWithoutCoordinatesBefore(startNodeIndex, lineString);
+      LineString updatedGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesBefore(startNodeIndex, lineString);
       if(endNodeIndex < startNodeIndex) {
         /* When the last node position is located before the first (possible because the way is circular)*/
         /* supplement with coordinates from the beginning of the original circular way */
-        LineString overFlowGeometry = geoUtils.createCopyWithoutCoordinatesAfter(endNodeIndex, lineString);
-        updatedGeometry = geoUtils.concatenate(updatedGeometry, overFlowGeometry);
+        LineString overFlowGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesAfter(endNodeIndex, lineString);
+        updatedGeometry = PlanitJtsUtils.concatenate(updatedGeometry, overFlowGeometry);
         /* since circular ways include one node twice and this node is now part of the overflow of this section, we must remove it */
-        updatedGeometry = geoUtils.createCopyWithoutAdjacentDuplicateCoordinates(updatedGeometry);
+        updatedGeometry = PlanitJtsUtils.createCopyWithoutAdjacentDuplicateCoordinates(updatedGeometry);
       }else {
         /* present, so simply remove coordinates after */
-        updatedGeometry = geoUtils.createCopyWithoutCoordinatesAfter(endNodeIndex-startNodeIndex, updatedGeometry);
+        updatedGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesAfter(endNodeIndex-startNodeIndex, updatedGeometry);
       }  
       lineString = updatedGeometry;
     }
@@ -1005,7 +1005,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb) throws PlanItException {
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = network.linkSegments.registerNew(link, directionAb, true /*register on nodes and link*/);      
+      linkSegment = network.linkSegments.registerNew(link, directionAb, true /*register on nodes and link*/);
+      /* external id, identical to link since OSM has no directional ids */
+      linkSegment.setExternalId(link.getExternalId());
     }else{
       LOGGER.warning(String.format(
           "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), osmWay.getId()));
@@ -1228,11 +1230,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected Set<Link> handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
-    
-    if(circularOsmWay.getId()==743452155) {
-      int bla = 4;
-    }
-    
+        
     Set<Link> createdLinks = null;    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     if(isActivatedHighwayOrRailway(tags)) {
@@ -1316,7 +1314,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     for(int index = initialNodeIndex ; index <= finalNodeIndex ; ++index) {
       long osmNodeId = circularOsmWay.getNodeId(index);
               
-      if(nodesByExternalId.containsKey(osmNodeId) || linkInternalOsmNodes.containsKey(osmNodeId)) {                    
+      if(nodesByOsmId.containsKey(osmNodeId) || linkInternalOsmNodes.containsKey(osmNodeId)) {                    
         
         if(partialLinkStartNodeIndex < 0) {
           /* set first node to earlier realised node */
@@ -1491,19 +1489,17 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       long originalNumberOfLinks = this.network.links.size();
             
       while(++linkIndex<originalNumberOfLinks) {
-        Link link = this.network.links.get(linkIndex);       
-        
-        if( ((Long)link.getExternalId()).longValue() == 784968342l) {
-          int bla = 4;
-        }      
+        Link link = this.network.links.get(linkIndex);                 
         
         // 1. break links when a link's internal node is another existing link's extreme node 
         breakLinksWithInternalNode(link.getNodeA(), brokenLinksByOriginalOsmLinkId);
-        linkInternalOsmNodes.remove(link.getNodeA().getExternalId());
+        long nodeAOsmId = Long.parseLong(link.getNodeA().getExternalId());
+        linkInternalOsmNodes.remove(nodeAOsmId);
         
         /* apply to node B as well */
         breakLinksWithInternalNode(link.getNodeB(), brokenLinksByOriginalOsmLinkId);
-        linkInternalOsmNodes.remove(link.getNodeB().getExternalId());
+        long nodeBOsmId = Long.parseLong(link.getNodeB().getExternalId());
+        linkInternalOsmNodes.remove(nodeBOsmId);
       }
       
       //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
@@ -1653,11 +1649,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-    
-    if(osmWay.getId() == 277459095) {
-      int bla = 4;
-    }
-    
+        
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
@@ -1734,7 +1726,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* free memory */
     osmCircularWays.clear();    
     osmNodes.clear();
-    nodesByExternalId.clear();
+    nodesByOsmId.clear();
   }
 
 
