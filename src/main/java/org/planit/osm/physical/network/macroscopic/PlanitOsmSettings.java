@@ -134,6 +134,43 @@ public class PlanitOsmSettings {
     }     
   }
   
+  /** add osmModeId to planit external id (in case multiple osm modes are mapped to the same planit mode)
+   * @param planitMode to update external id for
+   * @param osModeId to use
+   */
+  void addToModeExternalId(Mode planitMode, String osModeId){
+    if(planitMode != null) {
+      if(planitMode.hasExternalId()) {
+        planitMode.setExternalId(planitMode.getExternalId().concat("_").concat(osModeId));
+      }else {
+        planitMode.setExternalId(osModeId);
+      }
+    }
+  }
+  
+  /** remove osmModeId to planit external id (in case multiple osm modes are mapped to the same planit mode)
+   * @param planitMode to update external id for
+   * @param osModeId to use
+   */  
+  void removeFromModeExternalId(Mode planitMode, String osModeId){
+    if(planitMode!= null && planitMode.hasExternalId()) {
+      int startIndex = planitMode.getExternalId().indexOf(osModeId);
+      if(startIndex == -1) {
+        /* not present */
+        return;
+      }
+      if(startIndex==0) {
+        /* first */
+        planitMode.setExternalId(planitMode.getExternalId().substring(startIndex+osModeId.length()));
+      }else {
+        /* not first, so preceded by underscore "*_<name>" */
+        String before = planitMode.getExternalId().substring(0,startIndex-1);
+        String after = planitMode.getExternalId().substring(startIndex+osModeId.length());
+        planitMode.setExternalId(before.concat(after));
+      }
+    }
+  }  
+  
   /**
    * each OSM road mode is mapped to a PLANit mode by default so that the memory model's modes
    * are user configurable yet linked to the original format. Note that when the reader is used
@@ -200,6 +237,9 @@ public class PlanitOsmSettings {
       osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.HEAVY_GOODS, planitModes.getPredefinedMode(PredefinedModeType.HEAVY_GOODS_VEHICLE));
       osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED, planitModes.getPredefinedMode(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE));
       osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.BUS, planitModes.getPredefinedMode(PredefinedModeType.BUS));
+      
+      /* ensure external id is set based on OSM name */
+      osmRoadMode2PlanitModeMap.forEach( (osmMode, planitMode) -> addToModeExternalId(planitMode, osmMode));
     }
   }
   
@@ -246,6 +286,9 @@ public class PlanitOsmSettings {
       osmRailMode2PlanitModeMap.put(OsmRailWayTags.RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
       osmRailMode2PlanitModeMap.put(OsmRailWayTags.SUBWAY, planitModes.getPredefinedMode(PredefinedModeType.SUBWAY));
       osmRailMode2PlanitModeMap.put(OsmRailWayTags.TRAM, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
+      
+      /* ensure external id is set based on OSM name */
+      osmRailMode2PlanitModeMap.forEach( (osmMode, planitMode) -> addToModeExternalId(planitMode, osmMode));
     }           
   }  
   
@@ -649,6 +692,7 @@ public class PlanitOsmSettings {
       return;
     }
     osmRoadMode2PlanitModeMap.put(osmRoadMode, planitMode);
+    addToModeExternalId(planitMode, osmRoadMode);
   }  
   
   /** remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
@@ -662,7 +706,9 @@ public class PlanitOsmSettings {
       return;
     }
     LOGGER.fine(String.format("osm road mode %s is deactivated", osmRoadMode));
-    osmRoadMode2PlanitModeMap.remove(osmRoadMode);
+    
+    Mode planitMode = osmRoadMode2PlanitModeMap.remove(osmRoadMode);
+    removeFromModeExternalId(planitMode,osmRoadMode);
   }
   
   /** add/overwrite a mapping from OSM rail mode to PLANit mode. This means that the osmMode will be added to the PLANit network
@@ -680,6 +726,7 @@ public class PlanitOsmSettings {
       return;
     }
     osmRailMode2PlanitModeMap.put(osmRailMode, planitMode);
+    addToModeExternalId(planitMode,osmRailMode);
   }   
   
   /** remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
@@ -693,7 +740,9 @@ public class PlanitOsmSettings {
       return;
     }
     LOGGER.fine(String.format("osm rail mode %s is deactivated", osmRailMode));
-    osmRailMode2PlanitModeMap.remove(osmRailMode);
+    
+    Mode planitMode = osmRailMode2PlanitModeMap.remove(osmRailMode);
+    removeFromModeExternalId(planitMode,osmRailMode);
   }
   
   /** remove all rail modes from mapping

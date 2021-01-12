@@ -148,15 +148,17 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   
   /**
    *  Create an OSM default link segment type (no mode properties)
-   * @param name name of the type
+   * @param externalId of the type
    * @param capacityPcuPerhour capacity in pcu/h
    * @param maxDensityPcuPerKm max density
    * @throws PlanItException thrown if error
    */
-  protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String name, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
-    MacroscopicLinkSegmentType linkSegmentType = this.linkSegmentTypes.createAndRegisterNew(name, capacityPcuPerhour, maxDensityPcuPerKm);
-    /* name is used as external id */
-    linkSegmentType.setExternalId(name);
+  protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String externalId, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
+    MacroscopicLinkSegmentType linkSegmentType = this.linkSegmentTypes.createAndRegisterNew(externalId, capacityPcuPerhour, maxDensityPcuPerKm);
+    /* XML id */
+    linkSegmentType.setXmlId(Long.toString(linkSegmentType.getId()));
+    /* external id */
+    linkSegmentType.setExternalId(externalId);
     return linkSegmentType;
   }  
    
