@@ -9,8 +9,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.planit.network.physical.macroscopic.MacroscopicModePropertiesFactory;
-import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
+import org.planit.network.macroscopic.physical.MacroscopicNetwork;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailWayTags;
 import org.planit.osm.util.PlanitOsmConstants;

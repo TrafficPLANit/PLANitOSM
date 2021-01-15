@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.logging.Logger;
 
 import org.planit.network.converter.NetworkReader;
-import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.network.macroscopic.physical.MacroscopicNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;

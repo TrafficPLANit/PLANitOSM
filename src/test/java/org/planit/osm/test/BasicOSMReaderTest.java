@@ -8,7 +8,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.planit.logging.Logging;
-import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.network.macroscopic.physical.MacroscopicNetwork;
 import org.planit.osm.network.converter.PlanitOsmReader;
 import org.planit.osm.network.converter.PlanitOsmReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;

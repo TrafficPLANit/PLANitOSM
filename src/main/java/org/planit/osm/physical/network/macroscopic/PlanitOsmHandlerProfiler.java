@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
-import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.network.macroscopic.physical.MacroscopicNetwork;
 
 /**
  * Track statistics on Osm handler

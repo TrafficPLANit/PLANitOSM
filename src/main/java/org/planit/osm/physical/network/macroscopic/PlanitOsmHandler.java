@@ -17,7 +17,7 @@ import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 
 import org.planit.geo.PlanitJtsUtils;
-import org.planit.network.physical.macroscopic.MacroscopicNetwork;
+import org.planit.network.macroscopic.physical.MacroscopicNetwork;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.graph.Edge;
