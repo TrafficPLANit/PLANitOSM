@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.logging.Logger;
 
 import org.planit.network.converter.NetworkReader;
-import org.planit.network.macroscopic.physical.MacroscopicNetwork;
+import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
@@ -129,7 +129,7 @@ public class PlanitOsmReader implements NetworkReader {
       
       if(settings.isRemoveDanglingSubnetworks()) {
         // CONTINUE HERE
-        osmNetwork.removeDanglingSubnetworks(
+        osmNetwork.getDefaultNetworkLayer().removeDanglingSubnetworks(
             settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
       }
     }

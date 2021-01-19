@@ -6,8 +6,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
-import org.planit.network.macroscopic.physical.MacroscopicNetwork;
-
 /**
  * Track statistics on Osm handler
  * 
@@ -65,18 +63,18 @@ public class PlanitOsmHandlerProfiler {
    * 
    * @param network for which information  was tracked
    */
-  public void logProfileInformation(MacroscopicNetwork network) {
+  public void logProfileInformation(PlanitOsmNetwork network) {
     for(Entry<String, LongAdder> entry : counterByHighwayTag.entrySet()) {
       long count = entry.getValue().longValue();
       LOGGER.info(String.format(" [STATS] processed highway:%s count:%d", entry.getKey(), count));
     }
     
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",network.nodes.size()));
-    LOGGER.info(String.format(" [STATS] created PLANit %d links",network.links.size()));
-    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",network.linkSegments.size()));    
+    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",network.getDefaultNetworkLayer().nodes.size()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links",network.getDefaultNetworkLayer().links.size()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",network.getDefaultNetworkLayer().linkSegments.size()));    
     
-    double numberOfParsedLinks = (double)network.links.size();
+    double numberOfParsedLinks = (double)network.getDefaultNetworkLayer().links.size();
     double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
     double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
     LOGGER.info(String.format(" [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));

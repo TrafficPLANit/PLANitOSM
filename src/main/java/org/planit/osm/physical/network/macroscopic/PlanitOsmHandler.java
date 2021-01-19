@@ -17,7 +17,6 @@ import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 
 import org.planit.geo.PlanitJtsUtils;
-import org.planit.network.macroscopic.physical.MacroscopicNetwork;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.graph.Edge;
@@ -162,7 +161,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     List<Link> linksToBreak = findLinksToBreak(theNode, brokenLinksByOriginalOsmId);
     if(linksToBreak != null) {
       /* performing breaking of links, returns the broken links by the original link's PLANit edge id */
-      Map<Long, Set<Link>> localBrokenLinks = this.network.breakLinksAt(linksToBreak, theNode);           
+      Map<Long, Set<Link>> localBrokenLinks = this.network.getDefaultNetworkLayer().breakLinksAt(linksToBreak, theNode, network.getCoordinateReferenceSystem());           
       
       /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/
       if(localBrokenLinks != null) {
@@ -778,7 +777,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
       if(finalLinkSegmentType==null) {
         /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = network.linkSegmentTypes.registerUniqueCopyOf(linkSegmentType);
+        finalLinkSegmentType = network.getDefaultNetworkLayer().linkSegmentTypes.registerUniqueCopyOf(linkSegmentType);
         
         /* XML id */
         finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
@@ -847,7 +846,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         }
   
         /* create and register */
-        node = network.nodes.registerNew();
+        node = network.getDefaultNetworkLayer().nodes.registerNew();
         /* XML id */
         node.setXmlId(Long.toString(node.getId()));
         /* external id */
@@ -857,7 +856,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         
         nodesByOsmId.put(osmNodeId, node);
        
-        profiler.logNodeStatus(network.nodes.size());
+        profiler.logNodeStatus(network.getDefaultNetworkLayer().nodes.size());
       }
     }
     return node;
@@ -920,7 +919,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       linkLength = geoUtils.getDistanceInKilometres(lineString);
       
       /* create link */
-      link = network.links.registerNew(nodeFirst, nodeLast, linkLength, true);
+      link = network.getDefaultNetworkLayer().links.registerNew(nodeFirst, nodeLast, linkLength, true);
       /* geometry */
       link.setGeometry(lineString);      
       /* XML id */
@@ -981,7 +980,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     if(link != null) {
       /* register internal nodes for breaking links later on during parsing */
       registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);                  
-      profiler.logLinkStatus(network.links.size());
+      profiler.logLinkStatus(network.getDefaultNetworkLayer().links.size());
     }
     return link;
   }
@@ -1016,7 +1015,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb) throws PlanItException {
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = network.linkSegments.registerNew(link, directionAb, true /*register on nodes and link*/);
+      linkSegment = network.getDefaultNetworkLayer().linkSegments.registerNew(link, directionAb, true /*register on nodes and link*/);
       /* Xml id */
       linkSegment.setXmlId(Long.toString(linkSegment.getId()));
       /* external id, identical to link since OSM has no directional ids */
@@ -1029,7 +1028,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     /* link segment type */
     linkSegment.setLinkSegmentType(linkSegmentType);
         
-    profiler.logLinkSegmentStatus(network.linkSegments.size());      
+    profiler.logLinkSegmentStatus(network.getDefaultNetworkLayer().linkSegments.size());      
     return linkSegment;
   }
   
@@ -1390,13 +1389,6 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     return createdLinks;    
   }
    
-
-  /**
-   * @return the network
-   */
-  protected MacroscopicNetwork getNetwork() {
-    return network;
-  }
   
   /**
    * Collect the default settings for this way based on its highway type
@@ -1499,10 +1491,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     try {
           
       long linkIndex = -1;
-      long originalNumberOfLinks = this.network.links.size();
+      long originalNumberOfLinks = this.network.getDefaultNetworkLayer().links.size();
             
       while(++linkIndex<originalNumberOfLinks) {
-        Link link = this.network.links.get(linkIndex);    
+        Link link = this.network.getDefaultNetworkLayer().links.get(linkIndex);    
         
         // 1. break links when a link's internal node is another existing link's extreme node 
         breakLinksWithInternalNode(link.getNodeA(), brokenLinksByOriginalOsmLinkId);
@@ -1620,9 +1612,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * @throws PlanItException 
    */
   public void initialiseBeforeParsing() throws PlanItException {
-    PlanItException.throwIf(network.linkSegments.size()>0,"network is expected to be empty at start of parsing OSM network, but it has link segments");
-    PlanItException.throwIf(network.links.size()>0,"network is expected to be empty at start of parsing OSM network, but it has links");
-    PlanItException.throwIf(network.nodes.size()>0,"network is expected to be empty at start of parsing OSM network, but it has nodes");
+    PlanItException.throwIf(network.getDefaultNetworkLayer().linkSegments.size()>0,"network is expected to be empty at start of parsing OSM network, but it has link segments");
+    PlanItException.throwIf(network.getDefaultNetworkLayer().links.size()>0,"network is expected to be empty at start of parsing OSM network, but it has links");
+    PlanItException.throwIf(network.getDefaultNetworkLayer().nodes.size()>0,"network is expected to be empty at start of parsing OSM network, but it has nodes");
     
     /* create the supported link segment types on the network */
     network.createOsmCompatibleLinkSegmentTypes(settings);
@@ -1729,7 +1721,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     createdLinksByOsmWayId.clear();
     
     /* useful for debugging */
-    network.validate();
+    network.getDefaultNetworkLayer().validate();
     
     /* stats*/
     profiler.logProfileInformation(network);

@@ -9,8 +9,9 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
-import org.planit.network.macroscopic.physical.MacroscopicNetwork;
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailWayTags;
 import org.planit.osm.util.PlanitOsmConstants;
@@ -39,7 +40,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * The logger
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetwork.class.getCanonicalName());
-  
+    
   /** Create a link segment type on the network based on the passed in OSM highway value tags
    * 
    * @param highwayTypeValue of OSM way key
@@ -154,7 +155,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected MacroscopicLinkSegmentType createOsmLinkSegmentType(String externalId, double capacityPcuPerhour, double maxDensityPcuPerKm) throws PlanItException {
-    MacroscopicLinkSegmentType linkSegmentType = this.linkSegmentTypes.createAndRegisterNew(externalId, capacityPcuPerhour, maxDensityPcuPerKm);
+    MacroscopicLinkSegmentType linkSegmentType = getDefaultNetworkLayer().linkSegmentTypes.createAndRegisterNew(externalId, capacityPcuPerhour, maxDensityPcuPerKm);
     /* XML id */
     linkSegmentType.setXmlId(Long.toString(linkSegmentType.getId()));
     /* external id */
@@ -765,6 +766,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   public PlanitOsmNetwork(final IdGroupingToken groupId) {
     super(groupId);    
     this.defaultPlanitOsmLinkSegmentTypes = new HashMap<String, MacroscopicLinkSegmentType>();
+    /* for now an OSM network comprises but one layer for all modes */
+    this.infrastructureLayers.registerNew();
   }
 
   /**
@@ -791,5 +794,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       linkSegmentType.addModeProperties(planitMode, MacroscopicModePropertiesFactory.create(cappedMaxSpeed,cappedMaxSpeed));
     }
   }
+  
+  /** collect the only available layer for this network, a macroscopic physical network layer
+   * 
+   * @return network layer
+   */
+  public MacroscopicPhysicalNetwork getDefaultNetworkLayer() {
+    return (MacroscopicPhysicalNetwork) this.infrastructureLayers.getFirst();
+  }  
     
 }
