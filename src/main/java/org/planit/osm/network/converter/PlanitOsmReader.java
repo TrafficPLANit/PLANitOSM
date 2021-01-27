@@ -7,7 +7,7 @@ import org.planit.network.converter.NetworkReader;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
+import org.planit.osm.settings.deactivateAllOsmHighwayTypesExcept;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.FileUtils;
 import de.topobyte.osm4j.core.access.OsmInputException;
@@ -30,7 +30,7 @@ public class PlanitOsmReader implements NetworkReader {
   private final String inputFile;
   
   /** settings to use */
-  private final PlanitOsmSettings settings;
+  private final deactivateAllOsmHighwayTypesExcept settings;
   
   /** network to populate */
   private final PlanitOsmNetwork osmNetwork;
@@ -83,7 +83,7 @@ public class PlanitOsmReader implements NetworkReader {
   PlanitOsmReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork){
     this.inputFile = inputFile;
     this.osmNetwork = osmNetwork; 
-    this.settings = new PlanitOsmSettings(countryName, osmNetwork.modes);
+    this.settings = new deactivateAllOsmHighwayTypesExcept(countryName, osmNetwork.modes);
   }
   
   /** osm XML extension string */
@@ -143,7 +143,7 @@ public class PlanitOsmReader implements NetworkReader {
    * 
    * @return the setings
    */
-  public PlanitOsmSettings getSettings() {
+  public deactivateAllOsmHighwayTypesExcept getSettings() {
     return settings;
   }
 

@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 
@@ -784,9 +785,13 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         
         /* update mode properties */
         if(!toBeAddedModes.isEmpty()) {
-          String roadTypeKey = tags.containsKey(OsmHighwayTags.HIGHWAY) ? OsmHighwayTags.HIGHWAY : OsmRailWayTags.RAILWAY; 
-          double osmHighwayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(roadTypeKey, tags.get(roadTypeKey));               
-          network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmHighwayTypeMaxSpeed);
+          double osmWayTypeMaxSpeed = -1;
+          if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+            osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.HIGHWAY));  
+          }else if(settings.isRailwayParserActive() && OsmRailWayTags.hasRailwayKeyTag(tags)) {
+            osmWayTypeMaxSpeed = settings.getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailWayTags.RAILWAY));
+          }
+          network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
         }
         if(!toBeRemovedModes.isEmpty()) {
           finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
@@ -857,6 +862,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         nodesByOsmId.put(osmNodeId, node);
        
         profiler.logNodeStatus(network.getDefaultNetworkLayer().nodes.size());
+        
+        /* remove from osmNodes as it has been processed */
+        osmNodes.remove(osmNodeId);
       }
     }
     return node;
@@ -1585,7 +1593,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * 
    * @param settings for the handler
    */
-  public PlanitOsmHandler(final PlanitOsmNetwork network, final PlanitOsmSettings settings) {
+  public PlanitOsmHandler(final PlanitOsmNetwork network, final deactivateAllOsmHighwayTypesExcept settings) {
     this.network = network;
     
     /* gis initialisation */

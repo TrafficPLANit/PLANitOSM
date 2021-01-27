@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.settings.deactivateAllOsmHighwayTypesExcept;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailWayTags;
 import org.planit.osm.util.PlanitOsmConstants;
@@ -586,7 +587,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param settings to collect from
    * @return mappedPLANitModes, empty if no modes are mapped
    */
-  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmSettings settings) {
+  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, deactivateAllOsmHighwayTypesExcept settings) {
     Collection<String> allowedOsmModes =  settings.getModeAccessConfiguration().collectAllowedModes(osmWayKey, osmWayValue);
     return settings.collectMappedPlanitModes(allowedOsmModes);
   }     
@@ -598,7 +599,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return created (or already existing) default link segment type for the given OSM highway type
    * @throws PlanItException thrown if error
    */
-  protected MacroscopicLinkSegmentType createOsmCompatibleRoadLinkSegmentType(final String osmWayValue, final PlanitOsmSettings settings) throws PlanItException {
+  protected MacroscopicLinkSegmentType createOsmCompatibleRoadLinkSegmentType(final String osmWayValue, final deactivateAllOsmHighwayTypesExcept settings) throws PlanItException {
     MacroscopicLinkSegmentType linkSegmentType = null; 
     
     /* only when way type is marked as supported in settings we parse it */
@@ -675,7 +676,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return created (or already existing) default link segment type for the given OSM highway type
    * @throws PlanItException thrown if error
    */
-  protected MacroscopicLinkSegmentType createOsmCompatibleRailLinkSegmentType(final String osmWayValue, final PlanitOsmSettings settings) throws PlanItException {
+  protected MacroscopicLinkSegmentType createOsmCompatibleRailLinkSegmentType(final String osmWayValue, final deactivateAllOsmHighwayTypesExcept settings) throws PlanItException {
     MacroscopicLinkSegmentType linkSegmentType = null;
   
     /* only when way type is marked as supported in settings we parse it */
@@ -716,13 +717,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  protected void createOsmCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
+  protected void createOsmCompatibleLinkSegmentTypes(deactivateAllOsmHighwayTypesExcept settings) throws PlanItException {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
-        settings.highwayTypeConfiguration.setOfActivatedTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
+        settings.getSetOfActivatedOsmWayTypes(OsmHighwayTags.HIGHWAY).stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
     Map<String,String> railwayKeyValueMap = 
-        settings.railwayTypeConfiguration.setOfActivatedTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
+        settings.getSetOfActivatedOsmWayTypes(OsmRailWayTags.RAILWAY).stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
     Map<String,String> combinedWayMap = new HashMap<String,String>();
     combinedWayMap.putAll(highwayKeyValueMap);
     combinedWayMap.putAll(railwayKeyValueMap);    

@@ -3,7 +3,7 @@ package org.planit.osm.util;
 import java.util.HashSet;
 import java.util.Map;
 
-import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
+import org.planit.osm.settings.deactivateAllOsmHighwayTypesExcept;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 
@@ -44,7 +44,7 @@ public class OsmLaneTaggingSchemeHelper{
    * @param settings containing the activated and mapped Osm to PLANit modes 
    * @return yes, when these modes are activated, false otherwise
    */
-  protected static boolean requireTaggingSchemeHelper(PlanitOsmSettings settings) {
+  protected static boolean requireTaggingSchemeHelper(deactivateAllOsmHighwayTypesExcept settings) {
     return settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS);
   }  
   
@@ -56,7 +56,7 @@ public class OsmLaneTaggingSchemeHelper{
    * </ul>
    * @param settings to filter for activated modes only
    * @return list os OSM modes that would identify such modes */
-  protected static Set<String> getEligibleTaggingSchemeHelperModes(PlanitOsmSettings settings) {
+  protected static Set<String> getEligibleTaggingSchemeHelperModes(deactivateAllOsmHighwayTypesExcept settings) {
     Set<String> eligibleModes = new HashSet<>();
     if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS)){
       eligibleModes.add(OsmRoadModeTags.BUS);
