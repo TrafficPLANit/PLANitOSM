@@ -3,7 +3,7 @@ package org.planit.osm.util;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.planit.osm.settings.deactivateAllOsmHighwayTypesExcept;
+import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmLaneTags;
 import java.util.Set;
@@ -57,7 +57,7 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * @param settings containing the activated and mapped Osm to PLANit modes 
    * @return yes, when these modes are activated, false otherwise
    */
-  public static boolean requireLanesModeSchemeHelper(deactivateAllOsmHighwayTypesExcept settings) {
+  public static boolean requireLanesModeSchemeHelper(PlanitOsmSettings settings) {
     return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings);
   }    
   
@@ -69,7 +69,7 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * </ul>
    * @param settings to filter for activated modes only
    * @return list os OSM modes that would identify such modes */
-  public static Set<String> getEligibleLanesModeSchemeHelperModes(deactivateAllOsmHighwayTypesExcept settings) {
+  public static Set<String> getEligibleLanesModeSchemeHelperModes(PlanitOsmSettings settings) {
     return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings);
   } 
   

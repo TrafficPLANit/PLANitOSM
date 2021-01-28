@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
+import org.planit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.planit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.planit.osm.tags.OsmRailWayTags;
@@ -32,7 +34,12 @@ public class PlanitOsmRailwaySettings {
   /**
    * speed limit defaults for railways
    */
-  OsmSpeedLimitDefaultsCategory railwaySpeedLimitDefaults;  
+  OsmSpeedLimitDefaultsCategory railwaySpeedLimitDefaults; 
+  
+  /**
+   * mode access defaults for railways
+   */
+  OsmModeAccessDefaultsCategory osmModeAccessRailwayDefaults;
   
   /** mapping from each supported osm rail mode to a PLANit mode */
   protected final Map<String, Mode> osmRailMode2PlanitModeMap = new HashMap<String, Mode>();
@@ -98,9 +105,11 @@ public class PlanitOsmRailwaySettings {
    * Constructor 
    * 
    * @param railwaySpeedLimitDefaults as they are initially provided
+   * @param osmModeAccessRailwayDefaults configuration
    */
-  public PlanitOsmRailwaySettings(OsmSpeedLimitDefaultsCategory railwaySpeedLimitDefaults) {
+  public PlanitOsmRailwaySettings(OsmSpeedLimitDefaultsCategory railwaySpeedLimitDefaults, OsmModeAccessDefaultsCategory osmModeAccessRailwayDefaults) {
     this.railwaySpeedLimitDefaults = railwaySpeedLimitDefaults;
+    this.osmModeAccessRailwayDefaults = osmModeAccessRailwayDefaults;
   }
   
   /**
@@ -115,10 +124,9 @@ public class PlanitOsmRailwaySettings {
   }
   
   /** collect all activated types as a set (copy)
-   * @param osmRailwayKey to collect activate types for
    * @return set of currently activated osm railway types, modifications to this set have no effect on configuration
    */
-  public final Set<String> getSetOfActivatedOsmRailwayTypes(final String osmRailwayKey){
+  public final Set<String> getSetOfActivatedOsmRailwayTypes(){
     return railwayTypeConfiguration.setOfActivatedTypes();    
   }  
   
@@ -246,6 +254,23 @@ public class PlanitOsmRailwaySettings {
    */
   public boolean hasMappedPlanitMode(final String osmMode) {
     return getMappedPlanitRailMode(osmMode) != null;    
+  }  
+  
+  /**
+   * Collect all Osm modes that are allowed for the given osmRailway type as configured by the user
+   * 
+   * @param osmRailwayValueType to use
+   * @return allowed OsmModes
+   */
+  public Collection<String> collectAllowedOsmRailwayModes(String osmRailwayValueType) {
+    Set<String> allowedModes = null; 
+    if(OsmRailWayTags.isRailwayKeyTag(osmRailwayValueType) && OsmRailWayTags.isRailBasedRailway(osmRailwayValueType)) {
+      /* while rail has no categories that complicate identifying mode support, we utilise the same approach for consistency and future flexibility */
+      allowedModes =  OsmRailWayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessRailwayDefaults.isAllowed(osmRailwayValueType, railModeTag)).collect(Collectors.toSet());
+    }else {
+      LOGGER.warning(String.format("unrecognised osm railway key value type railway=%s, no allowed modes can be identified", osmRailwayValueType));
+    }
+    return allowedModes;
   }  
   
   /**

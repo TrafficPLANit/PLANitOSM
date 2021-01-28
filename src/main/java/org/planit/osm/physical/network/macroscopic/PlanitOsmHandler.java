@@ -785,12 +785,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         
         /* update mode properties */
         if(!toBeAddedModes.isEmpty()) {
-          double osmWayTypeMaxSpeed = -1;
-          if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-            osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.HIGHWAY));  
-          }else if(settings.isRailwayParserActive() && OsmRailWayTags.hasRailwayKeyTag(tags)) {
-            osmWayTypeMaxSpeed = settings.getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailWayTags.RAILWAY));
-          }
+          double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);          
           network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
         }
         if(!toBeRemovedModes.isEmpty()) {
@@ -1232,9 +1227,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     if(!OsmTags.isArea(tags) && (OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailWayTags.hasRailwayKeyTag(tags))) {
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        return settings.isOsmWayTypeActivated(OsmHighwayTags.HIGHWAY, tags.get(OsmHighwayTags.HIGHWAY));
+        return settings.getHighwaySettings().isOsmHighwayTypeActivated(tags.get(OsmHighwayTags.HIGHWAY));
       }else if(OsmRailWayTags.hasRailwayKeyTag(tags)) {
-        return settings.isOsmWayTypeActivated(OsmRailWayTags.RAILWAY, tags.get(OsmRailWayTags.RAILWAY));
+        return settings.getRailwaySettings().isOsmRailwayTypeActivated(tags.get(OsmRailWayTags.RAILWAY));
       }
     }
     return false;
@@ -1410,15 +1405,17 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     /* exclude ways that are areas and in fact not ways */
     boolean isExplicitArea = OsmTags.isArea(tags);
+    boolean isHighway = true;
     if(isExplicitArea) {
       return null;
     }
       
     /* highway (road) or railway (rail) */
     if (OsmHighwayTags.hasHighwayKeyTag(tags)) {
-      osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;         
+      osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;      
     }else if(OsmRailWayTags.hasRailwayKeyTag(tags)) {
       osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
+      isHighway = false;
     }
     
     /* without mapping no type */
@@ -1432,19 +1429,17 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       profiler.incrementOsmTagCounter(osmTypeValueToUse);        
     }
     /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/
-    else if(!settings.isOsmWayTypeDeactivated(osmTypeKeyToUse, osmTypeValueToUse)) {
-      
-      boolean typeConfigurationMissing = true;
-      if(osmTypeKeyToUse.equals(OsmHighwayTags.HIGHWAY) && OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse)) {
-        typeConfigurationMissing = false;         
-      }else if(osmTypeKeyToUse.equals(OsmRailWayTags.RAILWAY) && OsmRailWayTags.isNonRailBasedRailway(osmTypeValueToUse)) {
-        typeConfigurationMissing = false;
-      }  
-      
-      /*... not available event though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
-      if(typeConfigurationMissing) {            
-        LOGGER.warning(String.format(
-            "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
+    else {
+      boolean isWayTypeDeactived = isHighway ?
+          settings.getHighwaySettings().isOsmHighWayTypeDeactivated(osmTypeValueToUse) :settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
+      if(!isWayTypeDeactived) {
+        boolean typeConfigurationMissing = isHighway ? OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse) : OsmRailWayTags.isNonRailBasedRailway(osmTypeValueToUse);         
+        
+        /*... not available event though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
+        if(typeConfigurationMissing) {            
+          LOGGER.warning(String.format(
+              "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
+        }
       }
       
     }
@@ -1536,7 +1531,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   }    
   
   /**
-   * extract OSM way's PLANit infrastructure for the entire way, i.e., link, nodes, and link segements where applicable. 
+   * extract OSM way's PLANit infrastructure for the entire way, i.e., link, nodes, and link segments where applicable. 
    * The parser will try to infer missing/default data by using defaults set by the user
    * 
    * @param osmWay to parse
@@ -1593,7 +1588,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
    * 
    * @param settings for the handler
    */
-  public PlanitOsmHandler(final PlanitOsmNetwork network, final deactivateAllOsmHighwayTypesExcept settings) {
+  public PlanitOsmHandler(final PlanitOsmNetwork network, final PlanitOsmSettings settings) {
     this.network = network;
     
     /* gis initialisation */
@@ -1625,6 +1620,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     PlanItException.throwIf(network.getDefaultNetworkLayer().nodes.size()>0,"network is expected to be empty at start of parsing OSM network, but it has nodes");
     
     /* create the supported link segment types on the network */
+    network.initialiseInfrastructureLayers(settings.getPlanitInfrastructureLayerConfiguration());
     network.createOsmCompatibleLinkSegmentTypes(settings);
     /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupport way types to avoid warnings during parsing */
     settings.excludeOsmWayTypesWithoutActivatedModes();

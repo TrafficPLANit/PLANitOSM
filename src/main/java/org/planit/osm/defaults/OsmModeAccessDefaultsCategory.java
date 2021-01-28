@@ -409,7 +409,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    * @return true when allowed, false when disallowed, false if unknown
    */
   public boolean isAllowed(final String osmWayValue, final String osmMode) {
-    Boolean isAllowed = Boolean.FALSE;
+    Boolean isAllowed = Boolean.FALSE;    
                
     if(allowedModesByType.containsKey(osmWayValue)){
       /* verify if it is explicitly allowed */
