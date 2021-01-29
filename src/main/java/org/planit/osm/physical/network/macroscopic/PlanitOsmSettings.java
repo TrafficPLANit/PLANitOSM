@@ -229,14 +229,14 @@ public class PlanitOsmSettings {
     
     /* add default mapping */
     {
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.FOOT, planitModes.getPredefinedMode(PredefinedModeType.PEDESTRIAN));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.BICYCLE, planitModes.getPredefinedMode(PredefinedModeType.BICYCLE));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.MOTOR_CYCLE, planitModes.getPredefinedMode(PredefinedModeType.MOTOR_BIKE));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.MOTOR_CAR, planitModes.getPredefinedMode(PredefinedModeType.CAR));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.GOODS, planitModes.getPredefinedMode(PredefinedModeType.GOODS_VEHICLE));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.HEAVY_GOODS, planitModes.getPredefinedMode(PredefinedModeType.HEAVY_GOODS_VEHICLE));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED, planitModes.getPredefinedMode(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE));
-      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.BUS, planitModes.getPredefinedMode(PredefinedModeType.BUS));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.FOOT, planitModes.get(PredefinedModeType.PEDESTRIAN));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.BICYCLE, planitModes.get(PredefinedModeType.BICYCLE));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.MOTOR_CYCLE, planitModes.get(PredefinedModeType.MOTOR_BIKE));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.MOTOR_CAR, planitModes.get(PredefinedModeType.CAR));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.GOODS, planitModes.get(PredefinedModeType.GOODS_VEHICLE));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.HEAVY_GOODS, planitModes.get(PredefinedModeType.HEAVY_GOODS_VEHICLE));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED, planitModes.get(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE));
+      osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.BUS, planitModes.get(PredefinedModeType.BUS));
       
       /* ensure external id is set based on OSM name */
       osmRoadMode2PlanitModeMap.forEach( (osmMode, planitMode) -> addToModeExternalId(planitMode, osmMode));
@@ -278,14 +278,14 @@ public class PlanitOsmSettings {
     
     /* add default mapping */
     {
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.FUNICULAR, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.LIGHT_RAIL, planitModes.getPredefinedMode(PredefinedModeType.LIGHTRAIL));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.MONO_RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.NARROW_GAUGE, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.PRESERVED, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.RAIL, planitModes.getPredefinedMode(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.SUBWAY, planitModes.getPredefinedMode(PredefinedModeType.SUBWAY));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.TRAM, planitModes.getPredefinedMode(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.PRESERVED, planitModes.get(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.RAIL, planitModes.get(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
+      osmRailMode2PlanitModeMap.put(OsmRailWayTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
       
       /* ensure external id is set based on OSM name */
       osmRailMode2PlanitModeMap.forEach( (osmMode, planitMode) -> addToModeExternalId(planitMode, osmMode));
