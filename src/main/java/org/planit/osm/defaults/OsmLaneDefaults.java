@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailWayTags;
-import org.planit.utils.misc.Pair;
 
 /**
  * configure and retrieve the default configuration for the number of lanes for various osm way types (these are the total lanes on a link covering both directions.
@@ -28,10 +27,7 @@ public class OsmLaneDefaults implements Cloneable {
     
   /** store the defaults  for class instance */
   protected Map<String, Integer> lanesPerDirection;
-  
-  /** store all defaults per country by ISO2 code **/
-  protected static Map<String, Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>> speedLimitDefaultsByCountry = new HashMap<String,Pair<OsmSpeedLimitDefaults,OsmSpeedLimitDefaults>>();
-    
+      
   /** lanes per direction if not configured */
   protected int lanesPerDirectionIfUnspecified  = DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
   

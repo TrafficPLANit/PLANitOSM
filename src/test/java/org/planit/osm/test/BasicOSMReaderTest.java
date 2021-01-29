@@ -51,13 +51,13 @@ public class BasicOSMReaderTest {
       PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_OSM);
       
       /* test out excluding a particular type highway:road from parsing */
-      osmReader.getSettings().deactivateOsmWayType(OsmHighwayTags.HIGHWAY, OsmHighwayTags.ROAD);
+      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
       
       /* test out setting different defaults for the highway:primary type*/
-      osmReader.getSettings().overwriteOsmHighwayTypeDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
+      osmReader.getSettings().getHighwaySettings().overwriteOsmHighwayTypeDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
-      osmReader.getSettings().getModeAccessConfiguration().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailWayTags.TRAM);
+      osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailWayTags.TRAM);
             
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);

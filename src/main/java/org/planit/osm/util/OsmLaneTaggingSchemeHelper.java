@@ -1,11 +1,15 @@
 package org.planit.osm.util;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
-import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
+import org.planit.utils.mode.Mode;
 
 import java.util.Set;
 import java.util.Map.Entry;
@@ -42,10 +46,20 @@ public class OsmLaneTaggingSchemeHelper{
    * <li>hgv</li>
    * </ul>
    * @param settings containing the activated and mapped Osm to PLANit modes 
+   * @param networkLayer to identify subset of modes relevant for the layer at hand
    * @return yes, when these modes are activated, false otherwise
    */
-  protected static boolean requireTaggingSchemeHelper(PlanitOsmSettings settings) {
-    return settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS);
+  protected static boolean requireTaggingSchemeHelper(PlanitOsmSettings settings, MacroscopicPhysicalNetwork networkLayer) {    
+    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS)) {
+      List<String> modesRequiringTaggingScheme = Arrays.asList(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS);
+      for(String osmMode : modesRequiringTaggingScheme) {
+        Mode planitMode = settings.getMappedPlanitMode(osmMode);
+        if(planitMode != null && networkLayer.supports(planitMode)) {
+          return true;
+        }
+      }            
+    }
+    return false;
   }  
   
   /** collect activated modes that are utilised via all derived tagging schemes. currently we only consider:
@@ -55,15 +69,16 @@ public class OsmLaneTaggingSchemeHelper{
    * <li>hgv</li>
    * </ul>
    * @param settings to filter for activated modes only
+   * @param networkLayer to identify subset of modes relevant for the layer at hand 
    * @return list os OSM modes that would identify such modes */
-  protected static Set<String> getEligibleTaggingSchemeHelperModes(PlanitOsmSettings settings) {
+  protected static Set<String> getEligibleTaggingSchemeHelperModes(PlanitOsmSettings settings, MacroscopicPhysicalNetwork networkLayer) {
     Set<String> eligibleModes = new HashSet<>();
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS)){
+    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.BUS))){
       eligibleModes.add(OsmRoadModeTags.BUS);
       eligibleModes.add(OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
-    }else if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE)) {
+    }else if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE))) {
       eligibleModes.add(OsmRoadModeTags.BICYCLE);
-    }else if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.HEAVY_GOODS)) {
+    }else if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.HEAVY_GOODS) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.HEAVY_GOODS))) {
       eligibleModes.add(OsmRoadModeTags.HEAVY_GOODS);
     }
     return eligibleModes;

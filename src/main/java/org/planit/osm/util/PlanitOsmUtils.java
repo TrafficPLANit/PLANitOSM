@@ -1,12 +1,17 @@
 package org.planit.osm.util;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRoadModeCategoryTags;
+import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -22,6 +27,48 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class PlanitOsmUtils {
+  
+  /** collect all OSM modes with either preFix:<OSM mode name>= or postFix:<OSM mode name>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   * 
+   * @param isprefix when true prefix applied, when false, postfix
+   * @param alteration, the post or prefix alteration of the mode key
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTags used to filter the modes by
+   * @return modes found with specified value tag
+   */    
+  protected static Collection<String> getPrefixedOrPostfixedOsmModesWithAccessValue(boolean isprefix, String alteration, Map<String, String> tags, final String... modeAccessValueTags) {
+    Set<String> foundModes = new HashSet<String>();    
+    
+    /* osm modes extracted from road mode category */
+    Collection<String> roadModeCategories = OsmRoadModeCategoryTags.getRoadModeCategories();
+    for(String roadModeCategory : roadModeCategories) {
+      String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadModeCategory) : PlanitOsmUtils.createCompositeOsmKey(roadModeCategory, alteration);      
+      if(tags.containsKey(compositeKey)) {
+        String valueTag = tags.get(roadModeCategory).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");        
+        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
+          if(modeAccessValueTags[index].equals(valueTag)){
+            foundModes.addAll(OsmRoadModeCategoryTags.getRoadModesByCategory(roadModeCategory));
+          }
+        }
+      }
+    }
+    
+    /* osm road mode */
+    Collection<String> roadModes = OsmRoadModeTags.getSupportedRoadModeTags();
+    for(String roadMode : roadModes) {
+      String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadMode) : PlanitOsmUtils.createCompositeOsmKey(roadMode, alteration);      
+      if(tags.containsKey(compositeKey)){
+        String valueTag = tags.get(compositeKey).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
+          if(modeAccessValueTags[index].equals(valueTag)){
+            foundModes.add(roadMode);
+          }
+        }
+      }
+    }    
+    return foundModes;
+  }   
   
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
   public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
@@ -277,5 +324,39 @@ public class PlanitOsmUtils {
     /* clockwise stands for forward direction, so when they do not match, all modes are to be excluded, the direction is closed */
     return isClockWise!=isForwardDirection;
   } 
+  
+  /** collect all OSM modes with key=\<OSM mode name\> value=the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   * 
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTags used to filter the modes by (yes/no)
+   * @return modes found with specified value tag
+   */
+  public static Collection<String> getOsmModesWithAccessValue(Map<String, String> tags, final String... modeAccessValueTags){
+    return getPostfixedOsmModesWithAccessValue(null, tags, modeAccessValueTags);
+  }
+  
+  /** collect all OSM modes with key=\<OSM mode name\>:postFix= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   * 
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTags used to filter the modes by (yes/no)
+   * @return modes found with specified value tag
+   */  
+  public static Collection<String> getPostfixedOsmModesWithAccessValue(String postFix, Map<String, String> tags, final String... modeAccessValueTags) {
+    return getPrefixedOrPostfixedOsmModesWithAccessValue(false, postFix, tags, modeAccessValueTags);
+  }  
+  
+  /** collect all OSM modes with key=preFix:\<OSM mode name\>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   * 
+   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param modeAccessValueTags used to filter the modes by
+   * @return modes found with specified value tag
+   */  
+  public static Collection<String> getPrefixedOsmModesWithAccessValue(String prefix, Map<String, String> tags, final String... modeAccessValueTags) {
+    return getPrefixedOrPostfixedOsmModesWithAccessValue(true, prefix, tags, modeAccessValueTags);
+  }  
+   
 
 }

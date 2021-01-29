@@ -34,11 +34,12 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaultsByCountry.class.getCanonicalName());
   
-  /** store the global defaults as fall back option */
-  protected static OsmSpeedLimitDefaults globalDefaultSpeedLimits;
-  
+  /** store the global railway defaults as fall back option */
+  protected static OsmSpeedLimitDefaults globalSpeedLimits = new OsmSpeedLimitDefaults(CountryNames.GLOBAL);
+      
   /** store all defaults per country by ISO2 code **/
-  protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountryCode = new HashMap<String, OsmSpeedLimitDefaults>();  
+  protected static Map<String, OsmSpeedLimitDefaults> speedLimitDefaultsByCountryCode = new HashMap<String, OsmSpeedLimitDefaults>();
+    
   
   /* initialise */
   static {    
@@ -51,42 +52,59 @@ public class OsmSpeedLimitDefaultsByCountry {
       LOGGER.severe("unable to initialise global and/or country specific OSM speed limit defaults");
     }    
   }  
+  
+  /** set global defaults for highways
+   * @param type of highway
+   * @param urbanSpeedLimit urban limit
+   * @param nonUrbanSpeedLimit non-urnam limit
+   */
+  protected static void setGlobalHighwaySpeedLimitDefaults(String type, double urbanSpeedLimit, double nonUrbanSpeedLimit) {
+    globalSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(type, urbanSpeedLimit);
+    globalSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(type, nonUrbanSpeedLimit);
+  }
+  
+  /** set global defaults for railways
+   * @param type of railway
+   * @param speedLimit to use
+   */
+  protected static void setGlobalRailwaySpeedLimitDefaults(String type, double speedLimit) {
+    globalSpeedLimits.getRailwayDefaults().setSpeedLimitDefault(type, speedLimit);
+  }  
              
   /**
    * populate the global defaults for highway types in case the country is not available, or in case the road type for that country is not available
    * 
-   * @param globalSpeedLimits to populate
    * @throws PlanItException thrown if error
    */
-  protected static void populateGlobalDefaultHighwaySpeedLimits(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {
+  protected static void populateGlobalDefaultHighwaySpeedLimits() throws PlanItException {
     /* note that these are physical speed limits for the most unrestricted mode on the highway type, when a mode has a lower
      * speed limit based on the mode, this will be applied, hence it is not needed to reduce the speed for a footway to 5 km/h */
     
-    /* GLOBAL -->                                                          URBAN,  NON_URBAN */
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,        100,  120);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,   100,  120);    
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK,           80,   100);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,      80,   100);    
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY,         60,   100);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,    60,   100);    
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY,       50,   80);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,  50,   80);    
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY,        50,   80);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,   50,   80);    
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,    50,   80);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,     40,   80);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.LIVING_STREET,   20,   20);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PEDESTRIAN,      20,   20);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.TRACK,           20,   40);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.ROAD,            20,   40);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.SERVICE,         20,   40);   
+    /* GLOBAL -->                                                  URBAN,  NON_URBAN */
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.MOTORWAY,        100,  120);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.MOTORWAY_LINK,   100,  120);    
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TRUNK,           80,   100);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TRUNK_LINK,      80,   100);    
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.PRIMARY,         60,   100);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.PRIMARY_LINK,    60,   100);    
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.SECONDARY,       50,   80);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.SECONDARY_LINK,  50,   80);    
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TERTIARY,        50,   80);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TERTIARY_LINK,   50,   80);    
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.UNCLASSIFIED,    50,   80);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.RESIDENTIAL,     40,   80);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.LIVING_STREET,   20,   20);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.PEDESTRIAN,      20,   20);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TRACK,           20,   40);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.ROAD,            20,   40);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.SERVICE,         20,   40);   
     
     /* other less common tags PLANit specific made up defaults, generally low speed limits */
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.FOOTWAY,         20,   20);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.PATH,            20,   20);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.CYCLEWAY,        20,   20);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.STEPS,           10,   10);
-    globalSpeedLimits.setHighwaySpeedLimitDefault(OsmHighwayTags.BRIDLEWAY,       20,   20);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.FOOTWAY,         20,   20);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.PATH,            20,   20);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.CYCLEWAY,        20,   20);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.STEPS,           10,   10);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.BRIDLEWAY,       20,   20);
   }  
   
   /**
@@ -98,14 +116,14 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param speedLimitsToPopulate to populate
    * @throws PlanItException thrown if error
    */  
-  protected static void populateDefaultRailwaySpeedLimits(OsmSpeedLimitDefaults speedLimitsToPopulate) {
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.FUNICULAR,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.LIGHT_RAIL,    OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.MONO_RAIL,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.NARROW_GAUGE,  OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.RAIL,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.SUBWAY,        OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
-    speedLimitsToPopulate.setRailwaySpeedLimitDefault(OsmRailWayTags.TRAM,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);   
+  protected static void populateDefaultRailwaySpeedLimits(OsmSpeedLimitDefaultsCategory speedLimitsToPopulate) {
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.FUNICULAR,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.LIGHT_RAIL,    OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.MONO_RAIL,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.NARROW_GAUGE,  OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.RAIL,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.SUBWAY,        OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.TRAM,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);   
   }  
   
   /**
@@ -114,12 +132,11 @@ public class OsmSpeedLimitDefaultsByCountry {
    * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for all modes. This can overridden by the user if required 
    * 
    * 
-   * @param globalSpeedLimits to populate
    * @throws PlanItException thrown if error
    */
-  protected static void populateGlobalDefaultRailwaySpeedLimits(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {        
+  protected static void populateGlobalDefaultRailwaySpeedLimits() throws PlanItException {        
     /* GLOBAL */    
-    populateDefaultRailwaySpeedLimits(globalSpeedLimits);    
+    populateDefaultRailwaySpeedLimits(globalSpeedLimits.getRailwayDefaults());    
   }   
   
   /**
@@ -128,10 +145,8 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @throws PlanItException thrown if error
    */
   protected static void populateGlobalSpeedLimits() throws PlanItException {
-    OsmSpeedLimitDefaults globalSpeedLimits = new OsmSpeedLimitDefaults();
-    populateGlobalDefaultHighwaySpeedLimits(globalSpeedLimits);
-    populateGlobalDefaultRailwaySpeedLimits(globalSpeedLimits);
-    setGlobalDefaults(globalSpeedLimits);
+    populateGlobalDefaultHighwaySpeedLimits();
+    populateGlobalDefaultRailwaySpeedLimits();
   }   
   
   /**
@@ -139,28 +154,45 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @throws PlanItException thrown if error
    */
   protected static void populateAustralianSpeedLimits() throws PlanItException {
-    OsmSpeedLimitDefaults ausSpeedLimitDefaults = new OsmSpeedLimitDefaults(CountryNames.AUSTRALIA);
+    OsmSpeedLimitDefaults australianSpeedLimits = new OsmSpeedLimitDefaults(CountryNames.AUSTRALIA, globalSpeedLimits);
     
     /* AUSTRALIA */ 
     {
-      /*        HIGHWAY -->                                                           URBAN,  NON_URBAN */
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100, 100);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80,  80);    
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK,            60,  100);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60,  60);    
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY,          60,  80);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60,  60);    
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY,        60,  80);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60,  60);    
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY,         50,  80);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    50,  60);    
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     50,  80);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      50,  80);
-      ausSpeedLimitDefaults.setHighwaySpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20,  20);
+      /*        HIGHWAY -->                                                                   URBAN */
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80);    
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TRUNK,            60);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60);    
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.PRIMARY,          60);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60);    
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.SECONDARY,        60);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60);    
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TERTIARY,         50);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    50);    
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     50);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      50);
+      australianSpeedLimits.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20);
+      
+      /*        HIGHWAY -->                                                                      NON_URBAN */
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.MOTORWAY,         100);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.MOTORWAY_LINK,    80);    
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TRUNK,            100);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TRUNK_LINK,       60);    
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.PRIMARY,          80);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.PRIMARY_LINK,     60);    
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.SECONDARY,        80);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.SECONDARY_LINK,   60);    
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TERTIARY,         80);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.TERTIARY_LINK,    60);    
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.UNCLASSIFIED,     80);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.RESIDENTIAL,      80);
+      australianSpeedLimits.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.LIVING_STREET,    20);
+      
       /*        RAILWAY */
-      populateDefaultRailwaySpeedLimits(ausSpeedLimitDefaults); 
-      /*        REGISTER */    
-      setDefaultsByCountry(ausSpeedLimitDefaults);      
+      populateDefaultRailwaySpeedLimits(australianSpeedLimits.getRailwayDefaults()); 
+      
+      /*        REGISTER */
+      setDefaultsByCountry(australianSpeedLimits);      
     }
   }
   
@@ -179,10 +211,10 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   protected static double getSpeedLimitByHighwayType(OsmSpeedLimitDefaults countryDefaults, boolean outside, String type) throws PlanItException {
     /* country limit */
-    Double speedLimit = countryDefaults.getHighwaySpeedLimit(type, outside);
+    Double speedLimit = outside ? countryDefaults.getNonUrbanHighwayDefaults().getSpeedLimit(type) : countryDefaults.getUrbanHighwayDefaults().getSpeedLimit(type); 
     if(speedLimit == null) {
       /* global limit */
-      speedLimit = globalDefaultSpeedLimits.getHighwaySpeedLimit(type, outside);
+      speedLimit = outside ? globalSpeedLimits.getNonUrbanHighwayDefaults().getSpeedLimit(type) : globalSpeedLimits.getUrbanHighwayDefaults().getSpeedLimit(type);
     }
     
     if(speedLimit==null) {
@@ -203,25 +235,9 @@ public class OsmSpeedLimitDefaultsByCountry {
     String iso2Australia = LocaleUtils.getIso2CountryCodeByName(countrySpeedLimits.getCountry());    
     PlanItException.throwIfNull(iso2Australia, "country name could not be converted into ISO2 code");
     
-    try {
-      speedLimitDefaultsByCountryCode.put(iso2Australia, countrySpeedLimits.clone());
-    } catch (CloneNotSupportedException e) {
-      throw new PlanItException("unable to clone passed in country specific speed limit defaults", e);
-    }
+    speedLimitDefaultsByCountryCode.put(iso2Australia, countrySpeedLimits.clone());
   }
   
-  /**
-   * set/overwrite  the global defaults
-   * @param globalSpeedLimits speed limits by highway type 
-   * @throws PlanItException throw if error
-   */
-  protected static void setGlobalDefaults(OsmSpeedLimitDefaults globalSpeedLimits) throws PlanItException {
-    try {
-      globalDefaultSpeedLimits = globalSpeedLimits.clone();
-    } catch (CloneNotSupportedException e) {
-      throw new PlanItException("unable to clone passed in global speed limit defaults", e);
-    }
-  }  
   
   /** collect the (original) speed limit defaults (outside,inside urban areas) for a given country name
    * 
@@ -247,12 +263,7 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   public static OsmSpeedLimitDefaults create() {
     OsmSpeedLimitDefaults createdDefaults = null;
-    try {
-      createdDefaults = globalDefaultSpeedLimits.clone();
-    } catch (CloneNotSupportedException e) {
-      LOGGER.severe(e.getMessage());
-      LOGGER.severe("unable to clone global speed limit defaults");
-    }
+    createdDefaults = globalSpeedLimits.clone();
     return createdDefaults;
   }  
   
@@ -264,33 +275,41 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   public static OsmSpeedLimitDefaults create(String countryName) {
     OsmSpeedLimitDefaults createdDefaults = null;
-    /* clone defaults so they can be adjusted without impacting actual defaults */
-    try {
-      
-      if(countryName != null && !countryName.isBlank()) {
-        createdDefaults = getDefaultsByCountryName(countryName).clone();
-      }
-      
-      if(createdDefaults==null) {
-        createdDefaults = globalDefaultSpeedLimits.clone(); 
-        LOGGER.warning(String.format("No OSM speed limit defaults available for country %s, reverting to global defaults",countryName));
-      }
-      
-    } catch (CloneNotSupportedException e) {
-      LOGGER.severe(e.getMessage());      
-      LOGGER.severe(String.format("Unable to copy default speed limits for indicated country %s",countryName));
+    if(countryName != null && !countryName.isBlank()) {
+      createdDefaults = getDefaultsByCountryName(countryName).clone();
+    }
+    
+    if(createdDefaults==null) {
+      createdDefaults =create(); 
+      LOGGER.warning(String.format("No OSM speed limit defaults available for country %s, reverting to global defaults",countryName));
     }
     
     return createdDefaults;
   }  
   
-  /** collect the (original) speed limit defaults (outside,inside urban areas) globally (non-country specific)
+  /** collect the (original) highway-urban speed limit defaults 
    * 
    * @return global speed limit defaults
    */
-  public static OsmSpeedLimitDefaults getGlobalDefaults() {    
-    return globalDefaultSpeedLimits;
-  }    
+  public static OsmSpeedLimitDefaultsCategory getGlobalUrbanHighwayDefaults() {    
+    return globalSpeedLimits.getUrbanHighwayDefaults();
+  }
+  
+  /** collect the (original) highway-non-urban speed limit defaults 
+   * 
+   * @return global speed limit defaults
+   */
+  public static OsmSpeedLimitDefaultsCategory getGlobalNonUrbanHighwayDefaults() {    
+    return globalSpeedLimits.getNonUrbanHighwayDefaults();
+  }
+  
+  /** collect the (original) railway speed limit defaults 
+   * 
+   * @return global speed limit defaults
+   */
+  public static OsmSpeedLimitDefaultsCategory getGlobalRailwayDefaults() {    
+    return globalSpeedLimits.getRailwayDefaults();
+  }        
        
   
 }

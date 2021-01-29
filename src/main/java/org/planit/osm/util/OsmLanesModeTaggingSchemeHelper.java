@@ -2,7 +2,9 @@ package org.planit.osm.util;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
+
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmLaneTags;
 import java.util.Set;
@@ -46,6 +48,9 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   }
   
   /** Verify if any modes that can be identified via the lanes:/<mode/> tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme.
+   * Note that if the passed in layer does not support the activated planit mode the helper is not required either, since the layer will not support
+   * any of these modes.
+   * 
    * Currently we only consider:
    * 
    * <ul>
@@ -54,10 +59,11 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * <li>hgv</li>
    * </ul>
    * @param settings containing the activated and mapped Osm to PLANit modes 
+   * @param networkLayer to identify supported modes on the layer, which is a subset of all mapped modes
    * @return yes, when these modes are activated, false otherwise
    */
-  public static boolean requireLanesModeSchemeHelper(PlanitOsmSettings settings) {
-    return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings);
+  public static boolean requireLanesModeSchemeHelper(PlanitOsmSettings settings, MacroscopicPhysicalNetwork networkLayer) {
+    return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings, networkLayer);
   }    
   
   /** collect activated modes that can be identified via the lanes:/<mode/> tagging scheme are currently supported. currently we only consider:
@@ -67,9 +73,10 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * <li>hgv</li>
    * </ul>
    * @param settings to filter for activated modes only
+   * @param networkLayer to restrict the eligible modes based on the modes supported by the layer
    * @return list os OSM modes that would identify such modes */
-  public static Set<String> getEligibleLanesModeSchemeHelperModes(PlanitOsmSettings settings) {
-    return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings);
+  public static Set<String> getEligibleLanesModeSchemeHelperModes(PlanitOsmSettings settings, MacroscopicPhysicalNetwork networkLayer) {
+    return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings, networkLayer);
   } 
   
   /** Constructor

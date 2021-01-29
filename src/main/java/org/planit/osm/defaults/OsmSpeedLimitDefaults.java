@@ -1,165 +1,135 @@
 package org.planit.osm.defaults;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
-import org.planit.utils.locale.CountryNames;
-import org.planit.utils.misc.Pair;
-
 /**
- * Container class for storing urban/non-urban speed limits for different highway=type/railway=type for OSM.
+ * A class containing instances for each of the OSM speed limit default categories: urban/non-urban highways and railways
  * 
  * @author markr
  *
  */
-public class OsmSpeedLimitDefaults implements Cloneable {
-  
-  /** the Logger for this class */
-  private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaults.class.getCanonicalName());
+
+public class OsmSpeedLimitDefaults {
   
   /**
-   * store urban highway defaults in this map
+   * urban highway speed limit defaults
    */
-  protected final Map<String,Double> highwayUrbanSpeedLimitDefaults;
+  protected final OsmSpeedLimitDefaultsCategory urbanHighwayDefaults;
+
+  /**
+   * non-urban highway speed limit defaults
+   */  
+  protected final OsmSpeedLimitDefaultsCategory nonUrbanHighwayDefaults;
   
   /**
-   * store non-urban highway defaults in this map
+   * country name for the defaults
    */
-  protected final Map<String,Double> highwayNonUrbanSpeedLimitDefaults;
+  protected final String countryName;
   
   /**
-   * store railwat defaults in this map
-   */
-  protected final Map<String,Double> railwaySpeedLimitDefaults;
+   * railway speed limit defaults
+   */  
+  protected final OsmSpeedLimitDefaultsCategory railwayDefaults;
   
-  /** chosen country for instance of this class */
-  protected final String currentCountry;
   
   /** in absence of OSM default, we create a global highway speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH = 50;  
     
   /** in absence of OSM defined defaults, we make a global rail way speed limit (km/h) available */
-  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
+  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;  
   
-  /**
-   * Default constructor
-   */
-  public OsmSpeedLimitDefaults() {
-    this.currentCountry = CountryNames.GLOBAL;
-    this.highwayUrbanSpeedLimitDefaults = new HashMap<String,Double>();
-    this.highwayNonUrbanSpeedLimitDefaults = new HashMap<String,Double>();
-    this.railwaySpeedLimitDefaults = new HashMap<String,Double>();
-  }
-  
-  /**
-   * constructor
-   * 
-   * @param countryName defaults specific to this country
+  /** constructor 
+   * @param countryName country
    */
   public OsmSpeedLimitDefaults(String countryName) {
-    this.currentCountry = countryName;
-    this.highwayUrbanSpeedLimitDefaults = new HashMap<String,Double>();
-    this.highwayNonUrbanSpeedLimitDefaults = new HashMap<String,Double>();
-    this.railwaySpeedLimitDefaults = new HashMap<String,Double>();
+    this.countryName = countryName;
+    this.urbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
+    this.nonUrbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
+    this.railwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
   }  
   
-  /**
-   * copy constructor
-   *  
-   * @param other to use
-   * 
+  /** constructor 
+   * @param countryName country
+   * @param backup to use in case this does not contain the default
+   */
+  public OsmSpeedLimitDefaults(String countryName, OsmSpeedLimitDefaults backup) {
+    this.countryName = countryName;
+    this.urbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getUrbanHighwayDefaults());
+    this.nonUrbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getNonUrbanHighwayDefaults());
+    this.railwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getRailwayDefaults());
+  }  
+
+  
+  /** constructor 
+   * @param countryName country
+   * @param urbanHighwayDefaults defaults
+   * @param nonUrbanHighwayDefaults defaults
+   * @param nonUrbanHighwayDefaults defaults
+   */
+  public OsmSpeedLimitDefaults(String countryName, OsmSpeedLimitDefaultsCategory urbanHighwayDefaults, OsmSpeedLimitDefaultsCategory nonUrbanHighwayDefaults, OsmSpeedLimitDefaultsCategory railwayDefaults) {
+    this.countryName = countryName;
+    this.urbanHighwayDefaults =urbanHighwayDefaults;
+    this.nonUrbanHighwayDefaults =nonUrbanHighwayDefaults;
+    this.railwayDefaults = railwayDefaults;
+  }
+  
+  /** Copy constructor 
+   * @param other
+   * @throws CloneNotSupportedException  thrown if error
    */
   public OsmSpeedLimitDefaults(OsmSpeedLimitDefaults other) {
-    this.currentCountry = other.currentCountry;
-    this.highwayUrbanSpeedLimitDefaults =  new HashMap<String,Double>(other.highwayUrbanSpeedLimitDefaults);
-    this.highwayNonUrbanSpeedLimitDefaults = new HashMap<String,Double>(other.highwayNonUrbanSpeedLimitDefaults);
-    this.railwaySpeedLimitDefaults = new HashMap<String,Double>(other.railwaySpeedLimitDefaults);
-  }
-  
-  /** set a speed default for a given highway=type
-   * 
-   * @param type of road to set speed default for
-   * @param urbanSpeedLimit the physical speed limit (km/h)
-   * @param nonUrbanSpeedLimit the physical speed limit (km/h)
-   */
-  public void setHighwaySpeedLimitDefault(final String type, double urbanSpeedLimit, double nonUrbanSpeedLimit){
-    highwayUrbanSpeedLimitDefaults.put(type, urbanSpeedLimit);
-    highwayNonUrbanSpeedLimitDefaults.put(type, urbanSpeedLimit);
-  }
-  
-  /** get a speed limit default for a given highway=type
-   * 
-   * @param type of road to get speed default for
-   * @return the physical speed limit (km/h)
-   */
-  public Pair<Double,Double> getHighwaySpeedLimit(String type) {
-    return Pair.create(getHighwaySpeedLimit(type, false /* urban */ ), getHighwaySpeedLimit(type, true /* non-urban */ ));
-  }
-  
-  /** set a speed default for a given railway=type
-   * 
-   * @param type of railway to set speed default for
-   */
-  public void setRailwaySpeedLimitDefault(final String type, double speedLimit){
-    railwaySpeedLimitDefaults.put(type, speedLimit);
-  }
-  
-  /** get a speed limit default for a given railway=type
-   * 
-   * @param type of road to get speed default for
-   * @return the physical speed limit (km/h)
-   */
-  public Double getRailwaySpeedLimit(String type) {
-    Double railWaySpeedLimit = railwaySpeedLimitDefaults.get(type);
-    if(railWaySpeedLimit == null) {
-      railWaySpeedLimit = OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().getRailwaySpeedLimit(type);
-    }        
-    return railWaySpeedLimit;
-  }
-  
-  /** get a speed limit default for a given highway=type
-   * 
-   * @param type of road to get speed default for
-   * @param outsideUrbanArea flag indicating outside urban area or not
-   * @return the physical speed limit (km/h)
-   */
-  public Double getHighwaySpeedLimit(String type, boolean outsideUrbanArea) {
-    Double speedLimit = outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.get(type) : highwayUrbanSpeedLimitDefaults.get(type);
-    if(speedLimit == null) {
-      if(OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().containsHighwaySpeedLimit(type, outsideUrbanArea)) {
-        speedLimit = OsmSpeedLimitDefaultsByCountry.getGlobalDefaults().getHighwaySpeedLimit(type, outsideUrbanArea);
+    if(other != null) {
+      this.countryName = other.countryName;
+      if(other.urbanHighwayDefaults != null) {
+        this.urbanHighwayDefaults = other.urbanHighwayDefaults.clone();
       }else {
-        LOGGER.severe(String.format("unable to obtain default speed limit for highway=%s, reverting to global default %.2f", type, GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH));
-        speedLimit = GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH;
+        this.urbanHighwayDefaults = null;
       }
+      if(other.nonUrbanHighwayDefaults != null) {
+        this.nonUrbanHighwayDefaults = other.nonUrbanHighwayDefaults.clone();
+      }
+      else {
+        this.nonUrbanHighwayDefaults = null;
+      }
+      if(other.railwayDefaults != null) {
+        this.railwayDefaults = other.railwayDefaults.clone();
+      }else {
+        this.railwayDefaults = null;
+      }
+    }else {
+      this.urbanHighwayDefaults = null;
+      this.railwayDefaults = null;
+      this.nonUrbanHighwayDefaults = null;
+      this.countryName = null;
     }
-    return speedLimit;    
-  }
-  
-  /** verify if a default speed limit is available for the given type
-   * @param type to verify
-   * @param outsideUrbanArea flag indicating outside urban area or not
-   * @return true when available false otherwise
-   */
-  public boolean containsHighwaySpeedLimit(String type, boolean outsideUrbanArea) {
-    return outsideUrbanArea ?  highwayNonUrbanSpeedLimitDefaults.containsKey(type) : highwayUrbanSpeedLimitDefaults.containsKey(type);
-  }
-
-  /** Collect the country for which these defaults are meant. When not set "global" is returned
-   * @return country set
-   */
-  public String getCountry() {
-    return currentCountry;
-  }  
-   
+  }   
   
   /**
-   * clone this class instance
+   * clone
+   * 
+   * @return shallow copy
    */
-  @Override
-  public OsmSpeedLimitDefaults clone() throws CloneNotSupportedException {
+  public OsmSpeedLimitDefaults clone() {
     return new OsmSpeedLimitDefaults(this);
-  }  
+  }
+  
+  public OsmSpeedLimitDefaultsCategory getUrbanHighwayDefaults() {
+    return urbanHighwayDefaults;
+  }
 
+
+  public OsmSpeedLimitDefaultsCategory getNonUrbanHighwayDefaults() {
+    return nonUrbanHighwayDefaults;
+  }
+
+
+  public OsmSpeedLimitDefaultsCategory getRailwayDefaults() {
+    return railwayDefaults;
+  }
+  
+  /** collect the country name
+   * 
+   * @return country name
+   */
+  public String getCountry() {
+    return this.countryName;
+  }
 }

@@ -7,7 +7,7 @@ import org.planit.network.converter.NetworkReader;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.physical.network.macroscopic.PlanitOsmSettings;
+import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.FileUtils;
 import de.topobyte.osm4j.core.access.OsmInputException;
