@@ -13,7 +13,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.planit.geo.PlanitJtsUtils;
-import org.planit.network.InfrastructureLayer;
+import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.osm.tags.OsmAccessTags;
@@ -698,7 +698,7 @@ public class PlanitOsmNetworkLayerHandler {
         /* update mode properties */
         if(!toBeAddedModes.isEmpty()) {
           double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);          
-          network.addLinkSegmentTypeModeProperties(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
+          MacroscopicModePropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
         }
         if(!toBeRemovedModes.isEmpty()) {
           finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
@@ -725,7 +725,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @return the link segment types for the forward direction and backward direction as per OSM specification of forward and backward. When no allowed modes exist in a direction the link segment type is set to null
    * @throws PlanItException thrown if error
    */
-  private Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> extractLinkSegmentTypeByOsmAccessTags(final OsmWay osmWay, final Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
+  private Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> extractLinkSegmentTypeByOsmAccessTags(final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
     
     /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry, and backward, i.e., the opposite of the geometry)*/
     boolean forwardDirection = true;
@@ -1142,6 +1142,15 @@ public class PlanitOsmNetworkLayerHandler {
       }                          
     }    
     return link;
+  }
+  
+  /** verify if OSM node id is converted to a PLANit node or is part of a PLANit link's internal geometry
+   * 
+   * @param osmNodeId to check
+   * @return true when part of a geometry in the layer, false otherwise
+   */
+  public boolean isOsmNodePresentInLayer(long osmNodeId) {
+    return (nodesByOsmId.containsKey(osmNodeId) || linkInternalOsmNodes.containsKey(osmNodeId));
   }
 
 }

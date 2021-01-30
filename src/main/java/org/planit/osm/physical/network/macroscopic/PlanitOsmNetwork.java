@@ -177,7 +177,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       /* collect and register mode properties */
       linkSegmentType = typesPerLayer.get(networkLayer);
       double cappedMaxSpeed = Math.min(maxSpeed, mode.getMaximumSpeedKmH());
-      linkSegmentType.addModeProperties(mode, MacroscopicModePropertiesFactory.create(cappedMaxSpeed,cappedMaxSpeed));
+      MacroscopicModePropertiesFactory.createOnLinkSegmentType(linkSegmentType, mode, cappedMaxSpeed);      
     }
     return typesPerLayer;
   }  
@@ -869,6 +869,6 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   public Map<InfrastructureLayer, MacroscopicLinkSegmentType> getDefaultLinkSegmentTypeByOsmTag(final String osmHighwayTagValue) {
     return this.defaultPlanitOsmLinkSegmentTypes.get(osmHighwayTagValue);
-  }
+  }  
         
 }

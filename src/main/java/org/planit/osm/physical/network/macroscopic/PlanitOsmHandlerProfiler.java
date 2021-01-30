@@ -6,6 +6,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+
 /**
  * Track statistics on Osm handler
  * 
@@ -61,20 +63,20 @@ public class PlanitOsmHandlerProfiler {
   /**
    * log counters
    * 
-   * @param network for which information  was tracked
+   * @param networkLayer for which information  was tracked
    */
-  public void logProfileInformation(PlanitOsmNetwork network) {
+  public void logProfileInformation(MacroscopicPhysicalNetwork networkLayer) {
     for(Entry<String, LongAdder> entry : counterByHighwayTag.entrySet()) {
       long count = entry.getValue().longValue();
       LOGGER.info(String.format(" [STATS] processed highway:%s count:%d", entry.getKey(), count));
     }
     
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",network.getDefaultNetworkLayer().nodes.size()));
-    LOGGER.info(String.format(" [STATS] created PLANit %d links",network.getDefaultNetworkLayer().links.size()));
-    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",network.getDefaultNetworkLayer().linkSegments.size()));    
+    LOGGER.info(String.format(" [STATS] created PLANit %d nodes",networkLayer.nodes.size()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links",networkLayer.links.size()));
+    LOGGER.info(String.format(" [STATS] created PLANit %d links segments ",networkLayer.linkSegments.size()));    
     
-    double numberOfParsedLinks = (double)network.getDefaultNetworkLayer().links.size();
+    double numberOfParsedLinks = (double)networkLayer.links.size();
     double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
     double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
     LOGGER.info(String.format(" [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
