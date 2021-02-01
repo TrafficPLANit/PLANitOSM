@@ -428,7 +428,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
       
     /* when allowed (via category), it can be that it is explicitly disallowed within its category overruling the category setting */
     if(isAllowed) {
-        isAllowed = !disallowedModesByType.containsKey(osmWayValue) && disallowedModesByType.get(osmWayValue).contains(osmMode);
+        isAllowed = !(disallowedModesByType.containsKey(osmWayValue) && disallowedModesByType.get(osmWayValue).contains(osmMode));
     }        
             
     return isAllowed;

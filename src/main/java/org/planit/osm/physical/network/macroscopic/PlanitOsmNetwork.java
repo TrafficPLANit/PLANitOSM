@@ -734,8 +734,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
               
               /** convert to comma separated string by mode name */
               String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
-              LOGGER.info(String.format("%s%s layer:%s highway:%s - modes: %s speed: %.2f (km/h) capacity: %.2f (pcu/lane/h), max density %.2f (pcu/km/lane)", 
-                  isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", layer.getXmlId(), osmWayValueToUse, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));              
+              LOGGER.info(String.format("%s %s%s highway:%s - modes: %s speed: %.2f (km/h) capacity: %.2f (pcu/lane/h), max density %.2f (pcu/km/lane)", 
+                  InfrastructureLayer.createLayerLogPrefix(layer),isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getCapacityPerLane(),linkSegmentType.getMaximumDensityPerLane()));              
             }            
           }else {
             linkSegmentTypes = defaultPlanitOsmLinkSegmentTypes.get(osmWayValueToUse);
@@ -787,7 +787,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
           
           String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
-          LOGGER.info(String.format("[DEFAULT] layer:%s railway:%s - modes: %s speed: %s (km/h)", layer.getXmlId(), osmWayValue, csvModeString, railwayMaxSpeed));
+          LOGGER.info(String.format("%s [DEFAULT] railway:%s - modes: %s speed: %s (km/h)", InfrastructureLayer.createLayerLogPrefix(layer), osmWayValue, csvModeString, railwayMaxSpeed));
         }
         
       }else {
@@ -827,26 +827,26 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       String osmWayKey = entry.getValue();      
            
       /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
-      Map<InfrastructureLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;  
+      Map<InfrastructureLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer = null;  
 
       /* only create type when there are one or more activated modes for it */
       Collection<Mode> activatedPlanitModes = collectMappedPlanitModes(osmWayKey, osmWayValueToUse, settings);
       if(activatedPlanitModes!=null && !activatedPlanitModes.isEmpty()) {
         
         if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayValueToUse)) {
-          linkSegmentTypes = createOsmCompatibleRoadLinkSegmentTypeByLayer(osmWayValueToUse, settings);
+          linkSegmentTypesByLayer = createOsmCompatibleRoadLinkSegmentTypeByLayer(osmWayValueToUse, settings);
         }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailBasedRailway(osmWayValueToUse)) {             
-          linkSegmentTypes = createOsmCompatibleRailLinkSegmentTypeByLayer(osmWayValueToUse, settings);
+          linkSegmentTypesByLayer = createOsmCompatibleRailLinkSegmentTypeByLayer(osmWayValueToUse, settings);
         }else {
           LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));
         }
         /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
         
-        if(linkSegmentTypes == null || linkSegmentTypes.isEmpty()) {
+        if(linkSegmentTypesByLayer == null || linkSegmentTypesByLayer.isEmpty()) {
           LOGGER.warning(String.format("unable to create osm compatible PLANit link segment type for key:value combination %s:%s, ignored",osmWayKey, osmWayValueToUse));
         }else {
           /* create, register, and also store by osm tag */
-          defaultPlanitOsmLinkSegmentTypes.put(osmWayValueToUse, linkSegmentTypes);        
+          defaultPlanitOsmLinkSegmentTypes.put(osmWayValueToUse, linkSegmentTypesByLayer);        
         }
       }                        
     }

@@ -108,11 +108,11 @@ public class OsmInfrastructureConfiguration {
   public void activate(String... osmWayValues) {
     for(int index=0;index<osmWayValues.length;++index) {
       String osmWayValue = osmWayValues[index];
-      boolean removed = deactivatedOsmTypes.remove(osmWayValue);
-      if(!removed) {
-        LOGGER.warning(String.format("unable to activate OSM type %s=%s, either it is already active, or it is not yet supported by the parser",osmWayKey, osmWayValue));  
+      deactivatedOsmTypes.remove(osmWayValue);
+      boolean added = activatedOsmTypes.add(osmWayValue);
+      if(!added) {
+        LOGGER.warning(String.format("OSM type %s=%s is already active, no need to activate again, ignored",osmWayKey, osmWayValue));
       }
-      activatedOsmTypes.add(osmWayValue);      
       LOGGER.fine(String.format("activating OSM type %s=%s",osmWayKey, osmWayValue));
     }
   }  

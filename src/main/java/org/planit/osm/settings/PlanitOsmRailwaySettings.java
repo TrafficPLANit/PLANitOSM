@@ -43,6 +43,9 @@ public class PlanitOsmRailwaySettings {
   
   /** mapping from each supported osm rail mode to a PLANit mode */
   protected final Map<String, Mode> osmRailMode2PlanitModeMap = new HashMap<String, Mode>();
+
+  /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
+  private boolean isParserActive = DEFAULT_RAILWAYS_PARSER_ACTIVE;
   
   /**
    * each OSM rail mode is mapped (or not) to a PLANit mode by default so that the memory model's modes
@@ -100,6 +103,9 @@ public class PlanitOsmRailwaySettings {
   protected OsmSpeedLimitDefaultsCategory getRailwaySpeedLimitConfiguration() {
     return railwaySpeedLimitDefaults;
   }  
+  
+  /** by default the railway parser is deactivated */
+  public static boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
   
   /**
    * Constructor 
@@ -260,15 +266,15 @@ public class PlanitOsmRailwaySettings {
    * Collect all Osm modes that are allowed for the given osmRailway type as configured by the user
    * 
    * @param osmRailwayValueType to use
-   * @return allowed OsmModes
+   * @return allowed OsmModes found
    */
   public Collection<String> collectAllowedOsmRailwayModes(String osmRailwayValueType) {
     Set<String> allowedModes = null; 
-    if(OsmRailWayTags.isRailwayKeyTag(osmRailwayValueType) && OsmRailWayTags.isRailBasedRailway(osmRailwayValueType)) {
+    if(OsmRailWayTags.isRailBasedRailway(osmRailwayValueType)) {
       /* while rail has no categories that complicate identifying mode support, we utilise the same approach for consistency and future flexibility */
       allowedModes =  OsmRailWayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessRailwayDefaults.isAllowed(osmRailwayValueType, railModeTag)).collect(Collectors.toSet());
     }else {
-      LOGGER.warning(String.format("unrecognised osm railway key value type railway=%s, no allowed modes can be identified", osmRailwayValueType));
+      LOGGER.warning(String.format("unrecognised osm railway railway=%s, no allowed modes can be identified", osmRailwayValueType));
     }
     return allowedModes;
   }  
@@ -285,6 +291,20 @@ public class PlanitOsmRailwaySettings {
    */  
   public void logUnsupportedOsmRailwayTypes() {
     railwayTypeConfiguration.logDeactivatedTypes();
+  }
+
+  /** set the flag whether or not the railways should be parsed or not
+   * @param activate
+   */
+  public void activateParser(boolean activate) {
+    this.isParserActive = activate;
+  }
+
+  /** verifies if the parser for these settings is active or not
+   * @return
+   */
+  public boolean isParserActive() {
+    return this.isParserActive;
   }   
     
 }

@@ -262,7 +262,9 @@ public class PlanitOsmHighwaySettings {
    * @param modeProperties new values per mode
    */
   public void overwriteOsmHighwayTypeDefaults(String osmHighwayType, double capacityPerLanePerHour, double maxDensityPerLane) {
-    highwayTypeConfiguration.activate(osmHighwayType);
+    if(!highwayTypeConfiguration.isActivated(osmHighwayType)) {
+      highwayTypeConfiguration.activate(osmHighwayType);
+    }
     overwriteByOsmHighwayType.put(osmHighwayType, Pair.create(capacityPerLanePerHour,maxDensityPerLane));
     LOGGER.info(String.format("overwriting defaults for osm road type highway:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmHighwayType, capacityPerLanePerHour, maxDensityPerLane));
   }  
@@ -407,7 +409,7 @@ public class PlanitOsmHighwaySettings {
    */
   public Collection<String> collectAllowedOsmHighwayModes(String osmHighwayValueType) {
     Set<String> allowedModes = null; 
-    if(OsmHighwayTags.isHighwayKeyTag(osmHighwayValueType) && OsmHighwayTags.isRoadBasedHighwayValueTag(osmHighwayValueType)){
+    if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmHighwayValueType)){
       /* collect all rail and road modes that are allowed, try all because the mode categories make it difficult to collect individual modes otherwise */
       Set<String> allowedRoadModesOnRoad =  OsmRoadModeTags.getSupportedRoadModeTags().stream().filter( roadModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, roadModeTag)).collect(Collectors.toSet());
       Set<String> allowedRailModesOnRoad =  OsmRailWayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, railModeTag)).collect(Collectors.toSet());      

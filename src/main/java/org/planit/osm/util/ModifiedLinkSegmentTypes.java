@@ -156,4 +156,11 @@ public class ModifiedLinkSegmentTypes {
     modifiedLinkSegmentTypeModes.putIfAbsent(original, new ModifiedLinkSegmentTypesModes(original));
     return modifiedLinkSegmentTypeModes.get(original).addModifiedLinkSegmentType(modifiedLinkSegmentType, addedModes, removedModes);
   }
+
+  /**
+   * remove all identified modified link segment types available
+   */
+  public void reset() {
+    modifiedLinkSegmentTypeModes.clear();    
+  }
 }

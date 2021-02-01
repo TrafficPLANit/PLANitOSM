@@ -171,13 +171,17 @@ public class PlanitOsmSettings {
    * @param osmModes of which at least one should be active on the key:value pair
    */
   protected void excludeOsmWayTypesWithoutModes(String osmWayKey, String osmWayValue, Collection<String> osmModes) {
+    
     boolean hasMappedMode = false;
-    for(String osmMode : osmModes) {
-      if(hasMappedPlanitMode(osmMode)) {
-        hasMappedMode = true;
-        break;
-      }
+    if(osmModes != null) {
+      for(String osmMode : osmModes) {
+        if(hasMappedPlanitMode(osmMode)) {
+          hasMappedMode = true;
+          break;
+        }
+      } 
     }
+    
     if(!hasMappedMode) {
       if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
         osmHighwaySettings.deactivateOsmHighwayType(osmWayValue);
@@ -211,12 +215,20 @@ public class PlanitOsmSettings {
    */
   public PlanitOsmSettings(String countryName, Modes planitModes) {
     this.countryName = countryName;
+    
+    /* general */
     this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
     this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create(countryName);
+    
+    /* settings by sub-type */
     this.osmHighwaySettings = new PlanitOsmHighwaySettings(
         this.speedLimitConfiguration.getUrbanHighwayDefaults(), 
         this.speedLimitConfiguration.getNonUrbanHighwayDefaults(),
         this.modeAccessConfiguration.getHighwayModeAccessDefaults());
+    this.osmRailwaySettings = new PlanitOsmRailwaySettings(
+        this.speedLimitConfiguration.getRailwayDefaults(), 
+        this.modeAccessConfiguration.getRailwayModeAccessDefaults());
+    
     initialise(planitModes);   
     
     /* default will map all modes to a single layer */
@@ -239,16 +251,12 @@ public class PlanitOsmSettings {
    * @return railway settings
    */
   public PlanitOsmRailwaySettings activateRailwayParser(boolean activate) {
-    if(activate && osmRailwaySettings != null) {
-      /* pt settings, we pass on railway speed limit defaults as they should be configured (by the user) via pt settings */
-      this.osmRailwaySettings = new PlanitOsmRailwaySettings(
-          this.speedLimitConfiguration.getRailwayDefaults(), 
-          this.modeAccessConfiguration.getRailwayModeAccessDefaults());
-    }else if(!activate) {
-      /* reset */
-      this.osmRailwaySettings = null;
+    osmRailwaySettings.activateParser(activate);
+    if(isRailwayParserActive()) {
+      return osmRailwaySettings;  
+    }else {
+      return null;
     }
-    return osmRailwaySettings;
   }
   
   /** Verify if railway parser is active
@@ -256,7 +264,7 @@ public class PlanitOsmSettings {
    * @return ture when active false otherwise
    */
   public boolean isRailwayParserActive() {
-    return osmRailwaySettings != null;
+    return osmRailwaySettings.isParserActive();
   }
 
   /**
@@ -329,10 +337,10 @@ public class PlanitOsmSettings {
   public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags) throws PlanItException {
     if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
       return osmHighwaySettings.getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.HIGHWAY));   
-    }else if(tags.containsKey(OsmHighwayTags.HIGHWAY) && isRailwayParserActive()){
+    }else if(tags.containsKey(OsmRailWayTags.RAILWAY) && isRailwayParserActive()){
       return osmRailwaySettings.getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailWayTags.RAILWAY));
     }else {
-      throw new PlanItException("no osm highway key contained in provided osmTags when collecting default speed limit by OsmHighwayType");
+      throw new PlanItException("no default speed limit available, tags do not contain highway or railway key");
     }
   }   
 
@@ -388,10 +396,14 @@ public class PlanitOsmSettings {
   /** convenience method that provides an overview of all PLANit modes that are currently mapped by any of the passed in OsmModes
    * 
    * @param osmModes to verify
-   * @return mapped PLANit modes
+   * @return mapped PLANit modes, empty set when no mapped modes can be found
    */
   public Set<Mode> collectMappedPlanitModes(Collection<String> osmModes) {
     HashSet<Mode> mappedPlanitModes = new HashSet<Mode>();
+    if(osmModes == null) {
+      return mappedPlanitModes;
+    }    
+    
     for (String osmMode : osmModes) {
       Mode mappedMode = getMappedPlanitMode(osmMode);
       if(mappedMode != null) {
