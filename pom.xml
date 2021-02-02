@@ -6,7 +6,7 @@
 	<parent>
     <groupId>org.planit.parentpom</groupId>
     <artifactId>PLANitParentPom</artifactId>
-		<version>0.1.1a1</version>
+		<version>0.2.0</version>
 	</parent>
 
 	<groupId>org.planit.osm</groupId>
