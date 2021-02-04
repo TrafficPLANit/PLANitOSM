@@ -18,7 +18,7 @@ import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
 import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
@@ -41,7 +41,10 @@ public class PlanitOsmSettings {
   protected PlanitOsmRailwaySettings osmRailwaySettings;
   
   /** all settings specific to osm highway tags*/
-  protected PlanitOsmHighwaySettings osmHighwaySettings;   
+  protected PlanitOsmHighwaySettings osmHighwaySettings; 
+  
+  /** all settings specific to osm (pt) transfer infrastructure related tags */
+  protected PlanitOsmTransferSettings osmTransferSettings;
   
   /** the country we are importing for (if any) */
   protected final String countryName;
@@ -185,7 +188,7 @@ public class PlanitOsmSettings {
     if(!hasMappedMode) {
       if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
         osmHighwaySettings.deactivateOsmHighwayType(osmWayValue);
-      }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && isRailwayParserActive()){
+      }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)){
         osmRailwaySettings.deactivateOsmRailwayType(osmWayValue);
       }
     } 
@@ -247,25 +250,59 @@ public class PlanitOsmSettings {
   }
   
   /** activate the parsing of railways
-   * @param activate when true activate railway parsing, when false deactive and reset all existing settings
-   * @return railway settings
+   * @param activate when true activate railway parsing, when false deactivate
+   * @return railway settings that are activated, null when deactivated
    */
   public PlanitOsmRailwaySettings activateRailwayParser(boolean activate) {
     osmRailwaySettings.activateParser(activate);
-    if(isRailwayParserActive()) {
-      return osmRailwaySettings;  
-    }else {
-      return null;
-    }
+    return getRailwaySettings();      
   }
+  
+  /** activate the parsing of highways
+   * @param activate when true activate highway parsing, when false deactivate
+   * @return highway settings that are activated, null when deactivated
+   */
+  public PlanitOsmHighwaySettings activateHighwayParser(boolean activate) {
+    osmHighwaySettings.activateParser(activate);
+    return getHighwaySettings();
+  } 
+  
+  /** activate the parsing of (public transport) transfer infrastructure (stops, poles, platforms, etc.) as
+   * PLANit transfer zones.
+   * 
+   * @param activate when true activate transfer parsing, when false deactivate
+   * @return transfer settings that are activated, null when deactivated
+   */
+  public PlanitOsmTransferSettings activateTransferInfrastructureParser(boolean activate) {
+    osmTransferSettings.activateParser(activate);
+    return getTransferSettings();      
+  }  
+  
+  
   
   /** Verify if railway parser is active
    * 
-   * @return ture when active false otherwise
+   * @return true when active false otherwise
    */
   public boolean isRailwayParserActive() {
     return osmRailwaySettings.isParserActive();
   }
+  
+  /** Verify if railway parser is active
+   * 
+   * @return true when active false otherwise
+   */
+  public boolean isHighwayParserActive() {
+    return osmHighwaySettings.isParserActive();
+  }  
+  
+  /** Verify if transfer parser is active
+   * 
+   * @return true when active false otherwise
+   */
+  public boolean isTransferParserActive() {
+    return osmTransferSettings.isParserActive();
+  }    
 
   /**
    * chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
@@ -288,6 +325,8 @@ public class PlanitOsmSettings {
    * explicitly exclude all osmWay types that are included but have no more activated modes due to deactivation of their default assigned modes.
    * Doing so avoids the reader to log warnings that supported way types cannot be injected in the network because they
    * have no viable modes attached
+   * 
+   * :TODO move somewhere else, not used from perspective of user
    */
   public void excludeOsmWayTypesWithoutActivatedModes() {
     Set<String> originallySupportedTypes = osmHighwaySettings.highwayTypeConfiguration.setOfActivatedTypes();
@@ -300,7 +339,7 @@ public class PlanitOsmSettings {
       originallySupportedTypes = osmRailwaySettings.railwayTypeConfiguration.setOfActivatedTypes();
       for(String supportedRailWayType : originallySupportedTypes) {
         Collection<String> allowedOsmModes = osmRailwaySettings.collectAllowedOsmRailwayModes(supportedRailWayType);
-        excludeOsmWayTypesWithoutModes(OsmRailWayTags.RAILWAY, supportedRailWayType, allowedOsmModes);      
+        excludeOsmWayTypesWithoutModes(OsmRailwayTags.RAILWAY, supportedRailWayType, allowedOsmModes);      
       }       
     }   
   }      
@@ -337,10 +376,10 @@ public class PlanitOsmSettings {
   public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags) throws PlanItException {
     if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
       return osmHighwaySettings.getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.HIGHWAY));   
-    }else if(tags.containsKey(OsmRailWayTags.RAILWAY) && isRailwayParserActive()){
-      return osmRailwaySettings.getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailWayTags.RAILWAY));
+    }else if(tags.containsKey(OsmRailwayTags.RAILWAY)){
+      return osmRailwaySettings.getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.RAILWAY));
     }else {
-      throw new PlanItException("no default speed limit available, tags do not contain highway or railway key");
+      throw new PlanItException("no default speed limit available, tags do not contain activated highway or railway key");
     }
   }   
 
@@ -362,7 +401,7 @@ public class PlanitOsmSettings {
    */
   public Mode getMappedPlanitMode(final String osmMode) {
     Mode theMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
-    if(theMode == null && isRailwayParserActive()) {
+    if(theMode == null) {
       theMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
     return theMode;
@@ -374,7 +413,7 @@ public class PlanitOsmSettings {
    */
   public boolean hasMappedPlanitMode(final String osmMode) {
     Mode mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);;
-    if(mappedMode == null && isRailwayParserActive()) {
+    if(mappedMode == null) {
       mappedMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
     return mappedMode != null;
@@ -472,9 +511,7 @@ public class PlanitOsmSettings {
    */
   public void deactivateAllOsmWayTypes() {    
     osmHighwaySettings.highwayTypeConfiguration.deactivateAll();
-    if(isRailwayParserActive()) {
-      osmRailwaySettings.deactivateAllOsmRailWayTypes();
-    }
+    osmRailwaySettings.deactivateAllOsmRailWayTypes();
   }
 
   /** deactive all osm way types except the ones indicated, meaning that if the ones passed in
@@ -486,7 +523,7 @@ public class PlanitOsmSettings {
     for(String osmWayType : Arrays.asList(osmWaytypes)) {
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
         osmHighwaySettings.activateOsmHighwayWayTypes(osmWayType);
-      }else if(isRailwayParserActive() && OsmRailWayTags.isRailBasedRailway(osmWayType)) {
+      }else if(OsmRailwayTags.isRailBasedRailway(osmWayType)) {
         osmRailwaySettings.activateOsmRailwayType(osmWayType);
       }
     }
@@ -538,18 +575,25 @@ public class PlanitOsmSettings {
   }
 
   /** provide railway specific settings
-   * @return railway settings 
+   * @return railway settings , null when not activated
    */
   public PlanitOsmRailwaySettings getRailwaySettings() {
-    return osmRailwaySettings;
+    return isRailwayParserActive() ? osmRailwaySettings : null ;
   }
   
   /** provide highway specific settings
-   * @return highway settings 
+   * @return highway settings , null when not activated
    */
   public PlanitOsmHighwaySettings getHighwaySettings() {
-    return osmHighwaySettings;
+    return isHighwayParserActive() ? osmHighwaySettings : null ;
   }
+  
+  /** provide (pt) transfer infrastructure specific settings
+   * @return transfer settings, null when not activated
+   */
+  public PlanitOsmTransferSettings getTransferSettings() {
+    return isTransferParserActive() ? osmTransferSettings : null ;
+  }  
   
   /**
    * Allows access to the current planit infrastructure layer configuration which maps planit modes

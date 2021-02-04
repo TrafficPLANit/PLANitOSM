@@ -1,0 +1,75 @@
+package org.planit.osm.tags;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+/**
+ * Tags related specifically to public transport infrastructure and services for the OSM PTv2 tagging scheme. 
+ * This tagging scheme mainly relies on public_transport=* key although it is compatible with the Ptv1 scheme. 
+ * 
+ * @author markr
+ *
+ */
+public class OsmPtv2Tags {
+  
+  /**
+   * all public_transport=* related value tags that pertain to public transport Ptv2 scheme
+   */
+  private static final Set<String> PTV2_VALUE_TAGS = new HashSet<String>();
+      
+  /**
+   * populate the pt highway value tags
+   */
+  private static void populateOsmPublicTransportValueTags() {
+    PTV2_VALUE_TAGS.add(PLATFORM);
+    PTV2_VALUE_TAGS.add(STATION);
+    PTV2_VALUE_TAGS.add(STOP_AREA);
+    PTV2_VALUE_TAGS.add(STOP_POSITION);    
+  }  
+  
+  
+  static {
+    populateOsmPublicTransportValueTags();
+  }     
+  
+  /* KEY */ 
+  
+  /** all Ptv2 scheme tags use the public_transport=* key */
+  public static final String PUBLIC_TRANSPORT = "public_transport";
+  
+  /* VALUES */
+  
+  
+  /** The place where passengers are waiting for the public transport vehicles, identical to the Ptv1 tag value */
+  public static final String PLATFORM = OsmPtv1Tags.PLATFORM;
+  
+  /** A station is an area designed to access public transport, identical to Ptv1 tag value */
+  public static final String STATION = OsmPtv1Tags.STATION;  
+  
+  /** A relation that contains all elements of a train, subway, monorail, tram, bus, trolleybus, aerialway, or ferry stop */
+  public static final String STOP_AREA = "stop_area";
+  
+  /** The position on the street or rails where a public transport vehicle stops */
+  public static final String STOP_POSITION = "stop_position";
+        
+  /** collect the value tags as they are currently registered
+   * 
+   * @return value tags
+   */
+  public static final Set<String> getPtv2ValueTags(){
+    return PTV2_VALUE_TAGS;
+  }
+  
+  /** Verify if any of the tags is a match for the supported Ptv2 scheme tags
+   * 
+   * @param tags to check against
+   * @return true when present, false otherwise
+   */
+  public static boolean hasPtv2ValueTag(final Map<String, String> tags) {
+    if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+      return PTV2_VALUE_TAGS.contains(tags.get(OsmHighwayTags.HIGHWAY));
+    }
+    return false;
+  }  
+}

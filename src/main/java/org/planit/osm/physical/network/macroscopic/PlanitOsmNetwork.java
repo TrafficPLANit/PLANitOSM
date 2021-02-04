@@ -17,7 +17,7 @@ import org.planit.osm.settings.PlanitOsmHighwaySettings;
 import org.planit.osm.settings.PlanitOsmRailwaySettings;
 import org.planit.osm.settings.PlanitOsmSettings;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.util.PlanitOsmConstants;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
@@ -122,19 +122,19 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmRailWayLinkSegmentType(String railwayTypeValue, double maxSpeed, Collection<Mode> modes) throws PlanItException {
     /* create link segment type for the OSM type */
     switch (railwayTypeValue) {
-      case OsmRailWayTags.FUNICULAR:
+      case OsmRailwayTags.FUNICULAR:
         return createFunicular(maxSpeed, modes);
-      case OsmRailWayTags.LIGHT_RAIL:
+      case OsmRailwayTags.LIGHT_RAIL:
         return createLightRail(maxSpeed, modes);
-      case OsmRailWayTags.MONO_RAIL:
+      case OsmRailwayTags.MONO_RAIL:
         return createMonoRail(maxSpeed, modes);
-      case OsmRailWayTags.NARROW_GAUGE:
+      case OsmRailwayTags.NARROW_GAUGE:
         return createNarrowGauge(maxSpeed, modes);
-      case OsmRailWayTags.RAIL:
+      case OsmRailwayTags.RAIL:
         return createRail(maxSpeed, modes);
-      case OsmRailWayTags.SUBWAY:
+      case OsmRailwayTags.SUBWAY:
         return createSubway(maxSpeed, modes);
-      case OsmRailWayTags.TRAM:
+      case OsmRailwayTags.TRAM:
         return createTram(maxSpeed, modes);        
       default:
         throw new PlanItException(
@@ -522,7 +522,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createFunicular(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.FUNICULAR, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.FUNICULAR, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -535,7 +535,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createLightRail(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.LIGHT_RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.LIGHT_RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -548,7 +548,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createMonoRail(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.MONO_RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.MONO_RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -561,7 +561,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createNarrowGauge(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.NARROW_GAUGE, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.NARROW_GAUGE, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -574,7 +574,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createRail(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -587,7 +587,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createSubway(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.SUBWAY, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.SUBWAY, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   } 
   
   /**
@@ -600,7 +600,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTram(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailWayTags.TRAM, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.TRAM, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
    
   /**
@@ -646,13 +646,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   /** the supported types for which we have default rail link segment type settings available */
   static {
     supportedOsmRailLinkSegmentTypes = new HashSet<String>();
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.FUNICULAR);
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.LIGHT_RAIL);
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.MONO_RAIL);
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.NARROW_GAUGE);
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.RAIL);
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.SUBWAY);
-    supportedOsmRailLinkSegmentTypes.add(OsmRailWayTags.TRAM);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.FUNICULAR);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.LIGHT_RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.MONO_RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.NARROW_GAUGE);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.RAIL);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.SUBWAY);
+    supportedOsmRailLinkSegmentTypes.add(OsmRailwayTags.TRAM);
   }  
      
   /**
@@ -670,7 +670,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Collection<String> allowedOsmModes = null;
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       allowedOsmModes =  settings.getHighwaySettings().collectAllowedOsmHighwayModes(osmWayValue);
-    }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey)) {
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)) {
       allowedOsmModes =  settings.getRailwaySettings().collectAllowedOsmRailwayModes(osmWayValue);
     }
     return settings.collectMappedPlanitModes(allowedOsmModes);
@@ -815,7 +815,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<String,String> highwayKeyValueMap = 
         settings.getHighwaySettings().getSetOfActivatedOsmHighwayTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
     Map<String,String> railwayKeyValueMap = 
-        settings.getRailwaySettings().getSetOfActivatedOsmRailwayTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmRailWayTags.RAILWAY));
+        settings.getRailwaySettings().getSetOfActivatedOsmRailwayTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmRailwayTags.RAILWAY));
     Map<String,String> combinedWayMap = new HashMap<String,String>();
     combinedWayMap.putAll(highwayKeyValueMap);
     combinedWayMap.putAll(railwayKeyValueMap);    
@@ -835,7 +835,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         
         if(OsmHighwayTags.isHighwayKeyTag(osmWayKey) && OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayValueToUse)) {
           linkSegmentTypesByLayer = createOsmCompatibleRoadLinkSegmentTypeByLayer(osmWayValueToUse, settings);
-        }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey) && OsmRailWayTags.isRailBasedRailway(osmWayValueToUse)) {             
+        }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) && OsmRailwayTags.isRailBasedRailway(osmWayValueToUse)) {             
           linkSegmentTypesByLayer = createOsmCompatibleRailLinkSegmentTypeByLayer(osmWayValueToUse, settings);
         }else {
           LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));

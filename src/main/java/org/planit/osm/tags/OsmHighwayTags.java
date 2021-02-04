@@ -5,7 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * OSM "highway" values, e.g. highway=<option>
+ * OSM "highway" values, e.g. highway=<option>. Tags specific to the Ptv1 scheme are collected via the OsmPtv1 tags class
+ * and integrated in the collections managed by this class.
  * 
  * @author markr
  *
@@ -71,9 +72,10 @@ public class OsmHighwayTags {
      * </ul>
      */
     private static void populateAreaBasedOsmHighwayValueTags() {
-      AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(PLATFORM);
       AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(SERVICES);
-      AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(REST_AREA);    
+      AREABASED_OSM_HIGHWAY_VALUE_TAGS.add(REST_AREA);
+      AREABASED_OSM_HIGHWAY_VALUE_TAGS.addAll(OsmPtv1Tags.getAreaBasedHighwayValueTags());
+      AREABASED_OSM_HIGHWAY_VALUE_TAGS.addAll(OsmPtv1Tags.getAreaBasedRailwayValueTags());
     }      
     
     /**
@@ -89,9 +91,7 @@ public class OsmHighwayTags {
      * @return the default created unsupported types
      */
     private static void populateNonRoadBasedOsmHighwayTags(){
-      NON_ROADBASED_HIGHWAY_VALUE_TAGS.addAll(AREABASED_OSM_HIGHWAY_VALUE_TAGS);
-      
-      NON_ROADBASED_HIGHWAY_VALUE_TAGS.add(OsmHighwayTags.BUS_STOP);
+      NON_ROADBASED_HIGHWAY_VALUE_TAGS.addAll(AREABASED_OSM_HIGHWAY_VALUE_TAGS);      
     }      
     
     static {
@@ -166,16 +166,13 @@ public class OsmHighwayTags {
     
     /* area based highway value tags */
     
+    /** area based non-road tag */
     private static final String SERVICES = "services";
 
+    /** area based non-road tag */
     private static final String REST_AREA = "rest_area";
     
-    public static final String PLATFORM =  OsmPublicTransportTags.PLATFORM;    
-        
-    /* other highway types that do not signify a road or link but are valid values*/    
- 
-    public static final String BUS_STOP = OsmPublicTransportTags.BUS_STOP;
-    
+            
     /** verify if passed in tag is indeed a highway tag that represents a road like piece of infrastructure
      * 
      * @param highwayTag to verify

@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 import org.planit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.planit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsCategory;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
@@ -82,14 +82,14 @@ public class PlanitOsmRailwaySettings {
     
     /* add default mapping */
     {
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.PRESERVED, planitModes.get(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.RAIL, planitModes.get(PredefinedModeType.TRAIN));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
-      osmRailMode2PlanitModeMap.put(OsmRailWayTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.PRESERVED, planitModes.get(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.RAIL, planitModes.get(PredefinedModeType.TRAIN));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
+      osmRailMode2PlanitModeMap.put(OsmRailwayTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
       
       /* ensure external id is set based on OSM name */
       osmRailMode2PlanitModeMap.forEach( (osmMode, planitMode) -> PlanitOsmSettings.addToModeExternalId(planitMode, osmMode));
@@ -190,8 +190,8 @@ public class PlanitOsmRailwaySettings {
    */  
   public Double getDefaultSpeedLimitByOsmRailwayType(Map<String, String> tags) throws PlanItException {
     String osmWayKey = null;
-    if(tags.containsKey(OsmRailWayTags.RAILWAY)){
-      osmWayKey = OsmRailWayTags.RAILWAY;      
+    if(tags.containsKey(OsmRailwayTags.RAILWAY)){
+      osmWayKey = OsmRailwayTags.RAILWAY;      
     }else {
       throw new PlanItException("no railway key contained in provided osmTags when collecting default speed limit by OsmRailwayType");
     }
@@ -204,7 +204,7 @@ public class PlanitOsmRailwaySettings {
    * @param planitMode to map it to
    */
   public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
-    if(!OsmRailWayTags.isRailBasedRailway(osmRailMode)) {
+    if(!OsmRailwayTags.isRailBasedRailway(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -222,7 +222,7 @@ public class PlanitOsmRailwaySettings {
    * @param osmRoadMode to remove
    */
   public void removeOsmRailMode2PlanitModeMapping(String osmRailMode) {
-    if(!OsmRailWayTags.isRailBasedRailway(osmRailMode)) {
+    if(!OsmRailwayTags.isRailBasedRailway(osmRailMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
@@ -236,7 +236,7 @@ public class PlanitOsmRailwaySettings {
    * 
    */
   public void deactivateAllRailModes() {
-    Collection<String> allRailModes = OsmRailWayTags.getSupportedRailModeTags();
+    Collection<String> allRailModes = OsmRailwayTags.getSupportedRailModeTags();
     for(String osmRailMode : allRailModes) {
       removeOsmRailMode2PlanitModeMapping(osmRailMode);
     }
@@ -248,7 +248,7 @@ public class PlanitOsmRailwaySettings {
    * @return mapped PLANit mode, if not available null is returned
    */
   public Mode getMappedPlanitRailMode(final String osmMode) {
-    if(OsmRailWayTags.isRailBasedRailway(osmMode)) {
+    if(OsmRailwayTags.isRailBasedRailway(osmMode)) {
       return this.osmRailMode2PlanitModeMap.get(osmMode);
     }
     return null;
@@ -270,9 +270,9 @@ public class PlanitOsmRailwaySettings {
    */
   public Collection<String> collectAllowedOsmRailwayModes(String osmRailwayValueType) {
     Set<String> allowedModes = null; 
-    if(OsmRailWayTags.isRailBasedRailway(osmRailwayValueType)) {
+    if(OsmRailwayTags.isRailBasedRailway(osmRailwayValueType)) {
       /* while rail has no categories that complicate identifying mode support, we utilise the same approach for consistency and future flexibility */
-      allowedModes =  OsmRailWayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessRailwayDefaults.isAllowed(osmRailwayValueType, railModeTag)).collect(Collectors.toSet());
+      allowedModes =  OsmRailwayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessRailwayDefaults.isAllowed(osmRailwayValueType, railModeTag)).collect(Collectors.toSet());
     }else {
       LOGGER.warning(String.format("unrecognised osm railway railway=%s, no allowed modes can be identified", osmRailwayValueType));
     }

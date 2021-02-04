@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 
 /**
  * configure and retrieve the default configuration for the number of lanes for various osm way types (these are the total lanes on a link covering both directions.
@@ -146,7 +146,7 @@ public class OsmLaneDefaults implements Cloneable {
   public Integer getDefaultDirectionalLanesByWayType(String osmWayKey, String osmWayValue) {
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       return getDefaultDirectionalLanesByHighwayType(osmWayValue);
-    }else if(OsmRailWayTags.isRailwayKeyTag(osmWayKey)) {
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)) {
       return getDefaultDirectionalRailwayTracks();
     }else {
       LOGGER.warning(String.format("unrecognised OSM way key %s, cannot collect default directional lanes",osmWayKey));

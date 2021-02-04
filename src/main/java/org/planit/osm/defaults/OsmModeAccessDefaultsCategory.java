@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.locale.CountryNames;
@@ -71,7 +71,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
           if(logChanges) {
             LOGGER.info(String.format("added additional road mode %s to highway:%s", osmModeValueTag,type));
           }
-        }else if(OsmRailWayTags.isRailBasedRailway(osmModeValueTag)){
+        }else if(OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
           /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can add an allowed rail mode to a highway type */
          allowedModesByType.get(type).add(osmModeValueTag);
           if(logChanges) {
@@ -81,10 +81,10 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
           LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to allowed modes access defaults", osmModeValueTag));
         }
       } 
-    }else if(OsmRailWayTags.isRailBasedRailway(type)) {
+    }else if(OsmRailwayTags.isRailBasedRailway(type)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
-        if( OsmRailWayTags.isRailBasedRailway(osmModeValueTag)){
+        if( OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
           allowedModesByType.putIfAbsent(type, new HashSet<>());
           allowedModesByType.get(type).add(osmModeValueTag);
           if(logChanges) {
@@ -186,7 +186,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
             if(logChanges) {
               LOGGER.info(String.format("removed allowed road mode %s from highway:%s", osmModeValueTag, wayType));
             }
-          }else if(OsmRailWayTags.isRailBasedRailway(osmModeValueTag)){
+          }else if(OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
             /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can remove an allowed rail mode to a highway type */
            allowedModeCategoriesByType.get(wayType).remove(osmModeValueTag);
             if(logChanges) {
@@ -197,10 +197,10 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
           }
         }
       } 
-    }else if(OsmRailWayTags.isRailBasedRailway(wayType)) {
+    }else if(OsmRailwayTags.isRailBasedRailway(wayType)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
-        if(allowedModesByType.containsKey(wayType) && OsmRailWayTags.isRailBasedRailway(osmModeValueTag)){          
+        if(allowedModesByType.containsKey(wayType) && OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){          
           allowedModesByType.get(wayType).remove(osmModeValueTag); 
           if(logChanges) {
             LOGGER.info(String.format("removing allowed rail mode %s from railway:%s", osmModeValueTag, wayType));

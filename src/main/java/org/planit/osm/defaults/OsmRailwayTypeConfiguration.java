@@ -4,7 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 
 /**
@@ -54,10 +54,10 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultActivatedOsmRailwayTypes() throws PlanItException {
-    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.LIGHT_RAIL);
-    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.RAIL);
-    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.SUBWAY);
-    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.TRAM);    
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.LIGHT_RAIL);
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.RAIL);
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.SUBWAY);
+    DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.TRAM);    
   }
   
   /**
@@ -83,16 +83,16 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultDeactivatedOsmRailwayTypes() throws PlanItException {
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.FUNICULAR);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.MONO_RAIL);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.NARROW_GAUGE);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.ABANDONED);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.CONSTRUCTION);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.DISUSED);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.MINIATURE);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.RAZED);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.TURNTABLE);
-    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailWayTags.PROPOSED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.FUNICULAR);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.MONO_RAIL);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.NARROW_GAUGE);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.ABANDONED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.CONSTRUCTION);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.DISUSED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.MINIATURE);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.RAZED);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.TURNTABLE);
+    DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES.add(OsmRailwayTags.PROPOSED);
   }
     
   
@@ -116,7 +116,7 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * Default constructor
    */
   public OsmRailwayTypeConfiguration(){
-    super(OsmRailWayTags.RAILWAY, DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES, DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES);    
+    super(OsmRailwayTags.RAILWAY, DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES, DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES);    
   }
 
 }

@@ -29,7 +29,7 @@ import org.planit.osm.tags.OsmLaneTags;
 import org.planit.osm.tags.OsmOneWayTags;
 import org.planit.osm.tags.OsmPedestrianTags;
 import org.planit.osm.tags.OsmRailFeatureTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmSpeedTags;
@@ -960,8 +960,8 @@ public class PlanitOsmNetworkLayerHandler {
       }
             
     /* convert number of tracks to lanes */
-    }else if(tags.containsKey(OsmRailWayTags.RAILWAY)) {
-      osmWayKey = OsmRailWayTags.RAILWAY;
+    }else if(tags.containsKey(OsmRailwayTags.RAILWAY)) {
+      osmWayKey = OsmRailwayTags.RAILWAY;
       if(tags.containsKey(OsmRailFeatureTags.TRACKS)) {
         /* assumption is that same rail is used in both directions */
         lanesForward = Integer.parseInt(tags.get(OsmRailFeatureTags.TRACKS));

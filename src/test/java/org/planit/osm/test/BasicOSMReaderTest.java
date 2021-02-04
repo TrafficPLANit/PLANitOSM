@@ -12,7 +12,7 @@ import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.network.converter.PlanitOsmReader;
 import org.planit.osm.network.converter.PlanitOsmReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 
 /**
  * basic *.osm and *.osm.pbf reader test
@@ -43,10 +43,10 @@ public class BasicOSMReaderTest {
   }  
 
   /**
-   * test *.osm format parsing on small network
+   * test *.osm format parsing on small network just collecting road infrastructure
    */
   @Test
-  public void osmReadertest() {
+  public void osmReaderRoadInfrastructureTest() {
     try {
       PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_OSM);
       
@@ -57,7 +57,7 @@ public class BasicOSMReaderTest {
       osmReader.getSettings().getHighwaySettings().overwriteOsmHighwayTypeDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
-      osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailWayTags.TRAM);
+      osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
             
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
@@ -70,6 +70,39 @@ public class BasicOSMReaderTest {
       fail();      
     }
   }
+  
+  /**
+   * test *.osm format parsing on small network collecting both road, rail AND stops, platforms, stations, e.g. inter-modal support
+   */
+  @Test
+  public void osmReaderRoadAndPtTest() {
+    try {
+      PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_OSM);
+      
+      /* test out excluding a particular type highway:road from parsing */
+      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+      
+      /* activate railways */
+      osmReader.getSettings().activateRailwayParser(true);
+      /* activate transfer infrastructure */
+      osmReader.getSettings().activateTransferInfrastructureParser(true);
+      
+      /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
+      osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
+            
+      MacroscopicNetwork network = osmReader.read();
+      assertNotNull(network);
+      
+      //TODO: find a way to test the settings had the intended effect
+      
+    }catch(Exception e) {
+      LOGGER.severe(e.getMessage());      
+      e.printStackTrace();
+      fail();      
+    }
+  }  
   
   /**
    * test *.osm.pbf format parsing on small network

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
 import org.planit.utils.locale.CountryNames;
@@ -117,13 +117,13 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @throws PlanItException thrown if error
    */  
   protected static void populateDefaultRailwaySpeedLimits(OsmSpeedLimitDefaultsCategory speedLimitsToPopulate) {
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.FUNICULAR,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.LIGHT_RAIL,    OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.MONO_RAIL,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.NARROW_GAUGE,  OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.RAIL,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.SUBWAY,        OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
-    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailWayTags.TRAM,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);   
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.FUNICULAR,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.LIGHT_RAIL,    OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.MONO_RAIL,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.NARROW_GAUGE,  OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.RAIL,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.SUBWAY,        OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);    
+    speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.TRAM,          OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);   
   }  
   
   /**

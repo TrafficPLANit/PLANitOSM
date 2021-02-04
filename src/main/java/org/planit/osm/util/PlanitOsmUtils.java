@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmSpeedTags;
@@ -156,7 +156,7 @@ public class PlanitOsmUtils {
      * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
      *    is only part of the geometry 
      */
-    if(tags.containsKey(OsmHighwayTags.HIGHWAY) || tags.containsKey(OsmRailWayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
+    if(tags.containsKey(OsmHighwayTags.HIGHWAY) || tags.containsKey(OsmRailwayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
       if(mustEndAtstart) {
         return (osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
       }else {

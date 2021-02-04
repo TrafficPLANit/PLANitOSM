@@ -12,7 +12,7 @@ import org.planit.osm.defaults.OsmHighwayTypeConfiguration;
 import org.planit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -61,6 +61,9 @@ public class PlanitOsmHighwaySettings {
   
   /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area speed limits (or non-urban), default is true */
   protected boolean speedLimitDefaultsBasedOnUrbanArea = DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA;  
+  
+  /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
+  private boolean isParserActive = DEFAULT_HIGHWAYS_PARSER_ACTIVE;  
   
   /**
    * each OSM road mode is mapped to a PLANit mode by default so that the memory model's modes
@@ -161,7 +164,10 @@ public class PlanitOsmHighwaySettings {
   public static String DEFAULT_HIGHWAY_TYPE_WHEN_UNSUPPORTED = OsmHighwayTags.TERTIARY;  
   
   /**  default value whether or not speed limits are based on urban area defaults: true */
-  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;    
+  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;   
+  
+  /** by default the highway parser is activated */
+  public static boolean DEFAULT_HIGHWAYS_PARSER_ACTIVE = true;  
   
   /**
    * 
@@ -412,7 +418,7 @@ public class PlanitOsmHighwaySettings {
     if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmHighwayValueType)){
       /* collect all rail and road modes that are allowed, try all because the mode categories make it difficult to collect individual modes otherwise */
       Set<String> allowedRoadModesOnRoad =  OsmRoadModeTags.getSupportedRoadModeTags().stream().filter( roadModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, roadModeTag)).collect(Collectors.toSet());
-      Set<String> allowedRailModesOnRoad =  OsmRailWayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, railModeTag)).collect(Collectors.toSet());      
+      Set<String> allowedRailModesOnRoad =  OsmRailwayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, railModeTag)).collect(Collectors.toSet());      
       allowedModes = new HashSet<String>();
       allowedModes.addAll(allowedRoadModesOnRoad);
       allowedModes.addAll(allowedRailModesOnRoad);
@@ -443,6 +449,20 @@ public class PlanitOsmHighwaySettings {
    */  
   public void logUnsupportedOsmHighwayTypes() {
     highwayTypeConfiguration.logDeactivatedTypes();
+  }
+  
+  /** set the flag whether or not the highways should be parsed or not
+   * @param activate
+   */
+  public void activateParser(boolean activate) {
+    this.isParserActive = activate;
+  }  
+  
+  /** verifies if the parser for these settings is active or not
+   * @return true if active false otherwise
+   */
+  public boolean isParserActive() {
+    return this.isParserActive;
   }   
 
 }

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailWayTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
@@ -209,13 +209,13 @@ public class OsmModeAccessDefaultsByCountry {
     
     /* FUNICULAR */
     {
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.FUNICULAR, OsmRailWayTags.FUNICULAR);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.LIGHT_RAIL, OsmRailWayTags.LIGHT_RAIL);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.MONO_RAIL, OsmRailWayTags.MONO_RAIL);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.NARROW_GAUGE, OsmRailWayTags.NARROW_GAUGE);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.RAIL, OsmRailWayTags.RAIL);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.SUBWAY, OsmRailWayTags.SUBWAY);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailWayTags.TRAM, OsmRailWayTags.TRAM);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.FUNICULAR, OsmRailwayTags.FUNICULAR);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.LIGHT_RAIL, OsmRailwayTags.LIGHT_RAIL);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.MONO_RAIL, OsmRailwayTags.MONO_RAIL);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.NARROW_GAUGE, OsmRailwayTags.NARROW_GAUGE);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.RAIL, OsmRailwayTags.RAIL);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.SUBWAY, OsmRailwayTags.SUBWAY);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.TRAM, OsmRailwayTags.TRAM);
     }
     
     

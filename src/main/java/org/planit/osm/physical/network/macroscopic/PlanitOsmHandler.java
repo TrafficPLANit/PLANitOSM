@@ -56,6 +56,9 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
   private final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> osmLayerHandlers = new HashMap<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler>();
+  
+  /** dedicated handler for transfer and intermodal component of OSM mapping to PLANit (if any) */
+  private PlanitOsmInterModalHandler osmIntermodalHandler = null;
     
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays;  
@@ -85,18 +88,33 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     return false;
   }                                           
     
-  /** verify if tags represent an highway or railway that is NOT an area and is activated based on the settings
+  /** verify if tags represent an highway or railway that is specifically aimed at road based or railbased infrastructure, e.g.,
+   * asphalt or tracks and NOT an area, platform, stops, etc. and is also activated for parsing based on the settings
+   * 
    * @param tags to verify
    * @return true when activated and highway or railway (not an area), false otherwise
    */
-  private boolean isActivatedHighwayOrRailway(Map<String, String> tags) {
+  private boolean isActivatedRoadOrRailwayBasedInfrastructure(Map<String, String> tags) {
     
-    if(!OsmTags.isArea(tags) && (OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailWayTags.hasRailwayKeyTag(tags))) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+    if(!OsmTags.isArea(tags)) {
+      if(settings.isHighwayParserActive() && OsmHighwayTags.hasHighwayKeyTag(tags)) {
         return settings.getHighwaySettings().isOsmHighwayTypeActivated(tags.get(OsmHighwayTags.HIGHWAY));
-      }else if(OsmRailWayTags.hasRailwayKeyTag(tags)) {
-        return settings.getRailwaySettings().isOsmRailwayTypeActivated(tags.get(OsmRailWayTags.RAILWAY));
+      }else if(settings.isRailwayParserActive() && OsmRailwayTags.hasRailwayKeyTag(tags)) {
+        return settings.getRailwaySettings().isOsmRailwayTypeActivated(tags.get(OsmRailwayTags.RAILWAY));
       }
+    }
+    return false;
+  }  
+  
+  /** verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
+   * and is also activated for parsing based on the related settings
+   * 
+   * @param tags to verify
+   * @return true when activated and present, false otherwise 
+   */  
+  private boolean isActivatedTransferBasedInfrastructure(Map<String, String> tags) {
+    if(settings.isTransferParserActive()) {
+      return osmIntermodalHandler.isTransferBasedInfrastructure(tags);
     }
     return false;
   }  
@@ -113,7 +131,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         
     Map<InfrastructureLayer, Set<Link>> createdLinksByLayer = null;    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
-    if(isActivatedHighwayOrRailway(tags)) {
+    if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
       createdLinksByLayer = handleRawCircularWay(circularOsmWay, tags, 0 /* start at initial index */);
     }
     return createdLinksByLayer;
@@ -288,10 +306,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }
       
     /* highway (road) or railway (rail) */
-    if (OsmHighwayTags.hasHighwayKeyTag(tags)) {
+    if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
       osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;      
-    }else if(OsmRailWayTags.hasRailwayKeyTag(tags)) {
-      osmTypeKeyToUse = OsmRailWayTags.RAILWAY;
+    }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
+      osmTypeKeyToUse = OsmRailwayTags.RAILWAY;
       isHighway = false;
     }
     
@@ -313,7 +331,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       boolean isWayTypeDeactived = isHighway ?
           settings.getHighwaySettings().isOsmHighWayTypeDeactivated(osmTypeValueToUse) :settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
       if(!isWayTypeDeactived) {
-        boolean typeConfigurationMissing = isHighway ? OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse) : OsmRailWayTags.isNonRailBasedRailway(osmTypeValueToUse);         
+        boolean typeConfigurationMissing = isHighway ? OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse) : OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);         
         
         /*... not available event though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
         if(typeConfigurationMissing) {            
@@ -432,6 +450,11 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     return linksByLayer;
   }       
+  
+  private void extractOsmTransferInfrastructure(Map<String, String> tags) {
+    // TODO Auto-generated method stub
+    
+  }  
 
   /**
    * constructor
@@ -466,6 +489,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     
     /* create the supported link segment types on the network */
     network.initialiseInfrastructureLayers(settings.getPlanitInfrastructureLayerConfiguration());
+    
     /* for each layer initialise a handler */
     for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
       MacroscopicPhysicalNetwork macroNetworkLayer = (MacroscopicPhysicalNetwork)networkLayer;
@@ -473,6 +497,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       osmLayerHandlers.put(macroNetworkLayer, layerHandler);
     }
     
+    /* for intermodal/transfer aspects, initialise dedicated handler,if activated */
+    if(settings.isTransferParserActive()) {
+      osmIntermodalHandler = new PlanitOsmInterModalHandler(osmNodes, settings, geoUtils);
+    }
     
     network.createOsmCompatibleLinkSegmentTypes(settings);
     /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupport way types to avoid warnings during parsing */
@@ -510,7 +538,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       try {              
         
         /* only parse ways that are potentially road infrastructure */
-        if(isActivatedHighwayOrRailway(tags)) {
+        if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
           
           /* circular ways special case filter */
           if(PlanitOsmUtils.isCircularOsmWay(osmWay, tags, false)) {          
@@ -525,6 +553,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
             extractOsmWay(osmWay, tags);                    
                         
           }
+        }else if(isActivatedTransferBasedInfrastructure(tags)) {
+          
+          /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
+          extractOsmTransferInfrastructure(tags);
         }
         
       } catch (PlanItException e) {
@@ -534,6 +566,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }
             
   }
+
 
   /** extract the correct link segment type based on the configuration of supported modes, the defaults for the given osm way and any 
    * modifications to the mode access based on the passed in tags of the OSM way
