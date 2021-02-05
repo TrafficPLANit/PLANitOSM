@@ -1,4 +1,4 @@
-package org.planit.osm.settings;
+package org.planit.osm.settings.network;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -92,7 +92,7 @@ public class PlanitOsmRailwaySettings {
       osmRailMode2PlanitModeMap.put(OsmRailwayTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
       
       /* ensure external id is set based on OSM name */
-      osmRailMode2PlanitModeMap.forEach( (osmMode, planitMode) -> PlanitOsmSettings.addToModeExternalId(planitMode, osmMode));
+      osmRailMode2PlanitModeMap.forEach( (osmMode, planitMode) -> PlanitOsmNetworkSettings.addToModeExternalId(planitMode, osmMode));
     }           
   }  
   
@@ -213,7 +213,7 @@ public class PlanitOsmRailwaySettings {
       return;
     }
     osmRailMode2PlanitModeMap.put(osmRailMode, planitMode);
-    PlanitOsmSettings.addToModeExternalId(planitMode,osmRailMode);
+    PlanitOsmNetworkSettings.addToModeExternalId(planitMode,osmRailMode);
   }   
   
   /** remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
@@ -229,7 +229,7 @@ public class PlanitOsmRailwaySettings {
     LOGGER.fine(String.format("osm rail mode %s is deactivated", osmRailMode));
     
     Mode planitMode = osmRailMode2PlanitModeMap.remove(osmRailMode);
-    PlanitOsmSettings.removeFromModeExternalId(planitMode,osmRailMode);
+    PlanitOsmNetworkSettings.removeFromModeExternalId(planitMode,osmRailMode);
   }
   
   /** remove all rail modes from mapping

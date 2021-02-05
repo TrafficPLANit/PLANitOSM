@@ -9,8 +9,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.planit.logging.Logging;
 import org.planit.network.macroscopic.MacroscopicNetwork;
-import org.planit.osm.network.converter.PlanitOsmReader;
-import org.planit.osm.network.converter.PlanitOsmReaderFactory;
+import org.planit.osm.converter.network.PlanitOsmNetworkReader;
+import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 
@@ -48,7 +48,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadInfrastructureTest() {
     try {
-      PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_OSM);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_OSM);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
@@ -77,7 +77,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadAndPtTest() {
     try {
-      PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_OSM);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_OSM);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
@@ -110,7 +110,7 @@ public class BasicOSMReaderTest {
   @Test
   public void pbfReadertest() {
     try {
-      PlanitOsmReader osmReader = PlanitOsmReaderFactory.createReader(SYDNEYCBD_PBF);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_PBF);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {

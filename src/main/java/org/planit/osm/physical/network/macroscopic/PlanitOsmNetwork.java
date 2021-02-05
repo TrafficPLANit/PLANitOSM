@@ -13,9 +13,9 @@ import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.settings.PlanitOsmHighwaySettings;
-import org.planit.osm.settings.PlanitOsmRailwaySettings;
-import org.planit.osm.settings.PlanitOsmSettings;
+import org.planit.osm.settings.network.PlanitOsmHighwaySettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmRailwaySettings;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.util.PlanitOsmConstants;
@@ -666,7 +666,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param settings to collect from
    * @return mappedPLANitModes, empty if no modes are mapped
    */
-  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmSettings settings) {
+  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmNetworkSettings settings) {
     Collection<String> allowedOsmModes = null;
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       allowedOsmModes =  settings.getHighwaySettings().collectAllowedOsmHighwayModes(osmWayValue);
@@ -683,7 +683,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return created (or already existing) default link segment type for the given OSM highway type per layer
    * @throws PlanItException thrown if error
    */
-  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRoadLinkSegmentTypeByLayer(final String osmWayValue, final PlanitOsmSettings settings) throws PlanItException {
+  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRoadLinkSegmentTypeByLayer(final String osmWayValue, final PlanitOsmNetworkSettings settings) throws PlanItException {
     Map<InfrastructureLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null; 
     
     /* only when way type is marked as supported in settings we parse it */
@@ -762,7 +762,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return created (or already existing) default link segment type per layer for the given OSM highway type
    * @throws PlanItException thrown if error
    */
-  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRailLinkSegmentTypeByLayer(final String osmWayValue, final PlanitOsmSettings settings) throws PlanItException {
+  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRailLinkSegmentTypeByLayer(final String osmWayValue, final PlanitOsmNetworkSettings settings) throws PlanItException {
     Map<InfrastructureLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;     
     
     if(!settings.isRailwayParserActive()) {
@@ -809,7 +809,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  protected void createOsmCompatibleLinkSegmentTypes(PlanitOsmSettings settings) throws PlanItException {
+  protected void createOsmCompatibleLinkSegmentTypes(PlanitOsmNetworkSettings settings) throws PlanItException {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 

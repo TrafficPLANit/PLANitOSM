@@ -1,4 +1,4 @@
-package org.planit.osm.settings;
+package org.planit.osm.settings.network;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -133,7 +133,7 @@ public class PlanitOsmHighwaySettings {
       osmRoadMode2PlanitModeMap.put(OsmRoadModeTags.BUS, planitModes.get(PredefinedModeType.BUS));
       
       /* ensure external id is set based on OSM name */
-      osmRoadMode2PlanitModeMap.forEach( (osmMode, planitMode) -> PlanitOsmSettings.addToModeExternalId(planitMode, osmMode));
+      osmRoadMode2PlanitModeMap.forEach( (osmMode, planitMode) -> PlanitOsmNetworkSettings.addToModeExternalId(planitMode, osmMode));
     }
   }  
   
@@ -353,7 +353,7 @@ public class PlanitOsmHighwaySettings {
       return;
     }
     osmRoadMode2PlanitModeMap.put(osmRoadMode, planitMode);
-    PlanitOsmSettings.addToModeExternalId(planitMode, osmRoadMode);
+    PlanitOsmNetworkSettings.addToModeExternalId(planitMode, osmRoadMode);
   }  
   
   /** remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
@@ -369,7 +369,7 @@ public class PlanitOsmHighwaySettings {
     LOGGER.fine(String.format("osm road mode %s is deactivated", osmRoadMode));
     
     Mode planitMode = osmRoadMode2PlanitModeMap.remove(osmRoadMode);
-    PlanitOsmSettings.removeFromModeExternalId(planitMode,osmRoadMode);
+    PlanitOsmNetworkSettings.removeFromModeExternalId(planitMode,osmRoadMode);
   }
   
   

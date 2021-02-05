@@ -18,7 +18,7 @@ import org.locationtech.jts.geom.Point;
 import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.settings.PlanitOsmSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmBicycleTags;
 import org.planit.osm.tags.OsmBusWayTags;
@@ -54,7 +54,7 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
  * Takes care of populating a PLANit layer based on the OSM way information that has been identified
- * as relevant to this layer by the {@link PlanitOsmHandler}
+ * as relevant to this layer by the {@link PlanitOsmNetworkHandler}
  * 
  * @author markr
  *
@@ -67,7 +67,7 @@ public class PlanitOsmNetworkLayerHandler {
   // local members only
   
   /** utility class for profiling this layer for logging purposes */
-  private final PlanitOsmHandlerProfiler profiler;
+  private final PlanitOsmNetworkHandlerProfiler profiler;
   
   /** helper class to deal with parsing tags under the lanesMode tagging scheme for eligible modes */
   private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper = null;
@@ -100,7 +100,7 @@ public class PlanitOsmNetworkLayerHandler {
   private final Map<Long, OsmNode> osmNodes;
   
   /** settings relevant to this parser */
-  private PlanitOsmSettings settings;
+  private PlanitOsmNetworkSettings settings;
   
   /** the network layer to use */
   private MacroscopicPhysicalNetwork networkLayer;  
@@ -578,7 +578,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @param settings to access mapping from osm mdoes to planit modes
    * @return the excluded planit modes supported by the parser in the designated direction
    */
-  private Set<Mode> getExplicitlyExcludedModesOneWayAgnostic(Map<String, String> tags, boolean isForwardDirection, PlanitOsmSettings settings){
+  private Set<Mode> getExplicitlyExcludedModesOneWayAgnostic(Map<String, String> tags, boolean isForwardDirection, PlanitOsmNetworkSettings settings){
     Set<Mode> excludedModes = new HashSet<Mode>();
     
     /* ... roundabout is implicitly one way without being tagged as such, all modes in non-main direction are to be excluded */
@@ -625,7 +625,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @param settings to access mapping from osm mdoes to planit modes
    * @return the included planit modes supported by the parser in the designated direction
    */
-  private Set<Mode> getExplicitlyIncludedModes(Map<String, String> tags, boolean isForwardDirection, PlanitOsmSettings settings) {          
+  private Set<Mode> getExplicitlyIncludedModes(Map<String, String> tags, boolean isForwardDirection, PlanitOsmNetworkSettings settings) {          
     Set<Mode> includedModes = new HashSet<Mode>();     
     
     /* 1) generic mode inclusions INDEPENDNT of ONEWAY tags being present or not*/
@@ -681,7 +681,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @param settings required for access to mode mapping between osm modes and PLANit modes
    * @return the included planit modes supported by the parser in the designated direction
    */
-  private Set<Mode> getExplicitlyExcludedModes(final Map<String, String> tags, final boolean isForwardDirection, final PlanitOsmSettings settings) {    
+  private Set<Mode> getExplicitlyExcludedModes(final Map<String, String> tags, final boolean isForwardDirection, final PlanitOsmNetworkSettings settings) {    
     Set<Mode> excludedModes = new HashSet<Mode>();       
     
     /* 1) generic mode exclusions INDEPENDNT of ONEWAY tags being present or not*/
@@ -1162,7 +1162,7 @@ public class PlanitOsmNetworkLayerHandler {
    * 
    * @return profiler of this layer
    */
-  protected PlanitOsmHandlerProfiler getProfiler() {
+  protected PlanitOsmNetworkHandlerProfiler getProfiler() {
     return this.profiler;
   }
 
@@ -1172,13 +1172,13 @@ public class PlanitOsmNetworkLayerHandler {
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmSettings settings, PlanitJtsUtils geoUtils) {
+  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmNetworkSettings settings, PlanitJtsUtils geoUtils) {
     this.networkLayer = networkLayer;
     this.osmNodes = osmNodes;
     this.geoUtils = geoUtils;
     this.settings = settings;
     
-    this.profiler  = new PlanitOsmHandlerProfiler();
+    this.profiler  = new PlanitOsmNetworkHandlerProfiler();
     
     /* initialise the tagging scheme helpers based on the registered modes */
     if(OsmLanesModeTaggingSchemeHelper.requireLanesModeSchemeHelper(settings, networkLayer)) {

@@ -15,12 +15,12 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
  * @author markr
  *
  */
-public class PlanitOsmHandlerProfiler {
+public class PlanitOsmNetworkHandlerProfiler {
   
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmHandlerProfiler.class.getCanonicalName());  
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkHandlerProfiler.class.getCanonicalName());  
   
   /**
    * track a counter by highway tag of the encountered entities

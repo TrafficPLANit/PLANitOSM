@@ -1,4 +1,4 @@
-package org.planit.osm.settings;
+package org.planit.osm.settings.network;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -29,12 +29,12 @@ import org.planit.utils.mode.Modes;
  * @author markr
  *
  */
-public class PlanitOsmSettings {
+public class PlanitOsmNetworkSettings {
     
   /**
    * The logger
    */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmSettings.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkSettings.class.getCanonicalName());
     
   
   /** all settings specific to osm railway tags */
@@ -216,7 +216,7 @@ public class PlanitOsmSettings {
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
    * @param planitModes to populate based on (default) mapping
    */
-  public PlanitOsmSettings(String countryName, Modes planitModes) {
+  public PlanitOsmNetworkSettings(String countryName, Modes planitModes) {
     this.countryName = countryName;
     
     /* general */
@@ -245,7 +245,7 @@ public class PlanitOsmSettings {
    * @param planitModes to populate based on (default) mapping
    * 
    */  
-  public PlanitOsmSettings(Modes planitModes) {
+  public PlanitOsmNetworkSettings(Modes planitModes) {
     this( "", planitModes);
   }
   

@@ -8,7 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.planit.osm.settings.PlanitOsmSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 
@@ -35,18 +35,18 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
  * 
  *
  */
-public class PlanitOsmHandler extends DefaultOsmHandler {
+public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
 
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmHandler.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkHandler.class.getCanonicalName());
   
   /** the network to populate */
   private final PlanitOsmNetwork network;
 
   /** the settings to adhere to */
-  private final PlanitOsmSettings settings;
+  private final PlanitOsmNetworkSettings settings;
 
   /** utilities for geographic information */
   private final PlanitJtsUtils geoUtils;
@@ -56,24 +56,10 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
   private final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> osmLayerHandlers = new HashMap<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler>();
-  
-  /** dedicated handler for transfer and intermodal component of OSM mapping to PLANit (if any) */
-  private PlanitOsmInterModalHandler osmIntermodalHandler = null;
-    
+      
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays;  
-  
-  /**
-   * reset the contents, mainly to free up unused resources 
-   */
-  private void reset() {
-    osmCircularWays.clear();    
-    osmNodes.clear();
-    /* reset layer handlers as well */
-    osmLayerHandlers.forEach( (layer, handler) -> {handler.reset();});
-    osmLayerHandlers.clear();
-  }
-  
+    
   /** find layers where the node is active
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
@@ -105,19 +91,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }
     return false;
   }  
-  
-  /** verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
-   * and is also activated for parsing based on the related settings
-   * 
-   * @param tags to verify
-   * @return true when activated and present, false otherwise 
-   */  
-  private boolean isActivatedTransferBasedInfrastructure(Map<String, String> tags) {
-    if(settings.isTransferParserActive()) {
-      return osmIntermodalHandler.isTransferBasedInfrastructure(tags);
-    }
-    return false;
-  }  
+   
   
   /**
    * now parse the remaining circular osmWays, which by default are converted into multiple links/linksegments for each part of
@@ -449,19 +423,14 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
     }    
     
     return linksByLayer;
-  }       
-  
-  private void extractOsmTransferInfrastructure(Map<String, String> tags) {
-    // TODO Auto-generated method stub
-    
-  }  
+  }         
 
   /**
    * constructor
    * 
    * @param settings for the handler
    */
-  public PlanitOsmHandler(final PlanitOsmNetwork network, final PlanitOsmSettings settings) {
+  public PlanitOsmNetworkHandler(final PlanitOsmNetwork network, final PlanitOsmNetworkSettings settings) {
     this.network = network;
     
     /* gis initialisation */
@@ -496,12 +465,7 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
       PlanitOsmNetworkLayerHandler layerHandler = new PlanitOsmNetworkLayerHandler(macroNetworkLayer, osmNodes, settings, geoUtils);
       osmLayerHandlers.put(macroNetworkLayer, layerHandler);
     }
-    
-    /* for intermodal/transfer aspects, initialise dedicated handler,if activated */
-    if(settings.isTransferParserActive()) {
-      osmIntermodalHandler = new PlanitOsmInterModalHandler(osmNodes, settings, geoUtils);
-    }
-    
+        
     network.createOsmCompatibleLinkSegmentTypes(settings);
     /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupport way types to avoid warnings during parsing */
     settings.excludeOsmWayTypesWithoutActivatedModes();
@@ -553,10 +517,6 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
             extractOsmWay(osmWay, tags);                    
                         
           }
-        }else if(isActivatedTransferBasedInfrastructure(tags)) {
-          
-          /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
-          extractOsmTransferInfrastructure(tags);
         }
         
       } catch (PlanItException e) {
@@ -624,9 +584,18 @@ public class PlanitOsmHandler extends DefaultOsmHandler {
         
     LOGGER.info(" OSM basic network parsing...DONE");
 
-    /* free memory */
-    reset();
   }
+  
+  /**
+   * reset the contents, mainly to free up unused resources 
+   */
+  public void reset() {
+    osmCircularWays.clear();    
+    osmNodes.clear();
+    /* reset layer handlers as well */
+    osmLayerHandlers.forEach( (layer, handler) -> {handler.reset();});
+    osmLayerHandlers.clear();
+  }  
 
 
 }

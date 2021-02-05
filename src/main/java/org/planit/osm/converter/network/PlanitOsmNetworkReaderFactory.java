@@ -1,4 +1,4 @@
-package org.planit.osm.network.converter;
+package org.planit.osm.converter.network;
 
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.id.IdGroupingToken;
@@ -8,38 +8,38 @@ import org.planit.utils.id.IdGroupingToken;
  * @author markr
  *
  */
-public class PlanitOsmReaderFactory {
+public class PlanitOsmNetworkReaderFactory {
   
   /** Create a PLANitOSMReader which will create its own macroscopic network and non-locale specific defaults for any right hand driving country
    * 
-   * @param inputFuile to use
+   * @param inputFile to use
    * @return create osm reader
    */
-  public static PlanitOsmReader createReader(String inputFile) {
-    return new PlanitOsmReader(inputFile, "", new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));    
+  public static PlanitOsmNetworkReader create(String inputFile) {
+    return new PlanitOsmNetworkReader(inputFile, "", new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));    
   }  
   
   /** Create a PLANitOSMReader which will create its own macroscopic network
    * 
-   * @param inputFuile to use
+   * @param inputFile to use
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @return create osm reader
    */
-  public static PlanitOsmReader createReader(String inputFile, String countryName) {
-    return new PlanitOsmReader(inputFile, countryName, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));    
+  public static PlanitOsmNetworkReader create(String inputFile, String countryName) {
+    return new PlanitOsmNetworkReader(inputFile, countryName, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));    
   }
   
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
-   * @param inputFuile to use
+   * @param inputFile to use
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @param osmNetworkToPopulate the network to populate
    * @return create osm reader
    */
-  public static PlanitOsmReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
-    return new PlanitOsmReader(inputFile, countryName, osmNetworkToPopulate);    
+  public static PlanitOsmNetworkReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
+    return new PlanitOsmNetworkReader(inputFile, countryName, osmNetworkToPopulate);    
   }  
   
 }

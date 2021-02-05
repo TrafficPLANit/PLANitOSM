@@ -1,4 +1,4 @@
-package org.planit.osm.settings;
+package org.planit.osm.settings.network;
 
 /**
  * Capture all the user configurable settings regarding how to
