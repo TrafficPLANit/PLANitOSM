@@ -8,11 +8,16 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.planit.logging.Logging;
+import org.planit.network.InfrastructureNetwork;
 import org.planit.network.macroscopic.MacroscopicNetwork;
+import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReader;
+import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReaderFactory;
 import org.planit.osm.converter.network.PlanitOsmNetworkReader;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
+import org.planit.utils.misc.Pair;
+import org.planit.zoning.Zoning;
 
 /**
  * basic *.osm and *.osm.pbf reader test
@@ -77,23 +82,28 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadAndPtTest() {
     try {
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_OSM);
+      PlanitOsmIntermodalReader osmReader = PlanitOsmIntermodalReaderFactory.create(SYDNEYCBD_OSM);
       
       /* test out excluding a particular type highway:road from parsing */
-      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+      osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+      osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+      osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
       
       /* activate railways */
-      osmReader.getSettings().activateRailwayParser(true);
-      /* activate transfer infrastructure */
-      osmReader.getSettings().activateTransferInfrastructureParser(true);
+      osmReader.getNetworkSettings().activateRailwayParser(true);
+                  
+      Pair<InfrastructureNetwork, Zoning> resultPair = osmReader.read();
+      MacroscopicNetwork network = (MacroscopicNetwork) resultPair.first();
+      Zoning zoning = resultPair.second();
       
-      /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
-      osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
-            
-      MacroscopicNetwork network = osmReader.read();
+      
       assertNotNull(network);
+      assertNotNull(zoning);
+      
+      assertFalse(network.infrastructureLayers.isNoLayers());
+      assertFalse(network.infrastructureLayers.getFirst().isEmpty());
+      assertTrue(zoning.odZones.isEmpty());
+      assertFalse(zoning.transferZones.isEmpty());
       
       //TODO: find a way to test the settings had the intended effect
       

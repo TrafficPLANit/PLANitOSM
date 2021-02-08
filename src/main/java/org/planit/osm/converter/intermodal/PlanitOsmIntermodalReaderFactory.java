@@ -47,7 +47,7 @@ public class PlanitOsmIntermodalReaderFactory {
    */
   public static PlanitOsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
     PlanitOsmNetworkReader networkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
-    PlanitOsmZoningReader zoningReader = PlanitOsmZoningReaderFactory.create(inputFile, osmNetworkToPopulate);
+    PlanitOsmZoningReader zoningReader = PlanitOsmZoningReaderFactory.create(inputFile, networkReader.getSettings(), osmNetworkToPopulate);
     return new PlanitOsmIntermodalReader( networkReader, zoningReader);      
   }  
   

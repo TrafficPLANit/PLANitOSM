@@ -8,8 +8,9 @@ package org.planit.osm.util;
  */
 public enum OsmPtVersionScheme {
 
-  v1("Ptv1"),
-  v2("Ptv2");
+  VERSION_1("Ptv1"),
+  VERSION_2("Ptv2"),
+  NONE("none");
   
   
   /**

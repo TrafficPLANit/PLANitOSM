@@ -67,9 +67,18 @@ public class OsmPtv2Tags {
    * @return true when present, false otherwise
    */
   public static boolean hasPtv2ValueTag(final Map<String, String> tags) {
-    if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-      return PTV2_VALUE_TAGS.contains(tags.get(OsmHighwayTags.HIGHWAY));
+    if(OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
+      return PTV2_VALUE_TAGS.contains(tags.get(PUBLIC_TRANSPORT));
     }
     return false;
+  }
+
+  /** Verify if tags contain "public_transport" key tag
+   * 
+   * @param tags to check
+   * @return true when present, false otherwise
+   */
+  public static boolean hasPublicTransportKeyTag(Map<String, String> tags) {
+    return tags.containsKey(PUBLIC_TRANSPORT);
   }  
 }

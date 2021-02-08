@@ -18,7 +18,7 @@ public class PlanitOsmTransferSettings {
   
   /** Constructor
   */
-  protected PlanitOsmTransferSettings() {
+  public PlanitOsmTransferSettings() {
   }    
   
   /** set the flag whether or not the highways should be parsed or not

@@ -428,10 +428,11 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   /**
    * constructor
    * 
+   * @param networkToPopulate the network to populate
    * @param settings for the handler
    */
-  public PlanitOsmNetworkHandler(final PlanitOsmNetwork network, final PlanitOsmNetworkSettings settings) {
-    this.network = network;
+  public PlanitOsmNetworkHandler(final PlanitOsmNetwork networkToPopulate, final PlanitOsmNetworkSettings settings) {
+    this.network = networkToPopulate;
     
     /* gis initialisation */
     this.geoUtils = new PlanitJtsUtils(settings.getSourceCRS());

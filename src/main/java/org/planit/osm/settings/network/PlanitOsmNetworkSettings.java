@@ -24,7 +24,8 @@ import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
 
 /**
- * Settings for the OSM reader
+ * All general settings (and subsettings classes) for the OSM reader pertaining to parsing  network infrastructure.
+ * contains additional settings for highway and railway (e.g., highway settings and reailway settings members, respectively).
  * 
  * @author markr
  *
@@ -42,9 +43,6 @@ public class PlanitOsmNetworkSettings {
   
   /** all settings specific to osm highway tags*/
   protected PlanitOsmHighwaySettings osmHighwaySettings; 
-  
-  /** all settings specific to osm (pt) transfer infrastructure related tags */
-  protected PlanitOsmTransferSettings osmTransferSettings;
   
   /** the country we are importing for (if any) */
   protected final String countryName;
@@ -265,20 +263,7 @@ public class PlanitOsmNetworkSettings {
   public PlanitOsmHighwaySettings activateHighwayParser(boolean activate) {
     osmHighwaySettings.activateParser(activate);
     return getHighwaySettings();
-  } 
-  
-  /** activate the parsing of (public transport) transfer infrastructure (stops, poles, platforms, etc.) as
-   * PLANit transfer zones.
-   * 
-   * @param activate when true activate transfer parsing, when false deactivate
-   * @return transfer settings that are activated, null when deactivated
-   */
-  public PlanitOsmTransferSettings activateTransferInfrastructureParser(boolean activate) {
-    osmTransferSettings.activateParser(activate);
-    return getTransferSettings();      
-  }  
-  
-  
+  }     
   
   /** Verify if railway parser is active
    * 
@@ -294,15 +279,7 @@ public class PlanitOsmNetworkSettings {
    */
   public boolean isHighwayParserActive() {
     return osmHighwaySettings.isParserActive();
-  }  
-  
-  /** Verify if transfer parser is active
-   * 
-   * @return true when active false otherwise
-   */
-  public boolean isTransferParserActive() {
-    return osmTransferSettings.isParserActive();
-  }    
+  }   
 
   /**
    * chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
@@ -586,14 +563,7 @@ public class PlanitOsmNetworkSettings {
    */
   public PlanitOsmHighwaySettings getHighwaySettings() {
     return isHighwayParserActive() ? osmHighwaySettings : null ;
-  }
-  
-  /** provide (pt) transfer infrastructure specific settings
-   * @return transfer settings, null when not activated
-   */
-  public PlanitOsmTransferSettings getTransferSettings() {
-    return isTransferParserActive() ? osmTransferSettings : null ;
-  }  
+  } 
   
   /**
    * Allows access to the current planit infrastructure layer configuration which maps planit modes

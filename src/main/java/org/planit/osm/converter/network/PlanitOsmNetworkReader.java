@@ -31,6 +31,9 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   
   /** network to populate */
   private final PlanitOsmNetwork osmNetwork;
+  
+  /** tha handler responsible for the actual parsing */
+  PlanitOsmNetworkHandler osmHandler;
      
   /**
    * Log some information about this reader's configuration
@@ -53,6 +56,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork){
     this.inputFile = inputFile;
     this.osmNetwork = osmNetwork; 
+    
     this.settings = new PlanitOsmNetworkSettings(countryName, osmNetwork.modes);
   }
    
@@ -76,8 +80,8 @@ public class PlanitOsmNetworkReader implements NetworkReader {
       LOGGER.severe("unable to create OSM reader for network, aborting");
     }else {
     
-      /* handler to deal with call backs from osm4j */
-      PlanitOsmNetworkHandler osmHandler = new PlanitOsmNetworkHandler(osmNetwork, settings);
+      /* set handler to deal with call backs from osm4j */
+      osmHandler = new PlanitOsmNetworkHandler(osmNetwork, settings);
       osmHandler.initialiseBeforeParsing();
       
       /* register handler */
@@ -86,7 +90,6 @@ public class PlanitOsmNetworkReader implements NetworkReader {
       /* conduct parsing which will call back the handler*/
       try {
         osmReader.read();
-        osmHandler.reset();
       } catch (OsmInputException e) {
         LOGGER.severe(e.getMessage());
         throw new PlanItException("error during parsing of osm file",e);
@@ -108,10 +111,19 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   /**
    * Collect the settings which can be used to configure the reader
    * 
-   * @return the setings
+   * @return the settings
    */
   public PlanitOsmNetworkSettings getSettings() {
     return settings;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void reset() {
+    /* reset last used handler */
+    osmHandler.reset();
   }
 
 
