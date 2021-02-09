@@ -19,13 +19,14 @@ public class OsmPtv2Tags {
   private static final Set<String> PTV2_VALUE_TAGS = new HashSet<String>();
       
   /**
-   * populate the pt highway value tags
+   * populate the possible pt v2 value tags that we support
    */
   private static void populateOsmPublicTransportValueTags() {
     PTV2_VALUE_TAGS.add(PLATFORM);
     PTV2_VALUE_TAGS.add(STATION);
     PTV2_VALUE_TAGS.add(STOP_AREA);
-    PTV2_VALUE_TAGS.add(STOP_POSITION);    
+    PTV2_VALUE_TAGS.add(STOP_POSITION);
+    PTV2_VALUE_TAGS.add(CONSTRUCTION);
   }  
   
   
@@ -45,7 +46,10 @@ public class OsmPtv2Tags {
   public static final String PLATFORM = OsmPtv1Tags.PLATFORM;
   
   /** A station is an area designed to access public transport, identical to Ptv1 tag value */
-  public static final String STATION = OsmPtv1Tags.STATION;  
+  public static final String STATION = OsmPtv1Tags.STATION;
+  
+  /** general tag indication this is under construction, parser should ignore this*/
+  public static final String CONSTRUCTION = OsmRailwayTags.CONSTRUCTION;    
   
   /** A relation that contains all elements of a train, subway, monorail, tram, bus, trolleybus, aerialway, or ferry stop */
   public static final String STOP_AREA = "stop_area";

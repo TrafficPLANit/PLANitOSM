@@ -305,6 +305,6 @@ public class PlanitOsmRailwaySettings {
    */
   public boolean isParserActive() {
     return this.isParserActive;
-  }   
+  }
     
 }

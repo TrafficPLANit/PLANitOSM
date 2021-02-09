@@ -1,11 +1,8 @@
-package org.planit.osm.converter.intermodal;
+package org.planit.osm.converter.reader;
 
-import org.planit.osm.converter.network.PlanitOsmNetworkReader;
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
-import org.planit.osm.converter.zoning.PlanitOsmZoningReader;
-import org.planit.osm.converter.zoning.PlanitOsmZoningReaderFactory;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.id.IdGroupingToken;
+import org.planit.zoning.Zoning;
 
 /**
  * Factory for creating PLANitOsmIntermodalReaders
@@ -34,7 +31,7 @@ public class PlanitOsmIntermodalReaderFactory {
    */
   public static PlanitOsmIntermodalReader create(String inputFile, String countryName) {
     PlanitOsmNetwork networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
-    return create(inputFile, countryName, networkToPopulate);    
+    return create(inputFile, countryName, networkToPopulate, new Zoning(networkToPopulate.getIdGroupingToken(), networkToPopulate.getNetworkGroupingTokenId()));    
   }
   
   /** Create a PLANitOsmIntermodalReader while providing an OSM network, and zoning to populate
@@ -43,12 +40,11 @@ public class PlanitOsmIntermodalReaderFactory {
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @param osmNetworkToPopulate the network to populate
+   * @param zoningToPopulate the zoning to populate
    * @return create osm intermodal reader
    */
-  public static PlanitOsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
-    PlanitOsmNetworkReader networkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
-    PlanitOsmZoningReader zoningReader = PlanitOsmZoningReaderFactory.create(inputFile, networkReader.getSettings(), osmNetworkToPopulate);
-    return new PlanitOsmIntermodalReader( networkReader, zoningReader);      
+  public static PlanitOsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    return new PlanitOsmIntermodalReader(inputFile, countryName, osmNetworkToPopulate, zoningToPopulate);      
   }  
   
 }

@@ -4,16 +4,19 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.network.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.locationtech.jts.geom.Point;
 import org.planit.geo.PlanitJtsUtils;
+import org.planit.network.InfrastructureLayer;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
@@ -39,6 +42,12 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningHandler.class.getCanonicalName());
   
+  /** profiler for this reader */
+  private final PlanitOsmZoningHandlerProfiler profiler;
+  
+  /** utilities for geographic information */
+  private final PlanitJtsUtils geoUtils;        
+  
   // references
   
   /**
@@ -46,18 +55,11 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    */
   private final Zoning zoning;
   
-  /** settings used to populate the reference network */
-  PlanitOsmNetworkSettings referenceNetworkSettings;   
-  
-  /** the network assumed to have been populated already and compatible with the about to be populated zoning */
-  private final PlanitOsmNetwork referenceNetwork;
-  
   /** the settings to adhere to regarding the parsing of PLAnit transfer infrastructure from OSM */
-  private final PlanitOsmTransferSettings transferSettings;    
-
-  /** utilities for geographic information */
-  private final PlanitJtsUtils geoUtils;
-      
+  private final PlanitOsmTransferSettings transferSettings;   
+  
+  /** network2ZoningData data collated from parsing network required to successfully popualte the zoning */
+  private final PlanitOsmNetworkToZoningReaderData network2ZoningData; 
   
   /**
    * check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node that might reflect
@@ -89,10 +91,10 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * @return which scheme it is compatible with, NONE if none could be found
    */
   private static OsmPtVersionScheme isTransferBasedOsmInfrastructure(Map<String, String> tags) {
-    if(isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
-      return OsmPtVersionScheme.VERSION_1;
-    }else if(isCompatibleWith(OsmPtVersionScheme.VERSION_2, tags)){
+    if(isCompatibleWith(OsmPtVersionScheme.VERSION_2, tags)){
       return OsmPtVersionScheme.VERSION_2;
+    }else if(isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
+      return OsmPtVersionScheme.VERSION_1;
     }
     return OsmPtVersionScheme.NONE;
   }  
@@ -141,7 +143,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     return transferZone;
   }  
   
-  private void extractOsmWayTransferInfrastructurePtv2(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
+  private void extractTransferInfrastructurePtv2(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
 
     }else {
@@ -149,7 +151,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     }
   }
 
-  private void extractOsmWayTransferInfrastructurePtv1(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
+  private void extractTransferInfrastructurePtv1(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
     if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
 
     }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
@@ -159,23 +161,9 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     }
   }  
   
-
-  /** extract the transfer infrastructure which will contribute to newly created transfer zones on the zoning instance
-   * 
-   * @param osmWay to parse
-   * @param ptVersion this way adheres to
-   * @param tags to use
-   * @throws PlanItException thrown if error
-   */
-  protected void extractOsmWayTransferInfrastructure(OsmWay osmWay, OsmPtVersionScheme ptVersion, Map<String, String> tags) throws PlanItException{
-    if(ptVersion == OsmPtVersionScheme.VERSION_2) {
-      extractOsmWayTransferInfrastructurePtv2(osmWay, tags);
-    }else if(ptVersion == OsmPtVersionScheme.VERSION_1) {
-      extractOsmWayTransferInfrastructurePtv1(osmWay, tags);
-    }
-  }    
+ 
   
-  private void extractOsmNodeTransferInfrastructurePtv2(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+  private void extractTransferInfrastructurePtv2(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
 
     }else {
@@ -189,11 +177,19 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * @param tags of the node
    * @throws PlanItException thrown if error
    */
-  private void extractOsmNodeTransferInfrastructurePtv1(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+  private void extractTransferInfrastructurePtv1(OsmNode osmNode, Map<String, String> tags) throws PlanItException {    
+    PlanitOsmNetworkSettings networkSettings = network2ZoningData.getSettings();
+    
+    /* make very sure we are indeed correct in parsing this as Ptv1 scheme */
+    if(tags.containsKey(OsmPtv2Tags.PUBLIC_TRANSPORT)) {
+      LOGGER.warning(String.format("parsing node %d as PTv1 but tags contain PTv2 tag %s, entry ignored",osmNode.getId(), tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT)));
+      return;
+    }
+    
     if(OsmHighwayTags.hasHighwayKeyTag(tags)) {      
       
       /* bus_stop or (bus) platform*/
-      if(referenceNetworkSettings.hasMappedPlanitMode(OsmRoadModeTags.BUS)) {
+      if(networkSettings.hasMappedPlanitMode(OsmRoadModeTags.BUS)) {
         /* bus stops are located next to the roads as they indicate waiting locations,
          * in Ptv1 the stop position of the bus is implicit and based on the nearest link/node */
         
@@ -206,20 +202,24 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
           transferzoneType = TransferZoneType.POLE;
         }else if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)){
           LOGGER.warning(String.format("node %s with highway=platform encountered, assuming bus access only",osmNode.getId()));
-          busStopBased = referenceNetworkSettings.hasMappedPlanitMode(OsmRoadModeTags.BUS);
+          busStopBased = networkSettings.hasMappedPlanitMode(OsmRoadModeTags.BUS);
           transferzoneType = TransferZoneType.PLATFORM;
         }
         
         if(busStopBased) {
+          profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+          
           /* create and register */
           TransferZone transferZone = createAndPopulateTransferZone(osmNode,tags, transferzoneType);
           zoning.transferZones.register(transferZone);
                   
           /* connectoid */
-          Mode planitBusMode = referenceNetworkSettings.getMappedPlanitMode(OsmRoadModeTags.BUS);        
+          Mode planitBusMode = networkSettings.getMappedPlanitMode(OsmRoadModeTags.BUS);        
           MacroscopicLinkSegment accessLinkSegment = null;  //TODO: identify most likely closest node/link accessible with planitBusMode
           double length = 0;
-          zoning.connectoids.registerNew(accessLinkSegment, transferZone, length);        
+          //zoning.connectoids.registerNew(accessLinkSegment, transferZone, length);
+          
+          //TODO: add connectoids for modes other than BUS that have access to the waiting area
         }else {
           LOGGER.warning(String.format("unsupported Ptv1 higway=%s tag encountered, ignored",ptv1ValueTag));
         }        
@@ -229,21 +229,39 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);
       
       /* tram stop */
-      if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && referenceNetworkSettings.hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
-        /* in contrast to highway=bus_stop this tag is tagged on the track because tram tracks are usually 
+      if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
+        profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+        /* in contrast to highway=bus_stop this tag is placed on the track, because tram tracks are usually 
          * one-way and different directions don't have to be considered */
+           
+        /* Tram connectoid: find layer and node/link segment for vehicle stop */ 
+        Mode planitTramMode = networkSettings.getMappedPlanitMode(OsmRailwayTags.TRAM);
+        InfrastructureLayer networkLayer = network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitTramMode);
+        Node planitNode = network2ZoningData.getNetworkLayerData(networkLayer).getNodesByOsmId().get(osmNode.getId());
+        if(planitNode == null) {
+          LOGGER.severe(String.format("encountered tram stop where OSM node %d has not been parsed as PLANit node, ignored",osmNode.getId()));
+          return;
+        }
+        if(planitNode.getEntryLinkSegments().size()>1) {
+          LOGGER.severe(String.format("encountered tram stop on OSM node %d, with multiple incoming tracks, only one expected, ignored", osmNode.getId()));
+          return;
+        }
+        if(planitNode.getEntryLinkSegments().size()<=0) {
+          LOGGER.severe(String.format("encountered tram stop on OSM node %d, with no incoming tracks, one expected, ignored", osmNode.getId()));
+          return;
+        }        
+        MacroscopicLinkSegment linkSegment = planitNode.getFirstEntryLinkSegment();
+        DirectedConnectoid connectoid = zoning.connectoids.registerNew(linkSegment);
         
-        /* create and register */
+        /* create and register transfer zone */
         TransferZone transferZone = createAndPopulateTransferZone(osmNode,tags, TransferZoneType.PLATFORM);
-        zoning.transferZones.register(transferZone);    
+        zoning.transferZones.register(transferZone);
         
-        Mode planitTramMode = referenceNetworkSettings.getMappedPlanitMode(OsmRailwayTags.TRAM);
-        /* collect node by external id, then find incoming links. Should alsways be 1, if not issue warning
-         * use incoming link as the link segment to register with */
-         CONTINUE HERE READ THE ABOVE
-        MacroscopicLinkSegment accessLinkSegment = null;  
-        double length = 0;
-        zoning.connectoids.registerNew(accessLinkSegment, transferZone, length);        
+        /* link connectoid to zone and register tram mode for access*/
+        connectoid.addAccessZone(transferZone);
+        connectoid.addAllowedMode(transferZone, planitTramMode);
+         
+        //TODO: add connectoids for modes other than TRAM that have access to the waiting area
       }
       
       /* train halt */
@@ -252,7 +270,10 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       
     }else {
       throw new PlanItException(String.format("parsing transfer infrastructure (Ptv1) for osm node %s, bit no compatible key tags found",osmNode.getId()));
-    }    
+    }  
+    
+    profiler.logTransferZoneStatus(zoning.transferZones.size());
+    profiler.logConnectoidStatus(zoning.connectoids.size());    
   }  
 
   /** extract the transfer infrastructure which will contribute to newly created transfer zones on the zoning instance
@@ -262,31 +283,47 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * @param tags to use
    * @throws PlanItException thrown if error
    */  
-  protected void extractOsmNodeTransferInfrastructure(OsmNode osmNode, OsmPtVersionScheme ptVersion, Map<String, String> tags) throws PlanItException{
+  protected void extractTransferInfrastructure(OsmNode osmNode, OsmPtVersionScheme ptVersion, Map<String, String> tags) throws PlanItException{
     if(ptVersion == OsmPtVersionScheme.VERSION_2) {
-      extractOsmNodeTransferInfrastructurePtv2(osmNode, tags);
+      extractTransferInfrastructurePtv2(osmNode, tags);
     }else if(ptVersion == OsmPtVersionScheme.VERSION_1) {
-      extractOsmNodeTransferInfrastructurePtv1(osmNode, tags);
+      extractTransferInfrastructurePtv1(osmNode, tags);
     }
   }  
+  
+  /** extract the transfer infrastructure which will contribute to newly created transfer zones on the zoning instance
+   * 
+   * @param osmWay to parse
+   * @param ptVersion this way adheres to
+   * @param tags to use
+   * @throws PlanItException thrown if error
+   */
+  protected void extractTransferInfrastructure(OsmWay osmWay, OsmPtVersionScheme ptVersion, Map<String, String> tags) throws PlanItException{
+    if(ptVersion == OsmPtVersionScheme.VERSION_2) {
+      extractTransferInfrastructurePtv2(osmWay, tags);
+    }else if(ptVersion == OsmPtVersionScheme.VERSION_1) {
+      extractTransferInfrastructurePtv1(osmWay, tags);
+    }
+  }    
 
 
   /**
    * constructor
    * 
    * @param transferSettings for the handler
-   * @param referenceNetworkSettings used to populate the referenceNetwork
+   * @param network2ZoningData data collated from parsing network required to successfully popualte the zoning
    * @param referenceNetwork to use
    * @param zoningToPopulate to populate
    */
-  public PlanitOsmZoningHandler(final PlanitOsmTransferSettings transferSettings, PlanitOsmNetworkSettings referenceNetworkSettings, final PlanitOsmNetwork referenceNetwork, final Zoning zoningToPopulate) {
-    this.referenceNetwork = referenceNetwork;
-    this.referenceNetworkSettings = referenceNetworkSettings;
-    this.zoning = zoningToPopulate;
-    
+  public PlanitOsmZoningHandler(final PlanitOsmTransferSettings transferSettings, final PlanitOsmNetworkToZoningReaderData network2ZoningData, final Zoning zoningToPopulate) {
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsUtils(referenceNetwork.getCoordinateReferenceSystem());
+    this.geoUtils = new PlanitJtsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
+    /* profiler */
+    this.profiler = new PlanitOsmZoningHandlerProfiler();
     
+    /* references */
+    this.network2ZoningData = network2ZoningData;
+    this.zoning = zoningToPopulate;       
     this.transferSettings = transferSettings;
   }
   
@@ -295,7 +332,9 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * @throws PlanItException 
    */
   public void initialiseBeforeParsing() throws PlanItException {
-    PlanItException.throwIf(referenceNetwork.infrastructureLayers == null || referenceNetwork.infrastructureLayers.size()<=0,"network is expected to be populated at start of parsing OSM zoning");       
+    PlanItException.throwIf(
+        this.network2ZoningData.getOsmNetwork().infrastructureLayers == null || this.network2ZoningData.getOsmNetwork().infrastructureLayers.size()<=0,
+          "network is expected to be populated at start of parsing OSM zoning");       
   }  
 
 
@@ -323,7 +362,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       if(ptVersion != OsmPtVersionScheme.NONE) {
         
         /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
-        extractOsmNodeTransferInfrastructure(osmNode, ptVersion, tags);
+        extractTransferInfrastructure(osmNode, ptVersion, tags);
       }
       
     } catch (PlanItException e) {
@@ -346,7 +385,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       if(ptVersion != OsmPtVersionScheme.NONE) {
         
         /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
-        extractOsmWayTransferInfrastructure(osmWay, ptVersion, tags);
+        extractTransferInfrastructure(osmWay, ptVersion, tags);
       }
       
     } catch (PlanItException e) {
@@ -369,7 +408,10 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    */
   @Override
   public void complete() throws IOException {
-                
+    
+    /* stats*/
+    profiler.logProfileInformation(zoning);            
+    
     LOGGER.info(" OSM (transfer) zone parsing...DONE");
 
   }

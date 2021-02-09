@@ -1,4 +1,4 @@
-package org.planit.osm.converter.network;
+package org.planit.osm.converter.reader;
 
 import java.util.logging.Logger;
 
@@ -33,7 +33,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   private final PlanitOsmNetwork osmNetwork;
   
   /** tha handler responsible for the actual parsing */
-  PlanitOsmNetworkHandler osmHandler;
+  private PlanitOsmNetworkHandler osmHandler;
      
   /**
    * Log some information about this reader's configuration
@@ -42,8 +42,16 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   private void logInfo(String inputFile) {
     LOGGER.info(String.format("OSM network input file: %s",inputFile));
     LOGGER.info(String.format("setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));    
-  }     
-
+  }    
+  
+  /** provide the handler that performs the actual parsing
+   * 
+   * @return osm handler
+   */
+  protected PlanitOsmNetworkHandler getOsmNetworkHandler() {
+    return osmHandler;
+  }
+  
   /**
    * Constructor 
    * 
@@ -53,7 +61,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * @param osmNetwork network to populate 
    * @param settings for populating the network
    */
-  PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork){
+  protected PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork){
     this.inputFile = inputFile;
     this.osmNetwork = osmNetwork; 
     

@@ -52,13 +52,13 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   private final PlanitJtsUtils geoUtils;
       
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
-  private final Map<Long, OsmNode> osmNodes;
+  protected final Map<Long, OsmNode> osmNodes;
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
-  private final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> osmLayerHandlers = new HashMap<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler>();
+  protected final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> osmLayerHandlers = new HashMap<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler>();
       
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
-  private final Map<Long, OsmWay> osmCircularWays;  
+  protected final Map<Long, OsmWay> osmCircularWays;  
     
   /** find layers where the node is active
    * @param osmNodeId to use
@@ -101,7 +101,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    * @return set of created links per layer for this circular way if any, null if no links are created
    * @throws PlanItException thrown if error
    */
-  protected Map<InfrastructureLayer, Set<Link>> handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
+  private Map<InfrastructureLayer, Set<Link>> handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
         
     Map<InfrastructureLayer, Set<Link>> createdLinksByLayer = null;    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
@@ -574,6 +574,8 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         
     /* process circular ways --> returns map of (per layer) created links by OSM way id (long) */
     Map<InfrastructureLayer, Map<Long, Set<Link>>> createdLinksByOsmWayId = processCircularWays();
+    
+
         
     /* break all links that have internal nodes that are extreme nodes of other links */
     breakLinksWithInternalConnections(createdLinksByOsmWayId);
@@ -598,5 +600,13 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     osmLayerHandlers.clear();
   }  
 
+  
+  /** provide reference to the used layer handlers for each of the identified layers
+   * 
+   * @return layerHandlers used
+   */
+  public final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> getLayerHandlers() {
+    return this.osmLayerHandlers;
+  }
 
 }

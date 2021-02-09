@@ -1,10 +1,8 @@
-package org.planit.osm.converter.zoning;
+package org.planit.osm.converter.reader;
 
 import java.util.logging.Logger;
 
 import org.planit.converter.zoning.ZoningReader;
-import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.network.PlanitOsmTransferSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.osm.zoning.PlanitOsmZoningHandler;
@@ -17,6 +15,10 @@ import de.topobyte.osm4j.core.access.OsmReader;
 /**
  * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit zoning instance comprising of the identified transfer zones.
  * Note that OSM data does not contain any information regarding OD zones, so this will be empty.
+ * <p>
+ * Further note that because a PLANit zoning relies on the network, we must first initialise the zoning reader
+ * before calling the read() method with the necessary data obtained by the related Osm network reader, otherwise
+ * parsing the zoning information will fail.
  * 
  * @author markr
  *
@@ -40,11 +42,8 @@ public class PlanitOsmZoningReader implements ZoningReader {
   /** zoning to populate */
   private final Zoning zoning;
   
-  /** settings used to populate the reference network */
-  PlanitOsmNetworkSettings referenceNetworkSettings;  
-  
-  /** the reference osm network that is assumed to have been populated already and is compatible with the zoning to be parsed */
-  private final PlanitOsmNetwork referenceNetwork;  
+  /** data from network parsing that is required to successfully complete the zoning parsing */
+  PlanitOsmNetworkToZoningReaderData network2ZoningData;
      
   /**
    * Log some information about this reader's configuration
@@ -52,23 +51,28 @@ public class PlanitOsmZoningReader implements ZoningReader {
    */
   private void logInfo(String inputFile) {
     LOGGER.info(String.format("OSM (transfer) zoning input file: %s",inputFile));    
-  }      
+  }  
+  
+  /** should be called after the network has been parsed but before we call the read() method on this instance to 
+   * provide this instance with the necessary data/references required to relate properly to the parsed network elements
+   * 
+   * @param osmNetworkReader to extract references from
+   */
+  protected void setNetworkToZoningReaderData(PlanitOsmNetworkToZoningReaderData network2zoningReaderData) {
+    this.network2ZoningData = network2zoningReaderData;
+  }   
 
   /**
    * Constructor 
    * 
    * @param inputFile to parse from
-   * @param referenceNetworkSettings used to populate the reference network this zoning is expected to be compatible with
-   * @param referenceNetwork to use
    * @param zoningToPopulate zoning to populate 
    */
-  PlanitOsmZoningReader(String inputFile, PlanitOsmNetworkSettings referenceNetworkSettings, PlanitOsmNetwork referenceNetwork, Zoning zoningToPopulate){
+  protected PlanitOsmZoningReader(String inputFile, Zoning zoningToPopulate){
     this.transferSettings = new PlanitOsmTransferSettings();
 
     // references
     this.inputFile = inputFile;
-    this.referenceNetwork = referenceNetwork;
-    this.referenceNetworkSettings = referenceNetworkSettings;
     
     // output
     this.zoning = zoningToPopulate; 
@@ -94,7 +98,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
     }else {
     
       /* handler to deal with callbacks from osm4j */
-      osmHandler = new PlanitOsmZoningHandler(transferSettings, this.referenceNetworkSettings, this.referenceNetwork, this.zoning);
+      osmHandler = new PlanitOsmZoningHandler(transferSettings, network2ZoningData, this.zoning);
       osmHandler.initialiseBeforeParsing();
       
       /* register handler */
@@ -131,6 +135,8 @@ public class PlanitOsmZoningReader implements ZoningReader {
    */
   public PlanitOsmTransferSettings getSettings() {
     return transferSettings;
-  }  
+  }
+
+
 
 }

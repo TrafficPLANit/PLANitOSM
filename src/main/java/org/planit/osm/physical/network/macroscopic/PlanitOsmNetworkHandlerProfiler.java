@@ -10,7 +10,7 @@ import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 
 /**
- * Track statistics on Osm handler
+ * Track statistics on Osm network handler
  * 
  * @author markr
  *

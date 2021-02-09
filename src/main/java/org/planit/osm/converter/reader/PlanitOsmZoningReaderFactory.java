@@ -1,4 +1,4 @@
-package org.planit.osm.converter.zoning;
+package org.planit.osm.converter.reader;
 
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
@@ -16,12 +16,11 @@ public class PlanitOsmZoningReaderFactory {
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param inputFile to use
-   * @param networkReaderSettings settings used to populate the network, including the mappings from osm entities to planit entities, such as modes
-   * @param referenceNetwork the network to populate
+   * @param referenceNetwork to use the same setup regarding id creation for zoning
    * @return create osm reader
    */
-  public static PlanitOsmZoningReader create(String inputFile, PlanitOsmNetworkSettings networkReaderSettings, PlanitOsmNetwork referenceNetwork) {
-    return new PlanitOsmZoningReader(inputFile, networkReaderSettings, referenceNetwork, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()));    
+  public static PlanitOsmZoningReader create(String inputFile, PlanitOsmNetwork referenceNetwork) {
+    return new PlanitOsmZoningReader(inputFile, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()));    
   }  
   
 }

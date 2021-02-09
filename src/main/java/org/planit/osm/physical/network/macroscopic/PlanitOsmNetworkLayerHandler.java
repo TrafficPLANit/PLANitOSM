@@ -76,13 +76,13 @@ public class PlanitOsmNetworkLayerHandler {
   private OsmModeLanesTaggingSchemeHelper modeLanesSchemeHelper = null;  
       
   /**
-   * track the PLANit nodes craeted on this layer by their original OSM id  so they can by looked up quickly while parsing ways
+   * track the PLANit nodes created on this layer by their original OSM id  so they can by looked up quickly while parsing ways
    */
   private final Map<Long, Node> nodesByOsmId = new HashMap<Long, Node>();
   
   /** Mapping from Osm node id to the links they are internal to. When done parsing, we verify if any
    * entry in the map contains more than one link in which case the two link intersect at a point other than the extremes
-   * and we must break the link. Also, in case any existin link's extreme node is internal to any other link, the link where
+   * and we must break the link. Also, in case any existing link's extreme node is internal to any other link, the link where
    * this node is internal to must be split into two because a PLANit network requires all intersections of links to occur
    * at the end or start of a link
    */
@@ -1241,7 +1241,7 @@ public class PlanitOsmNetworkLayerHandler {
    */
   protected void breakLinksWithInternalConnections(final Map<Long, Set<Link>> brokenLinksByOriginalOsmLinkId) {
     
-    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");
+    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");        
     
     try {
           
@@ -1250,7 +1250,7 @@ public class PlanitOsmNetworkLayerHandler {
             
       while(++linkIndex<originalNumberOfLinks) {
         Link link = networkLayer.links.get(linkIndex);    
-        
+                
         // 1. break links when a link's internal node is another existing link's extreme node 
         breakLinksWithInternalNode(link.getNodeA(), brokenLinksByOriginalOsmLinkId);
         long nodeAOsmId = Long.parseLong(link.getNodeA().getExternalId());
@@ -1304,6 +1304,14 @@ public class PlanitOsmNetworkLayerHandler {
     nodesByOsmId.clear();
     linkInternalOsmNodes.clear();
     modifiedLinkSegmentTypes.reset();
+  }
+
+  /** provide the map that indexed all created nodes in this layer by its OSM id
+   * 
+   * @return nodes by OSM id
+   */
+  public final Map<Long, Node> getParsedNodesByOsmId() {
+    return nodesByOsmId;
   }
 
 }
