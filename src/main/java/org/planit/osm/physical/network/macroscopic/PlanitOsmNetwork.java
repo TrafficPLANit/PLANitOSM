@@ -814,11 +814,15 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
         settings.getHighwaySettings().getSetOfActivatedOsmHighwayTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmHighwayTags.HIGHWAY));
-    Map<String,String> railwayKeyValueMap = 
-        settings.getRailwaySettings().getSetOfActivatedOsmRailwayTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmRailwayTags.RAILWAY));
+    Map<String,String> railwayKeyValueMap = null;
+    if(settings.isRailwayParserActive()) {
+      railwayKeyValueMap = settings.getRailwaySettings().getSetOfActivatedOsmRailwayTypes().stream().collect(Collectors.toMap( value -> value, value -> OsmRailwayTags.RAILWAY));
+    }
     Map<String,String> combinedWayMap = new HashMap<String,String>();
     combinedWayMap.putAll(highwayKeyValueMap);
-    combinedWayMap.putAll(railwayKeyValueMap);    
+    if(railwayKeyValueMap != null) {
+      combinedWayMap.putAll(railwayKeyValueMap);
+    }
     
     /* ------------------ FOR EACH SUPPORTED OSM WAY TYPE ----------------------------------------- */   
     for(Entry<String,String> entry : combinedWayMap.entrySet()) {

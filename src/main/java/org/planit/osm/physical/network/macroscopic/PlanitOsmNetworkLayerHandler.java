@@ -1245,30 +1245,29 @@ public class PlanitOsmNetworkLayerHandler {
     
     try {
           
-      long linkIndex = -1;
-      long originalNumberOfLinks = networkLayer.links.size();
+      long nodeIndex = -1;
+      long originalNumberOfNodes = networkLayer.nodes.size();
             
-      while(++linkIndex<originalNumberOfLinks) {
-        Link link = networkLayer.links.get(linkIndex);    
+      HashSet<Long> processedNodes = new HashSet<Long>();
+      while(++nodeIndex<originalNumberOfNodes) {
+        Node node = networkLayer.nodes.get(nodeIndex);    
                 
-        // 1. break links when a link's internal node is another existing link's extreme node 
-        breakLinksWithInternalNode(link.getNodeA(), brokenLinksByOriginalOsmLinkId);
-        long nodeAOsmId = Long.parseLong(link.getNodeA().getExternalId());
-        linkInternalOsmNodes.remove(nodeAOsmId);
-        
-        /* apply to node B as well */
-        breakLinksWithInternalNode(link.getNodeB(), brokenLinksByOriginalOsmLinkId);
-        long nodeBOsmId = Long.parseLong(link.getNodeB().getExternalId());
-        linkInternalOsmNodes.remove(nodeBOsmId);
+        // 1. break links when a link's internal node is another existing link's extreme node
+        //NOTE: 9/2/2021 changed this from using each links a and b node and calling below twice, to looping over nodes and 
+        // calling it only once, this should be better (more elegant avoiding duplicate code running, but not fully tested
+        // REMOVE NOTE WHEN FOUND CORRECT OR REVERT BACK
+        breakLinksWithInternalNode(node, brokenLinksByOriginalOsmLinkId);
+        linkInternalOsmNodes.remove(Long.parseLong(node.getExternalId()));        
       }
       
       //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
       for(Entry<Long, List<Link>> entry : linkInternalOsmNodes.entrySet()) {        
         /* only intersection of links when at least two links are registered */
-        if(entry.getValue().size() > 1) {
+        if(entry.getValue().size() > 1 && !processedNodes.contains(entry.getKey())) {
           /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
           Node planitIntersectionNode = extractNode(entry.getKey());
           breakLinksWithInternalNode(planitIntersectionNode, brokenLinksByOriginalOsmLinkId);
+          linkInternalOsmNodes.remove(entry.getKey());
         }
       }
       
@@ -1312,6 +1311,13 @@ public class PlanitOsmNetworkLayerHandler {
    */
   public final Map<Long, Node> getParsedNodesByOsmId() {
     return nodesByOsmId;
+  }
+  
+  /** collect all osm nodes that are internal to a parsed Planit Link
+   * @return osm node ids that are internal to a parsed link
+   */
+  public final Map<Long, List<Link>> getOsmNodesInternalToLink(){
+    return this.linkInternalOsmNodes;
   }
 
 }

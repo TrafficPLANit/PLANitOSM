@@ -64,8 +64,11 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     /* layer specific data references */
     for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmNetworkReader.getOsmNetworkHandler().getLayerHandlers().entrySet()){
       NetworkLayerData layerData = network2zoningData.registerNewLayerData(entry.getKey());
+      PlanitOsmNetworkLayerHandler layerHandler = entry.getValue();
       /* nodes by osm id by layer reference */
-      layerData.setNodesByOsmId(entry.getValue().getParsedNodesByOsmId());      
+      layerData.setNodesByOsmId(layerHandler.getParsedNodesByOsmId());
+      /* collect osm nodes internal to a parsed Planit link that have not yet been converted to nodes*/
+      layerData.setOsmNodeIdsInternalToLink(layerHandler.getOsmNodesInternalToLink());
     }
     
     return network2zoningData;

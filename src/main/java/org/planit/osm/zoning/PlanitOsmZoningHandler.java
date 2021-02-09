@@ -143,6 +143,16 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     return transferZone;
   }  
   
+  private Node extractPlanitNode(InfrastructureLayer networkLayer, OsmNode osmNode) {
+    Node planitNode = network2ZoningData.getNetworkLayerData(networkLayer).getNodesByOsmId().get(osmNode.getId());
+    if(planitNode == null) {
+      /* node is internal to an existing link, create it and break existing link */
+      CONTINUE HERE -> USE SAME CODE FOR EXTRACTING NODE AS IN NETWORK HANDLER -> FIND WAY TO PLACE THIS IN COMMON CODE BASE
+      SO WE DO NOT DUPLICATE IT
+    }
+    return planitNode;
+  }  
+  
   private void extractTransferInfrastructurePtv2(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
 
@@ -237,11 +247,8 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
         /* Tram connectoid: find layer and node/link segment for vehicle stop */ 
         Mode planitTramMode = networkSettings.getMappedPlanitMode(OsmRailwayTags.TRAM);
         InfrastructureLayer networkLayer = network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitTramMode);
-        Node planitNode = network2ZoningData.getNetworkLayerData(networkLayer).getNodesByOsmId().get(osmNode.getId());
-        if(planitNode == null) {
-          LOGGER.severe(String.format("encountered tram stop where OSM node %d has not been parsed as PLANit node, ignored",osmNode.getId()));
-          return;
-        }
+        Node planitNode = extractPlanitNode(networkLayer,osmNode);
+
         if(planitNode.getEntryLinkSegments().size()>1) {
           LOGGER.severe(String.format("encountered tram stop on OSM node %d, with multiple incoming tracks, only one expected, ignored", osmNode.getId()));
           return;
