@@ -43,9 +43,9 @@ public class PlanitOsmUtils {
     /* osm modes extracted from road mode category */
     Collection<String> roadModeCategories = OsmRoadModeCategoryTags.getRoadModeCategories();
     for(String roadModeCategory : roadModeCategories) {
-      String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadModeCategory) : PlanitOsmUtils.createCompositeOsmKey(roadModeCategory, alteration);      
+      String compositeKey = isprefix ? OsmTagUtils.createCompositeOsmKey(alteration, roadModeCategory) : OsmTagUtils.createCompositeOsmKey(roadModeCategory, alteration);      
       if(tags.containsKey(compositeKey)) {
-        String valueTag = tags.get(roadModeCategory).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");        
+        String valueTag = tags.get(roadModeCategory).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");        
         for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
           if(modeAccessValueTags[index].equals(valueTag)){
             foundModes.addAll(OsmRoadModeCategoryTags.getRoadModesByCategory(roadModeCategory));
@@ -57,9 +57,9 @@ public class PlanitOsmUtils {
     /* osm road mode */
     Collection<String> roadModes = OsmRoadModeTags.getSupportedRoadModeTags();
     for(String roadMode : roadModes) {
-      String compositeKey = isprefix ? PlanitOsmUtils.createCompositeOsmKey(alteration, roadMode) : PlanitOsmUtils.createCompositeOsmKey(roadMode, alteration);      
+      String compositeKey = isprefix ? OsmTagUtils.createCompositeOsmKey(alteration, roadMode) : OsmTagUtils.createCompositeOsmKey(roadMode, alteration);      
       if(tags.containsKey(compositeKey)){
-        String valueTag = tags.get(compositeKey).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        String valueTag = tags.get(compositeKey).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
         for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
           if(modeAccessValueTags[index].equals(valueTag)){
             foundModes.add(roadMode);
@@ -70,13 +70,6 @@ public class PlanitOsmUtils {
     return foundModes;
   }   
   
-  /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
-  public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
-  
-  /** regular expression pattern([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.* used to extract decimal values and unit (if any) where the decimal value is in group two 
-   * and the unit in group 3 (indicated by second section of round brackets)*/
-  public static final Pattern SPEED_LIMIT_PATTERN = Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");    
- 
   /**
    * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)
    * 
@@ -84,7 +77,7 @@ public class PlanitOsmUtils {
    * @return multiplier the multiplier from x to km/h
    * @throws PlanItException thrown when conversion not available
    */
-  public static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
+  protected static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
     switch (unitString) {
     case OsmSpeedTags.MILES_PER_HOUR:
       return 0.621371;
@@ -93,8 +86,12 @@ public class PlanitOsmUtils {
     default:
       throw new PlanItException(String.format("unit conversion to km/h not available from %s",unitString));
     }
-  }
-
+  }  
+    
+  /** regular expression pattern([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.* used to extract decimal values and unit (if any) where the decimal value is in group two 
+   * and the unit in group 3 (indicated by second section of round brackets)*/
+  public static final Pattern SPEED_LIMIT_PATTERN = Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");    
+ 
   /**
    * parse an OSM maxSpeedValue tag value and perform unit conversion to km/h if needed
    * @param maxSpeedValue string
@@ -201,95 +198,7 @@ public class PlanitOsmUtils {
   public static double getYCoordinate(final OsmNode osmNode) {
     return osmNode.getLatitude();
   }      
-  
-  /** verify if the passed in value tag is present in the list of value tags provided
-   * 
-   * @param valueTag to check
-   * @param valueTags to check against
-   * @return true when present, false otherwise
-   */
-  public static boolean matchesAnyValueTag(final String valueTag, final String... valueTags) {
-    for(int index=0; index < valueTags.length;++ index) {
-      if(valueTag.equals(valueTags[index])) {
-        return true;
-      }
-    }
-    return false;
-  }
-  
-  /** verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
-   * 
-   * @param tags to check existence from
-   * @param keyTags to check 
-   * @param valueTags to check
-   * @return true when match is present, false otherwise
-   */    
-  public static boolean keyMatchesAnyValueTag(Map<String, String> tags, String keyTag, String... valueTags) {
-    return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
-  }  
-  
-  /** verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
-   * 
-   * @param tags to check existence from
-   * @param keyTags to check 
-   * @param valueTags to check
-   * @return true when match is present, false otherwise
-   */  
-  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
-    return anyKeyMatchesAnyValueTag(tags, VALUETAG_SPECIALCHAR_STRIP_REGEX, keyTags, valueTags);
-  }
-  
-  /** verify if any of the passed in keys matches and of the passed in values in the tags provided
-   * 
-   * @param tags to check existence from
-   * @param regexFilter filter each value tag in tags by applying this regular expressions and replace matches with "", can be used to strip whitespaces or unwanted characters that cause a mistmach
-   * @param keyTags to check 
-   * @param valueTags to check
-   * @return true when match is present, false otherwise
-   */  
-  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, String regEx, final String[] keyTags, final String... valueTags) {
-    if(containsAnyKey(tags, keyTags)) {
-      for(int index=0; index < keyTags.length;++ index) {
-        String currentKey = keyTags[index];
-        if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey).replaceAll(regEx, ""), valueTags)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }       
-
-  /** construct composite key "currentKey:subTag1:subTag2:etc."
-   * @param currentKey the currentKey
-   * @param subTags to add
-   * @return composite version separated by colons
-   */
-  public static String createCompositeOsmKey(final String currentKey, final String... subTagConditions) {
-    String compositeKey = (currentKey!=null && !currentKey.isBlank()) ? currentKey : "";
-    if(subTagConditions != null) {    
-      for(int index=0;index<subTagConditions.length;++index) {
-        String subTag = subTagConditions[index];
-        compositeKey  = (subTag!=null && !subTag.isBlank()) ? compositeKey.concat(":").concat(subTag) : compositeKey; 
-      }
-    }
-    return compositeKey;
-  }
-
-  /** determine if any of the potential keys is listed in the passed in tags
-   * @param tags to check
-   * @param potentialKeys to check
-   * @return true when present, false otherwise
-   */
-  public static boolean containsAnyKey(final Map<String, String> tags, final String... potentialKeys) {
-    for(int index=0;index<potentialKeys.length;++index) {
-      String potentialKey = potentialKeys[index];
-      if(tags.containsKey(potentialKey)) {
-        return true;
-      }
-    }
-    return false;
-  } 
-  
+    
   /** the OSM default driving direction on a roundabout is either anticlockwise (right hand drive countries) or
    * clockwise (left hand drive countries), here we verify, based on the country name, if the default is
    * clockwise or not (anticlockwise)

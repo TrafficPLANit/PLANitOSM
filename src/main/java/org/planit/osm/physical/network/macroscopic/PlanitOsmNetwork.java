@@ -800,8 +800,26 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
             "Railwayway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing %s", osmWayValue));
     }     
     return linkSegmentTypes;
+  }    
+  
+  /**
+   * Constructor
+   */
+  public PlanitOsmNetwork(final IdGroupingToken groupId) {
+    super(groupId);    
+    this.defaultPlanitOsmLinkSegmentTypes = new HashMap<String, Map<InfrastructureLayer, MacroscopicLinkSegmentType>>();
   }
-    
+
+  /**
+   * find the link segment type (per layer) by the Highway=value, where we pass in the "value"
+   *  
+   * @param OSMHighwayTagValue the type of road to find
+   * @return the link segment type that is registered per layer
+   */
+  public Map<InfrastructureLayer, MacroscopicLinkSegmentType> getDefaultLinkSegmentTypeByOsmTag(final String osmHighwayTagValue) {
+    return this.defaultPlanitOsmLinkSegmentTypes.get(osmHighwayTagValue);
+  }
+  
   /**
    * Create the link segment types that are marked in the passed in settings. As long as they have defaults that
    * are supported, these will be created as indicated. If not available a warning is issued and a link segment type is created based on the default chosen in settings
@@ -809,7 +827,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
-  protected void createOsmCompatibleLinkSegmentTypes(PlanitOsmNetworkSettings settings) throws PlanItException {
+  public void createOsmCompatibleLinkSegmentTypes(PlanitOsmNetworkSettings settings) throws PlanItException {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
@@ -855,24 +873,6 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       }                        
     }
     /* ------------------ FOR EACH OSM HIGHWAY TYPE ----------------------------------------- */    
-  }
-  
-  /**
-   * Constructor
-   */
-  public PlanitOsmNetwork(final IdGroupingToken groupId) {
-    super(groupId);    
-    this.defaultPlanitOsmLinkSegmentTypes = new HashMap<String, Map<InfrastructureLayer, MacroscopicLinkSegmentType>>();
-  }
-
-  /**
-   * find the link segment type (per layer) by the Highway=value, where we pass in the "value"
-   *  
-   * @param OSMHighwayTagValue the type of road to find
-   * @return the link segment type that is registered per layer
-   */
-  public Map<InfrastructureLayer, MacroscopicLinkSegmentType> getDefaultLinkSegmentTypeByOsmTag(final String osmHighwayTagValue) {
-    return this.defaultPlanitOsmLinkSegmentTypes.get(osmHighwayTagValue);
   }  
         
 }

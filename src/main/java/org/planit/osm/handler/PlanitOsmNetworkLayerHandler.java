@@ -1,20 +1,17 @@
-package org.planit.osm.physical.network.macroscopic;
+package org.planit.osm.handler;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
 import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
@@ -37,6 +34,7 @@ import org.planit.osm.tags.OsmTags;
 import org.planit.osm.util.ModifiedLinkSegmentTypes;
 import org.planit.osm.util.OsmLanesModeTaggingSchemeHelper;
 import org.planit.osm.util.OsmModeLanesTaggingSchemeHelper;
+import org.planit.osm.util.OsmTagUtils;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
@@ -88,6 +86,10 @@ public class PlanitOsmNetworkLayerHandler {
    */
   private final Map<Long, List<Link>> linkInternalOsmNodes = new HashMap<Long, List<Link>>();
   
+  /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only track globally when
+   * part of intermodal reader where follow up components require this information, otherwise it is locally discarded after use */
+  private Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks = null;
+  
   /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of the PLANit link segment types while parsing */
   private final ModifiedLinkSegmentTypes modifiedLinkSegmentTypes = new ModifiedLinkSegmentTypes();  
   
@@ -102,92 +104,12 @@ public class PlanitOsmNetworkLayerHandler {
   /** settings relevant to this parser */
   private PlanitOsmNetworkSettings settings;
   
+  /** intermodalReaderActive flag indicating if part of intermodal reader, if so we retain some of our indices after completion to make it available to other parts
+  * of intermodal reader if they require to use it */
+  private final boolean intermodalReaderActive; 
+  
   /** the network layer to use */
-  private MacroscopicPhysicalNetwork networkLayer;  
-  
-  /** Identify which links we should break that have the node to break at as one of its internal nodes
-   * 
-   * @param theNodeToBreakAt the node to break at
-   * @param brokenLinksByOriginalOsmId earlier broken links
-   * @return the link to break, null if none could be found
-   * @throws PlanItException thrown if error
-   */
-  private List<Link> findLinksToBreak(Node theNodeToBreakAt, Map<Long, Set<Link>> brokenLinksByOriginalOsmId) throws PlanItException {
-    List<Link> linksToBreak = null;
-    Long nodeToBreakAtOsmId = Long.parseLong(theNodeToBreakAt.getExternalId());
-    if(theNodeToBreakAt != null && linkInternalOsmNodes.containsKey(nodeToBreakAtOsmId)) {
-      
-      /* find the links to break assuming no links have been broken yet */
-      linksToBreak = linkInternalOsmNodes.get(nodeToBreakAtOsmId);
-      
-      /* find replacement links for the original link to break in case the original already has been broken and we should use 
-       * one of the split off broken links instead of the original for the correct breaking for the given node (since it now resides on one of the broken
-       * links rather than the original full link that no longer exists in that form */
-      Set<Link> replacementLinks = new HashSet<Link>();
-      Iterator<Link> linksToBreakIter = linksToBreak.iterator();
-      while(linksToBreakIter.hasNext()) {
-        Link orginalLinkToBreak = linksToBreakIter.next(); 
-        
-        Long osmOriginalId = Long.valueOf(orginalLinkToBreak.getExternalId());
-        if(brokenLinksByOriginalOsmId.containsKey(osmOriginalId)) {
-          
-          /* link has been broken before, find out in which of its broken links the node to break at resides on */
-          Set<Link> earlierBrokenLinks = brokenLinksByOriginalOsmId.get(osmOriginalId);
-          Link matchingEarlierBrokenLink = null;
-          for(Link link : earlierBrokenLinks) {
-            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(theNodeToBreakAt.getPosition().getCoordinate(),link.getGeometry());
-            if(coordinatePosition.isPresent()) {
-              matchingEarlierBrokenLink = link;
-            }
-          }
-          
-          /* remove original and mark found link as replacement link to break */
-          linksToBreakIter.remove();          
-          
-          /* verify if match is valid (which it should be) */
-          if(matchingEarlierBrokenLink==null) {
-            LOGGER.warning(String.format("unable to locate broken sublink of OSM way %s (id:%d), likely malformed way encountered, ignored",
-                orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
-          }else {
-            replacementLinks.add(matchingEarlierBrokenLink);
-          }          
-        }
-      }
-      linksToBreak.addAll(replacementLinks);
-    }
-    return linksToBreak;
-  }   
-  
-  /** Check if we should break any links for the passed in node and if so, do it
-   * 
-   * @param theNode to verify
-   * @param brokenLinksByOriginalOsmId track all broken links that originated from one original link, tracked by its external OSM id
-   * @return number of link broken for this node
-   *  
-   * @throws PlanItException thrown if error
-   */
-  private int breakLinksWithInternalNode(Node theNode, Map<Long, Set<Link>> brokenLinksByOriginalOsmId) throws PlanItException {
-        
-    /* find the link that we should break */
-    List<Link> linksToBreak = findLinksToBreak(theNode, brokenLinksByOriginalOsmId);
-    if(linksToBreak != null) {
-      /* performing breaking of links, returns the broken links by the original link's PLANit edge id */
-      Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, geoUtils.getCoordinateReferenceSystem());           
-      
-      /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/
-      if(localBrokenLinks != null) {
-        localBrokenLinks.forEach((id, links) -> {
-          links.forEach( brokenLink -> {
-            Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
-            brokenLinksByOriginalOsmId.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
-            brokenLinksByOriginalOsmId.get(brokenLinkOsmId).add(brokenLink);
-          });
-        });        
-      }  
-    } 
-    
-    return linksToBreak==null ? 0 : linksToBreak.size();
-  }  
+  private MacroscopicPhysicalNetwork networkLayer;        
   
   /** register all nodes within the provided (inclusive) range as link internal nodes for the passed in link
    * 
@@ -644,7 +566,7 @@ public class PlanitOsmNetworkLayerHandler {
         includedModes.addAll(getExplicitlyIncludedModesOneWayOppositeDirection(tags));                                                
       }
       /* 2b) mode inclusions for ONE WAY MAIN DIRECTION if explored*/
-      else if(PlanitOsmUtils.matchesAnyValueTag(oneWayValueTag, OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION, OsmOneWayTags.YES)) {        
+      else if(OsmTagUtils.matchesAnyValueTag(oneWayValueTag, OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION, OsmOneWayTags.YES)) {        
         includedModes.addAll(getExplicitlyIncludedModesOneWayMainDirection(tags));                                              
       }            
     }else {
@@ -698,7 +620,7 @@ public class PlanitOsmNetworkLayerHandler {
         excludedModes.addAll(getExplicitlyExcludedModesOneWayOppositeDirection());                       
       }    
       /* 2b) mode inclusions for ONE WAY MAIN DIRECTION if explored*/
-      else if(PlanitOsmUtils.matchesAnyValueTag(oneWayValueTag, OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION, OsmOneWayTags.YES)) {
+      else if(OsmTagUtils.matchesAnyValueTag(oneWayValueTag, OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION, OsmOneWayTags.YES)) {
         excludedModes.addAll(getExplicitlyExcludedModesOneWayMainDirection(tags));                                             
       }
     }else {
@@ -752,8 +674,8 @@ public class PlanitOsmNetworkLayerHandler {
     
     /* supplement with implicitly included modes for the explored direction */
     if(accessTagAppliesToExploredDirection && tags.containsKey(OsmAccessTags.ACCESS)) {
-      String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(PlanitOsmUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");    
-      if(PlanitOsmUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
+      String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");    
+      if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
         includedModes.addAll(networkLayer.getSupportedModes());
         includedModes.removeAll(excludedModes);
       }else {
@@ -1079,26 +1001,10 @@ public class PlanitOsmNetworkLayerHandler {
       if(osmNode == null){
         LOGGER.fine(String.format("referenced OSM node %s not available, likely outside bounding box",osmNodeId));
       }else {
-     
-        /* location info */
-        Point geometry = null;
-        try {
-          geometry = PlanitJtsUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
-        } catch (PlanItException e) {
-          LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
-        }
-  
-        /* create and register */
-        node = networkLayer.nodes.registerNew();
-        /* XML id */
-        node.setXmlId(Long.toString(node.getId()));
-        /* external id */
-        node.setExternalId(String.valueOf(osmNodeId));
-        /* position */
-        node.setPosition(geometry);
-        
-        nodesByOsmId.put(osmNodeId, node);
-       
+        /* create */
+        node = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
+              
+        nodesByOsmId.put(osmNodeId, node);       
         profiler.logNodeStatus(networkLayer.nodes.size());        
       }
     }
@@ -1170,15 +1076,18 @@ public class PlanitOsmNetworkLayerHandler {
    * @param networkLayer to use
    * @param osmNodes reference to parsed osmNodes
    * @param settings used for this parser
+   * @param intermodalReaderActive flag indicating if part of intermodal reader, if so we retain some of our indices after completion to make it available to other parts
+   * of intermodal reader if they require to use it
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmNetworkSettings settings, PlanitJtsUtils geoUtils) {
+  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmNetworkSettings settings, boolean intermodalReaderActive, PlanitJtsUtils geoUtils) {
     this.networkLayer = networkLayer;
     this.osmNodes = osmNodes;
     this.geoUtils = geoUtils;
     this.settings = settings;
     
     this.profiler  = new PlanitOsmNetworkHandlerProfiler();
+    this.intermodalReaderActive = intermodalReaderActive;
     
     /* initialise the tagging scheme helpers based on the registered modes */
     if(OsmLanesModeTaggingSchemeHelper.requireLanesModeSchemeHelper(settings, networkLayer)) {
@@ -1234,13 +1143,45 @@ public class PlanitOsmNetworkLayerHandler {
    * is internal. the end result is a situations where all nodes used by more than one link are extreme 
    * nodes, i.e., start/end nodes.
    * <p>
-   * One can pass in already broken links on another occasion to make sure the correct PLANit link is selected to be broken further in case it is
-   * found that the OSM way needs to be broken again (in which case the original OSM id does not suffice to find the related link
+   * Osm ways with multiple planit links associated with them can cause problems because in the handler we only register
+   * nodes internal to the original way->link mapping. If a link is broken we adjust the original link and create an additional link
+   * causing the original mapping between internal nodes and planit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
+   * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
    * 
-   * @param brokenLinksByOriginalOsmLinkId all already broken links by original OSM id, yet multiple PLANit links exist for it (possibly in different layers)
-   */
-  protected void breakLinksWithInternalConnections(final Map<Long, Set<Link>> brokenLinksByOriginalOsmLinkId) {
-    
+   * @param node to break links for where it is internal to them
+   * @param osmWaysWithMultiplePlanitLinks all OSM ways that have multiple planit links, due to earlier breaking of links or because they are circular osm ways
+   * @return true when links were broken, false otherwise
+   * @throws PlanItException thrown if error
+   */ 
+  protected boolean breakLinksWithInternalNode(final Node theNode, final Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) throws PlanItException {
+    if(osmWaysWithMultiplePlanitLinks == null) {
+      throw new PlanItException(" unable to break links and update osm ways with multiple planit links when container is null");
+    }
+    Long osmNodeId = Long.valueOf(theNode.getExternalId());
+    if(linkInternalOsmNodes.containsKey(osmNodeId)) { 
+      List<Link> linksToBreak = linkInternalOsmNodes.get(osmNodeId);
+      PlanitOsmHandlerHelper.updateLinksForInternalNode(theNode, osmWaysWithMultiplePlanitLinks, linksToBreak /* <-- update */);            
+      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(theNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
+      PlanitOsmHandlerHelper.addAllTo(newOsmWaysWithMultipleLinks, osmWaysWithMultiplePlanitLinks);
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
+   * on an existing link but also an internal link on another node, we break the links where this node
+   * is internal. the end result is a situations where all nodes used by more than one link are extreme 
+   * nodes, i.e., start/end nodes.
+   * <p>
+   * Osm ways with multiple planit links associated with them can cause problems because in the handler we only register
+   * nodes internal to the original way->link mapping. If a link is broken we adjust the original link and create an additional link
+   * causing the original mapping between internal nodes and planit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
+   * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
+   * 
+   * @param osmWaysWithMultiplePlanitLinks all OSM ways that have multiple planit links, due to earlier breaking of links or because they are circular osm ways (may be null)
+   */ 
+  protected void breakLinksWithInternalConnections(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
     LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");        
     
     try {
@@ -1256,8 +1197,10 @@ public class PlanitOsmNetworkLayerHandler {
         //NOTE: 9/2/2021 changed this from using each links a and b node and calling below twice, to looping over nodes and 
         // calling it only once, this should be better (more elegant avoiding duplicate code running, but not fully tested
         // REMOVE NOTE WHEN FOUND CORRECT OR REVERT BACK
-        breakLinksWithInternalNode(node, brokenLinksByOriginalOsmLinkId);
-        linkInternalOsmNodes.remove(Long.parseLong(node.getExternalId()));        
+        boolean linksBroken = breakLinksWithInternalNode(node, osmWaysWithMultiplePlanitLinks);
+        if(linksBroken) {          
+          processedNodes.add(Long.parseLong(node.getExternalId()));
+        }
       }
       
       //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
@@ -1265,13 +1208,14 @@ public class PlanitOsmNetworkLayerHandler {
         /* only intersection of links when at least two links are registered */
         if(entry.getValue().size() > 1 && !processedNodes.contains(entry.getKey())) {
           /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
-          Node planitIntersectionNode = extractNode(entry.getKey());
-          breakLinksWithInternalNode(planitIntersectionNode, brokenLinksByOriginalOsmLinkId);
-          linkInternalOsmNodes.remove(entry.getKey());
+          if(linkInternalOsmNodes.containsKey(entry.getKey())) {          
+            Node planitIntersectionNode = extractNode(entry.getKey());
+            breakLinksWithInternalNode(planitIntersectionNode, osmWaysWithMultiplePlanitLinks);                                    
+          }
         }
       }
       
-      LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE",brokenLinksByOriginalOsmLinkId.size()));      
+      LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE",osmWaysWithMultiplePlanitLinks.size()));      
     
     } catch (PlanItException e) {
       LOGGER.severe(e.getMessage());
@@ -1318,6 +1262,41 @@ public class PlanitOsmNetworkLayerHandler {
    */
   public final Map<Long, List<Link>> getOsmNodesInternalToLink(){
     return this.linkInternalOsmNodes;
+  }
+  
+  /** collect the osmways with multiple planit links as identified by this layer's handler. This information is only retained
+   * when the handler is part of an intermodal reader, since it is otherwise discarded.
+   * 
+   * @return osmWaysWithMultiplePlanitLinks map by original Osm way id
+   */
+  public final Map<Long, Set<Link>> getOsmWaysWithMultiplePlanitLinks(){
+    if(!this.intermodalReaderActive) {
+      LOGGER.severe("OSM ways with multiple planit link information is only retained when handler is part of intermodal reader");
+    }
+    return this.osmWaysWithMultiplePlanitLinks;
+  }
+
+  /**
+   * complete the parsing, invoked from parent handler complete method
+   * 
+   * @param osmWaysWithMultiplePlanitLinks needed to complete the braking of links that intersect without other internally
+   */
+  public void complete(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
+    if(osmWaysWithMultiplePlanitLinks == null) {
+      osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
+    }
+    
+    /* break links */
+    breakLinksWithInternalConnections(osmWaysWithMultiplePlanitLinks);
+    
+    /* useful for debugging */
+    networkLayer.validate();
+    /* stats*/
+    logProfileInformation();
+    
+    if(intermodalReaderActive) {
+      this.osmWaysWithMultiplePlanitLinks = osmWaysWithMultiplePlanitLinks;
+    }
   }
 
 }

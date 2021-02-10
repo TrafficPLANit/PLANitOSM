@@ -2,7 +2,7 @@ package org.planit.osm.tags;
 
 import java.util.Map;
 
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.OsmTagUtils;
 
 /**
  * common OSM one way tags and some helper methods
@@ -31,7 +31,7 @@ public class OsmOneWayTags {
    * @return true when one way false otherwise
    */
   public static boolean isOneWay(Map<String,String> tags) {        
-    return PlanitOsmUtils.keyMatchesAnyValueTag(tags, OsmOneWayTags.ONEWAY, YES, ONE_WAY_REVERSE_DIRECTION, ALTERNATING, REVERSIBLE );
+    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmOneWayTags.ONEWAY, YES, ONE_WAY_REVERSE_DIRECTION, ALTERNATING, REVERSIBLE );
   }
   
   /** verify if the tags indicate a reversed one way OSM way, i.e., the value is set to "-1" indicating the main direction flows in the opposite direction
@@ -41,7 +41,7 @@ public class OsmOneWayTags {
    * @return true when one way false otherwise
    */
   public static boolean isReversedOneWay(Map<String,String> tags) {        
-    return PlanitOsmUtils.keyMatchesAnyValueTag(tags, OsmOneWayTags.ONEWAY, ONE_WAY_REVERSE_DIRECTION);
+    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmOneWayTags.ONEWAY, ONE_WAY_REVERSE_DIRECTION);
   }  
   
 }

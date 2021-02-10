@@ -3,7 +3,7 @@ package org.planit.osm.tags;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.OsmTagUtils;
 
 /**
  * Commonly used tags in relation to bicycles or bicycle ways. similar to buses, bicycle ways and lanes can be tagged following two different schemes:
@@ -88,17 +88,17 @@ public class OsmBicycleTags {
   /** highway type cycle way, which can also be used as key cycleway=*/
   public static final String CYCLEWAY = OsmHighwayTags.CYCLEWAY;   
   
-  public static final String CYCLEWAY_BOTH = PlanitOsmUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.BOTH);
+  public static final String CYCLEWAY_BOTH = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.BOTH);
   
   /* cycleway scheme */
   
-  public static final String CYCLEWAY_RIGHT = PlanitOsmUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.RIGHT);
+  public static final String CYCLEWAY_RIGHT = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.RIGHT);
   
-  public static final String CYCLEWAY_LEFT = PlanitOsmUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.LEFT);    
+  public static final String CYCLEWAY_LEFT = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.LEFT);    
   
-  public static final String CYCLEWAY_RIGHT_ONEWAY = PlanitOsmUtils.createCompositeOsmKey(CYCLEWAY_RIGHT, OsmOneWayTags.ONEWAY);
+  public static final String CYCLEWAY_RIGHT_ONEWAY = OsmTagUtils.createCompositeOsmKey(CYCLEWAY_RIGHT, OsmOneWayTags.ONEWAY);
   
-  public static final String CYCLEWAY_LEFT_ONEWAY = PlanitOsmUtils.createCompositeOsmKey(CYCLEWAY_LEFT, OsmOneWayTags.ONEWAY);
+  public static final String CYCLEWAY_LEFT_ONEWAY = OsmTagUtils.createCompositeOsmKey(CYCLEWAY_LEFT, OsmOneWayTags.ONEWAY);
     
   /* values */
     
@@ -192,9 +192,9 @@ public class OsmBicycleTags {
    */
   public static boolean isCyclewayIncludedForAnyOf(Map<String, String> tags, boolean oppositeDirection, String... cyclewayKeys) {
     if(!oppositeDirection) {
-      return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularPositiveValueTags());
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularPositiveValueTags());
     }else {
-      return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayPositiveOppositeDirectionValueTags());
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayPositiveOppositeDirectionValueTags());
     }
   }    
   
@@ -226,7 +226,7 @@ public class OsmBicycleTags {
    * @return true when present, false otherwise
    */  
   public static boolean isCyclewayExcludedForAnyOf(Map<String, String> tags, String... cyclewayKeys) {
-    return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularNegativeValueTags());
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularNegativeValueTags());
   }   
   
 
@@ -236,7 +236,7 @@ public class OsmBicycleTags {
    * @return true when present, false otherwise
    */
   public static boolean isNoOneWayCyclewayInAnyLocation(Map<String, String> tags) {
-    return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, getCycleWayOneWayLocationBasedKeyTags(), OsmBicycleTags.getCycleWayRegularNegativeValueTags());
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, getCycleWayOneWayLocationBasedKeyTags(), OsmBicycleTags.getCycleWayRegularNegativeValueTags());
   }
   
 }

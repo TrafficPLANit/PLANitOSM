@@ -1,6 +1,6 @@
 package org.planit.osm.tags;
 
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.OsmTagUtils;
 
 /**
  * Commonly used tags in relation to busways
@@ -39,11 +39,11 @@ public class OsmBusWayTags {
   
   /* busway scheme */
     
-  public static final String BUSWAY_RIGHT = PlanitOsmUtils.createCompositeOsmKey(BUSWAY, OsmTags.RIGHT);
+  public static final String BUSWAY_RIGHT = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.RIGHT);
   
-  public static final String BUSWAY_LEFT = PlanitOsmUtils.createCompositeOsmKey(BUSWAY, OsmTags.LEFT);
+  public static final String BUSWAY_LEFT = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.LEFT);
   
-  public static final String BUSWAY_BOTH = PlanitOsmUtils.createCompositeOsmKey(BUSWAY, OsmTags.BOTH);
+  public static final String BUSWAY_BOTH = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.BOTH);
    
   /* values for the busway scheme */
       

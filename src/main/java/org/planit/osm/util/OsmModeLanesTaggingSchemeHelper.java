@@ -38,11 +38,11 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   private void initialise() {    
     if(hasEligibleModes()) {
       /* lanes:<mode> */
-      eligibleOsmModes.forEach(osmMode -> modeLanesKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(osmMode, OsmLaneTags.LANES)));    
+      eligibleOsmModes.forEach(osmMode -> modeLanesKeyTags.put(osmMode, OsmTagUtils.createCompositeOsmKey(osmMode, OsmLaneTags.LANES)));    
       /* lanes:<mode>:forward */
-      modeLanesKeyTags.forEach( (osmMode, modeLaneTag) -> modeLanesForwardKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(modeLaneTag, OsmDirectionTags.FORWARD)));         
+      modeLanesKeyTags.forEach( (osmMode, modeLaneTag) -> modeLanesForwardKeyTags.put(osmMode, OsmTagUtils.createCompositeOsmKey(modeLaneTag, OsmDirectionTags.FORWARD)));         
       /* lanes:<mode>:backward */
-      modeLanesKeyTags.forEach((osmMode, modeLaneTag) -> modeLanesBackwardKeyTags.put(osmMode, PlanitOsmUtils.createCompositeOsmKey(modeLaneTag, OsmDirectionTags.BACKWARD)));                     
+      modeLanesKeyTags.forEach((osmMode, modeLaneTag) -> modeLanesBackwardKeyTags.put(osmMode, OsmTagUtils.createCompositeOsmKey(modeLaneTag, OsmDirectionTags.BACKWARD)));                     
     }
   }
   

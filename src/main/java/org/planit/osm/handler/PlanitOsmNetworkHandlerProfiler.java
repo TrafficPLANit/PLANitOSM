@@ -1,4 +1,4 @@
-package org.planit.osm.physical.network.macroscopic;
+package org.planit.osm.handler;
 
 import java.util.HashMap;
 import java.util.Map;

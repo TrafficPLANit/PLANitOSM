@@ -1,19 +1,26 @@
-package org.planit.osm.zoning;
+package org.planit.osm.handler;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
+import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData.NetworkLayerData;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.network.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.locationtech.jts.geom.Point;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.geo.PlanitJtsUtils;
-import org.planit.network.InfrastructureLayer;
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.physical.LinkSegment;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.DirectedConnectoid;
@@ -143,12 +150,44 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     return transferZone;
   }  
   
-  private Node extractPlanitNode(InfrastructureLayer networkLayer, OsmNode osmNode) {
-    Node planitNode = network2ZoningData.getNetworkLayerData(networkLayer).getNodesByOsmId().get(osmNode.getId());
+  /** Create a new PLANit node, register it and update stats
+   * 
+   * @param osmNode to extract PLANit node for
+   * @param networkLayer to create it on
+   * @return created planit node
+   */
+  private Node extractPlanitNode(OsmNode osmNode, final Map<Long, Node> nodesByOsmId,  MacroscopicPhysicalNetwork networkLayer) {
+    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);                
+    nodesByOsmId.put(osmNode.getId(), planitNode);
+    profiler.logNodeStatus(networkLayer.nodes.size());
+    return planitNode;
+  }  
+  
+  /** extract the connectoid access node. either it already exists as a regular node, or it is internal to an existing link. In the latter case
+   * a new node is created and the existing link is broke. In the former case, we simply collect the node
+   * 
+   * @param networkLayer to extract node on
+   * @param osmNode to collect planit node version for
+   * @return planit node collected/created
+   * @throws PlanItException thrown if error
+   */
+  private Node extractConnectoidAccessNode(MacroscopicPhysicalNetwork networkLayer, OsmNode osmNode) throws PlanItException {
+    final Map<Long, Node> nodesByOsmId = network2ZoningData.getNetworkLayerData(networkLayer).getNodesByOsmId();
+    Node planitNode = nodesByOsmId.get(osmNode.getId());
     if(planitNode == null) {
       /* node is internal to an existing link, create it and break existing link */
-      CONTINUE HERE -> USE SAME CODE FOR EXTRACTING NODE AS IN NETWORK HANDLER -> FIND WAY TO PLACE THIS IN COMMON CODE BASE
-      SO WE DO NOT DUPLICATE IT
+      planitNode = extractPlanitNode(osmNode, nodesByOsmId, networkLayer);
+      
+      /* make sure that we have the correct mapping from node to link (in case the link has been broken before in the network reader for example) */
+      NetworkLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
+      List<Link> linksWithOsmNodeInternally = layerData.getOsmNodeIdsInternalToLink().get(osmNode.getId());      
+      PlanitOsmHandlerHelper.updateLinksForInternalNode(planitNode, layerData.getOsmWaysWithMultiplePlanitLinks(), linksWithOsmNodeInternally);
+            
+      /* break link */
+      CoordinateReferenceSystem crs = network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem();
+      Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksWithOsmNodeInternally, networkLayer, crs);
+      /* update mapping since another osmWayId now has multiple planit links */
+      PlanitOsmHandlerHelper.addAllTo(newlyBrokenLinks, layerData.getOsmWaysWithMultiplePlanitLinks());      
     }
     return planitNode;
   }  
@@ -227,7 +266,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
           Mode planitBusMode = networkSettings.getMappedPlanitMode(OsmRoadModeTags.BUS);        
           MacroscopicLinkSegment accessLinkSegment = null;  //TODO: identify most likely closest node/link accessible with planitBusMode
           double length = 0;
-          //zoning.connectoids.registerNew(accessLinkSegment, transferZone, length);
+          zoning.connectoids.registerNew(accessLinkSegment, transferZone, length);
           
           //TODO: add connectoids for modes other than BUS that have access to the waiting area
         }else {
@@ -246,27 +285,24 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
            
         /* Tram connectoid: find layer and node/link segment for vehicle stop */ 
         Mode planitTramMode = networkSettings.getMappedPlanitMode(OsmRailwayTags.TRAM);
-        InfrastructureLayer networkLayer = network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitTramMode);
-        Node planitNode = extractPlanitNode(networkLayer,osmNode);
+        MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitTramMode);
+        Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);   
 
-        if(planitNode.getEntryLinkSegments().size()>1) {
-          LOGGER.severe(String.format("encountered tram stop on OSM node %d, with multiple incoming tracks, only one expected, ignored", osmNode.getId()));
+        if(planitNode.getEdges().size()>2) {
+          LOGGER.severe(String.format("encountered tram stop on OSM node %d, with more than one potential incoming track, only two links expected at maximum, ignored", osmNode.getId()));
           return;
         }
-        if(planitNode.getEntryLinkSegments().size()<=0) {
-          LOGGER.severe(String.format("encountered tram stop on OSM node %d, with no incoming tracks, one expected, ignored", osmNode.getId()));
-          return;
-        }        
-        MacroscopicLinkSegment linkSegment = planitNode.getFirstEntryLinkSegment();
-        DirectedConnectoid connectoid = zoning.connectoids.registerNew(linkSegment);
         
         /* create and register transfer zone */
         TransferZone transferZone = createAndPopulateTransferZone(osmNode,tags, TransferZoneType.PLATFORM);
-        zoning.transferZones.register(transferZone);
+        zoning.transferZones.register(transferZone);        
         
-        /* link connectoid to zone and register tram mode for access*/
-        connectoid.addAccessZone(transferZone);
-        connectoid.addAllowedMode(transferZone, planitTramMode);
+        /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram service using the tracks */
+        for(EdgeSegment incomingLinkSegment : planitNode.getEntryLinkSegments()) {
+          DirectedConnectoid connectoid = zoning.connectoids.registerNew((LinkSegment)incomingLinkSegment,transferZone);
+          /* link connectoid to zone and register tram mode for access*/
+          connectoid.addAllowedMode(transferZone, planitTramMode);    
+        }       
          
         //TODO: add connectoids for modes other than TRAM that have access to the waiting area
       }

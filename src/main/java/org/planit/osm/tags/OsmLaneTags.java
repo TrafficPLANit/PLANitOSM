@@ -2,7 +2,7 @@ package org.planit.osm.tags;
 
 import java.util.Map;
 
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.OsmTagUtils;
 
 /**
  * tags related to lanes and some basic convenience methods to check for lane related OSM tags
@@ -16,21 +16,21 @@ public class OsmLaneTags {
   
   public static final String LANES = "lanes";
 
-  public static final String LANES_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmDirectionTags.FORWARD);
+  public static final String LANES_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES, OsmDirectionTags.FORWARD);
 
-  public static final String LANES_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmDirectionTags.BACKWARD);
+  public static final String LANES_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES, OsmDirectionTags.BACKWARD);
   
-  public static String LANES_PSV = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
+  public static String LANES_PSV = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
   
-  public static String LANES_BUS = PlanitOsmUtils.createCompositeOsmKey(LANES, OsmRoadModeTags.BUS);
+  public static String LANES_BUS = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeTags.BUS);
   
-  public static final String LANES_PSV_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
+  public static final String LANES_PSV_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
   
-  public static final String LANES_PSV_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
+  public static final String LANES_PSV_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
   
-public static final String LANES_BUS_FORWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
+public static final String LANES_BUS_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
   
-  public static final String LANES_BUS_BACKWARD = PlanitOsmUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);  
+  public static final String LANES_BUS_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);  
   
   /* value tags */
   
@@ -50,7 +50,7 @@ public static final String LANES_BUS_FORWARD = PlanitOsmUtils.createCompositeOsm
    * @return true when <key>=lane is present, false otherwise
    */
   public static boolean isLaneIncludedForAnyOf(Map<String, String> tags, String... keys) {
-    return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.LANE);
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.LANE);
   }    
   
   /** Verify if any of the eligible keys have a value that represents an OSMLaneTags.LANE for the given tags
@@ -60,7 +60,7 @@ public static final String LANES_BUS_FORWARD = PlanitOsmUtils.createCompositeOsm
    * @return true when <key>=opposite_lane is present, false otherwise
    */
   public static boolean isOppositeLaneIncludedForAnyOf(Map<String, String> tags, String... keys) {
-    return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.OPPOSITE_LANE);
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.OPPOSITE_LANE);
   }
 
    

@@ -1,4 +1,4 @@
-package org.planit.osm.physical.network.macroscopic;
+package org.planit.osm.handler;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -183,6 +184,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   private Map<InfrastructureLayer,Set<Link>> handlePerfectCircularWay(OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) throws PlanItException {
 
+    
     Map<InfrastructureLayer,Set<Link>> createdLinksByLayer = new HashMap<>();
     int firstPartialLinkStartNodeIndex = -1;
     int partialLinkStartNodeIndex = -1;
@@ -254,7 +256,9 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
       }    
       
-      if(createdLinkByLayer != null) {
+      if(createdLinksByLayer.isEmpty()) {
+        LOGGER.severe(String.format("when parsing circular ways %d, no or only a single way has been converted into planit links, but a circular way comprises at least two planit links", circularOsmWay.getId()));
+      }else  if(createdLinkByLayer != null) {
         createdLinkByLayer.forEach( (layer, link) -> { createdLinksByLayer.get(layer).add(link);} );
       }
     }
@@ -353,29 +357,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     LOGGER.info(String.format("Processed %d circular ways...DONE",osmCircularWays.size()));
     return createdLinksPerLayerByOsmWayId;
   }
-  
-  /**
-   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
-   * on an existing link but also an internal link on another node, we break the links where this node
-   * is internal. the end result is a situations where all nodes used by more than one link are extreme 
-   * nodes, i.e., start/end nodes.
-   * <p>
-   * One can pass in already broken links on another occasion to make sure the correct PLANit link is selected to be broken further in case it is
-   * found that the OSM way needs to be broken again (in which case the original OSM id does not suffice to find the related link
-   * 
-   * @param createdLinksByOsmWayId all already broken links by original OSM id, yet multiple PLANit links exist for it (possibly in different layers)
-   */
-  protected void breakLinksWithInternalConnections(final Map<InfrastructureLayer, Map<Long, Set<Link>>> createdLinksByOsmWayId) {    
     
-    /* delegate to appropriate layer handlers */
-    for(Entry<InfrastructureLayer, Map<Long, Set<Link>>> entry : createdLinksByOsmWayId.entrySet()) {
-      InfrastructureLayer networkLayer = entry.getKey();
-      Map<Long, Set<Link>> brokenLinksPerLayer = entry.getValue();
-      this.osmLayerHandlers.get(networkLayer).breakLinksWithInternalConnections(brokenLinksPerLayer);
-    }
-  
-  }      
-  
   /**
    * extract OSM way's PLANit infrastructure for the entire way, i.e., link, nodes, and link segments where applicable. 
    * The parser will try to infer missing/default data by using defaults set by the user
@@ -452,9 +434,10 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler properly
+   * @param intermodalReaderActive indicates if part of intermodal reader, set settings accordingly on layer handlers 
    * @throws PlanItException 
    */
-  public void initialiseBeforeParsing() throws PlanItException {
+  public void initialiseBeforeParsing(boolean intermodalReaderActive) throws PlanItException {
     PlanItException.throwIf(network.infrastructureLayers != null && network.infrastructureLayers.size()>0,"network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* create the supported link segment types on the network */
@@ -463,7 +446,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     /* for each layer initialise a handler */
     for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
       MacroscopicPhysicalNetwork macroNetworkLayer = (MacroscopicPhysicalNetwork)networkLayer;
-      PlanitOsmNetworkLayerHandler layerHandler = new PlanitOsmNetworkLayerHandler(macroNetworkLayer, osmNodes, settings, geoUtils);
+      PlanitOsmNetworkLayerHandler layerHandler = new PlanitOsmNetworkLayerHandler(macroNetworkLayer, osmNodes, settings, intermodalReaderActive, geoUtils);
       osmLayerHandlers.put(macroNetworkLayer, layerHandler);
     }
         
@@ -571,19 +554,15 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void complete() throws IOException {
-        
+    
     /* process circular ways --> returns map of (per layer) created links by OSM way id (long) */
-    Map<InfrastructureLayer, Map<Long, Set<Link>>> createdLinksByOsmWayId = processCircularWays();
-    
-
+    Map<InfrastructureLayer, Map<Long, Set<Link>>> osmWaysWithMultiplePlanitLinks = processCircularWays();    
         
-    /* break all links that have internal nodes that are extreme nodes of other links */
-    breakLinksWithInternalConnections(createdLinksByOsmWayId);
-    
-    /* useful for debugging */
-    network.infrastructureLayers.forEach( layer -> layer.validate());
-    /* stats*/
-    network.infrastructureLayers.forEach( layer -> osmLayerHandlers.get(layer).logProfileInformation());
+    /* delegate to each layer handler present */
+    for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmLayerHandlers.entrySet()) {
+      entry.getValue().complete(osmWaysWithMultiplePlanitLinks.get(entry.getKey()));
+      osmWaysWithMultiplePlanitLinks.remove(entry.getKey());
+    }                 
         
     LOGGER.info(" OSM basic network parsing...DONE");
 

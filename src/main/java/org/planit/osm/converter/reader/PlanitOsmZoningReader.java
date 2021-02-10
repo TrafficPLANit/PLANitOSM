@@ -3,9 +3,9 @@ package org.planit.osm.converter.reader;
 import java.util.logging.Logger;
 
 import org.planit.converter.zoning.ZoningReader;
+import org.planit.osm.handler.PlanitOsmZoningHandler;
 import org.planit.osm.settings.network.PlanitOsmTransferSettings;
 import org.planit.osm.util.Osm4JUtils;
-import org.planit.osm.zoning.PlanitOsmZoningHandler;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.zoning.Zoning;
 

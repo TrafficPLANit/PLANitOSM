@@ -4,7 +4,7 @@ import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
 import org.planit.network.macroscopic.MacroscopicNetwork;
-import org.planit.osm.physical.network.macroscopic.PlanitOsmNetworkHandler;
+import org.planit.osm.handler.PlanitOsmNetworkHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.util.Osm4JUtils;
@@ -34,6 +34,10 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   
   /** tha handler responsible for the actual parsing */
   private PlanitOsmNetworkHandler osmHandler;
+  
+  /** flag indicating if network reader is part of intermodal reader, relevant for not discarding indices when finished
+   * parsing */
+  private boolean intermodalReaderActive = false;
      
   /**
    * Log some information about this reader's configuration
@@ -51,6 +55,14 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   protected PlanitOsmNetworkHandler getOsmNetworkHandler() {
     return osmHandler;
   }
+  
+  /** indicate of network reader is part of intermodal reader, if so, it retains some of the indices
+   * tracked ruing parsing for later use by other parts of the intermodal reader
+   * @param 
+   */
+  protected void setPartOfIntermodalReader(boolean intermodalReaderActive) {
+    this.intermodalReaderActive = intermodalReaderActive;
+  }  
   
   /**
    * Constructor 
@@ -90,7 +102,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     
       /* set handler to deal with call backs from osm4j */
       osmHandler = new PlanitOsmNetworkHandler(osmNetwork, settings);
-      osmHandler.initialiseBeforeParsing();
+      osmHandler.initialiseBeforeParsing(intermodalReaderActive);
       
       /* register handler */
       osmReader.setHandler(osmHandler);
@@ -133,7 +145,5 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     /* reset last used handler */
     osmHandler.reset();
   }
-
-
 
 }

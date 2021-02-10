@@ -3,7 +3,7 @@ package org.planit.osm.tags;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.OsmTagUtils;
 
 /**
  * pedestrian related tags which are not really grouped in a logical way in OSM, hence we provide all of them here as well as some convenience methods
@@ -91,8 +91,8 @@ public class OsmPedestrianTags {
    * @return true when one or more of the tag values is found, false otherwise
    */
   public static boolean hasExplicitSidewalkOrFootwayWithAccessValue(Map<String, String> tags, String... accessValueTags) {
-    if(PlanitOsmUtils.containsAnyKey(tags, getOsmPedestrianKeyTags())){
-      return PlanitOsmUtils.anyKeyMatchesAnyValueTag(tags, getOsmPedestrianKeyTags(), accessValueTags);
+    if(OsmTagUtils.containsAnyKey(tags, getOsmPedestrianKeyTags())){
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, getOsmPedestrianKeyTags(), accessValueTags);
     }
     return false;    
   }

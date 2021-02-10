@@ -7,8 +7,8 @@ import org.planit.converter.intermodal.IntermodalReader;
 import org.planit.network.InfrastructureNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData.NetworkLayerData;
+import org.planit.osm.handler.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.physical.network.macroscopic.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.network.PlanitOsmTransferSettings;
 import org.planit.utils.exceptions.PlanItException;
@@ -69,6 +69,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
       layerData.setNodesByOsmId(layerHandler.getParsedNodesByOsmId());
       /* collect osm nodes internal to a parsed Planit link that have not yet been converted to nodes*/
       layerData.setOsmNodeIdsInternalToLink(layerHandler.getOsmNodesInternalToLink());
+      layerData.setOsmWaysWithMultiplePlanitLinks(layerHandler.getOsmWaysWithMultiplePlanitLinks());
     }
     
     return network2zoningData;
@@ -84,10 +85,16 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    */
   protected PlanitOsmIntermodalReader(final String inputFile, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate){
     this.inputFile = inputFile;
+    /* NETWORK READER */
     this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
+    /* flag that network reader is part of intermodal reader, such that it will retain some of its indexes after parsing so that they
+     * can be passed over to the zoning reader */
+    this.osmNetworkReader.setPartOfIntermodalReader(true);
+    
+    /* ZONING READER */
     this.osmZoningReader = PlanitOsmZoningReaderFactory.create(inputFile, osmNetworkToPopulate);
     /* default activate the parser because otherwise there is no point in using an intermodal reader anyway */
-    this.osmZoningReader.getSettings().activateParser(true);        
+    this.osmZoningReader.getSettings().activateParser(true);    
   }
   
    

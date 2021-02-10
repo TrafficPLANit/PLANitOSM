@@ -3,6 +3,7 @@ package org.planit.osm.converter.reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.planit.network.InfrastructureLayer;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -40,6 +41,12 @@ public class PlanitOsmNetworkToZoningReaderData {
      */
     private Map<Long, List<Link>> osmNodeIdsInternalToLink = new HashMap<Long, List<Link>>();
     
+    /**
+     * tracks all the osm wayids for which more than one planit link has been generated (due to breaking links, cicrular ways etc.). This is useful since
+     * in that case we can no longer directly find a link by its external id, since multiple planit links with the same external id exist
+     */
+    private Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
+    
     
     public final Map<Long, Node> getNodesByOsmId() {
       return nodesByOsmId;
@@ -55,7 +62,15 @@ public class PlanitOsmNetworkToZoningReaderData {
     
     public Map<Long, List<Link>> getOsmNodeIdsInternalToLink() {
       return this.osmNodeIdsInternalToLink;      
-    }        
+    }
+
+    public void setOsmWaysWithMultiplePlanitLinks(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
+      this.osmWaysWithMultiplePlanitLinks = osmWaysWithMultiplePlanitLinks;      
+    }
+    
+    public Map<Long, Set<Link>> getOsmWaysWithMultiplePlanitLinks() {
+      return this.osmWaysWithMultiplePlanitLinks;      
+    }            
   }
 
   /** settings used in network reader */

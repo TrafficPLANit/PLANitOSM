@@ -1,4 +1,4 @@
-package org.planit.osm.zoning;
+package org.planit.osm.handler;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +38,12 @@ public class PlanitOsmZoningHandlerProfiler {
    */  
   private long moduloLoggingConnectoids = 500;
   
+  /**
+   * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
+   * while still providing information, hence the modulo use is dynamic
+   */  
+  private long moduloLoggingCounterNodes = 10;  
+  
 
   /**
    * Increment counter for passed in osm tag regarding a Ptv1 value tag
@@ -62,7 +68,7 @@ public class PlanitOsmZoningHandlerProfiler {
     
     /* stats on exact number of created PLANit network objects */
     LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.transferZones.size()));
-    LOGGER.info(String.format("[STATS] created PLANit %d connectoids",zoning.connectoids.size()));        
+    LOGGER.info(String.format("[STATS] created PLANit %d connectoids",zoning.connectoids.size()));
   }
 
   /**
@@ -88,5 +94,17 @@ public class PlanitOsmZoningHandlerProfiler {
       moduloLoggingConnectoids *=2;
     }  
   }
+  
+  /**
+   * log user information based on currently number of registered nodes
+   * 
+   * @param numberOfNodes registered number of nodes so far
+   */
+  public void logNodeStatus(int numberOfNodes) {
+    if(numberOfNodes >= moduloLoggingCounterNodes) {
+      LOGGER.info(String.format("Created %d nodes out of OSM nodes",numberOfNodes));
+      moduloLoggingCounterNodes *=2;
+    }  
+  }  
 
 }
