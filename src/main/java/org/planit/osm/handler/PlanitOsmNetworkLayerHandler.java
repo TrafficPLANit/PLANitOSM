@@ -209,7 +209,7 @@ public class PlanitOsmNetworkLayerHandler {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
     String[] accessValueTags = included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
     /* found modes with given access value tags in explored direction */
-    Set<Mode> foundModes = settings.collectMappedPlanitModes(PlanitOsmUtils.getPostfixedOsmModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
+    Set<Mode> foundModes = settings.collectMappedPlanitModes(PlanitOsmUtils.getPostfixedOsmRoadModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
     return foundModes;
   }    
   
@@ -230,7 +230,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @return the mapped PLANitModes found
    */
   private Set<Mode> getExplicitlyIncludedModesNonOneWay(Map<String, String> tags) {
-    return settings.collectMappedPlanitModes(PlanitOsmUtils.getPrefixedOsmModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
+    return settings.collectMappedPlanitModes(PlanitOsmUtils.getPrefixedOsmRoadModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
   }          
 
   /** Collect explicitly included modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
@@ -509,7 +509,7 @@ public class PlanitOsmNetworkLayerHandler {
     }else {
 
       /* ... all modes --> general exclusion of modes */
-      excludedModes =  settings.collectMappedPlanitModes(PlanitOsmUtils.getOsmModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
+      excludedModes =  settings.collectMappedPlanitModes(PlanitOsmUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
       
       /* ...all modes --> exclusions in explicit directions matching our explored direction, e.g. bicycle:forward=no, FORWARD/BACKWARD/BOTH based*/
       excludedModes.addAll(getExplicitlyExcludedModesForDirection(tags, isForwardDirection));
@@ -583,7 +583,7 @@ public class PlanitOsmNetworkLayerHandler {
     /* 3) mode inclusions for explored direction that is NOT ONE WAY OPPOSITE DIRECTION */
     if(!exploreOneWayOppositeDirection) {      
       /* ...all modes --> general inclusions in main or both directions <mode>= */
-      includedModes.addAll(settings.collectMappedPlanitModes(PlanitOsmUtils.getOsmModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags())));          
+      includedModes.addAll(settings.collectMappedPlanitModes(PlanitOsmUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags())));          
     }
            
     return includedModes;                  

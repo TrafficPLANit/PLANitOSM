@@ -11,6 +11,8 @@ import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 
+import de.topobyte.osm4j.core.model.iface.OsmNode;
+
 /**
  * Class that hosts all the data gathered (e.g., references, mappings, etc.) during the parsing of the OSM network
  * that is also of use to the OSM zoning reader. It is used by the intermodal OSM reader to pass this informatino along in 
@@ -48,11 +50,11 @@ public class PlanitOsmNetworkToZoningReaderData {
     private Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     
     
-    public final Map<Long, Node> getNodesByOsmId() {
+    public final Map<Long, Node> getPlanitNodesByOsmId() {
       return nodesByOsmId;
     }
 
-    public void setNodesByOsmId(final Map<Long, Node> nodesByOsmId) {
+    public void setPlanitNodesByOsmId(final Map<Long, Node> nodesByOsmId) {
       this.nodesByOsmId = nodesByOsmId;
     }
 
@@ -78,6 +80,9 @@ public class PlanitOsmNetworkToZoningReaderData {
   
   /** populated network  */
   private PlanitOsmNetwork osmNetwork;
+  
+  /** all osm nodes in the osm network */
+  private Map<Long, OsmNode> osmNodes = new HashMap<Long, OsmNode>();  
   
   /** layer specific data that is to be made available to the zoning reader */
   private Map<InfrastructureLayer, NetworkLayerData> networkLayerData = new HashMap<InfrastructureLayer, NetworkLayerData>(); 
@@ -109,5 +114,13 @@ public class PlanitOsmNetworkToZoningReaderData {
   public NetworkLayerData registerNewLayerData(InfrastructureLayer networkLayer) {
     networkLayerData.put(networkLayer, new NetworkLayerData());
     return networkLayerData.get(networkLayer);    
-  }  
+  }
+
+  public void setOsmNodes(Map<Long, OsmNode> osmNodes) {
+    this.osmNodes= osmNodes;
+  }
+  
+  public Map<Long, OsmNode> getOsmNodes() {
+    return this.osmNodes;
+  }    
 }

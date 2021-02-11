@@ -382,7 +382,22 @@ public class PlanitOsmNetworkSettings {
       theMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
     return theMode;
-  }    
+  } 
+  
+  /** convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
+   * 
+   * @param osmModes to collect mapped mode for (if any)
+   * @return mapped PLANit mode, if not available null is returned
+   */
+  public Set<Mode> getMappedPlanitModes(final Collection<String> osmModes) {
+    Set<Mode> mappedModes = null;
+    for(String osmMode : osmModes) {
+      Mode theMode = getMappedPlanitMode(osmMode);
+      mappedModes = mappedModes==null ? new HashSet<Mode>() : mappedModes;
+      mappedModes.add(theMode);
+    }    
+    return mappedModes;
+  }   
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode), i.e., if it is actively included when reading the network
    * @param osmMode to verify

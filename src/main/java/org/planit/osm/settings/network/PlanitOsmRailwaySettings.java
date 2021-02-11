@@ -306,5 +306,13 @@ public class PlanitOsmRailwaySettings {
   public boolean isParserActive() {
     return this.isParserActive;
   }
+
+  /** Verify if any mode other than the passed in osm mode is active
+   * @param osmMode to check
+   * @return true when other mapped mode is present false otherwise
+   */
+  public boolean hasAnyMappedPlanitModeOtherThan(String osmMode) {
+    return this.osmRailMode2PlanitModeMap.keySet().stream().filter( mode -> (!mode.equals(osmMode))).findFirst().isPresent();
+  }
     
 }

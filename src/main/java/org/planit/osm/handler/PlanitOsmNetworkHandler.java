@@ -587,5 +587,12 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   public final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> getLayerHandlers() {
     return this.osmLayerHandlers;
   }
+  
+  /** provide stored osmNodes
+   * @return
+   */
+  public final Map<Long,OsmNode> getOsmNodes() {
+    return osmNodes;
+  }
 
 }
