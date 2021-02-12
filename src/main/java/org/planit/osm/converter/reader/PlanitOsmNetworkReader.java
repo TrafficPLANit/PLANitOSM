@@ -146,9 +146,4 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     osmHandler.reset();
   }
 
-  protected Object getOsmNodes() {
-    // TODO Auto-generated method stub
-    return null;
-  }
-
 }

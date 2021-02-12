@@ -10,14 +10,15 @@ import java.util.regex.Pattern;
 import org.locationtech.jts.geom.Coordinate;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmSpeedTags;
+import org.planit.osm.tags.OsmTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
-import org.pmw.tinylog.Logger;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -267,7 +268,7 @@ public class PlanitOsmUtils {
     Set<String> foundModes = new HashSet<String>();    
         
     /* osm rail mode */
-    Collection<String> osmrailModes = OsmRailwayTags.getSupportedRailModeTags();
+    Collection<String> osmrailModes = OsmRailModeTags.getSupportedRailModeTags();
     for(String osmRailmode : osmrailModes) {     
       if(tags.containsKey(osmRailmode)){
         String valueTag = tags.get(osmRailmode).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
@@ -320,6 +321,30 @@ public class PlanitOsmUtils {
       coordArray[index] = new Coordinate(getXCoordinate(osmNode), getYCoordinate(osmNode));
     }
     return coordArray;
+  }
+
+  /** Collect the value for the first "ref" related key tag that we support. In order of precedence we currently support the following ref key tags
+   * 
+   * <ul>
+   * <li>ref</li>
+   * <li>loc_ref</li>
+   * <li>local_ref</li>
+   * </ul>
+   * 
+   * @param tags to verify
+   * @return found value, null if none is present
+   */
+  public static String getValueForSupportedRefKeys(Map<String, String> tags) {
+    if(OsmTagUtils.containsAnyKey(tags, OsmTags.REF, OsmTags.LOC_REF)) {
+      if(tags.containsKey(OsmTags.REF)) {
+        return tags.get(OsmTags.REF);
+      }else if(tags.containsKey(OsmTags.LOC_REF)) {
+        return tags.get(OsmTags.LOC_REF);
+      }else if(tags.containsKey(OsmTags.LOCAL_REF)) {
+        return tags.get(OsmTags.LOCAL_REF);
+      }
+    }
+    return null;
   }  
    
 

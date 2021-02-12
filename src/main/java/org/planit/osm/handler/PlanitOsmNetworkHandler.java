@@ -204,15 +204,16 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         }else if(!(index==finalNodeIndex && partialLinkStartNodeIndex==firstPartialLinkStartNodeIndex)) {            
           /* identified valid partial link (statement above makes sure that in case the one duplicate node (first=last) is chosen as partial link, we do not accept is as a partial link as it represents  the entire loop, otherwise
            * create link from start node to the intermediate node that attaches to an already existing planit link on the circular way */          
-          partialLinkEndNodeIndex = index;
-          Map<InfrastructureLayer, Link> createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
+          Map<InfrastructureLayer, Link> createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, index, partialLinksPartOfCircularWay);
           if(createdLinkByLayer != null) {
             createdLinkByLayer.forEach( (layer, link) -> {
               createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
               createdLinksByLayer.get(layer).add(link);} );
-          }
-           
-          /* update first node to last node of this link for next partial link */          partialLinkStartNodeIndex = partialLinkEndNodeIndex;                   
+            
+            /* update first node to last node of this link for next partial link */
+            partialLinkEndNodeIndex = index;
+            partialLinkStartNodeIndex = partialLinkEndNodeIndex;                
+          }                         
         }
       }
     }
@@ -256,9 +257,8 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
       }    
       
-      if(createdLinksByLayer.isEmpty()) {
-        LOGGER.severe(String.format("when parsing circular ways %d, no or only a single way has been converted into planit links, but a circular way comprises at least two planit links", circularOsmWay.getId()));
-      }else  if(createdLinkByLayer != null) {
+      /* possibly no links created, for example when circular way is not of a viable type, or access is private, or some other valid reason*/
+      if(createdLinkByLayer != null) {
         createdLinkByLayer.forEach( (layer, link) -> { createdLinksByLayer.get(layer).add(link);} );
       }
     }
@@ -337,8 +337,10 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     Map<InfrastructureLayer, Map<Long, Set<Link>>> createdLinksPerLayerByOsmWayId = new HashMap<>();    
     for(Entry<Long,OsmWay> entry : osmCircularWays.entrySet()) {
       try {        
-        Long osmWayId = entry.getKey();
+        
+        Long osmWayId = entry.getKey();                
         Map<InfrastructureLayer, Set<Link>> createdLinksByLayer = handleRawCircularWay(entry.getValue());
+        
         /* add to results */
         if(createdLinksByLayer!=null && !createdLinksByLayer.isEmpty()) {
           for(Entry<InfrastructureLayer, Set<Link>> layerEntry : createdLinksByLayer.entrySet()) {
@@ -390,17 +392,19 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
       MacroscopicPhysicalNetwork networkLayer = entry.getKey();
       Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = entry.getValue();
       
-      PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
-      if(layerHandler == null) {
-        throw new PlanItException("layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
-      }
-      /* delegate to layer handler */
-      Link link = layerHandler.extractPartialOsmWay(osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
-      if(link != null) {
-        if(linksByLayer==null) {
-          linksByLayer = new HashMap<InfrastructureLayer, Link>();
+      if(linkSegmentTypes != null && linkSegmentTypes.anyIsNotNull()) {
+        PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
+        if(layerHandler == null) {
+          throw new PlanItException("layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
         }
-        linksByLayer.put(networkLayer, link);        
+        /* delegate to layer handler */
+        Link link = layerHandler.extractPartialOsmWay(osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
+        if(link != null) {
+          if(linksByLayer==null) {
+            linksByLayer = new HashMap<InfrastructureLayer, Link>();
+          }
+          linksByLayer.put(networkLayer, link);        
+        }
       }
     }    
     

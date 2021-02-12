@@ -33,6 +33,14 @@ public class OsmTags {
     public static final String BOTH = "both";
 
     public static final String PROPOSED = "proposed";
+    
+    public static final String TYPE = "type";
+    
+    public static final String REF = "ref";
+    
+    public static final String LOC_REF = "loc_ref";
+    
+    public static final String LOCAL_REF = "local_ref";
 
 
     /** check if tags indicate the entity is in fact an area

@@ -12,7 +12,7 @@ import org.planit.osm.defaults.OsmHighwayTypeConfiguration;
 import org.planit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailwayTags;
+import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -418,7 +418,7 @@ public class PlanitOsmHighwaySettings {
     if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmHighwayValueType)){
       /* collect all rail and road modes that are allowed, try all because the mode categories make it difficult to collect individual modes otherwise */
       Set<String> allowedRoadModesOnRoad =  OsmRoadModeTags.getSupportedRoadModeTags().stream().filter( roadModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, roadModeTag)).collect(Collectors.toSet());
-      Set<String> allowedRailModesOnRoad =  OsmRailwayTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, railModeTag)).collect(Collectors.toSet());      
+      Set<String> allowedRailModesOnRoad =  OsmRailModeTags.getSupportedRailModeTags().stream().filter( railModeTag -> osmModeAccessHighwayDefaults.isAllowed(osmHighwayValueType, railModeTag)).collect(Collectors.toSet());      
       allowedModes = new HashSet<String>();
       allowedModes.addAll(allowedRoadModesOnRoad);
       allowedModes.addAll(allowedRailModesOnRoad);

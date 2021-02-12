@@ -387,16 +387,22 @@ public class PlanitOsmNetworkSettings {
   /** convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
    * 
    * @param osmModes to collect mapped mode for (if any)
-   * @return mapped PLANit mode, if not available null is returned
+   * @return mapped PLANit mode, if not available empty set is returned
    */
   public Set<Mode> getMappedPlanitModes(final Collection<String> osmModes) {
-    Set<Mode> mappedModes = null;
+    HashSet<Mode> mappedPlanitModes = new HashSet<Mode>();
+    
+    if(osmModes == null) {
+      return mappedPlanitModes;
+    } 
+    
     for(String osmMode : osmModes) {
       Mode theMode = getMappedPlanitMode(osmMode);
-      mappedModes = mappedModes==null ? new HashSet<Mode>() : mappedModes;
-      mappedModes.add(theMode);
+      if(theMode != null) {
+        mappedPlanitModes.add(theMode);
+      }
     }    
-    return mappedModes;
+    return mappedPlanitModes;  
   }   
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode), i.e., if it is actively included when reading the network
@@ -423,26 +429,6 @@ public class PlanitOsmNetworkSettings {
     }
     return false;
   }  
-
-  /** convenience method that provides an overview of all PLANit modes that are currently mapped by any of the passed in OsmModes
-   * 
-   * @param osmModes to verify
-   * @return mapped PLANit modes, empty set when no mapped modes can be found
-   */
-  public Set<Mode> collectMappedPlanitModes(Collection<String> osmModes) {
-    HashSet<Mode> mappedPlanitModes = new HashSet<Mode>();
-    if(osmModes == null) {
-      return mappedPlanitModes;
-    }    
-    
-    for (String osmMode : osmModes) {
-      Mode mappedMode = getMappedPlanitMode(osmMode);
-      if(mappedMode != null) {
-        mappedPlanitModes.add(mappedMode);
-      }
-    }
-    return mappedPlanitModes;
-  }
 
   /** When country is set for settings this will return the chosen country
    * @return countryName

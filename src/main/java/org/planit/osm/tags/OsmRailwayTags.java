@@ -1,6 +1,5 @@
 package org.planit.osm.tags;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +16,7 @@ public class OsmRailwayTags {
   
   /** all currently available rail way tags that represent tracks accessible to a rail mode*/
   private static final Set<String> RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();
-  
+    
   /** all currently supported railway tags that represent geographic areas, e.g. stations, or platforms next or alongside tracks, this is a subset of
    * the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS} */
   private static final Set<String> AREABASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();    
@@ -29,7 +28,20 @@ public class OsmRailwayTags {
   
   
   /**
-   * populate the available railway mode tags
+   * populate the available value tags for key railway= that represent rail tracks of some sort
+   * 
+   * <ul>
+   * <li>funicular</li>
+   * <li>light_rail</li>
+   * <li>mono_rail</li>
+   * <li>narrow_gauge</li>
+   * <li>miniature</li>
+   * <li>razed</li>
+   * <li>turntable</li>
+   * <li>rail</li>
+   * <li>subway</li>
+   * <li>tram</li>
+   * </ul>
    */
   private static void populateRailBasedOsmRailwayValueTags() {
     RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(FUNICULAR);
@@ -43,6 +55,7 @@ public class OsmRailwayTags {
     RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(SUBWAY);
     RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(TRAM);
   }
+  
   
   /**
    * populate the available railway area tags. These area tags are here to identify ways that are in fact NOT
@@ -185,14 +198,6 @@ public class OsmRailwayTags {
   public static boolean isRailwayKeyTag(String railwayTag) {
     return RAILWAY.equals(railwayTag);
   }  
-
-  /**
-   * provide a copy of all supported rail mode tags
-   * @return all supported road modes
-   */
-  public static Collection<String> getSupportedRailModeTags() {
-    return new HashSet<String>(RAILBASED_OSM_RAILWAY_VALUE_TAGS);
-  }
 
   /**
    * Verify if tags indicates this is a railway

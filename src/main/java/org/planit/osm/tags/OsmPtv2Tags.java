@@ -56,6 +56,14 @@ public class OsmPtv2Tags {
   
   /** The position on the street or rails where a public transport vehicle stops */
   public static final String STOP_POSITION = "stop_position";
+  
+  /* role names when part of stop_area relation */
+  
+  /** stop_position members in a stop_area relation take on this role identifier */
+  public static final String STOP_POSITION_ROLE = "stop";
+  
+  /** platform members in a stop_area relation take on this role identifier */
+  public static final String PLATFORM_ROLE = "platform";    
         
   /** collect the value tags as they are currently registered
    * 

@@ -25,6 +25,11 @@ public class PlanitOsmZoningHandlerProfiler {
    * track a counter by Ptv1 value tag of the encountered entities
    */
   private final Map<String, LongAdder> counterByPtv1Tag = new HashMap<String, LongAdder>();
+  
+  /**
+   * track a counter by Ptv2 value tag of the encountered entities
+   */
+  private final Map<String, LongAdder> counterByPtv2Tag = new HashMap<String, LongAdder>();  
         
   /**
    * for logging we log each x number of entities parsed, this is done to minimise number of logging lines
@@ -54,6 +59,16 @@ public class PlanitOsmZoningHandlerProfiler {
     counterByPtv1Tag.putIfAbsent(tagType, new LongAdder());
     counterByPtv1Tag.get(tagType).increment();    
   }
+  
+  /**
+   * Increment counter for passed in osm tag regarding a Ptv2 value tag
+   * 
+   * @param tagType to increment counter for
+   */
+  public void incrementOsmPtv2TagCounter(String tagType) {
+    counterByPtv2Tag.putIfAbsent(tagType, new LongAdder());
+    counterByPtv2Tag.get(tagType).increment();    
+  }  
 
   /**
    * log counters
@@ -63,8 +78,13 @@ public class PlanitOsmZoningHandlerProfiler {
   public void logProfileInformation(Zoning zoning) {
     for(Entry<String, LongAdder> entry : counterByPtv1Tag.entrySet()) {
       long count = entry.getValue().longValue();
-      LOGGER.info(String.format("[STATS] processed %s count:%d", entry.getKey(), count));
+      LOGGER.info(String.format("[STATS] [Ptv1] processed %s count:%d", entry.getKey(), count));
     }
+    
+    for(Entry<String, LongAdder> entry : counterByPtv2Tag.entrySet()) {
+      long count = entry.getValue().longValue();
+      LOGGER.info(String.format("[STATS] [Ptv2] processed %s count:%d", entry.getKey(), count));
+    }    
     
     /* stats on exact number of created PLANit network objects */
     LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.transferZones.size()));

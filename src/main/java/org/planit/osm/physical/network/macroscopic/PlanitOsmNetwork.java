@@ -673,7 +673,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)) {
       allowedOsmModes =  settings.getRailwaySettings().collectAllowedOsmRailwayModes(osmWayValue);
     }
-    return settings.collectMappedPlanitModes(allowedOsmModes);
+    return settings.getMappedPlanitModes(allowedOsmModes);
   }     
   
   /**
@@ -712,7 +712,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         if(!defaultPlanitOsmLinkSegmentTypes.containsKey(osmWayValueToUse)) {
         
           /* Only when one or more OSM modes are mapped to PLANit modes, the osm way type will be used, otherwise it is ignored */
-          Collection<Mode> activatedPlanitModes = settings.collectMappedPlanitModes(highwaySettings.collectAllowedOsmHighwayModes(osmWayValueToUse));          
+          Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(highwaySettings.collectAllowedOsmHighwayModes(osmWayValueToUse));          
           if(!activatedPlanitModes.isEmpty()) {
             /* maximum speed of the highway type to be used for the link segment type settings */
             double osmHighwayTypeMaxSpeed = highwaySettings.getDefaultSpeedLimitByOsmHighwayType(osmWayValueToUse);
@@ -774,7 +774,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     PlanitOsmRailwaySettings railwaySettings = settings.getRailwaySettings();
     if(railwaySettings.isOsmRailwayTypeActivated(osmWayValue)) {
       
-      Collection<Mode> activatedPlanitModes = settings.collectMappedPlanitModes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue));
+      Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue));
       if(!activatedPlanitModes.isEmpty()) {
         
         /* create the PLANit link segment type based on OSM way tag */
