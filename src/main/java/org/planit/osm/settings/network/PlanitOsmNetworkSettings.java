@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.planit.geo.PlanitJtsUtils;
 import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.network.InfrastructureLayersConfigurator;
 import org.planit.osm.defaults.OsmLaneDefaults;
@@ -20,6 +19,7 @@ import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
 

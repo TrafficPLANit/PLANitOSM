@@ -1,11 +1,15 @@
 package org.planit.osm.util;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.logging.Logger;
 
 import org.planit.utils.misc.FileUtils;
 
 import de.topobyte.osm4j.core.access.OsmReader;
+import de.topobyte.osm4j.core.model.iface.OsmEntity;
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.pbf.seq.PbfReader;
 import de.topobyte.osm4j.xml.dynsax.OsmXmlReader;
 
@@ -49,5 +53,20 @@ public class Osm4JUtils {
       LOGGER.warning(String.format("open street map input file does not exist: (%s) skip parsing", inputFileName));
     }
     return null;
-  }  
+  } 
+  
+  /** Create a comparator for osm entities absed on their id. Can only be used  within each entittypes as across
+   * entity types the ids are NOT unique
+   * 
+   * @return entity type based comaprator
+   */
+  public static Comparator<? super OsmEntity> createOsmEntityComparator(){
+    return new Comparator<OsmEntity>() {
+      public int compare(OsmEntity e1,OsmEntity e2)
+      {
+          return Long.valueOf(e1.getId()).compareTo(Long.valueOf(e2.getId()));
+      }
+    };
+  }
+
 }

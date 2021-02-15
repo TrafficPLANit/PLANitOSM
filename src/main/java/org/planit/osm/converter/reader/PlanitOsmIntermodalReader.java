@@ -10,7 +10,7 @@ import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData.Networ
 import org.planit.osm.handler.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
-import org.planit.osm.settings.network.PlanitOsmTransferSettings;
+import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 import org.planit.zoning.Zoning;

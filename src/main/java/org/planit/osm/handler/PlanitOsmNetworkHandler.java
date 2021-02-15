@@ -12,11 +12,10 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
-
-import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;

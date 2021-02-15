@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
-import org.planit.geo.PlanitJtsUtils;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
@@ -38,6 +37,7 @@ import org.planit.osm.util.OsmTagUtils;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;

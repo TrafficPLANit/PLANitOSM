@@ -4,10 +4,13 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailModeTags;
@@ -17,8 +20,11 @@ import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.osm.tags.OsmTags;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
+import org.planit.utils.zoning.TransferZone;
+import org.planit.utils.zoning.Zone;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -30,6 +36,9 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class PlanitOsmUtils {
+  
+  /** the logger */
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmUtils.class.getCanonicalName());
   
   /** collect all OSM modes with either preFix:<OSM mode name>= or postFix:<OSM mode name>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
@@ -335,16 +344,47 @@ public class PlanitOsmUtils {
    * @return found value, null if none is present
    */
   public static String getValueForSupportedRefKeys(Map<String, String> tags) {
-    if(OsmTagUtils.containsAnyKey(tags, OsmTags.REF, OsmTags.LOC_REF)) {
-      if(tags.containsKey(OsmTags.REF)) {
-        return tags.get(OsmTags.REF);
-      }else if(tags.containsKey(OsmTags.LOC_REF)) {
-        return tags.get(OsmTags.LOC_REF);
-      }else if(tags.containsKey(OsmTags.LOCAL_REF)) {
-        return tags.get(OsmTags.LOCAL_REF);
-      }
+    if(tags.containsKey(OsmTags.REF)) {
+      return tags.get(OsmTags.REF);
+    }else if(tags.containsKey(OsmTags.LOC_REF)) {
+      return tags.get(OsmTags.LOC_REF);
+    }else if(tags.containsKey(OsmTags.LOCAL_REF)) {
+      return tags.get(OsmTags.LOCAL_REF);
     }
     return null;
+  }
+
+  /** find the closest zone to the node location. Note that this method is NOT perfect, it utilises the closest coordinate on
+   * the geometry of the zone, but it is likely the closest point lies on a line of the geometry rather than an extreme point. Therefore
+   * it is possible that the found zone is not actually closest. So use with caution!
+   * 
+   * @param osmNode reference
+   * @param zones to check against
+   * @return zone with the geometry coordinate (or centroid) closest to the osmNode
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneWithClosestCoordinateTo(OsmNode osmNode, Set<? extends Zone> zones, PlanitJtsUtils geoUtils) throws PlanItException {
+    Zone closestZone = null; 
+    double minDistanceMeters = Double.POSITIVE_INFINITY;    
+    Point point = PlanitJtsUtils.createPoint(getXCoordinate(osmNode), getYCoordinate(osmNode));
+    for(Zone zone : zones) {
+      double distanceMeters = Double.POSITIVE_INFINITY;
+      if(zone.hasGeometry()) {
+        Geometry zoneGeometry = zone.getGeometry();
+        distanceMeters = geoUtils.getClosestCoordinateDistanceInMeters(point,zoneGeometry);
+      }else if(zone.getCentroid().hasPosition()) {
+        distanceMeters = geoUtils.getDistanceInMetres(point.getCoordinate(), zone.getCentroid().getPosition().getCoordinate());
+      }else {
+        LOGGER.warning(String.format("zone has no geographic information to determine closesness to osm node %d",osmNode.getId()));
+      }
+      
+      /* update if closer */
+      if(distanceMeters < minDistanceMeters) {
+        minDistanceMeters = distanceMeters;
+        closestZone = zone;
+      }
+    }
+    return closestZone;
   }  
    
 
