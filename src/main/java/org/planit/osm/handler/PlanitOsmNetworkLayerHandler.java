@@ -34,7 +34,10 @@ import org.planit.osm.util.ModifiedLinkSegmentTypes;
 import org.planit.osm.util.OsmLanesModeTaggingSchemeHelper;
 import org.planit.osm.util.OsmModeLanesTaggingSchemeHelper;
 import org.planit.osm.util.OsmTagUtils;
+import org.planit.osm.util.PlanitOsmModeUtils;
+import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.PlanitOsmWayUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -209,7 +212,7 @@ public class PlanitOsmNetworkLayerHandler {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
     String[] accessValueTags = included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
     /* found modes with given access value tags in explored direction */
-    Set<Mode> foundModes = settings.getMappedPlanitModes(PlanitOsmUtils.getPostfixedOsmRoadModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
+    Set<Mode> foundModes = settings.getMappedPlanitModes(PlanitOsmModeUtils.getPostfixedOsmRoadModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
     return foundModes;
   }    
   
@@ -230,7 +233,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @return the mapped PLANitModes found
    */
   private Set<Mode> getExplicitlyIncludedModesNonOneWay(Map<String, String> tags) {
-    return settings.getMappedPlanitModes(PlanitOsmUtils.getPrefixedOsmRoadModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
+    return settings.getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
   }          
 
   /** Collect explicitly included modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
@@ -504,12 +507,12 @@ public class PlanitOsmNetworkLayerHandler {
     Set<Mode> excludedModes = new HashSet<Mode>();
     
     /* ... roundabout is implicitly one way without being tagged as such, all modes in non-main direction are to be excluded */
-    if(OsmJunctionTags.isPartOfCircularWayJunction(tags) && PlanitOsmUtils.isCircularWayDirectionClosed(tags, isForwardDirection, settings.getCountryName())) {
+    if(OsmJunctionTags.isPartOfCircularWayJunction(tags) && PlanitOsmWayUtils.isCircularWayDirectionClosed(tags, isForwardDirection, settings.getCountryName())) {
       excludedModes.addAll(networkLayer.getSupportedModes());
     }else {
 
       /* ... all modes --> general exclusion of modes */
-      excludedModes =  settings.getMappedPlanitModes(PlanitOsmUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
+      excludedModes =  settings.getMappedPlanitModes(PlanitOsmModeUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
       
       /* ...all modes --> exclusions in explicit directions matching our explored direction, e.g. bicycle:forward=no, FORWARD/BACKWARD/BOTH based*/
       excludedModes.addAll(getExplicitlyExcludedModesForDirection(tags, isForwardDirection));
@@ -583,7 +586,7 @@ public class PlanitOsmNetworkLayerHandler {
     /* 3) mode inclusions for explored direction that is NOT ONE WAY OPPOSITE DIRECTION */
     if(!exploreOneWayOppositeDirection) {      
       /* ...all modes --> general inclusions in main or both directions <mode>= */
-      includedModes.addAll(settings.getMappedPlanitModes(PlanitOsmUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags())));          
+      includedModes.addAll(settings.getMappedPlanitModes(PlanitOsmModeUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags())));          
     }
            
     return includedModes;                  
@@ -766,7 +769,7 @@ public class PlanitOsmNetworkLayerHandler {
       if(osmNode == null) {
         throw new PlanItException(String.format("referenced osmNode %d in osmWay %d not available in OSM parser",osmWay.getNodeId(index), osmWay.getId()));
       }
-      coordinates[index] = new Coordinate(PlanitOsmUtils.getXCoordinate(osmNode),PlanitOsmUtils.getYCoordinate(osmNode));
+      coordinates[index] = new Coordinate(PlanitOsmNodeUtils.getXCoordinate(osmNode),PlanitOsmNodeUtils.getYCoordinate(osmNode));
     }
     return  PlanitJtsUtils.createLineStringFromCoordinates(coordinates);
   }  
@@ -1123,7 +1126,7 @@ public class PlanitOsmNetworkLayerHandler {
         if(isPartOfCircularWay) {
           /* when circular we only accept one direction as accessible regardless of what has been identified so far;
            * clockwise equates to forward direction while anti-clockwise equates to backward direction */
-          if(PlanitOsmUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
+          if(PlanitOsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
             linkSegmentTypes = Pair.create(linkSegmentTypes.first(), null);
           }else {
             linkSegmentTypes = Pair.create(null, linkSegmentTypes.second());

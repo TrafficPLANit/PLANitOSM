@@ -1,7 +1,6 @@
 package org.planit.osm.util;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.logging.Logger;
 
@@ -9,7 +8,6 @@ import org.planit.utils.misc.FileUtils;
 
 import de.topobyte.osm4j.core.access.OsmReader;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
-import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.pbf.seq.PbfReader;
 import de.topobyte.osm4j.xml.dynsax.OsmXmlReader;
 

@@ -2,6 +2,8 @@ package org.planit.osm.util;
 
 import java.util.Map;
 
+import org.planit.osm.tags.OsmTags;
+
 /**
  * Class with some general convenience methods for dealing with OSM tags 
  * 
@@ -28,7 +30,7 @@ public class OsmTagUtils {
     }
     return false;
   }
-  
+    
   /** verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
@@ -38,7 +40,7 @@ public class OsmTagUtils {
    */    
   public static boolean keyMatchesAnyValueTag(Map<String, String> tags, String keyTag, String... valueTags) {
     return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
-  }  
+  }   
   
   /** verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
@@ -100,6 +102,28 @@ public class OsmTagUtils {
       }
     }
     return false;
+  }
+
+  /** Collect the value for the first "ref" related key tag that we support. In order of precedence we currently support the following ref key tags
+   * 
+   * <ul>
+   * <li>ref</li>
+   * <li>loc_ref</li>
+   * <li>local_ref</li>
+   * </ul>
+   * 
+   * @param tags to verify
+   * @return found value, null if none is present
+   */
+  public static String getValueForSupportedRefKeys(Map<String, String> tags) {
+    if(tags.containsKey(OsmTags.REF)) {
+      return tags.get(OsmTags.REF);
+    }else if(tags.containsKey(OsmTags.LOC_REF)) {
+      return tags.get(OsmTags.LOC_REF);
+    }else if(tags.containsKey(OsmTags.LOCAL_REF)) {
+      return tags.get(OsmTags.LOCAL_REF);
+    }
+    return null;
   } 
-  
+    
 }

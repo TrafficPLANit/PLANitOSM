@@ -5,38 +5,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
+import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData.NetworkLayerData;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.operation.distance.DistanceOp;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.graph.EdgeSegment;
-import org.planit.utils.misc.StringUtils;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
-import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
 
-import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmBounds;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -53,162 +44,13 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
  * 
  *
  */
-public class PlanitOsmZoningHandler extends DefaultOsmHandler {
+public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
 
   /**
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningHandler.class.getCanonicalName());
-  
-  /** profiler for this reader */
-  private final PlanitOsmZoningHandlerProfiler profiler;
-  
-  /** utilities for geographic information */
-  private final PlanitJtsUtils geoUtils;  
-  
-  /** holds all the trackign data required for parsing zones */
-  private final PlanitOsmZoningHandlerData handlerData = new PlanitOsmZoningHandlerData();
-  
-  // references
-  
-  /**
-   * the zoning to populate
-   */
-  private final Zoning zoning;
-  
-  /** the settings to adhere to regarding the parsing of PLAnit transfer infrastructure from OSM */
-  private final PlanitOsmTransferSettings transferSettings;   
-  
-  /** network2ZoningData data collated from parsing network required to successfully popualte the zoning */
-  private final PlanitOsmNetworkToZoningReaderData network2ZoningData; 
-  
-  /**
-   * check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node that might reflect
-   * a platform, stop, etc.
-   *  
-   * @param scheme to check against
-   * @param tags to verify
-   * @return true when present, false otherwise
-   */
-  private static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
-    if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        return OsmPtv1Tags.hasPtv1ValueTag(tags);
-      }
-    }else if(scheme.equals(OsmPtVersionScheme.VERSION_2)) {
-      return OsmPtv2Tags.hasPtv2ValueTag(tags);
-    }else {
-     LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility with, ignored",scheme.value()));
-
-    }
-    return false;
-  }  
-  
-  /** Verify if passed in tags reflect transfer based infrastructure that is eligible (and supported) to be parsed by this class, e.g.
-   * tags related to original PT scheme stops ( railway=halt, railway=tram_stop, highway=bus_stop and highway=platform),
-   * or the current v2 PT scheme (public_transport=stop_position, platform, station, stop_area)
-   * 
-   * @param tags
-   * @return which scheme it is compatible with, NONE if none could be found
-   */
-  private static OsmPtVersionScheme isTransferBasedOsmInfrastructure(Map<String, String> tags) {
-    if(isCompatibleWith(OsmPtVersionScheme.VERSION_2, tags)){
-      return OsmPtVersionScheme.VERSION_2;
-    }else if(isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
-      return OsmPtVersionScheme.VERSION_1;
-    }
-    return OsmPtVersionScheme.NONE;
-  }  
-                                                          
-  
-  /** verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
-   * and is also activated for parsing based on the related settings
-   * 
-   * @param tags to verify
-   * @return which scheme it is compatible with, NONE if none could be found or if it is not active 
-   */  
-  private OsmPtVersionScheme isActivatedTransferBasedInfrastructure(Map<String, String> tags) {
-    if(transferSettings.isParserActive()) {
-      return isTransferBasedOsmInfrastructure(tags);
-    }
-    return OsmPtVersionScheme.NONE;
-  }
-  
-  /**Attempt to find the transfer zones by the use of the passed in tags containing references via key tag:
-   * 
-   * <ul>
-   * <li>ref</li>
-   * <li>loc_ref</li>
-   * <li>local_ref</li>
-   * </ul>
-   * 
-   * @param tags to search for reference keys in
-   * @param availableTransferZones to choose from
-   * @return found transfer zones that have been parsed before, null if no match is found
-   */
-  private Set<TransferZone> findTransferZonesByTagReference(Map<String, String> tags, Collection<TransferZone> availableTransferZones) {
-    Set<TransferZone> foundTransferZones = null;
-    
-    /* ref value, can be a list of multiple values */
-    String refValue = PlanitOsmUtils.getValueForSupportedRefKeys(tags);
-    if(refValue != null) {
-      String[] transferZoneRefValues = StringUtils.splitByAnythingExceptAlphaNumeric(refValue);
-      for(int index=0; index < transferZoneRefValues.length; ++index) {
-        String localRefValue = transferZoneRefValues[index];
-        boolean refValueFound = false;
-        for(TransferZone transferZone : availableTransferZones) {
-          Object refProperty = transferZone.getInputProperty(OsmTags.REF);
-          if(refProperty != null && localRefValue.equals(String.class.cast(refProperty))) {
-            /* match */
-            if(!refValueFound) {
-              if(foundTransferZones==null) {
-                foundTransferZones = new HashSet<TransferZone>();
-              }
-              foundTransferZones.add(transferZone);
-              refValueFound = true;
-            }else {
-              LOGGER.fine(String.format("referenced platform/pole %s found multiple times",transferZone.getExternalId()));
-            }            
-          }
-        }
-      }
-    }
-    return foundTransferZones;
-  }  
-  
-  /** find the closest and/or most likely transfer zone for the given osm node and its tags (with or without a reference
-   * for additional information for mapping). Use the search radius from the settings to identify eligible transfer zones and then
-   * use information on modes, references and spatial proximity to choose the most likely option. 
-   * 
-   * @param osmNode representing a stop position
-   * @param tags of the node
-   * @param planitModes the stop is compatible with
-   * @return most likely transfer zone
-   * @throws PlanItException thrown if error
-   */
-  private TransferZone findMostLikelyTransferZoneSpatially(OsmNode osmNode, Map<String, String> tags, Set<Mode> planitModes) throws PlanItException {
-    TransferZone foundZone = null;
-    
-    /* collect potential transfer zones based on spatial search*/
-    double searchRadiusMeters = this.transferSettings.getStopToWaitingAreaSearchRadiusMeters();
-    Envelope searchArea = geoUtils.createBoundingBox(osmNode.getLongitude(),osmNode.getLatitude(), searchRadiusMeters);
-    Collection<TransferZone> potentialTransferZones = this.handlerData.getTransferZonesWithoutConnectoid(searchArea);
-        
-    /* Ideally we relate via explicit references available on Osm tags */
-    /* Occurs when: platform (zone) exists but is not included in stop_area. 
-     * Note: This indicates poor tagging, yet occurs in reality, e.g. Sydney, circular quay for example */
-    Set<TransferZone> matchedTransferZones = findTransferZonesByTagReference(tags, potentialTransferZones);
-    if(matchedTransferZones != null) {
-      if(matchedTransferZones.size()>1) {
-        LOGGER.warning(String.format("found multiple transfer zones with reference to osm node %d based on search radius of %.2f (m), choosing closest match",osmNode,searchRadiusMeters));
-        foundZone =  (TransferZone) PlanitOsmUtils.findZoneWithClosestCoordinateTo(osmNode, matchedTransferZones, geoUtils);        
-      }
-    }
-    
-        
-    return null;
-  }  
-  
+                                                                  
   /** create a new but unpopulated transfer zone
    * 
    * @param transferZoneType of the zone
@@ -216,7 +58,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    */
   private TransferZone createEmptyTransferZone(TransferZoneType transferZoneType) {
     /* create */
-    TransferZone transferZone = zoning.transferZones.createNew();
+    TransferZone transferZone = getZoning().transferZones.createNew();
     /* type */
     transferZone.setType(transferZoneType);
     return transferZone;
@@ -259,7 +101,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     if(osmEntity instanceof OsmNode){
       OsmNode osmNode = OsmNode.class.cast(osmEntity);
       try {
-        Point geometry = PlanitJtsUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
+        Point geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
         transferZone.getCentroid().setPosition(geometry);
       } catch (PlanItException e) {
         LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
@@ -267,23 +109,23 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     }else if(osmEntity instanceof OsmWay) {
       /* either area or linestring */
       OsmWay osmWay = OsmWay.class.cast(osmEntity);
-      if(PlanitOsmUtils.isOsmWayPerfectLoop(osmWay)) {
+      if(PlanitOsmWayUtils.isOsmWayPerfectLoop(osmWay)) {
         /* area, so extract polygon geometry */
         try {
-          Polygon geometry = PlanitJtsUtils.createPolygon(PlanitOsmUtils.createCoordinateArray(osmWay, network2ZoningData.getOsmNodes()));
+          Polygon geometry = PlanitJtsUtils.createPolygon(PlanitOsmWayUtils.createCoordinateArray(osmWay, getNetworkToZoningData().getOsmNodes()));
           transferZone.setGeometry(geometry);
         }catch(PlanItException e) {
           LOGGER.fine(String.format("unable to extract polygon from osm way %s when creating transfer zone, likely some nodes are outside the bounding box",osmWay.getId()));
         }
       }else {
         /* line string -> for convenience we take the centre point of the two extreme nodes and make it our centroid location */
-        OsmNode nodeA = network2ZoningData.getOsmNodes().get(osmWay.getNodeId(0));
-        OsmNode nodeB = network2ZoningData.getOsmNodes().get(osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
+        OsmNode nodeA = getNetworkToZoningData().getOsmNodes().get(osmWay.getNodeId(0));
+        OsmNode nodeB = getNetworkToZoningData().getOsmNodes().get(osmWay.getNodeId(osmWay.getNumberOfNodes()-1));
         try {
           if(nodeA==null || nodeB==null) {
             throw new PlanItException("dummy");
           }
-          Point geometry = PlanitJtsUtils.createPoint(PlanitOsmUtils.getXCoordinate(nodeA)+PlanitOsmUtils.getXCoordinate(nodeB)/2, PlanitOsmUtils.getYCoordinate(nodeA)+PlanitOsmUtils.getYCoordinate(nodeB)/2);
+          Point geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(nodeA)+PlanitOsmNodeUtils.getXCoordinate(nodeB)/2, PlanitOsmNodeUtils.getYCoordinate(nodeA)+PlanitOsmNodeUtils.getYCoordinate(nodeB)/2);
           transferZone.getCentroid().setPosition(geometry); 
         }catch(PlanItException e) {
           LOGGER.fine(String.format("unable to extract location from osm way %s when creating transfer zone, likely some nodes are outside the bounding box",osmWay.getId()));
@@ -301,7 +143,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       transferZone.setName(tags.get(OsmTags.NAME));
     }    
     
-    String refValue = PlanitOsmUtils.getValueForSupportedRefKeys(tags);
+    String refValue = OsmTagUtils.getValueForSupportedRefKeys(tags);
     /* ref (to allow other entities to refer to this transfer zone locally) */
     if(refValue != null) {
       transferZone.addInputProperty(OsmTags.REF, refValue);
@@ -318,7 +160,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    */  
   private TransferZoneGroup createAndPopulateTransferZoneGroup(Map<String, String> tags) {
       /* create */
-      TransferZoneGroup transferZoneGroup = zoning.transferZoneGroups.createNew();
+      TransferZoneGroup transferZoneGroup = getZoning().transferZoneGroups.createNew();
             
       /* XML id = internal id*/
       transferZoneGroup.setXmlId(Long.toString(transferZoneGroup.getId()));
@@ -332,63 +174,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       
       return transferZoneGroup;
   }
-  
-  /** update an existing directed connectoid with new access zone and allowed modes. In case the link segment does not have any of the 
-   * passed in modes listed as allowed, the connectoid is not updated with these modes for the given access zone as it would not be possible to utilise it. 
-   * 
-   * @param accessZone to relate connectoids to
-   * @param allowedModes to add to the connectoid for the given access zone
-   */  
-  private void updateDirectedConnectoid(DirectedConnectoid connectoidToUpdate, TransferZone accessZone, Set<Mode> allowedModes) {    
-    final Set<Mode> realAllowedModes = ((MacroscopicLinkSegment)connectoidToUpdate.getAccessLinkSegment()).getAllowedModes(allowedModes);
-    if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      if(!connectoidToUpdate.hasAccessZone(accessZone)) {
-        connectoidToUpdate.addAccessZone(accessZone);
-      }
-      connectoidToUpdate.addAllowedModes(accessZone, realAllowedModes);   
-    }
-  }  
-
-  /** create directed connectoid for the link segment provided, all related to the given transfer zone and with access modes provided. When the link segment does not have any of the 
-   * passed in modes listed as allowed, no connectoid is created and null is returned
-   * 
-   * @param accessZone to relate connectoids to
-   * @param linkSegment to create connectoid for
-   * @param allowedModes used for the connectoid
-   * @return created connectoid when at least one of the allowed modes is also allowed on the link segment
-   * @throws PlanItException thrown if error
-   */
-  private DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes) throws PlanItException {
-    final Set<Mode> realAllowedModes = linkSegment.getAllowedModes(allowedModes);
-    if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      DirectedConnectoid connectoid = zoning.connectoids.registerNew(linkSegment,accessZone);
-      /* link connectoid to zone and register modes for access*/
-      connectoid.addAllowedModes(accessZone, realAllowedModes);   
-      return connectoid;
-    }
-    return null;
-  }   
-  
-  /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with access modes provided. connectoids are only created
-   * when the access link segment has at least one of the allowed modes as an eligible mode
-   * 
-   * @param transferZone to relate connectoids to
-   * @param linkSegments to create connectoids for (one per segment)
-   * @param allowedModes used for each connectoid
-   * @return created connectoids
-   * @throws PlanItException thrown if error
-   */
-  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(TransferZone transferZone, Set<EdgeSegment> linkSegments, Set<Mode> allowedModes) throws PlanItException {
-    Set<DirectedConnectoid> createdConnectoids = new HashSet<DirectedConnectoid>();
-    for(EdgeSegment linkSegment : linkSegments) {
-      DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
-      if(newConnectoid != null) {
-        createdConnectoids.add(newConnectoid);
-      }
-    } 
-    return createdConnectoids;
-  }  
-  
+    
   /** create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
    * it is not possible to best determine where they should reside
    * 
@@ -400,7 +186,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
   private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType) {
     /* create and register */
     TransferZone transferZone = createAndPopulateTransferZone(osmEntity,tags, transferZoneType);
-    zoning.transferZones.register(transferZone);
+    getZoning().transferZones.register(transferZone);
     EntityType entityType = null;
     if(osmEntity instanceof OsmNode) {
       entityType = EntityType.Node;
@@ -412,115 +198,9 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     }
     
     /* register locally */
-    handlerData.addTransferZoneWithoutConnectoid(entityType, osmEntity.getId(), transferZone);
+    getZoningReaderData().addTransferZoneWithoutConnectoid(entityType, osmEntity.getId(), transferZone);
     return transferZone;
-  }  
-  
-  /** Create a new PLANit node, register it and update stats
-   * 
-   * @param osmNode to extract PLANit node for
-   * @param networkLayer to create it on
-   * @return created planit node
-   */
-  private Node extractPlanitNode(OsmNode osmNode, final Map<Long, Node> nodesByOsmId,  MacroscopicPhysicalNetwork networkLayer) {
-    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);                
-    nodesByOsmId.put(osmNode.getId(), planitNode);
-    profiler.logNodeStatus(networkLayer.nodes.size());
-    return planitNode;
-  }  
-  
-  /** extract the connectoid access node. either it already exists as a regular node, or it is internal to an existing link. In the latter case
-   * a new node is created and the existing link is broke. In the former case, we simply collect the node
-   * 
-   * @param networkLayer to extract node on
-   * @param osmNode to collect planit node version for
-   * @return planit node collected/created
-   * @throws PlanItException thrown if error
-   */
-  private Node extractConnectoidAccessNode(MacroscopicPhysicalNetwork networkLayer, OsmNode osmNode) throws PlanItException {
-    final Map<Long, Node> nodesByOsmId = network2ZoningData.getNetworkLayerData(networkLayer).getPlanitNodesByOsmId();
-    Node planitNode = nodesByOsmId.get(osmNode.getId());
-    if(planitNode == null) {
-      /* node is internal to an existing link, create it and break existing link */
-      planitNode = extractPlanitNode(osmNode, nodesByOsmId, networkLayer);
-      
-      /* make sure that we have the correct mapping from node to link (in case the link has been broken before in the network reader, or here, for example) */
-      NetworkLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
-      List<Link> linksWithOsmNodeInternally = layerData.getOsmNodeIdsInternalToLink().get(osmNode.getId());      
-      PlanitOsmHandlerHelper.updateLinksForInternalNode(planitNode, layerData.getOsmWaysWithMultiplePlanitLinks(), linksWithOsmNodeInternally);
-            
-      /* break link */
-      CoordinateReferenceSystem crs = network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem();
-      Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksWithOsmNodeInternally, networkLayer, crs);
-      /* update mapping since another osmWayId now has multiple planit links */
-      PlanitOsmHandlerHelper.addAllTo(newlyBrokenLinks, layerData.getOsmWaysWithMultiplePlanitLinks());      
-    }
-    return planitNode;
-  }  
-  
-  /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node where the connectoids access link segments are extracted from
-   * 
-   * @param osmNode to relate to planit network's incoming link segments as access points
-   * @param tags to use
-   * @param transferZone this connectoid is assumed to provide access to
-   * @param networkLayer this connectoid resides on
-   * @param planitMode this connectoid is allowed access for
-   * @throws PlanItException thrown if error
-   */
-  private void extractDirectedConnectoidsForMode(OsmNode osmNode, Map<String, String> tags, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode) throws PlanItException {
-    
-    /* access node */
-    Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);    
-    if(planitNode==null) {
-      LOGGER.severe(String.format("unable to create connectoid for osm node (%d) even though it is thought to be a transfer access node, ignored",osmNode.getId()));
-      return;
-    }
-    
-    /* already created connectoids */
-    Map<Long, Set<DirectedConnectoid>> existingConnectoids = handlerData.getDirectedConnectoidsByOsmNodeId(networkLayer);                    
-    if(existingConnectoids.containsKey(osmNode.getId())) {      
-      
-      /* update: connectoid already exists */
-      Set<DirectedConnectoid> connectoidsForNode = existingConnectoids.get(osmNode.getId());
-      connectoidsForNode.forEach( connectoid -> updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode)));
-      
-    }else {
-      
-      /* new connectoid, create and register */
-      Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
-      if(newConnectoids==null || newConnectoids.isEmpty()) {
-        LOGGER.warning(String.format("found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
-      }
-      
-    }
-
-  }
-  
-  /** create and/or update directed connectoids for the transfer zones and mode combinations when eligible, based on the passed in osm node 
-   * where the connectoids access link segments are extracted from
-   * 
-   * @param osmNode to relate to planit network's incoming link segments as access points
-   * @param tags to use
-   * @param transferZones connectoids are assumed to provide access to
-   * @param planitMode this connectoid is allowed access for
-   * @throws PlanItException thrown if error
-   */
-  private void extractDirectedConnectoids(OsmNode osmNode, Map<String, String> tags, Set<TransferZone> transferZones, Set<Mode> planitModes) throws PlanItException {
-    
-    /* for the given layer/mode combination, extract connectoids by linking them to the provided transfer zones */
-    for(Mode planitMode : planitModes) {
-      /* layer */
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitMode);
-
-      /* transfer zone */
-      for(TransferZone transferZone : transferZones) {
-        
-        /* connectoid(s) */
-        extractDirectedConnectoidsForMode(osmNode, tags, transferZone, networkLayer, planitMode);
-      }      
-    }
-  }  
-
+  }    
 
   /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag highway=* on an osmNode (no Ptv2 tags)
    * 
@@ -533,10 +213,10 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
         
     /* postpone creation of connectoid, in case Ptv2 tag with stop position is referenced that we can later relate to this transfer zone */
     if(OsmPtv1Tags.BUS_STOP.equals(ptv1ValueTag)){
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       createAndRegisterTransferZoneWithoutConnectoids(osmNode, tags, TransferZoneType.POLE);
     }else if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)){
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       createAndRegisterTransferZoneWithoutConnectoids(osmNode, tags, TransferZoneType.PLATFORM);
     }else {
       LOGGER.warning(String.format("unsupported Ptv1 higway=%s tag encountered, ignored",ptv1ValueTag));
@@ -565,14 +245,14 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    */
   private void extractPtv1TramStop(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
     /* in contrast to highway=bus_stop this tag is placed on the track, so we can and will create connectoids immediately */
-    PlanitOsmNetworkSettings networkSettings = network2ZoningData.getSettings();    
+    PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();    
        
     /* Tram connectoid: find layer and node/link segment for vehicle stop */ 
     Mode planitTramMode = networkSettings.getMappedPlanitMode(OsmRailwayTags.TRAM);
     if(planitTramMode == null) {
       throw new PlanItException("should not attempt to parse tram stop when tram mode is not activated on planit network");
     }
-    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitTramMode);
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitTramMode);
     Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);   
 
     if(planitNode.getEdges().size()>2) {
@@ -582,7 +262,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     
     /* create and register transfer zone */
     TransferZone transferZone = createAndPopulateTransferZone(osmNode,tags, TransferZoneType.PLATFORM);
-    zoning.transferZones.register(transferZone);
+    getZoning().transferZones.register(transferZone);
     
     /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
     /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
@@ -596,10 +276,10 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */  
   private void extractPtv1Halt(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
-    PlanitOsmNetworkSettings networkSettings = network2ZoningData.getSettings();
+    PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
     
     /* eligible modes */
-    Collection<String> eligibleOsmModes = PlanitOsmHandlerHelper.collectEligibleOsmRailModesOnPtOsmNode(osmNode, tags, OsmRailwayTags.RAIL);
+    Collection<String> eligibleOsmModes = PlanitOsmNodeUtils.collectEligibleOsmRailModesOnPtOsmNode(osmNode, tags, OsmRailwayTags.RAIL);
     Set<Mode> planitModes = networkSettings.getMappedPlanitModes(eligibleOsmModes);
     if(planitModes==null || planitModes.isEmpty()) {
       return;
@@ -607,20 +287,20 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     
     /* create and register transfer zone */
     TransferZone transferZone = createAndPopulateTransferZone(osmNode,tags, TransferZoneType.SMALL_STATION);
-    zoning.transferZones.register(transferZone);    
+    getZoning().transferZones.register(transferZone);    
     
     /* a halt is either placed on a line, or separate (preferred), both should be supported. In the former case we can create
      * connectoids immediately, in the latter case, we must find them based on the closest infrastructure (railway) or via separately
      * tagged stop_positions, in which case we postpone the creation of connectoids */
     for(Mode planitMode : planitModes) {      
       /* find node on parsed infrastructure */
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) network2ZoningData.getOsmNetwork().infrastructureLayers.get(planitMode);      
+      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);      
       
-      NetworkLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
+      NetworkLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
       if(layerData.getPlanitNodesByOsmId().get(osmNode.getId()) == null && layerData.getOsmNodeIdsInternalToLink().get(osmNode.getId())==null) {
          /* node is not part of infrastructure, we must identify closest railway infrastructure (in reasonable range) to create connectoids, or
          * Ptv2 stop position reference is used, so postpone creating connectoid for now, and deal with it later when stop_positions have all been parsed */
-        handlerData.addTransferZoneWithoutConnectoid(EntityType.Node, osmNode.getId(), transferZone);
+        getZoningReaderData().addTransferZoneWithoutConnectoid(EntityType.Node, osmNode.getId(), transferZone);
          continue;
       }
       
@@ -642,118 +322,6 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);    
   }
   
-  /** extract a Ptv2 stop position part of a stop_area relation. Based on description in https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position
-   * 
-   * @param member member in stop_area relation
-   * @param availableTransferZones the transfer zones this stop position is allowed to relate to
-   * @throws PlanItException thrown if error
-   */
-  private void extractPtv2StopPosition(OsmRelationMember member, Collection<TransferZone> availableTransferZones) throws PlanItException {
-    /* validate state and input */
-    PlanItException.throwIfNull(member, "stop_area stop_position member null");
-    if(member.getType() != EntityType.Node) {
-      throw new PlanItException("stop_position encountered that it not an OSM node, this is not permitted");
-    }
-    if(!handlerData.getUnprocessedPtv2StopPositions().contains(member.getId())){
-      LOGGER.severe(String.format("stop_position %d not marked as unproccessed even though it is expected to be unprocessed up until now",member.getId()));
-    }        
-    
-    /* stop location via Osm node */
-    OsmNode osmNode = network2ZoningData.getOsmNodes().get(member.getId());
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
-    
-    /* supported modes */
-    Collection<String> eligibleOsmModes = PlanitOsmHandlerHelper.collectEligibleOsmModesOnPtOsmNode(osmNode, tags, null);    
-    Set<Mode> planitModes = network2ZoningData.getSettings().getMappedPlanitModes(eligibleOsmModes);
-    if(planitModes==null || planitModes.isEmpty()) {
-      return;
-    }
-    
-    /* reference to platform, i.e. transfer zone */
-    Set<TransferZone> transferZones = findTransferZonesByTagReference(tags, availableTransferZones);    
-    if(transferZones == null || transferZones.isEmpty()) {
-      /* no matches found, either it has no reference, or the referenced zone is not part of the area. Either way 
-       * we must find the most likely match geographically to obtain the most likely transfer zone! */
-      TransferZone transferZone = findMostLikelyTransferZoneSpatially(osmNode, tags, planitModes);
-      if(transferZone == null) {
-        LOGGER.severe(String.format("stop position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such, ignored",member.getId()));
-        return;
-      }
-      transferZones = Collections.singleton(transferZone);
-    }
-    
-    /* connectoids */
-    extractDirectedConnectoids(osmNode, tags, transferZones, planitModes);    
-
-  }
-
-
-
-  /** extract stop area relation of Ptv2 scheme. We create transfer zone groups for each valid stop_area, connect it to the transfer zones and
-   * extract the related connectoids and their connections to the transfer zones. We also mark processed stations, platforms, etc., such that after all
-   * stop_areas have been processed, we can extract planit instances for the remaining unprocessed osm entities, knowing they do not belong to any stop_area and
-   * constitute their own separate entity.
-   * 
-   * @param osmRelation to extract stop_area for
-   * @param tags of the stop_area relation
-   * @throws PlanItException thrown if error
-   */
-  private void extractPtv2StopArea(OsmRelation osmRelation, Map<String, String> tags) throws PlanItException{
-
-    /* transfer zone group */
-    TransferZoneGroup transferZoneGroup = createAndPopulateTransferZoneGroup(tags);
-    zoning.transferZoneGroups.register(transferZoneGroup);
-    
-    /* process all but stop_positions */
-    Map<EntityType, Set<Long>> processedTransferZones = new HashMap<EntityType,Set<Long>>();
-    for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
-      OsmRelationMember member = osmRelation.getMember(index);
-      
-      /* platform */
-      if(member.getRole().equals(OsmPtv2Tags.PLATFORM_ROLE)) {        
-        
-        /* should be parsed (without connectoids), connect to group and let stop_positions create connectoids */
-        TransferZone transferZone = handlerData.getTransferZoneWithoutConnectoid(member.getType(), member.getId());
-        if(transferZone==null) {
-          /* not parsed, likely on fringe of bounding box, create dummy */
-          LOGGER.warning(String.format("platform %d not available in planit memory model, yet referenced by stop_area %d, creating dummy",member.getId(),osmRelation.getId()));
-          transferZone = createDummyTransferZone(member.getId(),TransferZoneType.PLATFORM);
-          handlerData.addTransferZoneWithoutConnectoid(member.getType(), member.getId(), transferZone);
-        }
-        transferZoneGroup.addTransferZone(transferZone);
-        processedTransferZones.putIfAbsent(member.getType(), new HashSet<Long>());
-        processedTransferZones.get(member.getType()).add(member.getId());
-        
-      }
-      /* other than stop_position */
-      else {
-        /* some common members do not have a dedicated role type, verify the supported ones here */
-        
-        /* station */
-        //TODO
-        
-        /* entrances/exits */
-        //TODO        
-      }
-    }
-    
-    /* postpone stop positions because all platforms, i.e., transfer zones must have been created beforehand*/
-    
-    /* process stop_positions */
-    for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
-      OsmRelationMember member = osmRelation.getMember(index);      
-      if(member.getRole().equals(OsmPtv2Tags.STOP_POSITION_ROLE)) {
-
-        extractPtv2StopPosition(member, transferZoneGroup.getTransferZones());
-        handlerData.getUnprocessedPtv2StopPositions().remove(member.getId());
-      }      
-    }
-    
-    /* remove processed transfer zones since they now should have connectoids */
-    processedTransferZones.forEach( (type, transferZones) -> {
-      handlerData.removeTransferZonesWithoutConnectoids(type, transferZones);} );        
-  }  
-
   /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag railway=* for an OsmNode
    * 
    * @param osmNode the node to extract
@@ -762,25 +330,25 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */  
   private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag) throws PlanItException {
-    PlanitOsmNetworkSettings networkSettings = network2ZoningData.getSettings();
+    PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
     
     /* tram stop */
     if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       extractPtv1TramStop(osmNode, tags);
     }
     
     /* train platform */
     if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)) {
       /* assumed to never be part of a Ptv2 stop_area relation, so we parse immediately */
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       extractPtv1RailwayPlatform(osmNode, tags);
     }          
     
     /* train halt (not for trams)*/
     if(OsmPtv1Tags.HALT.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
       /* assumed to never be part of a Ptv2 stop_area relation, so we parse immediately */
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       extractPtv1Halt(osmNode, tags);
     }
     
@@ -789,7 +357,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
        * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
        * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
-      handlerData.getUnprocessedPtv1Stations().add(osmNode);
+      getZoningReaderData().getUnprocessedPtv1Stations().add(osmNode);
     }    
   }
 
@@ -805,14 +373,14 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     
     /* platform edge */
     if(OsmPtv1Tags.PLATFORM_EDGE.equals(ptv1ValueTag)) {
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       /* platform edges are for additional geographic information, nothing requires them to be there in our format, so we take note
        * but do not parse, see also https://wiki.openstreetmap.org/wiki/Tag:railway%3Dplatform_edge */
     }
     
     /* platform */
     if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)) {
-      profiler.incrementOsmPtv1TagCounter(ptv1ValueTag);
+      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       extractPtv1RailwayPlatform(osmWay, tags);      
     }    
   }
@@ -829,7 +397,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       
       /* platform */
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
-        profiler.incrementOsmPtv2TagCounter(ptv2ValueTag);
+        getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);
         /* create transfer zone but no connectoids, these will be constructed during or after we have parsed relations, i.e. stop_areas */
         createAndRegisterTransferZoneWithoutConnectoids(osmWay, tags, TransferZoneType.PLATFORM);   
       }      
@@ -844,7 +412,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
         /* stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
          * ignore them altogether. Therefore postpone parsing them until after we have parsed the relations */
-        handlerData.getUnprocessedPtv2Stations(EntityType.Way).add(osmWay);
+        getZoningReaderData().getUnprocessedPtv2Stations(EntityType.Way).add(osmWay);
       }     
       
       /* stop area */
@@ -905,14 +473,14 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       if(OsmPtv2Tags.STOP_POSITION.equals(ptv2ValueTag)) {
         /* stop positions relate to connectoids that provide access to transfer zones. The transfer zones are based on platforms, but these might not have been
          * processed yet. So, we postpone parsing of all stop positions, and simply track them for delayed processing after all platforms/transfer zones have been identified */
-        handlerData.getUnprocessedPtv2StopPositions().add(osmNode.getId());
+        getZoningReaderData().getUnprocessedPtv2StopPositions().add(osmNode.getId());
       }
       
       /* stop position */
       if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
         /* stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
          * ignore them altogether. Therefore postpone parsing them until after we have parsed the relations */
-        handlerData.getUnprocessedPtv2Stations(EntityType.Node).add(osmNode);
+        getZoningReaderData().getUnprocessedPtv2Stations(EntityType.Node).add(osmNode);
       }     
       
       /* stop area */
@@ -954,10 +522,75 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
       throw new PlanItException(String.format("parsing transfer infrastructure (Ptv1) for osm node %s, bit no compatible key tags found",osmNode.getId()));
     }  
     
-    profiler.logTransferZoneStatus(zoning.transferZones.size());
-    profiler.logConnectoidStatus(zoning.connectoids.size());    
+    getProfiler().logTransferZoneStatus(getZoning().transferZones.size());
+    getProfiler().logConnectoidStatus(getZoning().connectoids.size());    
   }  
 
+
+  /** extract stop area relation of Ptv2 scheme. We create transfer zone groups for each valid stop_area, connect it to the transfer zones and
+   * extract the related connectoids and their connections to the transfer zones. We also mark processed stations, platforms, etc., such that after all
+   * stop_areas have been processed, we can extract planit instances for the remaining unprocessed osm entities, knowing they do not belong to any stop_area and
+   * constitute their own separate entity.
+   * 
+   * @param osmRelation to extract stop_area for
+   * @param tags of the stop_area relation
+   * @throws PlanItException thrown if error
+   */
+  private void extractPtv2StopAreaRelation(OsmRelation osmRelation, Map<String, String> tags) throws PlanItException{
+  
+    /* transfer zone group */
+    TransferZoneGroup transferZoneGroup = createAndPopulateTransferZoneGroup(tags);
+    getZoning().transferZoneGroups.register(transferZoneGroup);
+    getZoningReaderData().addTransferZoneGroupByOsmId(osmRelation.getId(), transferZoneGroup);
+    
+    /* process all but stop_positions */
+    Map<EntityType, Set<Long>> processedTransferZones = new HashMap<EntityType,Set<Long>>();
+    for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
+      OsmRelationMember member = osmRelation.getMember(index);
+      
+      /* platform */
+      if(member.getRole().equals(OsmPtv2Tags.PLATFORM_ROLE)) {        
+        
+        /* should be parsed (without connectoids), connect to group and let stop_positions create connectoids */
+        TransferZone transferZone = getZoningReaderData().getTransferZoneWithoutConnectoid(member.getType(), member.getId());
+        if(transferZone==null) {
+          /* not parsed, likely on fringe of bounding box, create dummy */
+          LOGGER.warning(String.format("platform %d not available in planit memory model, yet referenced by stop_area %d, creating dummy",member.getId(),osmRelation.getId()));
+          transferZone = createDummyTransferZone(member.getId(),TransferZoneType.PLATFORM);
+          getZoningReaderData().addTransferZoneWithoutConnectoid(member.getType(), member.getId(), transferZone);
+        }
+        transferZoneGroup.addTransferZone(transferZone);
+        processedTransferZones.putIfAbsent(member.getType(), new HashSet<Long>());
+        processedTransferZones.get(member.getType()).add(member.getId());
+        
+      }
+      /* other than stop_position */
+      else {
+        /* some common members do not have a dedicated role type, verify the supported ones here */
+        
+        /* station */
+        //TODO (+ remove from unprocessed entries in data)
+        
+        /* entrances/exits */
+        //TODO (+ remove from unprocessed entries in data?)       
+      }
+    }
+        
+    /* remove processed transfer zones since they now should have connectoids */
+    processedTransferZones.forEach( (type, transferZones) -> {
+      getZoningReaderData().removeTransferZonesWithoutConnectoids(type, transferZones);} );        
+  }
+
+  /** extract Ptv2 platforms from the multi-polygon. Do not create connectoids for them as the stop_positions
+   * might not have been parsed yet.
+   * 
+   * @param osmRelation to extract platform from
+   * @param tags to use
+   */
+  private void extractPtv2MultiPolygonPlatformRelation(OsmRelation osmRelation, Map<String, String> tags) {
+    // TODO Auto-generated method stub
+    
+  }
 
   /** extract the transfer infrastructure which will contribute to newly created transfer zones on the zoning instance
    * 
@@ -994,21 +627,18 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * constructor
    * 
    * @param transferSettings for the handler
+   * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
    * @param network2ZoningData data collated from parsing network required to successfully popualte the zoning
-   * @param referenceNetwork to use
    * @param zoningToPopulate to populate
+   * @param profiler to use
    */
-  public PlanitOsmZoningHandler(final PlanitOsmTransferSettings transferSettings, final PlanitOsmNetworkToZoningReaderData network2ZoningData, final Zoning zoningToPopulate) {
-    /* gis initialisation */
-    this.geoUtils = new PlanitJtsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
-    /* profiler */
-    this.profiler = new PlanitOsmZoningHandlerProfiler();
-    
-    /* references */
-    this.network2ZoningData = network2ZoningData;
-    this.zoning = zoningToPopulate;       
-    this.transferSettings = transferSettings;
-    
+  public PlanitOsmZoningHandler(
+      final PlanitOsmTransferSettings transferSettings, 
+      final PlanitOsmZoningReaderData zoningReaderData, 
+      final PlanitOsmNetworkToZoningReaderData network2ZoningData, 
+      final Zoning zoningToPopulate,
+      final PlanitOsmZoningHandlerProfiler profiler) {
+    super(transferSettings, zoningReaderData,network2ZoningData, zoningToPopulate, profiler);    
   }
   
   /**
@@ -1019,18 +649,17 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     reset();
     
     PlanItException.throwIf(
-        this.network2ZoningData.getOsmNetwork().infrastructureLayers == null || this.network2ZoningData.getOsmNetwork().infrastructureLayers.size()<=0,
+        this.getNetworkToZoningData().getOsmNetwork().infrastructureLayers == null || this.getNetworkToZoningData().getOsmNetwork().infrastructureLayers.size()<=0,
           "network is expected to be populated at start of parsing OSM zoning");
   }  
-
-
+  
   /**
-   * Not used
+   * {@inheritDoc}
    */
   @Override
   public void handle(OsmBounds bounds) throws IOException {
-    // not used
-  }
+    // do nothing
+  }  
 
   /**
    * construct PLANit nodes/connectoids/transferzones from OSM nodes when relevant
@@ -1072,6 +701,14 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
         
         /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
         extractTransferInfrastructure(osmWay, ptVersion, tags);
+        
+      }else if(getZoningReaderData().shouldOsmWayBeKept(osmWay)) {
+        
+        /* even though osm way itself appears not to be public transport related, it is marked for keeping
+         * so we keep it. This occurs when way is part of relation (multipolygon) where its shape represents for
+         * example the outline of a platform, but all pt tags reside on the relation and not on the way itself. 
+         * Processing of the way is postponed until we parse relations */
+        getZoningReaderData().addUnprocessedOsmWay(osmWay);
       }
       
     } catch (PlanItException e) {
@@ -1090,19 +727,35 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);          
     try {              
       
-      /* only parse public_transport relations */
-      if(transferSettings.isParserActive() && tags.containsKey(OsmTags.TYPE) && tags.get(OsmTags.TYPE).equals(OsmPtv2Tags.PUBLIC_TRANSPORT)) {
- 
-        /* stop_area */
-        if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
+      /* only parse when parser is active and type is available */
+      if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE)) {
+        
+        /* public transport type */
+        if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT)) {
           
-          extractPtv2StopArea(osmRelation, tags);
+          /* stop_area: all but stop_positions (parsed in post-processing)*/
+          if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
+            
+            extractPtv2StopAreaRelation(osmRelation, tags);
+            
+          }else {
+            /* anything else is not expected */
+            LOGGER.info(String.format("unknown public_transport relation %s encountered for relation %d, ignored",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
+          }          
           
-        }else {
-          /* anything else is not expected */
-          LOGGER.info(String.format("unknown public_transport relation %s encountered for relation %d, ignored",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
         }
-      }        
+        
+        /* multi_polygons can represent public transport platforms */ 
+        if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.MULTIPOLYGON)) {
+          
+          /* only consider public_transport=platform multi-polygons */
+          if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+            
+            extractPtv2MultiPolygonPlatformRelation(osmRelation, tags);
+            
+          }          
+        }
+      }      
       
     } catch (PlanItException e) {
       LOGGER.severe(e.getMessage());
@@ -1118,7 +771,7 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
   public void complete() throws IOException {
     
     /* stats*/
-    profiler.logProfileInformation(zoning);            
+    getProfiler().logProfileInformation(getZoning());            
     
     LOGGER.info(" OSM (transfer) zone parsing...DONE");
 
@@ -1128,7 +781,8 @@ public class PlanitOsmZoningHandler extends DefaultOsmHandler {
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {  
-    handlerData.reset();
+    // do nothing yet
   }
+
   
 }

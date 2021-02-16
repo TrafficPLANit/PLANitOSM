@@ -1,7 +1,6 @@
 package org.planit.osm.converter.reader;
 
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.zoning.Zoning;
 
 /**

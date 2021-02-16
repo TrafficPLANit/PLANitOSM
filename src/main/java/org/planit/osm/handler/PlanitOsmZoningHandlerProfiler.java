@@ -125,6 +125,14 @@ public class PlanitOsmZoningHandlerProfiler {
       LOGGER.info(String.format("Created %d nodes out of OSM nodes",numberOfNodes));
       moduloLoggingCounterNodes *=2;
     }  
+  }
+
+  /**
+   * reset the profiler
+   */
+  public void reset() {
+    this.counterByPtv1Tag.clear();
+    this.counterByPtv2Tag.clear();
   }  
 
 }

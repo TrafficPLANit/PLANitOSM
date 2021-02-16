@@ -128,7 +128,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         
     /* when circular road is not perfect, i.e., its end node is not the start node, we first split it
      * in a perfect circle and a regular non-circular osmWay */
-    Pair<Integer,Integer> firstCircularIndices = PlanitOsmUtils.findIndicesOfFirstLoop(circularOsmWay, initialNodeIndex);            
+    Pair<Integer,Integer> firstCircularIndices = PlanitOsmWayUtils.findIndicesOfFirstLoop(circularOsmWay, initialNodeIndex);            
     if(firstCircularIndices != null) {    
       /* unprocessed circular section exists */
 
@@ -492,7 +492,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
           
           /* circular ways special case filter */
-          if(PlanitOsmUtils.isCircularOsmWay(osmWay, tags, false)) {          
+          if(PlanitOsmWayUtils.isCircularOsmWay(osmWay, tags, false)) {          
             
             /* postpone creation of link(s) for activated OSM highways that have a circular component and are not areas (areas cannot become roads) */
             /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */

@@ -1,7 +1,5 @@
 package org.planit.osm.handler;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,10 +12,7 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.tags.OsmRailModeTags;
-import org.planit.osm.tags.OsmRoadModeTags;
-import org.planit.osm.tags.OsmTags;
-import org.planit.osm.util.PlanitOsmUtils;
+import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.network.physical.Link;
@@ -35,7 +30,7 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 public class PlanitOsmHandlerHelper {
   
   /** the logger to use */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmHandlerHelper.class.getCanonicalName());
+  public static final Logger LOGGER = Logger.getLogger(PlanitOsmHandlerHelper.class.getCanonicalName());
   
   /** Identify which links truly have the passed in node as an internal node. whenever we have started with breaking links, or processing cirular ways
    * we can no longer rely on the original internal node mapping. Instead, we must use a two step process:
@@ -135,7 +130,7 @@ public class PlanitOsmHandlerHelper {
     /* location info */
     Point geometry = null;
     try {
-      geometry = PlanitJtsUtils.createPoint(PlanitOsmUtils.getXCoordinate(osmNode), PlanitOsmUtils.getYCoordinate(osmNode));
+      geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
     } catch (PlanItException e) {
       LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
     }
@@ -161,70 +156,5 @@ public class PlanitOsmHandlerHelper {
       destination.putIfAbsent(osmWayId, new HashSet<Link>());
       destination.get(osmWayId).addAll(links);
     });
-  } 
-  
-  /** Collect the modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided) 
-   * 
-   * @param osmNode to use
-   * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Collection<String> collectEligibleOsmModesOnPtOsmNode(OsmNode osmNode, Map<String, String> tags, String defaultOsmMode) {
-    String defaultRailMode = OsmRailModeTags.isRailModeTag(defaultOsmMode) ? defaultOsmMode : null;
-    Collection<String> eligibleOsmModes = PlanitOsmHandlerHelper.collectEligibleOsmRailModesOnPtOsmNode(osmNode, tags, defaultRailMode);
-    String defaultRoadMode = OsmRoadModeTags.isRoadModeTag(defaultOsmMode) ? defaultOsmMode : null;
-    Collection<String> eligibleOsmRoadModes = PlanitOsmHandlerHelper.collectEligibleOsmRoadModesOnPtOsmNode(osmNode, tags, defaultRoadMode);
-    if(eligibleOsmModes != null) {
-      eligibleOsmModes.addAll(eligibleOsmRoadModes);
-    }else {     
-      eligibleOsmModes = eligibleOsmRoadModes;
-    }
-    return eligibleOsmModes;       
-  }  
-  
-  /** Collect the rail modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided) 
-   * 
-   * @param osmNode to use
-   * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Collection<String> collectEligibleOsmRailModesOnPtOsmNode(OsmNode osmNode, Map<String, String> tags, String defaultOsmMode) {
-    Collection<String> explicitlyIncludedOsmModes = PlanitOsmUtils.getOsmRailModesWithAccessValue(tags, OsmTags.YES);
-    if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
-      Collection<String> explicitlyExcludedOsmModes = PlanitOsmUtils.getOsmRailModesWithAccessValue(tags, OsmTags.NO);
-      if(explicitlyExcludedOsmModes != null && !explicitlyExcludedOsmModes.isEmpty()) {
-        LOGGER.severe(String.format("we currently do not yet support explicitly excluded rail modes for PT osm node %d (platforms, etc.), ignored exclusion of %s", osmNode.getId(), explicitlyExcludedOsmModes.toString()));
-      }
-    }else if(defaultOsmMode != null){
-      /* default if no explicit modes are mapped, is to map it to rail */
-      explicitlyIncludedOsmModes = Collections.singleton(defaultOsmMode);
-    }
-    return explicitlyIncludedOsmModes;       
-  }
-  
-  /** Collect the rail modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. bus=yes, or when none are marked explicitly we assume the the default (if provided) 
-   * 
-   * @param osmNode to use
-   * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Collection<String> collectEligibleOsmRoadModesOnPtOsmNode(OsmNode osmNode, Map<String, String> tags, String defaultOsmMode) {
-    Collection<String> explicitlyIncludedOsmModes = PlanitOsmUtils.getOsmRoadModesWithAccessValue(tags, OsmTags.YES);
-    if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
-      Collection<String> explicitlyExcludedOsmModes = PlanitOsmUtils.getOsmRoadModesWithAccessValue(tags, OsmTags.NO);
-      if(explicitlyExcludedOsmModes != null && !explicitlyExcludedOsmModes.isEmpty()) {
-        LOGGER.severe(String.format("we currently do not yet support explicitly excluded road modes for PT osm nodes %d (platforms, etc.), ignored exclusion of %s", osmNode.getId(), explicitlyExcludedOsmModes.toString()));
-      }
-    }else if(defaultOsmMode != null){
-      /* default if no explicit modes are mapped, is to map it to rail */
-      explicitlyIncludedOsmModes = Collections.singleton(defaultOsmMode);
-    }
-    return explicitlyIncludedOsmModes;       
   }   
 }
