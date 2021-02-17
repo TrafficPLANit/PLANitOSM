@@ -20,12 +20,12 @@ public class OsmRailModeTags {
    * populate the available mode tags
    */
   private static void populateModeTags() {
-    MODE_TAGS.add(OsmRailwayTags.FUNICULAR);
-    MODE_TAGS.add(OsmRailwayTags.LIGHT_RAIL);
-    MODE_TAGS.add(OsmRailwayTags.MONO_RAIL);
-    MODE_TAGS.add(OsmRailwayTags.NARROW_GAUGE);
-    MODE_TAGS.add(OsmRailwayTags.SUBWAY);
-    MODE_TAGS.add(TRAIN);
+    MODE_TAGS.add(FUNICULAR);
+    MODE_TAGS.add(LIGHT_RAIL);
+    MODE_TAGS.add(MONO_RAIL);
+    MODE_TAGS.add(NARROW_GAUGE);
+    MODE_TAGS.add(SUBWAY);
+    MODE_TAGS.add(TRAIN); /* translates to railway=rail */
     MODE_TAGS.add(OsmRailwayTags.TRAM);
   }
   
@@ -35,7 +35,19 @@ public class OsmRailModeTags {
 
   /* NO VEHICLE */
   
+  public static final String FUNICULAR = OsmRailwayTags.FUNICULAR;
+  
+  public static final String LIGHT_RAIL = OsmRailwayTags.LIGHT_RAIL;
+  
+  public static final String MONO_RAIL = OsmRailwayTags.MONO_RAIL;
+  
+  public static final String NARROW_GAUGE = OsmRailwayTags.NARROW_GAUGE;
+  
+  public static final String SUBWAY = OsmRailwayTags.SUBWAY;
+  
   public static final String TRAIN = "train";
+  
+  public static final String TRAM = OsmRailwayTags.TRAM;
     
   
   /** verify if passed in tag is indeed a mode tag

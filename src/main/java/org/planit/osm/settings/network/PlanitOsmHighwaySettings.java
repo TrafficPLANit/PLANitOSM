@@ -407,6 +407,15 @@ public class PlanitOsmHighwaySettings {
     return null;
   }
   
+  /** verify if a mapped planit mode exists at this point
+   * 
+   * @param osmMode to verify
+   * @return true when available false otherwise
+   */
+  public boolean hasMappedPlanitMode(String osmMode) {
+    return getMappedPlanitRoadMode(osmMode)!=null;
+  } 
+  
   /**
    * Collect all Osm modes that are allowed for the given osmHighway type as configured by the user
    * 
@@ -463,6 +472,8 @@ public class PlanitOsmHighwaySettings {
    */
   public boolean isParserActive() {
     return this.isParserActive;
-  }   
+  }
+
+  
 
 }

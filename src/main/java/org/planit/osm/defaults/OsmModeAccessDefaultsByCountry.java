@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
@@ -209,13 +210,13 @@ public class OsmModeAccessDefaultsByCountry {
     
     /* FUNICULAR */
     {
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.FUNICULAR, OsmRailwayTags.FUNICULAR);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.LIGHT_RAIL, OsmRailwayTags.LIGHT_RAIL);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.MONO_RAIL, OsmRailwayTags.MONO_RAIL);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.NARROW_GAUGE, OsmRailwayTags.NARROW_GAUGE);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.RAIL, OsmRailwayTags.RAIL);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.SUBWAY, OsmRailwayTags.SUBWAY);
-      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.TRAM, OsmRailwayTags.TRAM);
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.FUNICULAR, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.FUNICULAR));
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.LIGHT_RAIL, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.LIGHT_RAIL));
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.MONO_RAIL, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.MONO_RAIL));
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.NARROW_GAUGE, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.NARROW_GAUGE));
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.RAIL, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.RAIL));
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.SUBWAY, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.SUBWAY));
+      globalAllowedModeAccessDefaults.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.TRAM, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.TRAM));
     }
     
     

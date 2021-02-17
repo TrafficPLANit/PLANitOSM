@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
+import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
 import org.planit.zoning.Zoning;
 
 /**
@@ -30,6 +31,11 @@ public class PlanitOsmZoningHandlerProfiler {
    * track a counter by Ptv2 value tag of the encountered entities
    */
   private final Map<String, LongAdder> counterByPtv2Tag = new HashMap<String, LongAdder>();  
+  
+  /**
+   * track number of multipolygons eligible as PT platforms that we encountered
+   */
+  private final LongAdder multiPolygonCount = new LongAdder();   
         
   /**
    * for logging we log each x number of entities parsed, this is done to minimise number of logging lines
@@ -48,7 +54,13 @@ public class PlanitOsmZoningHandlerProfiler {
    * while still providing information, hence the modulo use is dynamic
    */  
   private long moduloLoggingCounterNodes = 10;  
-  
+
+  /**
+   * increment the counter that tracks the number of multi polygons identified as PT platforms
+   */
+  public void incrementMultiPolygonPlatformCounter() {
+    this.multiPolygonCount.increment();
+  }
 
   /**
    * Increment counter for passed in osm tag regarding a Ptv1 value tag
@@ -69,13 +81,26 @@ public class PlanitOsmZoningHandlerProfiler {
     counterByPtv2Tag.putIfAbsent(tagType, new LongAdder());
     counterByPtv2Tag.get(tagType).increment();    
   }  
+  
+  /**
+   * log stats related to the zoning pre-processing phase
+   * 
+   * @param planitOsmZoningReaderData to extract stats from
+   */
+  public void logPreProcessingStats(PlanitOsmZoningReaderData planitOsmZoningReaderData) {
+    
+    LOGGER.info(String.format("[STATS] identified %d multipolygons as PT platforms",multiPolygonCount.longValue()));
+    
+    LOGGER.info(String.format("[STATS] marked %d osm ways as part of multipolygon relations",planitOsmZoningReaderData.getUnprocessedMultiPolygonOsmWays().size()));    
+    
+  }  
 
   /**
-   * log counters
+   * log counters regarding main processing phase
    * 
    * @param zoning for which information  was tracked
    */
-  public void logProfileInformation(Zoning zoning) {
+  public void logProcessingStats(Zoning zoning) {
     for(Entry<String, LongAdder> entry : counterByPtv1Tag.entrySet()) {
       long count = entry.getValue().longValue();
       LOGGER.info(String.format("[STATS] [Ptv1] processed %s count:%d", entry.getKey(), count));
@@ -88,8 +113,17 @@ public class PlanitOsmZoningHandlerProfiler {
     
     /* stats on exact number of created PLANit network objects */
     LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.transferZones.size()));
-    LOGGER.info(String.format("[STATS] created PLANit %d connectoids",zoning.connectoids.size()));
   }
+  
+  /**
+   * log stats regarding post-processing steo
+   * 
+   * @param zoning for which information was tracked
+   */
+  public void logPostProcessingStats(Zoning zoning) {
+    
+    LOGGER.info(String.format("[STATS] created PLANit %d connectoids",zoning.connectoids.size()));
+  }  
 
   /**
    * log user information based on currently number of registered transfer zones
@@ -133,6 +167,8 @@ public class PlanitOsmZoningHandlerProfiler {
   public void reset() {
     this.counterByPtv1Tag.clear();
     this.counterByPtv2Tag.clear();
-  }  
+    this.multiPolygonCount.reset();
+  }
+ 
 
 }

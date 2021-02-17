@@ -8,7 +8,6 @@ import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.utils.exceptions.PlanItException;
-import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
@@ -27,26 +26,12 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
  * 
  *
  */
-public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
+public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHandler {
 
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningPreProcessingHandler.class.getCanonicalName());
-      
-  /**
-   * track number of multipolygons eligible as PT platforms that we encountered
-   */
-  private long multiPolygonCount = 0;
-  
-  // references
-    
-  /** the settings to adhere to regarding the parsing of PLAnit transfer infrastructure from OSM */
-  private final PlanitOsmTransferSettings transferSettings;  
-  
-  /** to use for storage of temporary information to be made available to later handlers */
-  private final PlanitOsmZoningReaderData zoningReaderData;
-  
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningPreProcessingHandler.class.getCanonicalName());         
 
   /**
    * constructor
@@ -55,10 +40,7 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
    */
   public PlanitOsmZoningPreProcessingHandler(final PlanitOsmTransferSettings transferSettings, PlanitOsmZoningReaderData zoningReaderData) {   
-    /* references */      
-    this.transferSettings = transferSettings;
-    this.zoningReaderData = zoningReaderData;
-    
+    super(transferSettings, zoningReaderData, null, null, null);    
   }
   
   /**
@@ -68,8 +50,8 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
    */
   public void initialiseBeforeParsing() throws PlanItException {
     reset();
-  }  
-
+  } 
+  
   /**
    * {@inheritDoc}
    */  
@@ -78,7 +60,7 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
 
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);          
     /* only parse when parser is active and type is available */
-    if(transferSettings.isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE)) {
+    if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE)) {
               
       /* multi_polygons can represent public transport platforms */ 
       if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.MULTIPOLYGON)) {
@@ -86,7 +68,7 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
         /* only consider public_transport=platform multi-polygons */
         if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
           
-          ++multiPolygonCount;
+          getProfiler().incrementMultiPolygonPlatformCounter();
           
           int numberOfMembers = osmRelation.getNumberOfMembers();
           for(int index = 0 ;index < numberOfMembers ; ++ index) {
@@ -94,7 +76,7 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
             /* only collect outer area, mapped as ways */
             if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
               /* mark for keeping in regular handler */
-              zoningReaderData.markOsmWayToKeepUnprocessed(member.getId());
+              getZoningReaderData().markMultiPolygonOsmWayToKeepUnprocessed(member.getId());
             }
           }
           
@@ -109,10 +91,9 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
    */
   @Override
   public void complete() throws IOException {
-    
+        
     /* stats*/
-    LOGGER.info(String.format("[STATS] identified %d multipolygons as PT platforms",multiPolygonCount));
-    LOGGER.info(String.format("[STATS] marked %d osm ways as part of multipolygon relations",zoningReaderData.getUnprocessedOsmWays().size()));          
+    getProfiler().logPreProcessingStats(getZoningReaderData());      
     
     LOGGER.info(" OSM zone pre-parsing...DONE");
 
@@ -122,7 +103,7 @@ public class PlanitOsmZoningPreProcessingHandler extends DefaultOsmHandler {
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {  
-    multiPolygonCount = 0;
+    // nothing yet
   }
   
 }

@@ -106,11 +106,7 @@ public class PlanitOsmNetworkLayerHandler {
   
   /** settings relevant to this parser */
   private PlanitOsmNetworkSettings settings;
-  
-  /** intermodalReaderActive flag indicating if part of intermodal reader, if so we retain some of our indices after completion to make it available to other parts
-  * of intermodal reader if they require to use it */
-  private final boolean intermodalReaderActive; 
-  
+    
   /** the network layer to use */
   private MacroscopicPhysicalNetwork networkLayer;        
   
@@ -1079,18 +1075,15 @@ public class PlanitOsmNetworkLayerHandler {
    * @param networkLayer to use
    * @param osmNodes reference to parsed osmNodes
    * @param settings used for this parser
-   * @param intermodalReaderActive flag indicating if part of intermodal reader, if so we retain some of our indices after completion to make it available to other parts
-   * of intermodal reader if they require to use it
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmNetworkSettings settings, boolean intermodalReaderActive, PlanitJtsUtils geoUtils) {
+  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmNetworkSettings settings, PlanitJtsUtils geoUtils) {
     this.networkLayer = networkLayer;
     this.osmNodes = osmNodes;
     this.geoUtils = geoUtils;
     this.settings = settings;
     
     this.profiler  = new PlanitOsmNetworkHandlerProfiler();
-    this.intermodalReaderActive = intermodalReaderActive;
     
     /* initialise the tagging scheme helpers based on the registered modes */
     if(OsmLanesModeTaggingSchemeHelper.requireLanesModeSchemeHelper(settings, networkLayer)) {
@@ -1250,6 +1243,7 @@ public class PlanitOsmNetworkLayerHandler {
     nodesByOsmId.clear();
     linkInternalOsmNodes.clear();
     modifiedLinkSegmentTypes.reset();
+    osmWaysWithMultiplePlanitLinks.clear();
   }
 
   /** provide the map that indexed all created nodes in this layer by its OSM id
@@ -1273,20 +1267,25 @@ public class PlanitOsmNetworkLayerHandler {
    * @return osmWaysWithMultiplePlanitLinks map by original Osm way id
    */
   public final Map<Long, Set<Link>> getOsmWaysWithMultiplePlanitLinks(){
-    if(!this.intermodalReaderActive) {
-      LOGGER.severe("OSM ways with multiple planit link information is only retained when handler is part of intermodal reader");
-    }
     return this.osmWaysWithMultiplePlanitLinks;
   }
+  
+  /** set the osmways with multiple planit links as identified exogenously. When completing the parsing round, we add to this map with
+   * additionally identified links based on breaking the necessary links with internal connections
+   * 
+   * @return osmWaysWithMultiplePlanitLinks reference map to use when finalising parsing by breaking links where needed based on this layer data
+   */
+  public void setOsmWaysWithMultiplePlanitLinks(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks){
+    this.osmWaysWithMultiplePlanitLinks = osmWaysWithMultiplePlanitLinks;
+  }  
 
   /**
    * complete the parsing, invoked from parent handler complete method
    * 
-   * @param osmWaysWithMultiplePlanitLinks needed to complete the braking of links that intersect without other internally
    */
-  public void complete(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
+  public void complete() {
     if(osmWaysWithMultiplePlanitLinks == null) {
-      osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
+      this.osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     }
     
     /* break links */
@@ -1297,9 +1296,6 @@ public class PlanitOsmNetworkLayerHandler {
     /* stats*/
     logProfileInformation();
     
-    if(intermodalReaderActive) {
-      this.osmWaysWithMultiplePlanitLinks = osmWaysWithMultiplePlanitLinks;
-    }
   }
 
 }

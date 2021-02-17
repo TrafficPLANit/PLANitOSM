@@ -3,6 +3,7 @@ package org.planit.osm.converter.reader;
 import java.util.logging.Logger;
 
 import org.planit.converter.zoning.ZoningReader;
+import org.planit.osm.handler.PlanitOsmZoningBaseHandler;
 import org.planit.osm.handler.PlanitOsmZoningHandler;
 import org.planit.osm.handler.PlanitOsmZoningHandlerProfiler;
 import org.planit.osm.handler.PlanitOsmZoningPostProcessingHandler;
@@ -12,7 +13,6 @@ import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.zoning.Zoning;
 
-import de.topobyte.osm4j.core.access.OsmHandler;
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
 
@@ -84,11 +84,11 @@ public class PlanitOsmZoningReader implements ZoningReader {
    * @param osmHandler to use
    * @throws PlanItException thrown if error
    */
-  protected void read(OsmReader osmReader, OsmHandler osmHandler) throws PlanItException {
+  protected void read(OsmReader osmReader, PlanitOsmZoningBaseHandler osmHandler) throws PlanItException {
     try {  
-      osmPreProcessingHandler.initialiseBeforeParsing();
+      osmHandler.initialiseBeforeParsing();
       /* register handler */
-      osmReader.setHandler(osmPreProcessingHandler);
+      osmReader.setHandler(osmHandler);
       /* conduct parsing which will call back the handler*/
       osmReader.read();  
     }catch (OsmInputException e) {
@@ -159,7 +159,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
           this.network2ZoningData, 
           this.zoning,
           this.handlerProfiler);
-      read(osmReader, osmHandler);        
+      read(osmReader, osmPostProcessingHandler);        
     } 
   }    
 

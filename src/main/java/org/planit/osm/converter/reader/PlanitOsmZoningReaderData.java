@@ -7,13 +7,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.util.Osm4JUtils;
+import org.planit.osm.util.OsmPtVersionScheme;
 import org.planit.utils.geo.PlanitJtsIntersectItemVisitor;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
@@ -32,19 +33,22 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  */
 public class PlanitOsmZoningReaderData {
   
+  /** logeger to use */
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningReaderData.class.getCanonicalName());
+  
   /* UNPROCESSED OSM */
 
   /** track unprocessed but identified Ptv1 station nodes */
-  private final Set<OsmNode> unprocessedPtv1Stations = new TreeSet<OsmNode>(Osm4JUtils.createOsmEntityComparator());
+  private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv1Stations = new TreeMap<EntityType, Map<Long, OsmEntity>>();
   
   /** track unprocessed but identified Ptv2 station nodes/ways */
-  private final Map<EntityType,Set<OsmEntity>> unprocessedPtv2Stations = new TreeMap<EntityType,Set<OsmEntity>>();
+  private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<EntityType, Map<Long, OsmEntity>>();
       
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
   private final Set<Long> unprocessedPtv2StopPositions= new HashSet<Long>();
   
   /** the registered osm ways that we kept based on osmWaysToKeep that were provided, and are processed at a later stage */
-  private final Map<Long, OsmWay> unprocessedOsmWays = new HashMap<Long, OsmWay>();
+  private final Map<Long, OsmWay> unprocessedMultiPolygonOsmWays = new HashMap<Long, OsmWay>();
   
   /* OSM <-> TRANSFER ZONE TRACKING */
   
@@ -69,24 +73,79 @@ public class PlanitOsmZoningReaderData {
  
   /** collect the Ptv1 stations that have been identified but not processed yet
    * 
+   * @param entityType to collect them for
    * @return unprocess ptv1 stations
    */
-  public Set<OsmNode> getUnprocessedPtv1Stations() {
-    return unprocessedPtv1Stations;
+  public Map<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
+    unprocessedPtv1Stations.putIfAbsent(entityType, new HashMap<Long, OsmEntity>());
+    return unprocessedPtv1Stations.get(entityType);
   }
+  
+  /** add unprocessed ptv1 station
+   * @param osmEntity to add
+   */
+  public void addUnprocessedPtv1Station(OsmEntity osmEntity) {
+    EntityType type = null;
+    if(osmEntity instanceof OsmNode) {
+      type = EntityType.Node;
+    }else if(osmEntity instanceof OsmWay) {
+      type = EntityType.Way;
+    }else {
+      LOGGER.severe(String.format("unknown entity type when adding unprocessed Ptv1 station wit osm id %d, ignored"));
+    }
+       
+    unprocessedPtv1Stations.putIfAbsent(type, new HashMap<Long,OsmEntity>());
+    unprocessedPtv1Stations.get(type).put(osmEntity.getId(), osmEntity);
+  }  
+  
+  /** add unprocessed ptv2 station
+   * @param osmEntity to add
+   */
+  public void addUnprocessedPtv2Station(OsmEntity osmEntity) {
+    EntityType type = null;
+    if(osmEntity instanceof OsmNode) {
+      type = EntityType.Node;
+    }else if(osmEntity instanceof OsmWay) {
+      type = EntityType.Way;
+    }else {
+      LOGGER.severe(String.format("unknown entity type when adding unprocessed Ptv2 station wit osm id %d, ignored"));
+    }
+       
+    unprocessedPtv2Stations.putIfAbsent(type, new HashMap<Long,OsmEntity>());
+    unprocessedPtv2Stations.get(type).put(osmEntity.getId(), osmEntity);
+  }   
 
   /** collect unprocces ptv2 stations 
    * @param entityType to collect for (node, way)
    * @return unprocessed stations
    */
-  public Set<OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
-    unprocessedPtv2Stations.putIfAbsent(entityType, new TreeSet<OsmEntity>(Osm4JUtils.createOsmEntityComparator()));
+  public Map<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
+    unprocessedPtv2Stations.putIfAbsent(entityType, new HashMap<Long, OsmEntity>());
     return unprocessedPtv2Stations.get(entityType);
   }
 
   public Set<Long> getUnprocessedPtv2StopPositions() {
     return unprocessedPtv2StopPositions;
   }
+  
+
+  /** remove an unprocessed station
+   * @param ptVersion pt version this
+   * @param osmEntity
+   * @return
+   */
+  public OsmEntity removeUnproccessedStation(OsmPtVersionScheme ptVersion, OsmEntity osmEntity) {
+    EntityType type = Osm4JUtils.getEntityType(osmEntity);
+    switch (ptVersion) {
+      case VERSION_1:
+        return getUnprocessedPtv1Stations(type).remove(osmEntity.getId());    
+      case VERSION_2:
+        return getUnprocessedPtv2Stations(type).remove(osmEntity.getId());
+      default:
+        LOGGER.warning(String.format("could not remove station %d from earlier identified unprocessed stations, this should not happen", osmEntity.getId()));
+        return null;
+    }
+  }  
   
   /** mark an osm way to be kept in unprocessed fashion even if it is not recognised as
    * as valid PT supporting way. This occurs when a way is part of for example a multi-polygon relation
@@ -95,9 +154,9 @@ public class PlanitOsmZoningReaderData {
    * 
    * @param osmWayId to mark
    */
-  public void markOsmWayToKeepUnprocessed(long osmWayId) {
+  public void markMultiPolygonOsmWayToKeepUnprocessed(long osmWayId) {
     /* include in unprocessed way, but without way itself, that is to be added later (we do not know it here)*/
-    unprocessedOsmWays.put(osmWayId, null);
+    unprocessedMultiPolygonOsmWays.put(osmWayId, null);
   }  
   
   /** verify if the passed in osm way should be kept (even if it is not converted to a PLANit link
@@ -106,8 +165,8 @@ public class PlanitOsmZoningReaderData {
    * @param osmWay to verify
    * @return true when it should, false otherwise
    */
-  public boolean shouldOsmWayBeKept(OsmWay osmWay) {
-    return unprocessedOsmWays.containsKey(osmWay.getId());
+  public boolean shouldMultiPolygonOsmWayBeKept(OsmWay osmWay) {
+    return unprocessedMultiPolygonOsmWays.containsKey(osmWay.getId());
   }
   
   /** add osm way to keep. Should be based on a positive result from {@link shouldOsmWayBeKept}
@@ -115,24 +174,24 @@ public class PlanitOsmZoningReaderData {
    * @param osmWay to keep
    * @return osm way that was located in positino of new osmWay, or null if none
    */
-  public OsmWay addUnprocessedOsmWay(OsmWay osmWay) {
+  public OsmWay addUnprocessedMultiPolygonOsmWay(OsmWay osmWay) {
     /* now add way itself to map, as we know it must be kept and we have access to it */
-    return unprocessedOsmWays.put(osmWay.getId(), osmWay);
+    return unprocessedMultiPolygonOsmWays.put(osmWay.getId(), osmWay);
   }
   
   /** collect an unprocessed osm way 
    * @param osmWayId to verify
    * @return the way, null if not marked/available
    */
-  public OsmWay getUnprocessedOsmWay(long osmWayId) {
-    return unprocessedOsmWays.get(osmWayId);
+  public OsmWay getUnprocessedMultiPolygonOsmWay(long osmWayId) {
+    return unprocessedMultiPolygonOsmWays.get(osmWayId);
   }
   
   /** collect the currently marked unprocessed Osm ways
    * @return unprocessed osm ways
    */
-  public Map<Long, OsmWay> getUnprocessedOsmWays() {
-    return unprocessedOsmWays;
+  public Map<Long, OsmWay> getUnprocessedMultiPolygonOsmWays() {
+    return unprocessedMultiPolygonOsmWays;
   }  
   
   /* TRANSFER ZONE RELATED METHODS */  
@@ -205,6 +264,20 @@ public class PlanitOsmZoningReaderData {
     return directedConnectoidsByOsmNodeId.get(networkLayer);
   }
   
+  /** add a connectoid to the registered connectoids indexed by their osm id
+   * 
+   * @param networkLayer to register for
+   * @param osmAccessNodeid this connectoid relates to
+   * @param connectoid to add
+   * @return true when successful, false otherwise
+   */
+  public boolean addDirectedConnectoidByOsmId(MacroscopicPhysicalNetwork networkLayer, long osmAccessNodeid, DirectedConnectoid connectoid) {
+    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Long, Set<DirectedConnectoid>>());
+    Map<Long, Set<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
+    connectoidsForLayer.putIfAbsent(osmAccessNodeid, new HashSet<DirectedConnectoid>());
+    return connectoidsForLayer.get(osmAccessNodeid).add(connectoid);
+  }
+  
   /* TRANSFER ZONE GROUP RELATED METHODS */  
   
   /** collect a parsed transfer zone group by osm id
@@ -231,10 +304,11 @@ public class PlanitOsmZoningReaderData {
     unprocessedPtv1Stations.clear();
     unprocessedPtv2Stations.clear();
     unprocessedPtv2StopPositions.clear();
-    unprocessedOsmWays.clear();
+    unprocessedMultiPolygonOsmWays.clear();
     transferZoneWithoutConnectoidByOsmEntityId.clear();
     directedConnectoidsByOsmNodeId.clear();     
   }
+
 
  
 }

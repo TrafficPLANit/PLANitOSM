@@ -6,7 +6,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+
+import org.planit.osm.settings.network.PlanitOsmRailwaySettings;
 import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
@@ -84,7 +87,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
     }else if(OsmRailwayTags.isRailBasedRailway(type)) {
       for(int index = 0; index < osmModes.length ; ++index) {
         String osmModeValueTag = osmModes[index];
-        if( OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
+        if( OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmModeValueTag))){
           allowedModesByType.putIfAbsent(type, new HashSet<>());
           allowedModesByType.get(type).add(osmModeValueTag);
           if(logChanges) {

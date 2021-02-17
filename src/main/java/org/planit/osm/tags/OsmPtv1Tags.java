@@ -49,7 +49,8 @@ public class OsmPtv1Tags {
   private static void populateOsmRailwayPublicTransportValueTags() {
     PT_RAILWAY_VALUE_TAGS.add(HALT);
     PT_RAILWAY_VALUE_TAGS.add(STOP);
-    PT_RAILWAY_VALUE_TAGS.add(PLATFORM_EDGE);    
+    PT_RAILWAY_VALUE_TAGS.add(PLATFORM_EDGE);
+    PT_RAILWAY_VALUE_TAGS.add(SUBWAY_ENTRANCE);  
     PT_RAILWAY_VALUE_TAGS.addAll(AREA_BASED_PT_RAILWAY_VALUE_TAGS);
   }    
 
@@ -103,7 +104,10 @@ public class OsmPtv1Tags {
   public static final String STOP = "stop";
   
   /** a tram_stop tag used frequently under PTv1 i.c.w. railway=tram_stop */  
-  public static final String TRAM_STOP = "tram_stop";  
+  public static final String TRAM_STOP = "tram_stop";
+  
+  /** an entrance to a station for pedestrians (and or cyclists) */
+  public static final String SUBWAY_ENTRANCE = "subway_entrance"; 
   
   
   /* railway areas */

@@ -88,9 +88,6 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     this.inputFile = inputFile;
     /* NETWORK READER */
     this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
-    /* flag that network reader is part of intermodal reader, such that it will retain some of its indexes after parsing so that they
-     * can be passed over to the zoning reader */
-    this.osmNetworkReader.setPartOfIntermodalReader(true);
     
     /* ZONING READER */
     this.osmZoningReader = PlanitOsmZoningReaderFactory.create(inputFile, osmNetworkToPopulate);
@@ -109,6 +106,10 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   @Override
   public Pair<InfrastructureNetwork, Zoning> read() throws PlanItException {
 
+    /* disable removing dangling subnetworks, until zoning has been parsed as well */
+    boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
+    osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(false);
+    
     /* first parse the network */
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
             
@@ -117,6 +118,14 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     
     /* then parse the intermodal zoning aspect, i.e., transfer/od zones */
     Zoning zoning = osmZoningReader.read();
+    
+    /* remove dangling subnetwork if eligible 
+     * TODO: make compatible with the (transfer) zones, because this also requires removal of these components 
+     * and additional logic that understands interactions between layers such that a danlging subnetwork with a transfer zone
+     * to another network that is not danlging means, it is in fact not dangling at all! 
+     */
+    osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
+    osmNetworkReader.removeDanglingSubNetworks();
     
     /* return result */
     return Pair.create(network, zoning);

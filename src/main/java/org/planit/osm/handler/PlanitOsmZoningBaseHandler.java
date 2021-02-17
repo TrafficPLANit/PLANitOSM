@@ -201,7 +201,10 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       
       /* make sure that we have the correct mapping from node to link (in case the link has been broken before in the network reader, or here, for example) */
       NetworkLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
-      List<Link> linksWithOsmNodeInternally = layerData.getOsmNodeIdsInternalToLink().get(osmNode.getId());      
+      List<Link> linksWithOsmNodeInternally = layerData.getOsmNodeIdsInternalToLink().get(osmNode.getId()); 
+      if(linksWithOsmNodeInternally == null) {
+        LOGGER.severe(String.format("new Planit node was created as connectoid for OsmNode %d, but node is not internal to any parsed Osmway, this should not happen",osmNode.getId()));
+      }
       PlanitOsmHandlerHelper.updateLinksForInternalNode(planitNode, layerData.getOsmWaysWithMultiplePlanitLinks(), linksWithOsmNodeInternally);
             
       /* break link */
@@ -246,6 +249,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
       if(newConnectoids==null || newConnectoids.isEmpty()) {
         LOGGER.warning(String.format("found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
+      }else {
+        newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByOsmId(networkLayer, osmNode.getId(),connectoid));
       }
       
     }

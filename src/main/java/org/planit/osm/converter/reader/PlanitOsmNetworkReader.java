@@ -34,11 +34,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   
   /** tha handler responsible for the actual parsing */
   private PlanitOsmNetworkHandler osmHandler;
-  
-  /** flag indicating if network reader is part of intermodal reader, relevant for not discarding indices when finished
-   * parsing */
-  private boolean intermodalReaderActive = false;
-     
+       
   /**
    * Log some information about this reader's configuration
    * @param inputFile 
@@ -54,14 +50,20 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */
   protected PlanitOsmNetworkHandler getOsmNetworkHandler() {
     return osmHandler;
-  }
+  }  
   
-  /** indicate of network reader is part of intermodal reader, if so, it retains some of the indices
-   * tracked ruing parsing for later use by other parts of the intermodal reader
-   * @param 
+  /**
+   * remove dangling subnetworks when settings dictate it 
+   * @throws PlanItException thrown if error
    */
-  protected void setPartOfIntermodalReader(boolean intermodalReaderActive) {
-    this.intermodalReaderActive = intermodalReaderActive;
+  protected void removeDanglingSubNetworks() throws PlanItException {
+    
+    if(settings.isRemoveDanglingSubnetworks()) {
+
+      osmNetwork.removeDanglingSubnetworks(
+          settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
+      
+    }
   }  
   
   /**
@@ -102,7 +104,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     
       /* set handler to deal with call backs from osm4j */
       osmHandler = new PlanitOsmNetworkHandler(osmNetwork, settings);
-      osmHandler.initialiseBeforeParsing(intermodalReaderActive);
+      osmHandler.initialiseBeforeParsing();
       
       /* register handler */
       osmReader.setHandler(osmHandler);
@@ -115,11 +117,8 @@ public class PlanitOsmNetworkReader implements NetworkReader {
         throw new PlanItException("error during parsing of osm file",e);
       }
       
-      if(settings.isRemoveDanglingSubnetworks()) {
-        // CONTINUE HERE
-        osmNetwork.removeDanglingSubnetworks(
-            settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
-      }
+      /* danlging subnetworks */
+      removeDanglingSubNetworks();                  
     }
     
     LOGGER.info(" OSM full network parsing...DONE");

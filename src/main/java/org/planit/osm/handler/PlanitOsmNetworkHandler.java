@@ -437,10 +437,9 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler properly
-   * @param intermodalReaderActive indicates if part of intermodal reader, set settings accordingly on layer handlers 
    * @throws PlanItException 
    */
-  public void initialiseBeforeParsing(boolean intermodalReaderActive) throws PlanItException {
+  public void initialiseBeforeParsing() throws PlanItException {
     PlanItException.throwIf(network.infrastructureLayers != null && network.infrastructureLayers.size()>0,"network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* create the supported link segment types on the network */
@@ -449,7 +448,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     /* for each layer initialise a handler */
     for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
       MacroscopicPhysicalNetwork macroNetworkLayer = (MacroscopicPhysicalNetwork)networkLayer;
-      PlanitOsmNetworkLayerHandler layerHandler = new PlanitOsmNetworkLayerHandler(macroNetworkLayer, osmNodes, settings, intermodalReaderActive, geoUtils);
+      PlanitOsmNetworkLayerHandler layerHandler = new PlanitOsmNetworkLayerHandler(macroNetworkLayer, osmNodes, settings, geoUtils);
       osmLayerHandlers.put(macroNetworkLayer, layerHandler);
     }
         
@@ -472,6 +471,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
+    
     /* store for later processing */
     osmNodes.put(osmNode.getId(), osmNode);   
   }
@@ -486,7 +486,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
-      try {              
+      try {                      
         
         /* only parse ways that are potentially road infrastructure */
         if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
@@ -563,8 +563,14 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         
     /* delegate to each layer handler present */
     for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmLayerHandlers.entrySet()) {
-      entry.getValue().complete(osmWaysWithMultiplePlanitLinks.get(entry.getKey()));
+      PlanitOsmNetworkLayerHandler networkLayerHandler = entry.getValue();
+      
+      /* transfer information (and ownership) to layer required for completion (breaking links) */
+      networkLayerHandler.setOsmWaysWithMultiplePlanitLinks(osmWaysWithMultiplePlanitLinks.get(entry.getKey()));
       osmWaysWithMultiplePlanitLinks.remove(entry.getKey());
+      
+      /* complete */
+      networkLayerHandler.complete();      
     }                 
         
     LOGGER.info(" OSM basic network parsing...DONE");

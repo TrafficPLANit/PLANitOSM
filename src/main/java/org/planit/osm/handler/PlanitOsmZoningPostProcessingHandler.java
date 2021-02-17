@@ -119,6 +119,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       if(matchedTransferZones.size()>1) {
         LOGGER.warning(String.format("found multiple transfer zones with reference to osm node %d based on search radius of %.2f (m), choosing closest match",osmNode,searchRadiusMeters));
         foundZone =  (TransferZone) PlanitOsmNodeUtils.findClosestCoordinateToNode(osmNode, matchedTransferZones, geoUtils);        
+      }else {
+        foundZone = matchedTransferZones.iterator().next();
       }
     }    
         
@@ -171,7 +173,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
     
     /* supported modes */
-    Collection<String> eligibleOsmModes = PlanitOsmNodeUtils.collectEligibleOsmModesOnPtOsmNode(osmNode, tags, null);    
+    Collection<String> eligibleOsmModes = PlanitOsmNodeUtils.collectEligibleOsmModesOnPtOsmEntity(osmNode, tags, null);    
     Set<Mode> planitModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
     if(planitModes==null || planitModes.isEmpty()) {
       return;
@@ -195,10 +197,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
 
   }  
   
-  /** extract stop area relation of Ptv2 scheme. We create transfer zone groups for each valid stop_area, connect it to the transfer zones and
-   * extract the related connectoids and their connections to the transfer zones. We also mark processed stations, platforms, etc., such that after all
-   * stop_areas have been processed, we can extract planit instances for the remaining unprocessed osm entities, knowing they do not belong to any stop_area and
-   * constitute their own separate entity.
+  /** extract stop area relation of Ptv2 scheme. We create connectoids for all now already present transfer zones.
    * 
    * @param osmRelation to extract stop_area for
    * @param tags of the stop_area relation
@@ -220,11 +219,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       if(member.getRole().equals(OsmPtv2Tags.STOP_POSITION_ROLE)) {        
         
         extractPtv2StopPosition(member, transferZoneGroup.getTransferZones());
-        getZoningReaderData().getUnprocessedPtv2StopPositions().remove(member.getId());
+        getZoningReaderData().getUnprocessedPtv2StopPositions().remove(member.getId());        
         
       }
 
-    }
+    }     
        
   }  
   
@@ -233,7 +232,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * constructor
    * 
    * @param transferSettings for the handler
-   * @param hanlderData the hanlder data gathered by preceding handlers for zoning parsing
+   * @param hanlderData the handler data gathered by preceding handlers for zoning parsing
    * @param network2ZoningData data collated from parsing network required to successfully popualte the zoning
    * @param zoningToPopulate to populate
    * @param profiler to use
@@ -305,6 +304,9 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   @Override
   public void complete() throws IOException {           
+    
+    /* log stats */
+    getProfiler().logPostProcessingStats(getZoning());
     
     LOGGER.info(" OSM (transfer) zone post-processing ...DONE");
 

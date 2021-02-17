@@ -106,7 +106,7 @@ public class PlanitOsmNetworkSettings {
   protected static void addToModeExternalId(Mode planitMode, String osModeId){
     if(planitMode != null) {
       if(planitMode.hasExternalId()) {
-        planitMode.setExternalId(planitMode.getExternalId().concat("_").concat(osModeId));
+        planitMode.setExternalId(planitMode.getExternalId().concat(";").concat(osModeId));
       }else {
         planitMode.setExternalId(osModeId);
       }
@@ -424,6 +424,19 @@ public class PlanitOsmNetworkSettings {
   public boolean hasAnyMappedPlanitMode(final String... osmModes) {
     for(int index=0;index<osmModes.length;++index) {
       if(hasMappedPlanitMode(osmModes[index])) {
+        return true;
+      }
+    }
+    return false;
+  }  
+  
+  /** Verify if any of the passed in osmModes are mapped, i.e., if it is actively included when reading the network
+   * @param osmModes to verify
+   * @return true if any is mapped, false otherwise
+   */  
+  public boolean hasAnyMappedPlanitMode(final Collection<String> osmModes) {
+    for(String osmMode : osmModes) {
+      if(hasMappedPlanitMode(osmMode)) {
         return true;
       }
     }

@@ -7,7 +7,10 @@ import java.util.logging.Logger;
 import org.planit.utils.misc.FileUtils;
 
 import de.topobyte.osm4j.core.access.OsmReader;
+import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
+import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.pbf.seq.PbfReader;
 import de.topobyte.osm4j.xml.dynsax.OsmXmlReader;
 
@@ -65,6 +68,21 @@ public class Osm4JUtils {
           return Long.valueOf(e1.getId()).compareTo(Long.valueOf(e2.getId()));
       }
     };
+  }
+  
+  /** collect entity type based on the entity
+   * @param entity to check
+   * @return type
+   */
+  public static EntityType getEntityType(OsmEntity entity) {
+    if(entity instanceof OsmNode) {
+      return EntityType.Node;
+    }else if( entity instanceof OsmWay){
+      return EntityType.Way;
+    }else {
+      LOGGER.severe(String.format("unknown osm entity %d encountered when registering transfer zone, transfer zone not registered",entity.getId()));
+      return null;
+    }
   }
 
 }
