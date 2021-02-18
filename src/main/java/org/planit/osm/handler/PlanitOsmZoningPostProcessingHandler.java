@@ -248,7 +248,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     boolean isProperPtv2StopPosition = true;
     if(!getZoningReaderData().getUnprocessedPtv2StopPositions().contains(member.getId())){      
       /* stop-position not marked as such on the node, we must infer mode access from infrastructure it resides on */      
-      LOGGER.info(String.format("stop_position in stop_area %d not marked as such on OSM node, inferring transfer zone and access modes by geographically closest transfer zone in stop_area instead ",member.getId()));
+      LOGGER.info(String.format("stop_position %d in stop_area not marked as such on OSM node, inferring transfer zone and access modes by geographically closest transfer zone in stop_area instead ",member.getId()));
       isProperPtv2StopPosition = false;
     }        
     

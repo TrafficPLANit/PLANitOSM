@@ -383,7 +383,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */  
   protected Map<InfrastructureLayer,Link> extractPartialOsmWay(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) throws PlanItException {
-    
+        
     Map<InfrastructureLayer,Link> linksByLayer = null;
     
     Map<MacroscopicPhysicalNetwork, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay,tags);
