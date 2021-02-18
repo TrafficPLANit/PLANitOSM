@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 import org.planit.converter.intermodal.IntermodalReader;
 import org.planit.network.InfrastructureNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData.NetworkLayerData;
 import org.planit.osm.handler.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
@@ -64,13 +63,8 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     
     /* layer specific data references */
     for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmNetworkReader.getOsmNetworkHandler().getLayerHandlers().entrySet()){
-      NetworkLayerData layerData = network2zoningData.registerNewLayerData(entry.getKey());
       PlanitOsmNetworkLayerHandler layerHandler = entry.getValue();
-      /* nodes by osm id by layer reference */
-      layerData.setPlanitNodesByOsmId(layerHandler.getParsedNodesByOsmId());
-      /* collect osm nodes internal to a parsed Planit link that have not yet been converted to nodes*/
-      layerData.setOsmNodeIdsInternalToLink(layerHandler.getOsmNodesInternalToLink());
-      layerData.setOsmWaysWithMultiplePlanitLinks(layerHandler.getOsmWaysWithMultiplePlanitLinks());
+      network2zoningData.registerLayerData(entry.getKey(), layerHandler.getLayerData());
     }
     
     return network2zoningData;

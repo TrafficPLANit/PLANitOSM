@@ -70,6 +70,20 @@ public class PlanitOsmZoningReaderData {
   
   
   /* UNPROCESSED RELATED METHODS */
+  
+  /** Collect an unprocessed station if it exists
+   * 
+   * @param entityType to collect for
+   * @param osmId id to collect for
+   * @return unprocessed station, null otherwise
+   */
+  public OsmEntity getUnprocessedStation(EntityType entityType, long osmId) {
+    OsmEntity osmEntity = getUnprocessedPtv1Stations(entityType).get(osmId);
+    if(osmEntity == null) {
+      osmEntity = getUnprocessedPtv2Stations(entityType).get(osmId);  
+    }
+    return osmEntity;
+  }
  
   /** collect the Ptv1 stations that have been identified but not processed yet
    * 
@@ -124,6 +138,10 @@ public class PlanitOsmZoningReaderData {
     return unprocessedPtv2Stations.get(entityType);
   }
 
+  /** collect unprocessed Ptv2 stop positions
+   * 
+   * @return unprocessed stop positions
+   */
   public Set<Long> getUnprocessedPtv2StopPositions() {
     return unprocessedPtv2StopPositions;
   }

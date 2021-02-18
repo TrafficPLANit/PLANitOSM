@@ -59,7 +59,7 @@ public class PlanitOsmNodeUtils {
    * @return zone with the geometry coordinate (or centroid) closest to the osmNode
    * @throws PlanItException thrown if error
    */
-  public static Zone findClosestCoordinateToNode(OsmNode osmNode, Set<? extends Zone> zones, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneWithClosestCoordinateToNode(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsUtils geoUtils) throws PlanItException {
     Zone closestZone = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;    
     Point point = PlanitJtsUtils.createPoint(getXCoordinate(osmNode), getYCoordinate(osmNode));
@@ -81,72 +81,6 @@ public class PlanitOsmNodeUtils {
       }
     }
     return closestZone;
-  }
-
-  /** Collect the rail modes that are deemed eligible for this entity (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. bus=yes, or when none are marked explicitly we assume the the default (if provided) 
-   * 
-   * @param osmNode to use
-   * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Collection<String> collectEligibleOsmRoadModesOnPtOsmEntity(OsmEntity osmEntity, Map<String, String> tags, String defaultOsmMode) {
-    Collection<String> explicitlyIncludedOsmModes = PlanitOsmModeUtils.getOsmRoadModesWithAccessValue(tags, OsmTags.YES);
-    if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
-      Collection<String> explicitlyExcludedOsmModes = PlanitOsmModeUtils.getOsmRoadModesWithAccessValue(tags, OsmTags.NO);
-      if(explicitlyExcludedOsmModes != null && !explicitlyExcludedOsmModes.isEmpty()) {
-        PlanitOsmHandlerHelper.LOGGER.severe(String.format("we currently do not yet support explicitly excluded road modes for PT osm entity %d (platforms, etc.), ignored exclusion of %s", osmEntity.getId(), explicitlyExcludedOsmModes.toString()));
-      }
-    }else if(defaultOsmMode != null){
-      /* default if no explicit modes are mapped, is to map it to rail */
-      explicitlyIncludedOsmModes = Collections.singleton(defaultOsmMode);
-    }
-    return explicitlyIncludedOsmModes;       
-  }
-
-  /** Collect the modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided) 
-   * 
-   * @param osmNode to use
-   * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Collection<String> collectEligibleOsmModesOnPtOsmEntity(OsmEntity osmEntity, Map<String, String> tags, String defaultOsmMode) {
-    String defaultRailMode = OsmRailModeTags.isRailModeTag(defaultOsmMode) ? defaultOsmMode : null;
-    Collection<String> eligibleOsmModes = PlanitOsmNodeUtils.collectEligibleOsmRailModesOnPtOsmEntity(osmEntity, tags, defaultRailMode);
-    String defaultRoadMode = OsmRoadModeTags.isRoadModeTag(defaultOsmMode) ? defaultOsmMode : null;
-    Collection<String> eligibleOsmRoadModes = collectEligibleOsmRoadModesOnPtOsmEntity(osmEntity, tags, defaultRoadMode);
-    if(eligibleOsmModes != null) {
-      eligibleOsmModes.addAll(eligibleOsmRoadModes);
-    }else {     
-      eligibleOsmModes = eligibleOsmRoadModes;
-    }
-    return eligibleOsmModes;       
-  }
-
-  /** Collect the rail modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided) 
-   * 
-   * @param osmNode to use
-   * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Collection<String> collectEligibleOsmRailModesOnPtOsmEntity(OsmEntity osmEntity, Map<String, String> tags, String defaultOsmMode) {
-    Collection<String> explicitlyIncludedOsmModes = PlanitOsmModeUtils.getOsmRailModesWithAccessValue(tags, OsmTags.YES);
-    if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
-      Collection<String> explicitlyExcludedOsmModes = PlanitOsmModeUtils.getOsmRailModesWithAccessValue(tags, OsmTags.NO);
-      if(explicitlyExcludedOsmModes != null && !explicitlyExcludedOsmModes.isEmpty()) {
-        PlanitOsmHandlerHelper.LOGGER.severe(String.format("we currently do not yet support explicitly excluded rail modes for PT osm entity %d (platforms, etc.), ignored exclusion of %s", osmEntity.getId(), explicitlyExcludedOsmModes.toString()));
-      }
-    }else if(defaultOsmMode != null){
-      /* default if no explicit modes are mapped, is to map it to rail */
-      explicitlyIncludedOsmModes = Collections.singleton(defaultOsmMode);
-    }
-    return explicitlyIncludedOsmModes;       
-  }      
-    
+  }   
 
 }

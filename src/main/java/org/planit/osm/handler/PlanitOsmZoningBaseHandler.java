@@ -8,9 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
-import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData.NetworkLayerData;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -42,6 +42,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningBaseHandler.class.getCanonicalName());
+  
+  /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
+   *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
+   *  on stop_positions that use this transfer zone
+   */
+  protected static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";
         
   // references
   
@@ -99,6 +105,46 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     return OsmPtVersionScheme.NONE;
   }  
+  
+  /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
+   * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
+   * via the generic input properties to be able to retrieve it if needed later
+   * 
+   * @param transferZone to use
+   * @param eligibleOsmModes to add
+   */
+  protected static void addEligibleAccessModesToTransferZone(final TransferZone transferZone, Collection<String> eligibleOsmModes) {
+    if(transferZone != null && eligibleOsmModes!= null) {
+      /* register identified eligible access modes */
+      transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
+    }
+  }    
+  
+  /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
+   * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
+   * via the generic input properties to be able to retrieve it if needed later
+   * 
+   * @param transferZone to use
+   * @param osmEntityId it relates to
+   * @param defaultOsmMode default mode for this zone (can be null)
+   */
+  protected static void addEligibleAccessModesToTransferZone(final TransferZone transferZone, final long osmEntityId, final Map<String, String> tags, final String defaultOsmMode) {
+    if(transferZone != null) {
+      /* register identified eligible access modes */
+      Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntityId, tags, defaultOsmMode);
+      addEligibleAccessModesToTransferZone(transferZone, eligibleOsmModes);
+    }
+  }
+  
+  /** collect any prior registered eligible osm modes on a Planit transfer zone 
+   * 
+   * @param transferZone to collect from
+   * @return eligible osm modes, null if none
+   */
+  @SuppressWarnings("unchecked")
+  protected static Collection<String> getEligibleOsmModesForTransferZone(final TransferZone transferZone){
+    return (Collection<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
+  }
                                                           
   
   /** verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
@@ -193,18 +239,21 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected Node extractConnectoidAccessNode(MacroscopicPhysicalNetwork networkLayer, OsmNode osmNode) throws PlanItException {
-    final Map<Long, Node> nodesByOsmId = network2ZoningData.getNetworkLayerData(networkLayer).getPlanitNodesByOsmId();
+    PlanitOsmNetworkLayerReaderData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
+    
+    final Map<Long, Node> nodesByOsmId = layerData.getNodesByOsmId();
     Node planitNode = nodesByOsmId.get(osmNode.getId());
     if(planitNode == null) {
-      /* node is internal to an existing link, create it and break existing link */
-      planitNode = extractPlanitNode(osmNode, nodesByOsmId, networkLayer);
       
       /* make sure that we have the correct mapping from node to link (in case the link has been broken before in the network reader, or here, for example) */
-      NetworkLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
-      List<Link> linksWithOsmNodeInternally = layerData.getOsmNodeIdsInternalToLink().get(osmNode.getId()); 
+      List<Link> linksWithOsmNodeInternally = layerData.getLinksByInternalOsmNodeIds().get(osmNode.getId()); 
       if(linksWithOsmNodeInternally == null) {
-        LOGGER.severe(String.format("new Planit node was created as connectoid for OsmNode %d, but node is not internal to any parsed Osmway, this should not happen",osmNode.getId()));
+        LOGGER.warning(String.format("Osm pt access node (%d) not internal to parsed Osm way, stop position possibly not attached to network, ignored",osmNode.getId()));
+        return null;
       }
+
+      /* node is internal to an existing link, create it and break existing link */
+      planitNode = extractPlanitNode(osmNode, nodesByOsmId, networkLayer);      
       PlanitOsmHandlerHelper.updateLinksForInternalNode(planitNode, layerData.getOsmWaysWithMultiplePlanitLinks(), linksWithOsmNodeInternally);
             
       /* break link */
@@ -231,7 +280,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* access node */
     Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);    
     if(planitNode==null) {
-      LOGGER.severe(String.format("unable to create connectoid for osm node (%d) even though it is thought to be a transfer access node, ignored",osmNode.getId()));
+      LOGGER.warning(String.format("unable to create pt access node from osm node (%d), ignored",osmNode.getId()));
       return;
     }
     

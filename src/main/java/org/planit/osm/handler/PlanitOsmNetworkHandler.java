@@ -67,7 +67,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) {
     for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
       PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
-      if(layerHandler.isOsmNodePresentInLayer(osmNodeId)){
+      if(layerHandler.getLayerData().isOsmNodePresentInLayer(osmNodeId)){
         return true;
       }
     }
@@ -564,13 +564,10 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     /* delegate to each layer handler present */
     for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmLayerHandlers.entrySet()) {
       PlanitOsmNetworkLayerHandler networkLayerHandler = entry.getValue();
-      
-      /* transfer information (and ownership) to layer required for completion (breaking links) */
-      networkLayerHandler.setOsmWaysWithMultiplePlanitLinks(osmWaysWithMultiplePlanitLinks.get(entry.getKey()));
+            
+      /* complete: Note that ownership of osmWaysWithMultiple planit links is transferred to handler on a per layer basis here */
+      networkLayerHandler.complete(osmWaysWithMultiplePlanitLinks.get(entry.getKey()));      
       osmWaysWithMultiplePlanitLinks.remove(entry.getKey());
-      
-      /* complete */
-      networkLayerHandler.complete();      
     }                 
         
     LOGGER.info(" OSM basic network parsing...DONE");

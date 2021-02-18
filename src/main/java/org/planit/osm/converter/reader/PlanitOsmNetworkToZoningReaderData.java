@@ -1,14 +1,15 @@
 package org.planit.osm.converter.reader;
 
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import org.planit.network.InfrastructureLayer;
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
-import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -23,69 +24,17 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
  */
 public class PlanitOsmNetworkToZoningReaderData {
   
-  /**
-   * layer specific data
-   * 
-   * @author markr
-   *
-   */
-  public class NetworkLayerData {
-    
-    /**
-     * the PLANit nodes created on a layer by their original OSM id so they can by looked up quickly
-     */
-    private Map<Long, Node> nodesByOsmId = new HashMap<Long, Node>();
-    
-    /**
-     * should provide all osm node ids that are internal to parsed links. Note that there should only
-     * be a single link in the list, it is however a list because while being parsed in the network reader, it might
-     * have been more than a single link at some point (resulting in broken links)
-     */
-    private Map<Long, List<Link>> osmNodeIdsInternalToLink = new HashMap<Long, List<Link>>();
-    
-    /**
-     * tracks all the osm wayids for which more than one planit link has been generated (due to breaking links, cicrular ways etc.). This is useful since
-     * in that case we can no longer directly find a link by its external id, since multiple planit links with the same external id exist
-     */
-    private Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
-    
-    
-    public final Map<Long, Node> getPlanitNodesByOsmId() {
-      return nodesByOsmId;
-    }
-
-    public void setPlanitNodesByOsmId(final Map<Long, Node> nodesByOsmId) {
-      this.nodesByOsmId = nodesByOsmId;
-    }
-
-    public void setOsmNodeIdsInternalToLink(final Map<Long, List<Link>> osmNodeIdsInternalToLink) {
-      this.osmNodeIdsInternalToLink = osmNodeIdsInternalToLink;      
-    }
-    
-    public Map<Long, List<Link>> getOsmNodeIdsInternalToLink() {
-      return this.osmNodeIdsInternalToLink;      
-    }
-
-    public void setOsmWaysWithMultiplePlanitLinks(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
-      this.osmWaysWithMultiplePlanitLinks = osmWaysWithMultiplePlanitLinks;      
-    }
-    
-    public Map<Long, Set<Link>> getOsmWaysWithMultiplePlanitLinks() {
-      return this.osmWaysWithMultiplePlanitLinks;      
-    }            
-  }
-
   /** settings used in network reader */
   private PlanitOsmNetworkSettings settings;
   
   /** populated network  */
   private PlanitOsmNetwork osmNetwork;
   
-  /** all osm nodes in the osm network */
+  /** all osm nodes in the osm network across layers */
   private Map<Long, OsmNode> osmNodes = new HashMap<Long, OsmNode>();  
   
   /** layer specific data that is to be made available to the zoning reader */
-  private Map<InfrastructureLayer, NetworkLayerData> networkLayerData = new HashMap<InfrastructureLayer, NetworkLayerData>(); 
+  private Map<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> networkLayerData = new HashMap<InfrastructureLayer, PlanitOsmNetworkLayerReaderData>(); 
 
   public PlanitOsmNetworkSettings getSettings() {
     return settings;
@@ -103,18 +52,14 @@ public class PlanitOsmNetworkToZoningReaderData {
     this.osmNetwork = osmNetwork;
   }
     
-  public NetworkLayerData  getNetworkLayerData(InfrastructureLayer networkLayer) {
-    NetworkLayerData data =  networkLayerData.get(networkLayer);
-    if( data == null) {
-      return registerNewLayerData(networkLayer);
-    }
+  public PlanitOsmNetworkLayerReaderData  getNetworkLayerData(InfrastructureLayer networkLayer) {
+    PlanitOsmNetworkLayerReaderData data =  networkLayerData.get(networkLayer);
     return data;
   }
-
-  public NetworkLayerData registerNewLayerData(InfrastructureLayer networkLayer) {
-    networkLayerData.put(networkLayer, new NetworkLayerData());
-    return networkLayerData.get(networkLayer);    
-  }
+  
+  public void registerLayerData(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkLayerReaderData layerData) {
+    networkLayerData.put(networkLayer, layerData);    
+  }  
 
   public void setOsmNodes(Map<Long, OsmNode> osmNodes) {
     this.osmNodes= osmNodes;
@@ -122,5 +67,36 @@ public class PlanitOsmNetworkToZoningReaderData {
   
   public Map<Long, OsmNode> getOsmNodes() {
     return this.osmNodes;
-  }    
+  }
+
+  /** find the planit node for the given osmNodeId. We search across the available layers to make a match
+   * @param osmNodeId to collect for
+   * @return Node found, null if not found
+   */
+  public Node findPlanitNodeByOsmId(long osmNodeId) {
+    for( Entry<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> entry : networkLayerData.entrySet()) {
+      if(entry.getValue().getNodesByOsmId().containsKey(osmNodeId)) {
+        return entry.getValue().getNodesByOsmId().get(osmNodeId);
+      }
+    }
+    return null;
+  }
+
+  /** find the layers the osm node resides on
+   * @param osmNodeId to verify
+   * @return layers it resides on (can be multiple if it supports multiple modes mapped to different layers)
+   */
+  public Collection<InfrastructureLayer> findNetworkLayersByOsmNodeId(long osmNodeId) {
+    Collection<InfrastructureLayer> layersPresent = null;
+    for( Entry<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> entry : networkLayerData.entrySet()) {
+      if(entry.getValue().isOsmNodePresentInLayer(osmNodeId)) {
+        if(layersPresent==null) {
+          layersPresent = new HashSet<InfrastructureLayer>();
+        }
+        layersPresent.add(entry.getKey());
+      }
+    }
+    return layersPresent;
+  }
+    
 }
