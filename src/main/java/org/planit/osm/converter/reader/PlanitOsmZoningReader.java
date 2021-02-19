@@ -47,8 +47,8 @@ public class PlanitOsmZoningReader implements ZoningReader {
   /** the (temporary) data gathered during parsing of OSM (transfer) zones */
   private final PlanitOsmZoningReaderData zoningReaderData;
   
-  /** the profiler shared across the handlers */
-  private final PlanitOsmZoningHandlerProfiler handlerProfiler;
+  /** the profiler shared across the internal handlers */
+  private PlanitOsmZoningHandlerProfiler handlerProfiler = null;
   
   // references
   
@@ -172,7 +172,6 @@ public class PlanitOsmZoningReader implements ZoningReader {
   protected PlanitOsmZoningReader(String inputFile, Zoning zoningToPopulate){
     this.transferSettings = new PlanitOsmTransferSettings();
     this.zoningReaderData = new PlanitOsmZoningReaderData();
-    this.handlerProfiler = new PlanitOsmZoningHandlerProfiler();
 
     // references
     this.inputFile = inputFile;
@@ -191,7 +190,8 @@ public class PlanitOsmZoningReader implements ZoningReader {
    */  
   @Override
   public Zoning read() throws PlanItException {
-    
+            
+    this.handlerProfiler = new PlanitOsmZoningHandlerProfiler(network2ZoningData.getOsmNetwork().infrastructureLayers.getNumberOfNodes());
     logInfo(inputFile);
             
     /* preprocessing (multi-polygon relation: osm way identification)*/

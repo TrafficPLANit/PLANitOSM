@@ -92,7 +92,7 @@ public class BasicOSMReaderTest {
       /* activate railways */
       osmReader.getNetworkSettings().activateRailwayParser(true);
                   
-      Pair<InfrastructureNetwork<?>, Zoning> resultPair = osmReader.read();
+      Pair<InfrastructureNetwork<?,?>, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = (MacroscopicNetwork) resultPair.first();
       Zoning zoning = resultPair.second();
       

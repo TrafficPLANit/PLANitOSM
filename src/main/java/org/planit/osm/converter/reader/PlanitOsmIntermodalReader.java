@@ -98,7 +98,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @throws PlanItException thrown if error
    */  
   @Override
-  public Pair<InfrastructureNetwork<?>, Zoning> read() throws PlanItException {
+  public Pair<InfrastructureNetwork<?,?>, Zoning> read() throws PlanItException {
 
     /* disable removing dangling subnetworks, until zoning has been parsed as well */
     boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
