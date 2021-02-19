@@ -873,6 +873,6 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       }                        
     }
     /* ------------------ FOR EACH OSM HIGHWAY TYPE ----------------------------------------- */    
-  }  
+  }
         
 }

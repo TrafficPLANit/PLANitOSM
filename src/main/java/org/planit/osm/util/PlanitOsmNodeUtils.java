@@ -1,22 +1,14 @@
 package org.planit.osm.util;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.planit.osm.handler.PlanitOsmHandlerHelper;
-import org.planit.osm.tags.OsmRailModeTags;
-import org.planit.osm.tags.OsmRoadModeTags;
-import org.planit.osm.tags.OsmTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.zoning.Zone;
 
-import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**

@@ -217,16 +217,16 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return createdConnectoids;
   }
   
-  /** Create a new PLANit node, register it and update stats
+  /** Create a new PLANit node required for connectoid access, register it and update stats
    * 
    * @param osmNode to extract PLANit node for
    * @param networkLayer to create it on
    * @return created planit node
    */
-  protected Node extractPlanitNode(OsmNode osmNode, final Map<Long, Node> nodesByOsmId,  MacroscopicPhysicalNetwork networkLayer) {
+  protected Node extractPlanitNodeForConnectoidAccess(OsmNode osmNode, final Map<Long, Node> nodesByOsmId,  MacroscopicPhysicalNetwork networkLayer) {
     Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);                
     nodesByOsmId.put(osmNode.getId(), planitNode);
-    profiler.logNodeStatus(networkLayer.nodes.size());
+    profiler.logNodeForConnectoidStatus(networkLayer.nodes.size());
     return planitNode;
   }  
   
@@ -253,7 +253,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       }
 
       /* node is internal to an existing link, create it and break existing link */
-      planitNode = extractPlanitNode(osmNode, nodesByOsmId, networkLayer);      
+      planitNode = extractPlanitNodeForConnectoidAccess(osmNode, nodesByOsmId, networkLayer);      
       PlanitOsmHandlerHelper.updateLinksForInternalNode(planitNode, layerData.getOsmWaysWithMultiplePlanitLinks(), linksWithOsmNodeInternally);
             
       /* break link */
@@ -357,7 +357,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       final PlanitOsmZoningHandlerProfiler profiler) {
 
     /* profiler */
-    this.profiler = new PlanitOsmZoningHandlerProfiler();
+    this.profiler = new PlanitOsmZoningHandlerProfiler(network2ZoningData.getOsmNetwork().infrastructureLayers.getNumberOfNodes());
     
     /* references */
     this.network2ZoningData = network2ZoningData;

@@ -53,8 +53,21 @@ public class PlanitOsmZoningHandlerProfiler {
    * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
    * while still providing information, hence the modulo use is dynamic
    */  
-  private long moduloLoggingCounterNodes = 10;  
-
+  private long moduloLoggingCounterNodes = 10;
+  
+  /**
+   * offset for existing number of nodes in network, such that we can accurately profile the additional
+   * number of nodes created by the zoning reader
+   */
+  private long nodesInNetworkOffset;
+  
+  /**
+   * @param nodesInNetworkOffset
+   */
+  public PlanitOsmZoningHandlerProfiler(long nodesInNetworkOffset) {
+    this.nodesInNetworkOffset = nodesInNetworkOffset;
+  }
+  
   /**
    * increment the counter that tracks the number of multi polygons identified as PT platforms
    */
@@ -154,9 +167,9 @@ public class PlanitOsmZoningHandlerProfiler {
    * 
    * @param numberOfNodes registered number of nodes so far
    */
-  public void logNodeStatus(int numberOfNodes) {
-    if(numberOfNodes >= moduloLoggingCounterNodes) {
-      LOGGER.info(String.format("Created %d nodes out of OSM nodes",numberOfNodes));
+  public void logNodeForConnectoidStatus(int numberOfNodes) {
+    if( (numberOfNodes-nodesInNetworkOffset) >= moduloLoggingCounterNodes) {
+      LOGGER.info(String.format("Created %d connectoid access nodes out of OSM nodes",numberOfNodes));
       moduloLoggingCounterNodes *=2;
     }  
   }
