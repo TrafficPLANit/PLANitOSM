@@ -46,10 +46,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
   
   /** the (temporary) data gathered during parsing of OSM (transfer) zones */
   private final PlanitOsmZoningReaderData zoningReaderData;
-  
-  /** the profiler shared across the internal handlers */
-  private PlanitOsmZoningHandlerProfiler handlerProfiler = null;
-  
+    
   // references
   
   /** input file to use */
@@ -100,10 +97,11 @@ public class PlanitOsmZoningReader implements ZoningReader {
   /**
    * conduct pre-processing step of zoning reader that cannot be conducted as part of the regular processing due to 
    * ordering conflicts
+   * @param profiler  to use
    * 
    * @throws PlanItException thrown if error
    */
-  private void doPreprocessing() throws PlanItException {
+  private void doPreprocessing(PlanitOsmZoningHandlerProfiler profiler) throws PlanItException {
     /* reader to parse the actual file for preprocessing  */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(inputFile);
     if(osmReader == null) {
@@ -111,7 +109,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
     }else {    
 
       /* preprocessing handler to deal with callbacks from osm4j */
-      osmPreProcessingHandler = new PlanitOsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData);
+      osmPreProcessingHandler = new PlanitOsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData, profiler);
       read(osmReader, osmPreProcessingHandler);     
     }
     
@@ -120,9 +118,10 @@ public class PlanitOsmZoningReader implements ZoningReader {
   /**
    * conduct main processing step of zoning reader given the information available from pre-processing
    *  
+   * @param profiler  to use
    * @throws PlanItException thrown if error
    */
-  private void doMainProcessing() throws PlanItException {
+  private void doMainProcessing(PlanitOsmZoningHandlerProfiler profiler) throws PlanItException {
     /* reader to parse the actual file */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(inputFile);
     if(osmReader == null) {
@@ -135,7 +134,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
           this.zoningReaderData, 
           this.network2ZoningData, 
           this.zoning, 
-          this.handlerProfiler);
+          profiler);
       read(osmReader, osmHandler);
     } 
   }   
@@ -143,9 +142,10 @@ public class PlanitOsmZoningReader implements ZoningReader {
   /**
    * conduct post-processing processing step of zoning reader given the information available from pre-processing
    *  
+   * @param profiler  to use
    * @throws PlanItException thrown if error
    */
-  private void doPostProcessing() throws PlanItException {
+  private void doPostProcessing(PlanitOsmZoningHandlerProfiler profiler) throws PlanItException {
     /* reader to parse the actual file */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(inputFile);
     if(osmReader == null) {
@@ -158,7 +158,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
           this.zoningReaderData, 
           this.network2ZoningData, 
           this.zoning,
-          this.handlerProfiler);
+          profiler);
       read(osmReader, osmPostProcessingHandler);        
     } 
   }    
@@ -191,17 +191,17 @@ public class PlanitOsmZoningReader implements ZoningReader {
   @Override
   public Zoning read() throws PlanItException {
             
-    this.handlerProfiler = new PlanitOsmZoningHandlerProfiler(network2ZoningData.getOsmNetwork().infrastructureLayers.getNumberOfNodes());
+    PlanitOsmZoningHandlerProfiler handlerProfiler = new PlanitOsmZoningHandlerProfiler(network2ZoningData.getOsmNetwork().infrastructureLayers.getNumberOfNodes());
     logInfo(inputFile);
             
     /* preprocessing (multi-polygon relation: osm way identification)*/
-    doPreprocessing();
+    doPreprocessing(handlerProfiler);
     
     /* main processing  (all but stop_positions)*/
-    doMainProcessing();
+    doMainProcessing(handlerProfiler);
     
     /* post-processing (stop_positions to connectoid) */
-    doPostProcessing();        
+    doPostProcessing(handlerProfiler);        
     
     LOGGER.info(" OSM zoning parsing...DONE");
     
@@ -220,7 +220,6 @@ public class PlanitOsmZoningReader implements ZoningReader {
     this.osmPreProcessingHandler.reset();
     this.osmPostProcessingHandler.reset();
     this.zoningReaderData.reset();
-    this.handlerProfiler.reset();
   }  
 
   /**

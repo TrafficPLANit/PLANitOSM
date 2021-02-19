@@ -16,6 +16,7 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.osm.util.OsmPtVersionScheme;
 import org.planit.utils.geo.PlanitJtsIntersectItemVisitor;
+import org.planit.utils.misc.Pair;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
@@ -75,14 +76,19 @@ public class PlanitOsmZoningReaderData {
    * 
    * @param entityType to collect for
    * @param osmId id to collect for
-   * @return unprocessed station, null otherwise
+   * @return pair of version and unprocessed station, null otherwise
    */
-  public OsmEntity getUnprocessedStation(EntityType entityType, long osmId) {
+  public Pair<OsmPtVersionScheme,OsmEntity> getUnprocessedStation(EntityType entityType, long osmId) {    
+    OsmPtVersionScheme version = OsmPtVersionScheme.NONE;
     OsmEntity osmEntity = getUnprocessedPtv1Stations(entityType).get(osmId);
     if(osmEntity == null) {
-      osmEntity = getUnprocessedPtv2Stations(entityType).get(osmId);  
+      osmEntity = getUnprocessedPtv2Stations(entityType).get(osmId);
+      version = OsmPtVersionScheme.VERSION_2;
+    }else {
+      version = OsmPtVersionScheme.VERSION_1;
     }
-    return osmEntity;
+    
+    return osmEntity==null ? null : Pair.create(version, osmEntity); 
   }
  
   /** collect the Ptv1 stations that have been identified but not processed yet
@@ -213,6 +219,14 @@ public class PlanitOsmZoningReaderData {
   }  
   
   /* TRANSFER ZONE RELATED METHODS */  
+  
+  /** collect all transfer zones without connectoids registered so far based on Osm entity type they originated from
+   * @param entityType os the transfer zone origin
+   * @return all transfer zones without connectoids up untill now by their original OsmEntityId
+   */
+  public Map<Long, TransferZone> getTransferZonesWithoutConnectoid(EntityType entityType) {
+    return transferZoneWithoutConnectoidByOsmEntityId.get(entityType);
+  }  
 
   /** collect the transfer zone without connectoid by entity type and entity id
    * @param entityType to collect for (node, way)

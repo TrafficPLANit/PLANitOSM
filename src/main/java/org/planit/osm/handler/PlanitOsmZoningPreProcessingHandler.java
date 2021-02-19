@@ -38,9 +38,10 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
+   * @param profiler to use
    */
-  public PlanitOsmZoningPreProcessingHandler(final PlanitOsmTransferSettings transferSettings, PlanitOsmZoningReaderData zoningReaderData) {   
-    super(transferSettings, zoningReaderData, null, null, null);    
+  public PlanitOsmZoningPreProcessingHandler(final PlanitOsmTransferSettings transferSettings, PlanitOsmZoningReaderData zoningReaderData, PlanitOsmZoningHandlerProfiler profiler) {   
+    super(transferSettings, zoningReaderData, null, null, profiler);    
   }
   
   /**

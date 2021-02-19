@@ -19,6 +19,7 @@ import org.locationtech.jts.geom.Polygon;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.zoning.DirectedConnectoid;
@@ -91,7 +92,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     }
     
     OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
-    getZoningReaderData().removeUnproccessedStation(ptVersion, osmEntity);     
+    getZoningReaderData().removeUnproccessedStation(ptVersion, osmEntity);  
+    
   }  
   
   /** process a stop_area member that has no role tag identifying its purpose but it is a Ptv1 supporting entity for highways. Based on already parsed entities we attempt
@@ -152,6 +154,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
         
         /* use name only */
         processStopAreaMemberStation(transferZoneGroup, osmRelation, osmNode, tags);
+        getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.STATION);
         
       }
       /* train platform */
@@ -216,6 +219,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STATION)) {
       
       processStopAreaMemberStation(transferZoneGroup, osmRelation, osmNode, tags);
+      getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);
       
     }
   }  
@@ -278,10 +282,11 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
        *  - (processed)   platforms (as transfer zones) -> register transfer zone on group */
             
       /* station */
-      OsmWay osmWay = (OsmWay) getZoningReaderData().getUnprocessedStation(EntityType.Way, member.getId());                  
-      if(osmWay != null) {
-        processStopAreaMemberStation(transferZoneGroup, osmRelation, osmWay, OsmModelUtil.getTagsAsMap(osmWay));
+      Pair<OsmPtVersionScheme, OsmEntity> osmWayPair = getZoningReaderData().getUnprocessedStation(EntityType.Way, member.getId());                  
+      if(osmWayPair != null) {
+        processStopAreaMemberStation(transferZoneGroup, osmRelation, osmWayPair.second(), OsmModelUtil.getTagsAsMap(osmWayPair.second()));
         unprocessed = false;
+        getProfiler().incrementOsmTagCounter(osmWayPair.first(), OsmPtv1Tags.STATION);
       }
       
       /* platform */
@@ -533,6 +538,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @throws PlanItException thrown if error
    */
   private void extractPtv1TramStop(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+    getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.TRAM_STOP);
+    
     /* in contrast to highway=bus_stop this tag is placed on the track, so we can and will create connectoids immediately */
     PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();    
        
@@ -577,10 +584,12 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(planitModes==null || planitModes.isEmpty()) {
       return;
     }
+    getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.HALT);    
     
     /* create and register transfer zone */
     TransferZone transferZone = createAndPopulateTransferZone(osmNode,tags, TransferZoneType.SMALL_STATION);
     getZoning().transferZones.register(transferZone);
+        
     
     /* record serviced osm modes */
     addEligibleAccessModesToTransferZone(transferZone, eligibleOsmModes);    
@@ -602,8 +611,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       
       /* connectoid */
       extractDirectedConnectoidsForMode(osmNode, tags, transferZone, networkLayer, planitMode);            
-    }      
+    }  
     
+            
   }
 
   /** extract a platform since it is deemed eligible for the planit network. Based on description in https://wiki.openstreetmap.org/wiki/Tag:railway%3Dplatform
@@ -613,10 +623,12 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @throws PlanItException thrown if error
    */    
   private void extractPtv1RailwayPlatform(OsmEntity osmEntity, Map<String, String> tags) {
+    getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
+    
     /* node is not part of infrastructure, we must identify closest railway infrastructure (in reasonable range) to create connectoids, or
      * Ptv2 stop position reference is used, so postpone creating connectoids for now, and deal with it later when stop_positions have all been parsed */
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);
-    addEligibleAccessModesToTransferZone(transferZone, osmEntity.getId(), tags, OsmRailModeTags.TRAIN);
+    addEligibleAccessModesToTransferZone(transferZone, osmEntity.getId(), tags, OsmRailModeTags.TRAIN);    
   }
   
   /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag railway=* for an OsmNode
@@ -631,21 +643,20 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     /* tram stop */
     if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
-      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
+      
       extractPtv1TramStop(osmNode, tags);
     }
     
     /* train platform */
     if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)) {
       /* assumed to never be part of a Ptv2 stop_area relation, so we parse immediately */
-      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       extractPtv1RailwayPlatform(osmNode, tags);
     }          
     
     /* train halt (not for trams)*/
     if(OsmPtv1Tags.HALT.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+      
       /* assumed to never be part of a Ptv2 stop_area relation, so we parse immediately */
-      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       extractPtv1Halt(osmNode, tags);
     }
     
@@ -671,6 +682,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     /* platform edge */
     if(OsmPtv1Tags.PLATFORM_EDGE.equals(ptv1ValueTag)) {
+      
       getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
       /* platform edges are for additional geographic information, nothing requires them to be there in our format, so we take note
        * but do not parse, see also https://wiki.openstreetmap.org/wiki/Tag:railway%3Dplatform_edge */
@@ -678,7 +690,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     /* platform */
     if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)) {
-      getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
+
       extractPtv1RailwayPlatform(osmWay, tags);      
     }  
     
@@ -771,6 +783,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       
       /* platform */
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
+        
+        getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM);
         /* create transfer zone but no connectoids, these will be constructed during or after we have parsed relations, i.e. stop_areas */
         TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmNode, tags, TransferZoneType.PLATFORM);
         addEligibleAccessModesToTransferZone(transferZone, osmNode.getId(), tags, null);
@@ -1078,6 +1092,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
           /* stop_area: all but stop_positions (parsed in post-processing)*/
           if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
             
+            getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_AREA);
             extractPtv2StopAreaRelation(osmRelation, tags);
             
           }else {
@@ -1093,6 +1108,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
           /* only consider public_transport=platform multi-polygons */
           if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
             
+            getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM_ROLE);
             extractPtv2MultiPolygonPlatformRelation(osmRelation, tags);
             
           }          

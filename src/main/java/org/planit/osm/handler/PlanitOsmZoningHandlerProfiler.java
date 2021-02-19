@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
+import org.planit.osm.util.OsmPtVersionScheme;
 import org.planit.zoning.Zoning;
 
 /**
@@ -96,6 +97,21 @@ public class PlanitOsmZoningHandlerProfiler {
   }  
   
   /**
+   * Increment counter for passed in osm tag regarding Ptv value tag
+   * @param version of pt tag
+   * @param tagType tagvalue
+   */
+  public void incrementOsmTagCounter(OsmPtVersionScheme version, String tagType) {
+    if(version == OsmPtVersionScheme.VERSION_1) {
+      incrementOsmPtv1TagCounter(tagType);
+    }else if(version == OsmPtVersionScheme.VERSION_2) {
+      incrementOsmPtv2TagCounter(tagType);
+    }else {
+      LOGGER.severe("Unknown pt version");
+    }    
+  }  
+  
+  /**
    * log stats related to the zoning pre-processing phase
    * 
    * @param planitOsmZoningReaderData to extract stats from
@@ -113,16 +129,7 @@ public class PlanitOsmZoningHandlerProfiler {
    * 
    * @param zoning for which information  was tracked
    */
-  public void logProcessingStats(Zoning zoning) {
-    for(Entry<String, LongAdder> entry : counterByPtv1Tag.entrySet()) {
-      long count = entry.getValue().longValue();
-      LOGGER.info(String.format("[STATS] [Ptv1] processed %s count:%d", entry.getKey(), count));
-    }
-    
-    for(Entry<String, LongAdder> entry : counterByPtv2Tag.entrySet()) {
-      long count = entry.getValue().longValue();
-      LOGGER.info(String.format("[STATS] [Ptv2] processed %s count:%d", entry.getKey(), count));
-    }    
+  public void logProcessingStats(Zoning zoning) {  
     
     /* stats on exact number of created PLANit network objects */
     LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.transferZones.size()));
@@ -134,6 +141,16 @@ public class PlanitOsmZoningHandlerProfiler {
    * @param zoning for which information was tracked
    */
   public void logPostProcessingStats(Zoning zoning) {
+    
+    for(Entry<String, LongAdder> entry : counterByPtv1Tag.entrySet()) {
+      long count = entry.getValue().longValue();
+      LOGGER.info(String.format("[STATS] [Ptv1] processed %s count:%d", entry.getKey(), count));
+    }
+    
+    for(Entry<String, LongAdder> entry : counterByPtv2Tag.entrySet()) {
+      long count = entry.getValue().longValue();
+      LOGGER.info(String.format("[STATS] [Ptv2] processed %s count:%d", entry.getKey(), count));
+    }     
     
     LOGGER.info(String.format("[STATS] created PLANit %d connectoids",zoning.connectoids.size()));
   }  
@@ -168,8 +185,9 @@ public class PlanitOsmZoningHandlerProfiler {
    * @param numberOfNodes registered number of nodes so far
    */
   public void logNodeForConnectoidStatus(int numberOfNodes) {
-    if( (numberOfNodes-nodesInNetworkOffset) >= moduloLoggingCounterNodes) {
-      LOGGER.info(String.format("Created %d connectoid access nodes out of OSM nodes",numberOfNodes));
+    long newlyCreatedNodes = numberOfNodes-nodesInNetworkOffset;
+    if( newlyCreatedNodes >= moduloLoggingCounterNodes) {
+      LOGGER.info(String.format("Created %d connectoid access nodes out of OSM nodes",newlyCreatedNodes));
       moduloLoggingCounterNodes *=2;
     }  
   }
@@ -182,6 +200,8 @@ public class PlanitOsmZoningHandlerProfiler {
     this.counterByPtv2Tag.clear();
     this.multiPolygonCount.reset();
   }
+
+
  
 
 }

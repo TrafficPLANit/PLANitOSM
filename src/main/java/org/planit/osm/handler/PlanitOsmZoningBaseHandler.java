@@ -357,7 +357,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       final PlanitOsmZoningHandlerProfiler profiler) {
 
     /* profiler */
-    this.profiler = new PlanitOsmZoningHandlerProfiler(network2ZoningData.getOsmNetwork().infrastructureLayers.getNumberOfNodes());
+    this.profiler = profiler;
     
     /* references */
     this.network2ZoningData = network2ZoningData;
