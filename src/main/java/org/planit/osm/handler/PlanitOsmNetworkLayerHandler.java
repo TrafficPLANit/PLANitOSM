@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.LineString;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
@@ -36,7 +35,6 @@ import org.planit.osm.util.OsmLanesModeTaggingSchemeHelper;
 import org.planit.osm.util.OsmModeLanesTaggingSchemeHelper;
 import org.planit.osm.util.OsmTagUtils;
 import org.planit.osm.util.PlanitOsmModeUtils;
-import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.osm.util.PlanitOsmWayUtils;
 import org.planit.utils.arrays.ArrayUtils;
@@ -721,7 +719,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException throw if error
    */
   private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) throws PlanItException {
-    LineString lineString = extractLinkGeometry(osmWay);        
+    LineString lineString = PlanitOsmWayUtils.extractLineString(osmWay, this.osmNodes);        
     if(startNodeIndex>0 || endNodeIndex < (osmWay.getNumberOfNodes()-1)) {          
       /* update geometry and length in case link represents only a subsection of the OSM way */
       LineString updatedGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesBefore(startNodeIndex, lineString);
@@ -740,26 +738,7 @@ public class PlanitOsmNetworkLayerHandler {
     }
     return lineString;
   }
-  
-  /**
-   * Extract the geometry for the passed in way
-   * @param osmWay way to extract geometry from
-   * @return line string instance representing the shape of the way
-   * @throws PlanItException 
-   */
-  private LineString extractLinkGeometry(OsmWay osmWay) throws PlanItException {
-    Coordinate[] coordinates = new Coordinate[osmWay.getNumberOfNodes()];
-    int numberOfNodes = osmWay.getNumberOfNodes();
-    for(int index = 0; index < numberOfNodes; ++index) {
-      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
-      if(osmNode == null) {
-        throw new PlanItException(String.format("referenced osmNode %d in osmWay %d not available in OSM parser",osmWay.getNodeId(index), osmWay.getId()));
-      }
-      coordinates[index] = new Coordinate(PlanitOsmNodeUtils.getXCoordinate(osmNode),PlanitOsmNodeUtils.getYCoordinate(osmNode));
-    }
-    return  PlanitJtsUtils.createLineStringFromCoordinates(coordinates);
-  }  
-  
+    
   /** Determine the speed limits in the forward and backward direction (if any).
    * 
    * @param link pertaining to the osmway tags

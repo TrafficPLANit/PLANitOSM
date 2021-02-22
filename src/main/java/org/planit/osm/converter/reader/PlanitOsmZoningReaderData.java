@@ -3,6 +3,7 @@ package org.planit.osm.converter.reader;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -20,6 +21,7 @@ import org.planit.utils.misc.Pair;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
+import org.planit.utils.zoning.Zone;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
@@ -248,10 +250,11 @@ public class PlanitOsmZoningReaderData {
   public Collection<TransferZone> getTransferZonesWithoutConnectoid(Envelope boundingBox) {
     
     final Set<TransferZone> correctZones = new HashSet<TransferZone>();
-    final PlanitJtsIntersectItemVisitor<TransferZone> spatialZoneFilterVisitor = new PlanitJtsIntersectItemVisitor<TransferZone>(boundingBox, correctZones);
-        
+    final PlanitJtsIntersectItemVisitor<TransferZone> spatialZoneFilterVisitor = new PlanitJtsIntersectItemVisitor<TransferZone>(boundingBox, correctZones);          
+    
     /* query the spatially indexed entries AND apply the visitor that filteres out false positives due to the coarseness of the quadtrees grid */
     for( Entry<EntityType, Quadtree> entry : transferZoneWithoutConnectoidBySpatialIndex.entrySet()) {
+      List<?> results = transferZoneWithoutConnectoidBySpatialIndex.get(entry.getKey()).query(boundingBox);
       transferZoneWithoutConnectoidBySpatialIndex.get(entry.getKey()).query(boundingBox, spatialZoneFilterVisitor);
     }
     
@@ -268,8 +271,15 @@ public class PlanitOsmZoningReaderData {
   public TransferZone addTransferZoneWithoutConnectoid(EntityType entityType, long osmEntityId, TransferZone transferZone) {
     transferZoneWithoutConnectoidByOsmEntityId.putIfAbsent(entityType, new HashMap<Long,TransferZone>());
     transferZoneWithoutConnectoidBySpatialIndex.putIfAbsent(entityType, new Quadtree());    
+    
     /* spatial index */
+    Envelope transferZoneBoundingBox = transferZone.getEnvelope();
+    if(transferZoneBoundingBox == null) {
+      LOGGER.warning(String.format("unable to track transfer zone %d while parsing, unknown spatial features, ignored", osmEntityId));
+      return null;
+    }    
     transferZoneWithoutConnectoidBySpatialIndex.get(entityType).insert(transferZone.getEnvelope(), transferZone);
+    
     /* id index */
     return transferZoneWithoutConnectoidByOsmEntityId.get(entityType).put(osmEntityId, transferZone);
   }  

@@ -21,6 +21,7 @@ import org.planit.utils.misc.StringUtils;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
+import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -140,7 +141,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Collection<TransferZone> potentialTransferZones = getZoningReaderData().getTransferZonesWithoutConnectoid(searchArea);
     
     if(potentialTransferZones==null || potentialTransferZones.isEmpty()) {
-      LOGGER.warning(String.format("unable to locate nearby transfer zone (search radius of %.2f (m)) when mapping stop position for osm node %d, ignored",searchRadiusMeters, osmNode));
+      LOGGER.warning(String.format("unable to locate nearby transfer zone (search radius of %.2f (m)) when mapping stop position for osm node %d",searchRadiusMeters, osmNode.getId()));
       return null;
     }
         
@@ -194,14 +195,15 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
   }    
   
-  /** find the transfer zones that are accessible to the stop_position on the given node
+  /** find the transfer zones that are accessible to the stop_position on the given node and given the already identified transfer zones
+   * in the group it belongs to
    * 
-   * @param osmNode node represting the stop_position
+   * @param osmNode node representing the stop_position
    * @param tags of the node
    * @param stopAreaTransferzones the transfer zones of the stop_area this stop_position belongs to
    * @throws PlanItException thrown if error
    */  
-  private Collection<TransferZone> findAccessibleTransferZonesForStopPosition(OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones) throws PlanItException {
+  private Collection<TransferZone> findAccessibleTransferZonesForPtv2StopPosition(OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones) throws PlanItException {
     Collection<TransferZone> matchedTransferZones = null;
         
     /* reference to platform, i.e. transfer zone */
@@ -218,17 +220,13 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       /* no matches found by name or reference tag, so it has no reference, or transfer zone is not part of the area. Either way 
-       * we must still try to find the most likely match. We do so geographically as our last resort! */
+       * we must still try to find the most likely match. We do so geographically */
       TransferZone foundTransferZone = findMostLikelyTransferZoneSpatially(osmNode, tags);
-      matchedTransferZones = Collections.singleton(foundTransferZone);
+      if(foundTransferZone != null) {
+        matchedTransferZones = Collections.singleton(foundTransferZone);
+      }
     }
-    
-    if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-      /* still no match, issue warning */
-      LOGGER.severe(String.format("stop position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such, ignored",osmNode.getId()));
-      return null;
-    }
-    
+        
     return matchedTransferZones;
   }  
   
@@ -289,14 +287,100 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     processTransferZonesWithImplicitStopPositions();    
   }  
   
+  /** extract a regular Ptv2 stop position that is part of a stop_area relation and is registered before as a stop_position in the main processing phase. 
+   * Extract based on description in https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position
+   * 
+   * @param osmNode node that is the stop_position in stop_area relation
+   * @param transferZoneGroup the group this stop position is allowed to relate to
+   * @return 
+   * @throws PlanItException thrown if error
+   */
+  private Collection<TransferZone> extractKnownPtv2StopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {  
+    Collection<TransferZone> matchedTransferZones = null;
+    
+    /* supported modes */
+    Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmNode.getId(), tags, null);    
+    Set<Mode> accessModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
+    
+    /* if at least one mapped mode is present continue */
+    if(accessModes!=null && !accessModes.isEmpty()) {        
+      matchedTransferZones = findAccessibleTransferZonesForPtv2StopPosition(osmNode, tags, transferZoneGroup.getTransferZones());
+      
+      if( (matchedTransferZones == null || matchedTransferZones.isEmpty()) && OsmPtv1Tags.isTramStop(tags)) {
+        /* no match found, neither based on references, name, or geographically. Last possible option is that the stop_position is not only a stop_position, but also
+         * the station/platform at the same time. This should not happen with Ptv2 tags. However in case a Ptv1 tag for a tram_stop is supplemented with a Ptv2 stop_position 
+         * tag we get exactly this situation. The parser assumed a valid Ptv2 tagging and ignored the Ptv1 tag. However, it was only a valid Ptv1 tag and incomplete Ptv2 stop_area.
+         * Since we can only detect this now, we must now identify this special situation and parse the tram_stop appropriately by creating a transfer zone for it before continuing
+         * with the connectoids (technically this is a tagging error, we are just trynig to fix it while parsing) */
+        LOGGER.info(String.format("Identified Ptv1 tram_stop (%d) that is also tagged as Ptv2 public_transport=stop_location, yet without Ptv2 platforms in the stop_area, parsing as Ptv1 entity instead", osmNode.getId()));
+        TransferZone foundTransferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, OsmRailModeTags.TRAM);
+        if(foundTransferZone != null) {
+          transferZoneGroup.addTransferZone(foundTransferZone);
+          matchedTransferZones = Collections.singleton(foundTransferZone);
+        }
+      }
+      
+      if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
+        /* still no match, issue warning */
+        LOGGER.severe(String.format("stop position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such, ignored",osmNode.getId()));
+      }else {               
+      /* connectoids */
+        extractDirectedConnectoids(osmNode, tags, matchedTransferZones, accessModes);
+      }      
+            
+    }                  
+      
+    return matchedTransferZones;
+  }  
+  
+  /** extract a Ptv2 stop position part of a stop_area relation but not yet identified in the regular phase of parsing as a stop_position. Hence it is not properly
+   * tagged. In this method we try to salvage it by inferring its properties (eligible modes). We do so, by mapping it to the nearest transfer zone available on the stop_area (if any)
+   *  as a last resort attempt
+   * 
+   * @param member member in stop_area relation
+   * @param transferZoneGroup the group this stop position is allowed to relate to
+   * @throws PlanItException thrown if error
+   */
+  private Collection<TransferZone> extractUnknownPtv2StopPosition(OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> transferZones) throws PlanItException {
+    Collection<TransferZone> matchedTransferZones = null;
+    Set<Mode> accessModes = null;
+    
+    /* not a proper stop_position, so we must infer its properties (eligible modes). We do so, by mapping it to the nearest transfer zone available on the stop_area (if any)
+     *  as a last resort attempt */
+    TransferZone foundZone =  (TransferZone) PlanitOsmNodeUtils.findZoneWithClosestCoordinateToNode(osmNode, transferZones, geoUtils);
+    if(foundZone == null) {
+      LOGGER.warning(String.format("Unable to find closest transfer zone in stop_area  to stop_position %d without proper tagging on OSM network, stop_position ignored", osmNode.getId()));
+    }else {        
+      Collection<String> eligibleOsmModes = getEligibleOsmModesForTransferZone(foundZone);
+      accessModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
+      if(accessModes == null) {
+        LOGGER.warning(String.format("Unable to identify access modes from closest transfer zone in stop_area to stop_position %d that has no proper tagging on OSM network, stop_position ignored", osmNode.getId()));
+      }else {
+        matchedTransferZones = Collections.singleton(foundZone);
+      }
+    }
+    
+    if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
+      /* still no match, issue warning */
+      LOGGER.severe(String.format("unmarked stop position %d has no closeby infrastructure that qualifies as platform/pole, ignored",osmNode.getId()));
+    }else if(accessModes != null){               
+    /* connectoids */
+      extractDirectedConnectoids(osmNode, tags, matchedTransferZones, accessModes);
+    }    
+    
+    return matchedTransferZones;
+  }  
+  
   /** extract a Ptv2 stop position part of a stop_area relation. Based on description in https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position
    * 
    * @param member member in stop_area relation
-   * @param availableTransferZones the transfer zones this stop position is allowed to relate to
+   * @param transferZoneGroup the group this stop position is allowed to relate to
    * @throws PlanItException thrown if error
    */
-  private void extractPtv2StopPosition(final OsmRelationMember member, final Collection<TransferZone> availableTransferZones) throws PlanItException {
-    
+  private void extractPtv2StopPosition(final OsmRelationMember member, final TransferZoneGroup transferZoneGroup) throws PlanItException {
+    if(member.getId()==2203953511l) {
+      int bla = 5;
+    }
     /* validate state and input */
     PlanItException.throwIfNull(member, "Stop_area stop_position member null");
     if(member.getType() != EntityType.Node) {
@@ -304,61 +388,32 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
     getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_POSITION);    
            
-    boolean isProperPtv2StopPosition = true;
+    boolean isKnownPtv2StopPosition = true; 
     if(!getZoningReaderData().getUnprocessedPtv2StopPositions().contains(member.getId())){      
       /* stop-position not marked as such on the node, we must infer mode access from infrastructure it resides on */      
       LOGGER.info(String.format("Stop_position %d in stop_area not marked as such on OSM node, inferring transfer zone and access modes by geographically closest transfer zone in stop_area instead ",member.getId()));
-      isProperPtv2StopPosition = false;
+      isKnownPtv2StopPosition = false;
     }        
     
     /* stop location via Osm node */
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
-    
-    /* now find matched transfer zone(s) */
-    Collection<TransferZone> matchedTransferZones = null;
-    Set<Mode> accessModes = null;
-    if(isProperPtv2StopPosition) {
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);    
+    if(isKnownPtv2StopPosition) {
       
-      /* supported modes */
-      Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmNode.getId(), tags, null);    
-      accessModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
-      
-      /* if at least one mapped mode is present continue */
-      if(accessModes!=null && !accessModes.isEmpty()) {        
-        matchedTransferZones = findAccessibleTransferZonesForStopPosition(osmNode, tags, availableTransferZones);
-      }            
-    
+      /* process as regular stop_position */
+      extractKnownPtv2StopPosition(osmNode, tags, transferZoneGroup);
       /* mark as processed */
       getZoningReaderData().getUnprocessedPtv2StopPositions().remove(osmNode.getId());
       
     }else {
       
-      /* not a proper stop_position, so we must infer its properties (eligible modes). We do so, by mapping it to the nearest transfer zone available on the stop_area (if any)
-       *  as a last resort attempt */
-      TransferZone foundZone =  (TransferZone) PlanitOsmNodeUtils.findZoneWithClosestCoordinateToNode(osmNode, availableTransferZones, geoUtils);
-      if(foundZone == null) {
-        LOGGER.warning(String.format("Unable to find closest transfer zone in stop_area  to stop_position %d without proper tagging on OSM network, stop_position ignored", osmNode.getId()));
-      }else {        
-        Collection<String> eligibleOsmModes = getEligibleOsmModesForTransferZone(foundZone);
-        accessModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
-        if(accessModes == null) {
-          LOGGER.warning(String.format("Unable to identify access modes from closest transfer zone in stop_area to stop_position %d that has no proper tagging on OSM network, stop_position ignored", osmNode.getId()));
-        }else {
-          matchedTransferZones = Collections.singleton(foundZone);
-        }
-      }
-      
+      /* unknown, so node is not tagged properly, try to salvage */
+      extractUnknownPtv2StopPosition(osmNode, tags, transferZoneGroup.getTransferZones());
+            
     }
-         
-    /* connectoids */
-    if(matchedTransferZones != null) {
-      extractDirectedConnectoids(osmNode, tags, matchedTransferZones, accessModes);
-    }
-
+    
   }  
   
-
   /** extract stop area relation of Ptv2 scheme. We create connectoids for all now already present transfer zones.
    * 
    * @param osmRelation to extract stop_area for
@@ -380,7 +435,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       /* stop_position */
       if(member.getRole().equals(OsmPtv2Tags.STOP_POSITION_ROLE)) {        
         
-        extractPtv2StopPosition(member, transferZoneGroup.getTransferZones());       
+        extractPtv2StopPosition(member, transferZoneGroup);       
         
       }
 

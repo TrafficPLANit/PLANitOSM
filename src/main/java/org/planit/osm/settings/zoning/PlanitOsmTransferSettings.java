@@ -23,7 +23,7 @@ public class PlanitOsmTransferSettings {
   /**
    * default search radius in meters for mapping stops/platforms to stop positions on the networks
    */
-  public static double DEFAULT_SEARCH_RADIUS_M = 50;
+  public static double DEFAULT_SEARCH_RADIUS_M = 20;
   
   /** Constructor
   */

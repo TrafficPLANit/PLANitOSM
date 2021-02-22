@@ -1,12 +1,19 @@
 package org.planit.osm.util;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Polygon;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.function.PlanitExceptionConsumer;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -21,7 +28,6 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 public class PlanitOsmWayUtils {
   
   /** the logger */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmWayUtils.class.getCanonicalName());
  
   
@@ -111,23 +117,161 @@ public class PlanitOsmWayUtils {
     /* clockwise stands for forward direction, so when they do not match, all modes are to be excluded, the direction is closed */
     return isClockWise!=isForwardDirection;
   } 
+  
+  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case something goes wrong and missing
+   * nodes are found, the passed in consumer is called to deal with it. User can decide to throw an exception or do something else
+   * entirely. If no exception is thrown, the nodes that could be parsed will be returned
+   * 
+   * @param osmWay to extract node coordinates from
+   * @param osmNodes to collect nodes from by reference node ids in the way
+   * @return coordinate array found, empty when no nodes were found available
+   * @throws PlanItException thrown if error
+   */
+  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes, PlanitExceptionConsumer<Set<Long>> missingNodeconsumer) throws PlanItException{
+    Set<Long> missingNodes = null;
+    Coordinate[] coordArray = new Coordinate[osmWay.getNumberOfNodes()];
+    for(int index = 0 ; index < osmWay.getNumberOfNodes() ; ++index) {
+      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
+      if(osmNode==null) {
+        if(missingNodes==null) {
+          missingNodes = new HashSet<Long>();
+        }
+        missingNodes.add(osmWay.getNodeId(index));
+        continue;
+      }
+      coordArray[index] = new Coordinate(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
+    }
+    
+    /* call consumer */
+    if(missingNodes!=null && missingNodeconsumer != null) {
+      missingNodeconsumer.accept(missingNodes);
+      
+      /* resize based on missing nodes*/
+      coordArray = PlanitJtsUtils.copyWithoutNullEntries(coordArray);
+    }        
+        
+    return coordArray;
+  }   
  
-  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array
+  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case there are missing
+   * nodes or something else goes wrong a PlanitException is thrown
+   * 
    * @param osmWay to extract node coordinates from
    * @param osmNodes to collect nodes from by reference node ids in the way
    * @return coordinate array
    * @throws PlanItException thrown if error
    */
-  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes) throws PlanItException {
-    Coordinate[] coordArray = new Coordinate[osmWay.getNumberOfNodes()];
-    for(int index = 0 ; index < osmWay.getNumberOfNodes() ; ++index) {
-      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
-      if(osmNode==null) {
-        throw new PlanItException(String.format("node %d not available when extracting coordinate array for OSM way %d",osmWay.getNodeId(index), osmWay.getId()));
+  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes) throws PlanItException{
+    
+    /* throw when issue */
+    PlanitExceptionConsumer<Set<Long>> missingNodeconsumer = (missingNodes) -> {
+      if(missingNodes!=null) {
+        throw new PlanItException(String.format("Missing osm nodes when extracting coordinate array for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
       }
-      coordArray[index] = new Coordinate(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
+    };
+    
+    return createCoordinateArray(osmWay, osmNodes, missingNodeconsumer);
+  }  
+  
+  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case there are missing
+   * nodes we log this but retain as much of the information in the returned coordinate array as possible
+   * 
+   * @param osmWay to extract node coordinates from
+   * @param osmNodes to collect nodes from by reference node ids in the way
+   * @return coordinate array
+   */
+  public static Coordinate[] createCoordinateArrayNoThrow(OsmWay osmWay, Map<Long,OsmNode> osmNodes){
+    
+    /* log -> no throw */
+    PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
+      if(missingNodes!=null) {
+        LOGGER.warning(String.format("Missing osm nodes when extracting coordinate array for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+      }
+    };
+    
+    Coordinate[] coordArray = null;  
+    try {
+      coordArray =  createCoordinateArray(osmWay, osmNodes, missingNodeConsumer);
+    }catch (PlanItException e) {
+      LOGGER.severe(e.getMessage());
     }
     return coordArray;
   }  
+  
+  /**
+   * Extract the geometry for the passed in way as line string
+   * 
+   * @param osmWay way to extract geometry from
+   * @return line string instance representing the shape of the way
+   * @throws PlanItException thrown if error
+   */
+  public static LineString extractLineString(OsmWay osmWay, Map<Long,OsmNode> osmNodes) throws PlanItException {
+    Coordinate[] coordArray = createCoordinateArray(osmWay, osmNodes);
+    return  PlanitJtsUtils.createLineStringFromCoordinates(coordArray);
+  }
+
+  /** identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+   * @param osmWay to extract geometry for
+   * @param osmNodes to collect from
+   * @return parsed geometry, can be null if not valid for some reason
+   */
+  public static LineString extractLineStringNoThrow(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
+    try {
+      Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
+      /* create line string when valid number of coordinates is still present */
+      if(coordArray!= null && coordArray.length>=2) {
+        if(coordArray.length < osmWay.getNumberOfNodes() ) {
+          /* inform user that osm way is corrupted but it was salvaged to some degree */
+          LOGGER.info(String.format("Salvaged linestring for OSM way %d, truncated to available nodes",osmWay.getId()));
+        }
+        return  PlanitJtsUtils.createLineStringFromCoordinates(coordArray);
+      }
+      
+    }catch(Exception e) {
+      LOGGER.warning(String.format("Unable to create line string for OSM way %d",osmWay.getId()));
+    }
+    return null;
+  }
+  
+  /** Extract the geometry for the passed in way as polygon (assumed it has been identified as such already)
+   * 
+   * @param osmWay to extract geometry for
+   * @param osmNodes to collect from
+   * @return parsed geometry
+   * @throws PlanItException thrown if error
+   */
+  public static Polygon extractPolygon(OsmWay osmWay, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    Coordinate[] coordArray = createCoordinateArray(osmWay, osmNodes);
+    return PlanitJtsUtils.createPolygon(coordArray);
+  }   
+  
+  /** identical to {@link extractPolygon}, except it does not throw exceptions, but simply logs any issues found
+   * and tries to salvage the polygon by creating it out of the coordinates that are available as lnog as we can still create
+   * a closed 2D shape.
+   * 
+   * @param osmWay to extract geometry for
+   * @param osmNodes to collect from
+   * @return parsed geometry
+   */
+  public static Polygon extractPolygonNoThrow(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
+    if(osmWay.getId()==29758538) {
+      int bla = 4;
+    }    
+    try {
+      Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
+      /* create polygon when valid number of nodes present */
+      if(coordArray!= null && coordArray.length>=2) {
+        if(coordArray.length < osmWay.getNumberOfNodes() ) {
+          /* create closed ring in case nodes are missing but we still have a viable polygon shape */
+          coordArray = PlanitJtsUtils.makeClosed2D(coordArray);
+          LOGGER.info(String.format("Salvaged polygon for OSM way %d, truncated to available nodes",osmWay.getId())); 
+        }
+        return PlanitJtsUtils.createPolygon(coordArray);
+      }
+    }catch(Exception e) {
+      LOGGER.warning(String.format("Unable to create polygon for OSM way %d",osmWay.getId()));
+    }
+    return null;
+  }      
 
 }

@@ -164,5 +164,13 @@ public class OsmPtv1Tags {
       return PT_RAILWAY_VALUE_TAGS.contains(tags.get(OsmRailwayTags.RAILWAY));
     }
     return false;
+  }
+
+  /** check if this is a tram stop given the provided tags
+   * @param tags to check
+   * @return true if tram stop, false otherwise
+   */
+  public static boolean isTramStop(Map<String, String> tags) {
+    return  OsmRailwayTags.hasRailwayKeyTag(tags) && tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.TRAM_STOP);
   }  
 }
