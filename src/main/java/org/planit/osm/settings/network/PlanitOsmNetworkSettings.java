@@ -539,11 +539,20 @@ public class PlanitOsmNetworkSettings {
    * @param osmWayId to mark as excluded
    */
   public void excludeOsmWaysFromParsing(Long... osmWayIds) {
+    excludeOsmWaysFromParsing(Set.of(osmWayIds));
+  }  
+
+  /**
+   * exclude specific OSM ways from being parsed based on their id
+   * 
+   * @param osmWayId to mark as excluded
+   */
+  public void excludeOsmWaysFromParsing(Set<Long> osmWayIds) {
     if(osmWayIds==null) {
       LOGGER.warning(String.format("OSM way ids are null, ignored excluding them"));
       return;
     }    
-    Stream.of(osmWayIds).forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId));
+    osmWayIds.forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId));
   }  
 
   /** Verify if provided way id is excluded or not

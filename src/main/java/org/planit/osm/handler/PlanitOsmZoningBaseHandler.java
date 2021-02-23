@@ -362,7 +362,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* make sure that we have the correct mapping from node to link (in case the link has been broken before in the network reader, or here, for example) */
       List<Link> linksWithOsmNodeInternally = layerData.getLinksByInternalOsmNodeIds().get(osmNode.getId()); 
       if(linksWithOsmNodeInternally == null) {
-        LOGGER.warning(String.format("Osm pt access node (%d) its stop position not attached to network, or network not included in OSM file, ignored",osmNode.getId()));
+        LOGGER.warning(String.format("Discard: Osm pt access node (%d) stop_position not attached to network, or not included in OSM file",osmNode.getId()));
         return null;
       }
 
@@ -394,7 +394,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* access node */
     Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);    
     if(planitNode==null) {
-      LOGGER.warning(String.format("no pt access node created from osm node (%d) for transfer zone representation of osm entity %s, ignored",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
+      LOGGER.warning(String.format("Discard: osm node (%d) could not be converted to access node for transfer zone representation of osm entity %s",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
       return;
     }
     
@@ -411,7 +411,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* new connectoid, create and register */
       Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
       if(newConnectoids==null || newConnectoids.isEmpty()) {
-        LOGGER.warning(String.format("found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
+        LOGGER.warning(String.format("Found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
       }else {
         newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByOsmId(networkLayer, osmNode.getId(),connectoid));
       }

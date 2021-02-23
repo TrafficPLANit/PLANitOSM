@@ -1,5 +1,10 @@
 package org.planit.osm.settings.zoning;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Capture all the user configurable settings regarding how to
  * parse (if at all) (public transport) transfer infrastructure such as stations, poles, platforms, and other
@@ -24,6 +29,10 @@ public class PlanitOsmTransferSettings {
    * default search radius in meters for mapping stops/platforms to stop positions on the networks
    */
   public static double DEFAULT_SEARCH_RADIUS_M = 20;
+  
+  /** allow users to provide OSM node ids that we are not to parse as stop_positions (including inferred stop_positinos not tagged as such), for example when we know the original coding or tagging is problematic */
+  protected final Set<Long>  excludedStopPositions = new HashSet<Long>();
+        
   
   /** Constructor
   */
@@ -61,5 +70,29 @@ public class PlanitOsmTransferSettings {
   public double getStopToWaitingAreaSearchRadiusMeters() {
     return this.searchRadiusInMeters;
   }  
+  
+  /** Provide OSM ids of stop_positions that we are not to parse, for example 
+   * when we know the original coding or tagging is problematic
+   * @param osmIds
+   */
+  public void excludeStopPositions(Long... osmIds) {
+    excludedStopPositions.addAll(Arrays.asList(osmIds));
+  }
+  
+  /** Provide OSM ids of stop_positions that we are not to parse, for example 
+   * when we know the original coding or tagging is problematic
+   * @param osmIds
+   */
+  public void excludeStopPositions(Set<Long> osmIds) {
+    excludedStopPositions.addAll(osmIds);
+  }  
+  
+  /** Verify if osm id is an excluded stop_position
+   * @param osmId
+   * @return true when excluded false otherwise
+   */
+  public boolean isExcludedStopPosition(long osmId) {
+    return excludedStopPositions.contains(osmId);
+  }     
 
 }

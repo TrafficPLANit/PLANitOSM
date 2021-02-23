@@ -42,16 +42,30 @@ public class PlanitOsmNodeUtils {
     return osmNode.getLatitude();
   }
 
+  /** identical to findZoneWithClosest coordinate that requires a maximum search distance. Here this distance is set to inifinite
+   * 
+   * @param osmNode reference
+   * @param zones to check against
+   * @param geoUtils to compute distance
+   * @return zone with the geometry coordinate (or centroid) closest to the osmNode
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneWithClosestCoordinateToNode(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsUtils geoUtils) throws PlanItException {
+    return findZoneWithClosestCoordinateToNode(osmNode, zones, Double.POSITIVE_INFINITY, geoUtils);
+  }   
+  
   /** find the closest zone to the node location. Note that this method is NOT perfect, it utilises the closest coordinate on
    * the geometry of the zone, but it is likely the closest point lies on a line of the geometry rather than an extreme point. Therefore
    * it is possible that the found zone is not actually closest. So use with caution!
    * 
    * @param osmNode reference
    * @param zones to check against
+   * @param geoUtils to compute distance
+   * @param maxDistanceMeters maximum allowable distance to search for
    * @return zone with the geometry coordinate (or centroid) closest to the osmNode
    * @throws PlanItException thrown if error
    */
-  public static Zone findZoneWithClosestCoordinateToNode(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneWithClosestCoordinateToNode(OsmNode osmNode, Collection<? extends Zone> zones, double maxDistanceMeters, PlanitJtsUtils geoUtils) throws PlanItException {
     Zone closestZone = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;    
     Point point = PlanitJtsUtils.createPoint(getXCoordinate(osmNode), getYCoordinate(osmNode));
@@ -69,7 +83,9 @@ public class PlanitOsmNodeUtils {
       /* update if closer */
       if(distanceMeters < minDistanceMeters) {
         minDistanceMeters = distanceMeters;
-        closestZone = zone;
+        if(minDistanceMeters < maxDistanceMeters) {
+          closestZone = zone;
+        }
       }
     }
     return closestZone;

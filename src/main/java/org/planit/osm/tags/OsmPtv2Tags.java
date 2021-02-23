@@ -60,7 +60,7 @@ public class OsmPtv2Tags {
   /* role names when part of stop_area relation */
   
   /** stop_position members in a stop_area relation take on this role identifier */
-  public static final String STOP_POSITION_ROLE = "stop";
+  public static final String STOP_ROLE = "stop";
   
   /** platform members in a stop_area relation take on this role identifier */
   public static final String PLATFORM_ROLE = "platform";    

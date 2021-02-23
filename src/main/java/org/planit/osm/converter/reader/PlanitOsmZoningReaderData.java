@@ -53,6 +53,11 @@ public class PlanitOsmZoningReaderData {
   /** the registered osm ways that we kept based on osmWaysToKeep that were provided, and are processed at a later stage */
   private final Map<Long, OsmWay> unprocessedMultiPolygonOsmWays = new HashMap<Long, OsmWay>();
   
+  /* INVALID OSM */
+  
+  /** Stop positions found to be invalid and to be excluded from post-processing when converting stop positions to connectoids */
+  private final Map<EntityType, Set<Long>> invalidStopAreaStopPositions = new HashMap<EntityType, Set<Long>>();
+  
   /* OSM <-> TRANSFER ZONE TRACKING */
   
   /** track transfer zones without connectoids yet that were extracted from an OsmNode or way (osm id is key) */
@@ -349,6 +354,31 @@ public class PlanitOsmZoningReaderData {
     unprocessedMultiPolygonOsmWays.clear();
     transferZoneWithoutConnectoidByOsmEntityId.clear();
     directedConnectoidsByOsmNodeId.clear();     
+  }
+
+  /** add identified osm entity as invalid stop_position. When converting stop_positions to connectoids
+   * it will be skipped without further issue or warning
+   * 
+   * @param type entity type
+   * @param osmId osm entity to mark as invalid stop_position
+   */
+  public void addInvalidStopAreaStopPosition(EntityType type, long osmId) {
+    invalidStopAreaStopPositions.putIfAbsent(type, new HashSet<Long>());
+    invalidStopAreaStopPositions.get(type).add(osmId);
+  }
+  
+  /** Verify if marked as invalid
+   * 
+   * @param type entity type
+   * @param osmId osm entity id to verify for invalidity
+   * @return  true when marked invalid, false otherwise
+   */
+  public boolean isInvalidStopAreaStopPosition(EntityType type, long osmId) {
+    if(type != null) {
+      invalidStopAreaStopPositions.putIfAbsent(type, new HashSet<Long>());
+      return invalidStopAreaStopPositions.get(type).contains(osmId);
+    }
+    return false;
   }
 
 

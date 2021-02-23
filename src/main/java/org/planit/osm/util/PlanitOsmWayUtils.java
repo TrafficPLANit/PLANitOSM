@@ -222,7 +222,7 @@ public class PlanitOsmWayUtils {
       if(coordArray!= null && coordArray.length>=2) {
         if(coordArray.length < osmWay.getNumberOfNodes() ) {
           /* inform user that osm way is corrupted but it was salvaged to some degree */
-          LOGGER.info(String.format("Salvaged linestring for OSM way %d, truncated to available nodes",osmWay.getId()));
+          LOGGER.info(String.format("Salvaged: linestring for OSM way %d, truncated to available nodes",osmWay.getId()));
         }
         return  PlanitJtsUtils.createLineStringFromCoordinates(coordArray);
       }
@@ -264,7 +264,7 @@ public class PlanitOsmWayUtils {
         if(coordArray.length < osmWay.getNumberOfNodes() ) {
           /* create closed ring in case nodes are missing but we still have a viable polygon shape */
           coordArray = PlanitJtsUtils.makeClosed2D(coordArray);
-          LOGGER.info(String.format("Salvaged polygon for OSM way %d, truncated to available nodes",osmWay.getId())); 
+          LOGGER.info(String.format("Salvaged: polygon for OSM way %d, truncated to available nodes",osmWay.getId())); 
         }
         return PlanitJtsUtils.createPolygon(coordArray);
       }
