@@ -65,6 +65,14 @@ public class OsmRailModeTags {
   public static Collection<String> getSupportedRailModeTags(){
     return new HashSet<String>(MODE_TAGS);
   }
+  
+  /**
+   * provide a copy of all supported rail mode tags
+   * @return all supported rail modes
+   */  
+  public static String[] getSupportedRailModeTagsAsArray() {
+    return MODE_TAGS.toArray(new String[MODE_TAGS.size()]);
+  }  
 
   /** convert the rail mode to the related railway type. In all cases they are the same, except for mode "train" which translates to railway=rail
    * 
@@ -82,6 +90,6 @@ public class OsmRailModeTags {
    */
   public static String convertRailwayToMode(String osmRailwayValue) {
     return OsmRailwayTags.RAIL.equals(osmRailwayValue) ? TRAIN : osmRailwayValue;
-  }  
+  } 
   
 }

@@ -207,7 +207,7 @@ public class PlanitOsmWayUtils {
    */
   public static LineString extractLineString(OsmWay osmWay, Map<Long,OsmNode> osmNodes) throws PlanItException {
     Coordinate[] coordArray = createCoordinateArray(osmWay, osmNodes);
-    return  PlanitJtsUtils.createLineStringFromCoordinates(coordArray);
+    return  PlanitJtsUtils.createLineString(coordArray);
   }
 
   /** identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
@@ -224,7 +224,7 @@ public class PlanitOsmWayUtils {
           /* inform user that osm way is corrupted but it was salvaged to some degree */
           LOGGER.info(String.format("Salvaged: linestring for OSM way %d, truncated to available nodes",osmWay.getId()));
         }
-        return  PlanitJtsUtils.createLineStringFromCoordinates(coordArray);
+        return  PlanitJtsUtils.createLineString(coordArray);
       }
       
     }catch(Exception e) {

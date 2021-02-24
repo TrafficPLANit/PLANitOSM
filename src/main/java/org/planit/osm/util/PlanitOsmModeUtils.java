@@ -33,7 +33,7 @@ public class PlanitOsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by
    * @return modes found with specified value tag
    */    
-  protected static Set<String> getPrefixedOrPostfixedOsmRoadModesWithAccessValue(boolean isprefix, String alteration, Map<String, String> tags, final String... modeAccessValueTags) {
+  protected static Set<String> getPrefixedOrPostfixedOsmRoadModesWithValueTag(boolean isprefix, String alteration, Map<String, String> tags, final String... modeAccessValueTags) {
     Set<String> foundModes = new HashSet<String>();    
     
     /* osm modes extracted from road mode category */
@@ -73,8 +73,8 @@ public class PlanitOsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */
-  public static Set<String> getOsmRoadModesWithAccessValue(Map<String, String> tags, final String... modeAccessValueTags){
-    return getPostfixedOsmRoadModesWithAccessValue(null, tags, modeAccessValueTags);
+  public static Set<String> getOsmRoadModesWithValueTag(Map<String, String> tags, final String... modeAccessValueTags){
+    return getPostfixedOsmRoadModesWithValueTag(null, tags, modeAccessValueTags);
   }
   
   /** collect all OSM rail modes with key=\<OSM mode name\> value=the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
@@ -84,7 +84,7 @@ public class PlanitOsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */
-  public static Set<String> getOsmRailModesWithAccessValue(Map<String, String> tags, final String... modeAccessValueTags){
+  public static Set<String> getOsmRailModesWithValueTag(Map<String, String> tags, final String... modeAccessValueTags){
     Set<String> foundModes = new HashSet<String>();    
         
     /* osm rail mode */
@@ -111,8 +111,8 @@ public class PlanitOsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */  
-  public static Set<String> getPostfixedOsmRoadModesWithAccessValue(String postFix, Map<String, String> tags, final String... modeAccessValueTags) {
-    return getPrefixedOrPostfixedOsmRoadModesWithAccessValue(false, postFix, tags, modeAccessValueTags);
+  public static Set<String> getPostfixedOsmRoadModesWithValueTag(String postFix, Map<String, String> tags, final String... modeAccessValueTags) {
+    return getPrefixedOrPostfixedOsmRoadModesWithValueTag(false, postFix, tags, modeAccessValueTags);
   }  
   
   /** collect all OSM modes with key=preFix:\<OSM mode name\>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
@@ -122,8 +122,8 @@ public class PlanitOsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by
    * @return modes found with specified value tag
    */  
-  public static Collection<String> getPrefixedOsmRoadModesWithAccessValue(String prefix, Map<String, String> tags, final String... modeAccessValueTags) {
-    return getPrefixedOrPostfixedOsmRoadModesWithAccessValue(true, prefix, tags, modeAccessValueTags);
+  public static Collection<String> getPrefixedOsmRoadModesWithValueTag(String prefix, Map<String, String> tags, final String... modeAccessValueTags) {
+    return getPrefixedOrPostfixedOsmRoadModesWithValueTag(true, prefix, tags, modeAccessValueTags);
   }
   
   /** Collect the rail modes that are deemed eligible for this entity (platform, station, halt, etc.). A mode is eligible when
@@ -136,9 +136,9 @@ public class PlanitOsmModeUtils {
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
   public static Set<String> collectEligibleOsmRoadModesOnPtOsmEntity(long osmEntityId, Map<String, String> tags, String defaultOsmMode) {
-    Set<String> explicitlyIncludedOsmModes = getOsmRoadModesWithAccessValue(tags, OsmTags.YES);
+    Set<String> explicitlyIncludedOsmModes = getOsmRoadModesWithValueTag(tags, OsmTags.YES);
     if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
-      Set<String> explicitlyExcludedOsmModes = getOsmRoadModesWithAccessValue(tags, OsmTags.NO);
+      Set<String> explicitlyExcludedOsmModes = getOsmRoadModesWithValueTag(tags, OsmTags.NO);
       if(explicitlyExcludedOsmModes != null && !explicitlyExcludedOsmModes.isEmpty()) {
         explicitlyIncludedOsmModes.removeAll(explicitlyExcludedOsmModes);
       }
@@ -159,9 +159,9 @@ public class PlanitOsmModeUtils {
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
   public static Set<String> collectEligibleOsmRailModesOnPtOsmEntity(long osmEntityId, Map<String, String> tags, String defaultOsmMode) {
-    Set<String> explicitlyIncludedOsmModes = getOsmRailModesWithAccessValue(tags, OsmTags.YES);
+    Set<String> explicitlyIncludedOsmModes = getOsmRailModesWithValueTag(tags, OsmTags.YES);
     if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
-      Set<String> explicitlyExcludedOsmModes = getOsmRailModesWithAccessValue(tags, OsmTags.NO);
+      Set<String> explicitlyExcludedOsmModes = getOsmRailModesWithValueTag(tags, OsmTags.NO);
       if(explicitlyExcludedOsmModes != null && !explicitlyExcludedOsmModes.isEmpty()) {
         explicitlyIncludedOsmModes.removeAll(explicitlyExcludedOsmModes);
       }

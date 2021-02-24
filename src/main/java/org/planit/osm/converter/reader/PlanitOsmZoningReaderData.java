@@ -325,6 +325,19 @@ public class PlanitOsmZoningReaderData {
     return connectoidsForLayer.get(osmAccessNodeid).add(connectoid);
   }
   
+  /** check if any connectoids have been registered for the given Osm id and entity type on any layer
+   * @param osmId to verify
+   * @return true when present, false otherwise
+   */
+  public boolean hasAnyDirectedConnectoidsForOsmNodeId(long osmId) {
+    for( Entry<InfrastructureLayer, Map<Long, Set<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
+        if(entry.getValue().containsKey(osmId)) {
+          return true;
+      }
+    }
+    return false;
+  }  
+  
   /* TRANSFER ZONE GROUP RELATED METHODS */  
   
   /** collect a parsed transfer zone group by osm id
@@ -380,7 +393,6 @@ public class PlanitOsmZoningReaderData {
     }
     return false;
   }
-
 
  
 }

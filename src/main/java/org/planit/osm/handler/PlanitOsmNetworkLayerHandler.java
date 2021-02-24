@@ -25,6 +25,7 @@ import org.planit.osm.tags.OsmLaneTags;
 import org.planit.osm.tags.OsmOneWayTags;
 import org.planit.osm.tags.OsmPedestrianTags;
 import org.planit.osm.tags.OsmRailFeatureTags;
+import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
@@ -51,6 +52,7 @@ import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
  * Takes care of populating a PLANit layer based on the OSM way information that has been identified
@@ -93,7 +95,35 @@ public class PlanitOsmNetworkLayerHandler {
   private PlanitOsmNetworkSettings settings;
     
   /** the network layer to use */
-  private MacroscopicPhysicalNetwork networkLayer;        
+  private MacroscopicPhysicalNetwork networkLayer; 
+  
+  /** update the included and excluded mode sets passed in based on the key/value information available in the access=<?> tag.
+   * 
+   * @param tags where we extract the access information from
+   * @param includedModesToUpdate the set to supplement with found access information of allowed modes, e.g. access=yes, access=bus, etc.
+   * @param excludedModesToUpdate the set to supplement with found access information of disallowed modes, e.g. access=no, etc.
+   */
+  private void updateAccessKeyBasedModeRestrictions(final Map<String, String> tags, final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
+    
+    String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+    /* access=<positive>*/
+    if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
+      includedModesToUpdate.addAll(networkLayer.getSupportedModes());
+      includedModesToUpdate.removeAll(excludedModesToUpdate);       
+    }
+    /* access=<mode>*/
+    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmRoadModeTags.getSupportedRoadModeTagsAsArray()) || OsmTagUtils.matchesAnyValueTag(accessValue, OsmRailModeTags.getSupportedRailModeTagsAsArray())){
+      /* access limited to a particular road/rail mode */
+      includedModesToUpdate.add(settings.getMappedPlanitMode(accessValue));
+      excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
+      excludedModesToUpdate.removeAll(includedModesToUpdate);
+    }
+    /* access=<negative>*/
+    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getNegativeAccessValueTags())){
+      excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
+      excludedModesToUpdate.removeAll(includedModesToUpdate);
+    }
+  }  
   
   /** register all nodes within the provided (inclusive) range as link internal nodes for the passed in link
    * 
@@ -193,7 +223,7 @@ public class PlanitOsmNetworkLayerHandler {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
     String[] accessValueTags = included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
     /* found modes with given access value tags in explored direction */
-    Set<Mode> foundModes = settings.getMappedPlanitModes(PlanitOsmModeUtils.getPostfixedOsmRoadModesWithAccessValue(osmDirectionCondition, tags, accessValueTags));
+    Set<Mode> foundModes = settings.getMappedPlanitModes(PlanitOsmModeUtils.getPostfixedOsmRoadModesWithValueTag(osmDirectionCondition, tags, accessValueTags));
     return foundModes;
   }    
   
@@ -214,7 +244,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @return the mapped PLANitModes found
    */
   private Set<Mode> getExplicitlyIncludedModesNonOneWay(Map<String, String> tags) {
-    return settings.getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithAccessValue(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
+    return settings.getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
   }          
 
   /** Collect explicitly included modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
@@ -450,7 +480,7 @@ public class PlanitOsmNetworkLayerHandler {
       if(lanesModeSchemeHelper!=null && lanesModeSchemeHelper.hasEligibleModes()) {
         /* lanes:<mode>:<direction>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
         lanesModeSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
-      }else if(modeLanesSchemeHelper!=null && modeLanesSchemeHelper.hasEligibleModes()) {
+      }if(modeLanesSchemeHelper!=null && modeLanesSchemeHelper.hasEligibleModes()) {
         /* <mode>:lanes:<direction>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
         modeLanesSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
       }
@@ -494,7 +524,7 @@ public class PlanitOsmNetworkLayerHandler {
     }else {
 
       /* ... all modes --> general exclusion of modes */
-      excludedModes =  settings.getMappedPlanitModes(PlanitOsmModeUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getNegativeAccessValueTags()));      
+      excludedModes =  settings.getMappedPlanitModes(PlanitOsmModeUtils.getOsmRoadModesWithValueTag(tags, OsmAccessTags.getNegativeAccessValueTags()));      
       
       /* ...all modes --> exclusions in explicit directions matching our explored direction, e.g. bicycle:forward=no, FORWARD/BACKWARD/BOTH based*/
       excludedModes.addAll(getExplicitlyExcludedModesForDirection(tags, isForwardDirection));
@@ -568,9 +598,9 @@ public class PlanitOsmNetworkLayerHandler {
     /* 3) mode inclusions for explored direction that is NOT ONE WAY OPPOSITE DIRECTION */
     if(!exploreOneWayOppositeDirection) {      
       /* ...all modes --> general inclusions in main or both directions <mode>= */
-      includedModes.addAll(settings.getMappedPlanitModes(PlanitOsmModeUtils.getOsmRoadModesWithAccessValue(tags, OsmAccessTags.getPositiveAccessValueTags())));
+      includedModes.addAll(settings.getMappedPlanitModes(PlanitOsmModeUtils.getOsmRoadModesWithValueTag(tags, OsmAccessTags.getPositiveAccessValueTags())));
       /* ...all modes --> general inclusions in main or both directions access:<mode>= */
-      includedModes.addAll(settings.getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithAccessValue(OsmAccessTags.ACCESS, tags, OsmAccessTags.getPositiveAccessValueTags())));
+      includedModes.addAll(settings.getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmAccessTags.ACCESS, tags, OsmAccessTags.getPositiveAccessValueTags())));
     }
            
     return includedModes;                  
@@ -649,7 +679,7 @@ public class PlanitOsmNetworkLayerHandler {
    */  
   private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmAccessTags(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection) throws PlanItException {  
         
-    /* identify explicitly excluded and included modes */
+    /* identify explicitly excluded and included modes with anything related to mode and direction specific key tags <?:>mode<:?>=<?> */
     Set<Mode> excludedModes = getExplicitlyExcludedModes(tags, forwardDirection, settings);
     Set<Mode> includedModes = getExplicitlyIncludedModes(tags, forwardDirection, settings);
         
@@ -659,16 +689,10 @@ public class PlanitOsmNetworkLayerHandler {
     /*                                              two way || oneway->forward    || oneway->backward and reversed oneway */  
     boolean accessTagAppliesToExploredDirection =  !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
     
-    /* supplement with implicitly included modes for the explored direction */
+    /* access=<?> related mode access */
     if(accessTagAppliesToExploredDirection && tags.containsKey(OsmAccessTags.ACCESS)) {
-      String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");    
-      if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
-        includedModes.addAll(networkLayer.getSupportedModes());
-        includedModes.removeAll(excludedModes);
-      }else {
-        excludedModes.addAll(networkLayer.getSupportedModes());
-        excludedModes.removeAll(includedModes);
-      }
+      
+      updateAccessKeyBasedModeRestrictions(tags, includedModes, excludedModes);
     }
     
     /* reduce included modes to only the modes supported by the layer the link segment type resides on*/

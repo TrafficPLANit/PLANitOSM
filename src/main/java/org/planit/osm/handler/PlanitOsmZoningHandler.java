@@ -14,11 +14,8 @@ import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Node;
@@ -133,10 +130,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
         processPtv2StopAreaPlatform(transferZoneGroup, osmRelation, member);
       }else {
         LOGGER.warning(String.format("Discard: stop_area %s member %d incorrectly tagged as stop...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
-        /* mark invalid for post-processing */
-        getZoningReaderData().addInvalidStopAreaStopPosition(member.getType(), member.getId());
       }
       
+      /* flag to not process as stop_position in post-processing since it is not a stop_position and invalidly tagged as such */
+      getZoningReaderData().addInvalidStopAreaStopPosition(member.getType(), member.getId());      
     }
   }  
   

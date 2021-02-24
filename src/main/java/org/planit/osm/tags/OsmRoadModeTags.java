@@ -142,8 +142,17 @@ public class OsmRoadModeTags {
    * provide a copy of all supported road mode tags
    * @return all supported road modes
    */
-  public static Collection<String> getSupportedRoadModeTags(){
+  public static final Collection<String> getSupportedRoadModeTags(){
     return new HashSet<String>(MODE_TAGS);
+  }
+
+  /**
+   * provide a copy of all supported road mode tags
+   * @return all supported road modes
+   */  
+  public final static String[] getSupportedRoadModeTagsAsArray() {
+    String[] modeTagsArray = new String[MODE_TAGS.size()];
+    return MODE_TAGS.toArray(modeTagsArray);
   }
   
 }

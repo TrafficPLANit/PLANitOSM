@@ -7,6 +7,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.Zone;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -89,6 +90,56 @@ public class PlanitOsmNodeUtils {
       }
     }
     return closestZone;
+  }
+  
+  /** find the closest zone to the node location. This method computes the actual distance between any location on any linesegment of the outer boundary
+   * of the zones (or its centroid if no polygon/linestring is available) and the reference point and it therefore very precise
+   * 
+   * 
+   * @param osmNode reference node
+   * @param zones to check against using their geometries
+   * @param geoUtils to compute projected distances
+   * @return zone closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneClosest(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsUtils geoUtils) throws PlanItException {
+    return findZoneClosest(osmNode, zones, Double.POSITIVE_INFINITY, geoUtils);    
+  }  
+
+  /** find the closest zone to the node location. This method computes the actual distance between any location on any linesegment of the outer boundary
+   * of the zones (or its centroid if no polygon/linestring is available) and the reference point and it therefore very precise. A cap is placed on how far a zone is allowed to be to still be regarded as closest
+   * via maxDistanceMeters.
+   * 
+   * @param osmNode reference node
+   * @param zones to check against using their geometries
+   * @param maxDistanceMeters maximum allowedDistance to be eligible
+   * @param geoUtils to compute projected distances
+   * @return zone closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneClosest(final OsmNode osmNode, final Collection<? extends Zone> zones, double maxDistanceMeters, final PlanitJtsUtils geoUtils) throws PlanItException {
+    Zone closestZone = null; 
+    double minDistanceMeters = Double.POSITIVE_INFINITY;    
+    Point point = PlanitJtsUtils.createPoint(getXCoordinate(osmNode), getYCoordinate(osmNode));
+    for(Zone zone : zones) {
+      double distanceMeters = Double.POSITIVE_INFINITY;
+      if(zone.hasGeometry()) {
+        Geometry zoneGeometry = zone.getGeometry();
+        distanceMeters = geoUtils.getClosestDistanceInMeters(point,zoneGeometry);
+      }else if(zone.getCentroid().hasPosition()) {
+        distanceMeters = geoUtils.getDistanceInMetres(point.getCoordinate(), zone.getCentroid().getPosition().getCoordinate());
+      }else {
+        LOGGER.warning(String.format("zone has no geographic information to determine closesness to osm node %d",osmNode.getId()));
+      }
+     
+      if(distanceMeters < minDistanceMeters) {
+        minDistanceMeters = distanceMeters;
+        if(minDistanceMeters < maxDistanceMeters) {
+          closestZone = zone;
+        }
+      }      
+    }
+    return closestZone;    
   }   
 
 }
