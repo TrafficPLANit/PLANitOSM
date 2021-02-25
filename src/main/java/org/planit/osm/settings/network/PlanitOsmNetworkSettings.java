@@ -2,11 +2,11 @@ package org.planit.osm.settings.network;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.geo.PlanitOpenGisUtils;
@@ -59,6 +59,12 @@ public class PlanitOsmNetworkSettings {
   /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
   protected final Set<Long>  excludedOsmWays = new HashSet<Long>();  
   
+  /**
+   * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file is incorrectly tagged which causes problems
+   * in the memory model. Here one can be manually overwrite the allowable modes for this particular way.
+   */
+  protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<Long, Set<String>>();    
+  
   /** mapping between PLANit modes and the layer their infrastructure will be mapped to. 
    * Default is based on {@link InfrastructureLayersConfigurator.createAllInOneConfiguration}, but the user can overwrite these settings if
    * desired */
@@ -98,44 +104,7 @@ public class PlanitOsmNetworkSettings {
    * not adhere to the criteria of {@code discardSubNetworkBelowSize} and/or {@code discardSubNetworkAbovesize} 
    */
   protected boolean alwaysKeepLargestsubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
-  
-  /** add osmModeId to planit external id (in case multiple osm modes are mapped to the same planit mode)
-   * @param planitMode to update external id for
-   * @param osModeId to use
-   */
-  protected static void addToModeExternalId(Mode planitMode, String osModeId){
-    if(planitMode != null) {
-      if(planitMode.hasExternalId()) {
-        planitMode.setExternalId(planitMode.getExternalId().concat(";").concat(osModeId));
-      }else {
-        planitMode.setExternalId(osModeId);
-      }
-    }
-  }
-  
-  /** remove osmModeId to planit external id (in case multiple osm modes are mapped to the same planit mode)
-   * @param planitMode to update external id for
-   * @param osModeId to use
-   */  
-  protected static void removeFromModeExternalId(Mode planitMode, String osModeId){
-    if(planitMode!= null && planitMode.hasExternalId()) {
-      int startIndex = planitMode.getExternalId().indexOf(osModeId);
-      if(startIndex == -1) {
-        /* not present */
-        return;
-      }
-      if(startIndex==0) {
-        /* first */
-        planitMode.setExternalId(planitMode.getExternalId().substring(startIndex+osModeId.length()));
-      }else {
-        /* not first, so preceded by underscore "*_<name>" */
-        String before = planitMode.getExternalId().substring(0,startIndex-1);
-        String after = planitMode.getExternalId().substring(startIndex+osModeId.length());
-        planitMode.setExternalId(before.concat(after));
-      }
-    }
-  }  
-    
+      
   /**
    * conduct general initialisation for any instance of this class
    * 
@@ -162,35 +131,7 @@ public class PlanitOsmNetworkSettings {
     osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes(planitModes);
   }
 
-     
-  
-  /**
-   * explicitly exclude all osmWay type:value in case none of the passed in osmModes is marked as mapped
-   * 
-   * @param osmWayKey to check
-   * @param osmWayValue to check
-   * @param osmModes of which at least one should be active on the key:value pair
-   */
-  protected void excludeOsmWayTypesWithoutModes(String osmWayKey, String osmWayValue, Collection<String> osmModes) {
-    
-    boolean hasMappedMode = false;
-    if(osmModes != null) {
-      for(String osmMode : osmModes) {
-        if(hasMappedPlanitMode(osmMode)) {
-          hasMappedMode = true;
-          break;
-        }
-      } 
-    }
-    
-    if(!hasMappedMode) {
-      if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
-        osmHighwaySettings.deactivateOsmHighwayType(osmWayValue);
-      }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)){
-        osmRailwaySettings.deactivateOsmRailwayType(osmWayValue);
-      }
-    } 
-  }     
+          
     
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS;
@@ -306,20 +247,9 @@ public class PlanitOsmNetworkSettings {
    * :TODO move somewhere else, not used from perspective of user
    */
   public void excludeOsmWayTypesWithoutActivatedModes() {
-    Set<String> originallySupportedTypes = osmHighwaySettings.highwayTypeConfiguration.setOfActivatedTypes();
-    for(String supportedHighWayType : originallySupportedTypes) {
-      Collection<String> allowedOsmModes = osmHighwaySettings.collectAllowedOsmHighwayModes(supportedHighWayType);
-      excludeOsmWayTypesWithoutModes(OsmHighwayTags.HIGHWAY, supportedHighWayType, allowedOsmModes);      
-    }
-    
-    if(isRailwayParserActive()) {
-      originallySupportedTypes = osmRailwaySettings.railwayTypeConfiguration.setOfActivatedTypes();
-      for(String supportedRailWayType : originallySupportedTypes) {
-        Collection<String> allowedOsmModes = osmRailwaySettings.collectAllowedOsmRailwayModes(supportedRailWayType);
-        excludeOsmWayTypesWithoutModes(OsmRailwayTags.RAILWAY, supportedRailWayType, allowedOsmModes);      
-      }       
-    }   
-  }      
+    osmHighwaySettings.excludeOsmWayTypesWithoutActivatedModes();
+    osmRailwaySettings.excludeOsmWayTypesWithoutActivatedModes();
+  }
      
   /**
    * indicate whether to remove dangling subnetworks or not
@@ -501,7 +431,7 @@ public class PlanitOsmNetworkSettings {
    * deactivate all types for both rail and highway
    */
   public void deactivateAllOsmWayTypes() {    
-    osmHighwaySettings.highwayTypeConfiguration.deactivateAll();
+    osmHighwaySettings.deactivateAllOsmHighWayTypes();
     osmRailwaySettings.deactivateAllOsmRailWayTypes();
   }
 
@@ -563,6 +493,35 @@ public class PlanitOsmNetworkSettings {
   public boolean isOsmWayExcluded(Long osmWayId) {
     return excludedOsmWays.contains(osmWayId);
   }
+  
+  /** set the mode access for the given osm way id
+   * 
+   * @param osmWayId this mode access will be applied on
+   * @param allowedModes to set as the only modes allowed
+   */
+  public void overwriteModeAccessByOsmWayId(Long osmWayId, String...allowedModes) {
+    this.overwriteOsmWayModeAccess.put(osmWayId, Set.of(allowedModes));
+  }  
+  
+  /**
+   * check if defaults should be overwritten
+   * 
+   * @param osmWayId to check
+   * @return true when alternative mode access is provided, false otherwise
+   */
+  public boolean isModeAccessOverwrittenByOsmWayId(long osmWayId) {
+    return overwriteOsmWayModeAccess.containsKey(osmWayId);
+  }
+
+  /**
+   * collect the overwrite type values that should be used
+   * 
+   * @param osmWayId to collect overwrite values for
+   * @return the osm modes with allowed access
+   */
+  public final Set<String> getModeAccessOverwrittenByOsmWayId(long osmWayId) {
+    return overwriteOsmWayModeAccess.get(osmWayId);
+  }   
   
   /**
    * Log all de-activated OSM way types

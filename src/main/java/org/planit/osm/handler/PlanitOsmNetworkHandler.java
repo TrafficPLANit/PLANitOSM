@@ -453,7 +453,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     }
         
     network.createOsmCompatibleLinkSegmentTypes(settings);
-    /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupport way types to avoid warnings during parsing */
+    /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
     settings.excludeOsmWayTypesWithoutActivatedModes();
     settings.logUnsupportedOsmWayTypes();    
   }  
@@ -539,7 +539,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
         
         /* collect possibly modified type (per direction) */
-        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerdirectionPair = this.osmLayerHandlers.get(networkLayer).extractLinkSegmentTypeByOsmAccessTags(osmWay, tags, linkSegmentType);                
+        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerdirectionPair = this.osmLayerHandlers.get(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);                
         if(typesPerdirectionPair != null) {
           linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerdirectionPair);
         }

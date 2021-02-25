@@ -52,7 +52,6 @@ import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
-import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
  * Takes care of populating a PLANit layer based on the OSM way information that has been identified
@@ -123,6 +122,46 @@ public class PlanitOsmNetworkLayerHandler {
       excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
       excludedModesToUpdate.removeAll(includedModesToUpdate);
     }
+  }  
+  
+  /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on
+   * the available tags. The update link segment type is returned, which in turn is registered properly on the network if it is indeed changed from the passed in existing one
+   * 
+   * @param toBeAddedModes modes to add
+   * @param toBeRemovedModes modes to remove
+   * @param tags to extract speed limit information from
+   * @param linkSegmentType existing link segment type deemed appropriate
+   * @return updated link segment type, which if different is not a modification of the existing one but a unique copy with the required changes that is considered a modification of the original, 
+   * yet its own unique new type
+   * @throws PlanItException thrown if error
+   */
+  private MacroscopicLinkSegmentType updateExistingLinkSegmentType(Set<Mode> toBeAddedModes, Set<Mode> toBeRemovedModes, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
+    MacroscopicLinkSegmentType finalLinkSegmentType = linkSegmentType;
+    if(!toBeAddedModes.isEmpty() || !toBeRemovedModes.isEmpty()) {
+      
+      finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
+      if(finalLinkSegmentType==null) {
+        /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
+        finalLinkSegmentType = networkLayer.linkSegmentTypes.registerUniqueCopyOf(linkSegmentType);
+        
+        /* XML id */
+        finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
+        
+        /* update mode properties */
+        if(!toBeAddedModes.isEmpty()) {
+          double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);          
+          MacroscopicModePropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
+        }
+        if(!toBeRemovedModes.isEmpty()) {
+          finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
+        }
+        
+        /* register modification */
+        modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
+      }      
+    }       
+    
+    return finalLinkSegmentType;
   }  
   
   /** register all nodes within the provided (inclusive) range as link internal nodes for the passed in link
@@ -677,58 +716,55 @@ public class PlanitOsmNetworkLayerHandler {
    * @return the link segment types for the main direction and contraflow direction
    * @throws PlanItException thrown if error
    */  
-  private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmAccessTags(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection) throws PlanItException {  
-        
-    /* identify explicitly excluded and included modes with anything related to mode and direction specific key tags <?:>mode<:?>=<?> */
-    Set<Mode> excludedModes = getExplicitlyExcludedModes(tags, forwardDirection, settings);
-    Set<Mode> includedModes = getExplicitlyIncludedModes(tags, forwardDirection, settings);
-        
+  private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmWay(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection) throws PlanItException {  
+
+    Set<Mode> toBeAddedModes = null;
+    Set<Mode> toBeRemovedModes = null;
     
-    /* global access is defined for both ways, or explored direction coincides with the main direction of the one way */
-    boolean isOneWay = OsmOneWayTags.isOneWay(tags);
-    /*                                              two way || oneway->forward    || oneway->backward and reversed oneway */  
-    boolean accessTagAppliesToExploredDirection =  !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
-    
-    /* access=<?> related mode access */
-    if(accessTagAppliesToExploredDirection && tags.containsKey(OsmAccessTags.ACCESS)) {
+    /* check if modes are overwritten by user settings directly */
+    if(settings.isModeAccessOverwrittenByOsmWayId(osmWay.getId())) {
       
-      updateAccessKeyBasedModeRestrictions(tags, includedModes, excludedModes);
-    }
-    
-    /* reduce included modes to only the modes supported by the layer the link segment type resides on*/
-    if(!includedModes.isEmpty()) {
-      includedModes.retainAll(networkLayer.getSupportedModes());
-    }
-    
-    /* identify differences with default link segment type in terms of mode access */
-    Set<Mode> toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(includedModes);
-    Set<Mode> toBeRemovedModes = linkSegmentType.getAvailableModesFrom(excludedModes);    
-    
-    MacroscopicLinkSegmentType finalLinkSegmentType = linkSegmentType;
-    if(!toBeAddedModes.isEmpty() || !toBeRemovedModes.isEmpty()) {
-      
-      finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
-      if(finalLinkSegmentType==null) {
-        /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = networkLayer.linkSegmentTypes.registerUniqueCopyOf(linkSegmentType);
-        
-        /* XML id */
-        finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
-        
-        /* update mode properties */
-        if(!toBeAddedModes.isEmpty()) {
-          double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);          
-          MacroscopicModePropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
-        }
-        if(!toBeRemovedModes.isEmpty()) {
-          finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
-        }
-        
-        /* register modification */
-        modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
+      /* use osm modes given to identify to be added and removed modes */
+      Set<Mode> allowedPlanitModes = settings.getMappedPlanitModes(settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
+      /* reduce included modes to only the modes supported by the layer the link segment type resides on*/
+      if(!allowedPlanitModes.isEmpty()) {
+        allowedPlanitModes.retainAll(networkLayer.getSupportedModes());
       }      
-    }       
-    
+      
+      toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(allowedPlanitModes);
+      toBeRemovedModes = linkSegmentType.getAvailableModesNotIn(allowedPlanitModes);
+      
+    }else {
+      /*regular approach based on available tags */
+      
+      /* identify explicitly excluded and included modes with anything related to mode and direction specific key tags <?:>mode<:?>=<?> */
+      Set<Mode> excludedModes = getExplicitlyExcludedModes(tags, forwardDirection, settings);
+      Set<Mode> includedModes = getExplicitlyIncludedModes(tags, forwardDirection, settings);
+          
+      
+      /* global access is defined for both ways, or explored direction coincides with the main direction of the one way */
+      boolean isOneWay = OsmOneWayTags.isOneWay(tags);
+      /*                                              two way || oneway->forward    || oneway->backward and reversed oneway */  
+      boolean accessTagAppliesToExploredDirection =  !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
+      
+      /* access=<?> related mode access */
+      if(accessTagAppliesToExploredDirection && tags.containsKey(OsmAccessTags.ACCESS)) {
+        
+        updateAccessKeyBasedModeRestrictions(tags, includedModes, excludedModes);
+      }
+      
+      /* reduce included modes to only the modes supported by the layer the link segment type resides on*/
+      if(!includedModes.isEmpty()) {
+        includedModes.retainAll(networkLayer.getSupportedModes());
+      }
+      
+      /* identify differences with default link segment type in terms of mode access */
+      toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(includedModes);
+      toBeRemovedModes = linkSegmentType.getAvailableModesFrom(excludedModes);        
+    }
+      
+    /* use the identified changes to the modes to update the link segment type (and register it if needed) */
+    MacroscopicLinkSegmentType finalLinkSegmentType = updateExistingLinkSegmentType(toBeAddedModes, toBeRemovedModes, tags, linkSegmentType);
     return finalLinkSegmentType;
   }  
       
@@ -1024,7 +1060,7 @@ public class PlanitOsmNetworkLayerHandler {
     return link;
   }  
   
-  /** given the OSM way tags we construct or find the appropriate link segment types for both directions, if no better alternative could be found
+  /** given the OSM way tags and settings we construct or find the appropriate link segment types for both directions, if no better alternative could be found
    * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way.
    * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag is available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
    *  
@@ -1037,12 +1073,12 @@ public class PlanitOsmNetworkLayerHandler {
    * @return the link segment types for the forward direction and backward direction as per OSM specification of forward and backward. When no allowed modes exist in a direction the link segment type is set to null
    * @throws PlanItException thrown if error
    */
-  protected Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> extractLinkSegmentTypeByOsmAccessTags(final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
+  protected Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> updatedLinkSegmentTypeBasedOnOsmWay(final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
     
     /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry, and backward, i.e., the opposite of the geometry)*/
     boolean forwardDirection = true;
-    MacroscopicLinkSegmentType  forwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmAccessTags(osmWay, tags, linkSegmentType, forwardDirection);
-    MacroscopicLinkSegmentType  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmAccessTags(osmWay, tags, linkSegmentType, !forwardDirection);
+    MacroscopicLinkSegmentType  forwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, forwardDirection);
+    MacroscopicLinkSegmentType  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
     
     /* reset when no modes are available, in which case no link segment should be created for the direction */
     if(!forwardDirectionLinkSegmentType.hasAvailableModes()) {

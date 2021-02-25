@@ -19,7 +19,6 @@ import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.function.PlanitExceptionConsumer;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.mode.Mode;
