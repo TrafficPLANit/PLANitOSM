@@ -1,6 +1,7 @@
 package org.planit.osm.converter.reader;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,14 +98,14 @@ public class PlanitOsmZoningReaderData {
     return osmEntity==null ? null : Pair.create(version, osmEntity); 
   }
  
-  /** collect the Ptv1 stations that have been identified but not processed yet
+  /** collect the Ptv1 stations that have been identified but not processed yet (unmodifiable)
    * 
    * @param entityType to collect them for
    * @return unprocess ptv1 stations
    */
   public Map<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
     unprocessedPtv1Stations.putIfAbsent(entityType, new HashMap<Long, OsmEntity>());
-    return unprocessedPtv1Stations.get(entityType);
+    return Collections.unmodifiableMap(unprocessedPtv1Stations.get(entityType));
   }
   
   /** add unprocessed ptv1 station
@@ -141,13 +142,13 @@ public class PlanitOsmZoningReaderData {
     unprocessedPtv2Stations.get(type).put(osmEntity.getId(), osmEntity);
   }   
 
-  /** collect unprocces ptv2 stations 
+  /** collect unprocces ptv2 stations (unmodifiable) 
    * @param entityType to collect for (node, way)
    * @return unprocessed stations
    */
   public Map<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
     unprocessedPtv2Stations.putIfAbsent(entityType, new HashMap<Long, OsmEntity>());
-    return unprocessedPtv2Stations.get(entityType);
+    return Collections.unmodifiableMap(unprocessedPtv2Stations.get(entityType));
   }
 
   /** collect unprocessed Ptv2 stop positions
@@ -161,21 +162,52 @@ public class PlanitOsmZoningReaderData {
 
   /** remove an unprocessed station
    * @param ptVersion pt version this
-   * @param osmEntity
-   * @return
+   * @param osmEntity to remove
    */
-  public OsmEntity removeUnproccessedStation(OsmPtVersionScheme ptVersion, OsmEntity osmEntity) {
+  public void removeUnproccessedStation(OsmPtVersionScheme ptVersion, OsmEntity osmEntity) {
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (ptVersion) {
       case VERSION_1:
-        return getUnprocessedPtv1Stations(type).remove(osmEntity.getId());    
+        unprocessedPtv1Stations.get(type).remove(osmEntity.getId());
+        break;
       case VERSION_2:
-        return getUnprocessedPtv2Stations(type).remove(osmEntity.getId());
+        unprocessedPtv2Stations.get(type).remove(osmEntity.getId());
+        break;
       default:
         LOGGER.warning(String.format("could not remove station %d from earlier identified unprocessed stations, this should not happen", osmEntity.getId()));
-        return null;
+    }
+  } 
+  
+  /** Remove all unprocessed station of a particular pt version that are currently still registered
+   * 
+   * @param ptVersion to remove all unprocessed station for
+   */
+  public void removeAllUnproccessedStations(OsmPtVersionScheme ptVersion) {
+    switch (ptVersion) {
+      case VERSION_1:
+        unprocessedPtv1Stations.clear();    
+      case VERSION_2:
+        unprocessedPtv2Stations.clear();
+      default:
+        LOGGER.warning(String.format("could not remove stations, invalid pt version provided"));        
     }
   }  
+  
+  /** Remove all unprocessed station of a particular pt version and type that are currently still registered
+   * 
+   * @param ptVersion to remove stations for
+   * @param type to remove all stations for
+   */
+  public void removeAllUnproccessedStations(OsmPtVersionScheme ptVersion, EntityType type) {
+    switch (ptVersion) {
+      case VERSION_1:
+        getUnprocessedPtv1Stations(type).clear();    
+      case VERSION_2:
+        getUnprocessedPtv2Stations(type).clear();
+      default:
+        LOGGER.warning(String.format("could not remove stations, invalid pt version provided"));        
+    }
+  }   
   
   /** mark an osm way to be kept in unprocessed fashion even if it is not recognised as
    * as valid PT supporting way. This occurs when a way is part of for example a multi-polygon relation
@@ -360,8 +392,8 @@ public class PlanitOsmZoningReaderData {
    * reset the handler
    */
   public void reset() {
-    unprocessedPtv1Stations.clear();
-    unprocessedPtv2Stations.clear();
+    removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_1);
+    removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
     unprocessedPtv2StopPositions.clear();
     unprocessedMultiPolygonOsmWays.clear();
     transferZoneWithoutConnectoidByOsmEntityId.clear();
@@ -392,6 +424,5 @@ public class PlanitOsmZoningReaderData {
     }
     return false;
   }
-
  
 }

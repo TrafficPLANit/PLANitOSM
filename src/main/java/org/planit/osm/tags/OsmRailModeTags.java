@@ -1,6 +1,7 @@
 package org.planit.osm.tags;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -59,11 +60,11 @@ public class OsmRailModeTags {
   }
   
   /**
-   * provide a copy of all supported rail mode tags
+   * provide a all supported rail mode tags (unmoidifable)
    * @return all supported rail modes
    */
-  public static Collection<String> getSupportedRailModeTags(){
-    return new HashSet<String>(MODE_TAGS);
+  public static Set<String> getSupportedRailModeTags(){
+    return Collections.unmodifiableSet(MODE_TAGS);
   }
   
   /**

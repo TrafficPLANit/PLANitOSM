@@ -27,6 +27,7 @@ import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
+import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
 
@@ -74,29 +75,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   
   /** profiler for this reader */
   private final PlanitOsmZoningHandlerProfiler profiler;   
-  
-  /**
-   * check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node that might reflect
-   * a platform, stop, etc.
-   *  
-   * @param scheme to check against
-   * @param tags to verify
-   * @return true when present, false otherwise
-   */
-  private static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
-    if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        return OsmPtv1Tags.hasPtv1ValueTag(tags);
-      }
-    }else if(scheme.equals(OsmPtVersionScheme.VERSION_2)) {
-      return OsmPtv2Tags.hasPtv2ValueTag(tags);
-    }else {
-     LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility with, ignored",scheme.value()));
-
-    }
-    return false;
-  }  
-  
+    
   /** Verify if passed in tags reflect transfer based infrastructure that is eligible (and supported) to be parsed by this class, e.g.
    * tags related to original PT scheme stops ( railway=halt, railway=tram_stop, highway=bus_stop and highway=platform),
    * or the current v2 PT scheme (public_transport=stop_position, platform, station, stop_area)
@@ -105,9 +84,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return which scheme it is compatible with, NONE if none could be found
    */
   private static OsmPtVersionScheme isTransferBasedOsmInfrastructure(Map<String, String> tags) {
-    if(isCompatibleWith(OsmPtVersionScheme.VERSION_2, tags)){
+    if(PlanitOsmUtils.isCompatibleWith(OsmPtVersionScheme.VERSION_2, tags)){
       return OsmPtVersionScheme.VERSION_2;
-    }else if(isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
+    }else if(PlanitOsmUtils.isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
       return OsmPtVersionScheme.VERSION_1;
     }
     return OsmPtVersionScheme.NONE;
@@ -226,7 +205,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param transferZone to use
    * @param eligibleOsmModes to add
    */
-  protected static void addEligibleAccessModesToTransferZone(final TransferZone transferZone, Collection<String> eligibleOsmModes) {
+  protected static void addOsmAccessModesToTransferZone(final TransferZone transferZone, Collection<String> eligibleOsmModes) {
     if(transferZone != null && eligibleOsmModes!= null) {
       /* register identified eligible access modes */
       transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
@@ -245,7 +224,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(transferZone != null) {
       /* register identified eligible access modes */
       Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntityId, tags, defaultOsmMode);
-      addEligibleAccessModesToTransferZone(transferZone, eligibleOsmModes);
+      addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
     }
   }
   
@@ -330,6 +309,27 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return createdConnectoids;
   }
   
+  /** process an osm entity that is classified as a (train) station. For this to register on the group, we only see if we can utilise its name and use it for the group, but only
+   * if the group does not already have a name
+   *   
+   * @param transferZoneGroup the osm station relates to 
+   * @param osmEntityStation of the relation to process
+   * @param tags of the osm entity representation a station
+   */
+  protected void processTransferZoneGroupMemberStation(TransferZoneGroup transferZoneGroup, OsmEntity osmEntityStation, Map<String, String> tags) {
+    
+    if(!transferZoneGroup.hasName()) {
+      String stationName = tags.get(OsmTags.NAME);
+      if(stationName!=null) {
+        transferZoneGroup.setName(stationName);
+      }
+    }
+    
+    OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
+    getZoningReaderData().removeUnproccessedStation(ptVersion, osmEntityStation);  
+    
+  }  
+  
   /** Create a new PLANit node required for connectoid access, register it and update stats
    * 
    * @param osmNode to extract PLANit node for
@@ -379,43 +379,50 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   }    
   
  
-  /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node where the connectoids access link segments are extracted from
+  /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node where the connectoids access link segments are extracted from.
+   * Each of the connectoids is related to the passed in transfer zone. Also, we know that the osmNode that reflects the stop position related to the passed in transfer zone group, so
+   * in case a connectoid is created and related to a transfer zone. This transfer zone must also be part of the passed in transfer zone group. If it is not something strange is happenning
+   * in the osm tagging. We will salvage this by adding the transfer zone to the group here. 
    * 
    * @param osmNode to relate to planit network's incoming link segments as access points
    * @param tags to use
    * @param transferZone this connectoid is assumed to provide access to
    * @param networkLayer this connectoid resides on
    * @param planitMode this connectoid is allowed access for
+   * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected void extractDirectedConnectoidsForMode(OsmNode osmNode, Map<String, String> tags, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode) throws PlanItException {
-    
+  protected boolean extractDirectedConnectoidsForMode(OsmNode osmNode, Map<String, String> tags, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode) throws PlanItException {
+    boolean success = true;
     /* access node */
     Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);    
     if(planitNode==null) {
       LOGGER.warning(String.format("Discard: osm node (%d) could not be converted to access node for transfer zone representation of osm entity %s",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
-      return;
+      success= false;
     }
     
-    /* already created connectoids */
-    Map<Long, Set<DirectedConnectoid>> existingConnectoids = zoningReaderData.getDirectedConnectoidsByOsmNodeId(networkLayer);                    
-    if(existingConnectoids.containsKey(osmNode.getId())) {      
-      
-      /* update: connectoid already exists */
-      Set<DirectedConnectoid> connectoidsForNode = existingConnectoids.get(osmNode.getId());
-      connectoidsForNode.forEach( connectoid -> updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode)));
-      
-    }else {
-      
-      /* new connectoid, create and register */
-      Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
-      if(newConnectoids==null || newConnectoids.isEmpty()) {
-        LOGGER.warning(String.format("Found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
+    if(success) {
+      /* already created connectoids */
+      Map<Long, Set<DirectedConnectoid>> existingConnectoids = zoningReaderData.getDirectedConnectoidsByOsmNodeId(networkLayer);                    
+      if(existingConnectoids.containsKey(osmNode.getId())) {      
+        
+        /* update: connectoid already exists */
+        Set<DirectedConnectoid> connectoidsForNode = existingConnectoids.get(osmNode.getId());
+        connectoidsForNode.forEach( connectoid -> updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode)));        
       }else {
-        newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByOsmId(networkLayer, osmNode.getId(),connectoid));
+        
+        /* new connectoid, create and register */
+        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
+        if(newConnectoids==null || newConnectoids.isEmpty()) {
+          LOGGER.warning(String.format("Found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
+          success = false;
+        }else {
+          newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByOsmId(networkLayer, osmNode.getId(),connectoid));
+        }        
       }
-      
     }
+    
+    return success;
   }
   
   /** create a dummy transfer zone without access to underlying osmNode or way and without any geometry or populated
@@ -434,20 +441,36 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
   /** attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
    * it is not possible to best determine where they should reside. Find eligible access modes as input properties as well which can be used later
-   * to map stop_positions more easily. Note that one can provide a default osm mode that is deemed eligible in case no tags are provided on the osm entity
+   * to map stop_positions more easily. Note that one can provide a default osm mode that is deemed eligible in case no tags are provided on the osm entity. In case no mode information
+   * can be extracted a warning is issued but the transfer zone is still created because this is a tagging error and we might be able to salvage later on. If there are osm modes
+   * but none of them are mapped, then we should not create the zone since it will not be of use.
    * 
    * @param osmEntity to extract transfer zone for
    * @param tags to use
    * @param transferZoneType to apply
    * @param defaultOsmMode to apply
-   * @return transfer zone created, null if something happenned making it impossible to create the zone
+   * @return transfer zone created, null if something happened making it impossible or not useful to create the zone
    */
-  protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode) {
-    TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);
-    if(transferZone != null) {
-      addEligibleAccessModesToTransferZone(transferZone, osmEntity.getId(), tags, defaultOsmMode);
-    }
-    return transferZone;
+  protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode) {  
+    
+    TransferZone transferZone = null;
+    
+    /* tagged osm modes */
+    Set<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntity.getId(), tags, defaultOsmMode);
+    if(eligibleOsmModes == null || eligibleOsmModes.isEmpty()) {
+      /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on closeby stop_positions with additional information 
+       * log issue, yet still create transfer zone (without any osm modes) */
+      LOGGER.fine(String.format("Salvaged: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
+      transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
+    }else {  
+      /* correctly tagged -> determine if any mapped planit modes ara available and we should create the transfer zone at all */
+      Set<Mode> planitModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
+      if(planitModes != null && !planitModes.isEmpty()) {
+        transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
+        addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
+      }
+    }  
+    return transferZone;    
   }  
   
   /** attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
@@ -463,7 +486,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes) {
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);
     if(transferZone != null) {
-      addEligibleAccessModesToTransferZone(transferZone, eligibleOsmModes);
+      addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
     }
     return transferZone;
   }    

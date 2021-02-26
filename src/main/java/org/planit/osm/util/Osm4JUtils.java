@@ -2,8 +2,11 @@ package org.planit.osm.util;
 
 import java.io.File;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.logging.Logger;
 
+import org.locationtech.jts.geom.Envelope;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.FileUtils;
 
 import de.topobyte.osm4j.core.access.OsmReader;
@@ -84,5 +87,5 @@ public class Osm4JUtils {
       return null;
     }
   }
-
+  
 }

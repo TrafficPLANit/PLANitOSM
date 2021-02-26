@@ -1,9 +1,14 @@
 package org.planit.osm.util;
 
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmPtv1Tags;
+import org.planit.osm.tags.OsmPtv2Tags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
 
@@ -86,6 +91,28 @@ public class PlanitOsmUtils {
     }
     return speedLimitKmh;
   }  
+  
+  /**
+   * check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node that might reflect
+   * a platform, stop, etc.
+   *  
+   * @param scheme to check against
+   * @param tags to verify
+   * @return true when present, false otherwise
+   */
+  public static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
+    if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
+      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags)) {
+        return OsmPtv1Tags.hasPtv1ValueTag(tags);
+      }
+    }else if(scheme.equals(OsmPtVersionScheme.VERSION_2)) {
+      return OsmPtv2Tags.hasPtv2ValueTag(tags);
+    }else {
+     LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility with, ignored",scheme.value()));
+
+    }
+    return false;
+  }    
    
 
 }

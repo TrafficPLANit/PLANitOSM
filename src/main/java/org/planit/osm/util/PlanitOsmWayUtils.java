@@ -1,11 +1,11 @@
 package org.planit.osm.util;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.osm.tags.OsmDirectionTags;
@@ -253,10 +253,7 @@ public class PlanitOsmWayUtils {
    * @param osmNodes to collect from
    * @return parsed geometry
    */
-  public static Polygon extractPolygonNoThrow(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
-    if(osmWay.getId()==29758538) {
-      int bla = 4;
-    }    
+  public static Polygon extractPolygonNoThrow(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {   
     try {
       Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
       /* create polygon when valid number of nodes present */
@@ -272,6 +269,31 @@ public class PlanitOsmWayUtils {
       LOGGER.warning(String.format("Unable to create polygon for OSM way %d",osmWay.getId()));
     }
     return null;
-  }      
+  }
+  
+  /** create a (Rectangular) bounding box around the osm ways geometry based on the provided offset
+   * 
+   * @param osmWay to collect bounding box for
+   * @param offsetInMeters around extreme points of osmWay
+   * @param osmNodes potentially references by osmWay
+   * @param geoUtils to extract length based on crs
+   * @return
+   */
+  public static Envelope createBoundingBox(OsmWay osmWay, double offsetInMeters, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) {
+    double minX = Double.POSITIVE_INFINITY;
+    double minY = Double.POSITIVE_INFINITY;
+    double maxX = Double.NEGATIVE_INFINITY;
+    double maxY = Double.NEGATIVE_INFINITY;
+    for(int index = 0 ; index < osmWay.getNumberOfNodes(); ++index) {
+      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
+      if(osmNode != null) {
+        minX = Math.min(minX, PlanitOsmNodeUtils.getXCoordinate(osmNode) );
+        minY = Math.min(minY, PlanitOsmNodeUtils.getYCoordinate(osmNode) );
+        maxX = Math.max(maxX, PlanitOsmNodeUtils.getXCoordinate(osmNode) );
+        maxY = Math.max(maxY, PlanitOsmNodeUtils.getYCoordinate(osmNode) );        
+      }
+    }
+    return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
+  }   
 
 }

@@ -3,11 +3,11 @@ package org.planit.osm.util;
 import java.util.Collection;
 import java.util.logging.Logger;
 
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.Zone;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -21,7 +21,6 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 public class PlanitOsmNodeUtils {
   
   /** the logger */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNodeUtils.class.getCanonicalName());
   
   
@@ -140,6 +139,19 @@ public class PlanitOsmNodeUtils {
       }      
     }
     return closestZone;    
-  }   
+  } 
+  
+  /** create a (Rectangular) bounding box around the osm node geometry based on the provided offset
+   * 
+   * @param osmNode to create bounding box around
+   * @param offsetInMeters of the bounding box with node location in centre
+   * @param geoUtils to properly create bounding box based on crs
+   * @return bounding box
+   */
+  public static Envelope createBoundingBox(OsmNode osmNode, double offsetInMeters, PlanitJtsUtils geoUtils) {
+    double xCoord = PlanitOsmNodeUtils.getXCoordinate(((OsmNode)osmNode));
+    double yCoord = PlanitOsmNodeUtils.getYCoordinate(((OsmNode)osmNode));
+    return geoUtils.createBoundingBox(xCoord, yCoord, offsetInMeters);
+  }  
 
 }

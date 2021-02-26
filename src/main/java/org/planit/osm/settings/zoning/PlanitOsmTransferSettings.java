@@ -20,15 +20,24 @@ public class PlanitOsmTransferSettings {
 
   /** the maximum search radius used when trying to map stops/platforms to stop positions on the networks, when no explicit
    * relation is made known by OSM */
-  protected double searchRadiusInMeters = DEFAULT_SEARCH_RADIUS_M;
+  protected double searchRadiusPlatformToStopInMeters = DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M;
+  
+  /** the maximum search radius used when trying to map stations to platforms on the networks, when no explicit
+   * relation is made known by OSM */
+  protected double searchRadiusStationToPlatformInMeters = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;  
   
   /** by default the transfer parser is deactivated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
     
   /**
-   * default search radius in meters for mapping stops/platforms to stop positions on the networks
+   * default search radius in meters for mapping stops/platforms to stop positions on the networks when they have no explicit reference
    */
-  public static double DEFAULT_SEARCH_RADIUS_M = 20;
+  public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 20;
+  
+  /**
+   * default search radius in meters for mapping stations to platforms on the networks, when they have no explicit reference
+   */
+  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 100;  
   
   /** allow users to provide OSM node ids that we are not to parse as stop_positions (including inferred stop_positinos not tagged as such), for example when we know the original coding or tagging is problematic */
   protected final Set<Long>  excludedStopPositions = new HashSet<Long>();
@@ -59,7 +68,7 @@ public class PlanitOsmTransferSettings {
    * @param searchRadiusInMeters to use
    */
   public void setStopToWaitingAreaSearchRadiusMeters(double searchRadiusInMeters) {
-    this.searchRadiusInMeters = searchRadiusInMeters;
+    this.searchRadiusPlatformToStopInMeters = searchRadiusInMeters;
   }
   
   /** Collect the maximum search radius set when trying to map stops/platforms to stop positions on the networks, 
@@ -68,7 +77,25 @@ public class PlanitOsmTransferSettings {
    * @return search radius in meters
    */
   public double getStopToWaitingAreaSearchRadiusMeters() {
-    return this.searchRadiusInMeters;
+    return this.searchRadiusPlatformToStopInMeters;
+  }  
+  
+  /** Set the maximum search radius used when trying to map stations to platforms on the networks, 
+   * when no explicit relation is made known by OSM 
+   * 
+   * @param searchRadiusInMeters to use
+   */
+  public void setStationToWaitingAreaSearchRadiusMeters(double searchRadiusInMeters) {
+    this.searchRadiusStationToPlatformInMeters = searchRadiusInMeters;
+  }
+  
+  /** Collect the maximum search radius set when trying to map stations to platforms on the networks, 
+   * when no explicit relation is made known by OSM 
+   * 
+   * @return search radius in meters
+   */
+  public double getStationToWaitingAreaSearchRadiusMeters() {
+    return this.searchRadiusStationToPlatformInMeters;
   }  
   
   /** Provide OSM ids of stop_positions that we are not to parse, for example 

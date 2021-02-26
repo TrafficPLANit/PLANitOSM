@@ -8,6 +8,10 @@ import java.util.logging.Logger;
 
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.tags.OsmHighwayTags;
+import org.planit.osm.tags.OsmRailModeTags;
+import org.planit.osm.tags.OsmRailwayTags;
+import org.planit.osm.tags.OsmRoadModeTags;
 
 /**
  * Track statistics on Osm network handler
@@ -25,7 +29,7 @@ public class PlanitOsmNetworkHandlerProfiler {
   /**
    * track a counter by highway tag of the encountered entities
    */
-  private final Map<String, LongAdder> counterByHighwayTag = new HashMap<String, LongAdder>();
+  private final Map<String, LongAdder> counterBywayTag = new HashMap<String, LongAdder>();
   
   /** track how many osmways have no explicit speed limit defined */
   private LongAdder missingSpeedLimitCounter = new LongAdder();
@@ -57,8 +61,8 @@ public class PlanitOsmNetworkHandlerProfiler {
    * @param tagType to increment counter for
    */
   public void incrementOsmTagCounter(String tagType) {
-    counterByHighwayTag.putIfAbsent(tagType, new LongAdder());
-    counterByHighwayTag.get(tagType).increment();    
+    counterBywayTag.putIfAbsent(tagType, new LongAdder());
+    counterBywayTag.get(tagType).increment();    
   }
 
   /**
@@ -67,9 +71,13 @@ public class PlanitOsmNetworkHandlerProfiler {
    * @param networkLayer for which information  was tracked
    */
   public void logProfileInformation(MacroscopicPhysicalNetwork networkLayer) {
-    for(Entry<String, LongAdder> entry : counterByHighwayTag.entrySet()) {
+    for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
       long count = entry.getValue().longValue();
-      LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d", InfrastructureLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+      if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {
+        LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d", InfrastructureLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+      }else if(OsmRailwayTags.isRailBasedRailway(entry.getKey())) {
+        LOGGER.info(String.format("%s [STATS] processed railway:%s count:%d", InfrastructureLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+      }
     }
     
     /* stats on exact number of created PLANit network objects */

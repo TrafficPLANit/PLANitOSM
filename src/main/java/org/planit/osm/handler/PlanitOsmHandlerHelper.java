@@ -1,5 +1,6 @@
 package org.planit.osm.handler;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -12,12 +13,16 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.util.PlanitOsmModeUtils;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 
+import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
@@ -157,4 +162,16 @@ public class PlanitOsmHandlerHelper {
       destination.get(osmWayId).addAll(links);
     });
   }   
+  
+  /** collect the osm modes (mapped to planit modes) deemed eligible on the PtOsmEntity based on the tags of this entity
+   *  
+   * @param osmEntity to check
+   * @param tags of the entity
+   * @param defaultOsmMode to apply in case no modes are tagged, when null no default mode is applied
+   * @return planit modes eligible
+   */
+  public  static Set<Mode> collectEligiblePlanitModesOnPtOsmEntity(OsmEntity osmEntity, Map<String,String> tags, PlanitOsmNetworkSettings settings, String defaultOsmMode) {
+    Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntity.getId(), tags, null);    
+    return settings.getMappedPlanitModes(eligibleOsmModes);
+  }
 }

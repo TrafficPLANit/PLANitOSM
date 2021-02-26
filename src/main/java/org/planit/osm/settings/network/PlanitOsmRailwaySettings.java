@@ -60,14 +60,13 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
     
     /* add default mapping */
     {
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.PRESERVED, planitModes.get(PredefinedModeType.TRAIN));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.RAIL, planitModes.get(PredefinedModeType.TRAIN));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
-      addOsmMode2PlanitModeMapping(OsmRailwayTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.TRAIN, planitModes.get(PredefinedModeType.TRAIN));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
+      addOsmMode2PlanitModeMapping(OsmRailModeTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
       
       /* ensure external id is set based on OSM name */
       setModeExternalIdsBasedOnMappedOsmModes();
