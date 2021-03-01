@@ -862,7 +862,7 @@ public class PlanitOsmNetworkLayerHandler {
     /* mode specific speed limits*/
     //TODO
     
-    return Pair.create(speedLimitForwardKmh,speedLimitBackwardKmh);
+    return Pair.of(speedLimitForwardKmh,speedLimitBackwardKmh);
   }  
   
   /**
@@ -940,7 +940,7 @@ public class PlanitOsmNetworkLayerHandler {
       profiler.incrementMissingLaneCounter();
     }
     
-    return Pair.create(lanesForward, lanesBackward);
+    return Pair.of(lanesForward, lanesBackward);
         
   }
   
@@ -1088,7 +1088,7 @@ public class PlanitOsmNetworkLayerHandler {
       backwardDirectionLinkSegmentType = null;
     }    
         
-    return Pair.create(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
+    return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
   }    
   
   /**
@@ -1150,9 +1150,9 @@ public class PlanitOsmNetworkLayerHandler {
           /* when circular we only accept one direction as accessible regardless of what has been identified so far;
            * clockwise equates to forward direction while anti-clockwise equates to backward direction */
           if(PlanitOsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
-            linkSegmentTypes = Pair.create(linkSegmentTypes.first(), null);
+            linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
           }else {
-            linkSegmentTypes = Pair.create(null, linkSegmentTypes.second());
+            linkSegmentTypes = Pair.of(null, linkSegmentTypes.second());
           }
         }
         

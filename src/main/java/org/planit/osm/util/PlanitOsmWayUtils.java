@@ -1,12 +1,15 @@
 package org.planit.osm.util;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -16,6 +19,8 @@ import org.planit.utils.function.PlanitExceptionConsumer;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
+import org.planit.utils.zoning.Zone;
+
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 
@@ -76,7 +81,7 @@ public class PlanitOsmWayUtils {
       long nodeIdToCheck = osmWay.getNodeId(index);
       for(int index2 = index+1 ; index2 < osmWay.getNumberOfNodes() ; ++index2) {
         if(nodeIdToCheck == osmWay.getNodeId(index2)) {
-          return Pair.create(index, index2);
+          return Pair.of(index, index2);
         }
       }
     }
@@ -294,6 +299,50 @@ public class PlanitOsmWayUtils {
       }
     }
     return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
+  }   
+  
+  /** find the closest zone to the way . This method computes the actual distance between any location on any linesegment of the outer boundary
+   * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it therefore is very precise
+   * 
+   * 
+   * @param osmWay reference way
+   * @param zones to check against using their geometries
+   * @param geoUtils to compute projected distances
+   * @return zone closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+    return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
+  }  
+
+  /** find the closest zone to the way . This method computes the actual distance between any location on any linesegment of the outer boundary
+   * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it therefore is very precise.
+   * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
+   * 
+   * @param osmWay reference way
+   * @param zones to check against using their geometries
+   * @param maxDistanceMeters maximum allowedDistance to be eligible
+   * @param osmNodes the way might refer to
+   * @param geoUtils to compute projected distances
+   * @return zone closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+    Zone closestZone = null; 
+    double minDistanceMeters = Double.POSITIVE_INFINITY;
+    for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
+      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
+      if(osmNode != null) {
+        Point point = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
+        Pair<Zone,Double> result = PlanitOsmNodeUtils.findZoneClosest(osmNode.getId(), point, zones, maxDistanceMeters, geoUtils);
+        if(result!=null && result.second() < minDistanceMeters) {
+          closestZone = result.first();
+          minDistanceMeters = result.second();
+        }        
+      }
+    }
+    
+    return closestZone;    
   }   
 
 }

@@ -1,6 +1,9 @@
 package org.planit.osm.util;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,6 +14,15 @@ import org.planit.osm.tags.OsmPtv2Tags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.zoning.TransferZone;
+import org.planit.utils.zoning.TransferZoneGroup;
+import org.planit.utils.zoning.Zone;
+
+import de.topobyte.osm4j.core.model.iface.EntityType;
+import de.topobyte.osm4j.core.model.iface.OsmEntity;
+import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
  * Utilities in relation to parsing osm data and constructing a PLANit model from it that are too general to
@@ -112,6 +124,48 @@ public class PlanitOsmUtils {
 
     }
     return false;
+  }
+  
+  /** find the zone closest to the passed in osm Entity
+   * 
+   * @param osmEntity to find closest zone for
+   * @param matchedTransferZones to check against
+   * @param osmNodes to extract geo information from if needed
+   * @param geoUtils used to cmpute distances
+   * @return closest zone found
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneClosestByTransferGroup(OsmEntity osmEntity, Collection<? extends TransferZoneGroup> transferZoneGroups, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+    Set<Zone> closestPerGroup = new HashSet<Zone>();
+    for(TransferZoneGroup group : transferZoneGroups) {
+      Zone closestOfGroup = findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, geoUtils);
+      closestPerGroup.add(closestOfGroup);
+    }
+    /* now find closest across all groups */
+    return findZoneClosest(osmEntity, closestPerGroup, osmNodes, geoUtils);
+  }    
+
+  /** find the zone closest to the passed in osm Entity
+   * 
+   * @param osmEntity to find closest zone for
+   * @param matchedTransferZones to check against
+   * @param osmNodes to extract geo information from if needed
+   * @param geoUtils used to cmpute distances
+   * @return closest zone found
+   * @throws PlanItException thrown if error
+   */
+  public static Zone findZoneClosest(OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+    EntityType type = Osm4JUtils.getEntityType(osmEntity);
+    switch (type) {
+    case Node:
+      return PlanitOsmNodeUtils.findZoneClosest((OsmNode)osmEntity, zones, geoUtils);
+    case Way:
+      return PlanitOsmWayUtils.findZoneClosest((OsmWay)osmEntity, zones, osmNodes, geoUtils);      
+    default:
+      LOGGER.warning(String.format("unsupported osm entity type when finding closest zone to %d",osmEntity.getId()));
+      break;
+    }
+    return null;
   }    
    
 

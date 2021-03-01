@@ -122,7 +122,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     osmNetworkReader.removeDanglingSubNetworks();
     
     /* return result */
-    return Pair.create(network, zoning);
+    return Pair.of(network, zoning);
   }
 
 

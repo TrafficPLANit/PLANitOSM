@@ -171,6 +171,14 @@ public class OsmPtv1Tags {
    * @return true if tram stop, false otherwise
    */
   public static boolean isTramStop(Map<String, String> tags) {
-    return  OsmRailwayTags.hasRailwayKeyTag(tags) && tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.TRAM_STOP);
+    return OsmRailwayTags.hasRailwayKeyTag(tags) && tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.TRAM_STOP);
+  }
+
+  /** check if this is a bus stop given the provided tags
+   * @param tags to check
+   * @return true if bus stop, false otherwise
+   */  
+  public static boolean isBusStop(Map<String, String> tags) {
+    return OsmHighwayTags.hasHighwayKeyTag(tags) && tags.get(OsmHighwayTags.HIGHWAY).equals(OsmPtv1Tags.BUS_STOP);
   }  
 }

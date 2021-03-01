@@ -243,7 +243,7 @@ public abstract class PlanitOsmWaySettings {
     if(!isOsmWayTypeActivated(osmWayType)) {
       activateOsmWayType(osmWayType);
     }
-    overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.create(capacityPerLanePerHour,maxDensityPerLane));
+    overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.of(capacityPerLanePerHour,maxDensityPerLane));
     LOGGER.info(String.format("overwriting defaults for osm road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
   }          
   

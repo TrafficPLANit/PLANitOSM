@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -95,7 +94,7 @@ public class PlanitOsmZoningReaderData {
       version = OsmPtVersionScheme.VERSION_1;
     }
     
-    return osmEntity==null ? null : Pair.create(version, osmEntity); 
+    return osmEntity==null ? null : Pair.of(version, osmEntity); 
   }
  
   /** collect the Ptv1 stations that have been identified but not processed yet (unmodifiable)
@@ -290,7 +289,6 @@ public class PlanitOsmZoningReaderData {
     
     /* query the spatially indexed entries AND apply the visitor that filteres out false positives due to the coarseness of the quadtrees grid */
     for( Entry<EntityType, Quadtree> entry : transferZoneWithoutConnectoidBySpatialIndex.entrySet()) {
-      List<?> results = transferZoneWithoutConnectoidBySpatialIndex.get(entry.getKey()).query(boundingBox);
       transferZoneWithoutConnectoidBySpatialIndex.get(entry.getKey()).query(boundingBox, spatialZoneFilterVisitor);
     }
     

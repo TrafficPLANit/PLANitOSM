@@ -56,6 +56,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    *  on stop_positions that use this transfer zone
    */
   protected static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";
+  
+  /** When known, transfer zones are provided with a station name extracted from the osm station entity (if possible). Its name is stored under
+   * this key as input property
+   */
+  protected static final String TRANSFERZONE_STATION_INPUT_PROPERTY_KEY = "station";  
         
   // references
   
@@ -211,31 +216,20 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
     }
   }    
-  
-  /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
-   * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
-   * via the generic input properties to be able to retrieve it if needed later
-   * 
-   * @param transferZone to use
-   * @param osmEntityId it relates to
-   * @param defaultOsmMode default mode for this zone (can be null)
-   */
-  protected static void addEligibleAccessModesToTransferZone(final TransferZone transferZone, final long osmEntityId, final Map<String, String> tags, final String defaultOsmMode) {
-    if(transferZone != null) {
-      /* register identified eligible access modes */
-      Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntityId, tags, defaultOsmMode);
-      addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
-    }
-  }
-  
-  /** collect any prior registered eligible osm modes on a Planit transfer zone 
+    
+  /** collect any prior registered eligible osm modes on a Planit transfer zone (unmodifiable)
    * 
    * @param transferZone to collect from
    * @return eligible osm modes, null if none
    */
   @SuppressWarnings("unchecked")
   protected static Collection<String> getEligibleOsmModesForTransferZone(final TransferZone transferZone){
-    return (Collection<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
+    Collection<String> eligibleOsmModes = (Collection<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
+    if(eligibleOsmModes != null)
+    {
+      return Collections.unmodifiableCollection(eligibleOsmModes);
+    }
+    return null;
   }
                                                           
   
@@ -316,7 +310,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param osmEntityStation of the relation to process
    * @param tags of the osm entity representation a station
    */
-  protected void processTransferZoneGroupMemberStation(TransferZoneGroup transferZoneGroup, OsmEntity osmEntityStation, Map<String, String> tags) {
+  protected void updateTransferZoneGroupStationName(TransferZoneGroup transferZoneGroup, OsmEntity osmEntityStation, Map<String, String> tags) {
     
     if(!transferZoneGroup.hasName()) {
       String stationName = tags.get(OsmTags.NAME);
@@ -324,11 +318,28 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         transferZoneGroup.setName(stationName);
       }
     }
-    
-    OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
-    getZoningReaderData().removeUnproccessedStation(ptVersion, osmEntityStation);  
-    
+      
   }  
+  
+  /** process an osm entity that is classified as a (train) station. For this to register on the transfer zone, we try to utilise its name and use it for the zone
+   * name if it is empty. We also record it as an input property for future reference, e.g. key=station and value the name of the osm station
+   *   
+   * @param transferZone the osm station relates to 
+   * @param tags of the osm entity representation a station
+   */  
+  protected void updateTransferZoneStationName(TransferZone transferZone, Map<String, String> tags) {
+    
+    String stationName = tags.get(OsmTags.NAME);
+    if(!transferZone.hasName()) {      
+      if(stationName!=null) {
+        transferZone.setName(stationName);
+      }
+    }
+    /* only set when not already set, because when already set it is likely the existing station name is more accurate */
+    if(!transferZone.hasInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY)) {
+      transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
+    }
+  }    
   
   /** Create a new PLANit node required for connectoid access, register it and update stats
    * 
@@ -463,7 +474,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       LOGGER.fine(String.format("Salvaged: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
     }else {  
-      /* correctly tagged -> determine if any mapped planit modes ara available and we should create the transfer zone at all */
+      /* correctly tagged -> determine if any mapped planit modes are available and we should create the transfer zone at all */
       Set<Mode> planitModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);
       if(planitModes != null && !planitModes.isEmpty()) {
         transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);

@@ -163,15 +163,4 @@ public class PlanitOsmHandlerHelper {
     });
   }   
   
-  /** collect the osm modes (mapped to planit modes) deemed eligible on the PtOsmEntity based on the tags of this entity
-   *  
-   * @param osmEntity to check
-   * @param tags of the entity
-   * @param defaultOsmMode to apply in case no modes are tagged, when null no default mode is applied
-   * @return planit modes eligible
-   */
-  public  static Set<Mode> collectEligiblePlanitModesOnPtOsmEntity(OsmEntity osmEntity, Map<String,String> tags, PlanitOsmNetworkSettings settings, String defaultOsmMode) {
-    Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntity.getId(), tags, null);    
-    return settings.getMappedPlanitModes(eligibleOsmModes);
-  }
 }

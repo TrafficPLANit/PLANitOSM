@@ -241,7 +241,7 @@ public class PlanitOsmModeUtils {
     }
     
     /* water modes */
-    String defaultWaterMode = OsmWaterModeTags.isWaterModeTag(defaultOsmMode) ? defaultOsmMode : null;
+    String defaultWaterMode = OsmWaterModeTags.isWaterModeTag(defaultOsmMode) ? defaultOsmMode : null;    
     Set<String> eligibleOsmWaterModes = collectEligibleOsmWaterModesOnPtOsmEntity(tags, defaultWaterMode);
     if(eligibleOsmWaterModes!=null && !eligibleOsmWaterModes.isEmpty()) {
       if(eligibleOsmModes!=null) {
@@ -250,33 +250,55 @@ public class PlanitOsmModeUtils {
         eligibleOsmModes = eligibleOsmWaterModes;
       }
     }    
-  
-    /* special case implied Ptv1 way modes (inferred) */
-    Set<String> eligiblePtv1OsmModes = null; 
-    if(PlanitOsmUtils.isCompatibleWith(OsmPtVersionScheme.VERSION_1, tags)){
-      /* if Ptv1 tags are present it is possible user neglected explicit access for modes because it can be derived from the fact this is a bus_stop or tram_stop */
-      if(tags.containsKey(OsmHighwayTags.HIGHWAY) && tags.get(OsmHighwayTags.HIGHWAY).equals(OsmPtv1Tags.BUS_STOP)) {
-        eligiblePtv1OsmModes = Set.of(OsmRoadModeTags.BUS);
-      }else if(tags.containsKey(OsmRailwayTags.RAILWAY)) {
-        String railWayValueTag = tags.get(OsmRailwayTags.RAILWAY);
-        if(railWayValueTag.equals(OsmPtv1Tags.TRAM_STOP)) {
-          eligiblePtv1OsmModes = Set.of(OsmRailModeTags.TRAM);
-        }else if(railWayValueTag.equals(OsmPtv1Tags.PLATFORM)) {
-          /* unknown, so better to allow a multitude of options */
-          eligiblePtv1OsmModes = Set.of(OsmRailModeTags.TRAIN,OsmRailModeTags.SUBWAY,OsmRailModeTags.LIGHT_RAIL);
-        }
-      }
-    }  
-    
-    if(eligiblePtv1OsmModes!=null) {
-      if(eligibleOsmModes!=null) {
-        eligibleOsmModes.addAll(eligiblePtv1OsmModes);
-      }else {
-        eligibleOsmModes = eligiblePtv1OsmModes;
-      }
-    }
-    
+          
     return eligibleOsmModes;       
+  }
+
+  /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported,
+   * <ul>
+   * <li>highway=bus_stop gives bus</li>
+   * <li>highway=station gives bus</li>
+   * <li>highway=platform gives bus</li>
+   * <li>highway=platform_edge gives bus</li>
+   * <li>railway=station gives train</li>
+   * <li>railway=platform gives train</li>
+   * <li>railway=platform_edge gives train</li>
+   * <li>railway=halt gives train</li>
+   * <li>railway=tram_stop gives tram</li>
+   * </ul> 
+   * @param tags to extract information from
+   * @return default mode, null if no match could be made
+   */
+  public static String identifyPtv1DefaultMode(Map<String, String> tags) {
+    if(OsmPtv1Tags.hasPtv1ValueTag(tags)) {
+      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+        /* bus_stop --> bus */
+        if(OsmPtv1Tags.isBusStop(tags)) {
+          return OsmRoadModeTags.BUS;
+        }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, 
+            OsmPtv1Tags.STATION, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE)) {
+          return OsmRoadModeTags.BUS;
+        }else {
+          LOGGER.warning(String.format(
+              "unsupported Ptv1 value tag highway=%s used when identifying default mode, ignored",tags.get(OsmHighwayTags.HIGHWAY)));
+        }
+      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
+        /* tram_stop -> tram */
+        if(OsmPtv1Tags.isTramStop(tags)) {
+          return OsmRailModeTags.TRAM;
+        }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmRailwayTags.RAILWAY, 
+            OsmPtv1Tags.STATION, OsmPtv1Tags.HALT, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE)) {
+          return OsmRailModeTags.TRAIN;
+        }else {
+          LOGGER.warning(String.format(
+              "unsupported Ptv1 value tag railway=%s used when identifying default mode, ignored",tags.get(OsmRailwayTags.RAILWAY)));  
+        }
+      }else {
+        LOGGER.warning("unknown Ptv1 key tag used when identifying default mode, ignored");
+      }
+      
+    }
+    return null;
   }
 
 }
