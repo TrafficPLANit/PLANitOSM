@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
+import org.planit.osm.settings.network.PlanitOsmRailwaySettings;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -250,11 +251,17 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void processStationNotPartOfStopArea(OsmEntity osmStation, Envelope eligibleSearchBoundingBox) throws PlanItException {    
-    /* potential transfer zones in neighbourhood...(if it is a large station some platforms might not be identified, but as long as
-     * we only use the name of the station this is not a problem.
-     * TODO: more elaborate search for all platforms using transitive approach, where for each found platform, we again create a bounding box search area
-     * for closeby platforms. This way all local platforms will be found*/
+    /* mark as processed */
     Map<String,String> tags = OsmModelUtil.getTagsAsMap(osmStation);    
+    OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
+    getZoningReaderData().removeUnproccessedStation(ptVersion, osmStation);
+    
+    if(osmStation.getId()==325641844) {
+      int bla = 4;
+    }
+        
+    /* eligible modes for station, must at least support one or more mapped modes */
+    Set<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmStation.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags) );   
     Set<TransferZone> matchedTransferZones = new HashSet<TransferZone>();
     Collection<TransferZone> potentialTransferZones = getZoningReaderData().getTransferZonesWithoutConnectoid(eligibleSearchBoundingBox);
     if(potentialTransferZones != null && !potentialTransferZones.isEmpty()) {
@@ -262,23 +269,26 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       if(osmStation.getId()==485847421) {
         int bla = 4;
       }        
-      
-      /* eligible modes for station */
-      String defaultEligibleMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-      if(defaultEligibleMode == null) {
-        /* no default found, likely because this is a Ptv2 station, in this case we assume default of train, because almost all station will be train stations */
-        defaultEligibleMode = OsmRailModeTags.TRAIN;
-      }
-      Set<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmStation.getId(), tags, defaultEligibleMode );
-      
-      /* local transfer zones to match */
+            
+      /* find potential matched transfer zones based on mode compatibility while tracking group memberships */
       Set<TransferZoneGroup> potentialTransferZoneGroups = new HashSet<TransferZoneGroup>();
       Set<TransferZone> modeCompatibleTransferZones = new HashSet<TransferZone>();
       for(TransferZone transferZone : potentialTransferZones) {
                 
         Collection<String> transferZoneSupportedModes = getEligibleOsmModesForTransferZone(transferZone);
-        if(transferZoneSupportedModes==null || Collections.disjoint(eligibleOsmModes,transferZoneSupportedModes)) {
-          /* no overlap between modes, so transfer zone cannot be matched to this transfer zone */
+        if(transferZoneSupportedModes==null) {       
+          /* zone has no known modes, not a trustworthy match */ 
+          continue;
+        } 
+        Set<String> overlappingModes = new HashSet<String>(transferZoneSupportedModes);
+        if(eligibleOsmModes !=null) {          
+          /* get intersection of station and zone modes */
+          overlappingModes.retainAll(eligibleOsmModes);
+        }
+        /* only proceed when there is a valid mapping based on overlapping between station and zone, while in absence
+         * of station modes, we trust any nearby zone with mapped mode */
+        if(!getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(overlappingModes)) {
+          /* no overlapping mapped modes while both have explicit osm modes available, not a match */
           continue;
         }
         
@@ -290,9 +300,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           modeCompatibleTransferZones.add(transferZone);
         }
       }      
-      
-      
-      /* transfer group match(es) */
+            
+      /* find transfer group and zone match(es) based on proximity -> then process accordingly */
       if(!potentialTransferZoneGroups.isEmpty()) {
         /* when part of one or more transfer zone groups -> find transfer zone group with closest by transfer zone
          * then update all transfer zones within that group with this station information...
@@ -318,18 +327,18 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
     
     if(matchedTransferZones.isEmpty()) {
-      /* we could potentially create transfer zones and connectoids for it, but so far we have never encountered this situation and
-       * to do this properly we would need to spatially index all Osm nodes or loop over them sequentially. The first is memory intensive
-       * the second is slow. So until really needed, we leave this for now and simply issue a warning */
-      LOGGER.warning(String.format("Dangling station %d found (no nearby platforms/poles nor part of stop_area), ignored",osmStation.getId())); 
+      /* create a new station with transfer zones and connectoids based on the stations eligible modes (if any) 
+       * it is however possible that we found no matches because the station represents only unmapped modes, e.g. ferry 
+       * in which case we can safely skip*/
+      if(getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(eligibleOsmModes)) {
+        /* station with mapped modes */
+        LOGGER.warning(String.format("Dangling station %d found (no mode compatible nearby platforms/poles nor stop_area found), ignored",osmStation.getId()));
+      }             
     }else {      
       String transferZonesExternalId = matchedTransferZones.stream().map( z -> z.getExternalId()).collect(Collectors.toSet()).toString();
       LOGGER.info(String.format("Station %d mapped to platform/pole(s) %s",osmStation.getId(), transferZonesExternalId));
     }
-    
-    /* mark as processed */
-    OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
-    getZoningReaderData().removeUnproccessedStation(ptVersion, osmStation);    
+        
   }
   
   /**
