@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -367,6 +368,21 @@ public abstract class PlanitOsmWaySettings {
   protected Mode getMappedPlanitMode(final String osmMode) {
     return this.osmMode2PlanitModeMap.get(osmMode);
   }  
+  
+  /** convenience method that collects the currently mapped Osm modes for the given planit mode
+   * 
+   * @param planitMode to collect mapped mode for (if any)
+   * @return mapped osm modes, if not available empty collection is returned
+   */  
+  protected Collection<String> getMappedOsmModes(final Mode planitMode) {
+    Set<String> mappedOsmModes = new HashSet<String>();
+    for( Entry<String, Mode> entry : osmMode2PlanitModeMap.entrySet()) {
+      if(entry.getValue().idEquals(planitMode)) {
+        mappedOsmModes.add(entry.getKey());
+      }
+    }
+    return mappedOsmModes;
+  }
     
   /** verify if a particular osm mode is allowed on the provided osm way type
    *  e.g. is train allowed on rail?

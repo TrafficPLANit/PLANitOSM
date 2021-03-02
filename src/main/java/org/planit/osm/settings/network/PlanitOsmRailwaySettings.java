@@ -289,12 +289,20 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
    * @return mapped PLANit mode, if not available null is returned
    */
   public Mode getMappedPlanitRailMode(final String osmMode) {
-    String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmMode);
-    if(OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
+    if(OsmRailModeTags.isRailModeTag(osmMode)) {
       return getMappedPlanitMode(osmMode);
     }
     return null;
   }  
+  
+  /** convenience method that collects the currently mapped osm rail modes for the given planit mode
+   * 
+   * @param planitMode to collect mapped mode for (if any)
+   * @return mapped osm modes, if not available empty collection is returned
+   */  
+  public final Collection<String> getMappedOsmRailModes(final Mode planitMode) {    
+    return getMappedOsmModes(planitMode);
+  }   
     
   /**
    * Collect all Osm modes that are allowed for the given osmRailway type as configured by the user
@@ -305,5 +313,5 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
   public Collection<String> collectAllowedOsmRailwayModes(String osmRailwayValueType) {
     return collectAllowedOsmWayModes(osmRailwayValueType);    
   }
- 
+    
 }

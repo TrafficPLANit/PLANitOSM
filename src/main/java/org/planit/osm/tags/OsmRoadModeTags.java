@@ -1,6 +1,7 @@
 package org.planit.osm.tags;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -153,6 +154,25 @@ public class OsmRoadModeTags {
   public final static String[] getSupportedRoadModeTagsAsArray() {
     String[] modeTagsArray = new String[MODE_TAGS.size()];
     return MODE_TAGS.toArray(modeTagsArray);
+  }
+
+  /** verify if any of the passed in osmModes can be qualified as a road mode
+   * @param osmModes
+   * @return true when overlap exists, false otherwise
+   */
+  public static boolean containsAnyMode(Collection<String> osmModes) {
+    return !Collections.disjoint(MODE_TAGS, osmModes);
+  }
+
+  /** collect the modes that represent the intersection of the passed in modes and available modes of this class
+   * 
+   * @param eligibleOsmModes to use
+   * @return intersection with modes in this class
+   */
+  public static Collection<String> getModesFrom(final Collection<String> eligibleOsmModes) {
+    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+    intersectionModes.retainAll(MODE_TAGS);
+    return intersectionModes;
   }
   
 }

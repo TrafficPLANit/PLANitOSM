@@ -300,6 +300,37 @@ public class PlanitOsmNetworkSettings {
   public Integer getDefaultDirectionalLanesByWayType(String osmWayKey, String osmWayValue) {
     return this.laneConfiguration.getDefaultDirectionalLanesByWayType(osmWayKey, osmWayValue);    
   }
+  
+  /** collect the mapped osm modes based on the provided planit mode
+   * @param planitModes to get mapped planit modes for
+   * @return mapped osm modes, empty if no matches
+   */  
+  public Collection<String> getMappedOsmModes(Mode planitMode) {
+    Collection<String> theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitMode);
+    Collection<String> theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitMode);
+    theRoadModes.addAll(theOsmRailModes);
+    return theRoadModes;
+  }  
+  
+  /** collect the mapped osm modes based on the provided planit modes (if any)
+   * @param planitModes to get mapped planit modes for
+   * @return mapped osm modes, empty if no matches
+   */
+  public Set<String> getMappedOsmModes(Collection<Mode> planitModes) {
+    HashSet<String> mappedOsmModes = new HashSet<String>();
+    
+    if(planitModes == null) {
+      return mappedOsmModes;
+    } 
+    
+    for(Mode planitMode : planitModes) {
+      Collection<String> theModes = getMappedOsmModes(planitMode);
+      if(theModes != null) {
+        mappedOsmModes.addAll(theModes);
+      }
+    }    
+    return mappedOsmModes; 
+  }   
     
   /** convenience method that collects the currently mapped PLANit mode (road or rail) for the given OSM mode
    * 
@@ -365,9 +396,11 @@ public class PlanitOsmNetworkSettings {
    * @return true if any is mapped, false otherwise
    */  
   public boolean hasAnyMappedPlanitMode(final Collection<String> osmModes) {
-    for(String osmMode : osmModes) {
-      if(hasMappedPlanitMode(osmMode)) {
-        return true;
+    if(osmModes!=null) {
+      for(String osmMode : osmModes) {
+        if(hasMappedPlanitMode(osmMode)) {
+          return true;
+        }
       }
     }
     return false;
@@ -564,6 +597,7 @@ public class PlanitOsmNetworkSettings {
   public void setPlanitInfrastructureLayerConfiguration(
       InfrastructureLayersConfigurator planitInfrastructureLayerConfiguration) {
     this.planitInfrastructureLayerConfiguration = planitInfrastructureLayerConfiguration;
-  }   
+  }
+ 
  
 }

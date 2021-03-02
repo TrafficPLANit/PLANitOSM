@@ -405,7 +405,15 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
     return null;
   }
   
-  
+  /** convenience method that collects the currently mapped osm road modes for the given planit mode
+   * 
+   * @param planitMode to collect mapped mode for (if any)
+   * @return mapped osm modes, if not available empty collection is returned
+   */  
+  public final Collection<String> getMappedOsmRoadModes(final Mode planitMode) {    
+    return getMappedOsmModes(planitMode);
+  }      
+
   /**
    * Collect all Osm modes that are allowed for the given osmHighway type as configured by the user
    * 
@@ -430,6 +438,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    */  
   public void logUnsupportedOsmHighwayTypes() {
     logUnsupportedOsmWayTypes();
-  }   
+  }
+ 
 
 }

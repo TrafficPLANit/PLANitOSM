@@ -93,4 +93,23 @@ public class OsmRailModeTags {
     return OsmRailwayTags.RAIL.equals(osmRailwayValue) ? TRAIN : osmRailwayValue;
   } 
   
+  /** verify if any of the passed in osmModes can be qualified as a rail mode
+   * @param osmModes
+   * @return true when overlap exists, false otherwise
+   */
+  public static boolean containsAnyMode(Collection<String> osmModes) {
+    return !Collections.disjoint(MODE_TAGS, osmModes);
+  }  
+  
+  /** collect the modes that represent the intersection of the passed in modes and available modes of this class
+   * 
+   * @param eligibleOsmModes to use
+   * @return intersection with modes in this class
+   */
+  public static Collection<String> getModesFrom(final Collection<String> eligibleOsmModes) {
+    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+    intersectionModes.retainAll(MODE_TAGS);
+    return intersectionModes;
+  }  
+  
 }

@@ -687,7 +687,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
       String ptv2ValueTag = tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT);
       
-      if(osmWay.getId()==216906045l) {
+      if(osmWay.getId()==208506996) {
         int bla = 4;
       }
       /* platform */

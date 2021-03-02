@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
+import org.planit.osm.settings.network.PlanitOsmRailwaySettings;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -25,6 +26,7 @@ import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
@@ -95,6 +97,30 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       return OsmPtVersionScheme.VERSION_1;
     }
     return OsmPtVersionScheme.NONE;
+  }  
+  
+  /** find out if link osmModesToCheck are compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
+   * mode that is mapped to a planit mode. When one allows for pseudo comaptibility we relax the restrictions such that any rail/road/water mode
+   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
+   * to filter out definite non-matches.
+   *  
+   * @param referenceOsmModes to map against (may be null)
+   * @param potentialTransferZones to extract transfer zone groups from
+   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
+   * @return matched transfer zones
+   */   
+  private boolean isModeCompatible(Collection<String> osmModesToCheck, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+    /* collect compatible modes */
+    Collection<String> overlappingModes = PlanitOsmModeUtils.getCompatibleModes(osmModesToCheck, referenceOsmModes, allowPseudoMatches);    
+    
+    /* only proceed when there is a valid mapping based on overlapping between reference modes and zone modes, while in absence
+     * of reference osm modes, we trust any nearby zone with mapped mode */
+    if(getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(overlappingModes)) {
+      /* no overlapping mapped modes while both have explicit osm modes available, not a match */
+      return true;
+    }
+    return false;    
+
   }  
   
   /** create a new but unpopulated transfer zone
@@ -202,7 +228,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     return transferZone;
   }    
-  
+    
   /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
    * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
    * via the generic input properties to be able to retrieve it if needed later
@@ -231,8 +257,58 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     return null;
   }
-                                                          
   
+  /** find out if transfer zone is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
+   * mode that is mapped to a planit mode.If the zone has no known modes, it is by definition not mode compatible. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
+   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
+   * to filter out definite non-matches.
+   *  
+   * @param transferZone to verify
+   * @param referenceOsmModes to macth against
+   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
+   * @return matched transfer zones
+   */   
+  protected boolean isTransferZoneModeCompatible(TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+    Collection<String> transferZoneSupportedModes = getEligibleOsmModesForTransferZone(transferZone);
+    if(transferZoneSupportedModes==null) {       
+      /* zone has no known modes, not a trustworthy match */ 
+      return false;
+    } 
+    
+    /* check mode compatibility on extracted transfer zone supported modes*/
+    return isModeCompatible(transferZoneSupportedModes, referenceOsmModes, allowPseudoMatches);    
+  } 
+  
+  /** find out if link is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
+   * mode that is mapped to a planit mode. If the zone has no known modes, it is by definition not mode compatible. 
+   * When one allows for pseudo comaptibility we relax the restrictions such that any rail/road/water mode
+   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
+   * to filter out definite non-matches.
+   *  
+   * @param referenceOsmModes to map agains (may be null)
+   * @param potentialTransferZones to extract transfer zone groups from
+   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
+   * @return matched transfer zones
+   */   
+  protected boolean isLinkModeCompatible(Link link, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+    Collection<String> osmLinkModes = new HashSet<String>(); 
+    if(link.hasEdgeSegmentAb()) {      
+      Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAvailableModes();
+      osmLinkModes.addAll(getNetworkToZoningData().getSettings().getMappedOsmModes(planitModes));
+    }
+    if(link.hasEdgeSegmentBa()) {      
+      Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentBa()).getLinkSegmentType().getAvailableModes();
+      osmLinkModes.addAll(getNetworkToZoningData().getSettings().getMappedOsmModes(planitModes));
+    }
+    if(osmLinkModes==null || osmLinkModes.isEmpty()) {
+      return false;
+    }
+    
+    /* check mode compatibility on extracted link supported modes*/
+    return isModeCompatible(osmLinkModes, referenceOsmModes, allowPseudoMatches);
+  }  
+                                                          
+
   /** verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
    * and is also activated for parsing based on the related settings
    * 

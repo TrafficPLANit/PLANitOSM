@@ -21,6 +21,10 @@ import org.planit.osm.tags.OsmWaterModeTags;
  * @author markr
  *
  */
+/**
+ * @author markr
+ *
+ */
 public class PlanitOsmModeUtils {
   
   /** the logger */
@@ -299,6 +303,39 @@ public class PlanitOsmModeUtils {
       
     }
     return null;
+  }
+
+  /** find out if modes to check are compatible with the reference osm modes. Mode compatible means at least one overlapping
+   * osm mode. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
+   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
+   * to filter out definite non-matches.
+   *  
+   * @param osmModesToCheck the modes to check
+   * @param referenceOsmModes modes to check against
+   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
+   * @return compatible modes found
+   */
+  public static Collection<String> getCompatibleModes(Collection<String> osmModesToCheck, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+    Set<String> overlappingModes = new HashSet<String>();          
+    if(referenceOsmModes !=null) {
+      if(allowPseudoMatches) {
+        /* retain all zone modes per overlapping type of modes */
+        if(OsmRoadModeTags.containsAnyMode(referenceOsmModes)) {
+          overlappingModes.addAll(OsmRoadModeTags.getModesFrom(osmModesToCheck));
+        }
+        if(OsmRailModeTags.containsAnyMode(referenceOsmModes)) {
+          overlappingModes.addAll(OsmRailModeTags.getModesFrom(osmModesToCheck));
+        }
+        if(OsmWaterModeTags.containsAnyMode(referenceOsmModes)) {
+          overlappingModes.addAll(OsmWaterModeTags.getModesFrom(osmModesToCheck));
+        }        
+      }else {                   
+        /* get intersection of station and zone modes */
+        overlappingModes.addAll(osmModesToCheck); 
+        overlappingModes.retainAll(referenceOsmModes);
+      }
+    }
+    return overlappingModes;
   }
 
 }
