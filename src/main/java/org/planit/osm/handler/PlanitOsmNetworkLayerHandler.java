@@ -105,9 +105,25 @@ public class PlanitOsmNetworkLayerHandler {
   private void updateAccessKeyBasedModeRestrictions(final Map<String, String> tags, final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
     
     String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+    
     /* access=<positive>*/
     if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
-      includedModesToUpdate.addAll(networkLayer.getSupportedModes());
+      
+      /* collect all modes the type of road supports...*/
+      Set<Mode> allowedModes = null;
+      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+        allowedModes = settings.getMappedPlanitModes(OsmRoadModeTags.getSupportedRoadModeTags());  
+      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
+        allowedModes = settings.getMappedPlanitModes(OsmRailModeTags.getSupportedRailModeTags());
+      }else {
+        /* no other major types yet supported */
+      }
+      
+      /*... retain all that are supported by the layer */
+      if(allowedModes!= null) {
+        allowedModes.retainAll(networkLayer.getSupportedModes());
+        includedModesToUpdate.addAll(allowedModes);
+      }
       includedModesToUpdate.removeAll(excludedModesToUpdate);       
     }
     /* access=<mode>*/
@@ -122,6 +138,7 @@ public class PlanitOsmNetworkLayerHandler {
       excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
       excludedModesToUpdate.removeAll(includedModesToUpdate);
     }
+    
   }  
   
   /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on
@@ -175,8 +192,8 @@ public class PlanitOsmNetworkLayerHandler {
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
     for(int nodeIndex = startIndex; nodeIndex <= endIndex;++nodeIndex) {
       OsmNode internalNode = osmNodes.get(osmWay.getNodeId(nodeIndex));
-      layerData.getLinksByInternalOsmNodeIds().putIfAbsent(internalNode.getId(), new ArrayList<Link>());
-      layerData.getLinksByInternalOsmNodeIds().get(internalNode.getId()).add(link);
+      layerData.getLinksByInternalOsmNodeId().putIfAbsent(internalNode.getId(), new ArrayList<Link>());
+      layerData.getLinksByInternalOsmNodeId().get(internalNode.getId()).add(link);
     }   
   }   
   
@@ -1184,8 +1201,8 @@ public class PlanitOsmNetworkLayerHandler {
       throw new PlanItException(" unable to break links and update osm ways with multiple planit links when container is null");
     }
     Long osmNodeId = Long.valueOf(theNode.getExternalId());
-    if(this.layerData.getLinksByInternalOsmNodeIds().containsKey(osmNodeId)) { 
-      List<Link> linksToBreak = this.layerData.getLinksByInternalOsmNodeIds().get(osmNodeId);
+    if(this.layerData.getLinksByInternalOsmNodeId().containsKey(osmNodeId)) { 
+      List<Link> linksToBreak = this.layerData.getLinksByInternalOsmNodeId().get(osmNodeId);
       PlanitOsmHandlerHelper.updateLinksForInternalNode(theNode, osmWaysWithMultiplePlanitLinks, linksToBreak /* <-- update */);            
       Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(theNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
       PlanitOsmHandlerHelper.addAllTo(newOsmWaysWithMultipleLinks, osmWaysWithMultiplePlanitLinks);
@@ -1227,7 +1244,7 @@ public class PlanitOsmNetworkLayerHandler {
       }
       
       //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
-      Map<Long, List<Link>> linkInternalOsmNodes = this.layerData.getLinksByInternalOsmNodeIds();
+      Map<Long, List<Link>> linkInternalOsmNodes = this.layerData.getLinksByInternalOsmNodeId();
       for(Entry<Long, List<Link>> entry : linkInternalOsmNodes.entrySet()) {        
         /* only intersection of links when at least two links are registered */
         if(entry.getValue().size() > 1 && !processedNodes.contains(entry.getKey())) {

@@ -558,7 +558,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);    
       boolean haltOnRailway = true;
       PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
-      if(layerData.getNodesByOsmId().get(osmNode.getId()) == null && layerData.getLinksByInternalOsmNodeIds().get(osmNode.getId())==null) {
+      if(layerData.getNodesByOsmId().get(osmNode.getId()) == null && layerData.getLinksByInternalOsmNodeId().get(osmNode.getId())==null) {
         /* node is not part of infrastructure */
         haltOnRailway = false;
       }    
@@ -687,9 +687,6 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
       String ptv2ValueTag = tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT);
       
-      if(osmWay.getId()==208506996) {
-        int bla = 4;
-      }
       /* platform */
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
         getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);
@@ -859,10 +856,6 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     /* process all but stop_positions */
     for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
       OsmRelationMember member = osmRelation.getMember(index);         
-            
-      if(member.getId()==459973944) {
-        int bla = 4;
-      }
       
       /* platform */
       if(member.getRole().equals(OsmPtv2Tags.PLATFORM_ROLE)) {        
@@ -1037,11 +1030,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-                
-    if(osmWay.getId()==460872009) {
-      int bla = 4;
-    }
-    
+                    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
     try {       
       

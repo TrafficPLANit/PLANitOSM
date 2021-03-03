@@ -1,6 +1,5 @@
 package org.planit.osm.handler;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,16 +12,15 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
-import org.planit.osm.util.PlanitOsmModeUtils;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.mode.Mode;
+import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
+import org.planit.utils.zoning.DirectedConnectoid;
+import org.planit.zoning.ZoningModifier;
 
-import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
@@ -118,7 +116,18 @@ public class PlanitOsmHandlerHelper {
     } 
     
     return newOsmWaysWithMultiplePlanitLinks;
-  }   
+  }     
+  
+  /** Delegate to zoning modifier, to be used in tandem with {@link breakLinksWithInternalNode} because it may invalidate the references to link segments on connectoids. this
+   * method will update the connectoids link segments in accordance with the breakLink action given the correct inputs are provided.
+   * 
+   * @param connectoidsDownstreamVerticesBeforeBreakLink to use
+   * @throws PlanItException thrown if error
+   */
+  public static void updateLinkSegmentsForDirectedConnectoids(Map<DirectedConnectoid, DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink) throws PlanItException {
+    ZoningModifier.updateLinkSegmentsForDirectedConnectoids(connectoidsDownstreamVerticesBeforeBreakLink);
+  }
+   
 
   /**
    * Extract a PLANit node from the osmNode information
@@ -135,7 +144,7 @@ public class PlanitOsmHandlerHelper {
     /* location info */
     Point geometry = null;
     try {
-      geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
+      geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
     } catch (PlanItException e) {
       LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
     }
@@ -161,6 +170,6 @@ public class PlanitOsmHandlerHelper {
       destination.putIfAbsent(osmWayId, new HashSet<Link>());
       destination.get(osmWayId).addAll(links);
     });
-  }   
+  }
   
 }

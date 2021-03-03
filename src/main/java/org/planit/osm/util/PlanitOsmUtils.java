@@ -16,7 +16,7 @@ import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.zoning.TransferZone;
+import org.planit.utils.graph.Edge;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.Zone;
 
@@ -151,7 +151,7 @@ public class PlanitOsmUtils {
    * @param osmEntity to find closest zone for
    * @param matchedTransferZones to check against
    * @param osmNodes to extract geo information from if needed
-   * @param geoUtils used to cmpute distances
+   * @param geoUtils used to compute distances
    * @return closest zone found
    * @throws PlanItException thrown if error
    */
@@ -168,6 +168,28 @@ public class PlanitOsmUtils {
     }
     return null;
   }
+  
+  /** find the link closest to the passed in osm Entity
+   * 
+   * @param osmEntity to find closest link for
+   * @param matchedEdges to check against
+   * @param geoUtils used to compute distances
+   * @return closest edge found
+   * @throws PlanItException thrown if error
+   */
+  public static Edge findEdgeClosest(OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+    EntityType type = Osm4JUtils.getEntityType(osmEntity);
+    switch (type) {
+    case Node:
+      return PlanitOsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, geoUtils);
+    case Way:
+      return PlanitOsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, geoUtils);      
+    default:
+      LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
+      break;
+    }
+    return null;
+  }  
 
   /** create a bounding box based on the provided offset and osm entity geometry. The bounding box adds the offset to the extremes of the geometry
    * 

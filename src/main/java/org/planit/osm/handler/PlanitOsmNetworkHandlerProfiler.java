@@ -9,9 +9,7 @@ import java.util.logging.Logger;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
-import org.planit.osm.tags.OsmRoadModeTags;
 
 /**
  * Track statistics on Osm network handler

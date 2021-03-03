@@ -7,9 +7,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -17,6 +16,7 @@ import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.function.PlanitExceptionConsumer;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.zoning.Zone;
@@ -34,6 +34,34 @@ public class PlanitOsmWayUtils {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmWayUtils.class.getCanonicalName());
+  
+  /** find the closest planit entity to the way from the available entities. This method computes the actual distance between any location on any line segment of the 
+   * geometry of the entity and any node on the way and it is therefore is very precise.
+   * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
+   * 
+   * @param osmWay reference way
+   * @param planitEntities to check against using their geometries
+   * @param maxDistanceMeters maximum allowedDistance to be eligible
+   * @param osmNodes the way might refer to
+   * @param geoUtils to compute projected distances
+   * @return closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  protected static <T> T findPlanitEntityClosest(final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+    T closestPlanitEntity = null; 
+    double minDistanceMeters = Double.POSITIVE_INFINITY;
+    for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
+      OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
+      if(osmNode != null) {
+        Pair<T,Double> result = PlanitOsmNodeUtils.findPlanitEntityClosest(osmNode, planitEntities, maxDistanceMeters, geoUtils);
+        if(result!=null && result.second() < minDistanceMeters) {
+          closestPlanitEntity = result.first();
+          minDistanceMeters = result.second();
+        }        
+      }
+    }
+    return closestPlanitEntity;
+  }
  
   
   /**
@@ -144,7 +172,7 @@ public class PlanitOsmWayUtils {
         missingNodes.add(osmWay.getNodeId(index));
         continue;
       }
-      coordArray[index] = new Coordinate(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
+      coordArray[index] = new Coordinate(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
     }
     
     /* call consumer */
@@ -292,17 +320,17 @@ public class PlanitOsmWayUtils {
     for(int index = 0 ; index < osmWay.getNumberOfNodes(); ++index) {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode != null) {
-        minX = Math.min(minX, PlanitOsmNodeUtils.getXCoordinate(osmNode) );
-        minY = Math.min(minY, PlanitOsmNodeUtils.getYCoordinate(osmNode) );
-        maxX = Math.max(maxX, PlanitOsmNodeUtils.getXCoordinate(osmNode) );
-        maxY = Math.max(maxY, PlanitOsmNodeUtils.getYCoordinate(osmNode) );        
+        minX = Math.min(minX, PlanitOsmNodeUtils.getX(osmNode) );
+        minY = Math.min(minY, PlanitOsmNodeUtils.getY(osmNode) );
+        maxX = Math.max(maxX, PlanitOsmNodeUtils.getX(osmNode) );
+        maxY = Math.max(maxY, PlanitOsmNodeUtils.getY(osmNode) );        
       }
     }
     return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
   }   
   
   /** find the closest zone to the way . This method computes the actual distance between any location on any linesegment of the outer boundary
-   * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it therefore is very precise
+   * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it is therefore is very precise
    * 
    * 
    * @param osmWay reference way
@@ -315,8 +343,8 @@ public class PlanitOsmWayUtils {
     return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
   }  
 
-  /** find the closest zone to the way . This method computes the actual distance between any location on any linesegment of the outer boundary
-   * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it therefore is very precise.
+  /** find the closest zone to the way . This method computes the actual distance between any location on any line segment of the outer boundary
+   * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it is therefore is very precise.
    * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
    * 
    * @param osmWay reference way
@@ -328,21 +356,72 @@ public class PlanitOsmWayUtils {
    * @throws PlanItException thrown if error
    */
   public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
-    Zone closestZone = null; 
+    return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, geoUtils);   
+  }   
+  
+  /** find the closest edge to the way from the available edges. This method computes the actual distance between any location on any line segment of the 
+   * geometry of the edge and any node on the way and it is therefore is very precise
+   * 
+   * 
+   * @param osmWay reference way
+   * @param edges to check against using their geometries
+   * @param osmNodes the way might refer to
+   * @param geoUtils to compute projected distances
+   * @return edge closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+    return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
+  }   
+  
+  /** find the closest edge to the way from the available edges. This method computes the actual distance between any location on any line segment of the 
+   * geometry of the edge and any node on the way and it is therefore is very precise.
+   * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
+   * 
+   * @param osmWay reference way
+   * @param edges to check against using their geometries
+   * @param maxDistanceMeters maximum allowedDistance to be eligible
+   * @param osmNodes the way might refer to
+   * @param geoUtils to compute projected distances
+   * @return edge closest, null if none matches criteria
+   * @throws PlanItException thrown if error
+   */
+  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+    return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, geoUtils);        
+  }
+
+
+  /** find the minimum distance line segment that connects the osmWay to the passed in line string geometry
+   * 
+   * @param osmWay to use
+   * @param geometry to find minimum line segment to
+   * @param osmNodes to use for extracting geo information regarding the osm way
+   * @param geoUtils to compute distances
+   * @return line segment with minimum distance connecting the way and the geometry
+   * @throws PlanItException thrown if error
+   */
+  public static LineSegment findMinimumLineSegmentBetween(OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
     double minDistanceMeters = Double.POSITIVE_INFINITY;
+    Coordinate osmWayMinDistanceCoordinate = null;
+    Coordinate geometryMinDistanceCoordinate = null;
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
+      Coordinate osmNodeCoordinate = new Coordinate(PlanitOsmNodeUtils.getX(osmNode),PlanitOsmNodeUtils.getY(osmNode));
       if(osmNode != null) {
-        Point point = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
-        Pair<Zone,Double> result = PlanitOsmNodeUtils.findZoneClosest(osmNode.getId(), point, zones, maxDistanceMeters, geoUtils);
-        if(result!=null && result.second() < minDistanceMeters) {
-          closestZone = result.first();
-          minDistanceMeters = result.second();
-        }        
+        Coordinate closestCoordinate = PlanitOsmNodeUtils.findClosestProjectedCoordinateTo(osmNode, geometry, geoUtils);
+        double distanceMeters = geoUtils.getDistanceInMetres(osmNodeCoordinate, closestCoordinate);
+        if(distanceMeters < minDistanceMeters) {
+          minDistanceMeters = distanceMeters;
+          osmWayMinDistanceCoordinate = osmNodeCoordinate;
+          geometryMinDistanceCoordinate = closestCoordinate;
+        }
       }
     }
     
-    return closestZone;    
-  }   
+    if(minDistanceMeters < Double.POSITIVE_INFINITY) {
+      return PlanitJtsUtils.createLineSegment(osmWayMinDistanceCoordinate, geometryMinDistanceCoordinate);
+    }
+    return null;
+  }  
 
 }

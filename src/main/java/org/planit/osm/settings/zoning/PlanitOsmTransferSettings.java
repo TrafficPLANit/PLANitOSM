@@ -1,7 +1,6 @@
 package org.planit.osm.settings.zoning;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -24,7 +23,10 @@ public class PlanitOsmTransferSettings {
   
   /** the maximum search radius used when trying to map stations to platforms on the networks, when no explicit
    * relation is made known by OSM */
-  protected double searchRadiusStationToPlatformInMeters = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;  
+  protected double searchRadiusStationToPlatformInMeters = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
+  
+  /** the maximum search radius used when trying to to find parallel platforms for stand-alone stations */
+  protected double searchRadiusStationToParallelTracksInMeters = DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M;  
   
   /** by default the transfer parser is deactivated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
@@ -35,9 +37,14 @@ public class PlanitOsmTransferSettings {
   public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 20;
   
   /**
-   * default search radius in meters for mapping stations to platforms on the networks, when they have no explicit reference
+   * default search radius in meters for mapping stations to platforms on the networks when they have no explicit reference
    */
-  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 100;  
+  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 30;  
+  
+  /**
+   * Default search radius in meters when trying to find parallel lines (tracks) for stand-alone stations 
+   */
+  public static double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
   
   /** allow users to provide OSM node ids that we are not to parse as stop_positions (including inferred stop_positinos not tagged as such), for example when we know the original coding or tagging is problematic */
   protected final Set<Long>  excludedStopPositions = new HashSet<Long>();
@@ -97,6 +104,22 @@ public class PlanitOsmTransferSettings {
   public double getStationToWaitingAreaSearchRadiusMeters() {
     return this.searchRadiusStationToPlatformInMeters;
   }  
+  
+  /** Set the maximum search radius used when trying to find parallel lines (tracks) for stand-alone stations 
+   * 
+   * @param searchRadiusInMeters to use
+   */
+  public void setStationToParallelTracksSearchRadiusMeters(double searchRadiusInMeters) {
+    this.searchRadiusStationToParallelTracksInMeters = searchRadiusInMeters;
+  }
+  
+  /** Collect the maximum search radius set when trying to find parallel lines (tracks) for stand-alone stations 
+   * 
+   * @return search radius in meters
+   */
+  public double getStationToParallelTracksSearchRadiusMeters() {
+    return this.searchRadiusStationToParallelTracksInMeters;
+  }         
   
   /** Provide OSM ids of stop_positions that we are not to parse, for example 
    * when we know the original coding or tagging is problematic

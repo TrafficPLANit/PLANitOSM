@@ -2,6 +2,7 @@ package org.planit.osm.handler;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,6 @@ import java.util.logging.Logger;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
-import org.planit.osm.settings.network.PlanitOsmRailwaySettings;
 import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -21,18 +21,17 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
-
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
@@ -52,18 +51,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningBaseHandler.class.getCanonicalName());
-  
-  /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
-   *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
-   *  on stop_positions that use this transfer zone
-   */
-  protected static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";
-  
-  /** When known, transfer zones are provided with a station name extracted from the osm station entity (if possible). Its name is stored under
-   * this key as input property
-   */
-  protected static final String TRANSFERZONE_STATION_INPUT_PROPERTY_KEY = "station";  
-        
+          
   // references
   
   /**
@@ -121,6 +109,39 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     return false;    
 
+  }
+  
+  /** find all already registered directed connectoids that reference a link segment part of the passed in link in the given network layer
+   * 
+   * @param link to find referencing directed connectoids for
+   * @param networkLayer the link resides on
+   * @return all identified directed connectoids
+   */
+  private Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, MacroscopicPhysicalNetwork networkLayer) {
+    Collection<DirectedConnectoid> referencingConnectoids = new HashSet<DirectedConnectoid>();
+    /* find downstream osm node ids for link segments on link */
+    Set<Long> eligibleOsmNodeIds = new HashSet<Long>();
+    if(link.hasEdgeSegmentAb()) {      
+      eligibleOsmNodeIds.add(Long.valueOf(link.getEdgeSegmentAb().getDownstreamVertex().getExternalId()));
+    }
+    if(link.hasEdgeSegmentBa()) {
+      eligibleOsmNodeIds.add(Long.valueOf(link.getEdgeSegmentBa().getDownstreamVertex().getExternalId()));
+    }
+    
+    /* find all directed connectoids with link segments that have downstream nodes matching the eligible downstream osm node ids */
+    for(Long osmNodeId : eligibleOsmNodeIds) {
+      Set<DirectedConnectoid> connectoidsWithDownstreamOsmNode = getZoningReaderData().getDirectedConnectoidsByOsmNodeId(networkLayer).get(osmNodeId);
+      if(connectoidsWithDownstreamOsmNode != null && !connectoidsWithDownstreamOsmNode.isEmpty()) {
+        for(DirectedConnectoid connectoid : connectoidsWithDownstreamOsmNode) {
+          if(connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentAb())) {
+            /* match exists */
+            referencingConnectoids.add(connectoid);
+          }
+        }
+      }
+    }
+    
+    return referencingConnectoids;
   }  
   
   /** create a new but unpopulated transfer zone
@@ -160,7 +181,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       isNode = true;
       OsmNode osmNode = OsmNode.class.cast(osmEntity);
       try {
-        theGeometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getXCoordinate(osmNode), PlanitOsmNodeUtils.getYCoordinate(osmNode));
+        theGeometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
       } catch (PlanItException e) {
         LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
       }
@@ -206,7 +227,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
         
     return transferZone;
-  }        
+  }    
+   
   
   /** create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
    * it is not possible to best determine where they should reside
@@ -227,7 +249,18 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       getZoningReaderData().addTransferZoneWithoutConnectoid(entityType, osmEntity.getId(), transferZone);
     }
     return transferZone;
-  }    
+  }  
+  
+  /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
+   *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
+   *  on stop_positions that use this transfer zone
+   */
+  protected static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";
+  
+  /** When known, transfer zones are provided with a station name extracted from the osm station entity (if possible). Its name is stored under
+   * this key as input property
+   */
+  protected static final String TRANSFERZONE_STATION_INPUT_PROPERTY_KEY = "station";   
     
   /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
    * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
@@ -257,6 +290,30 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     return null;
   }
+  
+  /** collect the station name for a transfer zone (if any)
+   * @param transferZone to collect for
+   * @return station name
+   */
+  protected static String getTransferZoneStationName(TransferZone transferZone) {
+    return (String)transferZone.getInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY);
+  }
+  
+  /** collect the station name for a transfer zone (if any)
+   * @param transferZone to collect for
+   * @return station name
+   */
+  protected static void  setTransferZoneStationName(TransferZone transferZone, String stationName) {
+    transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
+  }  
+  
+  /** Verify if the transfer zone has a station name set
+   * @param transferZone to verify
+   * @return true when present, false otherwise
+   */  
+  protected static boolean hasTransferZoneStationName(TransferZone transferZone) {
+    return getTransferZoneStationName(transferZone) != null;
+  }  
   
   /** find out if transfer zone is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
    * mode that is mapped to a planit mode.If the zone has no known modes, it is by definition not mode compatible. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
@@ -412,8 +469,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       }
     }
     /* only set when not already set, because when already set it is likely the existing station name is more accurate */
-    if(!transferZone.hasInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY)) {
-      transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
+    if(!hasTransferZoneStationName(transferZone)) {
+      setTransferZoneStationName(transferZone, stationName);
     }
   }    
   
@@ -446,10 +503,21 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(planitNode == null) {
       
       /* make sure that we have the correct mapping from node to link (in case the link has been broken before in the network reader, or here, for example) */
-      List<Link> linksWithOsmNodeInternally = layerData.getLinksByInternalOsmNodeIds().get(osmNode.getId()); 
+      List<Link> linksWithOsmNodeInternally = layerData.getLinksByInternalOsmNodeId().get(osmNode.getId()); 
       if(linksWithOsmNodeInternally == null) {
         LOGGER.warning(String.format("Discard: Osm pt access node (%d) stop_position not attached to network, or not included in OSM file",osmNode.getId()));
         return null;
+      }
+      
+      /* track original combinations of linksegment/downstream vertex for each connectoid affected by breaking link (segments) they refer to 
+       * after breaking the links, we use this to identify if the link segment reference is still valid, if not modify to maintain most downstream
+       * link segment in relation to the original downstream vertex */
+      Map<DirectedConnectoid,DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<DirectedConnectoid,DirectedVertex>();
+      for(Link link : linksWithOsmNodeInternally) {
+        Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,networkLayer);
+        if(connectoids !=null && !connectoids.isEmpty()) {
+          connectoids.forEach( connectoid -> connectoidsDownstreamVerticesBeforeBreakLink.put(connectoid, connectoid.getAccessLinkSegment().getDownstreamVertex()));          
+        }
       }
 
       /* node is internal to an existing link, create it and break existing link */
@@ -459,13 +527,19 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* break link */
       CoordinateReferenceSystem crs = network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem();
       Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksWithOsmNodeInternally, networkLayer, crs);
+      
+      /* in case due to breaking links the access link segments no longer represent the linksegment directly upstream of the original vertex (downstream of the access link segment
+       * before breaking the links, this method will update the directed connectoids to undo this and update their access link segments where needed */
+      PlanitOsmHandlerHelper.updateLinkSegmentsForDirectedConnectoids(connectoidsDownstreamVerticesBeforeBreakLink);
+            
       /* update mapping since another osmWayId now has multiple planit links */
       PlanitOsmHandlerHelper.addAllTo(newlyBrokenLinks, layerData.getOsmWaysWithMultiplePlanitLinks());      
     }
     return planitNode;
   }    
   
- 
+
+
   /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node where the connectoids access link segments are extracted from.
    * Each of the connectoids is related to the passed in transfer zone. Also, we know that the osmNode that reflects the stop position related to the passed in transfer zone group, so
    * in case a connectoid is created and related to a transfer zone. This transfer zone must also be part of the passed in transfer zone group. If it is not something strange is happenning
@@ -545,7 +619,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* tagged osm modes */
     Set<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(eligibleOsmModes == null || eligibleOsmModes.isEmpty()) {
-      /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on closeby stop_positions with additional information 
+      /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any osm modes) */
       LOGGER.fine(String.format("Salvaged: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);

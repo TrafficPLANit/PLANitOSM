@@ -38,7 +38,7 @@ public class PlanitOsmNetworkLayerReaderData {
     return nodesByOsmId;
   }
  
-  public Map<Long, List<Link>> getLinksByInternalOsmNodeIds() {
+  public Map<Long, List<Link>> getLinksByInternalOsmNodeId() {
     return linkInternalOsmNodes;
   }
 
@@ -57,7 +57,7 @@ public class PlanitOsmNetworkLayerReaderData {
    * @return true when part of a geometry in the layer, false otherwise
    */
   public boolean isOsmNodePresentInLayer(long osmNodeId) {
-    return (getNodesByOsmId().containsKey(osmNodeId) || getLinksByInternalOsmNodeIds().containsKey(osmNodeId));
+    return (getNodesByOsmId().containsKey(osmNodeId) || getLinksByInternalOsmNodeId().containsKey(osmNodeId));
   }  
 
   /**

@@ -17,6 +17,7 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.osm.util.OsmPtVersionScheme;
 import org.planit.utils.geo.PlanitJtsIntersectZoneVisitor;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
@@ -285,7 +286,8 @@ public class PlanitOsmZoningReaderData {
   public Collection<TransferZone> getTransferZonesWithoutConnectoid(Envelope boundingBox) {
     
     final Set<TransferZone> correctZones = new HashSet<TransferZone>();
-    final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor = new PlanitJtsIntersectZoneVisitor<TransferZone>(boundingBox, correctZones);          
+    final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor = 
+        new PlanitJtsIntersectZoneVisitor<TransferZone>(PlanitJtsUtils.create2DPolygon(boundingBox), correctZones);          
     
     /* query the spatially indexed entries AND apply the visitor that filteres out false positives due to the coarseness of the quadtrees grid */
     for( Entry<EntityType, Quadtree> entry : transferZoneWithoutConnectoidBySpatialIndex.entrySet()) {
