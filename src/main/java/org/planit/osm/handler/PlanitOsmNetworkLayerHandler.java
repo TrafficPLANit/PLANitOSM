@@ -1,13 +1,11 @@
 package org.planit.osm.handler;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.LineString;
@@ -192,8 +190,7 @@ public class PlanitOsmNetworkLayerHandler {
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
     for(int nodeIndex = startIndex; nodeIndex <= endIndex;++nodeIndex) {
       OsmNode internalNode = osmNodes.get(osmWay.getNodeId(nodeIndex));
-      layerData.getLinksByInternalOsmNodeId().putIfAbsent(internalNode.getId(), new ArrayList<Link>());
-      layerData.getLinksByInternalOsmNodeId().get(internalNode.getId()).add(link);
+      layerData.registerOsmNodeIdAsInternalToPlanitLink(internalNode.getId(),link);
     }   
   }   
   
@@ -1201,9 +1198,8 @@ public class PlanitOsmNetworkLayerHandler {
       throw new PlanItException(" unable to break links and update osm ways with multiple planit links when container is null");
     }
     Long osmNodeId = Long.valueOf(theNode.getExternalId());
-    if(this.layerData.getLinksByInternalOsmNodeId().containsKey(osmNodeId)) { 
-      List<Link> linksToBreak = this.layerData.getLinksByInternalOsmNodeId().get(osmNodeId);
-      PlanitOsmHandlerHelper.updateLinksForInternalNode(theNode, osmWaysWithMultiplePlanitLinks, linksToBreak /* <-- update */);            
+    if(layerData.isOsmNodeInternalToAnyLink(osmNodeId)) {       
+      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalOsmNode(osmNodes.get(osmNodeId));     
       Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(theNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
       PlanitOsmHandlerHelper.addAllTo(newOsmWaysWithMultipleLinks, osmWaysWithMultiplePlanitLinks);
       return true;
@@ -1244,15 +1240,12 @@ public class PlanitOsmNetworkLayerHandler {
       }
       
       //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
-      Map<Long, List<Link>> linkInternalOsmNodes = this.layerData.getLinksByInternalOsmNodeId();
-      for(Entry<Long, List<Link>> entry : linkInternalOsmNodes.entrySet()) {        
-        /* only intersection of links when at least two links are registered */
-        if(entry.getValue().size() > 1 && !processedNodes.contains(entry.getKey())) {
-          /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
-          if(linkInternalOsmNodes.containsKey(entry.getKey())) {          
-            Node planitIntersectionNode = extractNode(entry.getKey());
-            breakLinksWithInternalNode(planitIntersectionNode, osmWaysWithMultiplePlanitLinks);                                    
-          }
+      Set<Long> osmNodeIdsInternalToPlanitLinks = this.layerData.getOsmNodeIdsInternalToAnyPlanitLink(2 /* minimum 2 links node is internal to */);
+      for(Long osmNodeId : osmNodeIdsInternalToPlanitLinks) {        
+        if(!processedNodes.contains(osmNodeId)) {
+          /* node does not yet exist in PLANit network because it was internal node so far, so create it first */        
+          Node planitIntersectionNode = extractNode(osmNodeId);
+          breakLinksWithInternalNode(planitIntersectionNode, osmWaysWithMultiplePlanitLinks);                                    
         }
       }
       

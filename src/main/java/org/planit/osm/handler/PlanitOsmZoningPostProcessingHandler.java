@@ -25,7 +25,6 @@ import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.index.quadtree.Quadtree;
-import org.locationtech.jts.index.strtree.STRtree;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
@@ -78,7 +77,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   /** to be able to find osm nodes internal to parsed planit links that we want to break to for example create stop locations for stand alone station, 
    * we must be able to spatially find those nodes spatially because they are not referenced by the station or planit link eplicitly, this is what we do here. 
    * It is not placed in the zoning data as it is only utilised in post-processing */
-  private Map<MacroscopicPhysicalNetwork, STRtree> spatiallyIndexedOsmNodesInternalToPlanitLinks = null;  
+  private Map<MacroscopicPhysicalNetwork, Quadtree> spatiallyIndexedOsmNodesInternalToPlanitLinks = null;  
   
   /**
    * created spatially indexed link container
@@ -98,11 +97,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Map<Long, OsmNode> osmNodes = getNetworkToZoningData().getOsmNodes();
     for(MacroscopicPhysicalNetwork layer : getNetworkToZoningData().getOsmNetwork().infrastructureLayers) {
       PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
-      spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new STRtree());
-      STRtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);
+      spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new Quadtree());
+      Quadtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);
       for( Entry<Long, Node> entry : layerData.getNodesByOsmId().entrySet()) {
         /* only add osm nodes internal to any planit link to reduce memory foot print */
-        if(layerData.isOsmNodeInternalToLink(entry.getKey())){
+        if(layerData.isOsmNodeInternalToAnyLink(entry.getKey())){
           OsmNode osmNode = osmNodes.get(entry.getKey());          
           spatialcontainer.insert(new Envelope(PlanitOsmNodeUtils.createCoordinate(osmNode)), osmNode);
         }
@@ -1007,7 +1006,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   public void reset() {  
     spatiallyIndexedPlanitLinks = new Quadtree();
-    spatiallyIndexedOsmNodesInternalToPlanitLinks = new HashMap<MacroscopicPhysicalNetwork, STRtree>();
+    spatiallyIndexedOsmNodesInternalToPlanitLinks = new HashMap<MacroscopicPhysicalNetwork, Quadtree>();
   }
   
 }

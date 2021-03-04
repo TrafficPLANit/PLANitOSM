@@ -35,60 +35,7 @@ public class PlanitOsmHandlerHelper {
   
   /** the logger to use */
   public static final Logger LOGGER = Logger.getLogger(PlanitOsmHandlerHelper.class.getCanonicalName());
-  
-  /** Identify which links truly have the passed in node as an internal node. whenever we have started with breaking links, or processing cirular ways
-   * we can no longer rely on the original internal node mapping. Instead, we must use a two step process:
-   * 1) identify the original osmWayId the node was internal to
-   * 2) use the known broken links by osmWayId, track the planit link that represents part of the original osmway and mark that as a link with the node as internal.
-   * 
-   * That is what this method does by updating the linksWithNodeInternallyToUpdate list based on the osmWaysWithMultiplePlanitLinks given the reference node
-   * 
-   * @param node the node to break at
-   * @param osmWaysWithMultiplePlanitLinks known osm ways with multiple planit links due to earlier breaking of links
-   * @param linksWithNodeInternallyToUpdate list of links the node is internal to not taken into account breaking of links that has occurred since (to be updated)
-   * @return the link to break, null if none could be found
-   * @throws PlanItException thrown if error
-   */
-  protected static void updateLinksForInternalNode(final Node node, final Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks, final List<Link> linksWithNodeInternallyToUpdate) throws PlanItException {
-    if(node != null && linksWithNodeInternallyToUpdate!= null && !linksWithNodeInternallyToUpdate.isEmpty()) {
-            
-      /* find replacement links for the original link to break in case the original already has been broken and we should use 
-       * one of the split off broken links instead of the original for the correct breaking for the given node (since it now resides on one of the broken
-       * links rather than the original full link that no longer exists in that form */
-      Set<Link> replacementLinks = new HashSet<Link>();
-      Iterator<Link> linksToBreakIter = linksWithNodeInternallyToUpdate.iterator();
-      while(linksToBreakIter.hasNext()) {
-        Link orginalLinkToBreak = linksToBreakIter.next(); 
-        
-        Long osmOriginalWayId = Long.valueOf(orginalLinkToBreak.getExternalId());
-        if(osmWaysWithMultiplePlanitLinks != null && osmWaysWithMultiplePlanitLinks.containsKey(osmOriginalWayId)) {
-          
-          /* link has been broken before, find out in which of its broken links the node to break at resides on */
-          Set<Link> earlierBrokenLinks = osmWaysWithMultiplePlanitLinks.get(osmOriginalWayId);
-          Link matchingEarlierBrokenLink = null;
-          for(Link link : earlierBrokenLinks) {
-            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(node.getPosition().getCoordinate(),link.getGeometry());
-            if(coordinatePosition.isPresent()) {
-              matchingEarlierBrokenLink = link;
-              break;
-            }
-          }
-          
-          /* remove original and mark found link as replacement link to break */
-          linksToBreakIter.remove();          
-          
-          /* verify if match is valid (which it should be) */
-          if(matchingEarlierBrokenLink==null) {
-            LOGGER.warning(String.format("unable to locate broken sublink of OSM way %s (id:%d), likely malformed way encountered, ignored",
-                orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
-          }else {
-            replacementLinks.add(matchingEarlierBrokenLink);
-          }          
-        }
-      }      linksWithNodeInternallyToUpdate.addAll(replacementLinks);
-    }
-  }  
-  
+    
   /** find all already registered directed connectoids that reference a link segment part of the passed in link in the given network layer
    * 
    * @param link to find referencing directed connectoids for

@@ -558,7 +558,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);    
       boolean haltOnRailway = true;
       PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
-      if(layerData.getNodesByOsmId().get(osmNode.getId()) == null && layerData.getLinksByInternalOsmNodeId().get(osmNode.getId())==null) {
+      if(layerData.getNodesByOsmId().get(osmNode.getId()) == null && layerData.isOsmNodeInternalToAnyLink(osmNode.getId())) {
         /* node is not part of infrastructure */
         haltOnRailway = false;
       }    
