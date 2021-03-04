@@ -333,13 +333,14 @@ public class PlanitOsmZoningReaderData {
   
   /* CONNECTOID RELATED METHODS */  
 
-  /** collect the registered connectoids by their osm id for a given network layer
+  /** collect the registered connectoids by their osm id for a given network layer (unmoidifable)
+   * 
    * @param networkLayer to use
    * @return registered directed connectoids by OsmId
    */
   public Map<Long, Set<DirectedConnectoid>> getDirectedConnectoidsByOsmNodeId(MacroscopicPhysicalNetwork networkLayer) {
     directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Long, Set<DirectedConnectoid>>());
-    return directedConnectoidsByOsmNodeId.get(networkLayer);
+    return Collections.unmodifiableMap(directedConnectoidsByOsmNodeId.get(networkLayer));
   }
   
   /** add a connectoid to the registered connectoids indexed by their osm id

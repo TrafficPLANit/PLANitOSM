@@ -113,7 +113,7 @@ public class PlanitOsmNodeUtils {
    * @param osmNode
    * @return
    */
-  public static Coordinate getCoordinate(OsmNode osmNode) {
+  public static Coordinate createCoordinate(OsmNode osmNode) {
     return new Coordinate(getX(osmNode), getY(osmNode));
   }
   
@@ -274,6 +274,31 @@ public class PlanitOsmNodeUtils {
     double xCoord = PlanitOsmNodeUtils.getX(((OsmNode)osmNode));
     double yCoord = PlanitOsmNodeUtils.getY(((OsmNode)osmNode));
     return geoUtils.createBoundingBox(xCoord, yCoord, offsetInMeters);
+  }
+
+
+  /** find (first) node who's location coincides with the provided coordinate from the collection of eligible nodes passed in
+   * @param coordinate to match
+   * @param osmNodes to match against
+   * @return found node that matches, null if no match found
+   */
+  public static OsmNode findNodeWithCoordinate2D(Coordinate coordinate, Collection<OsmNode> osmNodes) {
+    for(OsmNode osmNode : osmNodes) {
+      if(nodeLocationEquals2D(osmNode, coordinate)) {
+        return osmNode;
+      }
+    }
+    return null;
+  }
+
+
+  /** Verify if the location of the provided coordinate equals the node's location
+   * @param osmNode osmNode to check
+   * @param coordinate to check against
+   * @return true when a match, false otherwise
+   */
+  private static boolean nodeLocationEquals2D(OsmNode osmNode, Coordinate coordinate) {
+    return createCoordinate(osmNode).equals2D(coordinate);
   }
 
 }

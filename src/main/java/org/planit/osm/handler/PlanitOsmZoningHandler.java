@@ -501,7 +501,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     for(Mode mode : planitModes) {
       MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(mode);
-      Node planitNode = extractConnectoidAccessNode(networkLayer,osmNode);
+      Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);
       if(planitNode == null) {
         LOGGER.warning(String.format("Discard: osm node (%d) could not be converted to access node for transfer zone representation of tram_stop",osmNode.getId()));
         return;

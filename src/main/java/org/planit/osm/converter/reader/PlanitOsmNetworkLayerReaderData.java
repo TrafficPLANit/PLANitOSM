@@ -41,6 +41,15 @@ public class PlanitOsmNetworkLayerReaderData {
   public Map<Long, List<Link>> getLinksByInternalOsmNodeId() {
     return linkInternalOsmNodes;
   }
+  
+  /** Verify if osm node is registered as internal to a planit link
+   * 
+   * @param osmNodeId to verify
+   * @return true when registered as internal, false otherwise
+   */
+  public boolean isOsmNodeInternalToLink(Long osmNodeId) {
+    return getLinksByInternalOsmNodeId().containsKey(osmNodeId);
+  }     
 
   
   public Map<Long, Set<Link>> getOsmWaysWithMultiplePlanitLinks() {
@@ -59,6 +68,7 @@ public class PlanitOsmNetworkLayerReaderData {
   public boolean isOsmNodePresentInLayer(long osmNodeId) {
     return (getNodesByOsmId().containsKey(osmNodeId) || getLinksByInternalOsmNodeId().containsKey(osmNodeId));
   }  
+  
 
   /**
    * reset contents of members
@@ -67,5 +77,6 @@ public class PlanitOsmNetworkLayerReaderData {
     nodesByOsmId.clear();
     linkInternalOsmNodes.clear();
     osmWaysWithMultiplePlanitLinks.clear();
-  }  
+  }
+ 
 }

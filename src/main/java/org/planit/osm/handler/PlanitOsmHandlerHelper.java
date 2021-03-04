@@ -1,5 +1,6 @@
 package org.planit.osm.handler;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -48,7 +49,7 @@ public class PlanitOsmHandlerHelper {
    * @return the link to break, null if none could be found
    * @throws PlanItException thrown if error
    */
-  protected static void updateLinksForInternalNode(Node node, Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks, List<Link> linksWithNodeInternallyToUpdate) throws PlanItException {
+  protected static void updateLinksForInternalNode(final Node node, final Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks, final List<Link> linksWithNodeInternallyToUpdate) throws PlanItException {
     if(node != null && linksWithNodeInternallyToUpdate!= null && !linksWithNodeInternallyToUpdate.isEmpty()) {
             
       /* find replacement links for the original link to break in case the original already has been broken and we should use 
@@ -88,6 +89,39 @@ public class PlanitOsmHandlerHelper {
     }
   }  
   
+  /** find all already registered directed connectoids that reference a link segment part of the passed in link in the given network layer
+   * 
+   * @param link to find referencing directed connectoids for
+   * @param connectoidsByOsmId all connectoids of the network layer by their original osm id
+   * @return all identified directed connectoids
+   */
+  protected static Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, Map<Long, Set<DirectedConnectoid>> connectoidsByOsmId) {
+    Collection<DirectedConnectoid> referencingConnectoids = new HashSet<DirectedConnectoid>();
+    /* find downstream osm node ids for link segments on link */
+    Set<Long> eligibleOsmNodeIds = new HashSet<Long>();
+    if(link.hasEdgeSegmentAb()) {      
+      eligibleOsmNodeIds.add(Long.valueOf(link.getEdgeSegmentAb().getDownstreamVertex().getExternalId()));
+    }
+    if(link.hasEdgeSegmentBa()) {
+      eligibleOsmNodeIds.add(Long.valueOf(link.getEdgeSegmentBa().getDownstreamVertex().getExternalId()));
+    }
+    
+    /* find all directed connectoids with link segments that have downstream nodes matching the eligible downstream osm node ids */
+    for(Long osmNodeId : eligibleOsmNodeIds) {
+      Set<DirectedConnectoid> connectoidsWithDownstreamOsmNode = connectoidsByOsmId.get(osmNodeId);
+      if(connectoidsWithDownstreamOsmNode != null && !connectoidsWithDownstreamOsmNode.isEmpty()) {
+        for(DirectedConnectoid connectoid : connectoidsWithDownstreamOsmNode) {
+          if(connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentAb())) {
+            /* match exists */
+            referencingConnectoids.add(connectoid);
+          }
+        }
+      }
+    }
+    
+    return referencingConnectoids;
+  }  
+  
   /** Check if we should break any links for the passed in node and if so, do it
    * 
    * @param theNode to verify
@@ -101,7 +135,7 @@ public class PlanitOsmHandlerHelper {
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(Node theNode, List<Link> linksToBreak, MacroscopicPhysicalNetwork networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     if(linksToBreak != null) {
-      /* performing breaking of links, returns the broken links by the original link's PLANit edge id */
+      /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
       Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs);                 
       /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
       if(localBrokenLinks != null) {
@@ -124,9 +158,30 @@ public class PlanitOsmHandlerHelper {
    * @param connectoidsDownstreamVerticesBeforeBreakLink to use
    * @throws PlanItException thrown if error
    */
-  public static void updateLinkSegmentsForDirectedConnectoids(Map<DirectedConnectoid, DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink) throws PlanItException {
+  public static void updateAccessLinkSegmentsForDirectedConnectoids(Map<DirectedConnectoid, DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink) throws PlanItException {
     ZoningModifier.updateLinkSegmentsForDirectedConnectoids(connectoidsDownstreamVerticesBeforeBreakLink);
   }
+  
+  /**
+   * Delegate to zoning modifier, to be used in tandem with {@link breakLinksWithInternalNode} because it may invalidate the references to link segments on connectoids. this
+   * method will identify the connectoids access link segment's downstream vertex and should be invoked BEFORE any breakLink action. after the break link use 
+   * {@link updateAccessLinkSegmentsForDirectedConnectoids} with the results of this call to update the connectoids affected and make sure the refer to the same original vertex via
+   * an updated link segment (if needed). 
+   * 
+   * @param links to collect connectoid information for, i.e., only connectoids referencing link segments with a parent link in this collection
+   * @param connectoidsByOsmId all connectoids by their original osm id
+   * @return found connectoids and their access link segment's current downstream vertex 
+   */
+  public static Map<DirectedConnectoid, DirectedVertex> collectAccessLinkSegmentDownstreamVerticesForConnectoids(Collection<Link> links, Map<Long, Set<DirectedConnectoid>> connectoidsByOsmId) {    
+    Map<DirectedConnectoid,DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<DirectedConnectoid,DirectedVertex>();
+    for(Link link : links) {
+      Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,connectoidsByOsmId);
+      if(connectoids !=null && !connectoids.isEmpty()) {
+        connectoids.forEach( connectoid -> connectoidsDownstreamVerticesBeforeBreakLink.put(connectoid, connectoid.getAccessLinkSegment().getDownstreamVertex()));          
+      }
+    }
+    return connectoidsDownstreamVerticesBeforeBreakLink;
+  }  
    
 
   /**
