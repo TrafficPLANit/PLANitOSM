@@ -24,7 +24,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
@@ -95,17 +94,34 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * created spatially indexed osm nodes internal to existing planit links container
    */
   private void initialiseSpatiallyIndexedOsmNodesInternalToPlanitLinks() {
-    Map<Long, OsmNode> osmNodes = getNetworkToZoningData().getOsmNodes();
+    
+    double envelopeMinExtentAbsolute = Double.POSITIVE_INFINITY;
     for(MacroscopicPhysicalNetwork layer : getNetworkToZoningData().getOsmNetwork().infrastructureLayers) {
       PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
       spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new Quadtree());
       Quadtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);
-      for( Entry<Long, Node> entry : layerData.getPlanitNodesByOsmId().entrySet()) {
-        /* only add osm nodes internal to any planit link to reduce memory foot print */
-        if(layerData.isOsmNodeInternalToAnyLink(entry.getKey())){
-          OsmNode osmNode = osmNodes.get(entry.getKey());          
-          spatialcontainer.insert(new Envelope(PlanitOsmNodeUtils.createCoordinate(osmNode)), osmNode);
-        }
+            
+      Map<Point, Pair<Node, OsmNode>> nodesByLocation = layerData.getCreatedPlanitNodesByLocation();
+      if(!nodesByLocation.isEmpty()) {
+        Pair<Node, OsmNode> anyEntry = nodesByLocation.values().iterator().next();
+        /* because points have a delta of 0 in either dimension, the quadtree uses the default padding
+         * of 1/2. However, because we use long/lat, this is way to coarse and we must override this minimum
+         * extent, instead we set it roughly to the equivalent of 5 m (we do this once to avoid having to use geodetic calculations for every
+         * node which would be very time consuming */
+        double refPointX = PlanitOsmNodeUtils.getX(anyEntry.second());
+        double refPointY = PlanitOsmNodeUtils.getY(anyEntry.second());
+        Envelope boundingBox5Meters = geoUtils.createBoundingBox(refPointX, refPointY, 5 /*meters*/);
+        double deltaX = Math.abs(refPointX - boundingBox5Meters.getMaxX());
+        double deltaY = Math.abs(refPointY - boundingBox5Meters.getMaxY());
+        envelopeMinExtentAbsolute = Math.max(deltaY, deltaX);        
+      }
+            
+      Set<Point> registeredInternalLinkLocations = layerData.getRegisteredLocationsInternalToAnyPlanitLink();
+      for( Point location: registeredInternalLinkLocations) {
+        OsmNode osmNodeAtLocation = layerData.getOsmNodeInternalToLinkByLocation(location);
+        Envelope pointEnvelope = new Envelope(location.getCoordinate());
+        /* pad envelope with minium extent computed */
+        spatialcontainer.insert(Quadtree.ensureExtent(pointEnvelope, envelopeMinExtentAbsolute), osmNodeAtLocation);
       }
     }
   }  
@@ -491,11 +507,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Map<String,String> tags = OsmModelUtil.getTagsAsMap(osmStation);    
     OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
     getZoningReaderData().removeUnproccessedStation(ptVersion, osmStation);
-    
-    if(osmStation.getId()==325641844) {
-      int bla = 4;
-    }
-        
+            
     /* eligible modes for station, must at least support one or more mapped modes */
     Set<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmStation.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags) );   
     Set<TransferZone> matchedTransferZones = new HashSet<TransferZone>();
@@ -624,6 +636,10 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private void extractStandAloneStation(OsmEntity osmStation, Map<String, String> tags) throws PlanItException {
     
+    if(osmStation.getId()==482806609l) {
+      int bla = 4;
+    }
+    
     /* first identify if this is a road or rail based station because they are treated differently */
     String defaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
     Collection<String> eligibleStationModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmStation.getId(), tags, defaultMode);
@@ -695,7 +711,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         throw new PlanItException("unknown entity type %s encountered, skip connectoid creation for station %d, this should not happen",osmStation.getId());
       }
         
-      /* if close enough break at existing osm node to create stop_position/connectoid, otherwise create artifical non-osm node in closest location */  
+      /* if close enough break at existing osm node to create stop_position/connectoid, otherwise create artifical non-osm node in closest location */
+      Coordinate connectoidLocation = null;
       if(distanceToExistingCoordinateOnLinkInMeters > getSettings().getStopToWaitingAreaSearchRadiusMeters()) {
         /* too far, so we must break the existing link in appropriate location */
         LinearLocation projectedLinearLocationOnLink = null;
@@ -708,16 +725,14 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           throw new PlanItException("unknown entity type %s encountered for osm station %d, this should not happen",osmStation.getId());
         }
         
+        /* add projected location to geometry of link */
         Pair<LineString, LineString> splitLineString = PlanitJtsUtils.splitLineString(link.getGeometry(),projectedLinearLocationOnLink);          
         LineString linkGeometryWithExplicitProjectedCoordinate = PlanitJtsUtils.mergeLineStrings(splitLineString.first(),splitLineString.second());
-        link.setGeometry(linkGeometryWithExplicitProjectedCoordinate);
+        connectoidLocation = projectedLinearLocationOnLink.getCoordinate(link.getGeometry());
+        link.setGeometry(linkGeometryWithExplicitProjectedCoordinate);            
         
-        /* create directed connectoids for non-osm node coordinate ... */
-        for(Mode planitMode : planitStationModes) {
-          /* ... per mode (or update existing connectoid with mode access if valid */
-          extractDirectedConnectoidsForMode(null, tags, stationTransferZone, networkLayer, planitMode);
-        }        
-        //extractConnectoidAccessNodeByGeometryIndex(osmNode, networkLayer)
+        /* new location must be marked as internal to link, otherwise the link will not be broken when extracting connectoids at this location*/
+        getNetworkToZoningData().getNetworkLayerData(networkLayer).registerLocationAsInternalToPlanitLink(PlanitJtsUtils.createPoint(connectoidLocation), link);
         
       }else {
         
@@ -732,12 +747,16 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           throw new PlanItException("Unable to locate link internal osm node even though it is expected to exist when creating stop locations for osm station %d",osmStation.getId());
         }
         
-        /* create directed connectoids for existing osm node ... */
-        for(Mode planitMode : planitStationModes) {
-          /* ... per mode (or update existing connectoid with mode access if valid */
-          extractDirectedConnectoidsForMode(linkInternalOsmNode, tags, stationTransferZone, networkLayer, planitMode);
-        }
+        /* now convert osm node to location, since this location already existed, the osm node's location is already marked as internal to the link and ensures the link is 
+         * broken correctly when creating connectoids */
+        connectoidLocation = PlanitOsmNodeUtils.createCoordinate(linkInternalOsmNode);
       }
+        
+      /* create connectoids at identified location */
+      for(Mode planitMode : planitStationModes) {
+        /* ... per mode (or update existing connectoid with mode access if valid */
+        extractDirectedConnectoidsForMode(PlanitJtsUtils.createPoint(connectoidLocation), tags, stationTransferZone, networkLayer, planitMode);
+      }            
        
     }
     
@@ -885,12 +904,14 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     if(member.getType() != EntityType.Node) {
       throw new PlanItException("Stop_position %d encountered that it not an OSM node, this is not permitted",member.getId());
     }      
+    OsmNode stopPositionNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
+    Point stopLocation = PlanitOsmNodeUtils.createPoint(stopPositionNode);
                
     Boolean isKnownPtv2StopPosition = null; 
     if(getZoningReaderData().getUnprocessedPtv2StopPositions().contains(member.getId())){
       /* registered as unprocessed --> known and available for processing */
       isKnownPtv2StopPosition = true;      
-    }else if(getZoningReaderData().hasAnyDirectedConnectoidsForOsmNodeId(member.getId())) {
+    }else if(getZoningReaderData().hasAnyDirectedConnectoidsForLocation(stopLocation)) {
       /* already processed by an earlier relation --> stop_position resides in multiple stop_areas, this is strongly discouraged by OSM, but does occur still so we identify and skip (no need to process twice anyway)*/
       LOGGER.warning(String.format("Encountered stop_position %d in stop_area %s that has been processed by earlier stop_area already, skip",member.getId(), transferZoneGroup.getExternalId()));
       return;

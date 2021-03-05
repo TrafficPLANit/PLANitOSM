@@ -16,7 +16,6 @@ import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -455,7 +454,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
      * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
      * downstream vertex identified */
     Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = 
-        PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(linksToBreak, getZoningReaderData().getDirectedConnectoidsByOsmNodeId(networkLayer));
+        PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(linksToBreak, getZoningReaderData().getDirectedConnectoidsByLocation(networkLayer));
           
     /* break links */
     Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
@@ -468,27 +467,35 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
           
   }  
   
-  /** extract the connectoid access node. either it already exists as a planit node, or it is internal to an existing link. In the latter case
+  /** extract the connectoid access node based on the given location. Either it already exists as a planit node, or it is internal to an existing link. In the latter case
    * a new node is created and the existing link is broken. In the former case, we simply collect the planit node
-   * 
+   *
+   * @param osmNodeLocation to collect/create planit node for 
    * @param networkLayer to extract node on
-   * @param osmNode to collect planit node version for
    * @return planit node collected/created
    * @throws PlanItException thrown if error
-   */
-  protected Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-    final PlanitOsmNetworkLayerReaderData layerData = network2ZoningData.getNetworkLayerData(networkLayer);    
-    final Map<Long, Node> planitNodesByOsmId = layerData.getPlanitNodesByOsmId();
+   */  
+  protected Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+    final PlanitOsmNetworkLayerReaderData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
     
-    Node planitNode = planitNodesByOsmId.get(osmNode.getId());
+    /* check if already exists */
+    Node planitNode = layerData.getPlanitNodeByLocation(osmNodeLocation);
     if(planitNode == null) {
+      /* does not exist yet...create */
       
-      /* find the links with the osm node as internal */
-      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalOsmNode(osmNode);
+      /* find the links with the location registered as internal */
+      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
       if(linksToBreak != null) {
       
-        /* node is internal to an existing link, create it based on osm node */
-        planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNode, planitNodesByOsmId, networkLayer);
+        /* location is internal to an existing link, create it based on osm node if possible, otherwise base it solely on location provided*/
+        OsmNode osmNode = layerData.getOsmNodeByPlanitNodeLocation(osmNodeLocation);
+        if(osmNode != null) {
+          /* all regular cases */
+          planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNode, layerData, networkLayer);
+        }else {
+          /* special cases whenever parser decided that location required planit node even though there exists no osm node at this location */ 
+          planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNodeLocation, layerData, networkLayer);
+        }
         getProfiler().logConnectoidStatus(getZoning().connectoids.size());
                      
         /* now perform the breaking of links at the given node and update related tracking/reference information to broken link(segment)(s) where needed */
@@ -501,38 +508,61 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   /** extract the connectoid access node. either it already exists as a planit node, or it is internal to an existing link. In the latter case
    * a new node is created and the existing link is broken. In the former case, we simply collect the planit node
    * 
-   * @param networkLayer to extract node on
    * @param osmNode to collect planit node version for
+   * @param networkLayer to extract node on
    * @return planit node collected/created
    * @throws PlanItException thrown if error
    */
-  protected Node extractConnectoidAccessNodeByOsmNode(Point location, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-    final PlanitOsmNetworkLayerReaderData layerData = network2ZoningData.getNetworkLayerData(networkLayer);    
-    final Map<Point, Node> nodesByLocation = layerData.getPlanitNodesByLocation();
-    
-    Node planitNode = nodesByLocation.get(location);
-    if(planitNode == null) {
-      
-      /* find the links with the osm node as internal */
-      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(location);
-      if(linksToBreak != null) {
-      
-        /* node is internal to an existing link, create it based on osm node */
-        planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(location, nodesByLocation, networkLayer);
-        getProfiler().logConnectoidStatus(getZoning().connectoids.size());
-                     
-        /* now perform the breaking of links at the given node and update related tracking/reference information to broken link(segment)(s) where needed */
-        breakLinksAtPlanitNode(planitNode, networkLayer, linksToBreak);
-      }
-    }
-    return planitNode;
-  }  
-  
+  protected Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {        
+    Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);    
+    return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
+  }      
 
-  /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node where the connectoids access link segments are extracted from.
-   * Each of the connectoids is related to the passed in transfer zone. Also, we know that the osmNode that reflects the stop position related to the passed in transfer zone group, so
-   * in case a connectoid is created and related to a transfer zone. This transfer zone must also be part of the passed in transfer zone group. If it is not something strange is happenning
-   * in the osm tagging. We will salvage this by adding the transfer zone to the group here. 
+  /** create and/or update directed connectoids for the given mode and layer based on the passed in location where the connectoids access link segments are extracted for.
+   * Each of the connectoids is related to the passed in transfer zone.  
+   * 
+   * @param location to create the access point for as planit node
+   * @param tags to use
+   * @param transferZone this connectoid is assumed to provide access to
+   * @param networkLayer this connectoid resides on
+   * @param planitMode this connectoid is allowed access for
+   * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  protected boolean extractDirectedConnectoidsForMode(Point location, Map<String, String> tags, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode) throws PlanItException {
+    boolean success = true;
+    /* access node */
+    Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
+    if(planitNode==null) {
+      LOGGER.warning(String.format("Discard: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
+      success= false;
+    }
+    
+    if(success) {
+      /* already created connectoids */      
+      if(zoningReaderData.hasDirectedConnectoidForLocation(networkLayer, location)) {      
+        
+        /* update: connectoid already exists */
+        Set<DirectedConnectoid> connectoidsForNode = zoningReaderData.getDirectedConnectoidsByLocation(location, networkLayer);
+        connectoidsForNode.forEach( connectoid -> updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode)));        
+      }else {
+        
+        /* new connectoid, create and register */
+        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
+        if(newConnectoids==null || newConnectoids.isEmpty()) {
+          LOGGER.warning(String.format("Found eligible mode %s for stop_location of transferzone %s, but no access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
+          success = false;
+        }else {
+          newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByLocation(networkLayer, location ,connectoid));
+        }        
+      }
+    }
+    
+    return success;
+  }
+  
+  /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node (location) where the connectoids access link segments are extracted for.
+   * Each of the connectoids is related to the passed in transfer zone.  
    * 
    * @param osmNode to relate to planit network's incoming link segments as access points
    * @param tags to use
@@ -543,36 +573,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected boolean extractDirectedConnectoidsForMode(OsmNode osmNode, Map<String, String> tags, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode) throws PlanItException {
-    boolean success = true;
-    /* access node */
-    Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);    
-    if(planitNode==null) {
-      LOGGER.warning(String.format("Discard: osm node (%d) could not be converted to access node for transfer zone representation of osm entity %s",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
-      success= false;
-    }
-    
-    if(success) {
-      /* already created connectoids */
-      Map<Long, Set<DirectedConnectoid>> existingConnectoids = zoningReaderData.getDirectedConnectoidsByOsmNodeId(networkLayer);                    
-      if(existingConnectoids.containsKey(osmNode.getId())) {      
-        
-        /* update: connectoid already exists */
-        Set<DirectedConnectoid> connectoidsForNode = existingConnectoids.get(osmNode.getId());
-        connectoidsForNode.forEach( connectoid -> updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode)));        
-      }else {
-        
-        /* new connectoid, create and register */
-        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryEdgeSegments(), Collections.singleton(planitMode));      
-        if(newConnectoids==null || newConnectoids.isEmpty()) {
-          LOGGER.warning(String.format("Found eligible mode %s for osm node %d, but no access link segment supports this mode", planitMode.getExternalId(), osmNode.getId()));
-          success = false;
-        }else {
-          newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByOsmId(networkLayer, osmNode.getId(),connectoid));
-        }        
-      }
-    }
-    
-    return success;
+    Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);
+    return extractDirectedConnectoidsForMode(osmNodeLocation, tags, transferZone, networkLayer, planitMode);
   }
   
   /** create a dummy transfer zone without access to underlying osmNode or way and without any geometry or populated

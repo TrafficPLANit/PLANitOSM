@@ -198,7 +198,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
   @Override
   public Zoning read() throws PlanItException {
             
-    PlanitOsmZoningHandlerProfiler handlerProfiler = new PlanitOsmZoningHandlerProfiler(network2ZoningData.getOsmNetwork().infrastructureLayers.getNumberOfNodes());
+    PlanitOsmZoningHandlerProfiler handlerProfiler = new PlanitOsmZoningHandlerProfiler();
     logInfo(inputFile);
             
     /* preprocessing (multi-polygon relation: osm way identification)*/

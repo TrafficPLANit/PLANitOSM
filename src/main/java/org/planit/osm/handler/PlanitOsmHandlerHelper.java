@@ -3,12 +3,11 @@ package org.planit.osm.handler;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -40,27 +39,27 @@ public class PlanitOsmHandlerHelper {
   /** find all already registered directed connectoids that reference a link segment part of the passed in link in the given network layer
    * 
    * @param link to find referencing directed connectoids for
-   * @param connectoidsByOsmId all connectoids of the network layer by their original osm id
+   * @param knownConnectoidsByLocation all connectoids of the network layer indexed by their location
    * @return all identified directed connectoids
    */
-  protected static Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, Map<Long, Set<DirectedConnectoid>> connectoidsByOsmId) {
+  protected static Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, Map<Point, Set<DirectedConnectoid>> knownConnectoidsByLocation) {
     Collection<DirectedConnectoid> referencingConnectoids = new HashSet<DirectedConnectoid>();
-    /* find downstream osm node ids for link segments on link */
-    Set<Long> eligibleOsmNodeIds = new HashSet<Long>();
+    /* find eligible locations for connectoids based on downstream locations of link segments on link */
+    Set<Point> eligibleLocations = new HashSet<Point>();
     if(link.hasEdgeSegmentAb()) {      
-      eligibleOsmNodeIds.add(Long.valueOf(link.getEdgeSegmentAb().getDownstreamVertex().getExternalId()));
+      eligibleLocations.add(link.getEdgeSegmentAb().getDownstreamVertex().getPosition());
     }
     if(link.hasEdgeSegmentBa()) {
-      eligibleOsmNodeIds.add(Long.valueOf(link.getEdgeSegmentBa().getDownstreamVertex().getExternalId()));
+      eligibleLocations.add(link.getEdgeSegmentBa().getDownstreamVertex().getPosition());
     }
     
-    /* find all directed connectoids with link segments that have downstream nodes matching the eligible downstream osm node ids */
-    for(Long osmNodeId : eligibleOsmNodeIds) {
-      Set<DirectedConnectoid> connectoidsWithDownstreamOsmNode = connectoidsByOsmId.get(osmNodeId);
-      if(connectoidsWithDownstreamOsmNode != null && !connectoidsWithDownstreamOsmNode.isEmpty()) {
-        for(DirectedConnectoid connectoid : connectoidsWithDownstreamOsmNode) {
-          if(connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentAb())) {
-            /* match exists */
+    /* find all directed connectoids with link segments that have downstream locations matching the eligible locations identified*/
+    for(Point location : eligibleLocations) {
+      Set<DirectedConnectoid> knownConnectoidsForLink = knownConnectoidsByLocation.get(location);
+      if(knownConnectoidsForLink != null && !knownConnectoidsForLink.isEmpty()) {
+        for(DirectedConnectoid connectoid : knownConnectoidsForLink) {
+          if(connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentAb()) || connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentBa()) ) {
+            /* match */
             referencingConnectoids.add(connectoid);
           }
         }
@@ -82,19 +81,27 @@ public class PlanitOsmHandlerHelper {
    */
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(Node theNode, List<Link> linksToBreak, MacroscopicPhysicalNetwork networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
+    
     if(linksToBreak != null) {
-      /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-      Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs);                 
-      /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
-      if(localBrokenLinks != null) {
-        localBrokenLinks.forEach((id, links) -> {
-          links.forEach( brokenLink -> {
-            Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
-            newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
-            newOsmWaysWithMultiplePlanitLinks.get(brokenLinkOsmId).add(brokenLink);
-          });
-        });        
-      }  
+      
+      try {
+        /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
+        Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs);                 
+        /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
+        if(localBrokenLinks != null) {
+          localBrokenLinks.forEach((id, links) -> {
+            links.forEach( brokenLink -> {
+              Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
+              newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
+              newOsmWaysWithMultiplePlanitLinks.get(brokenLinkOsmId).add(brokenLink);
+            });
+          });        
+        }
+      }catch(PlanItException e) {
+        LOGGER.severe(e.getMessage());
+        LOGGER.severe(String.format("unable to break links %s for node %s, something unexpected went wrong",
+            linksToBreak.stream().map( link -> link.getExternalId()).collect(Collectors.toSet()).toString(), theNode.getExternalId()));
+      }
     } 
     
     return newOsmWaysWithMultiplePlanitLinks;
@@ -117,13 +124,13 @@ public class PlanitOsmHandlerHelper {
    * an updated link segment (if needed). 
    * 
    * @param links to collect connectoid information for, i.e., only connectoids referencing link segments with a parent link in this collection
-   * @param connectoidsByOsmId all connectoids by their original osm id
+   * @param connectoidsByLocation all connectoids indexed by their location
    * @return found connectoids and their access link segment's current downstream vertex 
    */
-  public static Map<DirectedConnectoid, DirectedVertex> collectAccessLinkSegmentDownstreamVerticesForConnectoids(Collection<Link> links, Map<Long, Set<DirectedConnectoid>> connectoidsByOsmId) {    
+  public static Map<DirectedConnectoid, DirectedVertex> collectAccessLinkSegmentDownstreamVerticesForConnectoids(Collection<Link> links, Map<Point, Set<DirectedConnectoid>> connectoidsByLocation) {    
     Map<DirectedConnectoid,DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<DirectedConnectoid,DirectedVertex>();
     for(Link link : links) {
-      Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,connectoidsByOsmId);
+      Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,connectoidsByLocation);
       if(connectoids !=null && !connectoids.isEmpty()) {
         connectoids.forEach( connectoid -> connectoidsDownstreamVerticesBeforeBreakLink.put(connectoid, connectoid.getAccessLinkSegment().getDownstreamVertex()));          
       }
@@ -134,12 +141,14 @@ public class PlanitOsmHandlerHelper {
   /** Create a new PLANit node required for connectoid access, register it and update stats
    * 
    * @param osmNode to extract PLANit node for
+   * @param layerData to register osm node to planit node mapping on
    * @param networkLayer to create it on
    * @return created planit node
+   * @throws PlanItException thrown if error
    */
-  public static Node createPlanitNodeForConnectoidAccess(OsmNode osmNode, final Map<Long, Node> nodesByOsmId,  MacroscopicPhysicalNetwork networkLayer) {
-    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);                
-    nodesByOsmId.put(osmNode.getId(), planitNode);
+  public static Node createPlanitNodeForConnectoidAccess(OsmNode osmNode, final PlanitOsmNetworkLayerReaderData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
+    layerData.registerPlanitNodeByOsmNode(osmNode, planitNode);
     return planitNode;
   }  
   
@@ -147,12 +156,14 @@ public class PlanitOsmHandlerHelper {
    * osm nodes in the input file (within pre-specified distance of transfer zone
    * 
    * @param osmNode to extract PLANit node for
+   * @param layerData to register location to planit node mapping on
    * @param networkLayer to create it on
    * @return created planit node
+   * @throws PlanItException thrown if error
    */
-  public static Node createPlanitNodeForConnectoidAccess(Point location, final Map<Point, Node> nodesByLocation,  MacroscopicPhysicalNetwork networkLayer) {
-    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(location, networkLayer);                
-    nodesByLocation.put(location, planitNode);
+  public static Node createPlanitNodeForConnectoidAccess(Point location, final PlanitOsmNetworkLayerReaderData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(location, networkLayer);
+    layerData.registerPlanitNodeByLocation(location, planitNode);
     return planitNode;
   }  
 

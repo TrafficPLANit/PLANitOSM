@@ -1,6 +1,7 @@
 package org.planit.osm.converter.reader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,6 +17,7 @@ import org.planit.osm.handler.PlanitOsmHandlerHelper;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.misc.Pair;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 
@@ -49,46 +51,6 @@ public class PlanitOsmNetworkLayerReaderData {
    * @return the link to break, null if none could be found
    * @throws PlanItException thrown if error
    */
-  private static void updateLinksForInternalNode(final OsmNode osmNode, final Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks, final List<Link> linksWithNodeInternallyToUpdate) throws PlanItException {
-    if(osmNode != null && linksWithNodeInternallyToUpdate!= null && !linksWithNodeInternallyToUpdate.isEmpty()) {
-            
-      /* find replacement links for the original link to break in case the original already has been broken and we should use 
-       * one of the split off broken links instead of the original for the correct breaking for the given node (since it now resides on one of the broken
-       * links rather than the original full link that no longer exists in that form */
-      Set<Link> replacementLinks = new HashSet<Link>();
-      Iterator<Link> linksToBreakIter = linksWithNodeInternallyToUpdate.iterator();
-      while(linksToBreakIter.hasNext()) {
-        Link orginalLinkToBreak = linksToBreakIter.next(); 
-        
-        Long osmOriginalWayId = Long.valueOf(orginalLinkToBreak.getExternalId());
-        if(osmWaysWithMultiplePlanitLinks != null && osmWaysWithMultiplePlanitLinks.containsKey(osmOriginalWayId)) {
-          
-          /* link has been broken before, find out in which of its broken links the node to break at resides on */
-          Set<Link> earlierBrokenLinks = osmWaysWithMultiplePlanitLinks.get(osmOriginalWayId);
-          Link matchingEarlierBrokenLink = null;
-          for(Link link : earlierBrokenLinks) {
-            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(PlanitOsmNodeUtils.createCoordinate(osmNode),link.getGeometry());
-            if(coordinatePosition.isPresent()) {
-              matchingEarlierBrokenLink = link;
-              break;
-            }
-          }
-          
-          /* remove original and mark found link as replacement link to break */
-          linksToBreakIter.remove();          
-          
-          /* verify if match is valid (which it should be) */
-          if(matchingEarlierBrokenLink==null) {
-            LOGGER.warning(String.format("unable to locate broken sublink of OSM way %s (id:%d), likely malformed way encountered, ignored",
-                orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
-          }else {
-            replacementLinks.add(matchingEarlierBrokenLink);
-          }          
-        }
-      }
-      linksWithNodeInternallyToUpdate.addAll(replacementLinks);
-    }
-  } 
   private void updateLinksForInternalLocation(Point location, Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks, List<Link> linksWithLocationInternally) {
     if(location != null && linksWithLocationInternally!= null && !linksWithLocationInternally.isEmpty()) {
       
@@ -96,9 +58,9 @@ public class PlanitOsmNetworkLayerReaderData {
        * one of the split off broken links instead of the original for the correct breaking for the given node (since it now resides on one of the broken
        * links rather than the original full link that no longer exists in that form */
       Set<Link> replacementLinks = new HashSet<Link>();
-      Iterator<Link> linksToBreakIter = linksWithLocationInternally.iterator();
-      while(linksToBreakIter.hasNext()) {
-        Link orginalLinkToBreak = linksToBreakIter.next(); 
+      Iterator<Link> linksWithLocationInternal = linksWithLocationInternally.iterator();
+      while(linksWithLocationInternal.hasNext()) {
+        Link orginalLinkToBreak = linksWithLocationInternal.next(); 
         
         Long osmOriginalWayId = Long.valueOf(orginalLinkToBreak.getExternalId());
         if(osmWaysWithMultiplePlanitLinks != null && osmWaysWithMultiplePlanitLinks.containsKey(osmOriginalWayId)) {
@@ -106,24 +68,31 @@ public class PlanitOsmNetworkLayerReaderData {
           /* link has been broken before, find out in which of its broken links the node to break at resides on */
           Set<Link> earlierBrokenLinks = osmWaysWithMultiplePlanitLinks.get(osmOriginalWayId);
           Link matchingEarlierBrokenLink = null;
+          boolean locationInternal = true;
           for(Link link : earlierBrokenLinks) {
             Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(location.getCoordinate(),link.getGeometry());
             if(coordinatePosition.isPresent()) {
               matchingEarlierBrokenLink = link;
+              
+              int position = coordinatePosition.get();
+              if(position==0 || position == (link.getGeometry().getNumPoints()-1)) {
+                /* match found, but position is not longer internal due to link being broken before on this location */
+                locationInternal = false;
+              }
               break;
             }
           }
           
           /* remove original and mark found link as replacement link to break */
-          linksToBreakIter.remove();          
+          linksWithLocationInternal.remove();          
           
           /* verify if match is valid (which it should be) */
           if(matchingEarlierBrokenLink==null) {
             LOGGER.warning(String.format("unable to locate broken sublink of OSM way %s (id:%d), likely malformed way encountered, ignored",
                 orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
-          }else {
+          }else if(locationInternal){
             replacementLinks.add(matchingEarlierBrokenLink);
-          }          
+          }
         }
       }
       linksWithLocationInternally.addAll(replacementLinks);
@@ -131,33 +100,90 @@ public class PlanitOsmNetworkLayerReaderData {
   }  
   
   /**
-   * track the PLANit nodes created on this layer by their original OSM id  so they can by looked up quickly while parsing ways
+   * track the PLANit nodes created on this layer by their location (which reflects eith an osm node, or an auto-generated stop_location, not related to an osm node
+   * in the latter case, no osm node is available) so they can be collected when needed, for example when breaking planit links
    */
-  protected final Map<Long, Node> nodesByOsmId = new HashMap<Long, Node>();
-  protected final Map<Point, Node> nodesByLocation = new HashMap<Point, Node>();
+  protected final Map<Point, Pair<Node, OsmNode>> planitNodesByLocation = new HashMap<Point,  Pair<Node, OsmNode>>();
   
-  /** Mapping from Osm node id to the links they are internal to. When done intial parsing, we verify if any
-   * entry in the map contains more than one link in which case the two link intersect at a point other than the extremes
+  /** Mapping from locations (representing known osm nodes or auto-generated planit nodes without osm node, in the latter case, no osm node is stored in the pair) to the links they are internal to. When initial parsing is done, 
+   * we verify if any entry in the map contains more than one link in which case the two link intersect at a point other than the extremes
    * and we must break the link. Also, in case any existing link's extreme node is internal to any other link, the link where
-   * this node is internal to must be split into two because a PLANit network requires all intersections of links to occur
-   * at the end or start of a link. Since during breaking of links, the mapping between osmnode and planit links is no longer correct
-   * we use a seaprate mapping via {@link osmWaysWithMultiplePlanitLinks} to track how original osm ways (links) are now split
-   * still allowing us to map an osm node to the correct planit link even after breaking of links
+   * this location is internal to must be split into two because a PLANit network requires all intersections of links to occur
+   * at the end or start of a link. Since during breaking of links, the mapping between known locations (osm nodes/auto-generated planit nodes) and planit links is no longer correct
+   * we use a separate mapping via {@link osmWaysWithMultiplePlanitLinks} to track how original osm ways (links) are now split allowing us to map any previously registered  
+   * location to the correct planit link even after breaking of links
    */
-  protected Map<Long, List<Link>> originalLinkInternalOsmNodes = new HashMap<Long, List<Link>>();
-  protected Map<Point, List<Link>> originalLinkInternalAvailableLocations = new HashMap<Point, List<Link>>();
+  protected Map<Point, Pair<List<Link>,OsmNode>> originalLinkInternalAvailableLocations = new HashMap<Point, Pair<List<Link>, OsmNode>>();
+                 
   
-          
-  
-  /** collect the created planit nodes indexed by osm node id
+  /** collect the planit node available for this osm node (if any)
    * 
-   * @return nodes so far
+   * @param osmNode found, null otherwise
+   * @throws PlanItException thrown if error
    */
-  public Map<Long, Node> getPlanitNodesByOsmId() {
-    return nodesByOsmId;
+  public Node getPlanitNodeByOsmNode(OsmNode osmNode) throws PlanItException {
+    if(osmNode != null) {
+      return getPlanitNodeByLocation(PlanitOsmNodeUtils.createPoint(osmNode));
+    }
+    return null;
+  } 
+  
+  /** collect the planit node available for the given location
+   * 
+   * @param osmNode found, null otherwise
+   * @throws PlanItException thrown if error
+   */
+  public Node getPlanitNodeByLocation(Point location) throws PlanItException {
+    if(location != null) {
+      Pair<Node, OsmNode> result = planitNodesByLocation.get(location);
+      if(result != null) {
+        return result.first();
+      }
+    }
+    return null;
   }  
-  public Map<Point, Node> getPlanitNodesByLocation() {
-    return nodesByLocation;
+  
+  /** collect the osm node available for the given location (if any)
+   * 
+   * @param osmNode found, null otherwise
+   * @throws PlanItException thrown if error
+   */  
+  public OsmNode getOsmNodeByPlanitNodeLocation(Point location) {
+    if(location != null) {
+      Pair<Node, OsmNode> result = planitNodesByLocation.get(location);
+      if(result != null) {
+        return result.second();
+      }
+    }
+    return null;
+  }  
+  
+  /** provide read access to the registered planit nodes (and original osm node if any was used) by location
+   * 
+   * @return mapping of locations for which planit nodes are created, potentially based on osm node
+   */
+  public Map<Point, Pair<Node, OsmNode>> getCreatedPlanitNodesByLocation() {
+    return Collections.unmodifiableMap(planitNodesByLocation);
+  }
+  
+  /** register a planit node based on an osm node for this layer
+   * @param osmNode to index by
+   * @param planitNode to register
+   * @throws PlanItException 
+   */
+  public void registerPlanitNodeByOsmNode(OsmNode osmNode, Node planitNode) throws PlanItException {
+    Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);
+    planitNodesByLocation.put(osmNodeLocation, Pair.of(planitNode, osmNode));
+  }
+  
+  /** register a planit node based on a location only, instead of based on an osm node
+   * 
+   * @param location to index by
+   * @param planitNode to register
+   * @throws PlanItException 
+   */
+  public void registerPlanitNodeByLocation(Point location, Node planitNode) throws PlanItException {
+    planitNodesByLocation.put(location, Pair.of(planitNode, null));
   }  
   
   /** add a mapping from osm node id to the (initial) planit link it is internal to
@@ -165,13 +191,19 @@ public class PlanitOsmNetworkLayerReaderData {
    * @param planitLink to register as osm node being internal to
    * @throws PlanItException thrown if error
    */
-  public void registerOsmNodeIdAsInternalToPlanitLink(OsmNode osmNode, Link planitLink) throws PlanItException {
-    originalLinkInternalOsmNodes.putIfAbsent(osmNode.getId(), new ArrayList<Link>());
-    originalLinkInternalOsmNodes.get(osmNode.getId()).add(planitLink);
-    
-    Point osmNodePoint = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.createCoordinate(osmNode));
-    originalLinkInternalAvailableLocations.putIfAbsent(osmNodePoint, new ArrayList<Link>());
-    originalLinkInternalAvailableLocations.get(osmNodePoint).add(planitLink);
+  public void registerOsmNodeAsInternalToPlanitLink(OsmNode osmNode, Link planitLink) throws PlanItException {
+    Point location = PlanitOsmNodeUtils.createPoint(osmNode);
+    originalLinkInternalAvailableLocations.putIfAbsent(location, Pair.of(new ArrayList<Link>(), osmNode ));
+    registerLocationAsInternalToPlanitLink(location, planitLink);
+  }  
+  
+  /** add a mapping from location to the (initial) planit link it is internal to
+   * @param location to use
+   * @param planitLink to register as location being internal to (location either being a known osm node, or, for example, an auto-generated stop_position, not absed on a planit node)
+   */  
+  public void registerLocationAsInternalToPlanitLink(Point location, Link planitLink) {
+    originalLinkInternalAvailableLocations.putIfAbsent(location, Pair.of(new ArrayList<Link>(), null /* no node */));
+    originalLinkInternalAvailableLocations.get(location).first().add(planitLink);
   }  
   
   /** update all known osm ways with multiple planit links. To use whenever a planit link is broken and split into multiple
@@ -209,60 +241,97 @@ public class PlanitOsmNetworkLayerReaderData {
     return osmWaysWithMultiplePlanitLinks.size();
   }  
  
-  /** Verify if osm node is registered as internal to a planit link
+  /** Verify if location is registered as internal to a planit link
    * 
    * @param osmNodeId to verify
    * @return true when registered as internal, false otherwise
    */
-  public boolean isOsmNodeInternalToAnyLink(Long osmNodeId) {
-    return originalLinkInternalOsmNodes.containsKey(osmNodeId);
-  }   
-  
-  /** verify if OSM node id is present as PLANit node or is part of a PLANit link's internal geometry
-   * 
-   * @param osmNodeId to check
-   * @return true when part of a geometry in the layer, false otherwise
-   */
-  public boolean isOsmNodePresentInLayer(long osmNodeId) {
-    return (getPlanitNodesByOsmId().containsKey(osmNodeId) || originalLinkInternalOsmNodes.containsKey(osmNodeId));
-  }    
-  
-  /** collect all osmNodeIds that are internal to at least the given number of planit links
-   * 
-   * @param numberOfLinksNodeMustAtLeastBeInternalTo restriction
-   * @return found osmNodeIds
-   */
-  public Set<Long> getOsmNodeIdsInternalToAnyPlanitLink(int numberOfLinksNodeMustAtLeastBeInternalTo) {
-    Set<Long> osmNodeIds = new HashSet<Long>();
-    for( Entry<Long, List<Link>> entry : originalLinkInternalOsmNodes.entrySet()) {
-      if(entry.getValue().size() >= numberOfLinksNodeMustAtLeastBeInternalTo) {
-        osmNodeIds.add(entry.getKey());
-      }
-    }
-    return osmNodeIds;
+  public boolean isLocationInternalToAnyLink(Point location) {
+    return originalLinkInternalAvailableLocations.containsKey(location);
   }
   
-  /** based on the original internal osm node to planit link information as well as subsequently break link actions that
-   * caused changes to what planit link an osm node is internal to, we identify which current planit links the given osm node
-   * id provided is internal to
+  /** verify if osm node is part of this layer either as a planit node, or internal to any planit link 
    * 
-   * @param osmNode to use
+   * @param location to check
+   * @return true when part of a geometry in the layer, false otherwise
    * @throws PlanItException thrown if error
    */
-  public List<Link> findPlanitLinksWithInternalOsmNode(OsmNode osmNode) throws PlanItException {
-    /* collect original mapping from node to planit link (however due to breaking links, the referenced link may now we repurposes as part of the original link it represented) */
-    List<Link> linksWithOsmNodeInternally = originalLinkInternalOsmNodes.get(osmNode.getId()); 
-    if(linksWithOsmNodeInternally == null) {
-      LOGGER.warning(String.format("Discard: Osm pt access node (%d) stop_position not attached to network, or not included in OSM file",osmNode.getId()));
-      return null;
-    }      
-    /* update the references to which link the node is internal to based on latest information regarding layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
-    updateLinksForInternalNode(osmNode, osmWaysWithMultiplePlanitLinks, linksWithOsmNodeInternally /* <-- updated */);
-    return linksWithOsmNodeInternally;
-  } 
+  public boolean isOsmNodePresentInLayer(OsmNode osmNode) throws PlanItException {
+    return isLocationPresentInLayer(PlanitOsmNodeUtils.createPoint(osmNode));
+  }     
+  
+  /** verify if location is registered on this layer
+   * 
+   * @param location to check
+   * @return true when part of a geometry in the layer, false otherwise
+   */
+  public boolean isLocationPresentInLayer(Point location) {
+    return (planitNodesByLocation.containsKey(location) || isLocationInternalToAnyLink(location));
+  }
+  
+  /** collect all registered locations internal to a planit link (unmoidfiable)
+   * 
+   * @param numberOfLinksNodeMustAtLeastBeInternalTo restriction
+   * @return found locations
+   */
+  public Set<Point> getRegisteredLocationsInternalToAnyPlanitLink() {
+    return Collections.unmodifiableSet(originalLinkInternalAvailableLocations.keySet());
+  }  
+  
+  /** collect all registered locations that are internal to at least the given number of planit links
+   * 
+   * @param numberOfLinksNodeMustAtLeastBeInternalTo restriction
+   * @return found locations
+   */
+  public Set<Point> getRegisteredLocationsInternalToAnyPlanitLink(int numberOfLinksNodeMustAtLeastBeInternalTo) {
+    Set<Point> foundLocations = new HashSet<Point>();
+    for( Entry<Point, Pair<List<Link>,OsmNode>> entry : originalLinkInternalAvailableLocations.entrySet()) {
+      if(entry.getValue().first().size() >= numberOfLinksNodeMustAtLeastBeInternalTo) {
+        foundLocations.add(entry.getKey());
+      }
+    }
+    return foundLocations;
+  }
+  
+  /** collect all registered osm nodes that are internal to at least the given number of planit links
+   * 
+   * @param numberOfLinksNodeMustAtLeastBeInternalTo restriction
+   * @return found osm nodes
+   */  
+  public Set<OsmNode> getRegisteredOsmNodesInternalToAnyPlanitLink(int numberOfLinksNodeMustAtLeastBeInternalTo) {
+    Set<OsmNode> foundOsmNodes = new HashSet<OsmNode>();
+    for( Entry<Point, Pair<List<Link>,OsmNode>> entry : originalLinkInternalAvailableLocations.entrySet()) {
+      List<Link> planitLinks = entry.getValue().first();
+      OsmNode osmNode = entry.getValue().second();
+      if(planitLinks.size() >= numberOfLinksNodeMustAtLeastBeInternalTo && osmNode!=null) {
+        foundOsmNodes.add(entry.getValue().second());        
+      }
+    }
+    return foundOsmNodes;
+  }  
+  
+  /** collect osm node registered as internal to an already created planit link based on its location
+   * 
+   * @param location to use
+   * @return osmNode, null if no match was found
+   */
+  public OsmNode getOsmNodeInternalToLinkByLocation(Point location) {
+    Pair<List<Link>, OsmNode> result = originalLinkInternalAvailableLocations.get(location);
+    if(result!=null) {
+      return result.second();
+    }
+    return null;
+  }
+  
+  /** We identify which current planit links have the given location registered as internal to them
+   * 
+   * @param location to use
+   * @throws PlanItException thrown if error
+   */
   public List<Link> findPlanitLinksWithInternalLocation(Point location) {
     /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposes as part of the original link it represented) */
-    List<Link> linksWithOsmNodeInternally = originalLinkInternalAvailableLocations.get(location); 
+    Pair<List<Link>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);
+    List<Link> linksWithOsmNodeInternally = result.first();  
     if(linksWithOsmNodeInternally == null) {
       LOGGER.warning(String.format("Discard: Osm pt stop_position not attached to network, or not included in OSM file",location.toString()));
       return null;
@@ -270,14 +339,23 @@ public class PlanitOsmNetworkLayerReaderData {
     /* update the references to which link the node is internal to based on latest information regarding layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
     updateLinksForInternalLocation(location, osmWaysWithMultiplePlanitLinks, linksWithOsmNodeInternally /* <-- updated */);
     return linksWithOsmNodeInternally;
+  }
+  
+  /** We identify which current planit links have the given osm node registered as internal to them
+   * 
+   * @param osmNode to use
+   * @throws PlanItException thrown if error
+   */  
+  public List<Link> findPlanitLinksWithInternalOsmNode(OsmNode osmNode) throws PlanItException {
+    return findPlanitLinksWithInternalLocation(PlanitOsmNodeUtils.createPoint(osmNode));
   }  
        
   /**
    * reset contents of members
    */
   public void reset() {
-    nodesByOsmId.clear();
-    originalLinkInternalOsmNodes.clear();
+    planitNodesByLocation.clear();
+    originalLinkInternalAvailableLocations.clear();
     osmWaysWithMultiplePlanitLinks.clear();
   }
 

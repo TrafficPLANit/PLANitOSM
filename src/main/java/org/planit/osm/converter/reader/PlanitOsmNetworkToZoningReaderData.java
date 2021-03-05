@@ -1,17 +1,11 @@
 package org.planit.osm.converter.reader;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
-import org.planit.utils.network.physical.Node;
-
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
@@ -67,36 +61,6 @@ public class PlanitOsmNetworkToZoningReaderData {
   
   public Map<Long, OsmNode> getOsmNodes() {
     return this.osmNodes;
-  }
-
-  /** find the planit node for the given osmNodeId. We search across the available layers to make a match
-   * @param osmNodeId to collect for
-   * @return Node found, null if not found
-   */
-  public Node findPlanitNodeByOsmId(long osmNodeId) {
-    for( Entry<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> entry : networkLayerData.entrySet()) {
-      if(entry.getValue().getPlanitNodesByOsmId().containsKey(osmNodeId)) {
-        return entry.getValue().getPlanitNodesByOsmId().get(osmNodeId);
-      }
-    }
-    return null;
-  }
-
-  /** find the layers the osm node resides on
-   * @param osmNodeId to verify
-   * @return layers it resides on (can be multiple if it supports multiple modes mapped to different layers)
-   */
-  public Collection<InfrastructureLayer> findNetworkLayersByOsmNodeId(long osmNodeId) {
-    Collection<InfrastructureLayer> layersPresent = null;
-    for( Entry<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> entry : networkLayerData.entrySet()) {
-      if(entry.getValue().isOsmNodePresentInLayer(osmNodeId)) {
-        if(layersPresent==null) {
-          layersPresent = new HashSet<InfrastructureLayer>();
-        }
-        layersPresent.add(entry.getKey());
-      }
-    }
-    return layersPresent;
   }
     
 }

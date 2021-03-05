@@ -49,24 +49,11 @@ public class PlanitOsmZoningHandlerProfiler {
    * while still providing information, hence the modulo use is dynamic
    */  
   private long moduloLoggingConnectoids = 500;
-  
-  /**
-   * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
-   * while still providing information, hence the modulo use is dynamic
-   */  
-  private long moduloLoggingCounterNodes = 10;
-  
-  /**
-   * offset for existing number of nodes in network, such that we can accurately profile the additional
-   * number of nodes created by the zoning reader
-   */
-  private long nodesInNetworkOffset;
-  
+       
   /**
    * @param nodesInNetworkOffset
    */
-  public PlanitOsmZoningHandlerProfiler(long nodesInNetworkOffset) {
-    this.nodesInNetworkOffset = nodesInNetworkOffset;
+  public PlanitOsmZoningHandlerProfiler() {
   }
   
   /**

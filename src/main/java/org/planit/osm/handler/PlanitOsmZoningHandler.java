@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
@@ -522,8 +521,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       if(transferZone != null) {        
         /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
         /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
-        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone,planitNode.getEntryLinkSegments(), Collections.singleton(mode));
-        newConnectoids.forEach( connectoid -> getZoningReaderData().addDirectedConnectoidByOsmId(networkLayer, osmNode.getId(),connectoid));
+        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryLinkSegments(), Collections.singleton(mode));
+        for(DirectedConnectoid connectoid : newConnectoids) {
+          getZoningReaderData().addDirectedConnectoidByLocation(networkLayer, PlanitOsmNodeUtils.createPoint(osmNode),connectoid);
+        }
       }      
     }
   }  
@@ -554,16 +555,16 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
      * tagged stop_positions, in which case we postpone the creation of connectoids */
     TransferZone transferZone = null;
     for(Mode planitMode : planitModes) {      
+      
       /* find node on parsed infrastructure */
       MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);    
       boolean haltOnRailway = true;
-      PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
-      if(layerData.getPlanitNodesByOsmId().get(osmNode.getId()) == null && layerData.isOsmNodeInternalToAnyLink(osmNode.getId())) {
-        /* node is not part of infrastructure */
+      if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
+        /* node is not part of infrastructure on this layer */
         haltOnRailway = false;
       }    
       
-      /* only proceed when not user excluded */
+      /* only proceed when not user excluded and available on layer */
       if(haltOnRailway && getSettings().isExcludedStopPosition(osmNode.getId())) {
         return;
       }    

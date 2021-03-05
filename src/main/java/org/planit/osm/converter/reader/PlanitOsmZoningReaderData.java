@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
@@ -69,8 +70,8 @@ public class PlanitOsmZoningReaderData {
   
   /* OSM <-> CONNECTOID TRACKING */
   
-  /** track created connectoids by their osm node id and layer they reside on, needed to avoid creating duplicates when dealing with multiple modes/layers */
-  private final Map<InfrastructureLayer,Map<Long, Set<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<InfrastructureLayer,Map<Long, Set<DirectedConnectoid>>>();
+  /** track created connectoids by their location and layer they reside on, needed to avoid creating duplicates when dealing with multiple modes/layers */
+  private final Map<InfrastructureLayer,Map<Point, Set<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<InfrastructureLayer,Map<Point, Set<DirectedConnectoid>>>();
   
   /* OSM <-> TRANSFER ZONE GROUP TRACKING */
   
@@ -333,15 +334,25 @@ public class PlanitOsmZoningReaderData {
   
   /* CONNECTOID RELATED METHODS */  
 
-  /** collect the registered connectoids by their osm id for a given network layer (unmoidifable)
+  /** collect the registered connectoids indexed by their locations for a given network layer (unmodifiable)
    * 
    * @param networkLayer to use
-   * @return registered directed connectoids by OsmId
+   * @return registered directed connectoids indexed by location
    */
-  public Map<Long, Set<DirectedConnectoid>> getDirectedConnectoidsByOsmNodeId(MacroscopicPhysicalNetwork networkLayer) {
-    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Long, Set<DirectedConnectoid>>());
+  public Map<Point, Set<DirectedConnectoid>> getDirectedConnectoidsByLocation(MacroscopicPhysicalNetwork networkLayer) {
+    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Point, Set<DirectedConnectoid>>());
     return Collections.unmodifiableMap(directedConnectoidsByOsmNodeId.get(networkLayer));
   }
+  
+  /**collect the registered connectoids by given locations and network layer (unmodifiable)
+   * 
+   * @param nodeLocation to verify
+   * @param networkLayerto extract from
+   * @return found connectoids (if any), otherwise null or empty set
+   */
+  public Set<DirectedConnectoid> getDirectedConnectoidsByLocation(Point nodeLocation, MacroscopicPhysicalNetwork networkLayer) {
+    return getDirectedConnectoidsByLocation(networkLayer).get(nodeLocation);
+  }  
   
   /** add a connectoid to the registered connectoids indexed by their osm id
    * 
@@ -350,24 +361,34 @@ public class PlanitOsmZoningReaderData {
    * @param connectoid to add
    * @return true when successful, false otherwise
    */
-  public boolean addDirectedConnectoidByOsmId(MacroscopicPhysicalNetwork networkLayer, long osmAccessNodeid, DirectedConnectoid connectoid) {
-    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Long, Set<DirectedConnectoid>>());
-    Map<Long, Set<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
-    connectoidsForLayer.putIfAbsent(osmAccessNodeid, new HashSet<DirectedConnectoid>());
-    return connectoidsForLayer.get(osmAccessNodeid).add(connectoid);
+  public boolean addDirectedConnectoidByLocation(MacroscopicPhysicalNetwork networkLayer, Point connectoidLocation , DirectedConnectoid connectoid) {
+    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap< Point, Set<DirectedConnectoid>>());
+    Map<Point, Set<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
+    connectoidsForLayer.putIfAbsent(connectoidLocation, new HashSet<DirectedConnectoid>());
+    return connectoidsForLayer.get(connectoidLocation).add(connectoid);
   }
   
-  /** check if any connectoids have been registered for the given Osm id and entity type on any layer
-   * @param osmId to verify
+  /** check if any connectoids have been registered for the given location on any layer
+   * @param location to verify
    * @return true when present, false otherwise
    */
-  public boolean hasAnyDirectedConnectoidsForOsmNodeId(long osmId) {
-    for( Entry<InfrastructureLayer, Map<Long, Set<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
-        if(entry.getValue().containsKey(osmId)) {
-          return true;
+  public boolean hasAnyDirectedConnectoidsForLocation(Point location) {
+    for( Entry<InfrastructureLayer, Map<Point, Set<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
+      if(hasDirectedConnectoidForLocation(entry.getKey(), location)) {
+        return true;
       }
     }
     return false;
+  }  
+  
+  /** check if any connectoid has been registered for the given location for this layer
+   * @param location to verify
+   * @param networkLayer to check for
+   * @return true when present, false otherwise
+   */  
+  public boolean hasDirectedConnectoidForLocation(InfrastructureLayer networkLayer, Point createPoint) {
+    Map<Point, Set<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
+    return connectoidsForLayer != null && connectoidsForLayer.get(createPoint) != null && !connectoidsForLayer.get(createPoint).isEmpty();
   }  
   
   /* TRANSFER ZONE GROUP RELATED METHODS */  
@@ -425,5 +446,6 @@ public class PlanitOsmZoningReaderData {
     }
     return false;
   }
+
  
 }

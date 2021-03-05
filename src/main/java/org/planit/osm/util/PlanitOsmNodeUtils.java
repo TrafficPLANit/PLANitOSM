@@ -1,6 +1,7 @@
 package org.planit.osm.util;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Coordinate;
@@ -116,6 +117,29 @@ public class PlanitOsmNodeUtils {
   public static Coordinate createCoordinate(OsmNode osmNode) {
     return new Coordinate(getX(osmNode), getY(osmNode));
   }
+  
+  /** create a point from the node
+   * @param osmNode to create point for
+   * @return point
+   * @throws PlanItException thrown if error
+   */
+  public static Point createPoint(OsmNode osmNode) throws PlanItException {
+    return PlanitJtsUtils.createPoint(createCoordinate(osmNode));
+  }  
+  
+  /** create a point based on the osm node 
+   * @param osmNodeId to create point for
+   * @param osmNodes to collect node from
+   * @return created node, or null of osmNodeId is unknown is passed in osmNodes
+   * @throws PlanItException thrown if error
+   */  
+  public static Point createPoint(long osmNodeId, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    OsmNode osmNode = osmNodes.get(osmNodeId);
+    if(osmNode != null) {
+      return createPoint(osmNode);
+    }
+    return null;
+  }  
   
   /**
    * collect x coordinate based on mapping between long/lat/ x/y
@@ -300,5 +324,7 @@ public class PlanitOsmNodeUtils {
   private static boolean nodeLocationEquals2D(OsmNode osmNode, Coordinate coordinate) {
     return createCoordinate(osmNode).equals2D(coordinate);
   }
+
+
 
 }
