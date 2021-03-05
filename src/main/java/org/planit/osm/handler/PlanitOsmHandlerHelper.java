@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -129,39 +130,78 @@ public class PlanitOsmHandlerHelper {
     }
     return connectoidsDownstreamVerticesBeforeBreakLink;
   }  
-   
+
+  /** Create a new PLANit node required for connectoid access, register it and update stats
+   * 
+   * @param osmNode to extract PLANit node for
+   * @param networkLayer to create it on
+   * @return created planit node
+   */
+  public static Node createPlanitNodeForConnectoidAccess(OsmNode osmNode, final Map<Long, Node> nodesByOsmId,  MacroscopicPhysicalNetwork networkLayer) {
+    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);                
+    nodesByOsmId.put(osmNode.getId(), planitNode);
+    return planitNode;
+  }  
+  
+  /** Create a new PLANit node required for connectoid access, not based on an existing osm node, but based on an auto-generated location due to missing
+   * osm nodes in the input file (within pre-specified distance of transfer zone
+   * 
+   * @param osmNode to extract PLANit node for
+   * @param networkLayer to create it on
+   * @return created planit node
+   */
+  public static Node createPlanitNodeForConnectoidAccess(Point location, final Map<Point, Node> nodesByLocation,  MacroscopicPhysicalNetwork networkLayer) {
+    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(location, networkLayer);                
+    nodesByLocation.put(location, planitNode);
+    return planitNode;
+  }  
 
   /**
    * Extract a PLANit node from the osmNode information
    * 
    * @param osmNode to create PLANit node for
    * @param networkLayer to create node on
-   * @return created node, null when something wen wrong
+   * @return created node, null when something went wrong
    */
   public static Node createAndPopulateNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer)  {
     if(osmNode == null || networkLayer == null) {
       LOGGER.severe("no OSM node or network layer provided when creating new PLANit node, ignore");
       return null;
     }
-    /* location info */
-    Point geometry = null;
+
+    Node node = null;
     try {
-      geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
+      Point geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
+      node = createAndPopulateNode(geometry, networkLayer);
     } catch (PlanItException e) {
       LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
     }
 
-    /* create and register */
-    Node node = networkLayer.nodes.registerNew();
-    /* XML id */
-    node.setXmlId(Long.toString(node.getId()));
     /* external id */
     node.setExternalId(String.valueOf(osmNode.getId()));
+    
+    return node;
+  }
+  
+  /**
+   * Extract a PLANit node from the osmNode information
+   * 
+   * @param geometry to place on PLANit node
+   * @param networkLayer to create node on
+   * @return created node, null when something went wrong
+   */
+  public static Node createAndPopulateNode(Point geometry, MacroscopicPhysicalNetwork networkLayer)  {
+    /* create and register */
+    Node node = networkLayer.nodes.registerNew();
+    
+    /* XML id */
+    node.setXmlId(Long.toString(node.getId()));
+
     /* position */
     node.setPosition(geometry);
     
     return node;
-  }
+  }  
 
   /** add addition to destination
    * @param addition to add

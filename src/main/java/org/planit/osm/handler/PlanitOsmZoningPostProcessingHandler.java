@@ -24,6 +24,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
@@ -99,7 +100,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
       spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new Quadtree());
       Quadtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);
-      for( Entry<Long, Node> entry : layerData.getNodesByOsmId().entrySet()) {
+      for( Entry<Long, Node> entry : layerData.getPlanitNodesByOsmId().entrySet()) {
         /* only add osm nodes internal to any planit link to reduce memory foot print */
         if(layerData.isOsmNodeInternalToAnyLink(entry.getKey())){
           OsmNode osmNode = osmNodes.get(entry.getKey());          
@@ -668,28 +669,73 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     /* connectoids for each valid link segment */
     for(Link link : accessibleLinks) {
       MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(link);
-      if(Osm4JUtils.getEntityType(osmStation) == EntityType.Node) {
-        OsmNode osmStationNode = (OsmNode)osmStation;
-        Coordinate closestExistingCoordinate = geoUtils.getClosestExistingCoordinate(PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.createCoordinate(osmStationNode)), link.getGeometry());
-        double distanceToExistingCoordinateMeters = geoUtils.getDistanceInMetres(closestExistingCoordinate, PlanitOsmNodeUtils.createCoordinate(osmStationNode));
-        if(distanceToExistingCoordinateMeters > getSettings().getStopToWaitingAreaSearchRadiusMeters()) {
-          /* too far, so we must break the existing link in appropriate location */
-          LinearLocation projectedLinearLocationOnLink = geoUtils.getClosestLinearLocationTo(PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.createCoordinate(osmStationNode)),link.getGeometry());
-          Pair<LineString, LineString> splitLineString = PlanitJtsUtils.splitLineString(link.getGeometry(),projectedLinearLocationOnLink);          
-          LineString linkGeometryWithExplicitProjectedCoordinate = PlanitJtsUtils.mergeLineStrings(splitLineString.first(),splitLineString.second());
-          link.setGeometry(linkGeometryWithExplicitProjectedCoordinate);
-          //extractConnectoidAccessNodeByGeometryIndex(osmNode, networkLayer)
+      Collection<Mode> planitStationModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleStationModes);
+      
+      /* determine distance to closest osm node on exiting planit link */
+      Coordinate closestExistingCoordinate = null;
+      double distanceToExistingCoordinateOnLinkInMeters = Double.POSITIVE_INFINITY;
+      EntityType osmStationType = Osm4JUtils.getEntityType(osmStation);
+      if(osmStationType == EntityType.Node) {
+        
+        Coordinate osmStationCoordinate = PlanitOsmNodeUtils.createCoordinate((OsmNode)osmStation);
+        closestExistingCoordinate = geoUtils.getClosestExistingCoordinateToPoint(PlanitJtsUtils.createPoint(osmStationCoordinate), link.getGeometry());
+        distanceToExistingCoordinateOnLinkInMeters = geoUtils.getDistanceInMetres(closestExistingCoordinate, osmStationCoordinate);
+        
+      }else if(osmStationType == EntityType.Way) {
+        
+        OsmWay osmStationWay = (OsmWay )osmStation;
+        Geometry osmStationGeometry = PlanitOsmWayUtils.extractLineString(osmStationWay, getNetworkToZoningData().getOsmNodes());
+        if(PlanitJtsUtils.isClosed2D(osmStationGeometry.getCoordinates())) {
+          osmStationGeometry = PlanitJtsUtils.createPolygon(PlanitJtsUtils.makeClosed2D(osmStationGeometry.getCoordinates()));  
+        }        
+        closestExistingCoordinate = geoUtils.getClosestExistingCoordinateToGeometry(osmStationGeometry, link.getGeometry());
+        distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestExistingCoordinate), osmStationGeometry);
+        
+      }else {
+        throw new PlanItException("unknown entity type %s encountered, skip connectoid creation for station %d, this should not happen",osmStation.getId());
+      }
+        
+      /* if close enough break at existing osm node to create stop_position/connectoid, otherwise create artifical non-osm node in closest location */  
+      if(distanceToExistingCoordinateOnLinkInMeters > getSettings().getStopToWaitingAreaSearchRadiusMeters()) {
+        /* too far, so we must break the existing link in appropriate location */
+        LinearLocation projectedLinearLocationOnLink = null;
+        if(osmStationType == EntityType.Node) {
+          projectedLinearLocationOnLink = geoUtils.getClosestLinearLocationToPoint(PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.createCoordinate((OsmNode)osmStation)),link.getGeometry());
+        }else if(osmStationType == EntityType.Way) {
+          Geometry stationGeometry = PlanitOsmWayUtils.extractGeometry((OsmWay)osmStation, getNetworkToZoningData().getOsmNodes());
+          projectedLinearLocationOnLink = geoUtils.getClosestLinearLocationToGeometry(stationGeometry,link.getGeometry());
         }else {
-          /* close enough, identify osm node at coordinate location */
-          PlanitJtsIntersectOsmNodeVisitor spatialqueryVisitor = new PlanitJtsIntersectOsmNodeVisitor(PlanitJtsUtils.create2DPolygon(link.getEnvelope()), new HashSet<OsmNode>());
-          spatiallyIndexedOsmNodesInternalToPlanitLinks.get(networkLayer).query(link.getEnvelope(),spatialqueryVisitor);
-          Collection<OsmNode> potentialOsmNodes = spatialqueryVisitor.getResult();
-          /* find osm node from nearby osm nodes */
-          OsmNode linkInternalOsmNode = PlanitOsmNodeUtils.findNodeWithCoordinate2D(closestExistingCoordinate, potentialOsmNodes);
-          if(linkInternalOsmNode==null) {
-            throw new PlanItException("Unable to locate link internal osm node even though it is expected to exist when creating stop locations for osm station %d",osmStationNode.getId());
-          }
-          extractConnectoidAccessNodeByOsmNode(linkInternalOsmNode, networkLayer);
+          throw new PlanItException("unknown entity type %s encountered for osm station %d, this should not happen",osmStation.getId());
+        }
+        
+        Pair<LineString, LineString> splitLineString = PlanitJtsUtils.splitLineString(link.getGeometry(),projectedLinearLocationOnLink);          
+        LineString linkGeometryWithExplicitProjectedCoordinate = PlanitJtsUtils.mergeLineStrings(splitLineString.first(),splitLineString.second());
+        link.setGeometry(linkGeometryWithExplicitProjectedCoordinate);
+        
+        /* create directed connectoids for non-osm node coordinate ... */
+        for(Mode planitMode : planitStationModes) {
+          /* ... per mode (or update existing connectoid with mode access if valid */
+          extractDirectedConnectoidsForMode(null, tags, stationTransferZone, networkLayer, planitMode);
+        }        
+        //extractConnectoidAccessNodeByGeometryIndex(osmNode, networkLayer)
+        
+      }else {
+        
+        /* close enough, identify osm node at coordinate location */
+        PlanitJtsIntersectOsmNodeVisitor spatialqueryVisitor = new PlanitJtsIntersectOsmNodeVisitor(PlanitJtsUtils.create2DPolygon(link.getEnvelope()), new HashSet<OsmNode>());
+        spatiallyIndexedOsmNodesInternalToPlanitLinks.get(networkLayer).query(link.getEnvelope(),spatialqueryVisitor);
+        Collection<OsmNode> potentialOsmNodes = spatialqueryVisitor.getResult();
+        
+        /* find osm node from nearby osm nodes */
+        OsmNode linkInternalOsmNode = PlanitOsmNodeUtils.findOsmNodeWithCoordinate2D(closestExistingCoordinate, potentialOsmNodes);
+        if(linkInternalOsmNode==null) {
+          throw new PlanItException("Unable to locate link internal osm node even though it is expected to exist when creating stop locations for osm station %d",osmStation.getId());
+        }
+        
+        /* create directed connectoids for existing osm node ... */
+        for(Mode planitMode : planitStationModes) {
+          /* ... per mode (or update existing connectoid with mode access if valid */
+          extractDirectedConnectoidsForMode(linkInternalOsmNode, tags, stationTransferZone, networkLayer, planitMode);
         }
       }
        

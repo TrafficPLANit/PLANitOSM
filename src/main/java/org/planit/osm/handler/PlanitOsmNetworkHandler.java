@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.tags.*;
@@ -98,17 +99,24 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    * the circular way in between connecting in and outgoing links/linksegments that were parsed during the regular parsing phase
    * 
    * @param circularOsmWay the circular osm way to parse 
-   * @return set of created links per layer for this circular way if any, null if no links are created
    * @throws PlanItException thrown if error
    */
-  private Map<InfrastructureLayer, Set<Link>> handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
+  private void handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
         
     Map<InfrastructureLayer, Set<Link>> createdLinksByLayer = null;    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
       createdLinksByLayer = handleRawCircularWay(circularOsmWay, tags, 0 /* start at initial index */);
+      
+      if(createdLinksByLayer!=null) {
+        /* register that osm way has multiple planit links mapped (needed in case of subsequent break link actions on nodes of the osm way */
+        for( Entry<InfrastructureLayer, Set<Link>> entry : createdLinksByLayer.entrySet()) {
+          PlanitOsmNetworkLayerReaderData layerData = getLayerHandlers().get(entry.getKey()).getLayerData();
+          layerData.updateOsmWaysWithMultiplePlanitLinks(circularOsmWay.getId(), entry.getValue());
+        }
+      }
+
     }
-    return createdLinksByLayer;
   }  
   
   /** Recursive method that processes osm ways that have at least one circular section in it, but this might not be perfect, i.e., the final node might
@@ -136,7 +144,8 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         /* create separate link for the lead up part that is NOT circular, if supporting multiple modes mapped to different layers we get multiple links */         
         Map<InfrastructureLayer,Link> newLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, initialNodeIndex, firstCircularIndices.first(), false /* not a circular section */);
         if(newLinkByLayer != null) {
-          newLinkByLayer.forEach( (layer, link) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
+          newLinkByLayer.forEach( (layer, link) -> { 
+            createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
             createdLinksByLayer.get(layer).add(link);} );
         }
         /* update offsets for circular part */
@@ -325,30 +334,18 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   /** process all registered circular ways after parsing of basic nodes and ways is complete. Because circular ways are transformed into multiple
    * links, they in effect yield multiple links per original OSM way (id). In case such an OSMway is referenced later it no longer maps to a single 
    * PLANit link, hence we return how each OSMway is mapped to the set of links created for the circular way
-   *  
-   * @return map of created links per layer by OSM way id 
+   *   
    */
-  protected  Map<InfrastructureLayer, Map<Long, Set<Link>>> processCircularWays() {
+  protected  void processCircularWays() {
     
     LOGGER.info("Converting OSM circular ways into multiple link topologies...");
     
-    /* process circular ways*/
-    Map<InfrastructureLayer, Map<Long, Set<Link>>> createdLinksPerLayerByOsmWayId = new HashMap<>();    
+    /* process circular ways*/    
     for(Entry<Long,OsmWay> entry : osmCircularWays.entrySet()) {
       try {        
         
-        Long osmWayId = entry.getKey();                
-        Map<InfrastructureLayer, Set<Link>> createdLinksByLayer = handleRawCircularWay(entry.getValue());
-        
-        /* add to results */
-        if(createdLinksByLayer!=null && !createdLinksByLayer.isEmpty()) {
-          for(Entry<InfrastructureLayer, Set<Link>> layerEntry : createdLinksByLayer.entrySet()) {
-            createdLinksPerLayerByOsmWayId.putIfAbsent(layerEntry.getKey(), new HashMap<Long, Set<Link>>());
-            Map<Long, Set<Link>> createdLinksByOsmId = createdLinksPerLayerByOsmWayId.get(layerEntry.getKey());
-            createdLinksByOsmId.putIfAbsent(osmWayId, new HashSet<Link>());
-            createdLinksByOsmId.get(osmWayId).addAll(layerEntry.getValue());
-          }         
-        }
+        handleRawCircularWay(entry.getValue());
+                
       }catch (PlanItException e) {
         LOGGER.severe(e.getMessage());
         LOGGER.severe(String.format("unable to process circular way OSM id: %d",entry.getKey()));
@@ -356,7 +353,6 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     }
     
     LOGGER.info(String.format("Processed %d circular ways...DONE",osmCircularWays.size()));
-    return createdLinksPerLayerByOsmWayId;
   }
     
   /**
@@ -558,16 +554,15 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void complete() throws IOException {
     
-    /* process circular ways --> returns map of (per layer) created links by OSM way id (long) */
-    Map<InfrastructureLayer, Map<Long, Set<Link>>> osmWaysWithMultiplePlanitLinks = processCircularWays();    
+    /* process circular ways */
+    processCircularWays();    
         
     /* delegate to each layer handler present */
     for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmLayerHandlers.entrySet()) {
       PlanitOsmNetworkLayerHandler networkLayerHandler = entry.getValue();
-            
-      /* complete: Note that ownership of osmWaysWithMultiple planit links is transferred to handler on a per layer basis here */
-      networkLayerHandler.complete(osmWaysWithMultiplePlanitLinks.get(entry.getKey()));      
-      osmWaysWithMultiplePlanitLinks.remove(entry.getKey());
+      
+      /* break links on layer with internal connections to multiple osm ways */
+      networkLayerHandler.complete();      
     }                 
         
     LOGGER.info(" OSM basic network parsing...DONE");

@@ -185,12 +185,13 @@ public class PlanitOsmNetworkLayerHandler {
    * @param startIndex the start index
    * @param endIndex the end index
    * @param osmWay the link corresponds to
+   * @throws PlanItException thrown if error
    */
-  private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay) {
+  private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay) throws PlanItException {
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
     for(int nodeIndex = startIndex; nodeIndex <= endIndex;++nodeIndex) {
       OsmNode internalNode = osmNodes.get(osmWay.getNodeId(nodeIndex));
-      layerData.registerOsmNodeIdAsInternalToPlanitLink(internalNode.getId(),link);
+      layerData.registerOsmNodeIdAsInternalToPlanitLink(internalNode,link);
     }   
   }   
   
@@ -1035,7 +1036,7 @@ public class PlanitOsmNetworkLayerHandler {
    */
   private Node extractNode(final long osmNodeId) throws PlanItException {
     
-    Node node = this.layerData.getNodesByOsmId().get(osmNodeId);
+    Node node = this.layerData.getPlanitNodesByOsmId().get(osmNodeId);
     if(node == null) {
       
       /* not yet created */      
@@ -1046,7 +1047,7 @@ public class PlanitOsmNetworkLayerHandler {
         /* create */
         node = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
               
-        this.layerData.getNodesByOsmId().put(osmNodeId, node);       
+        this.layerData.getPlanitNodesByOsmId().put(osmNodeId, node);       
         profiler.logNodeStatus(networkLayer.nodes.size());        
       }
     }
@@ -1188,20 +1189,25 @@ public class PlanitOsmNetworkLayerHandler {
    * causing the original mapping between internal nodes and planit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
    * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
    * 
-   * @param node to break links for where it is internal to them
+   * @param thePlanitNode to break links for where it is internal to them (based on its osm node id reference)
    * @param osmWaysWithMultiplePlanitLinks all OSM ways that have multiple planit links, due to earlier breaking of links or because they are circular osm ways
    * @return true when links were broken, false otherwise
    * @throws PlanItException thrown if error
    */ 
-  protected boolean breakLinksWithInternalNode(final Node theNode, final Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) throws PlanItException {
-    if(osmWaysWithMultiplePlanitLinks == null) {
-      throw new PlanItException(" unable to break links and update osm ways with multiple planit links when container is null");
-    }
-    Long osmNodeId = Long.valueOf(theNode.getExternalId());
+  protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
+
+    Long osmNodeId = Long.valueOf(thePlanitNode.getExternalId());
     if(layerData.isOsmNodeInternalToAnyLink(osmNodeId)) {       
-      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalOsmNode(osmNodes.get(osmNodeId));     
-      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(theNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
-      PlanitOsmHandlerHelper.addAllTo(newOsmWaysWithMultipleLinks, osmWaysWithMultiplePlanitLinks);
+      /* link sto break */
+      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalOsmNode(osmNodes.get(osmNodeId));
+      
+      /* break links */
+      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
+      
+      /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct
+       * planit links for which osm nodes are internal */
+      layerData.updateOsmWaysWithMultiplePlanitLinks(newOsmWaysWithMultipleLinks);
+      
       return true;
     }
     return false;
@@ -1218,9 +1224,8 @@ public class PlanitOsmNetworkLayerHandler {
    * causing the original mapping between internal nodes and planit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
    * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
    * 
-   * @param osmWaysWithMultiplePlanitLinks all OSM ways that have multiple planit links, due to earlier breaking of links or because they are circular osm ways (may be null)
    */ 
-  protected void breakLinksWithInternalConnections(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
+  protected void breakLinksWithInternalConnections() {
     LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");        
     
     try {
@@ -1233,7 +1238,7 @@ public class PlanitOsmNetworkLayerHandler {
         Node node = networkLayer.nodes.get(nodeIndex);    
                 
         // 1. break links when a link's internal node is another existing link's extreme node
-        boolean linksBroken = breakLinksWithInternalNode(node, osmWaysWithMultiplePlanitLinks);
+        boolean linksBroken = breakLinksWithInternalNode(node);
         if(linksBroken) {          
           processedNodes.add(Long.parseLong(node.getExternalId()));
         }
@@ -1245,11 +1250,11 @@ public class PlanitOsmNetworkLayerHandler {
         if(!processedNodes.contains(osmNodeId)) {
           /* node does not yet exist in PLANit network because it was internal node so far, so create it first */        
           Node planitIntersectionNode = extractNode(osmNodeId);
-          breakLinksWithInternalNode(planitIntersectionNode, osmWaysWithMultiplePlanitLinks);                                    
+          breakLinksWithInternalNode(planitIntersectionNode);                                    
         }
       }
       
-      LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE",osmWaysWithMultiplePlanitLinks.size()));      
+      LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE", getLayerData().getNumberOfOsmWaysWithMultiplePlanitLinks()));      
     
     } catch (PlanItException e) {
       LOGGER.severe(e.getMessage());
@@ -1278,22 +1283,16 @@ public class PlanitOsmNetworkLayerHandler {
    * complete the parsing, invoked from parent handler complete method
    * 
    */
-  public void complete(Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks) {
-    if(osmWaysWithMultiplePlanitLinks==null) {
-      osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
-    }
+  public void complete() {
     
     /* break links */
-    breakLinksWithInternalConnections(osmWaysWithMultiplePlanitLinks);
+    breakLinksWithInternalConnections();
     
     /* useful for debugging */
     networkLayer.validate();
     /* stats*/
     logProfileInformation();
-    
-    /* store information regarding broken links on data for later usage if needed */
-    this.layerData.setOsmWaysWithMultiplePlanitLinks(osmWaysWithMultiplePlanitLinks);
-    
+        
   }
 
   /** collect the gathered data pertaining to Osm to Planit entity mapping that might be relevant to other parts of the reader

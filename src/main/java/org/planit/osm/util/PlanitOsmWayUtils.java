@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Polygon;
@@ -231,6 +232,25 @@ public class PlanitOsmWayUtils {
     return coordArray;
   }  
   
+
+  /** extract geometry from the osm way which can either be a line string or polygon
+   * 
+   * @param osmWay to extract geometry for
+   * @param osmNodes to extract geo features from
+   * @return created gemoetry
+   */
+  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
+    Geometry geometry = null;
+    if(PlanitOsmWayUtils.isOsmWayPerfectLoop(osmWay)) {
+      /* area, so extract polygon geometry, in case of missing nodes, we log this but do not throw an exception, instead we keep the best possible shape that remains */
+      geometry = PlanitOsmWayUtils.extractPolygonNoThrow(osmWay, osmNodes); 
+    }else {
+      /* (open) line string */
+      geometry = PlanitOsmWayUtils.extractLineStringNoThrow(osmWay, osmNodes);        
+    }
+    return geometry;
+  }   
+  
   /**
    * Extract the geometry for the passed in way as line string
    * 
@@ -422,6 +442,7 @@ public class PlanitOsmWayUtils {
       return PlanitJtsUtils.createLineSegment(osmWayMinDistanceCoordinate, geometryMinDistanceCoordinate);
     }
     return null;
-  }  
+  }
+
 
 }

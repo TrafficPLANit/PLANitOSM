@@ -180,19 +180,6 @@ public class PlanitOsmZoningHandlerProfiler {
   }
   
   /**
-   * log user information based on currently number of registered nodes
-   * 
-   * @param numberOfNodes registered number of nodes so far
-   */
-  public void logNodeForConnectoidStatus(int numberOfNodes) {
-    long newlyCreatedNodes = numberOfNodes-nodesInNetworkOffset;
-    if( newlyCreatedNodes >= moduloLoggingCounterNodes) {
-      LOGGER.info(String.format("Created %d connectoid access nodes out of OSM nodes",newlyCreatedNodes));
-      moduloLoggingCounterNodes *=2;
-    }  
-  }
-
-  /**
    * reset the profiler
    */
   public void reset() {

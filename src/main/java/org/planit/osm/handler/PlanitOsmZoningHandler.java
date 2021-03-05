@@ -558,7 +558,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);    
       boolean haltOnRailway = true;
       PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
-      if(layerData.getNodesByOsmId().get(osmNode.getId()) == null && layerData.isOsmNodeInternalToAnyLink(osmNode.getId())) {
+      if(layerData.getPlanitNodesByOsmId().get(osmNode.getId()) == null && layerData.isOsmNodeInternalToAnyLink(osmNode.getId())) {
         /* node is not part of infrastructure */
         haltOnRailway = false;
       }    
@@ -813,9 +813,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     }else {
       throw new PlanItException(String.format("parsing transfer infrastructure (Ptv1) for osm node %s, bit no compatible key tags found",osmNode.getId()));
     }  
-    
-    getProfiler().logTransferZoneStatus(getZoning().transferZones.size());
-    getProfiler().logConnectoidStatus(getZoning().connectoids.size());    
+        
   }  
   
   /** extract the platform member of a Ptv2 stop_area and register it on the transfer zone group

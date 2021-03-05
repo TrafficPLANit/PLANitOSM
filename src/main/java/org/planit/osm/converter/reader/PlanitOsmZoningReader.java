@@ -161,7 +161,14 @@ public class PlanitOsmZoningReader implements ZoningReader {
           profiler);
       read(osmReader, osmPostProcessingHandler);        
     } 
-  }    
+  }  
+  
+  /**
+   * remove any dangling zones if indicated
+   */
+  private void removeDanglingZones() {
+    //TODO
+  }  
 
   /**
    * Constructor 
@@ -201,7 +208,10 @@ public class PlanitOsmZoningReader implements ZoningReader {
     doMainProcessing(handlerProfiler);
     
     /* post-processing (stop_positions to connectoid) */
-    doPostProcessing(handlerProfiler);        
+    doPostProcessing(handlerProfiler); 
+    
+    /* remove any dangling zones, e g., transfer zones without connectoids etc. */
+    removeDanglingZones();
     
     LOGGER.info(" OSM zoning parsing...DONE");
     

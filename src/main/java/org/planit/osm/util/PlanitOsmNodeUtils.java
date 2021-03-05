@@ -282,7 +282,7 @@ public class PlanitOsmNodeUtils {
    * @param osmNodes to match against
    * @return found node that matches, null if no match found
    */
-  public static OsmNode findNodeWithCoordinate2D(Coordinate coordinate, Collection<OsmNode> osmNodes) {
+  public static OsmNode findOsmNodeWithCoordinate2D(Coordinate coordinate, Collection<OsmNode> osmNodes) {
     for(OsmNode osmNode : osmNodes) {
       if(nodeLocationEquals2D(osmNode, coordinate)) {
         return osmNode;

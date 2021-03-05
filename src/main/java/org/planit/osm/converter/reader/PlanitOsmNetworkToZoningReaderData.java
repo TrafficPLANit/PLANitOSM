@@ -75,8 +75,8 @@ public class PlanitOsmNetworkToZoningReaderData {
    */
   public Node findPlanitNodeByOsmId(long osmNodeId) {
     for( Entry<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> entry : networkLayerData.entrySet()) {
-      if(entry.getValue().getNodesByOsmId().containsKey(osmNodeId)) {
-        return entry.getValue().getNodesByOsmId().get(osmNodeId);
+      if(entry.getValue().getPlanitNodesByOsmId().containsKey(osmNodeId)) {
+        return entry.getValue().getPlanitNodesByOsmId().get(osmNodeId);
       }
     }
     return null;
