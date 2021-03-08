@@ -681,6 +681,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
     
     
+    
+    
     /* a stop position should be part of an already parsed planit link, if not it is incorrectly tagged */
     
   }   
