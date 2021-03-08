@@ -67,15 +67,14 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {
-    for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
-      PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
-      OsmNode osmNode = getOsmNodes().get(osmNodeId);
-      if(osmNode != null) {
+    OsmNode osmNode = getOsmNodes().get(osmNodeId);
+    if(osmNode != null) {
+      for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
+        PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
         if(layerHandler.getLayerData().isLocationPresentInLayer(PlanitOsmNodeUtils.createPoint(osmNode))){
           return true;
         }        
       }
-
     }
     return false;
   }                                           

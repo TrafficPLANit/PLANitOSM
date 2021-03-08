@@ -105,7 +105,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
         /* platform -> process as such */
         registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member);
       }else {
-        LOGGER.warning(String.format("Discard: stop_area %s member %d incorrectly tagged as stop...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
+        LOGGER.warning(String.format("DISCARD: stop_area %s member %d incorrectly tagged as stop...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
       }
       
       /* flag to not process as stop_position in post-processing since it is not a stop_position and invalidly tagged as such */
@@ -325,7 +325,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     }
   
     if(unidentified) {
-      LOGGER.warning(String.format("Discard: unable to collect osm way %d referenced in stop_area %d", osmWayMember.getId(), osmRelation.getId()));
+      LOGGER.warning(String.format("DISCARD: unable to collect osm way %d referenced in stop_area %d", osmWayMember.getId(), osmRelation.getId()));
     }  
   }   
 
@@ -502,7 +502,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(mode);
       Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);
       if(planitNode == null) {
-        LOGGER.warning(String.format("Discard: osm node (%d) could not be converted to access node for transfer zone representation of tram_stop",osmNode.getId()));
+        LOGGER.warning(String.format("DISCARD: osm node (%d) could not be converted to access node for transfer zone representation of tram_stop",osmNode.getId()));
         return;
       }
       if(planitNode.getEdges().size()>2) {
@@ -573,7 +573,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       if(transferZone == null) {
         transferZone = createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmNode, tags, TransferZoneType.SMALL_STATION, eligibleOsmModes);
         if(transferZone == null) {
-          LOGGER.severe(String.format("Discard: unable to create transfer zone for halt %d",osmNode.getId()));
+          LOGGER.severe(String.format("DISCARD: unable to create transfer zone for halt %d",osmNode.getId()));
           return;
         }        
       }

@@ -534,7 +534,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* access node */
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
     if(planitNode==null) {
-      LOGGER.warning(String.format("Discard: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
+      LOGGER.warning(String.format("DISCARD: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
       success= false;
     }
     

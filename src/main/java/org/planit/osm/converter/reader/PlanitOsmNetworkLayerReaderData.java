@@ -330,15 +330,15 @@ public class PlanitOsmNetworkLayerReaderData {
    */
   public List<Link> findPlanitLinksWithInternalLocation(Point location) {
     /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposes as part of the original link it represented) */
-    Pair<List<Link>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);
-    List<Link> linksWithOsmNodeInternally = result.first();  
-    if(linksWithOsmNodeInternally == null) {
-      LOGGER.warning(String.format("Discard: Osm pt stop_position not attached to network, or not included in OSM file",location.toString()));
+    Pair<List<Link>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);  
+    if(result==null || result.first() == null) {
+      LOGGER.warning(String.format("DISCARD: Osm pt stop_position not attached to network, or not included in OSM file",location.toString()));
       return null;
     }      
-    /* update the references to which link the node is internal to based on latest information regarding layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
-    updateLinksForInternalLocation(location, osmWaysWithMultiplePlanitLinks, linksWithOsmNodeInternally /* <-- updated */);
-    return linksWithOsmNodeInternally;
+    List<Link> linksWithLocationInternally = result.first();
+    /* update the references to which link the location is internal to based on latest information regarding layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
+    updateLinksForInternalLocation(location, osmWaysWithMultiplePlanitLinks, linksWithLocationInternally /* <-- updated */);
+    return linksWithLocationInternally;
   }
   
   /** We identify which current planit links have the given osm node registered as internal to them
