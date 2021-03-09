@@ -260,7 +260,8 @@ public class PlanitOsmNetworkLayerReaderData {
     return isLocationPresentInLayer(PlanitOsmNodeUtils.createPoint(osmNode));
   }     
   
-  /** verify if location is registered on this layer
+  /** verify if location is registered on this layer either as an internal location on a planit link or as an extreme node
+   * of a planit link
    * 
    * @param location to check
    * @return true when part of a geometry in the layer, false otherwise

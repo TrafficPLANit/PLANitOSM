@@ -154,11 +154,33 @@ public class PlanitOsmZoningReaderData {
 
   /** collect unprocessed Ptv2 stop positions
    * 
-   * @return unprocessed stop positions
+   * @return unprocessed stop positions (unmodifiable)
    */
   public Set<Long> getUnprocessedPtv2StopPositions() {
-    return unprocessedPtv2StopPositions;
+    return Collections.unmodifiableSet(unprocessedPtv2StopPositions);
   }
+  
+  /** remove unprocessed stop position
+   * @param osmId to remove
+   */
+  public void removeUnprocessedPtv2StopPosition(long osmId) {
+    unprocessedPtv2StopPositions.remove(osmId);
+  }
+  
+  /** add unprocessed stop position
+   * @param osmId to add
+   */
+  public void addUnprocessedPtv2StopPosition(long osmId) {
+    unprocessedPtv2StopPositions.add(osmId);
+  } 
+  
+  /** Verify if unprocessed stop_position is registered
+   * @param osmId to verify
+   * @return true when registered, false otherwise
+   */
+  public boolean hasUnprocessedPtv2StopPosition(long osmId) {
+    return unprocessedPtv2StopPositions.contains(osmId);
+  }  
   
 
   /** remove an unprocessed station
@@ -447,5 +469,4 @@ public class PlanitOsmZoningReaderData {
     return false;
   }
 
- 
 }

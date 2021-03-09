@@ -768,7 +768,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       else if(OsmPtv2Tags.STOP_POSITION.equals(ptv2ValueTag)) {
         /* stop positions relate to connectoids that provide access to transfer zones. The transfer zones are based on platforms, but these might not have been
          * processed yet. So, we postpone parsing of all stop positions, and simply track them for delayed processing after all platforms/transfer zones have been identified */
-        getZoningReaderData().getUnprocessedPtv2StopPositions().add(osmNode.getId());
+        getZoningReaderData().addUnprocessedPtv2StopPosition(osmNode.getId());
       }     
       /* stop position */
       else if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
@@ -1006,6 +1006,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
+    
+    if(osmNode.getId() == 1792543608) {
+      int bla = 4;
+    }
     
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);          
     try {              

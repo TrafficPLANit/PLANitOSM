@@ -268,6 +268,7 @@ public class PlanitOsmModeUtils {
    * <li>railway=platform gives train</li>
    * <li>railway=platform_edge gives train</li>
    * <li>railway=halt gives train</li>
+   * <li>railway=stop gives train</li>
    * <li>railway=tram_stop gives tram</li>
    * </ul> 
    * @param tags to extract information from
@@ -291,7 +292,7 @@ public class PlanitOsmModeUtils {
         if(OsmPtv1Tags.isTramStop(tags)) {
           return OsmRailModeTags.TRAM;
         }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmRailwayTags.RAILWAY, 
-            OsmPtv1Tags.STATION, OsmPtv1Tags.HALT, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE)) {
+            OsmPtv1Tags.STATION, OsmPtv1Tags.HALT, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE, OsmPtv1Tags.STOP)) {
           return OsmRailModeTags.TRAIN;
         }else {
           LOGGER.warning(String.format(
