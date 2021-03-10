@@ -174,11 +174,12 @@ public class PlanitOsmZoningReader implements ZoningReader {
    * Constructor 
    * 
    * @param inputFile to parse from
+   * @param countryName this zoning is used for
    * @param zoningToPopulate zoning to populate 
    */
-  protected PlanitOsmZoningReader(String inputFile, Zoning zoningToPopulate){
+  protected PlanitOsmZoningReader(String inputFile, String countryName, Zoning zoningToPopulate){
     this.transferSettings = new PlanitOsmTransferSettings();
-    this.zoningReaderData = new PlanitOsmZoningReaderData();
+    this.zoningReaderData = new PlanitOsmZoningReaderData(countryName);
 
     // references
     this.inputFile = inputFile;

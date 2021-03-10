@@ -251,7 +251,7 @@ public class PlanitOsmNodeUtils {
    */
   public static Coordinate findClosestProjectedCoordinateTo(OsmNode osmNode, LineString geometry, PlanitJtsUtils geoUtils) throws PlanItException {
     Point osmNodeLocation = PlanitJtsUtils.createPoint(getX(osmNode), getY(osmNode));
-    return geoUtils.getClosestProjectedCoordinateTo(osmNodeLocation, geometry);
+    return geoUtils.getClosestProjectedCoordinateOnLineString(osmNodeLocation, geometry);
   }  
   
   /** find the closest link to the node location. This method computes the actual distance between any location on any line segment of the geometry of the link

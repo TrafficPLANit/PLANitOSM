@@ -19,6 +19,7 @@ import org.planit.osm.util.Osm4JUtils;
 import org.planit.osm.util.OsmPtVersionScheme;
 import org.planit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
@@ -39,6 +40,9 @@ public class PlanitOsmZoningReaderData {
   
   /** logeger to use */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningReaderData.class.getCanonicalName());
+  
+  /** the country name, used for geographic mapping that depends on driving direction on the infrastructure */
+  private final String countryName;  
   
   /* UNPROCESSED OSM */
 
@@ -75,11 +79,31 @@ public class PlanitOsmZoningReaderData {
   
   /* OSM <-> TRANSFER ZONE GROUP TRACKING */
   
-  private final Map<Long, TransferZoneGroup> transferZoneGroupsByOsmId = new HashMap<Long, TransferZoneGroup>();
+  private final Map<Long, TransferZoneGroup> transferZoneGroupsByOsmId = new HashMap<Long, TransferZoneGroup>(); 
   
+  /**
+   * Default constructor using country set to GLOBAL (right hand drive)
+   */
+  public PlanitOsmZoningReaderData() {
+    this(CountryNames.GLOBAL);
+  }  
   
-  /* UNPROCESSED RELATED METHODS */
+  /** Constructor 
+   * @param countryName for this zoning
+   */
+  public PlanitOsmZoningReaderData(String countryName) {
+    this.countryName = countryName;
+  }
   
+  /** collect the country name
+   * @return country name
+   */
+  public String getCountryName() {
+    return countryName;
+  }  
+    
+  /* UNPROCESSED RELATED METHODS */  
+
   /** Collect an unprocessed station if it exists
    * 
    * @param entityType to collect for

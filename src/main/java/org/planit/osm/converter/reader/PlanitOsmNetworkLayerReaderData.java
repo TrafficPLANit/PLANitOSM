@@ -153,6 +153,9 @@ public class PlanitOsmNetworkLayerReaderData {
       Pair<Node, OsmNode> result = planitNodesByLocation.get(location);
       if(result != null) {
         return result.second();
+      }else {
+        /* check if internal to a link and not yet converted to a planit node */
+        return getOsmNodeInternalToLinkByLocation(location);
       }
     }
     return null;
@@ -330,12 +333,22 @@ public class PlanitOsmNetworkLayerReaderData {
    * @throws PlanItException thrown if error
    */
   public List<Link> findPlanitLinksWithInternalLocation(Point location) {
-    /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposes as part of the original link it represented) */
+    /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposed as part of the original link it represented) */
     Pair<List<Link>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);  
     if(result==null || result.first() == null) {
-      LOGGER.warning(String.format("DISCARD: Osm pt stop_position not attached to network, or not included in OSM file",location.toString()));
+      
+      /* log most represntative message possible */
+      OsmNode osmNode = null;
+      if(result!=null && result.second()!=null) {
+          osmNode = result.second();
+      }else {
+        /* try to see if we can pinpoint as extreme node, so we get more detailed logging message */
+        osmNode = getOsmNodeByPlanitNodeLocation(location);
+      }      
+      LOGGER.fine(String.format("DISCARD: Osm pt stop_position %s not available on network layer within planit link or as extreme node",osmNode!= null ? String.valueOf(osmNode.getId()) : location.toString()));
       return null;
-    }      
+    }  
+    
     List<Link> linksWithLocationInternally = result.first();
     /* update the references to which link the location is internal to based on latest information regarding layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
     updateLinksForInternalLocation(location, osmWaysWithMultiplePlanitLinks, linksWithLocationInternally /* <-- updated */);

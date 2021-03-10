@@ -3,12 +3,14 @@ package org.planit.osm.handler;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
@@ -17,9 +19,13 @@ import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
+import org.planit.utils.graph.EdgeSegment;
+import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
+import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.DirectedConnectoid;
+import org.planit.utils.zoning.TransferZone;
 import org.planit.zoning.ZoningModifier;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -184,6 +190,7 @@ public class PlanitOsmHandlerHelper {
     try {
       Point geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
       node = createAndPopulateNode(geometry, networkLayer);
+      node.setExternalId(String.valueOf(osmNode.getId()));
     } catch (PlanItException e) {
       LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
     }
@@ -223,6 +230,108 @@ public class PlanitOsmHandlerHelper {
       destination.putIfAbsent(osmWayId, new HashSet<Link>());
       destination.get(osmWayId).addAll(links);
     });
+  }
+
+  /** Verify if the geometry of the transfer zone equates to the provided location
+   * @param transferZone to verify
+   * @param location to verify against
+   * @return true when residing at the exact same location at the reference location, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  public static boolean isTransferZoneAtLocation(TransferZone transferZone, Point location) throws PlanItException {
+    PlanItException.throwIfNull(transferZone, "Transfer zone is null, unable to verify location");
+      
+    if(transferZone.hasCentroid() && transferZone.getCentroid().hasPosition()) {
+      return location.equals(transferZone.getCentroid().getPosition());
+    }else if(transferZone.hasGeometry()) {
+      if(transferZone.getGeometry() instanceof Point) {
+        return location.equals(transferZone.getGeometry());
+      }
+    }else { 
+      throw new PlanItException("Transferzone representing platform/pole %s has no valid geometry attached, unable to verify location", transferZone.getExternalId());
+    }
+      
+    return false;
+  }
+
+  /** Verify of the transfer zone resides left of the line coordA to coordB
+   * 
+   * @param transferZone to check
+   * @param coordA of line 
+   * @param coordB of line
+   * @return true when left, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  public static boolean isTransferZoneLeftOf(TransferZone transferZone, Coordinate coordA, Coordinate coordB, PlanitJtsUtils geoUtils) throws PlanItException {
+    
+    Coordinate transferZoneReferenceCoordinate = null; 
+    if(transferZone.hasCentroid() && transferZone.getCentroid().hasPosition()) {
+      transferZoneReferenceCoordinate = transferZone.getCentroid().getPosition().getCoordinate();
+    }else if(transferZone.hasGeometry()) {
+      if(transferZone.getGeometry() instanceof Point) {
+        transferZoneReferenceCoordinate = ((Point)transferZone.getGeometry()).getCoordinate();  
+      }else {
+        /* find projected coordinate closest to coordB */
+        transferZoneReferenceCoordinate = geoUtils.getClosestProjectedCoordinateOnGeometry(PlanitJtsUtils.createPoint(coordB),  transferZone.getGeometry());
+      }
+    }else { 
+      throw new PlanItException("Transferzone representing platform/pole %s has no valid geometry attached, unable to determine on which side of line AB (%s, %s) is resides", transferZone.getExternalId(), coordA.toString(), coordB.toString());
+    }
+    
+    return PlanitJtsUtils.isCoordinateLeftOf(transferZoneReferenceCoordinate, coordA, coordB);
+   
+  }
+
+  /** Find the access link segments eligible given the intended location of the to be created connectoid, the transfer zone provided, and the access mode.
+   * When transfer zone location differs from the connectoid location determine on which side of the infrastructure it exists and based on the country's driving direction
+   * and access mode determine the access link segments
+   *  
+   * @param connectoidNode the planit node from which access link segments are to be sourced to create connectoid(s) for
+   * @param transferZone to create connectoid(s) for
+   * @param planitMode that is accessible
+   * @param leftHandDrive is infrastructure left hand drive or not
+   * @param geoUtils to use for determining geographic eleigibility
+   * @return eligible link segments to be access link segments for connectoid at this location
+   * @throws PlanItException thrown if error
+   */
+  public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, PlanitJtsUtils geoUtils) throws PlanItException {
+        
+    Set<EdgeSegment> accessLinkSegments = null;
+    if(PlanitOsmHandlerHelper.isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {
+      /* transfer zone equates to stop location, so impossible to determine on what side of the infrastructure it lies: All incoming link segments used for connectoid */
+      accessLinkSegments = planitNode.getEntryEdgeSegments();
+    }else {
+      accessLinkSegments = new HashSet<EdgeSegment>();
+      for(EdgeSegment linkSegment : planitNode.getEntryEdgeSegments()) {
+        
+        /* final line segment of link segment geometry */
+        Coordinate toCoordinate = linkSegment.getDownstreamVertex().getPosition().getCoordinate();
+        /* select internal coordinate predecing toCoordinate, since sourced from link geometry, the index depends on direction of segment */
+        int fromCoordinateIndex = (linkSegment.isDirectionAb() && linkSegment.getParentEdge().isGeometryInAbDirection()) ? linkSegment.getParentEdge().getGeometry().getNumPoints()-2 : 1; 
+        Coordinate fromCoordinate  =  linkSegment.getParentEdge().getGeometry().getCoordinateN(fromCoordinateIndex);
+                    
+        /* determine location relative to infrastructure */
+        boolean isTransferZoneLeftOfInfrastructure = PlanitOsmHandlerHelper.isTransferZoneLeftOf(transferZone, fromCoordinate, toCoordinate, geoUtils);      
+        if(isTransferZoneLeftOfInfrastructure==leftHandDrive) {
+          /* viable --> add */
+          accessLinkSegments.add(linkSegment);
+        }
+      }
+    }
+        
+    /* filter by accessible modes */
+    if(accessLinkSegments!= null && !accessLinkSegments.isEmpty()) {
+      Iterator<EdgeSegment> iterator = accessLinkSegments.iterator();
+      while(iterator.hasNext()) {
+        MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) iterator.next();
+        if(!linkSegment.isModeAllowed(planitMode)) {
+          /* not eligible, because not mode compatible, remove */
+          iterator.remove();
+        }
+      }
+    }
+    
+    return accessLinkSegments;
   }
   
 }

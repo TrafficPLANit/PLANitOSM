@@ -2,7 +2,6 @@ package org.planit.osm.handler;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -17,8 +16,6 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.Node;
-import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
@@ -497,35 +494,24 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(getSettings().isExcludedStopPosition(osmNode.getId())) {
       return;
     }
-    
-    for(Mode mode : planitModes) {
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(mode);
-      Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);
-      if(planitNode == null) {
-        LOGGER.warning(String.format("DISCARD: osm node (%d) could not be converted to access node for transfer zone representation of tram_stop",osmNode.getId()));
-        return;
-      }
-      if(planitNode.getEdges().size()>2) {
-        LOGGER.severe(String.format("Encountered tram stop on OSM node %d, with more than one potential incoming track, only two links expected at maximum, ignored", osmNode.getId()));
-        return;
-      }
 
-      /* transfer zone */
-      TransferZone transferZone = getZoningReaderData().getTransferZonesWithoutConnectoid(EntityType.Node).get(osmNode.getId());
+    /* transfer zone */
+    TransferZone transferZone = getZoningReaderData().getTransferZonesWithoutConnectoid(EntityType.Node).get(osmNode.getId());
+    if(transferZone == null) {
+      /* not created for other layer; create and register transfer zone */
+      transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, OsmRailModeTags.TRAM);
       if(transferZone == null) {
-        /* not created for other layer; create and register transfer zone */
-        transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, OsmRailModeTags.TRAM);
+        throw new PlanItException("Unable to create transfer zone for tram_stop %d",osmNode.getId());
       }
+    }
+    
+    /* connectoid(s) */
+    for(Mode mode : planitModes) {
+      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(mode);             
       
-      /* connectoid */
-      if(transferZone != null) {        
-        /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
-        /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
-        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, planitNode.getEntryLinkSegments(), Collections.singleton(mode));
-        for(DirectedConnectoid connectoid : newConnectoids) {
-          getZoningReaderData().addDirectedConnectoidByLocation(networkLayer, PlanitOsmNodeUtils.createPoint(osmNode),connectoid);
-        }
-      }      
+      /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
+      /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
+      createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, mode);      
     }
   }  
   
@@ -548,7 +534,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     Set<Mode> planitModes = networkSettings.getMappedPlanitModes(eligibleOsmModes);
     if(planitModes==null || planitModes.isEmpty()) {
       return;
-    }
+    }    
     
     /* a halt is either placed on a line, or separate (preferred), both should be supported. In the former case we can create
      * connectoids immediately, in the latter case, we must find them based on the closest infrastructure (railway) or via separately
@@ -567,10 +553,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       /* only proceed when not user excluded and available on layer */
       if(haltOnRailway && getSettings().isExcludedStopPosition(osmNode.getId())) {
         return;
-      }    
-      
-      /* create and register transfer zone (once across layers) */
-      if(transferZone == null) {
+      }/* create and register transfer zone (once across layers) */
+      else if(transferZone == null) {
         transferZone = createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmNode, tags, TransferZoneType.SMALL_STATION, eligibleOsmModes);
         if(transferZone == null) {
           LOGGER.severe(String.format("DISCARD: unable to create transfer zone for halt %d",osmNode.getId()));
@@ -580,11 +564,15 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
                 
       if(!haltOnRailway) {
         /* node is not part of infrastructure, we must identify closest railway infrastructure (in reasonable range) to create connectoids, or
-         * Ptv2 stop position reference is used, so postpone creating connectoid for now, and deal with it later when stop_positions have all been parsed */
+         * Ptv2 stop position reference is used, so postpone creating connectoids across modes for now, and deal with it later when stop_positions have all been parsed */
         getZoningReaderData().addTransferZoneWithoutConnectoid(EntityType.Node, osmNode.getId(), transferZone);
-      }else {       
-        /* connectoid */
-        extractDirectedConnectoidsForMode(osmNode, tags, transferZone, networkLayer, planitMode);
+        break;
+      }else {  
+        
+        /* we can immediately create connectoids since Ptv1 halt is placed on tracks and no Ptv2 tag is present */
+        /* railway generally has no direction, so create connectoids for both incoming directions (if present), so we can service any rail line using the tracks */        
+        createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, planitMode);
+         
       }
     }
   }

@@ -17,8 +17,23 @@ public class OsmRoadModeTags {
   /** all currently available mode tags */
   private static final Set<String> MODE_TAGS = new HashSet<String>();
   
+  /** all currently available public transport based road mode tags */
+  private static final Set<String> PT_MODE_TAGS = new HashSet<String>();  
+  
   /**
-   * populate the available mode tags
+   * populate the available pt road mode tags
+   */
+  private static void populatePTModeTags() {
+    PT_MODE_TAGS.add(CARRIAGE);
+    PT_MODE_TAGS.add(TOURIST_BUS);
+    PT_MODE_TAGS.add(COACH);
+    PT_MODE_TAGS.add(BUS);
+    PT_MODE_TAGS.add(SHARE_TAXI);
+    PT_MODE_TAGS.add(MINI_BUS);
+  }
+  
+  /**
+   * populate the available road mode tags
    */
   private static void populateModeTags() {
     MODE_TAGS.add(FOOT);
@@ -48,6 +63,7 @@ public class OsmRoadModeTags {
   }
   
   static {
+    populatePTModeTags();
     populateModeTags();
   }
 
@@ -174,5 +190,16 @@ public class OsmRoadModeTags {
     intersectionModes.retainAll(MODE_TAGS);
     return intersectionModes;
   }
+  
+  /** collect all rail based pt modes available from the passed in modes
+   * 
+   * @param eligibleOsmModes to extract from
+   * @return found public transport based modes
+   */
+  public static Collection<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+    intersectionModes.retainAll(PT_MODE_TAGS);
+    return intersectionModes;
+  }  
   
 }

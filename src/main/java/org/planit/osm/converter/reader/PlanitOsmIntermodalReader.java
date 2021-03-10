@@ -84,7 +84,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
     
     /* ZONING READER */
-    this.osmZoningReader = PlanitOsmZoningReaderFactory.create(inputFile, osmNetworkToPopulate);
+    this.osmZoningReader = PlanitOsmZoningReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
     /* default activate the parser because otherwise there is no point in using an intermodal reader anyway */
     this.osmZoningReader.getSettings().activateParser(true);    
   }

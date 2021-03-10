@@ -15,11 +15,12 @@ public class PlanitOsmZoningReaderFactory {
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param inputFile to use
+   * @param countryName 
    * @param referenceNetwork to use the same setup regarding id creation for zoning
    * @return create osm reader
    */
-  public static PlanitOsmZoningReader create(String inputFile, PlanitOsmNetwork referenceNetwork) {
-    return new PlanitOsmZoningReader(inputFile, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()));    
+  public static PlanitOsmZoningReader create(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork) {
+    return new PlanitOsmZoningReader(inputFile, countryName, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()));    
   }  
   
 }

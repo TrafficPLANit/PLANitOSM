@@ -338,5 +338,19 @@ public class PlanitOsmModeUtils {
     }
     return overlappingModes;
   }
+  
+  /** collect all pt modes available from the passed in modes across all major mode types (road, rail, water)
+   * 
+   * @param eligibleOsmModes to extract from
+   * @return found public transport based modes
+   */
+  public static Collection<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+    Collection<String> railPtModes = OsmRailModeTags.getPublicTransportModesFrom(eligibleOsmModes);
+    Collection<String> roadPtModes = OsmRoadModeTags.getPublicTransportModesFrom(eligibleOsmModes);
+    Collection<String> waterPtModes = OsmWaterModeTags.getPublicTransportModesFrom(eligibleOsmModes);
+    railPtModes.addAll(roadPtModes);
+    railPtModes.addAll(waterPtModes);
+    return railPtModes;
+  }
 
 }

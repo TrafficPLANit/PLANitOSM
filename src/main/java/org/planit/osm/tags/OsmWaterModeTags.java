@@ -72,6 +72,15 @@ public class OsmWaterModeTags {
     HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
     intersectionModes.retainAll(MODE_TAGS);
     return intersectionModes;
-  }  
+  } 
+  
+  /** collect all rail based pt modes available from the passed in modes
+   * 
+   * @param eligibleOsmModes to extract from
+   * @return found public transport based modes
+   */
+  public static Collection<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+    return getModesFrom(eligibleOsmModes);
+  }   
   
 }

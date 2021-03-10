@@ -1065,9 +1065,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException thrown if error
    */
   private Link extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex) throws PlanItException {
-     if(osmWay.getId() == 197882870) {
-       int bla = 4;
-     }
+
     /* create the link */
     Link link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex);   
     if(link != null) {
@@ -1201,7 +1199,7 @@ public class PlanitOsmNetworkLayerHandler {
 
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), osmNodes);
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
-      /* link sto break */
+      /* links to break */
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
             
       /* break links */
