@@ -498,7 +498,10 @@ public class PlanitOsmNetworkLayerHandler {
    */  
   private Collection<? extends Mode> getExplicitlyExcludedModesOneWayOppositeDirection() {
     /* vehicular modes are excluded, equates to vehicle:<direction>=no see https://wiki.openstreetmap.org/wiki/Key:oneway */
-    return settings.getMappedPlanitModes(OsmRoadModeCategoryTags.getRoadModesByCategory(OsmRoadModeCategoryTags.VEHICLE));
+    Collection<String> excludedModes = OsmRoadModeCategoryTags.getRoadModesByCategory(OsmRoadModeCategoryTags.VEHICLE);
+    /* in case rail way is marked as one way, we exclude all rail modes as well */
+    excludedModes.addAll(OsmRailModeTags.getSupportedRailModeTags());
+    return settings.getMappedPlanitModes(excludedModes);
   }     
 
   /** Collect explicitly included modes from the passed in tags but only for tags that have the same meaning regarldess if the way is tagged as one way or not

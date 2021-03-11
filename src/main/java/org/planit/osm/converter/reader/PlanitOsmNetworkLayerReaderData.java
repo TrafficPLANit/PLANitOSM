@@ -143,12 +143,13 @@ public class PlanitOsmNetworkLayerReaderData {
     return null;
   }  
   
-  /** collect the osm node available for the given location (if any)
+  /** collect the osm node available for the given location (if any), either internal to existing planit node
+   * or already available as converted planit node at that location
    * 
    * @param osmNode found, null otherwise
    * @throws PlanItException thrown if error
    */  
-  public OsmNode getOsmNodeByPlanitNodeLocation(Point location) {
+  public OsmNode getOsmNodeByLocation(Point location) {
     if(location != null) {
       Pair<Node, OsmNode> result = planitNodesByLocation.get(location);
       if(result != null) {
@@ -336,16 +337,7 @@ public class PlanitOsmNetworkLayerReaderData {
     /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposed as part of the original link it represented) */
     Pair<List<Link>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);  
     if(result==null || result.first() == null) {
-      
-      /* log most represntative message possible */
-      OsmNode osmNode = null;
-      if(result!=null && result.second()!=null) {
-          osmNode = result.second();
-      }else {
-        /* try to see if we can pinpoint as extreme node, so we get more detailed logging message */
-        osmNode = getOsmNodeByPlanitNodeLocation(location);
-      }      
-      LOGGER.fine(String.format("DISCARD: Osm pt stop_position %s not available on network layer within planit link or as extreme node",osmNode!= null ? String.valueOf(osmNode.getId()) : location.toString()));
+      LOGGER.fine(String.format("DISCARD: Osm pt stop_position %s not available on network layer within planit link or as extreme node", location.toString()));
       return null;
     }  
     

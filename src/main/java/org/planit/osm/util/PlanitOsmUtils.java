@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Geometry;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmPtv1Tags;
 import org.planit.osm.tags.OsmPtv2Tags;
@@ -214,6 +215,29 @@ public class PlanitOsmUtils {
       break;
     }
     return boundingBox;
+  }
+
+  /** extract geometry from the osm entity, either a point, line string or polygon
+   * 
+   * @param osmEntity to extract from
+   * @param osmNodes to extract geo information from referenced nodes from in entity
+   * @return geometry created
+   */
+  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes) {
+    Geometry theGeometry = null;
+    if(osmEntity instanceof OsmNode){
+      OsmNode osmNode = OsmNode.class.cast(osmEntity);
+      try {
+        theGeometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
+      } catch (PlanItException e) {
+        LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
+      }
+    }else if(osmEntity instanceof OsmWay) {
+      /* either area or linestring */
+      OsmWay osmWay = OsmWay.class.cast(osmEntity);
+      theGeometry = PlanitOsmWayUtils.extractGeometry(osmWay, osmNodes);       
+    }
+    return theGeometry;
   }    
    
 

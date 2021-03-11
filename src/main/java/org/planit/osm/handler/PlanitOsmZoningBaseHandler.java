@@ -3,6 +3,7 @@ package org.planit.osm.handler;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.Point;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
@@ -143,28 +145,13 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     TransferZone transferZone = null;
     
     /* geometry, either centroid location or polygon circumference */
-    Geometry theGeometry = null;
-    boolean isNode = false;
-    if(osmEntity instanceof OsmNode){
-      isNode = true;
-      OsmNode osmNode = OsmNode.class.cast(osmEntity);
-      try {
-        theGeometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
-      } catch (PlanItException e) {
-        LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
-      }
-    }else if(osmEntity instanceof OsmWay) {
-      /* either area or linestring */
-      OsmWay osmWay = OsmWay.class.cast(osmEntity);
-      theGeometry = PlanitOsmWayUtils.extractGeometry(osmWay, getNetworkToZoningData().getOsmNodes());       
-    }
-    
+    Geometry theGeometry = PlanitOsmUtils.extractGeometry(osmEntity, getNetworkToZoningData().getOsmNodes());        
     if(theGeometry != null && !theGeometry.isEmpty()) {
     
       /* create */
       transferZone = createEmptyTransferZone(transferZoneType);
       transferZone.setGeometry(theGeometry); 
-      if(isNode) {
+      if(theGeometry instanceof Point) {
         transferZone.getCentroid().setPosition((Point) theGeometry);
       }
       
@@ -296,8 +283,109 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     /* check mode compatibility on extracted transfer zone supported modes*/
     return isModeCompatible(transferZoneSupportedModes, referenceOsmModes, allowPseudoMatches);    
-  } 
+  }
   
+  /** create a subset of transfer zones from the passed in ones, removing all transfer zones for which we can be certain they are located on the wrong side of the road infrastructure.
+   * This is verified by checking if the stop_location resides on a one-way link. If so, we can be sure (based on the driving direction of the country) if a transfer zone is located on
+   * the near or far side of the road, i.e., do people have to cross the road to egt to the stop position. If so, it is not eligible and we remove it, otherwise we keep it.
+   * 
+   * @param osmNode representing the stop location
+   * @param transferZones to create subset for
+   * @param osmModes eligible for the stop
+   * @param geoUtils to use
+   * @return subset of transfer zones
+   * @throws PlanItException thrown if error
+   */
+  protected Collection<TransferZone> removeTransferZonesOnWrongSideOfRoadOfStopLocation(OsmNode osmNode, Collection<TransferZone> transferZones, Collection<String> osmModes, PlanitJtsUtils geoUtils) throws PlanItException {
+    Collection<TransferZone> matchedTransferZones = new HashSet<TransferZone>(transferZones);
+    boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
+    
+    /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we exclude the matches that lie on the wrong side of the road, i.e.,
+     * would require passengers to cross the road to get to the stop position */
+    osmModes = PlanitOsmModeUtils.getPublicTransportModesFrom(osmModes);
+    for(String osmMode : osmModes) {
+      Mode accessMode = getNetworkToZoningData().getSettings().getMappedPlanitMode(osmMode);
+      if(accessMode==null) {
+        continue;
+      }
+            
+      /* remove all link's that are not reachable without experiencing cross-traffic */
+      for(TransferZone transferZone : transferZones) { 
+        if(isTransferZoneOnWrongSideOfRoadOfStopLocation(PlanitOsmNodeUtils.createPoint(osmNode),transferZone, isLeftHandDrive, accessMode, geoUtils)) {
+          LOGGER.fine(String.format(
+              "DISCARD: Platform/pole %s matched on name to stop_position %d, but discarded based on placement on the wrong side of the road",transferZone.getExternalId(), osmNode.getId()));
+          matchedTransferZones.remove(transferZone);
+        }
+      }
+    }
+    
+    return matchedTransferZones;
+  }
+  
+  /** Verify based on the stop_position location that is assumed to be located on earlier parsed road infrastructure, if the transfer zone is located
+   * on an eligible side of the road. Meaning that the closest experienced driving direction of the nearby road is the logical one, i.e., when
+   * transfer zone is on the left the closest driving direction should be left hand drive and vice versa.
+   * 
+   * @param location representation stop_location
+   * @param transferZone representing waiting area
+   * @param isLeftHandDrive is driving direction left hand drive
+   * @param accessMode to verify
+   * @param geoUtils to use
+   * @return true when not on the wrong side, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  protected boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsUtils geoUtils) throws PlanItException {
+    
+    /* first collect links that can access the connectoid location */
+    Collection<Link> planitLinksToCheck = getLinksWithAccessToConnectoidLocation(location, accessMode);
+        
+    /* remove all link's that are not reachable without experiencing cross-traffic from the perspective of the transfer zone*/
+    if(planitLinksToCheck!=null){
+      Collection<Link> accessibleLinks = PlanitOsmHandlerHelper.removeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
+      if(accessibleLinks==null || accessibleLinks.isEmpty()) {
+        /* all links experience cross-traffic, so not reachable */
+        return true;
+      }
+    }
+    
+    /* reachable, not on wrong side */
+    return false;    
+    
+  }    
+  
+  /** Find links that can access the stop_location by the given mode. if location is on extreme node, we provide all links attached, otherwise only the
+   * link on which the location resides
+   * 
+   * @param location stop_location
+   * @param accessMode for stop_location (not used for filteraing accessibility, only for lyaer identification)
+   * @return links that can access the stop location.
+   * @throws PlanItException
+   */
+  protected Collection<Link> getLinksWithAccessToConnectoidLocation(Point location, Mode accessMode) throws PlanItException {
+    /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
+     * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
+    MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(accessMode);
+    PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
+    OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
+    
+    /* links that can reach stop_location */
+    Collection<Link> planitLinksToCheck = null;
+    Node planitNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getPlanitNodeByLocation(location);
+    if(planitNode != null) {        
+      /* not internal to planit link, so regular match to planit node --> consider all incoming link segments as potentially usable  */
+      planitLinksToCheck = planitNode.<Link>getLinks();              
+    }else {      
+      /* not an extreme node, must be a node internal to a link up until now --> consider only link in question the location resides on */ 
+      planitLinksToCheck = getNetworkToZoningData().getNetworkLayerData(networkLayer).findPlanitLinksWithInternalLocation(location);  
+      if(planitLinksToCheck!=null){
+        if(planitLinksToCheck.size()>1) {
+          throw new PlanItException("location is internal to multiple planit links, should not happen %s", osmNode!=null ? "osm node "+osmNode.getId() : "");  
+        }                             
+      }
+    }
+    return planitLinksToCheck;
+  }
+
   /** find out if link is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
    * mode that is mapped to a planit mode. If the zone has no known modes, it is by definition not mode compatible. 
    * When one allows for pseudo comaptibility we relax the restrictions such that any rail/road/water mode
@@ -419,7 +507,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* create/collect planit node with access link segment */
     Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);
     if(planitNode == null) {
-      LOGGER.warning(String.format("DISCARD: osm node (%d) could not be converted to access node for transfer zone %d ",osmNode.getId()));
+      LOGGER.warning(String.format("DISCARD: osm node (%d) could not be converted to access node for transfer zone osm entity %d at same location",osmNode.getId()));
       return null;
     }
     if(planitNode.getEdges().size()>2) {
@@ -520,11 +608,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* does not exist yet...create */
       
       /* find the links with the location registered as internal */
-      OsmNode osmNode = layerData.getOsmNodeByPlanitNodeLocation(osmNodeLocation);
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
       if(linksToBreak != null) {
       
         /* location is internal to an existing link, create it based on osm node if possible, otherwise base it solely on location provided*/
+        OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
         if(osmNode != null) {
           /* all regular cases */
           planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNode, layerData, networkLayer);
@@ -568,16 +656,23 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {    
+    
+    
     /* planit access node */
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
     if(planitNode==null) {
-      LOGGER.warning(String.format("DISCARD: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
+      OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
+      if(osmNode != null) {
+        LOGGER.warning(String.format("DISCARD: osm node %d could not be converted to access node for transfer zone representation of osm entity %s",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
+      }else {
+        LOGGER.warning(String.format("DISCARD: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
+      }
       return false;
-    }
-          
+    }               
+           
     /* accessible link segments for planit node based on location and mode availability*/
-    boolean leftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
-    Set<EdgeSegment> accessLinkSegments = PlanitOsmHandlerHelper.findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(planitNode, transferZone, planitMode, leftHandDrive, geoUtils);
+    boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
+    Set<EdgeSegment> accessLinkSegments = PlanitOsmHandlerHelper.findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(planitNode, transferZone, planitMode, isLeftHandDrive, geoUtils);
     if(accessLinkSegments == null || accessLinkSegments.isEmpty()) {
       LOGGER.warning(String.format("DISCARD: No connectoids could be created for platform/pole %s and mode %s at stop_position %s",transferZone.getExternalId(), planitMode.getExternalId(), planitNode.getExternalId()));
       return false;
@@ -601,7 +696,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(!accessLinkSegments.isEmpty()) {
               
       /* create and register */
-      Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, networkLayer, accessLinkSegments, Collections.singleton(planitMode));      
+      Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, networkLayer, accessLinkSegments, Collections.singleton(planitMode));
+      
       if(newConnectoids==null || newConnectoids.isEmpty()) {
         LOGGER.warning(String.format("Found eligible mode %s for stop_location of transferzone %s, but no access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
         return false;

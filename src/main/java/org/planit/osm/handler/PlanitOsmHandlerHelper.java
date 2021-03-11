@@ -11,16 +11,23 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.linearref.LinearLocation;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
+import org.planit.osm.util.PlanitOsmModeUtils;
 import org.planit.osm.util.PlanitOsmNodeUtils;
+import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
+import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.mode.TrackModeType;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -264,23 +271,18 @@ public class PlanitOsmHandlerHelper {
    */
   public static boolean isTransferZoneLeftOf(TransferZone transferZone, Coordinate coordA, Coordinate coordB, PlanitJtsUtils geoUtils) throws PlanItException {
     
-    Coordinate transferZoneReferenceCoordinate = null; 
+    Geometry transferzoneGeometry = null; 
     if(transferZone.hasCentroid() && transferZone.getCentroid().hasPosition()) {
-      transferZoneReferenceCoordinate = transferZone.getCentroid().getPosition().getCoordinate();
+      transferzoneGeometry = transferZone.getCentroid().getPosition();
     }else if(transferZone.hasGeometry()) {
-      if(transferZone.getGeometry() instanceof Point) {
-        transferZoneReferenceCoordinate = ((Point)transferZone.getGeometry()).getCoordinate();  
-      }else {
-        /* find projected coordinate closest to coordB */
-        transferZoneReferenceCoordinate = geoUtils.getClosestProjectedCoordinateOnGeometry(PlanitJtsUtils.createPoint(coordB),  transferZone.getGeometry());
-      }
+      transferzoneGeometry = transferZone.getGeometry();
     }else { 
       throw new PlanItException("Transferzone representing platform/pole %s has no valid geometry attached, unable to determine on which side of line AB (%s, %s) is resides", transferZone.getExternalId(), coordA.toString(), coordB.toString());
     }
     
-    return PlanitJtsUtils.isCoordinateLeftOf(transferZoneReferenceCoordinate, coordA, coordB);
-   
+    return geoUtils.isGeometryLeftOf(transferzoneGeometry, coordA, coordB);   
   }
+    
 
   /** Find the access link segments eligible given the intended location of the to be created connectoid, the transfer zone provided, and the access mode.
    * When transfer zone location differs from the connectoid location determine on which side of the infrastructure it exists and based on the country's driving direction
@@ -295,28 +297,46 @@ public class PlanitOsmHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, PlanitJtsUtils geoUtils) throws PlanItException {
-        
+      
+    /* only no-rail waiting areas (e.g. bus poles) must reside on the driving direction of the road, i.e., no cross-traffic allowed) */
+    boolean mustAvoidCrossingTraffic = true;
+    if(planitMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)) {
+      mustAvoidCrossingTraffic = false;
+    }    
+
     Set<EdgeSegment> accessLinkSegments = null;
-    if(PlanitOsmHandlerHelper.isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {
-      /* transfer zone equates to stop location, so impossible to determine on what side of the infrastructure it lies: All incoming link segments used for connectoid */
-      accessLinkSegments = planitNode.getEntryEdgeSegments();
-    }else {
-      accessLinkSegments = new HashSet<EdgeSegment>();
+    accessLinkSegments = new HashSet<EdgeSegment>();    
+    if(!mustAvoidCrossingTraffic || isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {
+      /* transfer zone equates to stop location or we assume train/tram platforms are present servicing either direction, so what side of the infrastructure the transfer zone lies is either not important or
+       * infeasible to determine : All incoming link segments used for connectoid */
       for(EdgeSegment linkSegment : planitNode.getEntryEdgeSegments()) {
-        
-        /* final line segment of link segment geometry */
-        Coordinate toCoordinate = linkSegment.getDownstreamVertex().getPosition().getCoordinate();
-        /* select internal coordinate predecing toCoordinate, since sourced from link geometry, the index depends on direction of segment */
-        int fromCoordinateIndex = (linkSegment.isDirectionAb() && linkSegment.getParentEdge().isGeometryInAbDirection()) ? linkSegment.getParentEdge().getGeometry().getNumPoints()-2 : 1; 
-        Coordinate fromCoordinate  =  linkSegment.getParentEdge().getGeometry().getCoordinateN(fromCoordinateIndex);
-                    
-        /* determine location relative to infrastructure */
-        boolean isTransferZoneLeftOfInfrastructure = PlanitOsmHandlerHelper.isTransferZoneLeftOf(transferZone, fromCoordinate, toCoordinate, geoUtils);      
-        if(isTransferZoneLeftOfInfrastructure==leftHandDrive) {
-          /* viable --> add */
+        if(((MacroscopicLinkSegment)linkSegment).isModeAllowed(planitMode)){      
           accessLinkSegments.add(linkSegment);
         }
       }
+    }else {
+      /* we do care about location of waiting area (transfer zone) compared to road, we only select link segments that are in the expected driving direction given
+       * the location of the waiting area */      
+      accessLinkSegments = new HashSet<EdgeSegment>();              
+      for(EdgeSegment linkSegment : planitNode.getEntryEdgeSegments()) {
+        if(((MacroscopicLinkSegment)linkSegment).isModeAllowed(planitMode)){
+          /* use line geometry closest to connectoid location */
+          LineSegment finalLineSegment = extractClosestLineSegmentToGeometryFromLinkSegment(transferZone.getGeometry(), (MacroscopicLinkSegment)linkSegment, geoUtils);
+          if(mustAvoidCrossingTraffic) {
+            /* determine location relative to infrastructure */
+            boolean isTransferZoneLeftOfInfrastructure = PlanitOsmHandlerHelper.isTransferZoneLeftOf(transferZone, finalLineSegment.p0, finalLineSegment.p1, geoUtils);      
+            if(isTransferZoneLeftOfInfrastructure==leftHandDrive) {
+              /* viable no opposite traffic directions needs to be crossed on the link to get to stop location --> add */
+              accessLinkSegments.add(linkSegment);
+            }
+          }else {
+            accessLinkSegments.add(linkSegment);
+          } 
+        }                
+      }
+      if(mustAvoidCrossingTraffic && accessLinkSegments.isEmpty()) {
+        LOGGER.info(String.format("platform/pole/station %s for stop_location %s discarded due to passengers having to cross traffic in opposite driving direction to reach stop", transferZone.getExternalId(), planitNode.getExternalId()));
+      }      
     }
         
     /* filter by accessible modes */
@@ -333,5 +353,92 @@ public class PlanitOsmHandlerHelper {
     
     return accessLinkSegments;
   }
+
+  /** extract a JTS line segment based on the closest two coordinates on the link segment geometry in its intended direction to the reference geometry provided
+   * 
+   * @param referenceGeometry to find closest line segment to 
+   * @param edgeSegment to extract line segment from
+   * @param geoUtils for distance calculations
+   * @return line segment
+   * @throws PlanItException  thrown if error
+   */
+  public static LineSegment extractClosestLineSegmentToGeometryFromLinkSegment(Geometry referenceGeometry, MacroscopicLinkSegment linkSegment, PlanitJtsUtils geoUtils) throws PlanItException {
+    
+    LinearLocation linearLocation = geoUtils.getClosestLinearLocationToGeometry(referenceGeometry, linkSegment.getParentEdge().getGeometry());
+    boolean linearLocationInLinkSegmentDirection = linkSegment.isDirectionAb() && linkSegment.getParentEdge().isGeometryInAbDirection();
+    
+    LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParentEdge().getGeometry());
+    if(!linearLocationInLinkSegmentDirection) {
+      lineSegment.reverse();
+    }
+    return lineSegment;        
+  }
+  
+  /** collect the one way edge segment for the mode if the link is in fact one way. If it is not (for the mode), null is returned
+   * 
+   * @param link to collect one way edge segment (for mode) from, if available
+   * @param accessMode to check one-way characteristic
+   * @return edge segment that is one way for the mode, i.e., the other edge segment (if any) does not support this mode, null if this is not the case
+   */
+  public static MacroscopicLinkSegment getLinkSegmentIfLinkIsOneWayForMode(Link link, Mode accessMode) {
+    EdgeSegment edgeSegment = null;
+    if(link.hasEdgeSegmentAb() != link.hasEdgeSegmentBa()) {
+      /* link is one way across all modes, so transfer zones are identifiable to be one the wrong or right side of the road */
+      edgeSegment = link.hasEdgeSegmentAb() ? link.getLinkSegmentAb() : link.getLinkSegmentBa();
+    }else if(link.<MacroscopicLinkSegment>getLinkSegmentAb().isModeAllowed(accessMode) != link.<MacroscopicLinkSegment>getLinkSegmentBa().isModeAllowed(accessMode)) {
+      /* link is one way for our mode, so transfer zones are identifiable to be one the wrong or right side of the road */
+      edgeSegment = link.<MacroscopicLinkSegment>getLinkSegmentAb().isModeAllowed(accessMode) ? link.getLinkSegmentAb() : link.getLinkSegmentBa();
+    }
+
+    return (MacroscopicLinkSegment) edgeSegment;
+  }  
+
+  /** collect the downstream node of a link conditioned on the fact the link is identified as one-way for the provided mode (otherwise it is not possible to
+   * determine what downstream is for a link)
+   * 
+   * @param link to extract downstream node from
+   * @param accessMode to check one-way characteristic
+   * @return downstream node, null if not one-way for given mode
+   */
+  public static Node getDownstreamNodeIfLinkIsOneWayForMode(Link link, Mode accessMode) {
+    EdgeSegment edgeSegment = getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);    
+    if(edgeSegment != null) {
+      /* select the downstream planit node */
+      return (Node)edgeSegment.getDownstreamVertex();
+    }
+    return null;
+  }
+
+  /** create a subset of links from the passed in ones, removing all links for which we can be certain that geometry is located on the wrong side of the road infrastructure geometry.
+   * This is verified by checking if the link is one-way. If so, we can be sure (based on the driving direction of the country) if the geometry is located to the closest by (logical) 
+   * driving direction given the placement of the geometry, i.e., on the left hand side for left hand drive countries, on the right hand side for right hand driving countries
+   * 
+   * @param osmEntity representing the waiting area (station, platform, pole)
+   * @param links to remove ineligible ones from
+   * @param referenceOsmModes eligible for the waiting area
+   * @return remaining links that are deemed eligible
+   * @throws PlanItException thrown if error
+   */   
+  public static Collection<Link> removeLinksOnWrongSideOf(Geometry stationGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsUtils geoUtils) throws PlanItException{
+    Collection<Link> matchedLinks = new HashSet<Link>(links);  
+    for(Link link : links) {            
+      for(Mode accessMode : accessModes){
+        MacroscopicLinkSegment oneWayLinkSegment = PlanitOsmHandlerHelper.getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);
+        if(oneWayLinkSegment != null) {
+          /* use line geometry closest to connectoid location */
+          LineSegment finalLineSegment = PlanitOsmHandlerHelper.extractClosestLineSegmentToGeometryFromLinkSegment(stationGeometry, oneWayLinkSegment, geoUtils);                    
+          /* determine location relative to infrastructure */
+          boolean isStationLeftOfOneWayLinkSegment = geoUtils.isGeometryLeftOf(stationGeometry, finalLineSegment.p0, finalLineSegment.p1);  
+          if(isStationLeftOfOneWayLinkSegment != isLeftHandDrive) {
+            /* not reachable for at least one mode, so deemed not eligible */
+            matchedLinks.remove(link);
+            break; // from mode loop
+          }
+        }
+      }             
+    }
+    return matchedLinks;
+  }
+
   
 }

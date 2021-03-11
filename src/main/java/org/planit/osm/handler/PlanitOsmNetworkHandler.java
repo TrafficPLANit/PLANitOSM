@@ -483,6 +483,10 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
             
+    if(osmWay.getId()==506686939) {
+      int bla = 4;
+    }
+    
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
