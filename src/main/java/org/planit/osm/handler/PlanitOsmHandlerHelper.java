@@ -18,14 +18,12 @@ import org.locationtech.jts.linearref.LinearLocation;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
-import org.planit.osm.util.PlanitOsmModeUtils;
+import org.planit.osm.tags.OsmPtv1Tags;
 import org.planit.osm.util.PlanitOsmNodeUtils;
-import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
-import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.TrackModeType;
 import org.planit.utils.network.physical.Link;
@@ -33,6 +31,7 @@ import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
+import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.ZoningModifier;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -298,7 +297,8 @@ public class PlanitOsmHandlerHelper {
    */
   public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, PlanitJtsUtils geoUtils) throws PlanItException {
       
-    /* only no-rail waiting areas (e.g. bus poles) must reside on the driving direction of the road, i.e., no cross-traffic allowed) */
+    /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
+     * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen */
     boolean mustAvoidCrossingTraffic = true;
     if(planitMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)) {
       mustAvoidCrossingTraffic = false;
@@ -413,24 +413,32 @@ public class PlanitOsmHandlerHelper {
    * This is verified by checking if the link is one-way. If so, we can be sure (based on the driving direction of the country) if the geometry is located to the closest by (logical) 
    * driving direction given the placement of the geometry, i.e., on the left hand side for left hand drive countries, on the right hand side for right hand driving countries
    * 
-   * @param osmEntity representing the waiting area (station, platform, pole)
+   * @param waitingAreaGeometry representing the waiting area (station, platform, pole)
    * @param links to remove ineligible ones from
    * @param referenceOsmModes eligible for the waiting area
    * @return remaining links that are deemed eligible
    * @throws PlanItException thrown if error
    */   
-  public static Collection<Link> removeLinksOnWrongSideOf(Geometry stationGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsUtils geoUtils) throws PlanItException{
+  public static Collection<Link> removeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsUtils geoUtils) throws PlanItException{
     Collection<Link> matchedLinks = new HashSet<Link>(links);  
     for(Link link : links) {            
       for(Mode accessMode : accessModes){
-        MacroscopicLinkSegment oneWayLinkSegment = PlanitOsmHandlerHelper.getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);
-        if(oneWayLinkSegment != null) {
+        
+        /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
+         * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen */
+        boolean mustAvoidCrossingTraffic = true;
+        if(accessMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)) {
+          mustAvoidCrossingTraffic = false;
+        }           
+        
+        MacroscopicLinkSegment oneWayLinkSegment = PlanitOsmHandlerHelper.getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);        
+        if(oneWayLinkSegment != null && mustAvoidCrossingTraffic) {
           /* use line geometry closest to connectoid location */
-          LineSegment finalLineSegment = PlanitOsmHandlerHelper.extractClosestLineSegmentToGeometryFromLinkSegment(stationGeometry, oneWayLinkSegment, geoUtils);                    
+          LineSegment finalLineSegment = PlanitOsmHandlerHelper.extractClosestLineSegmentToGeometryFromLinkSegment(waitingAreaGeometry, oneWayLinkSegment, geoUtils);                    
           /* determine location relative to infrastructure */
-          boolean isStationLeftOfOneWayLinkSegment = geoUtils.isGeometryLeftOf(stationGeometry, finalLineSegment.p0, finalLineSegment.p1);  
+          boolean isStationLeftOfOneWayLinkSegment = geoUtils.isGeometryLeftOf(waitingAreaGeometry, finalLineSegment.p0, finalLineSegment.p1);  
           if(isStationLeftOfOneWayLinkSegment != isLeftHandDrive) {
-            /* not reachable for at least one mode, so deemed not eligible */
+            /* travellers cannot reach doors of mode on this side of the road, so deemed not eligible */
             matchedLinks.remove(link);
             break; // from mode loop
           }
@@ -438,6 +446,55 @@ public class PlanitOsmHandlerHelper {
       }             
     }
     return matchedLinks;
+  }
+  
+  /** Verify if the passed on osm node that represents a stop_location is in fact also a Ptv1 stop, either a highway=tram_stop or
+   * highway=bus_stop. This is effectively wrongly tagged, but does occur due to confusion regarding the tagging schemes. Therefore we
+   * identify this situation allowing the parser to change its behaviour and if it is a Patv1 stop, process it as such if deemed necessary
+   * 
+   * @param osmNode that is classified as Ptv2 stop_location
+   * @param tags of the stop_location
+   * @return true when also a Ptv1 stop (bus or tram stop), false otherwise
+   */
+  public static boolean isPtv2StopPositionPtv1Stop(OsmNode osmNode, Map<String, String> tags) {
+    
+    /* Context: The parser assumed a valid Ptv2 tagging and ignored the Ptv1 tag. However, it was only a valid Ptv1 tag and incorrectly tagged Ptv2 stop_location.
+     * We therefore identify this special situation */    
+    if(OsmPtv1Tags.isTramStop(tags)) {
+      LOGGER.fine(String.format("Identified Ptv1 tram_stop (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      return true;
+    }else if(OsmPtv1Tags.isBusStop(tags)) {
+      LOGGER.fine(String.format("Identified Ptv1 bus_stop (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      return true;
+    }else if(OsmPtv1Tags.isHalt(tags)) {
+      LOGGER.fine(String.format("Identified Ptv1 halt (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      return true;
+    }else if(OsmPtv1Tags.isStation(tags)) {
+      LOGGER.fine(String.format("Identified Ptv1 station (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      return true;
+    }
+    return false;
+  }   
+
+  /** collect the transfer zone type based on the tags
+   * 
+   * @param osmNode node 
+   * @param tags tags of the node
+   * @return transfer zone type, unknown if not able to map 
+   */
+  public static TransferZoneType getPtv1TransferZoneType(OsmNode osmNode, Map<String, String> tags) {
+    if(OsmPtv1Tags.isBusStop(tags)) {
+      return TransferZoneType.POLE;
+    }else if(OsmPtv1Tags.isTramStop(tags) ) {
+      return TransferZoneType.PLATFORM;
+    }else if(OsmPtv1Tags.isHalt(tags)) {
+      return TransferZoneType.SMALL_STATION;
+    }else if(OsmPtv1Tags.isStation(tags)) {
+      return TransferZoneType.STATION;
+    }else {
+      LOGGER.severe(String.format("unable to map node %d to Ptv1 transferzone type", osmNode.getId()));
+      return TransferZoneType.UNKNOWN;
+    }
   }
 
   

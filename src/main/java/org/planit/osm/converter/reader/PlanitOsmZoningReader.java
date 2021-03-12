@@ -8,7 +8,7 @@ import org.planit.osm.handler.PlanitOsmZoningHandler;
 import org.planit.osm.handler.PlanitOsmZoningHandlerProfiler;
 import org.planit.osm.handler.PlanitOsmZoningPostProcessingHandler;
 import org.planit.osm.handler.PlanitOsmZoningPreProcessingHandler;
-import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
+import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.zoning.Zoning;
@@ -42,7 +42,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
   private PlanitOsmZoningPostProcessingHandler osmPostProcessingHandler = null;
   
   /** the settings the user can configure for parsing transfer zones */
-  private final PlanitOsmTransferSettings transferSettings;
+  private final PlanitOsmPublicTransportSettings transferSettings;
   
   /** the (temporary) data gathered during parsing of OSM (transfer) zones */
   private final PlanitOsmZoningReaderData zoningReaderData;
@@ -178,7 +178,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
    * @param zoningToPopulate zoning to populate 
    */
   protected PlanitOsmZoningReader(String inputFile, String countryName, Zoning zoningToPopulate){
-    this.transferSettings = new PlanitOsmTransferSettings();
+    this.transferSettings = new PlanitOsmPublicTransportSettings();
     this.zoningReaderData = new PlanitOsmZoningReaderData(countryName);
 
     // references
@@ -238,7 +238,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
    * 
    * @return the settings
    */
-  public PlanitOsmTransferSettings getSettings() {
+  public PlanitOsmPublicTransportSettings getSettings() {
     return transferSettings;
   }
 

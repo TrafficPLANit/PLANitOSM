@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
-import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
+import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.utils.exceptions.PlanItException;
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -40,7 +40,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
    * @param profiler to use
    */
-  public PlanitOsmZoningPreProcessingHandler(final PlanitOsmTransferSettings transferSettings, PlanitOsmZoningReaderData zoningReaderData, PlanitOsmZoningHandlerProfiler profiler) {   
+  public PlanitOsmZoningPreProcessingHandler(final PlanitOsmPublicTransportSettings transferSettings, PlanitOsmZoningReaderData zoningReaderData, PlanitOsmZoningHandlerProfiler profiler) {   
     super(transferSettings, zoningReaderData, null, null, profiler);    
   }
   
@@ -74,6 +74,11 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
           int numberOfMembers = osmRelation.getNumberOfMembers();
           for(int index = 0 ;index < numberOfMembers ; ++ index) {
             OsmRelationMember member = osmRelation.getMember(index);
+            
+            if( skipOsmPtEntity(member)) {
+              continue;
+            }            
+            
             /* only collect outer area, mapped as ways */
             if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
               /* mark for keeping in regular handler */

@@ -61,14 +61,14 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   protected final Map<Long, OsmWay> osmCircularWays;  
     
-  /** find layers where the node is active
+  /** Verify if there exist any layers where the node is active either as an extreme node or internal to a planit link
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
    * @throws PlanItException thrown if error
    */
-  private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {
+  private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {    
     OsmNode osmNode = getOsmNodes().get(osmNodeId);
-    if(osmNode != null) {
+    if(osmNode != null) {      
       for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
         PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
         if(layerHandler.getLayerData().isLocationPresentInLayer(PlanitOsmNodeUtils.createPoint(osmNode))){

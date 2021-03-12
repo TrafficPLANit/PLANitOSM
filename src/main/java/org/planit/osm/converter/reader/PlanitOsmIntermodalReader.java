@@ -9,7 +9,7 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.handler.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
-import org.planit.osm.settings.zoning.PlanitOsmTransferSettings;
+import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 import org.planit.zoning.Zoning;
@@ -148,7 +148,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * 
    * @return transfer settings
    */
-  public PlanitOsmTransferSettings getTransferSettings() {
+  public PlanitOsmPublicTransportSettings getTransferSettings() {
     return osmZoningReader.getSettings();
   }  
 
