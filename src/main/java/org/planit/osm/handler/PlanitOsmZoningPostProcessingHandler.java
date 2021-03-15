@@ -302,7 +302,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
                         
             /* inform user of tagging issues in case platform is not fully correctly mode mapped */
             if(getEligibleOsmModesForTransferZone(transferZone)==null) {
-              LOGGER.info(String.format("Salvaged: Platform/pole (%s) referenced by stop_position (%s), matched although platform has no known mode support", transferZone.getExternalId(), osmNode.getId()));              
+              LOGGER.info(String.format("SALVAGED: Platform/pole (%s) referenced by stop_position (%s), matched although platform has no known mode support", transferZone.getExternalId(), osmNode.getId()));              
             }else if(!isTransferZoneModeCompatible(transferZone, referenceOsmModes, true /* allow pseudo matches */)) {
               LOGGER.warning(String.format("DISCARD: Platform/pole (%s) referenced by stop_position (%s), but platform is not (pseudo) mode compatible with stop", transferZone.getExternalId(), osmNode.getId()));
               continue;
@@ -318,7 +318,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           }
         }
         if(multipleMatchesForSameRef == true ) {
-          LOGGER.fine(String.format("Salvaged: non-unique reference (%s) on stop_position %d, selected spatially closest platform/pole %s", localRefValue, osmNode.getId(),foundTransferZones.get(localRefValue).getExternalId()));         
+          LOGGER.fine(String.format("SALVAGED: non-unique reference (%s) on stop_position %d, selected spatially closest platform/pole %s", localRefValue, osmNode.getId(),foundTransferZones.get(localRefValue).getExternalId()));         
         }        
       }
     }
@@ -515,7 +515,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmNode.getId());
       TransferZone foundZone = getZoningReaderData().getTransferZoneWithoutConnectoid(result.first(), result.second());
       if(foundZone==null) {
-        LOGGER.severe(String.format("User overwritten waiting area for osm node %d, not available",result.second()));
+        LOGGER.severe(String.format("User overwritten waiting area (platform, pole) for osm node %d, not available",osmNode.getId()));
       }else {
         matchedTransferZones = Collections.singleton(foundZone);
         LOGGER.fine(String.format("Mapped stop_position %d to overwritten waiting area %d", osmNode.getId(),  result.second()));
@@ -607,7 +607,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         success = extractDirectedConnectoidsForMode(osmNode, transferZone, networkLayer, planitMode, geoUtils) || success;
         if(success && transferZoneGroup != null && !transferZone.isInTransferZoneGroup(transferZoneGroup)) {
           /* in some rare cases only the stop locations are part of the stop_area, but not the platforms next to the road/rail, only then this situation is triggered and we salve the situation */
-          LOGGER.info(String.format("Salvaged: platform/pole %s identified for stop_position %d is not part of the stop_area %s, added it to transfer zone group",transferZone.getExternalId(), osmNode.getId(), transferZoneGroup.getExternalId()));
+          LOGGER.info(String.format("SALVAGED: Platform/pole %s identified for stop_position %d, platform/pole not in stop_area %s of stop_position, added it",transferZone.getExternalId(), osmNode.getId(), transferZoneGroup.getExternalId()));
           transferZoneGroup.addTransferZone(transferZone);
         }
       }      
@@ -1039,13 +1039,13 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * 
    * @throws PlanItException thrown if error
    */
-  private void extractRemainingOsmEntitiesNotPartOfStopArea() throws PlanItException {                        
-        
-    /* unprocessed stop_positions -> ? */
-    processStopPositionsNotPartOfStopArea();
+  private void extractRemainingOsmEntitiesNotPartOfStopArea() throws PlanItException {
     
     /* transfer zones without connectoids, i.e., implicit stop_positions not part of any stop_area, --> create connectoids */
-    processTransferZonesWithoutStopPositions();    
+    processTransferZonesWithoutStopPositions();     
+        
+    /* unprocessed stop_positions -> ? */
+    processStopPositionsNotPartOfStopArea();      
     
     /* unproccessed stations -> create transfer zone and connectoids (implicit stop_positions)*/
     processStationsNotPartOfStopArea();    
@@ -1156,7 +1156,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         boolean alreadyProcessed = getZoningReaderData().hasAnyDirectedConnectoidsForLocation(PlanitOsmNodeUtils.createPoint(stopPositionNode)); 
         if(isPtv2NodeOnly && alreadyProcessed) {
           /* stop_position resides in multiple stop_areas, this is strongly discouraged by OSM, but does occur still so we identify and skip (no need to process twice anyway)*/
-          LOGGER.info(String.format("stop_position %d present in multiple stop_areas, discouraged tagging behaviour, consider retagging",member.getId(), transferZoneGroup.getExternalId()));
+          LOGGER.fine(String.format("Stop_position %d present in multiple stop_areas, discouraged tagging behaviour, consider retagging",member.getId(), transferZoneGroup.getExternalId()));
         }
         if(alreadyProcessed) {
           return;

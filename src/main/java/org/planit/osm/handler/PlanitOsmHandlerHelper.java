@@ -291,19 +291,15 @@ public class PlanitOsmHandlerHelper {
    * @param transferZone to create connectoid(s) for
    * @param planitMode that is accessible
    * @param leftHandDrive is infrastructure left hand drive or not
-   * @param geoUtils to use for determining geographic eleigibility
+   * @param mustAvoidCrossingTraffic flag indicating if we filter out link segments where the traveller must cross traffic 
+   *  (due to pt vehicle doors only available on driving direction side)
+   * @param geoUtils to use for determining geographic eligibility
    * @return eligible link segments to be access link segments for connectoid at this location
    * @throws PlanItException thrown if error
    */
-  public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, PlanitJtsUtils geoUtils) throws PlanItException {
-      
-    /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
-     * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen */
-    boolean mustAvoidCrossingTraffic = true;
-    if(planitMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)) {
-      mustAvoidCrossingTraffic = false;
-    }    
-
+  public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(
+      Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, boolean mustAvoidCrossingTraffic, PlanitJtsUtils geoUtils) throws PlanItException {
+        
     Set<EdgeSegment> accessLinkSegments = null;
     accessLinkSegments = new HashSet<EdgeSegment>();    
     if(!mustAvoidCrossingTraffic || isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {

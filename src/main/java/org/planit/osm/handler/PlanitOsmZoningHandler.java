@@ -91,16 +91,16 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       Pair<OsmPtVersionScheme, OsmEntity> unprocessedStationPair = getZoningReaderData().getUnprocessedStation(member.getType(), member.getId());
       if(unprocessedStationPair != null) {
         /* station -> process it as such */
-        LOGGER.info(String.format("Salvaged: stop_area %s member %d incorrectly tagged as stop...identified as station", transferZoneGroup.getExternalId(), member.getId()));
+        LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as station", transferZoneGroup.getExternalId(), member.getId()));
         updateTransferZoneGroupStationName(transferZoneGroup, unprocessedStationPair.second(), OsmModelUtil.getTagsAsMap(unprocessedStationPair.second()));          
       }      
       /* platform? --> then we should already have a transfer zone for it*/      
       else if(getZoningReaderData().getTransferZoneWithoutConnectoid(member.getType(), member.getId())!=null) {
-        LOGGER.info(String.format("Salvaged: stop_area %s member %d incorrectly tagged as stop...identified as platform", transferZoneGroup.getExternalId(), member.getId()));
+        LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as platform", transferZoneGroup.getExternalId(), member.getId()));
         /* platform -> process as such */
         registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member);
       }else {
-        LOGGER.warning(String.format("DISCARD: stop_area %s member %d incorrectly tagged as stop...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
+        LOGGER.warning(String.format("DISCARD: stop_area %s member %d incorrectly given stop role...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
       }
       
       /* flag to not process as stop_position in post-processing since it is not a stop_position and invalidly tagged as such */

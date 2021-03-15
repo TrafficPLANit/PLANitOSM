@@ -25,6 +25,7 @@ import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.mode.TrackModeType;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -539,7 +540,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(eligibleOsmModes == null || eligibleOsmModes.isEmpty()) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any osm modes) */
-      LOGGER.fine(String.format("Salvaged: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
+      LOGGER.fine(String.format("SALVAGED: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
     }else {  
       /* correctly tagged -> determine if any mapped planit modes are available and we should create the transfer zone at all */
@@ -823,11 +824,22 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    */
   protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {    
     
+    OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
+    
+    /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
+     * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen... */
+    boolean mustAvoidCrossingTraffic = true;
+    if(planitMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)) {
+      /* ... exception 1: train platforms because trains have doros on both sides */
+      mustAvoidCrossingTraffic = false;
+    }else if( osmNode != null && getSettings().isOverwriteStopLocationWaitingArea(osmNode.getId())) {
+      /* ... exception 2: user override with mapping to this zone for this node */
+      mustAvoidCrossingTraffic = Long.valueOf(transferZone.getExternalId()) == getSettings().getOverwrittenStopLocationWaitingArea(osmNode.getId()).second();
+    }
     
     /* planit access node */
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
     if(planitNode==null) {
-      OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
       if(osmNode != null) {
         LOGGER.warning(String.format("DISCARD: osm node %d could not be converted to access node for transfer zone representation of osm entity %s",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
       }else {
@@ -836,11 +848,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       return false;
     }               
            
-    /* accessible link segments for planit node based on location and mode availability*/
-    boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
-    Set<EdgeSegment> accessLinkSegments = PlanitOsmHandlerHelper.findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(planitNode, transferZone, planitMode, isLeftHandDrive, geoUtils);
+    /* accessible link segments for planit node based on location, mode availability, and if explicit mapping is forced or not */
+    boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());            
+    Set<EdgeSegment> accessLinkSegments = PlanitOsmHandlerHelper.findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(planitNode, transferZone, planitMode, isLeftHandDrive, mustAvoidCrossingTraffic, geoUtils);
     if(accessLinkSegments == null || accessLinkSegments.isEmpty()) {
-      LOGGER.warning(String.format("DISCARD: No connectoids could be created for platform/pole %s and mode %s at stop_position %s",transferZone.getExternalId(), planitMode.getExternalId(), planitNode.getExternalId()));
+      LOGGER.warning(String.format("DISCARD: No accessible link segments found for platform/pole %s and mode %s at stop_position %s",transferZone.getExternalId(), planitMode.getExternalId(), planitNode.getExternalId()));
       return false;
     }
     
