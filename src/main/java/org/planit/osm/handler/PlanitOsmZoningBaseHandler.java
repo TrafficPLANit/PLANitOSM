@@ -210,7 +210,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       EntityType entityType = Osm4JUtils.getEntityType(osmEntity);
     
       /* register locally */
-      getZoningReaderData().addTransferZoneWithoutConnectoid(entityType, osmEntity.getId(), transferZone);
+      getZoningReaderData().getPlanitData().addIncompleteTransferZone(entityType, osmEntity.getId(), transferZone);
     }
     return transferZone;
   }  
@@ -595,7 +595,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
   
     /* transfer zone */
-    TransferZone transferZone = getZoningReaderData().getTransferZonesWithoutConnectoid(EntityType.Node).get(osmNode.getId());
+    TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Node).get(osmNode.getId());
     if(transferZone == null) {
       /* not created for other layer; create and register transfer zone */
       transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, PlanitOsmHandlerHelper.getPtv1TransferZoneType(osmNode, tags), defaultMode);
@@ -652,8 +652,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
       if(newConnectoid != null) {
         createdConnectoids.add(newConnectoid);
-        /* also index by access link segment's downstream node location */
-        zoningReaderData.addDirectedConnectoidByLocation(networkLayer, newConnectoid.getAccessLinkSegment().getDownstreamVertex().getPosition() ,newConnectoid);
+        
+        /* update planit data tracking information */ 
+        /* 1) index by access link segment's downstream node location */
+        zoningReaderData.getPlanitData().addDirectedConnectoidByLocation(networkLayer, newConnectoid.getAccessLinkSegment().getDownstreamVertex().getPosition() ,newConnectoid);
+        /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
+        zoningReaderData.getPlanitData().addConnectoidByTransferZone(transferZone, newConnectoid);
       }
     }         
     
@@ -745,7 +749,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
      * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
      * downstream vertex identified */
     Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = 
-        PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(linksToBreak, getZoningReaderData().getDirectedConnectoidsByLocation(networkLayer));
+        PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(
+            linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
           
     /* break links */
     Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
@@ -857,10 +862,10 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     
     /* update accessible link segments of already created connectoids (if any) */      
-    if(zoningReaderData.hasDirectedConnectoidForLocation(networkLayer, location)) {      
+    if(zoningReaderData.getPlanitData().hasDirectedConnectoidForLocation(networkLayer, location)) {      
       
       /* existing connectoid: update model eligibility */
-      Set<DirectedConnectoid> connectoidsForNode = zoningReaderData.getDirectedConnectoidsByLocation(location, networkLayer);        
+      Collection<DirectedConnectoid> connectoidsForNode = zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(location, networkLayer);        
       for(DirectedConnectoid connectoid : connectoidsForNode) {
         if(accessLinkSegments.contains(connectoid.getAccessLinkSegment())) {
           /* update mode eligibility */
@@ -879,8 +884,6 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       if(newConnectoids==null || newConnectoids.isEmpty()) {
         LOGGER.warning(String.format("Found eligible mode %s for stop_location of transferzone %s, but no access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
         return false;
-      }else {
-        newConnectoids.forEach( connectoid -> zoningReaderData.addDirectedConnectoidByLocation(networkLayer, location ,connectoid));
       }
     }
     

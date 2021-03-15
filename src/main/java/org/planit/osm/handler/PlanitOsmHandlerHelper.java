@@ -54,7 +54,7 @@ public class PlanitOsmHandlerHelper {
    * @param knownConnectoidsByLocation all connectoids of the network layer indexed by their location
    * @return all identified directed connectoids
    */
-  protected static Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, Map<Point, Set<DirectedConnectoid>> knownConnectoidsByLocation) {
+  protected static Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, Map<Point, List<DirectedConnectoid>> knownConnectoidsByLocation) {
     Collection<DirectedConnectoid> referencingConnectoids = new HashSet<DirectedConnectoid>();
     /* find eligible locations for connectoids based on downstream locations of link segments on link */
     Set<Point> eligibleLocations = new HashSet<Point>();
@@ -67,7 +67,7 @@ public class PlanitOsmHandlerHelper {
     
     /* find all directed connectoids with link segments that have downstream locations matching the eligible locations identified*/
     for(Point location : eligibleLocations) {
-      Set<DirectedConnectoid> knownConnectoidsForLink = knownConnectoidsByLocation.get(location);
+      Collection<DirectedConnectoid> knownConnectoidsForLink = knownConnectoidsByLocation.get(location);
       if(knownConnectoidsForLink != null && !knownConnectoidsForLink.isEmpty()) {
         for(DirectedConnectoid connectoid : knownConnectoidsForLink) {
           if(connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentAb()) || connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentBa()) ) {
@@ -139,7 +139,7 @@ public class PlanitOsmHandlerHelper {
    * @param connectoidsByLocation all connectoids indexed by their location
    * @return found connectoids and their access link segment's current downstream vertex 
    */
-  public static Map<DirectedConnectoid, DirectedVertex> collectAccessLinkSegmentDownstreamVerticesForConnectoids(Collection<Link> links, Map<Point, Set<DirectedConnectoid>> connectoidsByLocation) {    
+  public static Map<DirectedConnectoid, DirectedVertex> collectAccessLinkSegmentDownstreamVerticesForConnectoids(Collection<Link> links, Map<Point, List<DirectedConnectoid>> connectoidsByLocation) {    
     Map<DirectedConnectoid,DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<DirectedConnectoid,DirectedVertex>();
     for(Link link : links) {
       Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,connectoidsByLocation);
@@ -360,7 +360,7 @@ public class PlanitOsmHandlerHelper {
    */
   public static LineSegment extractClosestLineSegmentToGeometryFromLinkSegment(Geometry referenceGeometry, MacroscopicLinkSegment linkSegment, PlanitJtsUtils geoUtils) throws PlanItException {
     
-    LinearLocation linearLocation = geoUtils.getClosestLinearLocationToGeometry(referenceGeometry, linkSegment.getParentEdge().getGeometry());
+    LinearLocation linearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(referenceGeometry, linkSegment.getParentEdge().getGeometry());
     boolean linearLocationInLinkSegmentDirection = linkSegment.isDirectionAb() && linkSegment.getParentEdge().isGeometryInAbDirection();
     
     LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParentEdge().getGeometry());

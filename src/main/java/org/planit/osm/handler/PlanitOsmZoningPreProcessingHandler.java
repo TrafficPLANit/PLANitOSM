@@ -82,7 +82,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
             /* only collect outer area, mapped as ways */
             if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
               /* mark for keeping in regular handler */
-              getZoningReaderData().markMultiPolygonOsmWayToKeepUnprocessed(member.getId());
+              getZoningReaderData().getOsmData().markMultiPolygonOsmWayToKeepUnprocessed(member.getId());
             }
           }
           

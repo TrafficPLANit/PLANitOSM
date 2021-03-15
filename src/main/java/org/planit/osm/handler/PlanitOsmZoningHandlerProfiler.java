@@ -107,7 +107,7 @@ public class PlanitOsmZoningHandlerProfiler {
     
     LOGGER.info(String.format("[STATS] identified %d multipolygons as PT platforms",multiPolygonCount.longValue()));
     
-    LOGGER.info(String.format("[STATS] marked %d osm ways as part of multipolygon relations",planitOsmZoningReaderData.getUnprocessedMultiPolygonOsmWays().size()));    
+    LOGGER.info(String.format("[STATS] marked %d osm ways as part of multipolygon relations",planitOsmZoningReaderData.getOsmData().getUnprocessedMultiPolygonOsmWays().size()));    
     
   }  
 
