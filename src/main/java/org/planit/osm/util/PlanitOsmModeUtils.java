@@ -257,6 +257,26 @@ public class PlanitOsmModeUtils {
           
     return eligibleOsmModes;       
   }
+  
+  /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported,
+   * <ul>
+   * <li>highway=bus_stop gives bus</li>
+   * <li>highway=station gives bus</li>
+   * <li>highway=platform gives bus</li>
+   * <li>highway=platform_edge gives bus</li>
+   * <li>railway=station gives train</li>
+   * <li>railway=platform gives train</li>
+   * <li>railway=platform_edge gives train</li>
+   * <li>railway=halt gives train</li>
+   * <li>railway=stop gives train</li>
+   * <li>railway=tram_stop gives tram</li>
+   * </ul> 
+   * @param tags to extract information from
+   * @param backupDefaultMode if none can be found, this mode is used, may be null
+   */
+  public static String identifyPtv1DefaultMode(Map<String, String> tags) {
+   return identifyPtv1DefaultMode(tags, null);
+  }  
 
   /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported,
    * <ul>
@@ -272,17 +292,19 @@ public class PlanitOsmModeUtils {
    * <li>railway=tram_stop gives tram</li>
    * </ul> 
    * @param tags to extract information from
+   * @param backupDefaultMode if none can be found, this mode is used, may be null
    * @return default mode, null if no match could be made
    */
-  public static String identifyPtv1DefaultMode(Map<String, String> tags) {
+  public static String identifyPtv1DefaultMode(Map<String, String> tags, String backupDefaultMode) {
+    String foundMode = null;
     if(OsmPtv1Tags.hasPtv1ValueTag(tags)) {
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
         /* bus_stop --> bus */
         if(OsmPtv1Tags.isBusStop(tags)) {
-          return OsmRoadModeTags.BUS;
+          foundMode = OsmRoadModeTags.BUS;
         }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, 
             OsmPtv1Tags.STATION, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE)) {
-          return OsmRoadModeTags.BUS;
+          foundMode = OsmRoadModeTags.BUS;
         }else {
           LOGGER.warning(String.format(
               "unsupported Ptv1 value tag highway=%s used when identifying default mode, ignored",tags.get(OsmHighwayTags.HIGHWAY)));
@@ -290,10 +312,10 @@ public class PlanitOsmModeUtils {
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
         /* tram_stop -> tram */
         if(OsmPtv1Tags.isTramStop(tags)) {
-          return OsmRailModeTags.TRAM;
+          foundMode = OsmRailModeTags.TRAM;
         }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmRailwayTags.RAILWAY, 
             OsmPtv1Tags.STATION, OsmPtv1Tags.HALT, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE, OsmPtv1Tags.STOP)) {
-          return OsmRailModeTags.TRAIN;
+          foundMode = OsmRailModeTags.TRAIN;
         }else {
           LOGGER.warning(String.format(
               "unsupported Ptv1 value tag railway=%s used when identifying default mode, ignored",tags.get(OsmRailwayTags.RAILWAY)));  
@@ -303,7 +325,11 @@ public class PlanitOsmModeUtils {
       }
       
     }
-    return null;
+    
+    if(foundMode == null) {
+      foundMode = backupDefaultMode;
+    }
+    return foundMode;
   }
 
   /** find out if modes to check are compatible with the reference osm modes. Mode compatible means at least one overlapping

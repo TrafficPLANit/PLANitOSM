@@ -235,12 +235,23 @@ public class PlanitOsmZoningReaderPlanitData {
     }
   }  
   
+  /** Verify if transfer zone has connectoids present
+   * @param transferZone
+   * @return true when there exist connectoids that reference this transfer zone, false otherwise
+   */
+  public boolean hasConnectoids(TransferZone transferZone) {
+    return getConnectoidsByTransferZone(transferZone) != null && !getConnectoidsByTransferZone(transferZone).isEmpty();
+  }
+  
   /** register a known mapping from transfer zone to connectoid
    * 
    * @param transferZone to map to...
    * @param newConnectoid ...this connectoid
    */
   public Collection<DirectedConnectoid> getConnectoidsByTransferZone(TransferZone transferZone) {
+    if(transferZone == null) {
+      return null;
+    }
     connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<DirectedConnectoid>(1));
     return connectoidsByTransferZone.get(transferZone);
   }  
@@ -272,5 +283,6 @@ public class PlanitOsmZoningReaderPlanitData {
     directedConnectoidsByOsmNodeId.clear();     
     connectoidsByTransferZone.clear();
   }
+
 
 }

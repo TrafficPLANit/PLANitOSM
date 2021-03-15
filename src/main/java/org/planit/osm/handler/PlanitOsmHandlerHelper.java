@@ -1,6 +1,7 @@
 package org.planit.osm.handler;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -19,11 +20,14 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.tags.OsmPtv1Tags;
+import org.planit.osm.tags.OsmRailModeTags;
+import org.planit.osm.util.PlanitOsmModeUtils;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
+import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.TrackModeType;
 import org.planit.utils.network.physical.Link;
@@ -492,6 +496,33 @@ public class PlanitOsmHandlerHelper {
       return TransferZoneType.UNKNOWN;
     }
   }
+  
+  /** more readable check to see if pair with eligible modes contains any eligible osm mode
+   * 
+   * @param modeResult of collectEligibleModes on zoning base handler
+   * @return true when has at least one mapped planit mode present
+   */
+  public static boolean hasEligibleOsmMode(Pair<Collection<String>, Collection<Mode>> modeResult) {
+    if(modeResult!= null && modeResult.first()!=null && !modeResult.first().isEmpty()) {
+      /* eligible modes available */
+      return true;
+    }else {
+      return false;
+    }
+  }  
 
+  /** more readable check to see if pair with eligible modes contains any mapped planit mode
+   * 
+   * @param modeResult of collectEligibleModes on zoning base handler
+   * @return true when has at least one mapped planit mode present
+   */
+  public static boolean hasMappedPlanitMode(Pair<Collection<String>, Collection<Mode>> modeResult) {
+    if(modeResult!= null && modeResult.second()!=null && !modeResult.second().isEmpty()) {
+      /* eligible modes mapped to planit mode*/
+      return true;
+    }else {
+      return false;
+    }
+  }
   
 }
