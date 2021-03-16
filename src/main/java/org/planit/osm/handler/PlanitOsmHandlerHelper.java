@@ -20,8 +20,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.tags.OsmPtv1Tags;
-import org.planit.osm.tags.OsmRailModeTags;
-import org.planit.osm.util.PlanitOsmModeUtils;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -51,6 +49,17 @@ public class PlanitOsmHandlerHelper {
   
   /** the logger to use */
   public static final Logger LOGGER = Logger.getLogger(PlanitOsmHandlerHelper.class.getCanonicalName());
+  
+  /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
+   *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
+   *  on stop_positions that use this transfer zone
+   */
+  protected static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";  
+  
+  /** When known, transfer zones are provided with a station name extracted from the osm station entity (if possible). Its name is stored under
+   * this key as input property
+   */
+  protected static final String TRANSFERZONE_STATION_INPUT_PROPERTY_KEY = "station";  
     
   /** find all already registered directed connectoids that reference a link segment part of the passed in link in the given network layer
    * 
@@ -496,6 +505,59 @@ public class PlanitOsmHandlerHelper {
       return TransferZoneType.UNKNOWN;
     }
   }
+      
+  /** collect the station name for a transfer zone (if any)
+   * @param transferZone to collect for
+   * @return station name
+   */
+  public static String getTransferZoneStationName(TransferZone transferZone) {
+    return (String)transferZone.getInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY);
+  }
+  
+  /** collect the station name for a transfer zone (if any)
+   * @param transferZone to collect for
+   * @return station name
+   */
+  public static void  setTransferZoneStationName(TransferZone transferZone, String stationName) {
+    transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
+  }  
+  
+  /** Verify if the transfer zone has a station name set
+   * @param transferZone to verify
+   * @return true when present, false otherwise
+   */  
+  public static boolean hasTransferZoneStationName(TransferZone transferZone) {
+    return getTransferZoneStationName(transferZone) != null;
+  }   
+    
+  /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
+   * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
+   * via the generic input properties to be able to retrieve it if needed later
+   * 
+   * @param transferZone to use
+   * @param eligibleOsmModes to add
+   */
+  public static void addOsmAccessModesToTransferZone(final TransferZone transferZone, Collection<String> eligibleOsmModes) {
+    if(transferZone != null && eligibleOsmModes!= null) {
+      /* register identified eligible access modes */
+      transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
+    }
+  }    
+    
+  /** collect any prior registered eligible osm modes on a Planit transfer zone (unmodifiable)
+   * 
+   * @param transferZone to collect from
+   * @return eligible osm modes, null if none
+   */
+  @SuppressWarnings("unchecked")
+  public static Collection<String> getEligibleOsmModesForTransferZone(final TransferZone transferZone){
+    Collection<String> eligibleOsmModes = (Collection<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
+    if(eligibleOsmModes != null)
+    {
+      return Collections.unmodifiableCollection(eligibleOsmModes);
+    }
+    return null;
+  }  
   
   /** more readable check to see if pair with eligible modes contains any eligible osm mode
    * 

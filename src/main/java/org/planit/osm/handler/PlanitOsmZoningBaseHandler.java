@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -215,70 +214,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     return transferZone;
   }  
-  
-  /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
-   *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
-   *  on stop_positions that use this transfer zone
-   */
-  protected static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";
-  
-  /** When known, transfer zones are provided with a station name extracted from the osm station entity (if possible). Its name is stored under
-   * this key as input property
-   */
-  protected static final String TRANSFERZONE_STATION_INPUT_PROPERTY_KEY = "station";   
     
-  /** while PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
-   * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store osm mode information on a transfer zone
-   * via the generic input properties to be able to retrieve it if needed later
-   * 
-   * @param transferZone to use
-   * @param eligibleOsmModes to add
-   */
-  protected static void addOsmAccessModesToTransferZone(final TransferZone transferZone, Collection<String> eligibleOsmModes) {
-    if(transferZone != null && eligibleOsmModes!= null) {
-      /* register identified eligible access modes */
-      transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
-    }
-  }    
-    
-  /** collect any prior registered eligible osm modes on a Planit transfer zone (unmodifiable)
-   * 
-   * @param transferZone to collect from
-   * @return eligible osm modes, null if none
-   */
-  @SuppressWarnings("unchecked")
-  protected static Collection<String> getEligibleOsmModesForTransferZone(final TransferZone transferZone){
-    Collection<String> eligibleOsmModes = (Collection<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
-    if(eligibleOsmModes != null)
-    {
-      return Collections.unmodifiableCollection(eligibleOsmModes);
-    }
-    return null;
-  }
-  
-  /** collect the station name for a transfer zone (if any)
-   * @param transferZone to collect for
-   * @return station name
-   */
-  protected static String getTransferZoneStationName(TransferZone transferZone) {
-    return (String)transferZone.getInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY);
-  }
-  
-  /** collect the station name for a transfer zone (if any)
-   * @param transferZone to collect for
-   * @return station name
-   */
-  protected static void  setTransferZoneStationName(TransferZone transferZone, String stationName) {
-    transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
-  }  
-  
-  /** Verify if the transfer zone has a station name set
-   * @param transferZone to verify
-   * @return true when present, false otherwise
-   */  
-  protected static boolean hasTransferZoneStationName(TransferZone transferZone) {
-    return getTransferZoneStationName(transferZone) != null;
-  }  
   
   /** skip osm relation member when marked for exclusion in settings
    * 
@@ -351,7 +287,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return matched transfer zones
    */   
   protected boolean isTransferZoneModeCompatible(TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Collection<String> transferZoneSupportedModes = getEligibleOsmModesForTransferZone(transferZone);
+    Collection<String> transferZoneSupportedModes = PlanitOsmHandlerHelper.getEligibleOsmModesForTransferZone(transferZone);
     if(transferZoneSupportedModes==null) {       
       /* zone has no known modes, not a trustworthy match */ 
       return false;
@@ -562,7 +498,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }else if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)){  
       /* mapped planit modes are available and we should create the transfer zone*/
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
-      addOsmAccessModesToTransferZone(transferZone, modeResult.first());
+      PlanitOsmHandlerHelper.addOsmAccessModesToTransferZone(transferZone, modeResult.first());
     }  
     return transferZone;    
   }  
@@ -580,7 +516,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes) {
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);
     if(transferZone != null) {
-      addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
+      PlanitOsmHandlerHelper.addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
     }
     return transferZone;
   }   
@@ -737,8 +673,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       }
     }
     /* only set when not already set, because when already set it is likely the existing station name is more accurate */
-    if(!hasTransferZoneStationName(transferZone)) {
-      setTransferZoneStationName(transferZone, stationName);
+    if(!PlanitOsmHandlerHelper.hasTransferZoneStationName(transferZone)) {
+      PlanitOsmHandlerHelper.setTransferZoneStationName(transferZone, stationName);
     }
   }      
   
