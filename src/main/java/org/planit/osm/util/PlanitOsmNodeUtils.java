@@ -105,7 +105,7 @@ public class PlanitOsmNodeUtils {
     if(edge.hasGeometry()) {
       return geoUtils.getClosestDistanceInMeters(point,edge.getGeometry());
     }else {
-      LOGGER.warning(String.format("edge has no geographic information to determine closesness to osm entity %d",osmNode.getId()));
+      LOGGER.warning(String.format("Edge has no geographic information to determine closesness to osm entity %d",osmNode.getId()));
     }
     return Double.POSITIVE_INFINITY;    
   }  

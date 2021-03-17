@@ -173,7 +173,8 @@ public class PlanitOsmUtils {
   /** find the link closest to the passed in osm Entity
    * 
    * @param osmEntity to find closest link for
-   * @param matchedEdges to check against
+   * @param edges to check against
+   * @param osmNodes to extract geometry of osm entity from
    * @param geoUtils used to compute distances
    * @return closest edge found
    * @throws PlanItException thrown if error
@@ -191,7 +192,7 @@ public class PlanitOsmUtils {
     }
     return null;
   }  
-
+  
   /** create a bounding box based on the provided offset and osm entity geometry. The bounding box adds the offset to the extremes of the geometry
    * 
    * @param osmEntity to create bounding box fos
