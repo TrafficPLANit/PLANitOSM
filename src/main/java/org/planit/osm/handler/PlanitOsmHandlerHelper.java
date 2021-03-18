@@ -313,7 +313,7 @@ public class PlanitOsmHandlerHelper {
    */
   public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(
       Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, boolean mustAvoidCrossingTraffic, PlanitJtsUtils geoUtils) throws PlanItException {
-        
+            
     Set<EdgeSegment> accessLinkSegments = null;
     accessLinkSegments = new HashSet<EdgeSegment>();    
     if(!mustAvoidCrossingTraffic || isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {
@@ -345,7 +345,8 @@ public class PlanitOsmHandlerHelper {
         }                
       }
       if(mustAvoidCrossingTraffic && accessLinkSegments.isEmpty()) {
-        LOGGER.info(String.format("platform/pole/station %s for stop_location %s discarded due to passengers having to cross traffic in opposite driving direction to reach stop", transferZone.getExternalId(), planitNode.getExternalId()));
+        LOGGER.info(String.format("platform/pole/station %s for stop_location %s discarded due to passengers having to cross traffic in opposite driving direction to reach stop", 
+            transferZone.getExternalId(), planitNode.getExternalId()!= null ? planitNode.getExternalId(): ""));
       }      
     }
         
