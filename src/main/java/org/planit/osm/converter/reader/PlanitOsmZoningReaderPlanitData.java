@@ -17,13 +17,18 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.graph.Edges;
+import org.planit.utils.network.physical.Link;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
  * Data specifically required in the zoning reader while parsing OSM data
@@ -58,7 +63,27 @@ public class PlanitOsmZoningReaderPlanitData {
   /* OSM <-> TRANSFER ZONE GROUP TRACKING */
   
   /** track mapping from osm stop_area id to the transfer zone group that goes with it on the planit side */
-  private final Map<Long, TransferZoneGroup> transferZoneGroupsByOsmId = new HashMap<Long, TransferZoneGroup>();  
+  private final Map<Long, TransferZoneGroup> transferZoneGroupsByOsmId = new HashMap<Long, TransferZoneGroup>();
+  
+  /* SPATIAL LINK TRACKING */
+  
+  /** to be able to map stand-alone stations and platforms to connectoids in the network, we must be able to spatially find close by created
+   * links, this is what we do here. */
+  private Quadtree spatiallyIndexedPlanitLinks = null; 
+  
+  
+  /** initialise based on links in provided network
+   * 
+   * @param osmNetwork to use
+   */
+  protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
+    Collection<Edges<Link>> linksCollection = new ArrayList<Edges<Link>>();
+    for(MacroscopicPhysicalNetwork layer : osmNetwork.infrastructureLayers) {
+      linksCollection.add(layer.links);
+    }
+    spatiallyIndexedPlanitLinks = PlanitGraphGeoUtils.createSpatiallyIndexedPlanitEdges(linksCollection);
+  }
+    
         
   /* TRANSFER ZONE RELATED METHODS */  
   
@@ -159,6 +184,16 @@ public class PlanitOsmZoningReaderPlanitData {
     return removedTransferZone;
   }    
   
+  /** remove provided transfer zone as it is deemed complete (have the appropriate connectoid(s))
+   *  
+   * @param transferZone to remove 
+   * @return removed transfer zone if any, null otherwise
+   */  
+  public TransferZone removeIncompleteTransferZone(TransferZone transferZone) {
+    EntityType type = (transferZone.getGeometry() instanceof Point) ? EntityType.Node: EntityType.Way;
+    return removeIncompleteTransferZone(type, Long.valueOf(transferZone.getExternalId()));
+  }  
+  
   /* CONNECTOID RELATED METHODS */  
 
   /** collect the registered connectoids indexed by their locations for a given network layer (unmodifiable)
@@ -227,7 +262,7 @@ public class PlanitOsmZoningReaderPlanitData {
    * @param transferZone to map to...
    * @param newConnectoid ...this connectoid
    */
-  public void addConnectoidByTransferZone(TransferZone transferZone, DirectedConnectoid connectoid) {
+  public void addConnectoidByTransferZone(TransferZone transferZone, DirectedConnectoid connectoid) {    
     connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<DirectedConnectoid>(1));
     List<DirectedConnectoid> connectoids = connectoidsByTransferZone.get(transferZone);
     if(!connectoids.contains(connectoid)) {
@@ -282,7 +317,36 @@ public class PlanitOsmZoningReaderPlanitData {
     incompleteTransferZonesByOsmEntityId.clear();
     directedConnectoidsByOsmNodeId.clear();     
     connectoidsByTransferZone.clear();
+    spatiallyIndexedPlanitLinks = new Quadtree();
   }
 
+  /* SPATIAL LINK INDEX RELATED METHODS */
+    
+  /** remove provided links from local spatial index based on links
+   * @param links to remove
+   */
+  public void removeLinksFromSpatialLinkIndex(Collection<Link> links) {
+    if(links != null) {
+      links.forEach( link -> spatiallyIndexedPlanitLinks.remove(link.getEnvelope(), link));
+    }
+  }  
+  
+  /** add provided links to local spatial index based on their bounding box
+   * @param links to add
+   */  
+  public void addLinksToSpatialLinkIndex(Collection<Link> links) {
+    if(links != null) {
+      links.forEach( link -> spatiallyIndexedPlanitLinks.insert(link.getEnvelope(), link));
+    }
+  }   
+    
+  /** find links spatially based on the provided bounding box
+   * @param searchBoundingBox to use
+   * @return links found intersecting or within bounding box provided
+   */
+  public Collection<Link> findLinksSpatially(Envelope searchBoundingBox) {
+    return PlanitGraphGeoUtils.<Link>findEdgesSpatially(searchBoundingBox,spatiallyIndexedPlanitLinks);    
+  }
+   
 
 }

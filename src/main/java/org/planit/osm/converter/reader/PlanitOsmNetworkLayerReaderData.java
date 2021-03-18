@@ -331,9 +331,14 @@ public class PlanitOsmNetworkLayerReaderData {
   /** We identify which current planit links have the given location registered as internal to them
    * 
    * @param location to use
+   * @return found planit links, null if input is null
    * @throws PlanItException thrown if error
    */
   public List<Link> findPlanitLinksWithInternalLocation(Point location) {
+    if(location == null) {
+      return null;
+    }
+    
     /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposed as part of the original link it represented) */
     Pair<List<Link>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);  
     if(result==null || result.first() == null) {
@@ -346,15 +351,6 @@ public class PlanitOsmNetworkLayerReaderData {
     updateLinksForInternalLocation(location, osmWaysWithMultiplePlanitLinks, linksWithLocationInternally /* <-- updated */);
     return linksWithLocationInternally;
   }
-  
-  /** We identify which current planit links have the given osm node registered as internal to them
-   * 
-   * @param osmNode to use
-   * @throws PlanItException thrown if error
-   */  
-  public List<Link> findPlanitLinksWithInternalOsmNode(OsmNode osmNode) throws PlanItException {
-    return findPlanitLinksWithInternalLocation(PlanitOsmNodeUtils.createPoint(osmNode));
-  }  
        
   /**
    * reset contents of members

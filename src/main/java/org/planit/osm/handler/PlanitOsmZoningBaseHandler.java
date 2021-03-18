@@ -490,7 +490,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     /* tagged osm modes */        
     Pair<Collection<String>, Collection<Mode>> modeResult = collectEligibleModes(osmEntity.getId(), tags, defaultOsmMode);
-    if(PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult)) {
+    if(!PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any osm modes) */
       LOGGER.fine(String.format("SALVAGED: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
@@ -559,7 +559,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
       createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, mode);      
-    }
+    }    
+    /* connectoids created, mark transfer zone as complete */
+    getZoningReaderData().getPlanitData().removeIncompleteTransferZone(EntityType.Node, osmNode.getId());
     
     return transferZone;
   }
@@ -692,22 +694,34 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    */
   protected void breakLinksAtPlanitNode(Node planitNode, MacroscopicPhysicalNetwork networkLayer, List<Link> linksToBreak) throws PlanItException {
     PlanitOsmNetworkLayerReaderData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
-    
+
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
      * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
      * downstream vertex identified */
-    Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = 
-        PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(
-            linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
+    Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(
+        linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
+    
+    /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
+    {      
+      /* remove links from spatial index when they are broken up and their geometry changes, after breaking more links exist with smaller geometries... insert those after as replacements*/
+      getZoningReaderData().getPlanitData().removeLinksFromSpatialLinkIndex(linksToBreak); 
+    }    
           
     /* break links */
     Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
-    /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct planit links for (internal) osm nodes */
-    layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);    
     
     /* in case due to breaking links the access link segments no longer represent the link segment directly upstream of the original vertex (downstream of the access link segment
      * before breaking the links, this method will update the directed connectoids to undo this and update their access link segments where needed */
-    PlanitOsmHandlerHelper.updateAccessLinkSegmentsForDirectedConnectoids(connectoidsAccessLinkSegmentVerticesBeforeBreakLink);
+    PlanitOsmHandlerHelper.updateAccessLinkSegmentsForDirectedConnectoids(connectoidsAccessLinkSegmentVerticesBeforeBreakLink);    
+
+    /* TRACKING DATA CONSISTENCY - AFTER */
+    {
+      /* insert created/updated links and their geometries to spatial index instead */
+      newlyBrokenLinks.forEach( (id, links) -> {getZoningReaderData().getPlanitData().addLinksToSpatialLinkIndex(links);});
+                    
+      /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct planit links for (internal) osm nodes */
+      layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);                            
+    }
           
   }  
   
@@ -741,7 +755,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
           planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNodeLocation, layerData, networkLayer);
         }
         getProfiler().logConnectoidStatus(getZoning().connectoids.size());
-                     
+                             
         /* now perform the breaking of links at the given node and update related tracking/reference information to broken link(segment)(s) where needed */
         breakLinksAtPlanitNode(planitNode, networkLayer, linksToBreak);
       }
@@ -776,6 +790,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {    
+    if(location == null || transferZone == null || networkLayer == null || planitMode == null || geoUtils == null) {
+      return false;
+    }
     
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
     

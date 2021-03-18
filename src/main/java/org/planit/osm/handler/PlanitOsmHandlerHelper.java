@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
@@ -368,12 +369,16 @@ public class PlanitOsmHandlerHelper {
    * @param referenceGeometry to find closest line segment to 
    * @param edgeSegment to extract line segment from
    * @param geoUtils for distance calculations
-   * @return line segment
+   * @return line segment if found
    * @throws PlanItException  thrown if error
    */
   public static LineSegment extractClosestLineSegmentToGeometryFromLinkSegment(Geometry referenceGeometry, MacroscopicLinkSegment linkSegment, PlanitJtsUtils geoUtils) throws PlanItException {
     
-    LinearLocation linearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(referenceGeometry, linkSegment.getParentEdge().getGeometry());
+    LineString linkSegmentGeometry = linkSegment.getParentEdge().getGeometry();
+    if(linkSegmentGeometry == null) {
+      throw new PlanItException("geometry not available on osm way %s, unable to determine if link (segment) is closest to reference geometry, this shouldn't happen", linkSegment.getParentEdge().getExternalId());
+    }
+    LinearLocation linearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(referenceGeometry, linkSegmentGeometry);
     boolean linearLocationInLinkSegmentDirection = linkSegment.isDirectionAb() && linkSegment.getParentEdge().isGeometryInAbDirection();
     
     LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParentEdge().getGeometry());

@@ -65,14 +65,17 @@ public class PlanitOsmZoningReader implements ZoningReader {
   private void logInfo(String inputFile) {
     LOGGER.info(String.format("OSM (transfer) zoning input file: %s",inputFile));    
   }  
-  
+    
   /** should be called after the network has been parsed but before we call the read() method on this instance to 
    * provide this instance with the necessary data/references required to relate properly to the parsed network elements
    * 
    * @param osmNetworkReader to extract references from
    */
-  protected void setNetworkToZoningReaderData(PlanitOsmNetworkToZoningReaderData network2zoningReaderData) {
+  protected void initialiseAfterNetworkReadingBeforeZoningReading(PlanitOsmNetworkToZoningReaderData network2zoningReaderData) {
+    /* register */
     this.network2ZoningData = network2zoningReaderData;
+    /* spatially index all links to register on data trackers for use in handlers */
+    zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(network2zoningReaderData.getOsmNetwork());
   }   
   
   /** conduct reading of data with given reader and handler
@@ -169,6 +172,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
   private void removeDanglingZones() {
     //TODO
   }  
+    
 
   /**
    * Constructor 

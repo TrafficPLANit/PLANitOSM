@@ -2,6 +2,7 @@ package org.planit.osm.converter.reader;
 
 import java.util.logging.Logger;
 
+import org.locationtech.jts.index.quadtree.Quadtree;
 import org.planit.utils.locale.CountryNames;
 
 /**
@@ -70,5 +71,6 @@ public class PlanitOsmZoningReaderData {
    */
   public PlanitOsmZoningReaderOsmData getOsmData() {
     return osmData;
-  }  
+  }
+  
 }

@@ -989,7 +989,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
-        
+            
     if(skipOsmNode(osmNode)) {
       LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
       return;
@@ -1018,10 +1018,14 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
     
+    if(osmWay.getId()==45689694) {
+      int bla = 4;
+    }
+    
     if(skipOsmWay(osmWay)) {
       LOGGER.fine(String.format("Skipped osm way %d, marked for exclusion", osmWay.getId()));
       return;
-    }
+    }        
                     
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
     try {       

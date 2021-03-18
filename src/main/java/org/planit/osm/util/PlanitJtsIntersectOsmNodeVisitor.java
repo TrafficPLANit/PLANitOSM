@@ -44,6 +44,10 @@ public class PlanitJtsIntersectOsmNodeVisitor implements ItemVisitor{
      */
     @Override
     public void visitItem(Object osmNode) {
+      if(((OsmNode)osmNode).getId()==2274701420l) {
+        int bla = 4;
+      }
+      
       try {
         if(geometryFilter.intersects(PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.createCoordinate((OsmNode)osmNode)))){
           filteredResultToPopulate.add((OsmNode)osmNode); 

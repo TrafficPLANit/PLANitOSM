@@ -108,7 +108,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
             
     /* transfer network reader data required for zonal reading to the zoning reader */
-    this.osmZoningReader.setNetworkToZoningReaderData(createNetworkToZoningReaderData(network));       
+    this.osmZoningReader.initialiseAfterNetworkReadingBeforeZoningReading(createNetworkToZoningReaderData(network));       
     
     /* then parse the intermodal zoning aspect, i.e., transfer/od zones */
     Zoning zoning = osmZoningReader.read();
