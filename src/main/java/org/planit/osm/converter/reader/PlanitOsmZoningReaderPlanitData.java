@@ -91,7 +91,8 @@ public class PlanitOsmZoningReaderPlanitData {
    * @param entityType os the transfer zone origin
    * @return all transfer zones up until now by their original OsmEntityId
    */
-  public Map<Long, TransferZone> getIncompleteTransferZonesByOsmId(EntityType entityType) {
+  public Map<Long, TransferZone> getIncompleteTransferZonesByEntityType(EntityType entityType) {
+    incompleteTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
     return Collections.unmodifiableMap(incompleteTransferZonesByOsmEntityId.get(entityType));
   }  
 
@@ -101,7 +102,7 @@ public class PlanitOsmZoningReaderPlanitData {
    * @return transfer zone registered, null if not present
    */
   public TransferZone getIncompleteTransferZoneByOsmId(EntityType entityType, long osmEntityId) {
-    incompleteTransferZonesByOsmEntityId.putIfAbsent(entityType, new HashMap<Long,TransferZone>());
+    incompleteTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
     return incompleteTransferZonesByOsmEntityId.get(entityType).get(osmEntityId);
   }
   

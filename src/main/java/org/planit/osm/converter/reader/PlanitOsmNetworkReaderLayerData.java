@@ -29,10 +29,10 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
  * @author markr
  *
  */
-public class PlanitOsmNetworkLayerReaderData {
+public class PlanitOsmNetworkReaderLayerData {
   
   /** the logger */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkLayerReaderData.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkReaderLayerData.class.getCanonicalName());
   
   /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only track globally when
    * part of intermodal reader where follow up components require this information, otherwise it is locally discarded after use */

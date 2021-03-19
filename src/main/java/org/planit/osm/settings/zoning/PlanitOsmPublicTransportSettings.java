@@ -43,8 +43,16 @@ public class PlanitOsmPublicTransportSettings {
    * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole, station, halt, stop, etc. (by entity type and osm id).
    * This overrides the parser's mapping functionality and immediately maps the stop location to this osm entity. 
    */
-  private final Map<Long,Pair<EntityType,Long>> overwritePtStopMapping = new HashMap<Long,Pair<EntityType,Long>>();  
+  private final Map<Long,Pair<EntityType,Long>> overwritePtStopLocation2WaitingAreaMapping = new HashMap<Long,Pair<EntityType,Long>>();
   
+  /**
+   * Provide explicit mapping for waiting areas, e.g. platforms, poles, stations (by osm node id) to the osm way (by osm id) to place stop_locations on (connectoids)
+   * This overrides the parser's functionality to automatically attempt to identify the correct stop_location. Note that this should only be used for waiting areas that
+   * could not successfully be mapped to a stop_location and therefore have no known stop_location in the network. 
+   * Further one cannot override a waiting area here that is also part of a stop_location to waiting area override. 
+   */
+  private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<EntityType, Map<Long,Long>>();
+    
   /** by default the transfer parser is deactivated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
     
@@ -203,23 +211,61 @@ public class PlanitOsmPublicTransportSettings {
    * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.)
    */
   public void overwriteStopLocationWaitingArea(Long stopLocationOsmNodeId, EntityType waitingAreaEntityType, Long waitingAreaOsmId) {
-    overwritePtStopMapping.put(stopLocationOsmNodeId, Pair.of(waitingAreaEntityType, waitingAreaOsmId));    
+    overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId, Pair.of(waitingAreaEntityType, waitingAreaOsmId));    
   }  
   
   /** Verify if stop location's osm id is marked for overwritten platform mapping
    * 
    * @param stopLocationOsmNodeId to verify
+   * @return true when present, false otherwise
    */
   public boolean isOverwriteStopLocationWaitingArea(Long stopLocationOsmNodeId) {
-    return overwritePtStopMapping.containsKey(stopLocationOsmNodeId);    
+    return overwritePtStopLocation2WaitingAreaMapping.containsKey(stopLocationOsmNodeId);    
   } 
   
   /** Verify if stop location's osm id is marked for overwritten platform mapping
    * 
    * @param stopLocationOsmNodeId to verify
+   * @return pair reflecting the entity type and waiting area osm id, null if not present
    */
   public Pair<EntityType,Long> getOverwrittenStopLocationWaitingArea(Long stopLocationOsmNodeId) {
-    return overwritePtStopMapping.get(stopLocationOsmNodeId);    
-  }   
-
+    return overwritePtStopLocation2WaitingAreaMapping.get(stopLocationOsmNodeId);    
+  }  
+  
+  /**
+   * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by osm id).
+   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated osm way. Only use in case the platform has no stop_location
+   * and no stop_location maps to this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
+   * 
+   * @param stopLocationOsmNodeId osm node id of stop location
+   * @param waitingAreaEntityType entity type of waiting area to map to
+   * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.)
+   */
+  public void overwriteWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType, Long OsmWayId) {
+    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
+    overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId, OsmWayId);    
+  }  
+  
+  /** Verify if waiting area's osm id is marked for overwritten osm way mapping
+   * 
+   * @param waitingAreaOsmId to verify
+   * @param waitingAreaEntityType type of waiting area
+   * @return true when present, false otherwise
+   */
+  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType) {
+    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
+    return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).containsKey(waitingAreaOsmId);    
+  } 
+  
+  /** collect waiting area's osm way id to use for identifying most logical stop_location (connectoid)
+   * 
+   * @param waitingAreaOsmId to collect
+   * @param waitingAreaEntityType type of waiting area
+   * @return osm way id, null if not available
+   */
+  public Long getWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType) {
+    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
+    return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).get(waitingAreaOsmId);    
+  }    
+  
 }

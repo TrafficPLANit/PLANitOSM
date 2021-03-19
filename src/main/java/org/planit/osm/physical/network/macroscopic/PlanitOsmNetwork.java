@@ -808,7 +808,14 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
             "Railwayway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing %s", osmWayValue));
     }     
     return linkSegmentTypes;
-  }    
+  }  
+  
+  /**
+   * Default Constructor
+   */
+  public PlanitOsmNetwork() {
+    this(IdGroupingToken.collectGlobalToken());    
+  }  
   
   /**
    * Constructor

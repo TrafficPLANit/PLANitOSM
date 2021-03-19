@@ -21,46 +21,47 @@ public class PlanitOsmNetworkToZoningReaderData {
   /** settings used in network reader */
   private PlanitOsmNetworkSettings settings;
   
-  /** populated network  */
-  private PlanitOsmNetwork osmNetwork;
-  
-  /** all osm nodes in the osm network across layers */
-  private Map<Long, OsmNode> osmNodes = new HashMap<Long, OsmNode>();  
+  /** data from the network reader collected during parsing */
+  private PlanitOsmNetworkReaderData networkData;  
   
   /** layer specific data that is to be made available to the zoning reader */
-  private Map<InfrastructureLayer, PlanitOsmNetworkLayerReaderData> networkLayerData = new HashMap<InfrastructureLayer, PlanitOsmNetworkLayerReaderData>(); 
+  private Map<InfrastructureLayer, PlanitOsmNetworkReaderLayerData> networkLayerData = new HashMap<InfrastructureLayer, PlanitOsmNetworkReaderLayerData>(); 
 
   public PlanitOsmNetworkSettings getSettings() {
     return settings;
   }
-
-  public void setSettings(PlanitOsmNetworkSettings settings) {
+  
+  /** Constructor
+   * @param networkData to use
+   * @param settings to use
+   */
+  protected PlanitOsmNetworkToZoningReaderData(PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkSettings settings) {
+    this.networkData = networkData;
     this.settings = settings;
   }
 
-  public PlanitOsmNetwork getOsmNetwork() {
-    return osmNetwork;
-  }
 
-  public void setOsmNetwork(PlanitOsmNetwork osmNetwork) {
-    this.osmNetwork = osmNetwork;
+  /** collect network
+   * @return osm network
+   */
+  public PlanitOsmNetwork getOsmNetwork() {
+    return networkData.getOsmNetwork();
   }
     
-  public PlanitOsmNetworkLayerReaderData  getNetworkLayerData(InfrastructureLayer networkLayer) {
-    PlanitOsmNetworkLayerReaderData data =  networkLayerData.get(networkLayer);
+  public PlanitOsmNetworkReaderLayerData  getNetworkLayerData(InfrastructureLayer networkLayer) {
+    PlanitOsmNetworkReaderLayerData data =  networkLayerData.get(networkLayer);
     return data;
   }
   
-  public void registerLayerData(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkLayerReaderData layerData) {
+  public void registerLayerData(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderLayerData layerData) {
     networkLayerData.put(networkLayer, layerData);    
   }  
-
-  public void setOsmNodes(Map<Long, OsmNode> osmNodes) {
-    this.osmNodes= osmNodes;
-  }
   
+  /** collect osm nodes
+   * @return osm nodes
+   */
   public Map<Long, OsmNode> getOsmNodes() {
-    return this.osmNodes;
+    return networkData.getOsmNodes();
   }
     
 }

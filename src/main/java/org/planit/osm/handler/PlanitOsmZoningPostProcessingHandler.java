@@ -1,19 +1,17 @@
 package org.planit.osm.handler;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderOsmData;
@@ -33,7 +31,6 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.graph.Edges;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.misc.StringUtils;
@@ -87,7 +84,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     
     double envelopeMinExtentAbsolute = Double.POSITIVE_INFINITY;
     for(MacroscopicPhysicalNetwork layer : getNetworkToZoningData().getOsmNetwork().infrastructureLayers) {
-      PlanitOsmNetworkLayerReaderData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
+      PlanitOsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
       spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new Quadtree());
       Quadtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);            
             
@@ -151,22 +148,34 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private Collection<Link> findStopLocationLinksForWaitingArea(Long osmEntityId, Geometry waitingAreaGeometry, Collection<String> eligibleOsmModes, Envelope searchBoundingBox) throws PlanItException {
     
+    if(osmEntityId == 976339298l) {
+      int bla = 4;
+    }
+    
+    
     /* match links spatially */
     Collection<Link> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);    
     if(spatiallyMatchedLinks == null || spatiallyMatchedLinks.isEmpty()) {
-      LOGGER.warning(String.format("DISCARD: Waiting area (osm id %d) has no nearby infrastructure that qualifies for pt vehicles as stop locations",osmEntityId));
+      LOGGER.warning(String.format("Waiting area (osm id %d) has no nearby infrastructure that qualifies for pt modes %s as stop locations",
+          osmEntityId, PlanitOsmModeUtils.getPublicTransportModesFrom(eligibleOsmModes).toString()));
       return null;
     }    
   
     /* filter based on mode compatibility */
     Collection<Link> modeAndSpatiallyCompatibleLinks = findModeCompatibleLinks(eligibleOsmModes, spatiallyMatchedLinks, false /*only exact matches allowed */);    
     if(modeAndSpatiallyCompatibleLinks == null || modeAndSpatiallyCompatibleLinks.isEmpty()) {
-      LOGGER.warning(String.format("DISCARD: Waiting area (osm id) %d has no nearby infrastructure with compatible modes that qualifies for pt vehicles as stop locations",osmEntityId));
+      LOGGER.warning(String.format("Waiting area (osm id) %d has no compatible modes at nearby infrastructure that qualifies for pt modes %s as stop locations",
+          osmEntityId, PlanitOsmModeUtils.getPublicTransportModesFrom(eligibleOsmModes).toString()));
       return null;
     }
     
     /* filter based on driving direction, country, mode */
-    return findDrivingDirectionCompatibleLinks(waitingAreaGeometry, eligibleOsmModes, modeAndSpatiallyCompatibleLinks);        
+    Collection<Link> directionAndModeAndSpatiallyCompatibleLinks = findDrivingDirectionCompatibleLinks(waitingAreaGeometry, eligibleOsmModes, modeAndSpatiallyCompatibleLinks);
+    if(directionAndModeAndSpatiallyCompatibleLinks == null || directionAndModeAndSpatiallyCompatibleLinks.isEmpty()) {
+      LOGGER.warning(String.format("Waiting area (osm id) %d is situated on the wrong side of the road to qualify for pt modes as stop locations",
+          osmEntityId,PlanitOsmModeUtils.getPublicTransportModesFrom(eligibleOsmModes).toString()));
+    }
+    return directionAndModeAndSpatiallyCompatibleLinks;
   }
 
   /** find links that are within the given search bounding box and are mode compatible with the given reference modes. If more links are found
@@ -187,6 +196,9 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     /* First find all links that are spatially, mode, and driving direction compatible */
     Geometry stationGeometry = PlanitOsmUtils.extractGeometry(osmStation, getNetworkToZoningData().getOsmNodes());
     Collection<Link> directionModeSpatiallyCompatibleLinks = findStopLocationLinksForWaitingArea(osmStation.getId(), stationGeometry, referenceOsmModes, searchBoundingBox);
+    if(directionModeSpatiallyCompatibleLinks==null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
+      return null;
+    }
     
     /* #matches compatibility */
     Collection<Link> chosenLinksForStopLocations = null;    
@@ -755,7 +767,16 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       /* locate transfer zone(s) for stop_location/mode combination */
       Collection<TransferZone> matchedTransferZones = findTransferZonesForStopPosition(osmNode, tags, Collections.singleton(osmMode));      
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {        
-        LOGGER.warning(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode));
+        
+        if(PlanitOsmHandlerHelper.isPtv2StopPositionPtv1Stop(osmNode, tags)) {
+          /* no potential transfer zones AND Ptv1 tagged (bus_stop, station, halt), try to salvage by parsing it as Ptv1 tag 
+           * potentially revealing it resides on the road and can be treated as both stop_position and transfer zone now that we have eliminated the possibility of matching it to
+           * a Ptv2 platform nearby */
+          LOGGER.info(String.format("SALVAGED: process Ptv2 stop_position %d as Ptv1 entity, due to absence of eligible Ptv2 platform supporting mode %s",osmNode.getId(), osmMode));
+          extractTransferInfrastructurePtv1(osmNode, tags);          
+        }else {
+          LOGGER.warning(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode));
+        }
       }else {
         
         /* create connectoid(s) for stop_location/transferzone/mode combination */
@@ -822,7 +843,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param transferZone remaining unprocessed transfer zone (without connectoids)
    * @throws PlanItException thrown if error
    */  
-  private void processIncompleteTransferZone(TransferZone transferZone) throws PlanItException {    
+  private void processIncompleteTransferZone(TransferZone transferZone) throws PlanItException {
+    if(transferZone.getExternalId()!=null && transferZone.getExternalId().equals("4928940523")) {
+      int bla = 4;
+    }
+    
     /* mark as complete, if issues arise then this method flags them while processing */
     EntityType osmEntityType = (transferZone.getGeometry() instanceof Point) ? EntityType.Node : EntityType.Way;
     getZoningReaderData().getPlanitData().removeIncompleteTransferZone(osmEntityType, Long.valueOf(transferZone.getExternalId()));    
@@ -855,7 +880,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       Envelope searchBoundingBox = geoUtils.createBoundingBox(transferZone.getEnvelope(), getSettings().getStopToWaitingAreaSearchRadiusMeters());
       Collection<Link> directionModeSpatiallyCompatibleLinks = findStopLocationLinksForWaitingArea(osmEntityId, transferZone.getGeometry(), Collections.singleton(osmAccessMode), searchBoundingBox);
       if(directionModeSpatiallyCompatibleLinks == null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
-        LOGGER.warning(String.format("No accessible links within maximum search distance (%.2fm) found for transfer zone %s and mode %s", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode));
+        LOGGER.warning(String.format("DISCARD: No accessible links within maximum search distance (%.2fm) found for transfer zone %s and mode %s", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode));
         return;
       }
           
@@ -902,11 +927,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void processIncompleteTransferZonesNotPartOfStopArea() throws PlanItException {
-    if(!getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Node).isEmpty()) {
-      processIncompleteTransferZones(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Node).values());
+    if(!getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node).isEmpty()) {
+      processIncompleteTransferZones(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node).values());
     }  
-    if(!getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Way).isEmpty()) {
-      processIncompleteTransferZones(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Way).values());
+    if(!getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Way).isEmpty()) {
+      processIncompleteTransferZones(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Way).values());
     }     
   }
 
@@ -1107,7 +1132,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       /* accessible links for station conditioned on found modes */
       Collection<Link> accessibleLinks = findStopLocationLinksForStation(osmStation, tags, eligibleStationModes);
       if(accessibleLinks == null) {
-        return;
+        LOGGER.warning(String.format("DISCARD: station %d has no eligible links to qualify for pt vehicles as stop locations",osmStation.getId()));
       }        
       
       /* transfer zone*/

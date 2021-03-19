@@ -1,10 +1,10 @@
 package org.planit.osm.handler;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +19,7 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.tags.OsmPtv1Tags;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
@@ -172,7 +172,7 @@ public class PlanitOsmHandlerHelper {
    * @return created planit node
    * @throws PlanItException thrown if error
    */
-  public static Node createPlanitNodeForConnectoidAccess(OsmNode osmNode, final PlanitOsmNetworkLayerReaderData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+  public static Node createPlanitNodeForConnectoidAccess(OsmNode osmNode, final PlanitOsmNetworkReaderLayerData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
     Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
     layerData.registerPlanitNodeByOsmNode(osmNode, planitNode);
     return planitNode;
@@ -187,7 +187,7 @@ public class PlanitOsmHandlerHelper {
    * @return created planit node
    * @throws PlanItException thrown if error
    */
-  public static Node createPlanitNodeForConnectoidAccess(Point location, final PlanitOsmNetworkLayerReaderData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+  public static Node createPlanitNodeForConnectoidAccess(Point location, final PlanitOsmNetworkReaderLayerData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
     Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(location, networkLayer);
     layerData.registerPlanitNodeByLocation(location, planitNode);
     return planitNode;
@@ -311,57 +311,45 @@ public class PlanitOsmHandlerHelper {
    * @return eligible link segments to be access link segments for connectoid at this location
    * @throws PlanItException thrown if error
    */
-  public static Set<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(
+  public static Collection<EdgeSegment> findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(
       Node planitNode, TransferZone transferZone, Mode planitMode, boolean leftHandDrive, boolean mustAvoidCrossingTraffic, PlanitJtsUtils geoUtils) throws PlanItException {
             
-    Set<EdgeSegment> accessLinkSegments = null;
-    accessLinkSegments = new HashSet<EdgeSegment>();    
-    if(!mustAvoidCrossingTraffic || isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {
-      /* transfer zone equates to stop location or we assume train/tram platforms are present servicing either direction, so what side of the infrastructure the transfer zone lies is either not important or
-       * infeasible to determine : All incoming link segments used for connectoid */
-      for(EdgeSegment linkSegment : planitNode.getEntryEdgeSegments()) {
-        if(((MacroscopicLinkSegment)linkSegment).isModeAllowed(planitMode)){      
-          accessLinkSegments.add(linkSegment);
-        }
+    ArrayList<EdgeSegment> accessLinkSegments = new ArrayList<EdgeSegment>(4);
+    for(EdgeSegment linkSegment : planitNode.getEntryEdgeSegments()) {
+      if(((MacroscopicLinkSegment)linkSegment).isModeAllowed(planitMode)){      
+        accessLinkSegments.add(linkSegment);
       }
-    }else {
+    }    
+    
+    if(accessLinkSegments.isEmpty()) {
+      LOGGER.info(String.format("platform/pole/station %s nominated stop_location %s deemed invalided due to absence of compatible modes", 
+          transferZone.getExternalId(), planitNode.getExternalId()!= null ? planitNode.getExternalId(): ""));
+    }
+    
+    if(mustAvoidCrossingTraffic && !isTransferZoneAtLocation(transferZone, planitNode.getPosition())) {
       /* we do care about location of waiting area (transfer zone) compared to road, we only select link segments that are in the expected driving direction given
        * the location of the waiting area */      
-      accessLinkSegments = new HashSet<EdgeSegment>();              
+      
+      /* use line geometry closest to connectoid location */
       for(EdgeSegment linkSegment : planitNode.getEntryEdgeSegments()) {
-        if(((MacroscopicLinkSegment)linkSegment).isModeAllowed(planitMode)){
-          /* use line geometry closest to connectoid location */
-          LineSegment finalLineSegment = extractClosestLineSegmentToGeometryFromLinkSegment(transferZone.getGeometry(), (MacroscopicLinkSegment)linkSegment, geoUtils);
-          if(mustAvoidCrossingTraffic) {
-            /* determine location relative to infrastructure */
-            boolean isTransferZoneLeftOfInfrastructure = PlanitOsmHandlerHelper.isTransferZoneLeftOf(transferZone, finalLineSegment.p0, finalLineSegment.p1, geoUtils);      
-            if(isTransferZoneLeftOfInfrastructure==leftHandDrive) {
-              /* viable no opposite traffic directions needs to be crossed on the link to get to stop location --> add */
-              accessLinkSegments.add(linkSegment);
-            }
-          }else {
+        LineSegment finalLineSegment = extractClosestLineSegmentToGeometryFromLinkSegment(transferZone.getGeometry(), (MacroscopicLinkSegment)linkSegment, geoUtils);
+        if(mustAvoidCrossingTraffic) {
+          /* determine location relative to infrastructure */
+          boolean isTransferZoneLeftOfInfrastructure = PlanitOsmHandlerHelper.isTransferZoneLeftOf(transferZone, finalLineSegment.p0, finalLineSegment.p1, geoUtils);      
+          if(isTransferZoneLeftOfInfrastructure==leftHandDrive) {
+            /* viable no opposite traffic directions needs to be crossed on the link to get to stop location --> add */
             accessLinkSegments.add(linkSegment);
-          } 
-        }                
+          }
+        }else {
+          accessLinkSegments.add(linkSegment);
+        }                 
       }
       if(mustAvoidCrossingTraffic && accessLinkSegments.isEmpty()) {
-        LOGGER.info(String.format("platform/pole/station %s for stop_location %s discarded due to passengers having to cross traffic in opposite driving direction to reach stop", 
+        LOGGER.info(String.format("platform/pole/station %s nominated stop_location %s deemed invalid due to passengers having to cross traffic in opposite driving direction to reach stop", 
             transferZone.getExternalId(), planitNode.getExternalId()!= null ? planitNode.getExternalId(): ""));
       }      
     }
-        
-    /* filter by accessible modes */
-    if(accessLinkSegments!= null && !accessLinkSegments.isEmpty()) {
-      Iterator<EdgeSegment> iterator = accessLinkSegments.iterator();
-      while(iterator.hasNext()) {
-        MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) iterator.next();
-        if(!linkSegment.isModeAllowed(planitMode)) {
-          /* not eligible, because not mode compatible, remove */
-          iterator.remove();
-        }
-      }
-    }
-    
+            
     return accessLinkSegments;
   }
 

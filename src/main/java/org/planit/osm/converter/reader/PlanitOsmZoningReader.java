@@ -177,6 +177,25 @@ public class PlanitOsmZoningReader implements ZoningReader {
   /**
    * Constructor 
    * 
+   * @param inputFile to parse from 
+   * @param countryName this zoning is used for
+   * @param settings to use
+   * @param zoningToPopulate zoning to populate 
+   */
+  protected PlanitOsmZoningReader(String inputFile, String countryName, PlanitOsmPublicTransportSettings settings, Zoning zoningToPopulate){
+    this.transferSettings = settings;
+    this.zoningReaderData = new PlanitOsmZoningReaderData(countryName);
+
+    // references
+    this.inputFile = inputFile;
+    
+    // output
+    this.zoning = zoningToPopulate; 
+  }
+  
+  /**
+   * Constructor 
+   * 
    * @param inputFile to parse from
    * @param countryName this zoning is used for
    * @param zoningToPopulate zoning to populate 
@@ -190,7 +209,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
     
     // output
     this.zoning = zoningToPopulate; 
-  }
+  }  
      
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network

@@ -55,11 +55,14 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     /* register transfer zone if it exists on group */
     TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Node, osmNode.getId());
-    if(transferZone ==null) {            
+    if(transferZone ==null) {    
+      /* no match... */
       Pair<Collection<String>, Collection<Mode>> modeResult = collectEligibleModes(osmNode.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
-      if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {      
-        /* no match, this is only valid when the osm entity (platform) has no eligible modes tagged and therefore no transfer zone was ever created (correctly) */        
-        LOGGER.warning(String.format("Found stop_area %d node member %d that complies with %s, has no role and no PLANit transfer zone information available, ignored",osmRelation.getId(), osmNode.getId()));
+      if( PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult) &&
+          getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(PlanitOsmModeUtils.getPublicTransportModesFrom(modeResult .first()))) {      
+        /* ...this is only valid when the osm entity (platform) has no eligible modes tagged and therefore no transfer zone was ever created (correctly), however, we found eligible modes, possible problem */        
+        LOGGER.warning(String.format("Found stop_area %d node member %d compatible with with %s, yet it has no transfer zone available, ignored",
+            osmRelation.getId(), osmNode.getId(), PlanitOsmModeUtils.getPublicTransportModesFrom(modeResult .first()).toString()));
       }
       return;
     }
@@ -72,9 +75,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   private void identifyCompletedTransferZones() {
     identifyCompletedTransferZones(EntityType.Node, 
-        new HashMap<Long, TransferZone>(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Node)));
+        new HashMap<Long, TransferZone>(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node)));
     identifyCompletedTransferZones(EntityType.Way, 
-        new HashMap<Long, TransferZone>(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByOsmId(EntityType.Way)));
+        new HashMap<Long, TransferZone>(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Way)));
   }
   
   /**
@@ -417,96 +420,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       
       return transferZoneGroup;
   }        
-  
-  /** Method that will attempt to create both a transfer zone and its connectoids at the location of the osm node, unless the user has overwritten the default behaviour
-   * with a custom mapping of stop_location to waiting area. In that case, we mark the stop_position as unprocessed, because then it will be processed later in post processing where
-   * the stop_position is converted into a connectoid and the appropriate user mapper waiting area (Transfer zone) is collected to match. 
-   * This methodis only relevant for very specific types of osm pt nodes, such as tram_stop, some bus_stops, and potentially halts and/or stations, e.g., only when the
-   * stop location and transfer zone are both tagged on the road for a Ptv1 tagged node.
-   * 
-   * @param osmNode for the location to create both a transfer zone and connectoid(s)
-   * @param tags of the node
-   * @param defaultMode that is to be expected here
-   * @throws PlanItException thrown if error
-   */  
-  private void extractPtv1TransferZoneWithConnectoidsAtStopPosition(OsmNode osmNode, Map<String, String> tags, String defaultMode) throws PlanItException {
-    if(getSettings().isOverwriteStopLocationWaitingArea(osmNode.getId())) {       
-      /* postpone processing of stop location when all transfer zones (waiting areas) have been created, but do mark this location as an unprocessed stop_position */
-      getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());
-    }else {              
-      /* In the special case a Ptv1 tag for a tram_stop, bus_stop, halt, or station is supplemented with a Ptv2 stop_position we must treat this as stop_position AND transfer zone in one and therefore 
-       * create a transfer zone immediately */      
-      createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultMode);
-    }
-  }    
-  
-  /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag highway=platform on an osmNode (no Ptv2 tags)
-   * 
-   * @param osmEntity the node to extract
-   * @param tags all tags of the osm entity
-   * @throws PlanItException thrown if error
-   */  
-  private void extractTransferInfrastructurePtv1HighwayPlatform(OsmEntity osmEntity, Map<String, String> tags) {
-    
-    /* create transfer zone when at least one mode is supported */
-    String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-    if(!defaultOsmMode.equals(OsmRoadModeTags.BUS)) {
-      LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 highway platform %s,",defaultOsmMode));
-    }    
-
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectEligibleModes(osmEntity.getId(), tags, defaultOsmMode);
-    if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {               
-      getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
-      createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first());
-    }
-  }  
-  
-  /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag highway=bus_stop on an osmNode (no Ptv2 tags)
-   * 
-   * @param osmEntity the node to extract
-   * @param tags all tags of the osm entity
-   * @throws PlanItException thrown if error
-   */  
-  private void extractTransferInfrastructurePtv1HighwayBusStop(OsmEntity osmEntity, Map<String, String> tags) {
-    
-    /* create transfer zone when at least one mode is supported */
-    String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-    if(!defaultOsmMode.equals(OsmRoadModeTags.BUS)) {
-      LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 bus_stop %s,",defaultOsmMode));
-    }      
-    
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectEligibleModes(osmEntity.getId(), tags, defaultOsmMode);
-    if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {           
-      getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.BUS_STOP);
-      createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.POLE, modeResult.first());
-    }
-  }   
-
-  /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag highway=* on an osmNode (no Ptv2 tags)
-   * 
-   * @param osmNode the node to extract
-   * @param tags all tags of the osm Node
-   * @param ptv1ValueTag the value tag going with key highway=
-   * @throws PlanItException thrown if error
-   */
-  private void extractTransferInfrastructurePtv1Highway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag) throws PlanItException {
-        
-    /* bus stop -> create transfer zone */
-    if(OsmPtv1Tags.BUS_STOP.equals(ptv1ValueTag)){
-      
-      extractTransferInfrastructurePtv1HighwayBusStop(osmNode, tags);
-      
-    }
-    /* platform -> create transfer zone */
-    else if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)){ 
-      
-      extractTransferInfrastructurePtv1HighwayPlatform(osmNode, tags);
-      
-    }else {
-      LOGGER.warning(String.format("unsupported Ptv1 higway=%s tag encountered, ignored",ptv1ValueTag));
-    }            
-  }  
-  
+       
 
   /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag highway=* on an osmway (no Ptv2 tags)
    * 
@@ -524,100 +438,87 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     }
   }
 
-  /** extract a tram stop since it is deemed eligible for the planit network. Based on description in https://wiki.openstreetmap.org/wiki/Tag:railway%3Dtram_stop
+  /** parse the Ptv2 stop_position tag. It is possibly combined with PTv1 tags, if so determine based on context if this should be treated as a Ptv2 tag, a Ptv1 tag  or the user made 
+   * a mistake during tagging and attempt to salvage
    * 
-   * @param osmNode the node to extract
-   * @param tags all tags of the osm Node
+   * @param osmNodeof the stop_position
+   * @param tags of the osm node
    * @throws PlanItException thrown if error
    */
-  private void extractPtv1TramStop(OsmNode osmNode, Map<String, String> tags) throws PlanItException {    
-        
-    /* in contrast to (normal) highway=bus_stop this tag is placed on the track, so we can and will create connectoids immediately */
-    getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.TRAM_STOP);
-    extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, OsmRailModeTags.TRAM);
-  }  
-  
-  /** extract a halt since it is deemed eligible for the planit network. Based on description in https://wiki.openstreetmap.org/wiki/Tag:railway%3Dhalt
-   * 
-   * @param osmNode the node to extract
-   * @param tags all tags of the osm Node
-   * @throws PlanItException thrown if error
-   */  
-  private void extractPtv1Halt(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
-    getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.HALT);
-        
-    String expectedDefaultMode = OsmRailModeTags.TRAIN;
-    if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
+  private void extractPtv2StopPosition(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+    /* Ptv1 tags as well, use this context to determine if a tagging mistake has occurred and/or how to process in case special treatment is needed due
+     * to user error or contextual interpretation that indicates we should use the Ptv1 tag instead of the Ptv2 tag to process this entity */        
+    
+    if(OsmPtv1Tags.isTramStop(tags)) {
+      /* ok, a tram stop is waiting area and stop_location in one, parse as such immediately as supported by Ptv1 parser */
+      extractTransferInfrastructurePtv1(osmNode, tags);
+    }else if(OsmPtv1Tags.isBusStop(tags)) {
+      /* bus_stop */
       
-      extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, expectedDefaultMode);
-      
-    }else {
-      /* halt not on railway, just create transfer zone at this point */
-      
-      String defaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-      if(!defaultMode.equals(expectedDefaultMode)) {
-        LOGGER.warning(String.format("Unexpected osm mode identified for Ptv1 halt %s",defaultMode));
+      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
+        /* taggin error */
+        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 bus_stop (%d), yet it does not reside on road infrastructure, parse as pole instead", osmNode.getId()));
+        extractTransferInfrastructurePtv1(osmNode, tags);
+      }else {
+        /* ok, a bus_stop should normally not be on the road, but since it is tagged as stop_location, the stop_lcoation takes precendence, mark as unprocessed stop position*/
+        getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());          
       }
-      createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.SMALL_STATION, defaultMode);      
+    }else if(OsmPtv1Tags.isHalt(tags)) {
+      /* halt */
+      
+      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
+        /* tagging error */
+        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 halt (%d), yet it does not reside on road infrastructure, parse as small station instead", osmNode.getId()));
+        extractTransferInfrastructurePtv1(osmNode, tags);
+      }else {
+        /* ok, a halt can be on the rail track and is stop position, mark as regular unprocessed stop_position */
+        getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());          
+      }
+    }else if(OsmPtv1Tags.isStation(tags)) {
+      /* station */
+      
+      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
+        /* tagging error */
+        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 station (%d), yet it does not reside on road infrastructure, parse as station instead", osmNode.getId()));
+        extractTransferInfrastructurePtv1(osmNode, tags);
+      }else {
+        /* potentially ok, a station can be on the rail track and is stop position, mark as regular unprocessed stop_position, however it is very unusual and likely a Ptv2 platform 
+         * might be missing, so still log this for user to verify */
+        LOGGER.warning(String.format("Ptv2 public_transport=stop_location also tagged as Ptv1 station (%d), because it resides on road infrastructure parse as PTv2 stop_position, unusual and likely a tagging error please verify correctness", osmNode.getId()));
+        getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());          
+      }
+    }else {
+      /* PTv2 stop_position tag only (no Ptv1 tags for additional context) */
+      
+      /* stop positions relates to connectoids that provide access to transfer zones. The transfer zones are based on platforms, but these are processed separately. 
+       * So, postpone parsing of all Ptv2 stop positions, and simply track them for delayed processing after all platforms/transfer zones have been identified */
+      getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());
     }
-  }
-
-  /** extract a platform since it is deemed eligible for the planit network. Based on description in https://wiki.openstreetmap.org/wiki/Tag:railway%3Dplatform
-   * 
-   * @param osmEntity to extract from
-   * @param tags all tags of the osm Node
-   * @throws PlanItException thrown if error
-   */    
-  private void extractPtv1RailwayPlatform(OsmEntity osmEntity, Map<String, String> tags) {
-    getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
-    
-    /* node is not part of infrastructure, we must identify closest railway infrastructure (in reasonable range) to create connectoids, or
-     * Ptv2 stop position reference is used, so postpone creating connectoids for now, and deal with it later when stop_positions have all been parsed */
-    String defaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-    if(!defaultMode.equals(OsmRailModeTags.TRAIN)) {
-      LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 railway platform %s,",defaultMode));
-    }
-    createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, defaultMode);
   }
   
-  /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag railway=* for an OsmNode
+  /** Extract a ptv2 platform for a given osm node. When this node is on the road infrastructure we create a transfer zone and connectoids (discouraged tagging behaviour), but in most
+   * cases, a platform is seaprated from the road infrastructure, in which case we create a transfer zone without connectoids and stop_locations (connectoids) will be attached during the
+   * parsing of stop_locations, stop_areas, or spatially in post processing
    * 
-   * @param osmNode the node to extract
-   * @param tags all tags of the osm Node
-   * @param ptv1ValueTag the value tag going with key railway=
+   * @param osmNode the platform is represented by
+   * @param tags tags of the osm node
    * @throws PlanItException thrown if error
-   */  
-  private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag) throws PlanItException {
-    PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
+   */
+  private void extractPtv2Platform(OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+    getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM);
     
-    /* tram stop */
-    if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
-      
-      extractPtv1TramStop(osmNode, tags);
-    }
-    
-    /* train platform */
-    if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)) {
-      /* assumed to never be part of a Ptv2 stop_area relation, so we parse immediately */
-      extractPtv1RailwayPlatform(osmNode, tags);
-    }          
-    
-    /* train halt (not for trams)*/
-    if(OsmPtv1Tags.HALT.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
-      
-      /* assumed to never be part of a Ptv2 stop_area relation, so we parse immediately */
-      extractPtv1Halt(osmNode, tags);
-    }
-    
-    /* train station (not for trams) */
-    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
-      /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
-       * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
-       * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
-      getZoningReaderData().getOsmData().addUnprocessedPtv1Station(osmNode);
-    }    
-  }
-
+    String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
+    if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
+      /* platform is situated on the road infrastructure. This is discouraged and arguably a tagging error, but occurs sometimes and can be salvaged by
+       * extracting the platform and stop position together */
+      LOGGER.fine(String.format("SALVAGED: ptv2 platform %d erroneously placed on road infrastructure, creating waiting area and stop_position",osmNode.getId()));
+      extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, defaultOsmMode);
+    }else {
+      /* regular platform seaprated from vehicle stop position; create transfer zone but no connectoids, 
+       * these will be constructed during or after we have parsed relations, i.e. stop_areas */
+      createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, defaultOsmMode);
+    }   
+  }   
 
   /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag railway=* for an OsmWay
    * 
@@ -732,26 +633,14 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       
       /* platform */
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
-        
-        getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM);
-        /* create transfer zone but no connectoids, these will be constructed during or after we have parsed relations, i.e. stop_areas */
-        createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));        
+                
+        extractPtv2Platform(osmNode, tags);                     
       }            
       /* stop position */
       else if(OsmPtv2Tags.STOP_POSITION.equals(ptv2ValueTag)) {
-                
-        if(PlanitOsmHandlerHelper.isPtv2StopPositionPtv1Stop(osmNode, tags)) { 
-          LOGGER.fine(String.format("Ptv2 stop_position tag combined with Ptv1 tagging, redirected to Ptv1 parser for osm node %d",osmNode.getId()));
-          /* often people mistakenly add stop_position to bus_stops next to the road, or to tram_stops on the tracks etc. This is a tagging error and should instead be 
-           * treated as Ptv1 infrastructure rather than a Ptv2 stop. Therefore redirect */
-          extractTransferInfrastructurePtv1(osmNode, tags);                                     
-          
-        }else {
-          /* stop positions relate to connectoids that provide access to transfer zones. The transfer zones are based on platforms, but these might not have been
-           * processed yet. So, we postpone parsing of all stop positions, and simply track them for delayed processing after all platforms/transfer zones have been identified */
-          getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());          
-        }                          
         
+        extractPtv2StopPosition(osmNode, tags);
+
       }     
       /* stop position */
       else if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
@@ -769,31 +658,6 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       throw new PlanItException(String.format("parsing transfer infrastructure (Ptv2) for osm node %s, but no compatible key tags found",osmNode.getId()));
     }
   }
-
-
-  /** Classic PT infrastructure based on original OSM public transport scheme (not Ptv2 tags) for osm node
-   * 
-   * @param osmNode to parse
-   * @param tags of the node
-   * @throws PlanItException thrown if error
-   */
-  private void extractTransferInfrastructurePtv1(OsmNode osmNode, Map<String, String> tags) throws PlanItException {    
-        
-    if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-      
-      String ptv1ValueTag = tags.get(OsmHighwayTags.HIGHWAY);
-      extractTransferInfrastructurePtv1Highway(osmNode, tags, ptv1ValueTag);
-      
-    }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
-      
-      String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);      
-      extractTransferInfrastructurePtv1Railway(osmNode, tags, ptv1ValueTag);     
-      
-    }else {
-      throw new PlanItException("parsing transfer infrastructure (Ptv1) for osm node %s, but no compatible key tags found",osmNode.getId());
-    }  
-        
-  }  
   
   /** extract the platform member of a Ptv2 stop_area and register it on the transfer zone group
    * 
@@ -990,6 +854,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   @Override
   public void handle(OsmNode osmNode) throws IOException {
             
+    if(osmNode.getId()==4928940523l) {
+      int bla = 4;
+    }
+    
     if(skipOsmNode(osmNode)) {
       LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
       return;
@@ -1017,11 +885,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-    
-    if(osmWay.getId()==45689694) {
-      int bla = 4;
-    }
-    
+        
     if(skipOsmWay(osmWay)) {
       LOGGER.fine(String.format("Skipped osm way %d, marked for exclusion", osmWay.getId()));
       return;

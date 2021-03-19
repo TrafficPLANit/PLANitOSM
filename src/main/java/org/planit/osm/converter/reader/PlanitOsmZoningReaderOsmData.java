@@ -1,11 +1,10 @@
 package org.planit.osm.converter.reader;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.planit.osm.util.Osm4JUtils;
@@ -36,15 +35,15 @@ public class PlanitOsmZoningReaderOsmData {
   private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<EntityType, Map<Long, OsmEntity>>();
       
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
-  private final Set<Long> unprocessedPtv2StopPositions= new HashSet<Long>();
+  private final Set<Long> unprocessedPtv2StopPositions= new TreeSet<Long>();
   
   /** the registered osm ways that we kept based on osmWaysToKeep that were provided, and are processed at a later stage */
-  private final Map<Long, OsmWay> unprocessedMultiPolygonOsmWays = new HashMap<Long, OsmWay>();
+  private final Map<Long, OsmWay> unprocessedMultiPolygonOsmWays = new TreeMap<Long, OsmWay>();
   
   /* INVALID OSM */
   
   /** Stop positions found to be invalid and to be excluded from post-processing when converting stop positions to connectoids */
-  private final Map<EntityType, Set<Long>> invalidStopAreaStopPositions = new HashMap<EntityType, Set<Long>>();
+  private final Map<EntityType, Set<Long>> invalidStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
       
     
   /* UNPROCESSED RELATED METHODS */  
@@ -74,7 +73,7 @@ public class PlanitOsmZoningReaderOsmData {
    * @return unprocess ptv1 stations
    */
   public Map<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
-    unprocessedPtv1Stations.putIfAbsent(entityType, new HashMap<Long, OsmEntity>());
+    unprocessedPtv1Stations.putIfAbsent(entityType, new TreeMap<Long, OsmEntity>());
     return Collections.unmodifiableMap(unprocessedPtv1Stations.get(entityType));
   }
   
@@ -91,7 +90,7 @@ public class PlanitOsmZoningReaderOsmData {
       LOGGER.severe(String.format("unknown entity type when adding unprocessed Ptv1 station wit osm id %d, ignored"));
     }
        
-    unprocessedPtv1Stations.putIfAbsent(type, new HashMap<Long,OsmEntity>());
+    unprocessedPtv1Stations.putIfAbsent(type, new TreeMap<Long,OsmEntity>());
     unprocessedPtv1Stations.get(type).put(osmEntity.getId(), osmEntity);
   }  
   
@@ -108,7 +107,7 @@ public class PlanitOsmZoningReaderOsmData {
       LOGGER.severe(String.format("unknown entity type when adding unprocessed Ptv2 station wit osm id %d, ignored"));
     }
        
-    unprocessedPtv2Stations.putIfAbsent(type, new HashMap<Long,OsmEntity>());
+    unprocessedPtv2Stations.putIfAbsent(type, new TreeMap<Long,OsmEntity>());
     unprocessedPtv2Stations.get(type).put(osmEntity.getId(), osmEntity);
   }   
 
@@ -117,7 +116,7 @@ public class PlanitOsmZoningReaderOsmData {
    * @return unprocessed stations
    */
   public Map<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
-    unprocessedPtv2Stations.putIfAbsent(entityType, new HashMap<Long, OsmEntity>());
+    unprocessedPtv2Stations.putIfAbsent(entityType, new TreeMap<Long, OsmEntity>());
     return Collections.unmodifiableMap(unprocessedPtv2Stations.get(entityType));
   }
 
@@ -255,7 +254,7 @@ public class PlanitOsmZoningReaderOsmData {
    * @param osmId osm entity to mark as invalid stop_position
    */
   public void addInvalidStopAreaStopPosition(EntityType type, long osmId) {
-    invalidStopAreaStopPositions.putIfAbsent(type, new HashSet<Long>());
+    invalidStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
     invalidStopAreaStopPositions.get(type).add(osmId);
   }
   
@@ -267,7 +266,7 @@ public class PlanitOsmZoningReaderOsmData {
    */
   public boolean isInvalidStopAreaStopPosition(EntityType type, long osmId) {
     if(type != null) {
-      invalidStopAreaStopPositions.putIfAbsent(type, new HashSet<Long>());
+      invalidStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
       return invalidStopAreaStopPositions.get(type).contains(osmId);
     }
     return false;

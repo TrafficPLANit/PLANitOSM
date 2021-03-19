@@ -26,12 +26,12 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   /** input file to use */
   private final String inputFile;
   
+  /** network reader data tracked during parsing */
+  private final PlanitOsmNetworkReaderData networkData;
+  
   /** settings to use */
   private final PlanitOsmNetworkSettings settings;
-  
-  /** network to populate */
-  private final PlanitOsmNetwork osmNetwork;
-  
+    
   /** tha handler responsible for the actual parsing */
   private PlanitOsmNetworkHandler osmHandler;
        
@@ -53,6 +53,14 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   }  
   
   /**
+   * collect the network data gathered
+   * @return network data
+   */
+  protected PlanitOsmNetworkReaderData getNetworkReaderData() {
+    return networkData;
+  }
+  
+  /**
    * remove dangling subnetworks when settings dictate it 
    * @throws PlanItException thrown if error
    */
@@ -60,10 +68,29 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     
     if(settings.isRemoveDanglingSubnetworks()) {
 
-      osmNetwork.removeDanglingSubnetworks(
+      networkData.getOsmNetwork().removeDanglingSubnetworks(
           settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
       
     }
+  }
+  
+  /**
+   * Constructor 
+   * 
+   * @param inputFile
+   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
+   * based on a right hand driving approach
+   * @param osmNetwork network to populate 
+   * @param settings for populating the network
+   * @throws PlanItException throw if settings are inconsistent with reader configuration (different country name or network used)
+   */
+  protected PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetworkSettings settings, PlanitOsmNetwork osmNetwork) throws PlanItException{
+    this.inputFile = inputFile; 
+    this.networkData = new PlanitOsmNetworkReaderData(countryName, osmNetwork);
+    if(!settings.isConsistentWith(networkData)) {
+      throw new PlanItException("provided settings inconsistent with network reader settings");
+    }
+    this.settings = settings;
   }  
   
   /**
@@ -74,12 +101,10 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * based on a right hand driving approach
    * @param osmNetwork network to populate 
    * @param settings for populating the network
+   * @throws PlanItException never throws 
    */
-  protected PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork){
-    this.inputFile = inputFile;
-    this.osmNetwork = osmNetwork; 
-    
-    this.settings = new PlanitOsmNetworkSettings(countryName, osmNetwork.modes);
+  protected PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork) throws PlanItException {
+    this(inputFile, countryName, new PlanitOsmNetworkSettings(countryName, osmNetwork), osmNetwork);            
   }
    
   /**
@@ -93,7 +118,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   @Override
   public MacroscopicNetwork read() throws PlanItException {
     /* ensure that the network CRS is consistent with the chosen source CRS */
-    osmNetwork.transform(settings.getSourceCRS());    
+    networkData.getOsmNetwork().transform(settings.getSourceCRS());    
     logInfo(inputFile);
     
     /* reader to parse the actual file */
@@ -103,7 +128,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     }else {
     
       /* set handler to deal with call backs from osm4j */
-      osmHandler = new PlanitOsmNetworkHandler(osmNetwork, settings);
+      osmHandler = new PlanitOsmNetworkHandler(networkData, settings);
       osmHandler.initialiseBeforeParsing();
       
       /* register handler */
@@ -124,7 +149,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     LOGGER.info(" OSM full network parsing...DONE");
     
     /* return result */
-    return osmNetwork;
+    return networkData.getOsmNetwork();
   }  
     
   /**

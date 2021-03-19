@@ -11,7 +11,8 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.converter.reader.PlanitOsmNetworkLayerReaderData;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmBicycleTags;
@@ -73,27 +74,27 @@ public class PlanitOsmNetworkLayerHandler {
   private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper = null;
   
   /** helper class to deal with parsing tags under the modeLanes tagging scheme for eligible modes */
-  private OsmModeLanesTaggingSchemeHelper modeLanesSchemeHelper = null;  
-  
+  private OsmModeLanesTaggingSchemeHelper modeLanesSchemeHelper = null;
+     
   /** track all data that maps osm entities to PLANit entities here */
-  private final PlanitOsmNetworkLayerReaderData layerData; 
+  private final PlanitOsmNetworkReaderLayerData layerData; 
     
   /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of the PLANit link segment types while parsing */
   private final ModifiedLinkSegmentTypes modifiedLinkSegmentTypes = new ModifiedLinkSegmentTypes();  
   
   // references
   
-  /** geo utility instance based on network wide crs this layer is part of */
-  private final PlanitJtsUtils geoUtils;   
-  
-  /** reference to parsed OSM nodes */
-  private final Map<Long, OsmNode> osmNodes;
-  
+  /** reference to network wide tracked network reader data */
+  private final PlanitOsmNetworkReaderData networkData;    
+    
   /** settings relevant to this parser */
-  private PlanitOsmNetworkSettings settings;
+  private final PlanitOsmNetworkSettings settings;
     
   /** the network layer to use */
-  private MacroscopicPhysicalNetwork networkLayer; 
+  private final MacroscopicPhysicalNetwork networkLayer;
+  
+  /** geo utility instance based on network wide crs this layer is part of */
+  private final PlanitJtsUtils geoUtils;   
   
   /** update the included and excluded mode sets passed in based on the key/value information available in the access=<?> tag.
    * 
@@ -191,7 +192,7 @@ public class PlanitOsmNetworkLayerHandler {
   private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay) throws PlanItException {
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
     for(int nodeIndex = startIndex; nodeIndex <= endIndex;++nodeIndex) {
-      OsmNode internalNode = osmNodes.get(osmWay.getNodeId(nodeIndex));
+      OsmNode internalNode = networkData.getOsmNode(osmWay.getNodeId(nodeIndex));
       layerData.registerOsmNodeAsInternalToPlanitLink(internalNode,link);
     }   
   }   
@@ -577,7 +578,7 @@ public class PlanitOsmNetworkLayerHandler {
     Set<Mode> excludedModes = new HashSet<Mode>();
     
     /* ... roundabout is implicitly one way without being tagged as such, all modes in non-main direction are to be excluded */
-    if(OsmJunctionTags.isPartOfCircularWayJunction(tags) && PlanitOsmWayUtils.isCircularWayDirectionClosed(tags, isForwardDirection, settings.getCountryName())) {
+    if(OsmJunctionTags.isPartOfCircularWayJunction(tags) && PlanitOsmWayUtils.isCircularWayDirectionClosed(tags, isForwardDirection, networkData.getCountryName())) {
       excludedModes.addAll(networkLayer.getSupportedModes());
     }else {
 
@@ -646,7 +647,7 @@ public class PlanitOsmNetworkLayerHandler {
       /* 2c) mode inclusions for BIDIRECTIONAL WAY in explored direction: RIGHT and LEFT now DO IMPLY DIRECTION, unless indicated otherwise, see https://wiki.openstreetmap.org/wiki/Bicycle */
       
       /* country settings matter : left hand drive -> left = forward direction, right hand drive -> left is opposite direction */
-      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(settings.getCountryName());
+      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(networkData.getCountryName());
       boolean isDrivingDirectionLocationLeft = (isForwardDirection && isLeftHandDrive) ? true : false; 
       
       /* location means left or right hand side of the road specific tags pertaining to mode inclusions */
@@ -702,7 +703,7 @@ public class PlanitOsmNetworkLayerHandler {
       /* 2c) mode inclusions for BIDIRECTIONAL WAY in explored direction: RIGHT and LEFT now DO IMPLY DIRECTION, unless indicated otherwise, see https://wiki.openstreetmap.org/wiki/Bicycle */
       
       /* country settings matter : left hand drive -> left = forward direction, right hand drive -> left is opposite direction */
-      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(settings.getCountryName());
+      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(networkData.getCountryName());
       boolean isDrivingDirectionLocationLeft = (isForwardDirection && isLeftHandDrive) ? true : false;
       
       /* location means left or right hand side of the road specific tags pertaining to mode inclusions */
@@ -798,7 +799,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException throw if error
    */
   private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) throws PlanItException {
-    LineString lineString = PlanitOsmWayUtils.extractLineString(osmWay, this.osmNodes);        
+    LineString lineString = PlanitOsmWayUtils.extractLineString(osmWay, networkData.getOsmNodes());        
     if(startNodeIndex>0 || endNodeIndex < (osmWay.getNumberOfNodes()-1)) {          
       /* update geometry and length in case link represents only a subsection of the OSM way */
       LineString updatedGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesBefore(startNodeIndex, lineString);
@@ -1040,7 +1041,7 @@ public class PlanitOsmNetworkLayerHandler {
    */
   private Node extractNode(final long osmNodeId) throws PlanItException {    
         
-    OsmNode osmNode = osmNodes.get(osmNodeId);
+    OsmNode osmNode = networkData.getOsmNode(osmNodeId);
     Node node = this.layerData.getPlanitNodeByOsmNode(osmNode);
     if(node == null) {
       
@@ -1121,18 +1122,17 @@ public class PlanitOsmNetworkLayerHandler {
 
   /** Constructor
    * @param networkLayer to use
-   * @param osmNodes reference to parsed osmNodes
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, Map<Long, OsmNode> osmNodes, PlanitOsmNetworkSettings settings, PlanitJtsUtils geoUtils) {
+  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkSettings settings, PlanitJtsUtils geoUtils) {
     this.networkLayer = networkLayer;           
-    this.osmNodes = osmNodes;
+    this.networkData = networkData;
     this.geoUtils = geoUtils;
     this.settings = settings;
     
     this.profiler  = new PlanitOsmNetworkHandlerProfiler();
-    this.layerData = new PlanitOsmNetworkLayerReaderData();
+    this.layerData = new PlanitOsmNetworkReaderLayerData();
     
     /* initialise the tagging scheme helpers based on the registered modes */
     if(OsmLanesModeTaggingSchemeHelper.requireLanesModeSchemeHelper(settings, networkLayer)) {
@@ -1168,7 +1168,7 @@ public class PlanitOsmNetworkLayerHandler {
         if(isPartOfCircularWay) {
           /* when circular we only accept one direction as accessible regardless of what has been identified so far;
            * clockwise equates to forward direction while anti-clockwise equates to backward direction */
-          if(PlanitOsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
+          if(PlanitOsmWayUtils.isCircularWayDefaultDirectionClockwise(networkData.getCountryName())) {
             linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
           }else {
             linkSegmentTypes = Pair.of(null, linkSegmentTypes.second());
@@ -1200,7 +1200,7 @@ public class PlanitOsmNetworkLayerHandler {
    */ 
   protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
 
-    Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), osmNodes);
+    Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodes());
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
       /* links to break */
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
@@ -1303,7 +1303,7 @@ public class PlanitOsmNetworkLayerHandler {
    * 
    * @return layer data
    */
-  public PlanitOsmNetworkLayerReaderData getLayerData() {
+  public PlanitOsmNetworkReaderLayerData getLayerData() {
     return this.layerData;
   }
 

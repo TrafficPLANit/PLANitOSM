@@ -11,11 +11,13 @@ import java.util.logging.Logger;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.network.InfrastructureLayersConfigurator;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
 import org.planit.osm.defaults.OsmLaneDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaultsByCountry;
 import org.planit.osm.defaults.OsmSpeedLimitDefaults;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
@@ -37,16 +39,22 @@ public class PlanitOsmNetworkSettings {
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkSettings.class.getCanonicalName());
     
+  /* country name and network are only stored so we can verify the settings used are consistent with the reader ( because in some cases it is desirable
+   * to create settings before we create the reader, so we conduct configuration beforehand, in which case we must be able to verify that the settings we
+   * provide to the reader are consistent with the country and network that the reader is going to populate */
+  
+  /** country name used */
+  private final String countryName;
+  
+  /** network being populated */
+  private final PlanitOsmNetwork osmNetwork;
   
   /** all settings specific to osm railway tags */
   protected PlanitOsmRailwaySettings osmRailwaySettings;
   
   /** all settings specific to osm highway tags*/
   protected PlanitOsmHighwaySettings osmHighwaySettings; 
-  
-  /** the country we are importing for (if any) */
-  protected final String countryName;
-           
+             
   /** the default speed limits used in case no explicit information is available on the osmway's tags */
   protected final OsmSpeedLimitDefaults speedLimitConfiguration;
   
@@ -130,7 +138,6 @@ public class PlanitOsmNetworkSettings {
     osmHighwaySettings.initialiseDefaultMappingFromOsmRoadModes2PlanitModes(planitModes);
     osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes(planitModes);
   }
-
           
     
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
@@ -153,10 +160,11 @@ public class PlanitOsmNetworkSettings {
    * for various osm highway types in case maximum speed limit information is missing
    * 
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
-   * @param planitModes to populate based on (default) mapping
+   * @param osmNetworkToPopulate to populate based on (default) mapping
    */
-  public PlanitOsmNetworkSettings(String countryName, Modes planitModes) {
+  public PlanitOsmNetworkSettings(String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
     this.countryName = countryName;
+    this.osmNetwork = osmNetworkToPopulate;
     
     /* general */
     this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
@@ -171,21 +179,31 @@ public class PlanitOsmNetworkSettings {
         this.speedLimitConfiguration.getRailwayDefaults(), 
         this.modeAccessConfiguration.getRailwayModeAccessDefaults());
     
-    initialise(planitModes);   
+    initialise(osmNetworkToPopulate.modes);   
     
     /* default will map all modes to a single layer */
-    this.planitInfrastructureLayerConfiguration = InfrastructureLayersConfigurator.createAllInOneConfiguration(planitModes);
+    this.planitInfrastructureLayerConfiguration = InfrastructureLayersConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.modes);
   }    
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
    * speed limits and mdoe access restrictions (unless manually adjusted by the user)
    * 
-   * @param planitModes to populate based on (default) mapping
+   * @param osmNetworkToPopulate to populate
    * 
    */  
-  public PlanitOsmNetworkSettings(Modes planitModes) {
-    this( "", planitModes);
+  public PlanitOsmNetworkSettings(PlanitOsmNetwork osmNetworkToPopulate) {
+    this( "", osmNetworkToPopulate);
+  }
+  
+  /** validate if these settings are consistent with the passed in reader. Can be used in case the settings were created befor the reader and
+   * we want to check if the settings adopted the same network and country as the reader
+   * 
+   * @param networkReaderto check consistency with
+   * @return true when valid, false otherwise
+   */
+  public boolean isConsistentWith(PlanitOsmNetworkReaderData networkReaderData) {
+    return networkReaderData.getCountryName().equals(countryName) && osmNetwork.idEquals(networkReaderData.getOsmNetwork());
   }
   
   /** activate the parsing of railways
@@ -405,13 +423,6 @@ public class PlanitOsmNetworkSettings {
     }
     return false;
   }  
-
-  /** When country is set for settings this will return the chosen country
-   * @return countryName
-   */
-  public final String getCountryName() {
-    return this.countryName;
-  }
 
   /** the minimum size an identified dangling network must have for it to NOT be removed when danlging networks are removed
    * 
