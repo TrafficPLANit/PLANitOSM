@@ -511,10 +511,17 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
       /* platform is situated on the road infrastructure. This is discouraged and arguably a tagging error, but occurs sometimes and can be salvaged by
        * extracting the platform and stop position together */
-      LOGGER.fine(String.format("SALVAGED: ptv2 platform %d erroneously placed on road infrastructure, creating waiting area and stop_position",osmNode.getId()));
-      extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, defaultOsmMode);
+      if(PlanitOsmUtils.isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
+        /* use PTv1 context for extracting transfer zone information */
+        LOGGER.fine(String.format("SALVAGED: ptv2 platform %d erroneously placed on road infrastructure, parse combined waiting area and stop_position based on Ptv1 tagging",osmNode.getId()));
+        extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, defaultOsmMode);
+      }else {
+        /* no Ptv1 context, simply assign as platform */
+        LOGGER.info(String.format("SALVAGED: tagging error, ptv2 platform %d erroneously placed on road infrastructure without any Ptv1 context tagging, creating both waiting area and stop_position in this location instead",osmNode.getId()));
+        createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, TransferZoneType.PLATFORM);
+      }
     }else {
-      /* regular platform seaprated from vehicle stop position; create transfer zone but no connectoids, 
+      /* regular platform separated from vehicle stop position; create transfer zone but no connectoids, 
        * these will be constructed during or after we have parsed relations, i.e. stop_areas */
       createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, defaultOsmMode);
     }   
@@ -885,7 +892,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-        
+            
     if(skipOsmWay(osmWay)) {
       LOGGER.fine(String.format("Skipped osm way %d, marked for exclusion", osmWay.getId()));
       return;

@@ -87,10 +87,11 @@ public class PlanitOsmIntermodalReaderFactory {
    * @param ptSettings settings to use for the public transport aspect
    * @param osmNetworkToPopulate the network to populate
    * @return create osm intermodal reader
+   * @throws PlanItException throw if error
    */
   public static PlanitOsmIntermodalReader create(
-      String inputFile, String countryName, PlanitOsmNetworkSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) {
-    return new PlanitOsmIntermodalReader(inputFile, countryName, ptSettings, osmNetworkToPopulate, new Zoning(osmNetworkToPopulate.getIdGroupingToken(), osmNetworkToPopulate.getNetworkGroupingTokenId()));    
+      String inputFile, String countryName, PlanitOsmNetworkSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+    return new PlanitOsmIntermodalReader(inputFile, countryName, networkSettings, ptSettings, osmNetworkToPopulate, new Zoning(osmNetworkToPopulate.getIdGroupingToken(), osmNetworkToPopulate.getNetworkGroupingTokenId()));    
   }  
     
   /** Create a PLANitOsmIntermodalReader while providing an OSM network, and zoning to populate

@@ -1123,7 +1123,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
             
       /* station is stop_location as well as transfer zone*/      
       OsmNode osmStationNode = getNetworkToZoningData().getOsmNodes().get(osmStation.getId());      
-      createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmStationNode, tags, defaultMode);
+      createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(osmStationNode, tags, defaultMode);
       
     }else{
       /* either station is not on track, or it is, but a different transfer zone is user mandated, either way, we must obtain the transfer zone
@@ -1201,7 +1201,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param transferZoneGroup the group this stop position is allowed to relate to
    * @throws PlanItException thrown if error
    */
-  private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {                 
+  private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {
+    
+    if(osmNode.getId()==2038152687l) {
+      int bla = 4;
+    }
           
     /* supported modes */
     Pair<Collection<String>, Collection<Mode>> modeResult = collectEligibleModes(osmNode.getId(), tags, null);

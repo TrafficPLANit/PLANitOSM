@@ -277,7 +277,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         
         /* bus_stop on the road and NO Ptv2 tags (or Ptv2 tags assessed and decided they should be ignored), create both transfer zone and connectoids immediately */
         OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(osmEntity.getId());
-        createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, OsmRoadModeTags.BUS);
+        createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(osmNode, tags, OsmRoadModeTags.BUS);
         
       }else {
         
@@ -654,10 +654,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       PlanitOsmHandlerHelper.addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
     }
     return transferZone;
-  }   
-
+  }  
+  
   /** Method that will attempt to create both a transfer zone and its connectoids at the location of the osm node. This is only relevant for very specific types
-   * of osm pt nodes, such as tram_stop, some bus_stops that are tagged on the road, and potentially halts and/or stations
+   * of osm pt nodes, such as tram_stop, some bus_stops that are tagged on the road, and potentially halts and/or stations. since we assume this is in the context of
+   * the existence of Ptv1 tags, we utilise the Ptv1 tags to extract the correct transfer zone type in case the transfer zone does not yet exist in this location.
    * 
    * @param osmNode for the location to create both a transfer zone and connectoid(s)
    * @param tags of the node
@@ -665,7 +666,25 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return created transfer zone (if not already in existence)
    * @throws PlanItException thrown if error
    */
-  protected TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(OsmNode osmNode, Map<String, String> tags, String defaultOsmMode) throws PlanItException {
+  protected TransferZone createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(OsmNode osmNode, Map<String, String> tags, String defaultOsmMode) throws PlanItException {
+    TransferZoneType ptv1TransferZoneType = PlanitOsmHandlerHelper.getPtv1TransferZoneType(osmNode, tags);
+    return createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, ptv1TransferZoneType);    
+  }
+
+  /** Method that will attempt to create both a transfer zone and its connectoids at the location of the osm node. This is only relevant for very specific types
+   * of osm pt nodes, such as tram_stop, some bus_stops that are tagged on the road, and potentially halts and/or stations. In case no existing transfer zone in this
+   * location exists, we create one first using the default transfer zone type provided, otherwise we utilise the existing transfer zone
+   * 
+   * @param osmNode for the location to create both a transfer zone and connectoid(s)
+   * @param tags of the node
+   * @param defaultOsmMode that is to be expected here
+   * @param defaultTransferZoneType in case a transfer zone needs to be created in this location
+   * @return created transfer zone (if not already in existence)
+   * @throws PlanItException thrown if error
+   */  
+  protected TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
+      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType) throws PlanItException {
+    
     /* eligible modes */
     String foundDefaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
     if(defaultOsmMode!=null && !foundDefaultMode.equals(defaultOsmMode)) {
@@ -676,12 +695,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(!PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {    
       throw new PlanItException("Should not attempt to parse osm node %d when no planit modes are activated for it", osmNode.getId());
     }
-  
+      
     /* transfer zone */
     TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node).get(osmNode.getId());
     if(transferZone == null) {
       /* not created for other layer; create and register transfer zone */
-      transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, PlanitOsmHandlerHelper.getPtv1TransferZoneType(osmNode, tags), defaultOsmMode);
+      transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, defaultTransferZoneType, defaultOsmMode);
       if(transferZone == null) {
         throw new PlanItException("Unable to create transfer zone for osm node %d",osmNode.getId());
       }
@@ -1024,7 +1043,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }else {              
       /* In the special case a Ptv1 tag for a tram_stop, bus_stop, halt, or station is supplemented with a Ptv2 stop_position we must treat this as stop_position AND transfer zone in one and therefore 
        * create a transfer zone immediately */      
-      createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultMode);
+      createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultMode);
     }
   }   
   
