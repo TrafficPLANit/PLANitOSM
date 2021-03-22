@@ -20,9 +20,14 @@ import org.locationtech.jts.linearref.LinearLocation;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
+import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.OsmPtv1Tags;
+import org.planit.osm.tags.OsmRailModeTags;
+import org.planit.osm.tags.OsmRoadModeTags;
+import org.planit.osm.tags.OsmWaterModeTags;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
@@ -579,6 +584,56 @@ public class PlanitOsmHandlerHelper {
     }else {
       return false;
     }
+  }
+
+  /** collect the closest by link (with the given osm way id on the layer) to the provided geometry
+   * @param osmWayId to filter links on
+   * @param geometry to check closeness against
+   * @param networkLayer the link must reside on
+   * @param geoUtils to use for closeness computations
+   * @return found link (null if none)
+   * @throws PlanItException thrown if error
+   */
+  public static Link getClosestLinkWithOsmWayIdToGeometry(
+      long osmWayId, Geometry geometry, MacroscopicPhysicalNetwork networkLayer, PlanitJtsUtils geoUtils) throws PlanItException {
+    /* collect all planit links that match the osm way id (very slow, but it is rare and not worth the indexing generally) */
+    Collection<Link> nominatedLinks = networkLayer.links.getByExternalId(String.valueOf(osmWayId));
+    /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */
+    return (Link) PlanitGraphGeoUtils.findEdgeClosest(geometry, nominatedLinks, geoUtils);
+  }
+
+  /** A stand alone station can either support a single platform when it is road based or two stop_locations for rail (on either side). This is 
+   * reflected in the returned max matches. The search distance is based on the settings where a road based station utilises the stop to waiting
+   * area search distance whereas a rail based one uses the station to waiting area search distance
+   * 
+   * @param settings to obtain search distance for
+   * @param osmStationModes station modes supported
+   * @return search distance and max stop_location matches pair, null if problem occurred
+   */
+  public static Pair<Double, Integer> determineSearchDistanceAndMaxStopLocationMatchesForStandAloneStation(
+      long osmStationId, Collection<String> osmStationModes, PlanitOsmPublicTransportSettings settings) {
+    
+    Double searchDistance = null;
+    Integer maxMatches = null;
+    if(OsmRailModeTags.containsAnyMode(osmStationModes)) {
+      /* rail based station -> match to nearby train tracks 
+       * assumptions: small station would at most have two tracks with platforms and station might be a bit further away 
+       * from tracks than a regular bus stop pole, so cast wider net */
+      searchDistance = settings.getStationToWaitingAreaSearchRadiusMeters();
+      maxMatches = 2;
+    }else if(OsmRoadModeTags.containsAnyMode(osmStationModes)) {
+      /* road based station -> match to nearest road link 
+       * likely bus stop, so only match to closest by road link which should be very close, so use
+       * at most single match and small search radius, same as used for pole->stop_position search */
+      searchDistance = settings.getStopToWaitingAreaSearchRadiusMeters();
+      maxMatches = 1;
+    }else if(OsmWaterModeTags.containsAnyMode(osmStationModes)) {
+      /* water based -> not supported yet */
+      LOGGER.warning(String.format("DISCARD: water based stand-alone station detected %d, not supported yet, skip", osmStationId));
+      return null;
+    }
+    
+    return Pair.of(searchDistance, maxMatches);
   }
   
 }

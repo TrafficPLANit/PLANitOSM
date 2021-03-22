@@ -28,7 +28,6 @@ import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
-import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
  * Data specifically required in the zoning reader while parsing OSM data

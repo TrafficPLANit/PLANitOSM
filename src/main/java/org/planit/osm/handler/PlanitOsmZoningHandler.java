@@ -15,6 +15,7 @@ import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.zoning.TransferZone;
@@ -43,7 +44,11 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningHandler.class.getCanonicalName());     
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningHandler.class.getCanonicalName());
+  
+  /** utilities for geographic information */
+  private final PlanitJtsUtils geoUtils;  
+  
   
   /** add the node's transfer zone (if it can be found) to the provided transfer zone group
    * 
@@ -57,12 +62,11 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Node, osmNode.getId());
     if(transferZone ==null) {    
       /* no match... */
-      Pair<Collection<String>, Collection<Mode>> modeResult = collectEligibleModes(osmNode.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
-      if( PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult) &&
-          getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(PlanitOsmModeUtils.getPublicTransportModesFrom(modeResult .first()))) {      
+      Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
+      if( PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult) ) {      
         /* ...this is only valid when the osm entity (platform) has no eligible modes tagged and therefore no transfer zone was ever created (correctly), however, we found eligible modes, possible problem */        
         LOGGER.warning(String.format("Found stop_area %d node member %d compatible with with %s, yet it has no transfer zone available, ignored",
-            osmRelation.getId(), osmNode.getId(), PlanitOsmModeUtils.getPublicTransportModesFrom(modeResult .first()).toString()));
+            osmRelation.getId(), osmNode.getId(), modeResult .first().toString()));
       }
       return;
     }
@@ -451,14 +455,14 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     if(OsmPtv1Tags.isTramStop(tags)) {
       /* ok, a tram stop is waiting area and stop_location in one, parse as such immediately as supported by Ptv1 parser */
-      extractTransferInfrastructurePtv1(osmNode, tags);
+      extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);
     }else if(OsmPtv1Tags.isBusStop(tags)) {
       /* bus_stop */
       
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
         /* taggin error */
         LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 bus_stop (%d), yet it does not reside on road infrastructure, parse as pole instead", osmNode.getId()));
-        extractTransferInfrastructurePtv1(osmNode, tags);
+        extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);
       }else {
         /* ok, a bus_stop should normally not be on the road, but since it is tagged as stop_location, the stop_lcoation takes precendence, mark as unprocessed stop position*/
         getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());          
@@ -469,7 +473,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
         /* tagging error */
         LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 halt (%d), yet it does not reside on road infrastructure, parse as small station instead", osmNode.getId()));
-        extractTransferInfrastructurePtv1(osmNode, tags);
+        extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);
       }else {
         /* ok, a halt can be on the rail track and is stop position, mark as regular unprocessed stop_position */
         getZoningReaderData().getOsmData().addUnprocessedPtv2StopPosition(osmNode.getId());          
@@ -480,7 +484,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
         /* tagging error */
         LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 station (%d), yet it does not reside on road infrastructure, parse as station instead", osmNode.getId()));
-        extractTransferInfrastructurePtv1(osmNode, tags);
+        extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);
       }else {
         /* potentially ok, a station can be on the rail track and is stop position, mark as regular unprocessed stop_position, however it is very unusual and likely a Ptv2 platform 
          * might be missing, so still log this for user to verify */
@@ -514,11 +518,11 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       if(PlanitOsmUtils.isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
         /* use PTv1 context for extracting transfer zone information */
         LOGGER.fine(String.format("SALVAGED: ptv2 platform %d erroneously placed on road infrastructure, parse combined waiting area and stop_position based on Ptv1 tagging",osmNode.getId()));
-        extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, defaultOsmMode);
+        extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, defaultOsmMode, geoUtils);
       }else {
         /* no Ptv1 context, simply assign as platform */
         LOGGER.info(String.format("SALVAGED: tagging error, ptv2 platform %d erroneously placed on road infrastructure without any Ptv1 context tagging, creating both waiting area and stop_position in this location instead",osmNode.getId()));
-        createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, TransferZoneType.PLATFORM);
+        createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, TransferZoneType.PLATFORM, geoUtils);
       }
     }else {
       /* regular platform separated from vehicle stop position; create transfer zone but no connectoids, 
@@ -795,7 +799,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(ptVersion == OsmPtVersionScheme.VERSION_2) {
       extractTransferInfrastructurePtv2(osmNode, tags);
     }else if(ptVersion == OsmPtVersionScheme.VERSION_1) {
-      extractTransferInfrastructurePtv1(osmNode, tags);
+      extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);
     }
   }  
   
@@ -830,7 +834,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       final PlanitOsmNetworkToZoningReaderData network2ZoningData, 
       final Zoning zoningToPopulate,
       final PlanitOsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData,network2ZoningData, zoningToPopulate, profiler);    
+    super(transferSettings, zoningReaderData,network2ZoningData, zoningToPopulate, profiler);
+    
+    /* gis initialisation */
+    this.geoUtils = new PlanitJtsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
   }
   
   /**
