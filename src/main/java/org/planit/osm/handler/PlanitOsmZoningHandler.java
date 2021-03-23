@@ -59,7 +59,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   private void addPtv2StopAreaMemberTransferZoneToGroup(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
     
     /* register transfer zone if it exists on group */
-    TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Node, osmNode.getId());
+    TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(EntityType.Node, osmNode.getId());
     if(transferZone ==null) {    
       /* no match... */
       Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
@@ -76,8 +76,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   /**
    * After handlings pt nodes, ways, and relations, we can identify all transfer zones (platforms, poles) that have successfully been mapped to connectoids (stop_locations)
    * doing so removes them from the pool of remaining transferzones that still require connectoids and are up for post-processing.
+   * @throws PlanItException thrown if error
    */
-  private void identifyCompletedTransferZones() {
+  private void identifyCompletedTransferZones() throws PlanItException {
     identifyCompletedTransferZones(EntityType.Node, 
         new HashMap<Long, TransferZone>(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node)));
     identifyCompletedTransferZones(EntityType.Way, 
@@ -90,8 +91,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * 
    * @param entityType of the zones
    * @param transferZonesToVerify zones to verify
+   * @throws PlanItException thrown if error removing incomplete transfer zone
    */
-  private void identifyCompletedTransferZones(EntityType entityType, Map<Long, TransferZone> transferZonesToVerify) {
+  private void identifyCompletedTransferZones(EntityType entityType, Map<Long, TransferZone> transferZonesToVerify) throws PlanItException {
     if(transferZonesToVerify== null) {
       return;
     }
@@ -137,7 +139,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
         updateTransferZoneGroupStationName(transferZoneGroup, unprocessedStationPair.second(), OsmModelUtil.getTagsAsMap(unprocessedStationPair.second()));          
       }      
       /* platform? --> then we should already have a transfer zone for it*/      
-      else if(getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(member.getType(), member.getId())!=null) {
+      else if(getZoningReaderData().getPlanitData().getTransferZoneByOsmId(member.getType(), member.getId())!=null) {
         LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as platform", transferZoneGroup.getExternalId(), member.getId()));
         /* platform -> process as such */
         registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member);
@@ -319,7 +321,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     /* on each transfer zone on the group (we must use relation because not all transfer zones might be registered on the group yet */
     for(int index=0;index<osmRelation.getNumberOfMembers();++index) {
       OsmRelationMember transferZoneMember = osmRelation.getMember(index);
-      TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(transferZoneMember.getType(), osmStation.getId());
+      TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(transferZoneMember.getType(), osmStation.getId());
       if(transferZone!=null) {
         updateTransferZoneStationName(transferZone, tags);
       }
@@ -355,7 +357,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     /* platform */
     if(unidentified) {
-      TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Way, osmWayMember.getId());
+      TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(EntityType.Way, osmWayMember.getId());
       if(transferZone != null) { 
         /* process as platform */
         registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, osmWayMember);                    
@@ -678,8 +680,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   private void registerPtv2StopAreaPlatformOnGroup(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
     
-    /* should be parsed (without connectoids), connect to group and let stop_positions create connectoids */
-    TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(member.getType(), member.getId());
+    /* should be parsed (with or without connectoids), connect to group and let stop_positions create connectoids */
+    TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(member.getType(), member.getId());
     if(transferZone==null) {
       /* not parsed due to problems, discard */
       LOGGER.warning(String.format("DISCARD: platform for OSM entity %d not available, although referenced by stop_area %d",member.getId(),osmRelation.getId()));
@@ -990,7 +992,11 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     
     /* mark all transfer zones that now have been mapped to connectoids as such, this ensures
      * they are not considered for further post-processing */
-    identifyCompletedTransferZones();
+    try {
+      identifyCompletedTransferZones();
+    } catch (PlanItException e) {
+      LOGGER.severe(e.getMessage());
+    }
     
     LOGGER.info(" OSM (transfer) zone parsing...DONE");
 

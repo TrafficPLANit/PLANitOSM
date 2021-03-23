@@ -18,6 +18,7 @@ import org.locationtech.jts.index.quadtree.Quadtree;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -47,6 +48,9 @@ public class PlanitOsmZoningReaderPlanitData {
   
   /** in addition to tracking (potentially) incomplete transfer zones by their Osm entity id, we also track them spatially, to be able to map them to close by stop positions if needed */  
   private final Map<EntityType, Quadtree> incompleteTransferZonesBySpatialIndex = new TreeMap<EntityType, Quadtree>();
+  
+  /** whenever a transfer zone is no longer incomplete it is marked complete and is tracked here (or it can be registered as complete immediately) */
+  private final Map<EntityType, Map<Long, TransferZone>> completeTransferZonesByOsmEntityId = new TreeMap<EntityType,Map<Long,TransferZone>>();
   
   /* OSM <-> CONNECTOID TRACKING */
   
@@ -82,13 +86,38 @@ public class PlanitOsmZoningReaderPlanitData {
     }
     spatiallyIndexedPlanitLinks = PlanitGraphGeoUtils.createSpatiallyIndexedPlanitEdges(linksCollection);
   }
+  
+  /** mark as complete, can only be invoked by removing it from the incomplete transfer zones
+   * 
+   * @param transferZone to mark as complete
+   * @throws PlanItException thrown if error
+   */
+  protected void addCompleteTransferZone(TransferZone transferZone) throws PlanItException {
+    
+    if(transferZone==null || transferZone.getExternalId() == null) {
+      throw new PlanItException("unknown osm id for transfer zone %s, this shouldn't happen", transferZone==null ? "null" : String.valueOf(transferZone.getId()));
+    }
+    EntityType entityType = transferZone.getGeometry() instanceof Point ? EntityType.Node : EntityType.Way;  
+    completeTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long, TransferZone>()); 
+    completeTransferZonesByOsmEntityId.get(entityType).put(Long.valueOf(transferZone.getExternalId()), transferZone);
+    
+  }
     
         
   /* TRANSFER ZONE RELATED METHODS */  
   
+  /** collect all completed transfer zones based on Osm entity type they originated from
+   * @param entityType os the transfer zone origin
+   * @return all complete transfer zones up until now by their original OsmEntityId
+   */  
+  public Map<Long, TransferZone> getCompleteTransferZonesByEntityType(EntityType entityType) {
+    completeTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
+    return Collections.unmodifiableMap(completeTransferZonesByOsmEntityId.get(entityType));
+  }   
+  
   /** collect all potentially incomplete transfer zones based on Osm entity type they originated from
    * @param entityType os the transfer zone origin
-   * @return all transfer zones up until now by their original OsmEntityId
+   * @return all incomplete transfer zones up until now by their original OsmEntityId
    */
   public Map<Long, TransferZone> getIncompleteTransferZonesByEntityType(EntityType entityType) {
     incompleteTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
@@ -104,6 +133,29 @@ public class PlanitOsmZoningReaderPlanitData {
     incompleteTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
     return incompleteTransferZonesByOsmEntityId.get(entityType).get(osmEntityId);
   }
+  
+  /** collect the complete transfer zone by entity type and osm id
+   * @param entityType to collect for (node, way)
+   * @param osm id (node id/way id)
+   * @return transfer zone registered, null if not present
+   */
+  public TransferZone getCompleteTransferZoneByOsmId(EntityType entityType, long osmEntityId) {
+    completeTransferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
+    return completeTransferZonesByOsmEntityId.get(entityType).get(osmEntityId);
+  }  
+  
+  /** find transfer zone either incomplete or complete by osm is
+   * @param type osm entity type
+   * @param osmId osm id of transfer zone
+   * @return transfer zone if present as incomplete or complete, null otherwise
+   */
+  public TransferZone getTransferZoneByOsmId(EntityType type, long osmId) {
+    TransferZone transferZone = getIncompleteTransferZoneByOsmId(type, osmId);
+    if(transferZone == null) {
+      transferZone = getCompleteTransferZoneByOsmId(type, osmId);
+    }
+    return transferZone;
+  }  
   
   /** collect the potentially incomplete transfer zones by entity type and a spatial bounding box. Collect all created transfer zones
    * that fall within or intersect with this bounding box.
@@ -149,47 +201,57 @@ public class PlanitOsmZoningReaderPlanitData {
     return incompleteTransferZonesByOsmEntityId.get(entityType).put(osmEntityId, transferZone);
   }  
   
-  /** remove all provided transfer zones by Osm id as they are deemed complete (have the appropriate connectoid(s))
+  /** remove all provided transfer zones by Osm id as they are deemed complete (have the appropriate connectoid(s)), by invoking this method
+   * they are all registered as completed as well
    * 
    * @param type entity type
    * @param transferZonesToRemove to remove by Osm entity id
+   * @throws PlanItException thrown if error
    */
-  public void removeIncompleteTransferZones(EntityType type, Set<Long> transferZonesToRemove) {    
+  public void removeIncompleteTransferZones(EntityType type, Set<Long> transferZonesToRemove) throws PlanItException {    
     for(long transferZoneOsmId : transferZonesToRemove) {
-      removeIncompleteTransferZones(type, transferZoneOsmId);
+      removeIncompleteTransferZone(type, transferZoneOsmId);
     }
   }   
   
+
   /** remove all provided transfer zones by Osm id as they are deemed complete (have the appropriate connectoid(s))
    * 
    * @param type entity type
    * @param transferZones to remove by Osm entity id
+   * @throws PlanItException thrown if error
    */
-  public void removeIncompleteTransferZones(EntityType type, Long... transferZoneOsmIds) {
+  public void removeIncompleteTransferZones(EntityType type, Long... transferZoneOsmIds) throws PlanItException {
     removeIncompleteTransferZones(type, Set.of(transferZoneOsmIds));
   }  
   
-  /** remove provided transfer zone by Osm id (unique within type) as it is deemed complete (have the appropriate connectoid(s))
+  /** remove provided transfer zone by Osm id (unique within type) as it is deemed complete (have the appropriate connectoid(s)), it is 
+   * marked as complete as well from now on and collectible as such
    *  
    * @param type entity type
    * @param transferZoneOsmId to remove by Osm entity id
    * @return removed transfer zone if any, null otherwise
+   * @throws PlanItException thrown if error
    */
-  public TransferZone removeIncompleteTransferZone(EntityType type, long transferZoneOsmId) {
+  public TransferZone removeIncompleteTransferZone(EntityType type, long transferZoneOsmId) throws PlanItException {
     Map<Long,TransferZone> theTransferZones = incompleteTransferZonesByOsmEntityId.get(type);
-    TransferZone removedTransferZone = theTransferZones.remove(transferZoneOsmId);
-    if(removedTransferZone!=null) {
-      incompleteTransferZonesBySpatialIndex.get(type).remove(removedTransferZone.getEnvelope(), removedTransferZone);
+    TransferZone completedTransferZone = theTransferZones.remove(transferZoneOsmId);
+    if(completedTransferZone!=null) {
+      incompleteTransferZonesBySpatialIndex.get(type).remove(completedTransferZone.getEnvelope(), completedTransferZone);
+      addCompleteTransferZone(completedTransferZone);
     }
-    return removedTransferZone;
+    return completedTransferZone;
   }    
   
+
   /** remove provided transfer zone as it is deemed complete (have the appropriate connectoid(s))
    *  
    * @param transferZone to remove 
    * @return removed transfer zone if any, null otherwise
+   * @throws PlanItException thrown if error
+   * @throws NumberFormatException 
    */  
-  public TransferZone removeIncompleteTransferZone(TransferZone transferZone) {
+  public TransferZone removeIncompleteTransferZone(TransferZone transferZone) throws NumberFormatException, PlanItException {
     EntityType type = (transferZone.getGeometry() instanceof Point) ? EntityType.Node: EntityType.Way;
     return removeIncompleteTransferZone(type, Long.valueOf(transferZone.getExternalId()));
   }  
@@ -314,6 +376,7 @@ public class PlanitOsmZoningReaderPlanitData {
    * reset the planit data tracking containers
    */
   public void reset() {
+    completeTransferZonesByOsmEntityId.clear();
     incompleteTransferZonesByOsmEntityId.clear();
     directedConnectoidsByOsmNodeId.clear();     
     connectoidsByTransferZone.clear();
@@ -347,6 +410,6 @@ public class PlanitOsmZoningReaderPlanitData {
   public Collection<Link> findLinksSpatially(Envelope searchBoundingBox) {
     return PlanitGraphGeoUtils.<Link>findEdgesSpatially(searchBoundingBox,spatiallyIndexedPlanitLinks);    
   }
-   
+  
 
 }

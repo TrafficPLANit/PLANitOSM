@@ -1124,7 +1124,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           
           /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
           Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmStation.getId());
-          stationTransferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(result.first(), result.second());
+          stationTransferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
           LOGGER.fine(String.format("Mapped station stop_position %d to overwritten waiting area %d", osmStation.getId(), result.second()));
           
         }else {
