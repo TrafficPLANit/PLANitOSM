@@ -998,6 +998,10 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
     
+    if(transferZone.getExternalId().equals("737117676")) {
+      int bla = 4;
+    }
+    
     /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
      * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen... */
     boolean mustAvoidCrossingTraffic = true;

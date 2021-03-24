@@ -372,11 +372,12 @@ public class PlanitOsmHandlerHelper {
     if(linkSegmentGeometry == null) {
       throw new PlanItException("geometry not available on osm way %s, unable to determine if link (segment) is closest to reference geometry, this shouldn't happen", linkSegment.getParentEdge().getExternalId());
     }
+    int bla = 4;
     LinearLocation linearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(referenceGeometry, linkSegmentGeometry);
-    boolean reverseLinearLocationGeometry = linkSegment.isDirectionAb()==linkSegment.getParentEdge().isGeometryInAbDirection();
+    boolean reverseLinearLocationGeometry = linkSegment.isDirectionAb()!=linkSegment.getParentEdge().isGeometryInAbDirection();
     
     LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParentEdge().getGeometry());
-    if(!reverseLinearLocationGeometry) {
+    if(reverseLinearLocationGeometry) {
       lineSegment.reverse();
     }
     return lineSegment;        

@@ -483,7 +483,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
     
-    if(osmWay.getId()==19704989l) {
+    if(osmWay.getId()==99840400l) {
       int bla = 4;
     }
     

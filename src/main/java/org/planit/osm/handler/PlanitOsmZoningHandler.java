@@ -879,7 +879,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   @Override
   public void handle(OsmNode osmNode) throws IOException {
             
-    if(osmNode.getId()==4928940523l) {
+    if(osmNode.getId()==1287222216l) {
       int bla = 4;
     }
     
@@ -911,7 +911,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
             
-    if(osmWay.getId()==216469462l) {
+    if(osmWay.getId()==783883381l) {
       int bla = 4;
     }
     

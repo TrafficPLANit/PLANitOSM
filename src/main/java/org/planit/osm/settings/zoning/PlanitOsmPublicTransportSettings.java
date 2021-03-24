@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.planit.utils.misc.Pair;
@@ -44,7 +45,7 @@ public class PlanitOsmPublicTransportSettings {
    * This overrides the parser's mapping functionality and immediately maps the stop location to this osm entity. 
    */
   private final Map<Long,Pair<EntityType,Long>> overwritePtStopLocation2WaitingAreaMapping = new HashMap<Long,Pair<EntityType,Long>>();
-  
+    
   /**
    * Provide explicit mapping for waiting areas, e.g. platforms, poles, stations (by osm node id) to the osm way (by osm id) to place stop_locations on (connectoids)
    * This overrides the parser's functionality to automatically attempt to identify the correct stop_location. Note that this should only be used for waiting areas that
@@ -59,12 +60,12 @@ public class PlanitOsmPublicTransportSettings {
   /**
    * default search radius in meters for mapping stops/platforms to stop positions on the networks when they have no explicit reference
    */
-  public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 20;
+  public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 25;
   
   /**
    * default search radius in meters for mapping stations to platforms on the networks when they have no explicit reference
    */
-  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 30;  
+  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 35;  
   
   /**
    * Default search radius in meters when trying to find parallel lines (tracks) for stand-alone stations 
@@ -230,6 +231,20 @@ public class PlanitOsmPublicTransportSettings {
    */
   public Pair<EntityType,Long> getOverwrittenStopLocationWaitingArea(Long stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.get(stopLocationOsmNodeId);    
+  }  
+  
+  /** Verify if the witing area is used as the designated waiting area for a stop location by means of a user explicitly stating it as such
+   * 
+   * @param waitingAreaType of the waiting area
+   * @return true when waiting area is defined for a stop location as designated waiting area, false otherwise
+   */
+  public boolean isWaitingAreaStopLocationOverwritten(EntityType waitingAreaType, Long osmWaitingAreaId) {
+    for( Entry<Long, Pair<EntityType, Long>> entry : overwritePtStopLocation2WaitingAreaMapping.entrySet()) {
+      if(entry.getValue().first().equals(waitingAreaType) && entry.getValue().second().equals(osmWaitingAreaId)) {
+        return true;
+      }
+    }
+    return false;
   }  
   
   /**
