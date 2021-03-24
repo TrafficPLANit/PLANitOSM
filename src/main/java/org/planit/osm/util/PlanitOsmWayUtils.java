@@ -4,12 +4,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -237,20 +239,45 @@ public class PlanitOsmWayUtils {
    * 
    * @param osmWay to extract geometry for
    * @param osmNodes to extract geo features from
-   * @return created gemoetry
+   * @return created geometry
+   * @throws PlanItException thrown if error
    */
-  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
+  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    return extractGeometry(osmWay, osmNodes, LOGGER.getLevel());
+  }   
+  
+  /** extract geometry from the osm way which can either be a line string or polygon
+   * 
+   * @param osmWay to extract geometry for
+   * @param osmNodes to extract geo features from
+   * @param logLevel logLevel
+   * @return created geometry
+   * @throws PlanItException thrown if error
+   */
+  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
+    Level originalLevel = LOGGER.getLevel();
+    LOGGER.setLevel(logLevel);
     Geometry geometry = null;
     if(PlanitOsmWayUtils.isOsmWayPerfectLoop(osmWay)) {
       /* area, so extract polygon geometry, in case of missing nodes, we log this but do not throw an exception, instead we keep the best possible shape that remains */
       geometry = PlanitOsmWayUtils.extractPolygonNoThrow(osmWay, osmNodes); 
-    }else {
-      /* (open) line string */
+    }
+    
+    if(geometry== null) {
+      /* (open) line string (or unable to salvage polygon in case of missing nodes, so try to create line string instead)*/
       geometry = PlanitOsmWayUtils.extractLineStringNoThrow(osmWay, osmNodes);        
     }
+    
+    if(geometry== null) {
+      /* unable to salvage line string in case of missing nodes, so try to create point instead*/
+      geometry = PlanitOsmWayUtils.extractPoint(osmWay, osmNodes);        
+    }
+    LOGGER.setLevel(originalLevel);
     return geometry;
   }   
+   
   
+
   /**
    * Extract the geometry for the passed in way as line string
    * 
@@ -269,22 +296,41 @@ public class PlanitOsmWayUtils {
    * @return parsed geometry, can be null if not valid for some reason
    */
   public static LineString extractLineStringNoThrow(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
+    LineString lineString = null;
     try {
       Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
       /* create line string when valid number of coordinates is still present */
       if(coordArray!= null && coordArray.length>=2) {
-        if(coordArray.length < osmWay.getNumberOfNodes() ) {
+        lineString = PlanitJtsUtils.createLineString(coordArray);
+        if(lineString!=null && coordArray.length < osmWay.getNumberOfNodes()) {
           /* inform user that osm way is corrupted but it was salvaged to some degree */
           LOGGER.info(String.format("SALVAGED: linestring for OSM way %d, truncated to available nodes",osmWay.getId()));
         }
-        return  PlanitJtsUtils.createLineString(coordArray);
       }
       
     }catch(Exception e) {
-      LOGGER.warning(String.format("Unable to create line string for OSM way %d",osmWay.getId()));
+    }
+    return lineString;
+  }
+  
+  /** creates a point geoetry using the first available node from the nodes on the osm way. Only to be used when no line string or polygon could be extract
+   * due to missing nodes for example
+   * 
+   * @param osmWay to extract point geometry for
+   * @param osmNodes to collect from
+   * @return parsed geometry, can be null if not valid for some reason
+   * @throws PlanItException thrown if error
+   */
+  public static Point extractPoint(OsmWay osmWay, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
+    /* create point when enough coordinates are available */
+    if(coordArray!= null && coordArray.length>=1) {
+      return  PlanitJtsUtils.createPoint(coordArray[0]);
+    }else {
+      LOGGER.severe(String.format("Unable to extract a single location from nodes references by osm way %d",osmWay.getId()));
     }
     return null;
-  }
+  }  
   
   /** Extract the geometry for the passed in way as polygon (assumed it has been identified as such already)
    * 
@@ -307,19 +353,24 @@ public class PlanitOsmWayUtils {
    * @return parsed geometry
    */
   public static Polygon extractPolygonNoThrow(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {   
+    Polygon polygon = null;
+    boolean salvaged = false;
     try {
-      Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
+      Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);      
       /* create polygon when valid number of nodes present */
       if(coordArray!= null && coordArray.length>=2) {
         if(coordArray.length < osmWay.getNumberOfNodes() ) {
           /* create closed ring in case nodes are missing but we still have a viable polygon shape */
-          coordArray = PlanitJtsUtils.makeClosed2D(coordArray);
-          LOGGER.info(String.format("SALVAGED: polygon for OSM way %d, truncated to available nodes",osmWay.getId())); 
+          coordArray = PlanitJtsUtils.makeClosed2D(coordArray); 
+          salvaged = true;
         }
-        return PlanitJtsUtils.createPolygon(coordArray);
+        polygon = PlanitJtsUtils.createPolygon(coordArray);
+        if(polygon != null && salvaged) {
+          /* only log now, because it can still fail after closing the polygon */
+          LOGGER.info(String.format("SALVAGED: polygon for OSM way %d, truncated to available nodes",osmWay.getId()));
+        }
       }
     }catch(Exception e) {
-      LOGGER.warning(String.format("Unable to create polygon for OSM way %d",osmWay.getId()));
     }
     return null;
   }

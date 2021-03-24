@@ -1,6 +1,7 @@
 package org.planit.osm.util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -227,15 +228,13 @@ public class PlanitOsmModeUtils {
     Set<String> eligibleOsmModes = null;
     
     /* rail modes */
-    String defaultRailMode = OsmRailModeTags.isRailModeTag(defaultOsmMode) ? defaultOsmMode : null;
-    Set<String> eligibleOsmRailModes = collectEligibleOsmRailModesOnPtOsmEntity(tags, defaultRailMode);
+    Set<String> eligibleOsmRailModes = collectEligibleOsmRailModesOnPtOsmEntity(tags, null);
     if(eligibleOsmRailModes!=null && !eligibleOsmRailModes.isEmpty()) {
       eligibleOsmModes = eligibleOsmRailModes;
     }
     
     /* road modes */
-    String defaultRoadMode = OsmRoadModeTags.isRoadModeTag(defaultOsmMode) ? defaultOsmMode : null;
-    Set<String> eligibleOsmRoadModes = collectEligibleOsmRoadModesOnPtOsmEntity(osmEntityId, tags, defaultRoadMode);
+    Set<String> eligibleOsmRoadModes = collectEligibleOsmRoadModesOnPtOsmEntity(osmEntityId, tags, null);
     if(eligibleOsmRoadModes!=null && !eligibleOsmRoadModes.isEmpty()) {
       if(eligibleOsmModes!=null) {
         eligibleOsmModes.addAll(eligibleOsmRoadModes);
@@ -244,9 +243,8 @@ public class PlanitOsmModeUtils {
       }
     }
     
-    /* water modes */
-    String defaultWaterMode = OsmWaterModeTags.isWaterModeTag(defaultOsmMode) ? defaultOsmMode : null;    
-    Set<String> eligibleOsmWaterModes = collectEligibleOsmWaterModesOnPtOsmEntity(tags, defaultWaterMode);
+    /* water modes */   
+    Set<String> eligibleOsmWaterModes = collectEligibleOsmWaterModesOnPtOsmEntity(tags, null);
     if(eligibleOsmWaterModes!=null && !eligibleOsmWaterModes.isEmpty()) {
       if(eligibleOsmModes!=null) {
         eligibleOsmModes.addAll(eligibleOsmWaterModes);
@@ -254,6 +252,11 @@ public class PlanitOsmModeUtils {
         eligibleOsmModes = eligibleOsmWaterModes;
       }
     }    
+    
+    if(eligibleOsmModes==null && defaultOsmMode != null) {
+      /* use default mode when no explicit modes are found across all mode types */
+      eligibleOsmModes = Collections.singleton(defaultOsmMode);
+    }
           
     return eligibleOsmModes;       
   }

@@ -15,7 +15,6 @@ import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderOsmData;
-import org.planit.osm.converter.reader.PlanitOsmZoningReaderPlanitData;
 import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -50,11 +49,11 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
- * Handler that conducts final parsing round where all stop_positions in relatons are mapped to the now parsed transfer zones.
+ * Handler that conducts final parsing round where all stop_positions in relations are mapped to the now parsed transfer zones.
  * This is done separately because transfer zones are sometimes also part of relations and it is not guaranteed that all transfer zones
  * are available when encountering a stop_position in a relation. So we parse them in another pass.
  * <p>
- * Also, all unprocessed stations that are not part of any relatino are converted into transfer zones and connectoids here since
+ * Also, all unprocessed stations that are not part of any relation are converted into transfer zones and connectoids here since
  * we can now guarantee they are not part of a relation, i.e., stop_area 
  * 
  * @author markr
@@ -148,7 +147,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private Collection<Link> findStopLocationLinksForWaitingArea(Long osmEntityId, Geometry waitingAreaGeometry, Collection<String> eligibleOsmModes, Envelope searchBoundingBox) throws PlanItException {
     
-    if(osmEntityId == 976339298l) {
+    if(osmEntityId == 6646032959l) {
       int bla = 4;
     }
     
@@ -193,8 +192,9 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   private Collection<Link> findStopLocationLinksForStation(
       OsmEntity osmStation, Map<String, String> tags, Collection<String> referenceOsmModes, Envelope searchBoundingBox, Integer maxMatches) throws PlanItException {
     
-    /* First find all links that are spatially, mode, and driving direction compatible */
-    Geometry stationGeometry = PlanitOsmUtils.extractGeometry(osmStation, getNetworkToZoningData().getOsmNodes());
+    /* First find all links that are spatially, mode, and driving direction compatible (switch of logging of issues regarding station geometry since these would already be logged when creating transfer zone)*/
+    Geometry stationGeometry = PlanitOsmUtils.extractGeometry(osmStation, getNetworkToZoningData().getOsmNodes(), Level.OFF);
+    
     Collection<Link> directionModeSpatiallyCompatibleLinks = findStopLocationLinksForWaitingArea(osmStation.getId(), stationGeometry, referenceOsmModes, searchBoundingBox);
     if(directionModeSpatiallyCompatibleLinks==null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
       return null;
@@ -393,7 +393,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param stopAreaTransferzones the transfer zones of the stop_area this stop_position belongs to
    * @throws PlanItException thrown if error
    */   
-  private Collection<TransferZone> findAccessibleTransferZonesByReferenceOrName(
+  private Collection<TransferZone> findAccessibleTransferZonesByRefer(
       OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones, Collection<String> referenceOsmModes, PlanitJtsUtils geoUtils) throws PlanItException {
     
     /* first try explicit reference matching to platform, i.e. transfer zone */
@@ -410,7 +410,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         /* possible matches found, but names are not very trustworthy, try to eliminate options if they are too far away, or are in illogical locations */
         
         /* filter based on distance */
-        Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getIncompleteTransferZonesSpatially(
+        Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getTransferZonesSpatially(
             PlanitOsmNodeUtils.createBoundingBox(osmNode, getSettings().getStopToWaitingAreaSearchRadiusMeters(), geoUtils));
         matchedTransferZones.retainAll(potentialTransferZones);
         
@@ -490,7 +490,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     /* collect potential transfer zones based on spatial search*/
     double searchRadiusMeters = getSettings().getStopToWaitingAreaSearchRadiusMeters();    
     Envelope searchArea = PlanitOsmNodeUtils.createBoundingBox(osmNode, searchRadiusMeters, geoUtils);    
-    Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getIncompleteTransferZonesSpatially(searchArea);
+    Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getTransferZonesSpatially(searchArea);
     
     if(potentialTransferZones==null || potentialTransferZones.isEmpty()) {
       LOGGER.fine(String.format("Unable to locate nearby transfer zone (search radius of %.2f (m)) when mapping stop position for osm node %d",searchRadiusMeters, osmNode.getId()));
@@ -498,7 +498,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
     
     /* find matches based on reference, name from given potential options... */
-    Collection<TransferZone> matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, potentialTransferZones, referenceOsmModes, geoUtils);         
+    Collection<TransferZone> matchedTransferZones = findAccessibleTransferZonesByRefer(osmNode, tags, potentialTransferZones, referenceOsmModes, geoUtils);         
     if(matchedTransferZones == null) {
       /* no explicit reference or name match is found, we collect the closest mode compatible match */
       matchedTransferZones = findModeCompatibleTransferZones(referenceOsmModes, potentialTransferZones, true);      
@@ -544,7 +544,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       
       if(transferZoneGroup != null) {
         /* when transfer zone group available, first search among those zones as they are more likely to be matching */
-        matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, geoUtils);        
+        matchedTransferZones = findAccessibleTransferZonesByRefer(osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, geoUtils);        
       }
     
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
@@ -591,12 +591,16 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Map<String,String> tags = OsmModelUtil.getTagsAsMap(osmStation);    
     OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
     getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);
+    
+    if(osmStation.getId()==4511615961l) {
+      int bla = 4;
+    }
             
     /* eligible modes for station, must at least support one or more mapped modes */
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
     Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
     Set<TransferZone> matchedTransferZones = new HashSet<TransferZone>();
-    Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getIncompleteTransferZonesSpatially(eligibleSearchBoundingBox);
+    Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getTransferZonesSpatially(eligibleSearchBoundingBox);
     if(potentialTransferZones != null && !potentialTransferZones.isEmpty()) {          
             
       /* find potential matched transfer zones based on mode compatibility while tracking group memberships, for groups with multiple members
@@ -806,14 +810,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         processStopPositionNotPartOfStopArea(osmNode, OsmModelUtil.getTagsAsMap(osmNode));  
       } 
       
-      /* now unregister transfer zones with newly added connectoids as incomplete, so they are not required to add stop_positions (connectoids) any more */
-      PlanitOsmZoningReaderPlanitData planitData = getZoningReaderData().getPlanitData();
-      for(TransferZone transferZone : getZoning().transferZones) {
-        if(planitData.hasConnectoids(transferZone)) {
-          planitData.removeIncompleteTransferZone(transferZone);
-        }
-      }
-      
       LOGGER.info(String.format("%d UNPROCESSED STOP_POSITIONS REMAIN -> TODO",unprocessedStopPositions.size()));
     }
   }
@@ -831,10 +827,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
     
     EntityType osmEntityType = (transferZone.getGeometry() instanceof Point) ? EntityType.Node : EntityType.Way;
-    long osmEntityId = Long.valueOf(transferZone.getExternalId());
-    
-    /* mark as complete, if issues arise then this method flags them while processing */
-    getZoningReaderData().getPlanitData().removeIncompleteTransferZone(osmEntityType, Long.valueOf(transferZone.getExternalId()));    
+    long osmEntityId = Long.valueOf(transferZone.getExternalId());      
         
     /* validate mode support */
     Collection<String> accessOsmModes = PlanitOsmHandlerHelper.getEligibleOsmModesForTransferZone(transferZone);
@@ -864,8 +857,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         /* user override for what link to use for connectoids */        
         long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmEntityId, osmEntityType);
         Link nominatedLink = PlanitOsmHandlerHelper.getClosestLinkWithOsmWayIdToGeometry( osmWayId, transferZone.getGeometry(), networkLayer, geoUtils);
-        directionModeSpatiallyCompatibleLinks = Collections.singleton(nominatedLink);
-        
+        if(nominatedLink != null) {
+          directionModeSpatiallyCompatibleLinks = Collections.singleton(nominatedLink); 
+        }else {
+          LOGGER.severe(String.format("User nominated osm way not available for waiting area %d",osmWayId));
+        }
       }else {
         
         /* regular approach */                     
@@ -902,16 +898,12 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private void processIncompleteTransferZones(Collection<TransferZone> transferZones) throws PlanItException {
     Set<TransferZone> unprocessedTransferZones = Set.copyOf(transferZones);
-    if(!unprocessedTransferZones.isEmpty()) {
-      for(TransferZone transferZone : unprocessedTransferZones) {
-        if(getZoningReaderData().getPlanitData().hasConnectoids(transferZone)) {
-          LOGGER.warning(String.format("Transfer zone (platform/pole %s) has connectoids (stop_locations), but it is still marked as incomplete, this shouldn't happen, skip",transferZone.getExternalId()));
-        }
-        processIncompleteTransferZone(transferZone);  
-      }            
-      LOGGER.info(String.format("%d UNPROCESSED TRANSFER ZONES WITHOUT CONNECTOIDS REMAIN -> TODO",unprocessedTransferZones.size()));
-    }
-    
+    for(TransferZone transferZone : unprocessedTransferZones) {
+      /* only process incomplete zones (without connectoids) */
+      if(!getZoningReaderData().getPlanitData().hasConnectoids(transferZone)) {
+        processIncompleteTransferZone(transferZone);
+      }
+    }                
   }
 
   /**
@@ -920,12 +912,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void processIncompleteTransferZonesNotPartOfStopArea() throws PlanItException {
-    if(!getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node).isEmpty()) {
-      processIncompleteTransferZones(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Node).values());
-    }  
-    if(!getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Way).isEmpty()) {
-      processIncompleteTransferZones(getZoningReaderData().getPlanitData().getIncompleteTransferZonesByEntityType(EntityType.Way).values());
-    }     
+    processIncompleteTransferZones(getZoningReaderData().getPlanitData().getTransferZonesByOsmId(EntityType.Node)); 
+    processIncompleteTransferZones(getZoningReaderData().getPlanitData().getTransferZonesByOsmId(EntityType.Way));    
   }
 
   /** extract a connectoid location within the link based on an existing coordinate (osm node) or by inserting an additional coordinate in the location closest to the provided
@@ -1096,6 +1084,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void extractStandAloneStation(OsmEntity osmStation, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {
+    
+    if(osmStation.getId()==715380193l) {
+      int bla = 4;
+    }
+    
     /* modes */
     String defaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags, OsmRailModeTags.TRAIN);
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
@@ -1160,7 +1153,11 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           /* user override for what link to use for connectoids */        
           long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmStation.getId(), osmStationEntityType);
           Link nominatedLink = PlanitOsmHandlerHelper.getClosestLinkWithOsmWayIdToGeometry( osmWayId, stationTransferZone.getGeometry(), networkLayer, geoUtils);
-          accessLinks = Collections.singleton(nominatedLink);
+          if(nominatedLink != null) {
+            accessLinks = Collections.singleton(nominatedLink); 
+          }else {
+            LOGGER.severe(String.format("User nominated osm way not available for station %d",osmWayId));
+          }                    
           
         }else {      
         
@@ -1171,6 +1168,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         
         if(accessLinks == null) {
           LOGGER.warning(String.format("DISCARD: station %d has no eligible links to qualify for pt vehicles as stop locations",osmStation.getId()));
+          return;
         }                   
         
         /* connectoids per mode per link */
@@ -1181,8 +1179,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
           extractDirectedConnectoidsForTransferZoneByPlanitLink(osmStation.getId(), stationTransferZone.getGeometry() , accessLink, stationTransferZone, networkLayer, planitAccessMode);            
         }
       }
-      /* connectoids created, mark transfer zone as complete */
-      getZoningReaderData().getPlanitData().removeIncompleteTransferZone(osmStationEntityType, osmStation.getId());
     }
   }
   
@@ -1375,13 +1371,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         
       }
 
-    } 
-    
-    /* mark all matched transfer zones with connectoids as complete, since they now have connectoids attached */
-    for(TransferZone transferZone : transferZoneGroup.getTransferZones()) {
-      if(getZoningReaderData().getPlanitData().hasConnectoids(transferZone)) {   
-        getZoningReaderData().getPlanitData().removeIncompleteTransferZone(transferZone);
-      }
     }    
        
   }  

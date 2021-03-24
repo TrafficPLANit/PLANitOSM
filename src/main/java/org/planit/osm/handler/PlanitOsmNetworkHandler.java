@@ -468,6 +468,10 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmNode osmNode) throws IOException {
     
+    if(osmNode.getId()==712795372l) {
+      int bla = 4;
+    }
+    
     /* store for later processing */
     networkData.addOsmNode(osmNode);   
   }

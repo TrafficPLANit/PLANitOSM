@@ -38,7 +38,9 @@ public class PlanitOsmZoningReaderOsmData {
   private final Set<Long> unprocessedPtv2StopPositions= new TreeSet<Long>();
   
   /** the registered osm ways that we kept based on osmWaysToKeep that were provided, and are processed at a later stage */
-  private final Map<Long, OsmWay> unprocessedMultiPolygonOsmWays = new TreeMap<Long, OsmWay>();
+  private final Map<Long, Long> osmOuterRoleOsmWaysByOsmRelationId = new TreeMap<Long, Long>();
+  /** the registered osm ways to keep based on their outer_role identification in a multi_polygon */
+  private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<Long,OsmWay>();
   
   /* INVALID OSM */
   
@@ -200,16 +202,16 @@ public class PlanitOsmZoningReaderOsmData {
     }
   }   
   
-  /** mark an osm way to be kept in unprocessed fashion even if it is not recognised as
+  /** mark an osm way to be kept even if it is not recognised as
    * as valid PT supporting way. This occurs when a way is part of for example a multi-polygon relation
    * where the way itself has no tags, but the relation is a PT supporting entity. In that case the way member
    * still holds information that we require when parsing the relation.
    * 
    * @param osmWayId to mark
    */
-  public void markMultiPolygonOsmWayToKeepUnprocessed(long osmWayId) {
-    /* include in unprocessed way, but without way itself, that is to be added later (we do not know it here)*/
-    unprocessedMultiPolygonOsmWays.put(osmWayId, null);
+  public void markOsmRelationOuterRoleOsmWayToKeep(long osmRelationId, long osmWayId) {
+    osmOuterRoleOsmWaysByOsmRelationId.put(osmRelationId, osmWayId);
+    osmOuterRoleOsmWaysToKeep.put(osmWayId,null);
   }  
   
   /** verify if the passed in osm way should be kept (even if it is not converted to a PLANit link
@@ -218,8 +220,8 @@ public class PlanitOsmZoningReaderOsmData {
    * @param osmWay to verify
    * @return true when it should, false otherwise
    */
-  public boolean shouldMultiPolygonOsmWayBeKept(OsmWay osmWay) {
-    return unprocessedMultiPolygonOsmWays.containsKey(osmWay.getId());
+  public boolean shouldOsmRelationOuterRoleOsmWayBeKept(OsmWay osmWay) {
+    return osmOuterRoleOsmWaysToKeep.containsKey(osmWay.getId());
   }
   
   /** add osm way to keep. Should be based on a positive result from {@link shouldOsmWayBeKept}
@@ -227,26 +229,52 @@ public class PlanitOsmZoningReaderOsmData {
    * @param osmWay to keep
    * @return osm way that was located in positino of new osmWay, or null if none
    */
-  public OsmWay addUnprocessedMultiPolygonOsmWay(OsmWay osmWay) {
-    /* now add way itself to map, as we know it must be kept and we have access to it */
-    return unprocessedMultiPolygonOsmWays.put(osmWay.getId(), osmWay);
+  public OsmWay addOsmRelationOuterRoleOsmWay(OsmWay osmWay) {
+    return osmOuterRoleOsmWaysToKeep.put(osmWay.getId(), osmWay);
   }
   
-  /** collect an unprocessed osm way 
+  /** Verify if osm way id is registered of osm relation id that qualifies as an outer role on that relation
+   * @param osmRelationId to verify
+   * @return true when present false otherwise
+   */
+  public boolean hasOuterRoleOsmWayByOsmRelationId(long osmRelationId) {
+    return osmOuterRoleOsmWaysByOsmRelationId.containsKey(osmRelationId);
+  }
+
+  /** collect an unprocessed osm way that is identified as an outer role that is eligible as a platform/transfer zone
    * @param osmWayId to verify
    * @return the way, null if not marked/available
    */
-  public OsmWay getUnprocessedMultiPolygonOsmWay(long osmWayId) {
-    return unprocessedMultiPolygonOsmWays.get(osmWayId);
-  }
+  public OsmWay getOuterRoleOsmWayByOsmRelationId(long osmRelationId ) {
+    Long osmWayId = osmOuterRoleOsmWaysByOsmRelationId.get(osmRelationId);
+    if(osmWayId != null) {
+      return osmOuterRoleOsmWaysToKeep.get(osmWayId);
+    }
+    return null;
+  }  
   
-  /** collect the currently marked unprocessed Osm ways
-   * @return unprocessed osm ways
+  /** collect an unprocessed osm way that is identified as an outer role that is eligible as a platform/transfer zone
+   * @param osmWayId to verify
+   * @return the way, null if not marked/available
    */
-  public Map<Long, OsmWay> getUnprocessedMultiPolygonOsmWays() {
-    return unprocessedMultiPolygonOsmWays;
+  public OsmWay getOuterRoleOsmWayByOsmWayId(long osmWayId) {
+    return osmOuterRoleOsmWaysToKeep.get(osmWayId);
   }
   
+  /** check if outer role marked osm ways exist
+   * @return true when present false otherwise
+   */
+  public boolean hasOsmRelationOuterRoleOsmWays() {
+    return !osmOuterRoleOsmWaysToKeep.isEmpty();
+  }  
+  
+  /** collect number of oter role osm ways that we kepts
+   * @return number of outer role osm ways present
+   */
+  public long getNumberOfOuterRoleOsmWays() {
+    return osmOuterRoleOsmWaysToKeep.size();
+  }  
+    
   /** add identified osm entity as invalid stop_position. When converting stop_positions to connectoids
    * it will be skipped without further issue or warning
    * 
@@ -279,7 +307,8 @@ public class PlanitOsmZoningReaderOsmData {
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_1);
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
     unprocessedPtv2StopPositions.clear();
-    unprocessedMultiPolygonOsmWays.clear();     
+    osmOuterRoleOsmWaysByOsmRelationId.clear();
+    osmOuterRoleOsmWaysToKeep.clear();
   }
 
 }

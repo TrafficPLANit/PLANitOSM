@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -223,8 +224,23 @@ public class PlanitOsmUtils {
    * @param osmEntity to extract from
    * @param osmNodes to extract geo information from referenced nodes from in entity
    * @return geometry created
+   * @throws PlanItException thrown if error
    */
-  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes) {
+  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    return extractGeometry(osmEntity, osmNodes, LOGGER.getLevel());
+  } 
+  
+  /** extract geometry from the osm entity, either a point, line string or polygon
+   * 
+   * @param osmEntity to extract from
+   * @param osmNodes to extract geo information from referenced nodes from in entity
+   * @param logLevel change to this logLevel during the method call (reinstate original loglevel after)
+   * @return geometry created
+   * @throws PlanItException thrown if error
+   */
+  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
+    Level originalLogLevel = LOGGER.getLevel();
+    LOGGER.setLevel(logLevel);  
     Geometry theGeometry = null;
     if(osmEntity instanceof OsmNode){
       OsmNode osmNode = OsmNode.class.cast(osmEntity);
@@ -236,10 +252,14 @@ public class PlanitOsmUtils {
     }else if(osmEntity instanceof OsmWay) {
       /* either area or linestring */
       OsmWay osmWay = OsmWay.class.cast(osmEntity);
-      theGeometry = PlanitOsmWayUtils.extractGeometry(osmWay, osmNodes);       
+      theGeometry = PlanitOsmWayUtils.extractGeometry(osmWay, osmNodes, logLevel);       
     }
+    LOGGER.setLevel(originalLogLevel);
     return theGeometry;
-  }    
+  }  
+  
+  
+  
    
 
 }

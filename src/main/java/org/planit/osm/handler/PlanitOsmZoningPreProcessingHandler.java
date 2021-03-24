@@ -59,6 +59,11 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
   @Override
   public void handle(OsmRelation osmRelation) throws IOException {
 
+    if(osmRelation.getId()==5968567l) {
+      int bla = 4;
+    }
+    
+    boolean preserveOuterRole = false;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);          
     /* only parse when parser is active and type is available */
     if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE)) {
@@ -70,25 +75,35 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
         if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
           
           getProfiler().incrementMultiPolygonPlatformCounter();
-          
-          int numberOfMembers = osmRelation.getNumberOfMembers();
-          for(int index = 0 ;index < numberOfMembers ; ++ index) {
-            OsmRelationMember member = osmRelation.getMember(index);
-            
-            if( skipOsmPtEntity(member)) {
-              continue;
-            }            
-            
-            /* only collect outer area, mapped as ways */
-            if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
-              /* mark for keeping in regular handler */
-              getZoningReaderData().getOsmData().markMultiPolygonOsmWayToKeepUnprocessed(member.getId());
-            }
-          }
+          preserveOuterRole = true;          
           
         }          
+      }else if( tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) &&
+                OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+        
+        getProfiler().incrementPlatformRelationCounter();
+        preserveOuterRole = true;
       }
     }
+    
+    /* preserve information is outer role osm way so we can parse it as a transfer zone if needed in post_processing */
+    if(preserveOuterRole) {
+      
+      int numberOfMembers = osmRelation.getNumberOfMembers();
+      for(int index = 0 ;index < numberOfMembers ; ++ index) {
+        OsmRelationMember member = osmRelation.getMember(index);
+        
+        if( skipOsmPtEntity(member)) {
+          continue;
+        }            
+        
+        /* only collect outer area, mapped as ways */
+        if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
+          /* mark for keeping in regular handler */
+          getZoningReaderData().getOsmData().markOsmRelationOuterRoleOsmWayToKeep(osmRelation.getId(), member.getId());
+        }
+      }  
+    }   
   }
 
 

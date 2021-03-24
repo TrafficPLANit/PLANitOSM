@@ -36,7 +36,12 @@ public class PlanitOsmZoningHandlerProfiler {
   /**
    * track number of multipolygons eligible as PT platforms that we encountered
    */
-  private final LongAdder multiPolygonCount = new LongAdder();   
+  private final LongAdder multiPolygonCount = new LongAdder();
+  
+  /**
+   * track number of platforms tagged as relations eligible as PT platforms that we encountered
+   */
+  private final LongAdder platformRelationCount = new LongAdder();  
         
   /**
    * for logging we log each x number of entities parsed, this is done to minimise number of logging lines
@@ -62,6 +67,13 @@ public class PlanitOsmZoningHandlerProfiler {
   public void incrementMultiPolygonPlatformCounter() {
     this.multiPolygonCount.increment();
   }
+  
+  /**
+   * increment the counter that tracks the number of platform relations identified as PT platforms
+   */  
+  public void incrementPlatformRelationCounter() {
+    this.platformRelationCount.increment();
+  }  
 
   /**
    * Increment counter for passed in osm tag regarding a Ptv1 value tag
@@ -105,10 +117,17 @@ public class PlanitOsmZoningHandlerProfiler {
    */
   public void logPreProcessingStats(PlanitOsmZoningReaderData planitOsmZoningReaderData) {
     
-    LOGGER.info(String.format("[STATS] identified %d multipolygons as PT platforms",multiPolygonCount.longValue()));
+    if(multiPolygonCount.longValue()>0) {
+      LOGGER.info(String.format("[STATS] identified %d multipolygons as PT platforms",multiPolygonCount.longValue()));
+    }
     
-    LOGGER.info(String.format("[STATS] marked %d osm ways as part of multipolygon relations",planitOsmZoningReaderData.getOsmData().getUnprocessedMultiPolygonOsmWays().size()));    
+    if(platformRelationCount.longValue()>0) {
+      LOGGER.info(String.format("[STATS] identified %d platforms tagged as relations ",platformRelationCount.longValue()));
+    }
     
+    if(!planitOsmZoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
+      LOGGER.info(String.format("[STATS] marked %d osm ways that are outer roles of osm relations and eligible to be converted to platforms",planitOsmZoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
+    }
   }  
 
   /**
@@ -174,8 +193,6 @@ public class PlanitOsmZoningHandlerProfiler {
     this.counterByPtv2Tag.clear();
     this.multiPolygonCount.reset();
   }
-
-
  
 
 }
