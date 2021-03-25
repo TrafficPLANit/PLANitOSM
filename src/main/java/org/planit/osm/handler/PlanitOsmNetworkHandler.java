@@ -474,6 +474,8 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     
     /* store for later processing */
     networkData.addOsmNode(osmNode);   
+    /* track bounding box of parsed osm nodes */
+    networkData.updateBoundingBox(osmNode);
   }
 
   /**

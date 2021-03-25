@@ -2,6 +2,8 @@ package org.planit.osm.converter.reader;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.locationtech.jts.geom.Envelope;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -62,6 +64,14 @@ public class PlanitOsmNetworkToZoningReaderData {
    */
   public Map<Long, OsmNode> getOsmNodes() {
     return networkData.getOsmNodes();
+  }
+  
+  /** collect the bounding box of the network that is parsed
+   * 
+   * @return network bounding box
+   */
+  public Envelope getNetworkBoundingBox() {
+    return networkData.getBoundingBox();
   }
     
 }

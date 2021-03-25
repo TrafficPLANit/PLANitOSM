@@ -4,7 +4,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Envelope;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.osm.util.PlanitOsmNodeUtils;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -16,6 +19,8 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class PlanitOsmNetworkReaderData {
+
+  
 
   /** the country we are importing for (if any) */
   private final String countryName;
@@ -29,6 +34,13 @@ public class PlanitOsmNetworkReaderData {
   /** network to populate */
   private final PlanitOsmNetwork osmNetwork;
   
+  /** on the fly tracking of bounding box of all parsed nodes in the network */
+  private Envelope networkBoundingBox;
+  
+  /** the distance that qualifies as being near to the network bounding box. Used to suppress warnings of incomplete osm ways due to bounding box (which
+   * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */
+  public static final double BOUNDINGBOX_NEARNESS_DISTANCE_METERS = 200;  
+  
   /** Constructor 
    * @param countryName to use
    * @param osmNetwork to use
@@ -38,7 +50,7 @@ public class PlanitOsmNetworkReaderData {
     this.osmNetwork = osmNetwork;
     
     this.osmNodes = new HashMap<Long, OsmNode>();
-    this.osmCircularWays = new HashMap<Long, OsmWay>();    
+    this.osmCircularWays = new HashMap<Long, OsmWay>();
   }
   
   /**
@@ -48,6 +60,26 @@ public class PlanitOsmNetworkReaderData {
     clearOsmCircularWays();    
     osmNodes.clear();
   }  
+  
+  /** update bounding box to include osm node
+   * @param osmNode to expand so that bounding box includes it
+   */
+  public void updateBoundingBox(OsmNode osmNode) {
+    Coordinate coorinate = PlanitOsmNodeUtils.createCoordinate(osmNode);
+    if(networkBoundingBox==null) {
+      networkBoundingBox = new Envelope(coorinate);
+    }else {
+      networkBoundingBox.expandToInclude(coorinate);
+    }
+  }
+  
+  /** collect the network bounding box so far
+   * 
+   * @return network bounding box
+   */
+  public Envelope getBoundingBox() {
+    return networkBoundingBox;
+  }
 
   /** collect country name for this reader
    * @return country name
@@ -86,6 +118,14 @@ public class PlanitOsmNetworkReaderData {
     return osmNodes.get(osmNodeId);
   }  
   
+  /** Verify if osm node is available
+   * @param osmNodeId to verify
+   * @return true when available, false otherwise
+   */
+  public boolean hasOsmNode(long osmNodeId) {
+    return getOsmNode(osmNodeId)!=null;
+  }
+
   /** collect the identified circular ways (unmodifiable)
    * 
    * @return osm circular ways

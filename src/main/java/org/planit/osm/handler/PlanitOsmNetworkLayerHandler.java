@@ -40,6 +40,7 @@ import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.osm.util.PlanitOsmWayUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -96,6 +97,36 @@ public class PlanitOsmNetworkLayerHandler {
   /** geo utility instance based on network wide crs this layer is part of */
   private final PlanitJtsUtils geoUtils;   
   
+  /** finds the first available osm node index
+   * @param osmWay to collect from
+   * @return index of first available osm node
+   * @throws PlanItException thrown if not a single osm node is available
+   */
+  private int findFirstAvailableOsmNodeIndex(OsmWay osmWay) throws PlanItException {
+    for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
+      if(networkData.hasOsmNode(osmWay.getNodeId(nodeIndex))) {
+        return nodeIndex;
+      }
+    }
+    throw new PlanItException("not a single node on osm way %d is available, this shouldn't happen",osmWay.getId());
+  }
+
+  /** finds the last consecutive available osm node index after the offset, i.e. the index before the first unavailable node
+   * 
+   * @param osmWay to collect from
+   * @param offsetIndex to start search from
+   * @return last index of node that is available
+   * @throws PlanItException thrown if not found or offset is invalid
+   */  
+  private int findLastAvailableOsmNodeIndexAfter(OsmWay osmWay, int offsetIndex) throws PlanItException {
+    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
+      if(!networkData.hasOsmNode(osmWay.getNodeId(nodeIndex))) {
+        return nodeIndex-1;
+      }
+    }
+    throw new PlanItException("not a single node on osm way %d is available, this shouldn't happen",osmWay.getId());
+  }
+
   /** update the included and excluded mode sets passed in based on the key/value information available in the access=<?> tag.
    * 
    * @param tags where we extract the access information from
@@ -215,13 +246,13 @@ public class PlanitOsmNetworkLayerHandler {
      
     
     /* collect memory model nodes */
-    Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
-    Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));       
-    if(nodeFirst==null || nodeLast==null) {
-      LOGGER.fine(String.format("OSM way %s could not be parsed, one or more nodes could not be created, likely outside bounding box",osmWay.getId()));
+    Node nodeFirst = extractFirstNode(osmWay, startNodeIndex);   
+    Node nodeLast = extractLastNode(osmWay, endNodeIndex);
+    if(nodeLast.idEquals(nodeFirst)) {
+      LOGGER.fine(String.format("DISCARD: Osm way %d truncated to single node, unable to create planit link for it", osmWay.getId()));
       return null;
     }
-      
+          
     /* parse geometry */
     LineString lineString = null;          
     try {
@@ -1032,6 +1063,57 @@ public class PlanitOsmNetworkLayerHandler {
     
   }   
  
+  /** extract the first available node from the osm way based on the provided start node index
+   * 
+   * @param osmWay to use
+   * @param startNodeIndex to use
+   * @return extracted node (first node to use for osm way)
+   * @throws PlanItException thrown if error
+   */
+  private Node extractFirstNode(OsmWay osmWay, int startNodeIndex) throws PlanItException {
+    Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
+    if(nodeFirst==null) {
+      startNodeIndex = findFirstAvailableOsmNodeIndex(osmWay);
+      nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
+      if(nodeFirst!= null) {
+        if(PlanitGraphGeoUtils.isVertexNearBoundingBox(nodeFirst, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS, geoUtils)) {
+          LOGGER.fine(String.format("SALVAGED: OSM way %s not fully available from start node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));    
+        }else{
+          //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
+          LOGGER.warning(String.format("OSM way %s not fully available, likely due to network bounding box, please verify, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));
+        }
+      }else {
+        throw new PlanItException("unable to collect osm node (start node index: %d) from osm way %s, even though it is expected to be available, this shouldn't happen",startNodeIndex, osmWay.getId()); 
+      }
+    }
+    return nodeFirst;
+  }
+
+  /** Extract the last node of the osm way based on the provided end node index
+   * @param osmWay to parse
+   * @param endNodeIndex to use for last node
+   * @return extracted node
+   * @throws PlanItException thrown if error
+   */
+  private Node extractLastNode(OsmWay osmWay, int endNodeIndex) throws PlanItException {
+    Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
+    if(nodeLast==null) {
+      endNodeIndex = findLastAvailableOsmNodeIndexAfter(osmWay, findFirstAvailableOsmNodeIndex(osmWay));
+      nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
+      if(nodeLast!= null) {
+        if(PlanitGraphGeoUtils.isVertexNearBoundingBox(nodeLast, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS , geoUtils)) {
+          LOGGER.fine(String.format("SALVAGED: OSM way %s not fully available to end node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));    
+        }else {
+          //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
+          LOGGER.fine(String.format("OSM way %s not fully available, likely due to network bounding box, please verify, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));
+        }
+      }else {
+        throw new PlanItException("unable to collect osm node ( end node index: %d) from osm way %s, even though it is expected to be available, this shouldn't happen",endNodeIndex, osmWay.getId()); 
+      }
+    }
+    return nodeLast;
+  }
+
   /**
    * Extract a PLANit node from the osmNode information
    * 
@@ -1047,7 +1129,7 @@ public class PlanitOsmNetworkLayerHandler {
       
       /* not yet created */      
       if(osmNode == null){
-        LOGGER.fine(String.format("referenced OSM node %s not available, likely outside bounding box",osmNodeId));
+        LOGGER.fine(String.format("referenced OSM node %s not available",osmNodeId));
       }else {
         /* create */
         node = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);

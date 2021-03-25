@@ -1,11 +1,13 @@
 package org.planit.osm.handler;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
@@ -434,6 +436,38 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return false;
   }   
   
+  /** Find the link segments that are accessible for the given acces link, node, mode combination taking into account the relative location of the transfer zone if needed and
+   * mode compatibility.
+   * 
+   * @param transferZone these link segments pertain to
+   * @param accessLink that is nominated
+   * @param node extreme node of the link
+   * @param accessMode eligible access mode
+   * @param mustAvoidCrossingTraffic indicates of transfer zone must be on the logical side of the road or if it does not matter
+   * @param geoUtils to use
+   * @return found link segments that are deemed valid given the constraints
+   * @throws PlanItException thrown if error
+   */
+  protected Collection<EdgeSegment> findAccessLinkSegmentsForStandAloneTransferZone(
+      TransferZone transferZone, Link accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsUtils geoUtils) throws PlanItException {
+    
+    /* potential link segments based on mode compatibility and access link restriction */ 
+    Collection<EdgeSegment> accessLinkSegments = new ArrayList<EdgeSegment>(4);
+    for(EdgeSegment linkSegment : node.getEntryEdgeSegments()) {
+      if( ((MacroscopicLinkSegment)linkSegment).isModeAllowed(accessMode) && (linkSegment.getParentEdge().idEquals(accessLink))){      
+        accessLinkSegments.add(linkSegment);
+      }
+    }            
+  
+    /* accessible link segments for planit node based on relative location of waiting area compared to infrastructure*/    
+    if(mustAvoidCrossingTraffic) {   
+      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
+      accessLinkSegments = 
+          PlanitOsmHandlerHelper.filterTransferZoneAccessLinkSegmentBasedOnRelativeLocationToInfrastructure(accessLinkSegments, transferZone, accessMode, isLeftHandDrive, geoUtils);
+    }
+    return accessLinkSegments;
+  }
+
   /** find out if transfer zone is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
    * mode that is mapped to a planit mode.If the zone has no known modes, it is by definition not mode compatible. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
    * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
@@ -976,7 +1010,60 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {        
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);    
     return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
-  }      
+  }
+  
+  protected boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsUtils geoUtils) throws PlanItException {
+    
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
+    
+    for(EdgeSegment edgeSegment : eligibleLinkSegments) {
+     
+      /* update accessible link segments of already created connectoids (if any) */      
+      Point proposedConnectoidLocation = edgeSegment.getDownstreamVertex().getPosition();
+      boolean createConnectoidsForLinkSegment = true;
+      
+      if(zoningReaderData.getPlanitData().hasDirectedConnectoidForLocation(networkLayer, proposedConnectoidLocation)) {      
+        /* existing connectoid: update model eligibility */
+        Collection<DirectedConnectoid> connectoidsForNode = zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(proposedConnectoidLocation, networkLayer);        
+        for(DirectedConnectoid connectoid : connectoidsForNode) {
+          if(edgeSegment.idEquals(connectoid.getAccessLinkSegment())) {
+            /* update mode eligibility */
+            updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode));
+            createConnectoidsForLinkSegment  = false;
+            break;
+          }
+        }
+      }
+                    
+      /* for remaining access link segments without connectoid -> create them */        
+      if(createConnectoidsForLinkSegment) {
+                
+        /* create and register */
+        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, networkLayer, Collections.singleton(edgeSegment), Collections.singleton(planitMode));
+        
+        if(newConnectoids==null || newConnectoids.isEmpty()) {
+          LOGGER.warning(String.format("Found eligible mode %s for stop_location of transferzone %s, but no access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
+          return false;
+        }
+      }  
+    }
+    
+    return true;
+  }
+  
+  /** Identical to the same method with additional paramater containing link restrictions. Only by calling this method all entry link segments are considred whereas in the
+   * more general version only link segments with a parent link in the provided link collection are considered. 
+   * 
+   * @param location to create the access point for as planit node (one or more upstream planit link segments will act as access link segment for the created connectoid(s))
+   * @param transferZone this connectoid is assumed to provide access to
+   * @param planitMode this connectoid is allowed access for
+   * @param geoUtils used when location of transfer zone relative to infrastructure is to be determined 
+   * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {
+    return extractDirectedConnectoidsForMode(location, transferZone, planitMode, null, geoUtils);
+  }
 
   /** create and/or update directed connectoids for the given mode and layer based on the passed in location where the connectoids access link segments are extracted for.
    * Each of the connectoids is related to the passed in transfer zone. Generally a single connectoid is created for the most likely link segment identified, i.e., if the transfer
@@ -985,33 +1072,23 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * 
    * @param location to create the access point for as planit node (one or more upstream planit link segments will act as access link segment for the created connectoid(s))
    * @param transferZone this connectoid is assumed to provide access to
-   * @param networkLayer this connectoid resides on
    * @param planitMode this connectoid is allowed access for
+   * @param eligibleAccessLinks only links in this collection are considered when compatible with provided location
    * @param geoUtils used when location of transfer zone relative to infrastructure is to be determined 
    * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {    
-    if(location == null || transferZone == null || networkLayer == null || planitMode == null || geoUtils == null) {
+  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, Mode planitMode, Collection<Link> eligibleAccessLinks, PlanitJtsUtils geoUtils) throws PlanItException {    
+    if(location == null || transferZone == null || planitMode == null || geoUtils == null) {
       return false;
     }
     
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
-    
-    if(transferZone.getExternalId().equals("737117676")) {
-      int bla = 4;
-    }
-    
+            
     /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
      * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen... */
-    boolean mustAvoidCrossingTraffic = true;
-    if(planitMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)) {
-      /* ... exception 1: train platforms because trains have doors on both sides */
-      mustAvoidCrossingTraffic = false;
-    }else if( osmNode != null && getSettings().isOverwriteStopLocationWaitingArea(osmNode.getId())) {
-      /* ... exception 2: user override with mapping to this zone for this node, in which case we allow crossing traffic regardless */
-      mustAvoidCrossingTraffic = Long.valueOf(transferZone.getExternalId()) == getSettings().getOverwrittenStopLocationWaitingArea(osmNode.getId()).second();
-    }
+    boolean mustAvoidCrossingTraffic = PlanitOsmHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation( planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());    
     
     /* planit access node */
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
@@ -1022,43 +1099,29 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         LOGGER.warning(String.format("DISCARD: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
       }
       return false;
-    }               
-           
-    /* accessible link segments for planit node based on location, mode availability, and if explicit mapping is forced or not */
-    boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());            
-    Collection<EdgeSegment> accessLinkSegments = PlanitOsmHandlerHelper.findAccessibleLinkSegmentsForTransferZoneAtConnectoidLocation(planitNode, transferZone, planitMode, isLeftHandDrive, mustAvoidCrossingTraffic, geoUtils);
-    if(accessLinkSegments == null || accessLinkSegments.isEmpty()) {
-      LOGGER.warning(String.format("DISCARD: No accessible link segments found for platform/pole %s and mode %s at stop_position %s",transferZone.getExternalId(), planitMode.getExternalId(), planitNode.getExternalId()));
-      return false;
-    }
+    }  
     
-    /* update accessible link segments of already created connectoids (if any) */      
-    if(zoningReaderData.getPlanitData().hasDirectedConnectoidForLocation(networkLayer, location)) {      
-      
-      /* existing connectoid: update model eligibility */
-      Collection<DirectedConnectoid> connectoidsForNode = zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(location, networkLayer);        
-      for(DirectedConnectoid connectoid : connectoidsForNode) {
-        if(accessLinkSegments.contains(connectoid.getAccessLinkSegment())) {
-          /* update mode eligibility */
-          updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode));
-          accessLinkSegments.remove(connectoid.getAccessLinkSegment());
+    /* find access link segments */
+    Collection<EdgeSegment> accessLinkSegments = null;
+    for(Link link : planitNode.<Link>getLinks()) {
+      Collection<EdgeSegment> linkAccessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone,link, planitNode, planitMode, mustAvoidCrossingTraffic, geoUtils);
+      if(linkAccessLinkSegments != null && !linkAccessLinkSegments.isEmpty()) {
+        if(accessLinkSegments == null) {
+          accessLinkSegments = linkAccessLinkSegments;
+        }else {
+          accessLinkSegments.addAll(linkAccessLinkSegments);
         }
       }
-    }
-                  
-    /* for remaining access link segments without connectoid -> create them */        
-    if(!accessLinkSegments.isEmpty()) {
-              
-      /* create and register */
-      Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(transferZone, networkLayer, accessLinkSegments, Collections.singleton(planitMode));
+    }    
       
-      if(newConnectoids==null || newConnectoids.isEmpty()) {
-        LOGGER.warning(String.format("Found eligible mode %s for stop_location of transferzone %s, but no access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
-        return false;
-      }
-    }
+    if(accessLinkSegments==null || accessLinkSegments.isEmpty()) {
+      LOGGER.info(String.format("DICARD platform/pole/station %s its stop_location %s deemed invalid, no access link segment found due to incompatible modes or transfer zone on wrong side of road/rail", 
+          transferZone.getExternalId(), planitNode.getExternalId()!= null ? planitNode.getExternalId(): ""));
+      return false;
+    }                           
     
-    return true;
+    /* connectoids for link segments */
+    return extractDirectedConnectoidsForMode(transferZone, planitMode, accessLinkSegments, geoUtils);
   }
   
   /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node (location) where the connectoids access link segments are extracted for.
@@ -1066,15 +1129,14 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * 
    * @param osmNode to relate to planit network's incoming link segments as access points
    * @param transferZone this connectoid is assumed to provide access to
-   * @param networkLayer this connectoid resides on
    * @param planitMode this connectoid is allowed access for
    * @param geoUtils used to determine location of transfer zone relative to infrastructure to identify which link segment(s) are eligible for connectoids placement
    * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean extractDirectedConnectoidsForMode(OsmNode osmNode, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean extractDirectedConnectoidsForMode(OsmNode osmNode, TransferZone transferZone, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);
-    return extractDirectedConnectoidsForMode(osmNodeLocation, transferZone, networkLayer, planitMode, geoUtils);
+    return extractDirectedConnectoidsForMode(osmNodeLocation, transferZone, planitMode, geoUtils);
   }
   
   /** Method that will attempt to create both a transfer zone and its connectoids at the location of the osm node, unless the user has overwritten the default behaviour
