@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
@@ -28,7 +27,6 @@ import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.mode.TrackModeType;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -277,7 +275,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }      
     
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
-    if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {
+    if(PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {
       
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.BUS_STOP);      
       if(Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(osmEntity.getId())){
@@ -463,7 +461,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(mustAvoidCrossingTraffic) {   
       boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
       accessLinkSegments = 
-          PlanitOsmHandlerHelper.filterTransferZoneAccessLinkSegmentBasedOnRelativeLocationToInfrastructure(accessLinkSegments, transferZone, accessMode, isLeftHandDrive, geoUtils);
+          PlanitOsmZoningHandlerHelper.filterTransferZoneAccessLinkSegmentBasedOnRelativeLocationToInfrastructure(accessLinkSegments, transferZone, accessMode, isLeftHandDrive, geoUtils);
     }
     return accessLinkSegments;
   }
@@ -479,7 +477,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return matched transfer zones
    */   
   protected boolean isTransferZoneModeCompatible(TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Collection<String> transferZoneSupportedModes = PlanitOsmHandlerHelper.getEligibleOsmModesForTransferZone(transferZone);
+    Collection<String> transferZoneSupportedModes = PlanitOsmZoningHandlerHelper.getEligibleOsmModesForTransferZone(transferZone);
     if(transferZoneSupportedModes==null) {       
       /* zone has no known modes, not a trustworthy match */ 
       return false;
@@ -545,7 +543,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         
     /* remove all link's that are not reachable without experiencing cross-traffic from the perspective of the transfer zone*/
     if(planitLinksToCheck!=null){
-      Collection<Link> accessibleLinks = PlanitOsmHandlerHelper.removeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
+      Collection<Link> accessibleLinks = PlanitOsmZoningHandlerHelper.removeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
       if(accessibleLinks==null || accessibleLinks.isEmpty()) {
         /* all links experience cross-traffic, so not reachable */
         return true;
@@ -683,15 +681,15 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     /* tagged osm modes */        
     Pair<Collection<String>, Collection<Mode>> modeResult = collectModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
-    if(!PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult)) {
+    if(!PlanitOsmZoningHandlerHelper.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any osm modes) */
       LOGGER.fine(String.format("SALVAGED: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
-    }else if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)){  
+    }else if(PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)){  
       /* mapped planit modes are available and we should create the transfer zone*/
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType);
-      PlanitOsmHandlerHelper.addOsmAccessModesToTransferZone(transferZone, modeResult.first());
+      PlanitOsmZoningHandlerHelper.addOsmAccessModesToTransferZone(transferZone, modeResult.first());
     }  
     return transferZone;    
   }  
@@ -710,7 +708,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes) throws PlanItException {
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);
     if(transferZone != null) {
-      PlanitOsmHandlerHelper.addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
+      PlanitOsmZoningHandlerHelper.addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
     }
     return transferZone;
   }  
@@ -728,7 +726,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    */
   protected TransferZone createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(
       OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, PlanitJtsUtils geoUtils) throws PlanItException {
-    TransferZoneType ptv1TransferZoneType = PlanitOsmHandlerHelper.getPtv1TransferZoneType(osmNode, tags);
+    TransferZoneType ptv1TransferZoneType = PlanitOsmZoningHandlerHelper.getPtv1TransferZoneType(osmNode, tags);
     return createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, ptv1TransferZoneType, geoUtils);    
   }
 
@@ -754,7 +752,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }    
         
     Pair<Collection<String>, Collection<Mode>> modeResult = collectModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
-    if(!PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {    
+    if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {    
       throw new PlanItException("Should not attempt to parse osm node %d when no planit modes are activated for it", osmNode.getId());
     }
       
@@ -849,7 +847,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* user overwrite */
       
       long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node);
-      Link nominatedLink = PlanitOsmHandlerHelper.getClosestLinkWithOsmWayIdToGeometry( osmWayId, PlanitOsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
+      Link nominatedLink = PlanitOsmZoningHandlerHelper.getClosestLinkWithOsmWayIdToGeometry( osmWayId, PlanitOsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
       if(nominatedLink != null) {
         nominatedLinkSegments = nominatedLink.getEdgeSegments(); 
       }else {
@@ -911,8 +909,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       }
     }
     /* only set when not already set, because when already set it is likely the existing station name is more accurate */
-    if(!PlanitOsmHandlerHelper.hasTransferZoneStationName(transferZone)) {
-      PlanitOsmHandlerHelper.setTransferZoneStationName(transferZone, stationName);
+    if(!PlanitOsmZoningHandlerHelper.hasTransferZoneStationName(transferZone)) {
+      PlanitOsmZoningHandlerHelper.setTransferZoneStationName(transferZone, stationName);
     }
   }      
   
@@ -934,7 +932,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
      * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
      * downstream vertex identified */
-    Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = PlanitOsmHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(
+    Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = PlanitOsmZoningHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(
         linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
@@ -944,11 +942,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }    
           
     /* break links */
-    Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
+    Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
     
     /* in case due to breaking links the access link segments no longer represent the link segment directly upstream of the original vertex (downstream of the access link segment
      * before breaking the links, this method will update the directed connectoids to undo this and update their access link segments where needed */
-    PlanitOsmHandlerHelper.updateAccessLinkSegmentsForDirectedConnectoids(connectoidsAccessLinkSegmentVerticesBeforeBreakLink);    
+    PlanitOsmZoningHandlerHelper.updateAccessLinkSegmentsForDirectedConnectoids(connectoidsAccessLinkSegmentVerticesBeforeBreakLink);    
 
     /* TRACKING DATA CONSISTENCY - AFTER */
     {
@@ -985,10 +983,10 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
         if(osmNode != null) {
           /* all regular cases */
-          planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNode, layerData, networkLayer);
+          planitNode = PlanitOsmZoningHandlerHelper.createPlanitNodeForConnectoidAccess(osmNode, layerData, networkLayer);
         }else {
           /* special cases whenever parser decided that location required planit node even though there exists no osm node at this location */ 
-          planitNode = PlanitOsmHandlerHelper.createPlanitNodeForConnectoidAccess(osmNodeLocation, layerData, networkLayer);
+          planitNode = PlanitOsmZoningHandlerHelper.createPlanitNodeForConnectoidAccess(osmNodeLocation, layerData, networkLayer);
         }
         getProfiler().logConnectoidStatus(getZoning().connectoids.size());
                              
@@ -1088,7 +1086,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
             
     /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
      * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen... */
-    boolean mustAvoidCrossingTraffic = PlanitOsmHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation( planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());    
+    boolean mustAvoidCrossingTraffic = PlanitOsmZoningHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation( planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());    
     
     /* planit access node */
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
@@ -1198,7 +1196,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }    
 
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
-    if(PlanitOsmHandlerHelper.hasMappedPlanitMode(modeResult)) {               
+    if(PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
       createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first());
     }

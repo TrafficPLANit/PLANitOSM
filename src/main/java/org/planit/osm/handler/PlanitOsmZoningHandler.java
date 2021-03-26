@@ -60,7 +60,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(transferZone ==null) {    
       /* no match... */
       Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
-      if( PlanitOsmHandlerHelper.hasEligibleOsmMode(modeResult) ) {      
+      if( PlanitOsmZoningHandlerHelper.hasEligibleOsmMode(modeResult) ) {      
         /* ...this is only valid when the osm entity (platform) has no eligible modes tagged and therefore no transfer zone was ever created (correctly), however, we found eligible modes, possible problem */        
         LOGGER.warning(String.format("Found stop_area %d node member %d compatible with with %s, yet it has no transfer zone available, ignored",
             osmRelation.getId(), osmNode.getId(), modeResult .first().toString()));

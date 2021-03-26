@@ -321,7 +321,7 @@ public class PlanitOsmNodeUtils {
    * @param coordinate to check against
    * @return true when a match, false otherwise
    */
-  private static boolean nodeLocationEquals2D(OsmNode osmNode, Coordinate coordinate) {
+  public static boolean nodeLocationEquals2D(OsmNode osmNode, Coordinate coordinate) {
     return createCoordinate(osmNode).equals2D(coordinate);
   }
 

@@ -2,6 +2,7 @@ package org.planit.osm.util;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -13,6 +14,7 @@ import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
+import org.planit.osm.handler.PlanitOsmNetworkHandlerHelper;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
@@ -22,6 +24,7 @@ import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
+import org.planit.utils.network.physical.Link;
 import org.planit.utils.zoning.Zone;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -493,6 +496,38 @@ public class PlanitOsmWayUtils {
       return PlanitJtsUtils.createLineSegment(osmWayMinDistanceCoordinate, geometryMinDistanceCoordinate);
     }
     return null;
+  }
+
+
+  /** find the most prominent (important) of the edges based on the osm highway type they carry
+   * @param edges to check
+   * @return osm highway type found to be the most prominent
+   */
+  public static String findMostProminentOsmHighWayType(Set<Edge> edges) {
+    String mostProminent = OsmHighwayTags.UNCLASSIFIED; /* lowest priority option */
+    for(Edge edge : edges) {
+      String osmWayType = PlanitOsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
+      if(OsmHighwayTags.compareHighwayType(mostProminent,osmWayType)<0) {
+        mostProminent = osmWayType;
+      }
+    }
+    return mostProminent;
+  }
+
+
+  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the osm highway tags ordering 
+   * @param osmHighwayType to use as a reference
+   * @param edgesToFilter the collection being filtered
+   */
+  public static void removeEdgesWithOsmHighwayTypesLessImportantThan(String osmHighwayType, Set<Edge> edgesToFilter) {
+    Iterator<Edge> iterator = edgesToFilter.iterator();
+    while(iterator.hasNext()) {
+      Edge edge = iterator.next();
+      String osmWayType = PlanitOsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
+      if(OsmHighwayTags.compareHighwayType(osmHighwayType,osmWayType)>0) {
+        iterator.remove();
+      }
+    }
   }
 
 

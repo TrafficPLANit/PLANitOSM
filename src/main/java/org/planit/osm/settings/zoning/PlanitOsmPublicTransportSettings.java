@@ -71,6 +71,13 @@ public class PlanitOsmPublicTransportSettings {
    * Default search radius in meters when trying to find parallel lines (tracks) for stand-alone stations 
    */
   public static double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
+  
+  /**
+   * The default buffer distance when looking for edges within a distance of the closest edge to create connectoids (stop_locations) on for transfer zones. 
+   * In case candidates are so close just selecting the closest can lead to problems. By identifying multiple candidates via this buffer, we can then use more sophisticated ways than proximity
+   * to determine the best candidate 
+   */
+  public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 5;
             
   
   /** Constructor

@@ -296,6 +296,13 @@ public class PlanitOsmNetworkLayerHandler {
       if(tags.containsKey(OsmTags.NAME)) {
         link.setName(tags.get(OsmTags.NAME));
       }
+      
+      /* store osm way type for future reference (used in zoning reader for example) */
+      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+        PlanitOsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmHighwayTags.HIGHWAY));
+      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
+        PlanitOsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmRailwayTags.RAILWAY));
+      }
     }
     return link;      
   }  
@@ -1132,7 +1139,7 @@ public class PlanitOsmNetworkLayerHandler {
         LOGGER.fine(String.format("referenced OSM node %s not available",osmNodeId));
       }else {
         /* create */
-        node = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
+        node = PlanitOsmNetworkHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
               
         this.layerData.registerPlanitNodeByOsmNode(osmNode, node);       
         profiler.logNodeStatus(networkLayer.nodes.size());        
@@ -1288,7 +1295,7 @@ public class PlanitOsmNetworkLayerHandler {
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
             
       /* break links */
-      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
+      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
       
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct
        * planit links for which osm nodes are internal */

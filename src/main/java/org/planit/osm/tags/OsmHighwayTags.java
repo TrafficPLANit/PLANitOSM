@@ -1,5 +1,6 @@
 package org.planit.osm.tags;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -13,8 +14,8 @@ import java.util.Set;
  */
 public class OsmHighwayTags {
   
-    /** all currently available osm highway tags that can represent a road link */
-    private static final Set<String> ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+    /** all currently available osm highway tags that can represent a road link, the number is used for ordering, so we can compare importance */
+    private static final Map<String,Integer> ROADBASED_HIGHWAY_VALUE_TAGS = new HashMap<String, Integer>();
     
     /** all currently supported highway tags that represent geographic areas, e.g. rest areas on top or alongside a road , this is a subset of
      * the {@code NON_ROADBASED_HIGHWAY_VALUE_TAGS} */
@@ -30,34 +31,34 @@ public class OsmHighwayTags {
      * populate the available highway tags
      */
     private static void populateRoadBasedOsmHighwayTags() {
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(MOTORWAY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(MOTORWAY_LINK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(TRUNK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(TRUNK_LINK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(PRIMARY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(PRIMARY_LINK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(SECONDARY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(SECONDARY_LINK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(TERTIARY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(TERTIARY_LINK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(UNCLASSIFIED);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(RESIDENTIAL);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(LIVING_STREET);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(PEDESTRIAN);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(TRACK);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(ROAD);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(SERVICE);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(FOOTWAY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(BRIDLEWAY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(STEPS);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(CORRIDOR);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(CYCLEWAY);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(PATH);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(ELEVATOR);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(PROPOSED);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(CONSTRUCTION);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(TURNING_CIRCLE);
-      ROADBASED_HIGHWAY_VALUE_TAGS.add(RACEWAY);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(MOTORWAY,1);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(MOTORWAY_LINK,2);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(TRUNK,3);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(TRUNK_LINK,4);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(PRIMARY,5);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(PRIMARY_LINK,6);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(SECONDARY,7);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(SECONDARY_LINK,8);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(TERTIARY,9);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(TERTIARY_LINK,10);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(SERVICE,11);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(RESIDENTIAL,12);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(LIVING_STREET,13);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(TRACK,14);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(ROAD,15);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(TURNING_CIRCLE,16);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(RACEWAY,17);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(CYCLEWAY,18);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(PEDESTRIAN,19);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(FOOTWAY,20);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(STEPS,21);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(CORRIDOR,22);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(ELEVATOR,23);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(BRIDLEWAY,24);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(PATH,25);      
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(PROPOSED,26);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(CONSTRUCTION,27);
+      ROADBASED_HIGHWAY_VALUE_TAGS.put(UNCLASSIFIED,28);      
     }
     
     /**
@@ -179,7 +180,7 @@ public class OsmHighwayTags {
      * @return true when valid tag, otherwise false
      */
     public static boolean isRoadBasedHighwayValueTag(String highwayTag) {
-      return ROADBASED_HIGHWAY_VALUE_TAGS.contains(highwayTag);
+      return ROADBASED_HIGHWAY_VALUE_TAGS.containsKey(highwayTag);
     }
     
     /** some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
@@ -217,6 +218,15 @@ public class OsmHighwayTags {
      */
     public static boolean hasHighwayKeyTag(Map<String, String> tags) {
       return tags.containsKey(OsmHighwayTags.HIGHWAY);
+    }
+
+    /** compare highway types where we return a negative, zero, or positive value when highwayType is less, equal, or more important than the other
+     * @param highwayType to compare to other
+     * @param other to compare to highway type
+     * @return negative, equal, or zero depending on if highway type is less, equal, or more important than other 
+     */
+    public static int compareHighwayType(String highwayType, String otherHighwayType) {
+      return ROADBASED_HIGHWAY_VALUE_TAGS.get(otherHighwayType) - ROADBASED_HIGHWAY_VALUE_TAGS.get(highwayType);
     }    
 
 }

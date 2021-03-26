@@ -13,7 +13,8 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Point;
-import org.planit.osm.handler.PlanitOsmHandlerHelper;
+import org.planit.osm.handler.PlanitOsmNetworkHandlerHelper;
+import org.planit.osm.handler.PlanitOsmZoningHandlerHelper;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -217,7 +218,7 @@ public class PlanitOsmNetworkReaderLayerData {
    * @param newOsmWayToPlanitLinkMapping contains new mapping from osm way id to known planit links that cover this osm way
    */
   public void updateOsmWaysWithMultiplePlanitLinks(Map<Long, Set<Link>> newOsmWayToPlanitLinkMapping) {
-    PlanitOsmHandlerHelper.addAllTo(newOsmWayToPlanitLinkMapping, osmWaysWithMultiplePlanitLinks);    
+    PlanitOsmNetworkHandlerHelper.addAllTo(newOsmWayToPlanitLinkMapping, osmWaysWithMultiplePlanitLinks);    
   }
   
   /** update all known osm ways with multiple planit links. To use whenever a planit link is broken and split into multiple

@@ -10,16 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
@@ -27,13 +23,12 @@ import org.planit.osm.tags.OsmPtv1Tags;
 import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmWaterModeTags;
-import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
+import org.planit.utils.graph.Edge;
 import org.planit.utils.graph.EdgeSegment;
-import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.TrackModeType;
@@ -54,10 +49,10 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
  * @author markr
  *
  */
-public class PlanitOsmHandlerHelper {
+public class PlanitOsmZoningHandlerHelper {
   
   /** the logger to use */
-  public static final Logger LOGGER = Logger.getLogger(PlanitOsmHandlerHelper.class.getCanonicalName());
+  public static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningHandlerHelper.class.getCanonicalName());
   
   /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
    *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
@@ -101,45 +96,7 @@ public class PlanitOsmHandlerHelper {
     }
     
     return referencingConnectoids;
-  }  
-  
-  /** Check if we should break any links for the passed in node and if so, do it
-   * 
-   * @param theNode to verify
-   * @param linksToBreak contains the links that (at least at some point) had theNode as an internal link
-   * @param networkLayer the node resides on
-   * @param crs of the network layer 
-   * @return newly broken planit links by their original osmWayId 
-   *  
-   * @throws PlanItException thrown if error
-   */
-  public static Map<Long, Set<Link>> breakLinksWithInternalNode(Node theNode, List<Link> linksToBreak, MacroscopicPhysicalNetwork networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
-    Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
-    
-    if(linksToBreak != null) {
-      
-      try {
-        /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-        Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs);                 
-        /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
-        if(localBrokenLinks != null) {
-          localBrokenLinks.forEach((id, links) -> {
-            links.forEach( brokenLink -> {
-              Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
-              newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
-              newOsmWaysWithMultiplePlanitLinks.get(brokenLinkOsmId).add(brokenLink);
-            });
-          });        
-        }
-      }catch(PlanItException e) {
-        LOGGER.severe(e.getMessage());
-        LOGGER.severe(String.format("unable to break links %s for node %s, something unexpected went wrong",
-            linksToBreak.stream().map( link -> link.getExternalId()).collect(Collectors.toSet()).toString(), theNode.getExternalId()));
-      }
-    } 
-    
-    return newOsmWaysWithMultiplePlanitLinks;
-  }     
+  }       
   
   /** Delegate to zoning modifier, to be used in tandem with {@link breakLinksWithInternalNode} because it may invalidate the references to link segments on connectoids. this
    * method will update the connectoids link segments in accordance with the breakLink action given the correct inputs are provided.
@@ -181,7 +138,7 @@ public class PlanitOsmHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Node createPlanitNodeForConnectoidAccess(OsmNode osmNode, final PlanitOsmNetworkReaderLayerData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
+    Node planitNode = PlanitOsmNetworkHandlerHelper.createAndPopulateNode(osmNode, networkLayer);
     layerData.registerPlanitNodeByOsmNode(osmNode, planitNode);
     return planitNode;
   }  
@@ -196,69 +153,11 @@ public class PlanitOsmHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Node createPlanitNodeForConnectoidAccess(Point location, final PlanitOsmNetworkReaderLayerData layerData,  MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-    Node planitNode = PlanitOsmHandlerHelper.createAndPopulateNode(location, networkLayer);
+    Node planitNode = PlanitOsmNetworkHandlerHelper.createAndPopulateNode(location, networkLayer);
     layerData.registerPlanitNodeByLocation(location, planitNode);
     return planitNode;
   }  
-
-  /**
-   * Extract a PLANit node from the osmNode information
-   * 
-   * @param osmNode to create PLANit node for
-   * @param networkLayer to create node on
-   * @return created node, null when something went wrong
-   */
-  public static Node createAndPopulateNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer)  {
-    if(osmNode == null || networkLayer == null) {
-      LOGGER.severe("no OSM node or network layer provided when creating new PLANit node, ignore");
-      return null;
-    }
-
-    Node node = null;
-    try {
-      Point geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
-      node = createAndPopulateNode(geometry, networkLayer);
-      node.setExternalId(String.valueOf(osmNode.getId()));
-    } catch (PlanItException e) {
-      LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
-    }
-
-    /* external id */
-    node.setExternalId(String.valueOf(osmNode.getId()));
-    
-    return node;
-  }
   
-  /**
-   * Extract a PLANit node from the osmNode information
-   * 
-   * @param geometry to place on PLANit node
-   * @param networkLayer to create node on
-   * @return created node, null when something went wrong
-   */
-  public static Node createAndPopulateNode(Point geometry, MacroscopicPhysicalNetwork networkLayer)  {
-    /* create and register */
-    Node node = networkLayer.nodes.registerNew();
-    
-    /* XML id */
-    node.setXmlId(Long.toString(node.getId()));
-
-    /* position */
-    node.setPosition(geometry);
-    
-    return node;
-  }  
-
-  /** add addition to destination
-   * @param addition to add
-   * @param destination to add to
-   */
-  public static void addAllTo(Map<Long, Set<Link>> addition, Map<Long, Set<Link>> destination) {
-    addition.forEach( (osmWayId, links) -> {
-      destination.putIfAbsent(osmWayId, new HashSet<Link>());
-      destination.get(osmWayId).addAll(links);
-    });
-  }
 
   /** Verify if the geometry of the transfer zone equates to the provided location
    * @param transferZone to verify
@@ -326,7 +225,7 @@ public class PlanitOsmHandlerHelper {
       EdgeSegment linkSegment = iterator.next();
       LineSegment finalLineSegment = extractClosestLineSegmentToGeometryFromLinkSegment(transferZone.getGeometry(), (MacroscopicLinkSegment)linkSegment, geoUtils);
       /* determine location relative to infrastructure */
-      boolean isTransferZoneLeftOfInfrastructure = PlanitOsmHandlerHelper.isTransferZoneLeftOf(transferZone, finalLineSegment.p0, finalLineSegment.p1, geoUtils);      
+      boolean isTransferZoneLeftOfInfrastructure = PlanitOsmZoningHandlerHelper.isTransferZoneLeftOf(transferZone, finalLineSegment.p0, finalLineSegment.p1, geoUtils);      
       if(isTransferZoneLeftOfInfrastructure!=leftHandDrive) {
         /* not viable opposite traffic directions needs to be crossed on the link to get to stop location --> remove */
         iterator.remove();
@@ -393,10 +292,10 @@ public class PlanitOsmHandlerHelper {
           mustAvoidCrossingTraffic = false;
         }           
         
-        MacroscopicLinkSegment oneWayLinkSegment = PlanitOsmHandlerHelper.getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);        
+        MacroscopicLinkSegment oneWayLinkSegment = PlanitOsmZoningHandlerHelper.getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);        
         if(oneWayLinkSegment != null && mustAvoidCrossingTraffic) {
           /* use line geometry closest to connectoid location */
-          LineSegment finalLineSegment = PlanitOsmHandlerHelper.extractClosestLineSegmentToGeometryFromLinkSegment(waitingAreaGeometry, oneWayLinkSegment, geoUtils);                    
+          LineSegment finalLineSegment = PlanitOsmZoningHandlerHelper.extractClosestLineSegmentToGeometryFromLinkSegment(waitingAreaGeometry, oneWayLinkSegment, geoUtils);                    
           /* determine location relative to infrastructure */
           boolean isStationLeftOfOneWayLinkSegment = geoUtils.isGeometryLeftOf(waitingAreaGeometry, finalLineSegment.p0, finalLineSegment.p1);  
           if(isStationLeftOfOneWayLinkSegment != isLeftHandDrive) {
@@ -560,17 +459,17 @@ public class PlanitOsmHandlerHelper {
    * rather than projected ones
    * 
    * @param transferZone to use
-   * @param accessLink to use
+   * @param accessEdge to use
    * @param geoUtils to use
    * @return closest projected linear location on link geometry
    * @throws PlanItException thrown if error
    */
-  public static LinearLocation getClosestProjectedLinearLocationOnLinkForTransferZone(TransferZone transferZone, Link accessLink, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static LinearLocation getClosestProjectedLinearLocationOnEdgeForTransferZone(TransferZone transferZone, Edge accessEdge, PlanitJtsUtils geoUtils) throws PlanItException {
     LinearLocation projectedLinearLocationOnLink = null;
     if(transferZone.getGeometry() instanceof Point) {
-      projectedLinearLocationOnLink = geoUtils.getClosestProjectedLinearLocationOnGeometry((Point)transferZone.getGeometry(),accessLink.getGeometry());
+      projectedLinearLocationOnLink = geoUtils.getClosestProjectedLinearLocationOnGeometry((Point)transferZone.getGeometry(),accessEdge.getGeometry());
     }else{
-      projectedLinearLocationOnLink = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(),accessLink.getGeometry());
+      projectedLinearLocationOnLink = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(),accessEdge.getGeometry());
     }
     return projectedLinearLocationOnLink;
     
@@ -606,27 +505,27 @@ public class PlanitOsmHandlerHelper {
    * area search distance whereas a rail based one uses the station to waiting area search distance
    * 
    * @param settings to obtain search distance for
-   * @param osmStationModes station modes supported
+   * @param osmStationMode station modes supported
    * @return search distance and max stop_location matches pair, null if problem occurred
    */
   public static Pair<Double, Integer> determineSearchDistanceAndMaxStopLocationMatchesForStandAloneStation(
-      long osmStationId, Collection<String> osmStationModes, PlanitOsmPublicTransportSettings settings) {
+      long osmStationId, String osmStationMode, PlanitOsmPublicTransportSettings settings) {
     
     Double searchDistance = null;
     Integer maxMatches = null;
-    if(OsmRailModeTags.containsAnyMode(osmStationModes)) {
+    if(OsmRailModeTags.isRailModeTag(osmStationMode)) {
       /* rail based station -> match to nearby train tracks 
        * assumptions: small station would at most have two tracks with platforms and station might be a bit further away 
        * from tracks than a regular bus stop pole, so cast wider net */
       searchDistance = settings.getStationToWaitingAreaSearchRadiusMeters();
       maxMatches = 2;
-    }else if(OsmRoadModeTags.containsAnyMode(osmStationModes)) {
+    }else if(OsmRoadModeTags.isRoadModeTag(osmStationMode)) {
       /* road based station -> match to nearest road link 
        * likely bus stop, so only match to closest by road link which should be very close, so use
        * at most single match and small search radius, same as used for pole->stop_position search */
       searchDistance = settings.getStopToWaitingAreaSearchRadiusMeters();
       maxMatches = 1;
-    }else if(OsmWaterModeTags.containsAnyMode(osmStationModes)) {
+    }else if(OsmWaterModeTags.isWaterModeTag(osmStationMode)) {
       /* water based -> not supported yet */
       LOGGER.warning(String.format("DISCARD: water based stand-alone station detected %d, not supported yet, skip", osmStationId));
       return null;
