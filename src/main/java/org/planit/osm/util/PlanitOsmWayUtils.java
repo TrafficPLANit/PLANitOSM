@@ -503,7 +503,7 @@ public class PlanitOsmWayUtils {
    * @param edges to check
    * @return osm highway type found to be the most prominent
    */
-  public static String findMostProminentOsmHighWayType(Set<Edge> edges) {
+  public static String findMostProminentOsmHighWayType(Set<? extends Edge> edges) {
     String mostProminent = OsmHighwayTags.UNCLASSIFIED; /* lowest priority option */
     for(Edge edge : edges) {
       String osmWayType = PlanitOsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
@@ -519,8 +519,8 @@ public class PlanitOsmWayUtils {
    * @param osmHighwayType to use as a reference
    * @param edgesToFilter the collection being filtered
    */
-  public static void removeEdgesWithOsmHighwayTypesLessImportantThan(String osmHighwayType, Set<Edge> edgesToFilter) {
-    Iterator<Edge> iterator = edgesToFilter.iterator();
+  public static void removeEdgesWithOsmHighwayTypesLessImportantThan(String osmHighwayType, Set<? extends Edge> edgesToFilter) {
+    Iterator<? extends Edge> iterator = edgesToFilter.iterator();
     while(iterator.hasNext()) {
       Edge edge = iterator.next();
       String osmWayType = PlanitOsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
