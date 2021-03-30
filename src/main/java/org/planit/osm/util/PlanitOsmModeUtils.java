@@ -215,17 +215,16 @@ public class PlanitOsmModeUtils {
     }
     return explicitlyIncludedOsmModes;       
   }       
-
+  
   /** Collect the modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
-   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided) 
+   * marked as yes, e.g. subway=yes. 
    * 
    * @param osmEntityId to use
    * @param tags related to the node
-   * @param defaultOsmMode used when no explicit modes can be found (can be null)
-   * @return list of eligible osm modes, can be empty if no modes are found and default is null
-   */
-  public static Set<String> collectEligibleOsmModesOnPtOsmEntity(long osmEntityId, Map<String, String> tags, String defaultOsmMode) {
-    Set<String> eligibleOsmModes = null;
+   * @return list of eligible osm modes, can be empty if no modes are found
+   */  
+  public static Collection<String> collectEligibleOsmModesOnPtOsmEntity(long osmEntityId, Map<String, String> tags) {
+    Collection<String> eligibleOsmModes = null;
     
     /* rail modes */
     Set<String> eligibleOsmRailModes = collectEligibleOsmRailModesOnPtOsmEntity(tags, null);
@@ -251,15 +250,49 @@ public class PlanitOsmModeUtils {
       }else {
         eligibleOsmModes = eligibleOsmWaterModes;
       }
-    }    
+    }  
     
-    if(eligibleOsmModes==null && defaultOsmMode != null) {
+    return eligibleOsmModes;
+  }  
+
+  /** Collect the modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
+   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided). 
+   * 
+   * @param osmPtEntityId to use
+   * @param tags related to the node
+   * @param defaultOsmMode used when no explicit modes can be found (can be null)
+   * @return list of eligible osm modes, can be empty if no modes are found and default is null
+   */
+  public static Collection<String> collectEligibleOsmModesOnPtOsmEntity(long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {    
+    
+    Collection<String> eligibleOsmModes = collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags);            
+    if((eligibleOsmModes==null || eligibleOsmModes.isEmpty()) && defaultOsmMode != null) {
       /* use default mode when no explicit modes are found across all mode types */
       eligibleOsmModes = Collections.singleton(defaultOsmMode);
     }
           
     return eligibleOsmModes;       
   }
+  
+
+  /** Collect the public transport modes that are deemed eligible for this node (platform, station, halt, etc.). A mode is eligible when
+   * marked as yes, e.g. subway=yes, or when none are marked explicitly we assume the default (if provided). 
+   * 
+   * @param osmPtEntityId to use
+   * @param tags related to the node
+   * @param defaultOsmMode used when no explicit modes can be found (can be null)
+   * @return list of eligible osm public transport modes, can be empty if no modes are found and default is null
+   */  
+  public static Collection<String> collectEligibleOsmPublicTransportModesOnPtOsmEntity(long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {
+    Collection<String> eligibleOsmPtModes = getPublicTransportModesFrom(collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags));
+    
+    if((eligibleOsmPtModes==null || eligibleOsmPtModes.isEmpty()) && defaultOsmMode != null) {
+      /* use default mode when no modes are found across all pt modes*/
+      eligibleOsmPtModes = Collections.singleton(defaultOsmMode);
+    }
+          
+    return eligibleOsmPtModes; 
+  }  
   
   /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported,
    * <ul>
@@ -384,5 +417,7 @@ public class PlanitOsmModeUtils {
     railPtModes.addAll(waterPtModes);
     return railPtModes;
   }
+
+
 
 }

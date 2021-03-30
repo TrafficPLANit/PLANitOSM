@@ -393,7 +393,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return pair containing eligible osm modes identified and their mapped planit counterparts
    */
   public Pair<Collection<String>, Collection<Mode>> collectPublicTransportModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {
-    Collection<String> eligibleOsmModes = PlanitOsmModeUtils.getPublicTransportModesFrom(PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode));
+    Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmPublicTransportModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
@@ -410,6 +410,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    */
   public Pair<Collection<String>, Collection<Mode>> collectModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {
     Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
+    
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
@@ -714,7 +715,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     TransferZone transferZone = null;
     
     /* tagged osm modes */        
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any osm modes) */
@@ -785,7 +786,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       LOGGER.warning(String.format("unexpected default osm mode %s identified for Ptv1 osm node %d, overwrite with %s,",foundDefaultMode, osmNode.getId(), defaultOsmMode));
     }    
         
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {    
       throw new PlanItException("Should not attempt to parse osm node %d when no planit modes are activated for it", osmNode.getId());
     }

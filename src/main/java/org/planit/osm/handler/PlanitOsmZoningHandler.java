@@ -434,7 +434,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       /* bus_stop */
       
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
-        /* taggin error */
+        /* tagging error */
         LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 bus_stop (%d), yet it does not reside on road infrastructure, parse as pole instead", osmNode.getId()));
         extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);
       }else {
@@ -911,7 +911,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
             
-    if(osmWay.getId()==783883381l) {
+    if(osmWay.getId()==45362526l) {
       int bla = 4;
     }
     
