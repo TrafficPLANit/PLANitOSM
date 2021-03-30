@@ -960,9 +960,9 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void processStopPositionNotPartOfStopArea(OsmNode osmNode, Map<String, String> tags) throws PlanItException {   
-    getZoningReaderData().getOsmData().removeUnprocessedPtv2StopPosition(osmNode.getId());
+    getZoningReaderData().getOsmData().removeUnprocessedStopPosition(osmNode.getId());
     
-    if(osmNode.getId()==6646032960l) {
+    if(osmNode.getId()==2203952177l) {
       int bla = 4;
     }
     
@@ -990,12 +990,21 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       Collection<TransferZone> matchedTransferZones = findIncompleteTransferZonesForStopPosition(osmNode, tags, Collections.singleton(osmMode));      
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {        
         
+        MOVE THE BELOW IF STATEMENT AND CONTENTS TO findIncompleteTransferZonesForStopPosition SO IT IS ALSO USED FOR STOP_LOCATIONS IN A STOP_AREA
+        ALSO CLEANS UP THE CODE NOT HAVING IT IN MULTIPLE LOCATIONS
+        
         if(PlanitOsmZoningHandlerHelper.isPtv2StopPositionPtv1Stop(osmNode, tags)) {
-          /* no potential transfer zones AND Ptv1 tagged (bus_stop, station, halt), try to salvage by parsing it as Ptv1 tag 
-           * potentially revealing it resides on the road and can be treated as both stop_position and transfer zone now that we have eliminated the possibility of matching it to
-           * a Ptv2 platform nearby */
-          LOGGER.info(String.format("SALVAGED: process Ptv2 stop_position %d as Ptv1 entity, due to absence of eligible Ptv2 platform supporting mode %s",osmNode.getId(), osmMode));
-          extractTransferInfrastructurePtv1(osmNode, tags, geoUtils);          
+          /* no potential transfer zones AND Ptv1 tagged (bus_stop, station, halt, trams_stop), meaning that while we tried to match to
+           * separate waiting area, none is present. Instead, we accept the stop_location is in fact also the waiting area and we create a
+           * transfer zone in this location as well */
+            TransferZone transferZone = createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(osmNode, tags, osmMode, geoUtils);
+            if(transferZone== null) {
+              LOGGER.warning(String.format("DISCARD: stop_position %d has no pole, platform, station reference, nor could we convert the location itself into a transfer zone for mode %s",osmNode.getId(), osmMode));
+              return;
+            }else if(OsmPtv1Tags.isBusStop(tags)){
+              LOGGER.info(String.format("SALVAGED: process Ptv2 stop_position %d as Ptv1 tag representing both stop and waiting area in one for mode %s",osmNode.getId(), osmMode));  
+            }/* halt and tram_stop are common and valid to be located on road infrastructure without platform, so do not log this situation */
+            matchedTransferZones = Collections.singleton(transferZone);                        
         }else {
           LOGGER.warning(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode));
         }
@@ -1039,7 +1048,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void processStopPositionsNotPartOfStopArea() throws PlanItException {
-    Set<Long> unprocessedStopPositions = Set.copyOf(getZoningReaderData().getOsmData().getUnprocessedPtv2StopPositions());
+    Set<Long> unprocessedStopPositions = Set.copyOf(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
     if(!unprocessedStopPositions.isEmpty()) {
       for(Long osmNodeId : unprocessedStopPositions) {
         OsmNode osmNode =getNetworkToZoningData().getOsmNodes().get(osmNodeId);
@@ -1448,7 +1457,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {
     
-    if(osmNode.getId()==1287222139l) {
+    if(osmNode.getId()==2203952177l) {
       int bla = 4;
     }
           
@@ -1531,7 +1540,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     
     /* regular stop_position or special cases due to tagging errors */
     {
-      if(getZoningReaderData().getOsmData().hasUnprocessedPtv2StopPosition(member.getId())){
+      if(getZoningReaderData().getOsmData().hasUnprocessedStopPosition(member.getId())){
       
         /* registered as unprocessed --> known and available for processing */      
         isKnownPtv2StopPosition = true;      
@@ -1564,7 +1573,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       /* process as regular stop_position */
       extractKnownPtv2StopAreaStopPosition(stopPositionNode, tags, transferZoneGroup);
       /* mark as processed */
-      getZoningReaderData().getOsmData().removeUnprocessedPtv2StopPosition(stopPositionNode.getId());
+      getZoningReaderData().getOsmData().removeUnprocessedStopPosition(stopPositionNode.getId());
       
     }else {
       

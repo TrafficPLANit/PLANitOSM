@@ -35,7 +35,7 @@ public class PlanitOsmZoningReaderOsmData {
   private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<EntityType, Map<Long, OsmEntity>>();
       
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
-  private final Set<Long> unprocessedPtv2StopPositions= new TreeSet<Long>();
+  private final Set<Long> unprocessedStopPositions= new TreeSet<Long>();
   
   /** the registered osm ways that we kept based on osmWaysToKeep that were provided, and are processed at a later stage */
   private final Map<Long, Long> osmOuterRoleOsmWaysByOsmRelationId = new TreeMap<Long, Long>();
@@ -122,34 +122,34 @@ public class PlanitOsmZoningReaderOsmData {
     return Collections.unmodifiableMap(unprocessedPtv2Stations.get(entityType));
   }
 
-  /** collect unprocessed Ptv2 stop positions
+  /** collect unprocessed stop positions
    * 
    * @return unprocessed stop positions (unmodifiable)
    */
-  public Set<Long> getUnprocessedPtv2StopPositions() {
-    return Collections.unmodifiableSet(unprocessedPtv2StopPositions);
+  public Set<Long> getUnprocessedStopPositions() {
+    return Collections.unmodifiableSet(unprocessedStopPositions);
   }
   
   /** remove unprocessed stop position
    * @param osmId to remove
    */
-  public void removeUnprocessedPtv2StopPosition(long osmId) {
-    unprocessedPtv2StopPositions.remove(osmId);
+  public void removeUnprocessedStopPosition(long osmId) {
+    unprocessedStopPositions.remove(osmId);
   }
   
   /** add unprocessed stop position
    * @param osmId to add
    */
-  public void addUnprocessedPtv2StopPosition(long osmId) {
-    unprocessedPtv2StopPositions.add(osmId);
+  public void addUnprocessedStopPosition(long osmId) {
+    unprocessedStopPositions.add(osmId);
   } 
   
   /** Verify if unprocessed stop_position is registered
    * @param osmId to verify
    * @return true when registered, false otherwise
    */
-  public boolean hasUnprocessedPtv2StopPosition(long osmId) {
-    return unprocessedPtv2StopPositions.contains(osmId);
+  public boolean hasUnprocessedStopPosition(long osmId) {
+    return unprocessedStopPositions.contains(osmId);
   }  
   
 
@@ -306,7 +306,7 @@ public class PlanitOsmZoningReaderOsmData {
   public void reset() {
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_1);
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
-    unprocessedPtv2StopPositions.clear();
+    unprocessedStopPositions.clear();
     osmOuterRoleOsmWaysByOsmRelationId.clear();
     osmOuterRoleOsmWaysToKeep.clear();
   }
