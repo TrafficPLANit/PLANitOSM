@@ -4,8 +4,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
@@ -97,36 +99,6 @@ public class PlanitOsmNetworkLayerHandler {
   /** geo utility instance based on network wide crs this layer is part of */
   private final PlanitJtsUtils geoUtils;   
   
-  /** finds the first available osm node index
-   * @param osmWay to collect from
-   * @return index of first available osm node
-   * @throws PlanItException thrown if not a single osm node is available
-   */
-  private int findFirstAvailableOsmNodeIndex(OsmWay osmWay) throws PlanItException {
-    for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(networkData.hasOsmNode(osmWay.getNodeId(nodeIndex))) {
-        return nodeIndex;
-      }
-    }
-    throw new PlanItException("not a single node on osm way %d is available, this shouldn't happen",osmWay.getId());
-  }
-
-  /** finds the last consecutive available osm node index after the offset, i.e. the index before the first unavailable node
-   * 
-   * @param osmWay to collect from
-   * @param offsetIndex to start search from
-   * @return last index of node that is available
-   * @throws PlanItException thrown if not found or offset is invalid
-   */  
-  private int findLastAvailableOsmNodeIndexAfter(OsmWay osmWay, int offsetIndex) throws PlanItException {
-    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(!networkData.hasOsmNode(osmWay.getNodeId(nodeIndex))) {
-        return nodeIndex-1;
-      }
-    }
-    throw new PlanItException("not a single node on osm way %d is available, this shouldn't happen",osmWay.getId());
-  }
-
   /** update the included and excluded mode sets passed in based on the key/value information available in the access=<?> tag.
    * 
    * @param tags where we extract the access information from
@@ -222,9 +194,13 @@ public class PlanitOsmNetworkLayerHandler {
    */
   private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay) throws PlanItException {
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
-    for(int nodeIndex = startIndex; nodeIndex <= endIndex;++nodeIndex) {
-      OsmNode internalNode = networkData.getOsmNode(osmWay.getNodeId(nodeIndex));
-      layerData.registerOsmNodeAsInternalToPlanitLink(internalNode,link);
+    for(int internalLocationIndex = startIndex; internalLocationIndex <= endIndex;++internalLocationIndex) {
+      OsmNode osmnode = networkData.getOsmNode(osmWay.getNodeId(internalLocationIndex));
+      if(osmnode != null) {
+        layerData.registerOsmNodeAsInternalToPlanitLink(osmnode,link);
+      }else {
+        throw new PlanItException("osm node %d not available although internal to osm way %d, this should not happen",osmWay.getId(), osmWay.getNodeId(internalLocationIndex));
+      }
     }   
   }   
   
@@ -236,18 +212,30 @@ public class PlanitOsmNetworkLayerHandler {
    * @param tags to populate link data with
    * @param startNodeIndex of the OSM way that will represent start node of this link
    * @param endNodeIndex of the OSM way that will represent end node of this link
+   * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return created or fetched link
    * @throws PlanItException thrown if error
    */
-  private Link createAndPopulateLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex) throws PlanItException {
+  private Link createAndPopulateLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete) throws PlanItException {
     
     PlanItException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
     PlanItException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
      
+    if(osmWay.getId()==291623398l) {
+      int bla = 4;
+    }
     
     /* collect memory model nodes */
-    Node nodeFirst = extractFirstNode(osmWay, startNodeIndex);   
-    Node nodeLast = extractLastNode(osmWay, endNodeIndex);
+    Pair<Node,Integer> nodeFirstResult = extractFirstNode(osmWay, startNodeIndex, allowTruncationIfGeometryIncomplete);
+    if(nodeFirstResult== null || nodeFirstResult.first() == null) {
+      return null;
+    }
+    Pair<Node,Integer> nodeLastResult = extractLastNode(osmWay, nodeFirstResult.second(), endNodeIndex, allowTruncationIfGeometryIncomplete);
+    if(nodeLastResult== null || nodeLastResult.first() == null) {
+      return null;
+    }    
+    Node nodeFirst = nodeFirstResult.first();
+    Node nodeLast = nodeLastResult.first();
     if(nodeLast.idEquals(nodeFirst)) {
       LOGGER.fine(String.format("DISCARD: Osm way %d truncated to single node, unable to create planit link for it", osmWay.getId()));
       return null;
@@ -256,7 +244,7 @@ public class PlanitOsmNetworkLayerHandler {
     /* parse geometry */
     LineString lineString = null;          
     try {
-      lineString = extractPartialLinkGeometry(osmWay, startNodeIndex, endNodeIndex);
+      lineString = extractPartialLinkGeometry(osmWay, nodeFirstResult.second(), nodeLastResult.second());
     }catch (PlanItException e) {
       LOGGER.fine(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be created, likely outside bounding box",osmWay.getId()));
       return null;
@@ -837,23 +825,9 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException throw if error
    */
   private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) throws PlanItException {
-    LineString lineString = PlanitOsmWayUtils.extractLineString(osmWay, networkData.getOsmNodes());        
-    if(startNodeIndex>0 || endNodeIndex < (osmWay.getNumberOfNodes()-1)) {          
-      /* update geometry and length in case link represents only a subsection of the OSM way */
-      LineString updatedGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesBefore(startNodeIndex, lineString);
-      if(endNodeIndex < startNodeIndex) {
-        /* When the last node position is located before the first (possible because the way is circular)*/
-        /* supplement with coordinates from the beginning of the original circular way */
-        LineString overFlowGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesAfter(endNodeIndex, lineString);
-        updatedGeometry = PlanitJtsUtils.concatenate(updatedGeometry, overFlowGeometry);
-        /* since circular ways include one node twice and this node is now part of the overflow of this section, we must remove it */
-        updatedGeometry = PlanitJtsUtils.createCopyWithoutAdjacentDuplicateCoordinates(updatedGeometry);
-      }else {
-        /* present, so simply remove coordinates after */
-        updatedGeometry = PlanitJtsUtils.createCopyWithoutCoordinatesAfter(endNodeIndex-startNodeIndex, updatedGeometry);
-      }  
-      lineString = updatedGeometry;
-    }
+    LineString lineString = PlanitOsmWayUtils.extractLineString(osmWay, startNodeIndex, endNodeIndex, networkData.getOsmNodes());
+    lineString = PlanitJtsUtils.createCopyWithoutAdjacentDuplicateCoordinates(lineString);
+    
     return lineString;
   }
     
@@ -1074,13 +1048,14 @@ public class PlanitOsmNetworkLayerHandler {
    * 
    * @param osmWay to use
    * @param startNodeIndex to use
-   * @return extracted node (first node to use for osm way)
+   * @param changeStartNodeIndexIfNotPresent when true it replaces the startNodeIndex to first available node index that we can find if startNodeIndex is not available, if false not
+   * @return extracted node (first node to use for osm way), and start nod eindex used
    * @throws PlanItException thrown if error
    */
-  private Node extractFirstNode(OsmWay osmWay, int startNodeIndex) throws PlanItException {
+  private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, int startNodeIndex, boolean changeStartNodeIndexIfNotPresent) throws PlanItException {
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
-    if(nodeFirst==null) {
-      startNodeIndex = findFirstAvailableOsmNodeIndex(osmWay);
+    if(nodeFirst==null && changeStartNodeIndexIfNotPresent) {
+      startNodeIndex = PlanitOsmNetworkHandlerHelper.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
       nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
       if(nodeFirst!= null) {
         if(PlanitGraphGeoUtils.isVertexNearBoundingBox(nodeFirst, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS, geoUtils)) {
@@ -1093,19 +1068,22 @@ public class PlanitOsmNetworkLayerHandler {
         throw new PlanItException("unable to collect osm node (start node index: %d) from osm way %s, even though it is expected to be available, this shouldn't happen",startNodeIndex, osmWay.getId()); 
       }
     }
-    return nodeFirst;
+    return Pair.of(nodeFirst,startNodeIndex);
   }
 
   /** Extract the last node of the osm way based on the provided end node index
    * @param osmWay to parse
+   * @pram startNodeIndex used for the preceding node, if not relevant just provide 0 
    * @param endNodeIndex to use for last node
-   * @return extracted node
+   * @param changeEndNodeIndexIfNotPresent when true it replaces the startNodeIndex to first available node index that we can find if startNodeIndex is not available, if false not
+   * @return extracted node and end node index used
    * @throws PlanItException thrown if error
    */
-  private Node extractLastNode(OsmWay osmWay, int endNodeIndex) throws PlanItException {
+  private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, int startNodeIndex, int endNodeIndex, boolean changeEndNodeIndexIfNotPresent) throws PlanItException {
+    
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
-    if(nodeLast==null) {
-      endNodeIndex = findLastAvailableOsmNodeIndexAfter(osmWay, findFirstAvailableOsmNodeIndex(osmWay));
+    if(nodeLast==null && changeEndNodeIndexIfNotPresent) {
+      endNodeIndex = PlanitOsmNetworkHandlerHelper.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
       nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
       if(nodeLast!= null) {
         if(PlanitGraphGeoUtils.isVertexNearBoundingBox(nodeLast, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS , geoUtils)) {
@@ -1118,7 +1096,7 @@ public class PlanitOsmNetworkLayerHandler {
         throw new PlanItException("unable to collect osm node ( end node index: %d) from osm way %s, even though it is expected to be available, this shouldn't happen",endNodeIndex, osmWay.getId()); 
       }
     }
-    return nodeLast;
+    return Pair.of(nodeLast,endNodeIndex);
   }
 
   /**
@@ -1145,6 +1123,7 @@ public class PlanitOsmNetworkLayerHandler {
         profiler.logNodeStatus(networkLayer.nodes.size());        
       }
     }
+    
     return node;
   }   
   
@@ -1153,15 +1132,27 @@ public class PlanitOsmNetworkLayerHandler {
    * @param osmWay the way to process
    * @param tags tags that belong to the way
    * @param endNodeIndex for this link compared to the full OSM way
-   * @param startNodeIndex for this link compared to the full OSM way 
+   * @param startNodeIndex for this link compared to the full OSM way
+   * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return the link corresponding to this way
    * @throws PlanItException thrown if error
    */
-  private Link extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex) throws PlanItException {
+  private Link extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete) throws PlanItException {
 
+    if(osmWay.getId()==26405645l) {
+      int bla = 4;
+    }
+    
     /* create the link */
-    Link link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex);   
+    Link link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);   
     if(link != null) {
+      
+      /* if geometry might be truncated, update the actual used start and end indices used if needed to correctly register remaining internal nodes */
+      if(allowTruncationIfGeometryIncomplete) {
+        startNodeIndex = PlanitOsmNetworkHandlerHelper.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);
+        endNodeIndex = PlanitOsmNetworkHandlerHelper.getOsmWayNodeIndexByLocation(osmWay, link.getNodeB().getPosition(), networkData);
+      }
+      
       /* register internal nodes for breaking links later on during parsing */
       registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);                  
       profiler.logLinkStatus(networkLayer.links.size());
@@ -1250,8 +1241,9 @@ public class PlanitOsmNetworkLayerHandler {
     Link link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
       
-      /* a link only consists of start and end node, no direction and has no model information */
-      link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex);                                      
+      /* a link only consists of start and end node, no direction and has no model information, we allow truncation near bounding box but only if it is not a circular way */
+      boolean allowGeometryTruncation = !isPartOfCircularWay;
+      link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);                                      
       if(link != null) {
         
         if(isPartOfCircularWay) {
@@ -1288,14 +1280,14 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException thrown if error
    */ 
   protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
-
+    
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodes());
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
       /* links to break */
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
-            
+                  
       /* break links */
-      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());
+      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());                
       
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct
        * planit links for which osm nodes are internal */

@@ -124,7 +124,12 @@ public class PlanitOsmNetworkReaderLayerData {
    */
   public Node getPlanitNodeByOsmNode(OsmNode osmNode) throws PlanItException {
     if(osmNode != null) {
-      return getPlanitNodeByLocation(PlanitOsmNodeUtils.createPoint(osmNode));
+      Node planitNode = getPlanitNodeByLocation(PlanitOsmNodeUtils.createPoint(osmNode));
+      if(planitNode!=null && osmNode.getId() != Long.valueOf(planitNode.getExternalId())) {
+        /* match found, but different osm ids for same location, meaning that separate nodes reside in same location */
+        LOGGER.warning(String.format("OsmNodes %d and %s, reside on same location, likely tagging error", osmNode.getId(), planitNode.getExternalId()));
+      }
+      return planitNode;
     }
     return null;
   } 

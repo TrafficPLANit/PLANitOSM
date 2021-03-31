@@ -107,6 +107,13 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     Map<InfrastructureLayer, Set<Link>> createdLinksByLayer = null;    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
+      
+      /* only process circular ways that are complete, e.g. not near bounding box causing some nodes to be missing
+       * in which case we do not parse the entire circular way to avoid issues */
+      if(!PlanitOsmNetworkHandlerHelper.isAllOsmWayNodesAvailable(circularOsmWay, networkData.getOsmNodes())){
+        return;
+      }
+      
       createdLinksByLayer = handleRawCircularWay(circularOsmWay, tags, 0 /* start at initial index */);
       
       if(createdLinksByLayer!=null) {
@@ -468,7 +475,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmNode osmNode) throws IOException {
     
-    if(osmNode.getId()==712795372l) {
+    if(osmNode.getId() == 579487458l) {
       int bla = 4;
     }
     
@@ -485,7 +492,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
     
-    if(osmWay.getId()==308521678l) {
+    if(osmWay.getId()==291623398l) {
       int bla = 4;
     }
     

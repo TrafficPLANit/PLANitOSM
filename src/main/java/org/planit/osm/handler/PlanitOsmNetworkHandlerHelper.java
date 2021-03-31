@@ -5,18 +5,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
  * Helper class for the OSM network handlers, providing static helper methods that reflect common code across various
@@ -69,7 +73,7 @@ public class PlanitOsmNetworkHandlerHelper {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     
     if(linksToBreak != null) {
-      
+            
       try {
         /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
         Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs);                 
@@ -89,7 +93,7 @@ public class PlanitOsmNetworkHandlerHelper {
             linksToBreak.stream().map( link -> link.getExternalId()).collect(Collectors.toSet()).toString(), theNode.getExternalId()));
       }
     } 
-    
+        
     return newOsmWaysWithMultiplePlanitLinks;
   }
   
@@ -140,6 +144,74 @@ public class PlanitOsmNetworkHandlerHelper {
     
     return node;
   }  
+  
+  /** finds the first available osm node index on the osm way
+   * @param offsetIndex to start search from
+   * @param osmWay to collect from
+   * @param osmNodes to check existence of osm way nodes
+   * @return index of first available osm node
+   * @throws PlanItException thrown if not a single osm node is available
+   */
+  public static int findFirstAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes) throws PlanItException {
+    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
+      if(osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
+        return nodeIndex;
+      }
+    }
+    throw new PlanItException("not a single node on osm way %d is available, this shouldn't happen",osmWay.getId());
+  }
+  
+  /** verify that all osm nodes in the osm way are available
+   * @param osmWay to verify
+   * @param osmNodes to check existence of osm way nodes
+   * @return true when complete, false otherwise
+   */  
+  public static boolean isAllOsmWayNodesAvailable(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
+    for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
+      if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
+        return false;
+      }
+    }
+    return true;
+  }  
+  
+  /** collect index by location within the way. first collect node from all nodes and then extract location because
+   * if duplicate nodes in the same location exist, collecting by location directly from layer data could yield the wrong node. this way
+   * we are certain to extract the locatino from the right osm node
+   * 
+   * @param osmWay way to use
+   * @param layerData to use
+   * @param osmNodeId id to find
+   * @return the index, -1 if nothing is found
+   * @throws PlanItException thrown if error
+   */
+  public static int getOsmWayNodeIndexByLocation(OsmWay osmWay, Point nodePosition, PlanitOsmNetworkReaderData networkData) throws PlanItException {
+    for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
+      long osmNodeId = osmWay.getNodeId(nodeIndex);
+      OsmNode osmNode = networkData.getOsmNode(osmNodeId);      
+      if(osmNode != null && PlanitOsmNodeUtils.nodeLocationEquals2D(osmNode, nodePosition.getCoordinate())) {
+        return nodeIndex;
+      }
+    }
+    throw new PlanItException("osm node location id %s could not be found within osm way %d", nodePosition, osmWay.getId());
+  }  
+
+  /** finds the last consecutive available osm node index after the offset, i.e. the index before the first unavailable node
+   * 
+   * @param offsetIndex to start search from
+   * @param osmWay to collect from
+   * @param osmNodes to check existence of osm way nodes
+   * @return last index of node that is available
+   * @throws PlanItException thrown if not found or offset is invalid
+   */  
+  public static int findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes) throws PlanItException {
+    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
+      if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
+        return nodeIndex-1;
+      }
+    }
+    throw new PlanItException("not a single node on osm way %d is available, this shouldn't happen",osmWay.getId());
+  }  
 
   /** add addition to destination
    * @param addition to add
@@ -151,5 +223,9 @@ public class PlanitOsmNetworkHandlerHelper {
       destination.get(osmWayId).addAll(links);
     });
   }
+
+
+
+
   
 }

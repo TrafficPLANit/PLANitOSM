@@ -9,10 +9,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -216,7 +216,23 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       getZoningReaderData().getPlanitData().addTransferZoneByOsmId(entityType, osmEntity.getId(), transferZone);
     }
     return transferZone;
-  }                   
+  }          
+  
+  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
+   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
+   * more confusing than helpful in those situation and is therefore ignored
+   * 
+   * @param message to log if not too close to bounding box
+   * @param geometry to determine distance to bounding box to
+   * @parma logger to log on
+   * @param geoUtils to use
+   * @throws PlanItException thrown if error
+   */
+  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Logger logger, PlanitJtsUtils geoUtils) throws PlanItException {
+    if(!geoUtils.isGeometryNearBoundingBox(geometry, getNetworkToZoningData().getNetworkBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS)) {
+      logger.warning(message);
+    }
+  }    
   
   /** skip osm relation member when marked for exclusion in settings
    * 
@@ -309,7 +325,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    */
   protected Collection<EdgeSegment> findAccessLinkSegmentsForStandAloneTransferZone(
       TransferZone transferZone, Link accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsUtils geoUtils) throws PlanItException {
-    
+        
     Long osmWaitingAreaId = Long.valueOf(transferZone.getExternalId());
     Long osmNodeIdOfLinkExtremeNode = node.getExternalId()!= null ? Long.valueOf(node.getExternalId()) : null;
     EntityType osmWaitingAreaEntityType = PlanitOsmZoningHandlerHelper.getOsmEntityType(transferZone);
@@ -325,9 +341,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(accessLinkSegments==null || accessLinkSegments.isEmpty()) {
       return accessLinkSegments;
     }
-    
+        
     /* user overwrite checks and special treatment */
-    boolean skipRelativeLocationCheck = false;
     boolean removeInvalidAccessLinkSegmentsIfNoMatchLeft = true;
     {
       /* in both cases: When a match, we must use the user overwrite value. We will still try to remove access link segments
@@ -347,7 +362,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
   
     /* accessible link segments for planit node based on relative location of waiting area compared to infrastructure*/    
-    if(mustAvoidCrossingTraffic && !skipRelativeLocationCheck) {   
+    if(mustAvoidCrossingTraffic) { 
+                          
       boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
       Collection<EdgeSegment> toBeRemoveAccessLinkSegments = 
           PlanitOsmZoningHandlerHelper.identifyInvalidTransferZoneAccessLinkSegmentsBasedOnRelativeLocationToInfrastructure(accessLinkSegments, transferZone, accessMode, isLeftHandDrive, geoUtils);
@@ -589,14 +605,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return transferZone;    
   }  
   
-  /** attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
-   * it is not possible to best determine where they should reside. Register the provided access modes as eligible by setting them on the input properties 
-   * which can be used later to map stop_positions more easily. Note that one can provide a default osm mode that is deemed eligible in case no tags are provided on the osm entity
+  /** attempt to create a new transfer zone and register it, do not create connectoids for it. Register the provided access modes as eligible by setting them on the input properties 
+   * which can be used later to map stop_positions more easily.
    * 
    * @param osmEntity to extract transfer zone for
    * @param tags to use
    * @param transferZoneType to apply
-   * @param defaultOsmMode to apply
    * @return transfer zone created, null if something happenned making it impossible to create the zone
    * @throws PlanItException thrown if error
    */
@@ -614,7 +628,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * 
    * @param osmNode for the location to create both a transfer zone and connectoid(s)
    * @param tags of the node
-   * @param defaultOsmMode that is to be expected here
+   * @param defaultOsmMode to create it for
    * @param geoUtils to use
    * @return created transfer zone (if not already in existence)
    * @throws PlanItException thrown if error
@@ -638,13 +652,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */  
   protected TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
-      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsUtils geoUtils) throws PlanItException {
-        
-    /* eligible modes */
-    String foundDefaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-    if(defaultOsmMode!=null && !foundDefaultMode.equals(defaultOsmMode)) {
-      LOGGER.warning(String.format("unexpected default osm mode %s identified for Ptv1 osm node %d, overwrite with %s,",foundDefaultMode, osmNode.getId(), defaultOsmMode));
-    }    
+      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsUtils geoUtils) throws PlanItException {        
         
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {    
@@ -977,11 +985,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
     
     MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
-    OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
-            
-    /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
-     * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen... */
-    boolean mustAvoidCrossingTraffic = PlanitOsmZoningHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation( planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());    
+    OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);                
     
     /* planit access node */
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
@@ -992,7 +996,16 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         LOGGER.warning(String.format("DISCARD: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
       }
       return false;
-    }  
+    }
+    
+    /* must avoid cross traffic when:
+     * 1) stop position does not coincide with transfer zone, i.e., waiting area is not on the road/rail, and
+     * 2) mode requires waiting area to be on a specific side of the road, e.g. buses can only open doors on one side, so it matters for them, but not for train
+     */
+    boolean mustAvoidCrossingTraffic = !planitNode.getPosition().equalsTopo(transferZone.getGeometry());
+    if(mustAvoidCrossingTraffic) {
+      mustAvoidCrossingTraffic = PlanitOsmZoningHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation( planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());  
+    }         
     
     /* find access link segments */
     Collection<EdgeSegment> accessLinkSegments = null;
