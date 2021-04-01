@@ -58,10 +58,6 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
    */  
   @Override
   public void handle(OsmRelation osmRelation) throws IOException {
-
-    if(osmRelation.getId()==5968567l) {
-      int bla = 4;
-    }
     
     boolean preserveOuterRole = false;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);          

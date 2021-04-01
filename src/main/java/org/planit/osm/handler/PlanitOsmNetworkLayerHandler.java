@@ -228,11 +228,7 @@ public class PlanitOsmNetworkLayerHandler {
     
     PlanItException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
     PlanItException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
-     
-    if(osmWay.getId()==291623398l) {
-      int bla = 4;
-    }
-    
+         
     /* collect memory model nodes */
     Pair<Node,Integer> nodeFirstResult = extractFirstNode(osmWay, startNodeIndex, allowTruncationIfGeometryIncomplete);
     if(nodeFirstResult== null || nodeFirstResult.first() == null) {
@@ -1147,10 +1143,6 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException thrown if error
    */
   private Link extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete) throws PlanItException {
-
-    if(osmWay.getId()==26405645l) {
-      int bla = 4;
-    }
     
     /* create the link */
     Link link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);   

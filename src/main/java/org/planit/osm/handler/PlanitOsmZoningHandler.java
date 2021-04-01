@@ -869,11 +869,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     /* process all but stop_positions */
     for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
       OsmRelationMember member = osmRelation.getMember(index);    
-      
-      if(member.getId()==5968567) {
-        int bla = 4;
-      }
-      
+            
       if( skipOsmPtEntity(member)) {
         continue;
       }      
@@ -1053,10 +1049,6 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
-            
-    if(osmNode.getId()==1287222216l) {
-      int bla = 4;
-    }
     
     if(skipOsmNode(osmNode)) {
       LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
@@ -1085,11 +1077,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-            
-    if(osmWay.getId()==45362526l) {
-      int bla = 4;
-    }
-    
+                
     if(skipOsmWay(osmWay)) {
       LOGGER.fine(String.format("Skipped osm way %d, marked for exclusion", osmWay.getId()));
       return;

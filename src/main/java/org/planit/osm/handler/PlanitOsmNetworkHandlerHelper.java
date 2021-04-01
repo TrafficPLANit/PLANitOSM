@@ -5,22 +5,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
-import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
-import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
  * Helper class for the OSM network handlers, providing static helper methods that reflect common code across various

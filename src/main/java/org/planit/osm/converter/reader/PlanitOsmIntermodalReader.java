@@ -28,15 +28,26 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmIntermodalReader.class.getCanonicalName());
   
   /** initialise the zoning reader
-   * @param inputFile to use
+   * 
    * @param countryName to use
    * @param ptSettings to use
    * @param osmNetworkToPopulate network to populate
    */
-  private void initialiseZoningReader(String inputFile, String countryName, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) {
+  private void initialiseZoningReader(String countryName, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) {
     this.osmZoningReader = PlanitOsmZoningReaderFactory.create(inputFile, countryName, ptSettings, osmNetworkToPopulate);
     /* default activate the parser because otherwise there is no point in using an intermodal reader anyway */
     this.osmZoningReader.getSettings().activateParser(true);     
+  }  
+  
+  /** initialise the network  reader
+   * 
+   * @param countryName to use
+   * @param networkSettings to use
+   * @param osmNetworkToPopulate network to populate
+   * @throws PlanItException thrown if error
+   */  
+  private void initialiseNetworkReader(String countryName, PlanitOsmNetworkSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+    this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, networkSettings, osmNetworkToPopulate);    
   }  
   
   /** location of the input file to use */
@@ -110,7 +121,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     }    
     
     /* ZONING READER */
-    initialiseZoningReader(inputFile, countryName, ptSettings, osmNetworkToPopulate);   
+    initialiseZoningReader(countryName, ptSettings, osmNetworkToPopulate);   
   }
   
   /**
@@ -126,13 +137,14 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    */
   protected PlanitOsmIntermodalReader(
       final String inputFile, final String countryName, PlanitOsmNetworkSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
+    
     this.inputFile = inputFile;
     
     /* NETWORK READER */
-    this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, networkSettings, osmNetworkToPopulate);
+    initialiseNetworkReader(countryName, networkSettings, osmNetworkToPopulate);
     
     /* ZONING READER */
-    initialiseZoningReader(inputFile, countryName, ptSettings, osmNetworkToPopulate);   
+    initialiseZoningReader(countryName, ptSettings, osmNetworkToPopulate);   
   }  
   
    

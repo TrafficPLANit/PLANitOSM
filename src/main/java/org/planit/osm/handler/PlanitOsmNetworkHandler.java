@@ -18,7 +18,6 @@ import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
-import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
@@ -475,11 +474,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
-    
-    if(osmNode.getId() == 579487458l) {
-      int bla = 4;
-    }
-    
+        
     /* store for later processing */
     networkData.addOsmNode(osmNode);   
     /* track bounding box of parsed osm nodes */
@@ -492,11 +487,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-    
-    if(osmWay.getId()==291623398l) {
-      int bla = 4;
-    }
-    
+        
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          

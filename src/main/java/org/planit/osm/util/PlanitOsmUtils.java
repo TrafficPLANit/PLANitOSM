@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmPtv1Tags;
 import org.planit.osm.tags.OsmPtv2Tags;

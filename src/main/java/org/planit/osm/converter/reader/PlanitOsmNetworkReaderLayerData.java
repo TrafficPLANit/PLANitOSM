@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Point;
 import org.planit.osm.handler.PlanitOsmNetworkHandlerHelper;
-import org.planit.osm.handler.PlanitOsmZoningHandlerHelper;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;

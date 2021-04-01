@@ -181,10 +181,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-    
-    if(accessLink==null || transferZone==null) {
-      int bla = 4;
-    }
+
     Coordinate closestExistingCoordinate = geoUtils.getClosestExistingLineStringCoordinateToGeometry(transferZone.getGeometry(), accessLink.getGeometry());
     double distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestExistingCoordinate), transferZone.getGeometry());        
     
@@ -365,11 +362,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private Collection<Link> findModeDistanceCompatibleStopLocationLinksForWaitingArea(Long osmEntityId, Geometry waitingAreaGeometry, String eligibleOsmMode, Envelope searchBoundingBox) throws PlanItException {
-    
-    if(osmEntityId == 1546620260) {
-      int bla = 4;
-    }
-    
+        
     Collection<String> eligibleOsmModes = Collections.singleton(eligibleOsmMode);
     /* match links spatially */
     Collection<Link> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);    
@@ -891,11 +884,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Map<String,String> tags = OsmModelUtil.getTagsAsMap(osmStation);    
     OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
     getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);
-    
-    if(osmStation.getId()==29749103l) {
-      int bla = 4;
-    }
-            
+                
     /* eligible modes for station, must at least support one or more mapped modes */
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
     Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
@@ -967,10 +956,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     if(unprocessedStations != null) {
       for(OsmEntity osmStation : unprocessedStations){
         
-        if(osmStation.getId()==703329460l) {
-          int bla = 4;
-        }        
-        
         Envelope boundingBox = PlanitOsmUtils.createBoundingBox(osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getNetworkToZoningData().getOsmNodes(), geoUtils);        
         if(boundingBox!= null) {
           
@@ -1033,11 +1018,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private void processStopPositionNotPartOfStopArea(OsmNode osmNode, Map<String, String> tags) throws PlanItException {   
     getZoningReaderData().getOsmData().removeUnprocessedStopPosition(osmNode.getId());
-    
-    if(osmNode.getId()==512414261l) {
-      int bla = 4;
-    }
-    
+        
     /* modes for stop_position */
     String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
@@ -1097,9 +1078,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */  
   private void processIncompleteTransferZone(TransferZone transferZone) throws PlanItException {
-    if(transferZone.getExternalId()!=null && transferZone.getExternalId().equals("512414261")) {
-      int bla = 4;
-    }  
     
     EntityType osmEntityType = PlanitOsmZoningHandlerHelper.getOsmEntityType(transferZone);
     long osmEntityId = Long.valueOf(transferZone.getExternalId());      
@@ -1387,11 +1365,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */
   private void extractStandAloneStation(OsmEntity osmStation, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    
-    if(osmStation.getId()==715380193l) {
-      int bla = 4;
-    }
-    
+        
     /* modes */
     String defaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags, OsmRailModeTags.TRAIN);
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
@@ -1479,11 +1453,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param transferZoneGroup the group this stop position is allowed to relate to
    * @throws PlanItException thrown if error
    */
-  private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {
-    
-    if(osmNode.getId()==2203952177l) {
-      int bla = 4;
-    }
+  private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {    
           
     /* supported modes */
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
@@ -1626,10 +1596,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     /* process only stop_positions */
     for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
       OsmRelationMember member = osmRelation.getMember(index);
-            
-      if(member.getId()==4237552379l) {
-        int bla = 4;
-      }
       
       if( skipOsmPtEntity(member)) {
         continue;

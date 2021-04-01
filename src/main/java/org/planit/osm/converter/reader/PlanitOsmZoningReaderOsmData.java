@@ -179,8 +179,10 @@ public class PlanitOsmZoningReaderOsmData {
     switch (ptVersion) {
       case VERSION_1:
         unprocessedPtv1Stations.clear();    
+        break;
       case VERSION_2:
         unprocessedPtv2Stations.clear();
+        break;
       default:
         LOGGER.warning(String.format("could not remove stations, invalid pt version provided"));        
     }
@@ -194,9 +196,11 @@ public class PlanitOsmZoningReaderOsmData {
   public void removeAllUnproccessedStations(OsmPtVersionScheme ptVersion, EntityType type) {
     switch (ptVersion) {
       case VERSION_1:
-        getUnprocessedPtv1Stations(type).clear();    
+        getUnprocessedPtv1Stations(type).clear();   
+        break;
       case VERSION_2:
         getUnprocessedPtv2Stations(type).clear();
+        break;
       default:
         LOGGER.warning(String.format("could not remove stations, invalid pt version provided"));        
     }
