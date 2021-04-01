@@ -110,7 +110,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
       
       /* only process circular ways that are complete, e.g. not near bounding box causing some nodes to be missing
        * in which case we do not parse the entire circular way to avoid issues */
-      if(!PlanitOsmNetworkHandlerHelper.isAllOsmWayNodesAvailable(circularOsmWay, networkData.getOsmNodes())){
+      if(!PlanitOsmWayUtils.isAllOsmWayNodesAvailable(circularOsmWay, networkData.getOsmNodes())){
         return;
       }
       

@@ -232,7 +232,10 @@ public class PlanitOsmZoningReader implements ZoningReader {
     doMainProcessing(handlerProfiler);
     
     /* post-processing (stop_positions to connectoid) */
-    doPostProcessing(handlerProfiler); 
+    doPostProcessing(handlerProfiler);
+    
+    /* log stats */
+    handlerProfiler.logProcessingStats(zoningReaderData, zoning);
     
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
     removeDanglingZones();

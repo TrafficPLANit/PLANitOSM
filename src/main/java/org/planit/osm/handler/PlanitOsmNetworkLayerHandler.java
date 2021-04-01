@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
@@ -98,6 +99,16 @@ public class PlanitOsmNetworkLayerHandler {
   
   /** geo utility instance based on network wide crs this layer is part of */
   private final PlanitJtsUtils geoUtils;   
+  
+  /** check if geometry is near network bounding box
+   * @param geometry to check
+   * @param geoUtils to use
+   * @return truw when near, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  protected boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsUtils geoUtils) throws PlanItException {
+    return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
+  }  
   
   /** update the included and excluded mode sets passed in based on the key/value information available in the access=<?> tag.
    * 
@@ -1055,14 +1066,15 @@ public class PlanitOsmNetworkLayerHandler {
   private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, int startNodeIndex, boolean changeStartNodeIndexIfNotPresent) throws PlanItException {
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
     if(nodeFirst==null && changeStartNodeIndexIfNotPresent) {
-      startNodeIndex = PlanitOsmNetworkHandlerHelper.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
+      startNodeIndex = PlanitOsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
       nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
       if(nodeFirst!= null) {
-        if(PlanitGraphGeoUtils.isVertexNearBoundingBox(nodeFirst, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS, geoUtils)) {
-          LOGGER.fine(String.format("SALVAGED: OSM way %s not fully available from start node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));    
+       
+        if(isNearNetworkBoundingBox(nodeFirst.getPosition(), geoUtils)){
+          LOGGER.fine(String.format("SALVAGED: Osm way %s geometry incomplete from start node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));    
         }else{
-          //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
-          LOGGER.warning(String.format("OSM way %s not fully available, likely due to network bounding box, please verify, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));
+          /* quite far from bounding box, so log for user verification to be sure */
+          LOGGER.warning(String.format("SALVAGED: Osm way %s geometry incomplete, likely cut-off by network bounding box, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));
         }
       }else {
         throw new PlanItException("unable to collect osm node (start node index: %d) from osm way %s, even though it is expected to be available, this shouldn't happen",startNodeIndex, osmWay.getId()); 
@@ -1083,10 +1095,10 @@ public class PlanitOsmNetworkLayerHandler {
     
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
     if(nodeLast==null && changeEndNodeIndexIfNotPresent) {
-      endNodeIndex = PlanitOsmNetworkHandlerHelper.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
+      endNodeIndex = PlanitOsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
       nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
       if(nodeLast!= null) {
-        if(PlanitGraphGeoUtils.isVertexNearBoundingBox(nodeLast, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS , geoUtils)) {
+        if(isNearNetworkBoundingBox(nodeLast.getPosition(), geoUtils)) {
           LOGGER.fine(String.format("SALVAGED: OSM way %s not fully available to end node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));    
         }else {
           //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
@@ -1149,8 +1161,8 @@ public class PlanitOsmNetworkLayerHandler {
       
       /* if geometry might be truncated, update the actual used start and end indices used if needed to correctly register remaining internal nodes */
       if(allowTruncationIfGeometryIncomplete) {
-        startNodeIndex = PlanitOsmNetworkHandlerHelper.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);
-        endNodeIndex = PlanitOsmNetworkHandlerHelper.getOsmWayNodeIndexByLocation(osmWay, link.getNodeB().getPosition(), networkData);
+        startNodeIndex = PlanitOsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);
+        endNodeIndex = PlanitOsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeB().getPosition(), networkData);
       }
       
       /* register internal nodes for breaking links later on during parsing */

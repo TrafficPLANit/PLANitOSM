@@ -116,7 +116,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
     /* stats*/
     getProfiler().logPreProcessingStats(getZoningReaderData());      
     
-    LOGGER.info(" OSM zone pre-parsing...DONE");
+    LOGGER.fine(" OSM zone pre-parsing...DONE");
 
   }
 
