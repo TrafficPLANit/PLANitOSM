@@ -86,7 +86,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param zoning to populate
    */
   protected PlanitOsmIntermodalReader(final String inputFile, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(inputFile, countryName, null, osmNetworkToPopulate, zoningToPopulate);  
+    this(inputFile, countryName, new PlanitOsmPublicTransportSettings(), osmNetworkToPopulate, zoningToPopulate);  
   }  
 
   /**

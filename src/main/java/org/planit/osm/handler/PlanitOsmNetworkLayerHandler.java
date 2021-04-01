@@ -4,11 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
@@ -43,7 +40,7 @@ import org.planit.osm.util.PlanitOsmUtils;
 import org.planit.osm.util.PlanitOsmWayUtils;
 import org.planit.utils.arrays.ArrayUtils;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.geo.PlanitGraphGeoUtils;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -98,7 +95,7 @@ public class PlanitOsmNetworkLayerHandler {
   private final MacroscopicPhysicalNetwork networkLayer;
   
   /** geo utility instance based on network wide crs this layer is part of */
-  private final PlanitJtsUtils geoUtils;   
+  private final PlanitJtsCrsUtils geoUtils;   
   
   /** check if geometry is near network bounding box
    * @param geometry to check
@@ -106,7 +103,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @return truw when near, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
   }  
   
@@ -1217,7 +1214,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkSettings settings, PlanitJtsUtils geoUtils) {
+  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkSettings settings, PlanitJtsCrsUtils geoUtils) {
     this.networkLayer = networkLayer;           
     this.networkData = networkData;
     this.geoUtils = geoUtils;

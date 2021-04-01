@@ -31,6 +31,7 @@ import org.locationtech.jts.linearref.LinearLocation;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.graph.EdgeSegment;
@@ -74,7 +75,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningPostProcessingHandler.class.getCanonicalName());
     
   /** utilities for geographic information */
-  private final PlanitJtsUtils geoUtils; 
+  private final PlanitJtsCrsUtils geoUtils; 
     
   /** to be able to find osm nodes internal to parsed planit links that we want to break to for example create stop locations for stand alone station, 
    * we must be able to spatially find those nodes spatially because they are not referenced by the station or planit link eplicitly, this is what we do here. 
@@ -115,6 +116,22 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       }
     }
   } 
+  
+  /** Verify if the provided transfer zone supports more than a single stop_position. transfer zones that reside next to the road
+   * do, but point based transfer zones that reside on the road do not, because they are a stop_position and therefore only support that
+   * stop_position.
+   * 
+   * @param transferZone to verify if supports multiple stop positions
+   * @return true when supporting it, false otherwise
+   * @throws PlanItException thrown if error
+   */
+  public boolean supportsMultipleStopPositions(TransferZone transferZone) throws PlanItException {
+    EntityType osmEntityType = PlanitOsmZoningHandlerHelper.getOsmEntityType(transferZone);
+    if(osmEntityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(Long.valueOf(transferZone.getExternalId()))) {
+        return false;
+    }
+    return true;    
+  }
   
     
   /** find all links with at least one compatible mode (and planit mode mapped) based on the passed in reference osm modes
@@ -158,11 +175,12 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param transferZone to find location for
    * @param accessLink to find location on
    * @param accessMode to be compatible with
+   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
    * @param networkLayer to use
    * @return found location either exisiting osm node or projected location that is nearest and does not exist as a shape point on the link yet, or null if no valid position could be found
    * @throws PlanItException thrown if error
    */
-  private Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+  private Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
     
     if(accessLink==null || transferZone==null) {
       int bla = 4;
@@ -173,7 +191,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     /* if close enough break at existing osm node to create stop_position/connectoid, otherwise create artificial non-osm node in closest projected location which
      * in most cases will be closer and within threshold */
     Point connectoidLocation = null;
-    if(distanceToExistingCoordinateOnLinkInMeters < getSettings().getStopToWaitingAreaSearchRadiusMeters()) {
+    if(distanceToExistingCoordinateOnLinkInMeters < maxAllowedStopToTransferZoneDistanceMeters) {
       
       /* close enough, see if it can be reused: 
        * 1) node is an extreme node
@@ -196,7 +214,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       }else {
       
         /* 2) must be internal if not an extreme node */
-        int coordinateIndex = geoUtils.getCoordinateIndexOf(closestExistingCoordinate, accessLink.getGeometry().getCoordinates());
+        int coordinateIndex = PlanitJtsUtils.getCoordinateIndexOf(closestExistingCoordinate, accessLink.getGeometry().getCoordinates());
         if(coordinateIndex <= 0 || coordinateIndex==(accessLink.getGeometry().getCoordinates().length-1)) {
           throw new PlanItException("Unable to locate link internal osm node even though it is expected to exist when creating stop locations for osm entity %s",transferZone.getExternalId());
         }
@@ -219,7 +237,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       /* verify projected location is valid */
       Coordinate closestProjectedCoordinate = projectedLinearLocationOnLink.getCoordinate(accessLink.getGeometry());
       if( closestExistingCoordinate.equals2D(closestProjectedCoordinate) || 
-          geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestProjectedCoordinate), transferZone.getGeometry()) > getSettings().getStopToWaitingAreaSearchRadiusMeters()) {
+          geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestProjectedCoordinate), transferZone.getGeometry()) > maxAllowedStopToTransferZoneDistanceMeters) {
         /* no need to break link, the projected closest point is too far away or deemed not suitable */
       }else {
         connectoidLocation = PlanitJtsUtils.createPoint(closestProjectedCoordinate);
@@ -298,14 +316,15 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       Iterator<? extends Edge> iterator = candidatesToFilter.iterator();
       while(iterator.hasNext()) {      
         Edge candidateLink = iterator.next();
-        Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(transferZone, (Link)candidateLink, accessMode, networkLayer);
+        Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(
+            transferZone, (Link)candidateLink, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters(), networkLayer);
         if(connectoidLocation == null) {
           iterator.remove();
         }          
       }
       
       if(candidatesToFilter == null || candidatesToFilter.isEmpty() ) {
-        logWarningIfNotNearBoundingBox(String.format("DISCARD: No suitable stop_location on potential osm way candidates found for transfer zone %s and mode %s", transferZone.getExternalId(), accessMode), transferZone.getGeometry());
+        logWarningIfNotNearBoundingBox(String.format("DISCARD: No suitable stop_location on potential osm way candidates found for transfer zone %s and mode %s", transferZone.getExternalId(), accessMode.getName()), transferZone.getGeometry());
         return null;
       }
       
@@ -422,13 +441,20 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         }else {
           throw new PlanItException("unknown entity type %s for osm station encountered, this should not happen", Osm4JUtils.getEntityType(stationEntity).toString());
         }      
-        LineSegment interSectionLineSegment = geoUtils.createExtendedLineSegment(stationToClosestPointOnClosestLinkSegment, getSettings().getStationToParallelTracksSearchRadiusMeters(), true, true);
-        Geometry virtualInterSectionGeometryForParallelTracks = PlanitJtsUtils.createLineString(interSectionLineSegment.getCoordinate(0),interSectionLineSegment.getCoordinate(1));
+        final LineSegment interSectionLineSegment = geoUtils.createExtendedLineSegment(stationToClosestPointOnClosestLinkSegment, getSettings().getStationToParallelTracksSearchRadiusMeters(), true, true);
+        final Geometry virtualInterSectionGeometryForParallelTracks = PlanitJtsUtils.createLineString(interSectionLineSegment.getCoordinate(0),interSectionLineSegment.getCoordinate(1));
         
         /* find all links of compatible modes that intersect with virtual line reflecting parallel accessible (train) tracks eligible to create a platform for */
         for(Link link : directionModeSpatiallyCompatibleLinks) {
-          if(link.getGeometry().intersects(virtualInterSectionGeometryForParallelTracks)) {
-            chosenLinksForStopLocations.add(link);
+          if( link.getGeometry().intersects(virtualInterSectionGeometryForParallelTracks)) {
+            /* intersect so still possible */
+            final LinearLocation closestLinkLinearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(), link.getGeometry());
+            final Point closestLinkLocation = PlanitJtsUtils.createPoint(closestLinkLinearLocation.getCoordinate(link.getGeometry()));            
+            final double distanceStationToPotentialAccessLink = geoUtils.getClosestDistanceInMeters(closestLinkLocation, transferZone.getGeometry());
+            if(distanceStationToPotentialAccessLink < getSettings().getStationToWaitingAreaSearchRadiusMeters()) {
+              /* within distance set, so valid */
+              chosenLinksForStopLocations.add(link);  
+            }
           }
         }
       }else if(maxMatches<1) {
@@ -494,7 +520,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
        * due to a bend in the road in the downstream direction at this very coordinate. Hence, we only accept this existing coordinate when we are sure
        * it will not be discarded due to residing on the wrong side of the road infrastructure (when extrapolated) */
       Coordinate[] linkCoordinates = accessLink.getGeometry().getCoordinates();
-      int coordinateIndex = geoUtils.getCoordinateIndexOf(connectoidLocation.getCoordinate(), linkCoordinates);
+      int coordinateIndex = PlanitJtsUtils.getCoordinateIndexOf(connectoidLocation.getCoordinate(), linkCoordinates);
       if(coordinateIndex <= 0) {
         throw new PlanItException("Unable to locate link internal location %s for osm way even though it is expected to exist for osm entity %s",accessLink.getExternalId(), transferZone.getExternalId());
       }
@@ -532,16 +558,12 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param tags to search for reference keys in
    * @param availableTransferZones to choose from
    * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode to be deemed accessible, if not user is informed
-   * @param geoUtils to use in case of multiple matches requiring selection of closest entry spatially 
+
    * @return found transfer zones that have been parsed before, null if no match is found
    * @throws PlanItException thrown if error
    */
   private Collection<TransferZone> findClosestTransferZonesByTagReference(
-      OsmNode osmNode, 
-      Map<String, String> tags, 
-      Collection<TransferZone> availableTransferZones, 
-      Collection<String> referenceOsmModes, 
-      PlanitJtsUtils geoUtils) throws PlanItException {
+      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> availableTransferZones, Collection<String> referenceOsmModes) throws PlanItException {
     
     Map<String, TransferZone> foundTransferZones = null;
     /* ref value, can be a list of multiple values */
@@ -635,10 +657,10 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */   
   private Collection<TransferZone> findAccessibleTransferZonesByReferenceOrName(
-      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones, Collection<String> referenceOsmModes, PlanitJtsUtils geoUtils) throws PlanItException {
+      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones, Collection<String> referenceOsmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     /* first try explicit reference matching to platform, i.e. transfer zone */
-    Collection<TransferZone> matchedTransferZones = findClosestTransferZonesByTagReference(osmNode, tags, stopAreaTransferZones, referenceOsmModes, geoUtils);    
+    Collection<TransferZone> matchedTransferZones = findClosestTransferZonesByTagReference(osmNode, tags, stopAreaTransferZones, referenceOsmModes);    
     if(matchedTransferZones != null && !matchedTransferZones.isEmpty()) {
       /* explicit references found, these we trust most, so use them immediately as is */
       return matchedTransferZones;
@@ -738,6 +760,17 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       return null;
     }
     
+    /* filter transfer zones that cannot be valid for additional stop_positions (if they have any already) */
+    if( potentialTransferZones != null && !potentialTransferZones.isEmpty()){
+        Iterator<TransferZone> iterator = potentialTransferZones.iterator();
+        while(iterator.hasNext()) {
+          TransferZone transferZone = iterator.next();
+          if( getZoningReaderData().getPlanitData().hasConnectoids(transferZone) && !supportsMultipleStopPositions(transferZone)) {
+            iterator.remove();
+          }          
+        }      
+    }
+    
     /* find matches based on reference, name from given potential options... */
     Collection<TransferZone> matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, potentialTransferZones, referenceOsmModes, geoUtils);         
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
@@ -748,6 +781,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         matchedTransferZones = Collections.singleton(foundZone);
       }
     }
+     
         
     return matchedTransferZones;
   }  
@@ -933,7 +967,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     if(unprocessedStations != null) {
       for(OsmEntity osmStation : unprocessedStations){
         
-        if(osmStation.getId()==6646032959l) {
+        if(osmStation.getId()==703329460l) {
           int bla = 4;
         }        
         
@@ -1000,7 +1034,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   private void processStopPositionNotPartOfStopArea(OsmNode osmNode, Map<String, String> tags) throws PlanItException {   
     getZoningReaderData().getOsmData().removeUnprocessedStopPosition(osmNode.getId());
     
-    if(osmNode.getId()==4111222208l) {
+    if(osmNode.getId()==512414261l) {
       int bla = 4;
     }
     
@@ -1063,7 +1097,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @throws PlanItException thrown if error
    */  
   private void processIncompleteTransferZone(TransferZone transferZone) throws PlanItException {
-    if(transferZone.getExternalId()!=null && transferZone.getExternalId().equals("270043724")) {
+    if(transferZone.getExternalId()!=null && transferZone.getExternalId().equals("512414261")) {
       int bla = 4;
     }  
     
@@ -1120,7 +1154,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
        
       /* create connectoids */    
       if(selectedAccessLink != null) {
-        extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(Long.valueOf(transferZone.getExternalId()),transferZone.getGeometry(),selectedAccessLink, transferZone, networkLayer, accessMode);
+        extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
+            Long.valueOf(transferZone.getExternalId()),transferZone.getGeometry(),selectedAccessLink, transferZone, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters(), networkLayer);
       }
     }
     
@@ -1163,14 +1198,17 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param waitingAreaGeometry geometry of the waiting area
    * @param accessLink to create connectoid location on on either one of its extreme or internal coordinates
    * @param accessMode to consider
+   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
    * @param networkLayer the link is registered on
    * @return connectoid location to use, may or may not be an existing osm node location, or not
    * @throws PlanItException thrown if error
    */
-  private Point extractConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+  private Point extractConnectoidLocationForstandAloneTransferZoneOnLink(
+      TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
     
     /* determine distance to closest osm node on existing planit link to create stop location (connectoid) for*/
-    Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(transferZone, accessLink, accessMode, networkLayer);
+    Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(
+        transferZone, accessLink, accessMode, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     
     if(connectoidLocation !=null) {
       
@@ -1241,17 +1279,16 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param waitingAreaGeometry geometry of the waiting area
    * @param accessLink to create connectoids on by breaking it
    * @param transferZone to register connectoids on
-   * @param networkLayer the modes relate to
    * @param accessMode eligible mode for the station
+   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
+   * @param networkLayer the modes relate to
    * @throws PlanItException thrown if error
    */
   private void extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
-      long osmWaitingAreaId, Geometry waitingAreaGeometry , Link accessLink, TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode accessMode) throws PlanItException {
-    
-    
-        
+      long osmWaitingAreaId, Geometry waitingAreaGeometry , Link accessLink, TransferZone transferZone, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
+               
     /* geo location on planit link, possibly inserted for this purpose by this method if no viable osm node/existing coordinate is present */
-    Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(transferZone, accessLink, accessMode, networkLayer);
+    Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(transferZone, accessLink, accessMode, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     if(connectoidLocation == null) {
       logWarningIfNotNearBoundingBox(
           String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()), transferZone.getGeometry());
@@ -1285,7 +1322,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
-  private void extractStandAloneStationConnectoids(OsmEntity osmStation, Map<String, String> tags, TransferZone stationTransferZone, Collection<String> osmAccessModes, PlanitJtsUtils geoUtils) throws PlanItException {
+  private void extractStandAloneStationConnectoids(OsmEntity osmStation, Map<String, String> tags, TransferZone stationTransferZone, Collection<String> osmAccessModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     EntityType osmStationEntityType = Osm4JUtils.getEntityType(osmStation);
         
     /* modes */
@@ -1334,7 +1371,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       
         /* identify locations based on links and spatial restrictions, because no stop_location is known in osm, nearest osm node might be to
          * far away and we must break the link and insert a planit node without an osm node counterpart present, this is what the below method does */
-        extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(osmStation.getId(), stationTransferZone.getGeometry() , accessLink, stationTransferZone, networkLayer, planitMode);            
+        extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
+            osmStation.getId(), stationTransferZone.getGeometry() , accessLink, stationTransferZone, planitMode, getSettings().getStationToWaitingAreaSearchRadiusMeters(), networkLayer);            
       }
     }
   }
@@ -1345,9 +1383,10 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * 
    * @param osmStation to extract from
    * @param tags of the station
+   * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
-  private void extractStandAloneStation(OsmEntity osmStation, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {
+  private void extractStandAloneStation(OsmEntity osmStation, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     if(osmStation.getId()==715380193l) {
       int bla = 4;
@@ -1627,7 +1666,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     super(transferSettings, handlerData, network2ZoningData, zoningToPopulate, profiler);
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
+    this.geoUtils = new PlanitJtsCrsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
     
   }
   

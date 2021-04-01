@@ -17,6 +17,7 @@ import org.planit.osm.util.*;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.network.physical.Link;
@@ -51,7 +52,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   private final PlanitOsmNetworkSettings settings;
 
   /** utilities for geographic information */
-  private final PlanitJtsUtils geoUtils;
+  private final PlanitJtsCrsUtils geoUtils;
       
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
@@ -425,7 +426,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     this.networkData = networkData;
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsUtils(settings.getSourceCRS());
+    this.geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
     try {
       this.networkData.getOsmNetwork().transform(settings.getSourceCRS());
     }catch(PlanItException e) {

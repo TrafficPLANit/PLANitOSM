@@ -26,6 +26,7 @@ import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.osm.tags.OsmWaterModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.Edge;
@@ -191,7 +192,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @return true when left, false otherwise
    * @throws PlanItException thrown if error
    */
-  public static boolean isTransferZoneLeftOf(TransferZone transferZone, Coordinate coordA, Coordinate coordB, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static boolean isTransferZoneLeftOf(TransferZone transferZone, Coordinate coordA, Coordinate coordB, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     Geometry transferzoneGeometry = null; 
     if(transferZone.hasCentroid() && transferZone.getCentroid().hasPosition()) {
@@ -219,7 +220,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Collection<EdgeSegment> identifyInvalidTransferZoneAccessLinkSegmentsBasedOnRelativeLocationToInfrastructure(
-      final Collection<EdgeSegment> accessLinkSegments, final TransferZone transferZone, final Mode planitMode, boolean leftHandDrive, final PlanitJtsUtils geoUtils) throws PlanItException {                    
+      final Collection<EdgeSegment> accessLinkSegments, final TransferZone transferZone, final Mode planitMode, boolean leftHandDrive, final PlanitJtsCrsUtils geoUtils) throws PlanItException {                    
     
     Collection<EdgeSegment> invalidAccessLinkSegments = new ArrayList<EdgeSegment>(accessLinkSegments.size());
     /* use line geometry closest to connectoid location */
@@ -281,7 +282,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @return remaining links that are deemed eligible
    * @throws PlanItException thrown if error
    */   
-  public static Collection<Link> removeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsUtils geoUtils) throws PlanItException{
+  public static Collection<Link> removeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsCrsUtils geoUtils) throws PlanItException{
     Collection<Link> matchedLinks = new HashSet<Link>(links);  
     for(Link link : links) {            
       for(Mode accessMode : accessModes){
@@ -449,7 +450,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Link getClosestLinkWithOsmWayIdToGeometry(
-      long osmWayId, Geometry geometry, MacroscopicPhysicalNetwork networkLayer, PlanitJtsUtils geoUtils) throws PlanItException {
+      long osmWayId, Geometry geometry, MacroscopicPhysicalNetwork networkLayer, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     /* collect all planit links that match the osm way id (very slow, but it is rare and not worth the indexing generally) */
     Collection<Link> nominatedLinks = networkLayer.links.getByExternalId(String.valueOf(osmWayId));
     /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */
@@ -465,7 +466,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @return closest projected linear location on link geometry
    * @throws PlanItException thrown if error
    */
-  public static LinearLocation getClosestProjectedLinearLocationOnEdgeForTransferZone(TransferZone transferZone, Edge accessEdge, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static LinearLocation getClosestProjectedLinearLocationOnEdgeForTransferZone(TransferZone transferZone, Edge accessEdge, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     LinearLocation projectedLinearLocationOnLink = null;
     EntityType transferZoneGeometryType = PlanitOsmZoningHandlerHelper.getOsmEntityType(transferZone);
     if(transferZoneGeometryType.equals(EntityType.Node)) {
@@ -487,7 +488,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @return line segment if found
    * @throws PlanItException  thrown if error
    */
-  public static LineSegment extractClosestLineSegmentToGeometryFromLinkSegment(Geometry referenceGeometry, MacroscopicLinkSegment linkSegment, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static LineSegment extractClosestLineSegmentToGeometryFromLinkSegment(Geometry referenceGeometry, MacroscopicLinkSegment linkSegment, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     LineString linkSegmentGeometry = linkSegment.getParentEdge().getGeometry();
     if(linkSegmentGeometry == null) {

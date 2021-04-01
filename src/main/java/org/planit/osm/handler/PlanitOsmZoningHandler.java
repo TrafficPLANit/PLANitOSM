@@ -12,7 +12,7 @@ import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.zoning.TransferZone;
@@ -44,7 +44,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningHandler.class.getCanonicalName());
   
   /** utilities for geographic information */
-  private final PlanitJtsUtils geoUtils;  
+  private final PlanitJtsCrsUtils geoUtils;  
   
   
   /** add the node's transfer zone (if it can be found) to the provided transfer zone group
@@ -502,7 +502,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */  
-  private void extractPtv1StandAloneHalt(OsmNode osmNode, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {
+  private void extractPtv1StandAloneHalt(OsmNode osmNode, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.HALT);
         
     String expectedDefaultMode = OsmRailModeTags.TRAIN;    
@@ -520,7 +520,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */  
-  private void extractTransferInfrastructurePtv1HighwayBusStop(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {
+  private void extractTransferInfrastructurePtv1HighwayBusStop(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     /* create transfer zone when at least one mode is supported */
     String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
@@ -570,7 +570,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
-  private void extractTransferInfrastructurePtv1Highway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsUtils geoUtils) throws PlanItException {       
+  private void extractTransferInfrastructurePtv1Highway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsCrsUtils geoUtils) throws PlanItException {       
       
     /* bus stop -> create transfer zone */
     if(OsmPtv1Tags.BUS_STOP.equals(ptv1ValueTag)){
@@ -629,7 +629,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */  
-  private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsUtils geoUtils) throws PlanItException {
+  private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
     
     /* tram stop */
@@ -800,7 +800,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
-  protected void extractTransferInfrastructurePtv1(OsmNode osmNode, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {    
+  protected void extractTransferInfrastructurePtv1(OsmNode osmNode, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {    
         
     if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
       
@@ -1023,7 +1023,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     super(transferSettings, zoningReaderData,network2ZoningData, zoningToPopulate, profiler);
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
+    this.geoUtils = new PlanitJtsCrsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
   }
   
   /**

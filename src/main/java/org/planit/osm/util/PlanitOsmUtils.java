@@ -18,6 +18,7 @@ import org.planit.osm.tags.OsmPtv2Tags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.zoning.TransferZoneGroup;
@@ -139,7 +140,7 @@ public class PlanitOsmUtils {
    * @return closest zone found
    * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosestByTransferGroup(OsmEntity osmEntity, Collection<? extends TransferZoneGroup> transferZoneGroups, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosestByTransferGroup(OsmEntity osmEntity, Collection<? extends TransferZoneGroup> transferZoneGroups, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     Set<Zone> closestPerGroup = new HashSet<Zone>();
     for(TransferZoneGroup group : transferZoneGroups) {
       Zone closestOfGroup = findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, geoUtils);
@@ -158,7 +159,7 @@ public class PlanitOsmUtils {
    * @return closest zone found
    * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosest(OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
@@ -181,7 +182,7 @@ public class PlanitOsmUtils {
    * @return closest edge found
    * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Edge findEdgeClosest(OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
@@ -203,7 +204,7 @@ public class PlanitOsmUtils {
    * @param geoUtils used to extract distances based on underlying crs
    * @return bounding box
    */
-  public static Envelope createBoundingBox(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsUtils geoUtils) {
+  public static Envelope createBoundingBox(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
     /* search bounding box */
     Envelope boundingBox = null; 
     switch (Osm4JUtils.getEntityType(osmEntity)) {

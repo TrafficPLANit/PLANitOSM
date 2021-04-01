@@ -22,7 +22,7 @@ import org.locationtech.jts.geom.Point;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -42,7 +42,6 @@ import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
-import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
  * Base Handler for all zoning handlers. Contains shared functionality that is used across the different zoning handlers 
@@ -161,7 +160,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return transfer zone created
    * @throws PlanItException thrown if error
    */
-  private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsUtils geoUtils) throws PlanItException {
+  private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     TransferZone transferZone = null;
     
     /* first verify is there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
@@ -221,7 +220,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return transfer zone created, null if something happenned making it impossible to create the zone
    * @throws PlanItException thrown if error
    */
-  private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsUtils geoUtils) throws PlanItException {
+  private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     /* create and register */
     TransferZone transferZone = createAndPopulateTransferZone(osmEntity,tags, transferZoneType, geoUtils);
     if(transferZone != null) {
@@ -240,7 +239,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return truw when near, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return geoUtils.isGeometryNearBoundingBox(geometry, getNetworkToZoningData().getNetworkBoundingBox(), PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
   }   
   
@@ -254,7 +253,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
-  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Logger logger, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Logger logger, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     if(!isNearNetworkBoundingBox(geometry, geoUtils)) {
       logger.warning(message);
     }
@@ -350,7 +349,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected Collection<EdgeSegment> findAccessLinkSegmentsForStandAloneTransferZone(
-      TransferZone transferZone, Link accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsUtils geoUtils) throws PlanItException {
+      TransferZone transferZone, Link accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsCrsUtils geoUtils) throws PlanItException {
         
     Long osmWaitingAreaId = Long.valueOf(transferZone.getExternalId());
     Long osmNodeIdOfLinkExtremeNode = node.getExternalId()!= null ? Long.valueOf(node.getExternalId()) : null;
@@ -435,7 +434,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return subset of transfer zones
    * @throws PlanItException thrown if error
    */
-  protected Collection<TransferZone> removeTransferZonesOnWrongSideOfRoadOfStopLocation(OsmNode osmNode, Collection<TransferZone> transferZones, Collection<String> osmModes, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected Collection<TransferZone> removeTransferZonesOnWrongSideOfRoadOfStopLocation(OsmNode osmNode, Collection<TransferZone> transferZones, Collection<String> osmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     Collection<TransferZone> matchedTransferZones = new HashSet<TransferZone>(transferZones);
     boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
     
@@ -473,7 +472,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return true when not on the wrong side, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     /* first collect links that can access the connectoid location */
     Collection<Link> planitLinksToCheck = getLinksWithAccessToConnectoidLocation(location, accessMode);
@@ -614,7 +613,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsUtils geoUtils) throws PlanItException {  
+      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {  
     
     TransferZone transferZone = null;
     
@@ -644,7 +643,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
-      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes, PlanitJtsUtils geoUtils) throws PlanItException {
+      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM, geoUtils);
     if(transferZone != null) {
       PlanitOsmZoningHandlerHelper.addOsmAccessModesToTransferZone(transferZone, eligibleOsmModes);
@@ -664,7 +663,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected TransferZone createAndRegisterPtv1TransferZoneWithConnectoidsAtOsmNode(
-      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, PlanitJtsUtils geoUtils) throws PlanItException {
+      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     TransferZoneType ptv1TransferZoneType = PlanitOsmZoningHandlerHelper.getPtv1TransferZoneType(osmNode, tags);
     return createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, ptv1TransferZoneType, geoUtils);    
   }
@@ -682,7 +681,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */  
   protected TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
-      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsUtils geoUtils) throws PlanItException {        
+      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {        
         
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {    
@@ -771,7 +770,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @throws PlanItException thrown if error
    */
   protected Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-      TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {
+      TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     
@@ -943,7 +942,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
   }
   
-  protected boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
     
@@ -992,7 +991,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return extractDirectedConnectoidsForMode(location, transferZone, planitMode, null, geoUtils);
   }
 
@@ -1009,7 +1008,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, Mode planitMode, Collection<Link> eligibleAccessLinks, PlanitJtsUtils geoUtils) throws PlanItException {    
+  protected boolean extractDirectedConnectoidsForMode(Point location, TransferZone transferZone, Mode planitMode, Collection<Link> eligibleAccessLinks, PlanitJtsCrsUtils geoUtils) throws PlanItException {    
     if(location == null || transferZone == null || planitMode == null || geoUtils == null) {
       return false;
     }
@@ -1070,7 +1069,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean extractDirectedConnectoidsForMode(OsmNode osmNode, TransferZone transferZone, Mode planitMode, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected boolean extractDirectedConnectoidsForMode(OsmNode osmNode, TransferZone transferZone, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);
     return extractDirectedConnectoidsForMode(osmNodeLocation, transferZone, planitMode, geoUtils);
   }
@@ -1087,7 +1086,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */  
-  protected void extractPtv1TransferZoneWithConnectoidsAtStopPosition(OsmNode osmNode, Map<String, String> tags, String defaultMode, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected void extractPtv1TransferZoneWithConnectoidsAtStopPosition(OsmNode osmNode, Map<String, String> tags, String defaultMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     if(getSettings().isOverwriteStopLocationWaitingArea(osmNode.getId())) {       
       /* postpone processing of stop location because alternative waiting area might not have been created yet. When all transfer zones (waiting areas) 
@@ -1108,7 +1107,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */    
-  protected void extractPtv1RailwayPlatform(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected void extractPtv1RailwayPlatform(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
     
     /* node is not part of infrastructure, we must identify closest railway infrastructure (in reasonable range) to create connectoids, or
@@ -1127,7 +1126,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */  
-  protected void extractTransferInfrastructurePtv1HighwayPlatform(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsUtils geoUtils) throws PlanItException {
+  protected void extractTransferInfrastructurePtv1HighwayPlatform(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
     /* create transfer zone when at least one mode is supported */
     String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);

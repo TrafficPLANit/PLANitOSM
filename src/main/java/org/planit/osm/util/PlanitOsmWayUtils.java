@@ -21,6 +21,7 @@ import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.function.PlanitExceptionConsumer;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -54,7 +55,7 @@ public class PlanitOsmWayUtils {
    * @return closest, null if none matches criteria
    * @throws PlanItException thrown if error
    */
-  protected static <T> T findPlanitEntityClosest(final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+  protected static <T> T findPlanitEntityClosest(final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
     T closestPlanitEntity = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
@@ -299,9 +300,7 @@ public class PlanitOsmWayUtils {
    * @throws PlanItException thrown if error
    */
   public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
-    if(osmWay.getId()==57303830l) {
-      int bla = 4;
-    }
+
     Level originalLevel = LOGGER.getLevel();
     LOGGER.setLevel(logLevel);
     Geometry geometry = null;
@@ -444,7 +443,7 @@ public class PlanitOsmWayUtils {
    * @param geoUtils to extract length based on crs
    * @return
    */
-  public static Envelope createBoundingBox(OsmWay osmWay, double offsetInMeters, Map<Long,OsmNode> osmNodes, PlanitJtsUtils geoUtils) {
+  public static Envelope createBoundingBox(final OsmWay osmWay, double offsetInMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) {
     double minX = Double.POSITIVE_INFINITY;
     double minY = Double.POSITIVE_INFINITY;
     double maxX = Double.NEGATIVE_INFINITY;
@@ -471,7 +470,7 @@ public class PlanitOsmWayUtils {
    * @return zone closest, null if none matches criteria
    * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
   }  
 
@@ -487,7 +486,7 @@ public class PlanitOsmWayUtils {
    * @return zone closest, null if none matches criteria
    * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, geoUtils);   
   }   
   
@@ -502,7 +501,7 @@ public class PlanitOsmWayUtils {
    * @return edge closest, null if none matches criteria
    * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
   }   
   
@@ -518,7 +517,7 @@ public class PlanitOsmWayUtils {
    * @return edge closest, null if none matches criteria
    * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsUtils geoUtils) throws PlanItException {
+  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, geoUtils);        
   }
 
@@ -532,7 +531,7 @@ public class PlanitOsmWayUtils {
    * @return line segment with minimum distance connecting the way and the geometry
    * @throws PlanItException thrown if error
    */
-  public static LineSegment findMinimumLineSegmentBetween(OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsUtils geoUtils) throws PlanItException {
+  public static LineSegment findMinimumLineSegmentBetween(OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     Coordinate osmWayMinDistanceCoordinate = null;
     Coordinate geometryMinDistanceCoordinate = null;
