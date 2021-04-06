@@ -107,10 +107,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
    * {@inheritDoc}
    */
   @Override
-  public void complete() throws IOException {
-        
-    /* stats*/
-    getProfiler().logPreProcessingStats(getZoningReaderData());      
+  public void complete() throws IOException {         
     
     LOGGER.fine(" OSM zone pre-parsing...DONE");
 

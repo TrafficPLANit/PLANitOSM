@@ -722,7 +722,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes) throws PlanItException {
     final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      DirectedConnectoid connectoid = zoning.connectoids.registerNew(linkSegment,accessZone);
+      DirectedConnectoid connectoid = zoning.transferConnectoids.registerNew(linkSegment,accessZone);
       /* link connectoid to zone and register modes for access*/
       connectoid.addAllowedModes(accessZone, realAllowedModes);   
       return connectoid;
@@ -920,7 +920,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
           /* special cases whenever parser decided that location required planit node even though there exists no osm node at this location */ 
           planitNode = PlanitOsmZoningHandlerHelper.createPlanitNodeForConnectoidAccess(osmNodeLocation, layerData, networkLayer);
         }
-        getProfiler().logConnectoidStatus(getZoning().connectoids.size());
+        getProfiler().logConnectoidStatus(getZoning().transferConnectoids.size());
                              
         /* now perform the breaking of links at the given node and update related tracking/reference information to broken link(segment)(s) where needed */
         breakLinksAtPlanitNode(planitNode, networkLayer, linksToBreak);
