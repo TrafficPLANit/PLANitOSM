@@ -177,7 +177,9 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
      * to another network that is not danlging means, it is in fact not dangling at all! 
      */
     osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
-    osmNetworkReader.removeDanglingSubNetworks();
+    if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
+      osmNetworkReader.removeDanglingSubNetworks(zoning);
+    }
     
     /* return result */
     return Pair.of(network, zoning);

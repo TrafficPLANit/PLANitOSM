@@ -9,6 +9,8 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.zoning.Zoning;
+
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
 
@@ -65,14 +67,25 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * @throws PlanItException thrown if error
    */
   protected void removeDanglingSubNetworks() throws PlanItException {
-    
+    removeDanglingSubNetworks(null);
+  }
+  
+  /**
+   * remove dangling subnetworks when settings dictate it
+   * 
+   * @param zoning to also remove dangling entities from when they reference removed road/rail subnetworks
+   * @throws PlanItException thrown if error
+   */  
+  public void removeDanglingSubNetworks(Zoning zoning) throws PlanItException {
     if(settings.isRemoveDanglingSubnetworks()) {
 
-      networkData.getOsmNetwork().removeDanglingSubnetworks(
-          settings.getDiscardDanglingNetworkBelowSize(), settings.getDiscardDanglingNetworkAboveSize(), settings.isAlwaysKeepLargestsubNetwork());
+      Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
+      Integer discardMaxsize = settings.getDiscardDanglingNetworkAboveSize();
+      boolean keepLargest = settings.isAlwaysKeepLargestsubNetwork();
+      networkData.getOsmNetwork().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest, zoning);
       
     }
-  }
+  }  
   
   /**
    * Constructor 
@@ -142,11 +155,13 @@ public class PlanitOsmNetworkReader implements NetworkReader {
         throw new PlanItException("error during parsing of osm file",e);
       }
       
-      /* danlging subnetworks */
-      removeDanglingSubNetworks();                  
+      /* dangling subnetworks */
+      if(getSettings().isRemoveDanglingSubnetworks()) {
+        removeDanglingSubNetworks();
+      }
     }
     
-    LOGGER.info(" OSM full network parsing...DONE");
+    LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */
     return networkData.getOsmNetwork();

@@ -1531,6 +1531,12 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     
     
     OsmNode stopPositionNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
+    if(stopPositionNode==null) {
+      /* likely missing because it falls outside bounding box, ignore */
+      LOGGER.warning(String.format("DISCARD:Unable to extract otv2 stop position %d in stop area %s, osm node missing", member.getId(), transferZoneGroup.getExternalId()));
+      return;
+    }
+    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(stopPositionNode);            
     Boolean isKnownPtv2StopPosition = null;
     

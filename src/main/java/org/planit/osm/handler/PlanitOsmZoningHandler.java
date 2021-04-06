@@ -83,6 +83,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     boolean wronglyTaggedRole = false;
     if(member.getType() == EntityType.Node) {
       OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
+      if(osmNode == null) {
+        /* node not available, likely outside bounding box, since unknown we cannot claim it is wrongly tagged */
+        return false;
+      }
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
       if(!(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_POSITION))) {
         wronglyTaggedRole = true;
