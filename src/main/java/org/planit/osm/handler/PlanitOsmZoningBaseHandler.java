@@ -25,10 +25,12 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.DirectedVertex;
 import org.planit.utils.graph.EdgeSegment;
+import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.physical.LinkSegment;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.DirectedConnectoid;
@@ -36,6 +38,8 @@ import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
+import org.planit.zoning.listener.UpdateConnectoidsOnBreakLink;
+
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
@@ -864,9 +868,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
      * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
      * downstream vertex identified */
-    Map<DirectedConnectoid,DirectedVertex> connectoidsAccessLinkSegmentVerticesBeforeBreakLink = PlanitOsmZoningHandlerHelper.collectAccessLinkSegmentDownstreamVerticesForConnectoids(
-        linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
+    Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink = 
+        PlanitOsmZoningHandlerHelper.collectConnectoidAccessNodeLocations(linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
+    Set<BreakEdgeListener<Node, Link>> breakLinkListeners = 
+        Set.of(new UpdateConnectoidsOnBreakLink<Node, Link, LinkSegment>(connectoidsAccessNodeLocationBeforeBreakLink));
+        
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
     {      
       /* remove links from spatial index when they are broken up and their geometry changes, after breaking more links exist with smaller geometries... insert those after as replacements*/
@@ -874,11 +881,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }    
           
     /* break links */
-    Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
-    
-    /* in case due to breaking links the access link segments no longer represent the link segment directly upstream of the original vertex (downstream of the access link segment
-     * before breaking the links, this method will update the directed connectoids to undo this and update their access link segments where needed */
-    PlanitOsmZoningHandlerHelper.updateAccessLinkSegmentsForDirectedConnectoids(connectoidsAccessLinkSegmentVerticesBeforeBreakLink);    
+    Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(
+        planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem(), breakLinkListeners);   
 
     /* TRACKING DATA CONSISTENCY - AFTER */
     {

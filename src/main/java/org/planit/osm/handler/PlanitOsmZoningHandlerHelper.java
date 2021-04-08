@@ -98,33 +98,21 @@ public class PlanitOsmZoningHandlerHelper {
     
     return referencingConnectoids;
   }          
-  
-  /** Delegate to zoning modifier, to be used in tandem with {@link breakLinksWithInternalNode} because it may invalidate the references to link segments on connectoids. this
-   * method will update the connectoids link segments in accordance with the breakLink action given the correct inputs are provided.
-   * 
-   * @param connectoidsDownstreamVerticesBeforeBreakLink to use
-   * @throws PlanItException thrown if error
-   */
-  public static void updateAccessLinkSegmentsForDirectedConnectoids(Map<DirectedConnectoid, DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink) throws PlanItException {
-    ZoningModifier.updateLinkSegmentsForDirectedConnectoids(connectoidsDownstreamVerticesBeforeBreakLink);
-  }
-  
+    
   /**
-   * Delegate to zoning modifier, to be used in tandem with {@link breakLinksWithInternalNode} because it may invalidate the references to link segments on connectoids. this
-   * method will identify the connectoids access link segment's downstream vertex and should be invoked BEFORE any breakLink action. after the break link use 
-   * {@link updateAccessLinkSegmentsForDirectedConnectoids} with the results of this call to update the connectoids affected and make sure the refer to the same original vertex via
-   * an updated link segment (if needed). 
+   * Collect all connectoids and their access node's positions if their access link segments reside on the provided links. Can be useful to ensure
+   * these positions remain correct afetr modifying the network.  
    * 
    * @param links to collect connectoid information for, i.e., only connectoids referencing link segments with a parent link in this collection
    * @param connectoidsByLocation all connectoids indexed by their location
-   * @return found connectoids and their access link segment's current downstream vertex 
+   * @return found connectoids and their accessNode position 
    */
-  public static Map<DirectedConnectoid, DirectedVertex> collectAccessLinkSegmentDownstreamVerticesForConnectoids(Collection<Link> links, Map<Point, List<DirectedConnectoid>> connectoidsByLocation) {    
-    Map<DirectedConnectoid,DirectedVertex> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<DirectedConnectoid,DirectedVertex>();
+  public static Map<Point,DirectedConnectoid> collectConnectoidAccessNodeLocations(Collection<Link> links, Map<Point, List<DirectedConnectoid>> connectoidsByLocation) {    
+    Map<Point, DirectedConnectoid> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<Point, DirectedConnectoid>();
     for(Link link : links) {
       Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,connectoidsByLocation);
       if(connectoids !=null && !connectoids.isEmpty()) {
-        connectoids.forEach( connectoid -> connectoidsDownstreamVerticesBeforeBreakLink.put(connectoid, connectoid.getAccessLinkSegment().getDownstreamVertex()));          
+        connectoids.forEach( connectoid -> connectoidsDownstreamVerticesBeforeBreakLink.put(connectoid.getAccessNode().getPosition(),connectoid));          
       }
     }
     return connectoidsDownstreamVerticesBeforeBreakLink;

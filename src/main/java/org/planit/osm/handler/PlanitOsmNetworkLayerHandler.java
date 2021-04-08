@@ -43,6 +43,7 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
+import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
@@ -1265,6 +1266,18 @@ public class PlanitOsmNetworkLayerHandler {
   }
   
   /**
+   * identical to same method with listener parameters, only now now listeners will be used 
+   * 
+   * @param thePlanitNode to break links for where it is internal to them (based on its osm node id reference)
+   * @param breakLinkListeners to apply when breaking links
+   * @return true when links were broken, false otherwise
+   * @throws PlanItException thrown if error
+   */ 
+  protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
+    return breakLinksWithInternalNode(thePlanitNode, null);    
+  }  
+  
+  /**
    * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
    * on an existing link but also an internal link on another node, we break the links where this node
    * is internal. the end result is a situations where all nodes used by more than one link are extreme 
@@ -1276,11 +1289,11 @@ public class PlanitOsmNetworkLayerHandler {
    * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
    * 
    * @param thePlanitNode to break links for where it is internal to them (based on its osm node id reference)
-   * @param osmWaysWithMultiplePlanitLinks all OSM ways that have multiple planit links, due to earlier breaking of links or because they are circular osm ways
+   * @param breakLinkListeners to apply when breaking links
    * @return true when links were broken, false otherwise
    * @throws PlanItException thrown if error
    */ 
-  protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
+  protected boolean breakLinksWithInternalNode(final Node thePlanitNode, Set<BreakEdgeListener<Node, Link>> breakLinkListeners) throws PlanItException {
     
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodes());
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
@@ -1288,7 +1301,9 @@ public class PlanitOsmNetworkLayerHandler {
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
                   
       /* break links */
-      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());                
+      Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = 
+          PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(
+              thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem(), breakLinkListeners);                
       
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct
        * planit links for which osm nodes are internal */

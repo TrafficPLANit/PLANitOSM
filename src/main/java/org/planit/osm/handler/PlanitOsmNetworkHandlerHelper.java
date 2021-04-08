@@ -14,6 +14,9 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.graph.Edge;
+import org.planit.utils.graph.Vertex;
+import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -61,18 +64,20 @@ public class PlanitOsmNetworkHandlerHelper {
    * @param linksToBreak contains the links that (at least at some point) had theNode as an internal link
    * @param networkLayer the node resides on
    * @param crs of the network layer 
+   * @param breakLinkListeners to apply when breaking edges
    * @return newly broken planit links by their original osmWayId 
    *  
    * @throws PlanItException thrown if error
    */
-  public static Map<Long, Set<Link>> breakLinksWithInternalNode(Node theNode, List<Link> linksToBreak, MacroscopicPhysicalNetwork networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
+  public static Map<Long, Set<Link>> breakLinksWithInternalNode(
+      Node theNode, List<Link> linksToBreak, MacroscopicPhysicalNetwork networkLayer, CoordinateReferenceSystem crs, Set<BreakEdgeListener<Node, Link>> breakLinkListeners) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     
     if(linksToBreak != null) {
             
       try {
         /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-        Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs);                 
+        Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakLinksAt(linksToBreak, theNode, crs, breakLinkListeners);                 
         /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
         if(localBrokenLinks != null) {
           localBrokenLinks.forEach((id, links) -> {
