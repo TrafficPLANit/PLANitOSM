@@ -483,15 +483,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
       /* platform is situated on the road infrastructure. This is discouraged and arguably a tagging error, but occurs sometimes and can be salvaged by
        * extracting the platform and stop position together */
-      if(PlanitOsmUtils.isCompatibleWith(OsmPtVersionScheme.VERSION_1,tags)) {
-        /* use PTv1 context for extracting transfer zone information */
-        LOGGER.fine(String.format("SALVAGED: ptv2 platform %d erroneously placed on road infrastructure, parse combined waiting area and stop_position based on Ptv1 tagging",osmNode.getId()));
-        extractPtv1TransferZoneWithConnectoidsAtStopPosition(osmNode, tags, defaultOsmMode, geoUtils);
-      }else {
-        /* no Ptv1 context, simply assign as platform */
-        LOGGER.info(String.format("SALVAGED: tagging error, ptv2 platform %d erroneously placed on road infrastructure without any Ptv1 context tagging, creating both waiting area and stop_position in this location instead",osmNode.getId()));
-        createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, TransferZoneType.PLATFORM, geoUtils);
-      }
+      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
     }else {
       /* regular platform separated from vehicle stop position; create transfer zone but no connectoids, 
        * these will be constructed during or after we have parsed relations, i.e. stop_areas */
@@ -1053,6 +1045,10 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
+    
+    if(osmNode.getId()==32523710l) {
+      int bla = 4;
+    }
     
     if(skipOsmNode(osmNode)) {
       LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));

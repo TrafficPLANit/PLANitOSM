@@ -1,5 +1,6 @@
 package org.planit.osm.converter.reader;
 
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
@@ -9,7 +10,11 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.physical.Node;
+import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.zoning.Zoning;
+import org.planit.zoning.listener.UpdateConnectoidsOnSubGraphRemoval;
 
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
@@ -82,8 +87,16 @@ public class PlanitOsmNetworkReader implements NetworkReader {
       Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
       Integer discardMaxsize = settings.getDiscardDanglingNetworkAboveSize();
       boolean keepLargest = settings.isAlwaysKeepLargestsubNetwork();
-      networkData.getOsmNetwork().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest, zoning);
+           
+      /* remove dangling subnetworks and account for the connectoids that are to be removed as well in case they reside on a dangling network */
+      networkData.getOsmNetwork().removeDanglingSubnetworks(
+          discardMinsize, discardMaxsize, keepLargest, Set.of(new UpdateConnectoidsOnSubGraphRemoval<Node, Link, MacroscopicLinkSegment>(zoning)));
       
+      /* since zero or more connectoids have been removed if they were being part of a dangling subnetwork, we must now identify if there are any dangling zones
+       * , i.e., zones that no longer have any connectoids associated with them. If so, remove those zones */
+      zoning.getZoningModifier().removeDanglingZones();
+      /* now zero or more transfer zones have been removed and since they might reside in transfer zone groups, remove any dangling transfer zone groups as well */      
+      zoning.getZoningModifier().removeDanglingTransferZoneGroups();
     }
   }  
   

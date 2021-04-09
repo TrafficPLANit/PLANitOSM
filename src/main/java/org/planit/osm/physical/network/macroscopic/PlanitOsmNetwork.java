@@ -24,7 +24,6 @@ import org.planit.utils.id.IdGroupingToken;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
-import org.planit.zoning.Zoning;
 
 /**
  * Macroscopic network with additional OSM functionality

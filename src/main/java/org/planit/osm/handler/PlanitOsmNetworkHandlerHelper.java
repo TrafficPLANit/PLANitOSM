@@ -14,8 +14,6 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.graph.Edge;
-import org.planit.utils.graph.Vertex;
 import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
