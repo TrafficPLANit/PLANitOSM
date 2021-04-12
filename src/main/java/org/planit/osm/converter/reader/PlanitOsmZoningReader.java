@@ -167,10 +167,23 @@ public class PlanitOsmZoningReader implements ZoningReader {
   }  
   
   /**
-   * remove any dangling zones if indicated
+   * remove any dangling zones
    */
-  private void removeDanglingZones() {
-    //TODO
+  protected void removeDanglingZones() {
+    /* delegate to zoning modifier */
+    int originalNumberOfTransferZones = zoning.transferZones.size();
+    zoning.getZoningModifier().removeDanglingZones();
+    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)", zoning.transferZones.size(), originalNumberOfTransferZones));
+  }  
+  
+  /**
+   * remove any dangling transfer zone groups
+   */  
+  protected void removeDanglingTransferZoneGroups() {
+    /* delegate to zonign modifier */
+    int originalNumberOfTransferZoneGroups = zoning.transferZoneGroups.size();
+    zoning.getZoningModifier().removeDanglingTransferZoneGroups();    
+    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of zones %d (original: %d)", zoning.transferZoneGroups.size(), originalNumberOfTransferZoneGroups));    
   }  
     
 
@@ -238,7 +251,14 @@ public class PlanitOsmZoningReader implements ZoningReader {
     handlerProfiler.logProcessingStats(zoningReaderData, zoning);
     
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
-    removeDanglingZones();
+    if(getSettings().isRemoveDanglingZones()) {
+      removeDanglingZones();
+    }
+    
+    /* remove any dangling zones, e g., transfer zones without connectoids etc. */
+    if(getSettings().isRemoveDanglingTransferZoneGroups()) {    
+      removeDanglingTransferZoneGroups();
+    }    
     
     LOGGER.info(" OSM zoning parsing...DONE");
     

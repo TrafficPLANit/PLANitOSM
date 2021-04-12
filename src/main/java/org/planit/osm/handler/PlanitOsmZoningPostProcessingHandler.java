@@ -1408,7 +1408,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         }
             
         if(stationTransferZone == null) {
-          LOGGER.warning(String.format("UNABLE TO CREATE TRANSFERZONE FOR STATION %d", osmStation.getId()));  
+          LOGGER.warning(String.format("DISCARD: Unable to create transfer zone for osm station %d", osmStation.getId()));
+          return;
         }
         this.updateTransferZoneStationName(stationTransferZone, tags);
       }        

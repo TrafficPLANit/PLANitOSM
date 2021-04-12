@@ -166,19 +166,34 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
             
     /* transfer network reader data required for zonal reading to the zoning reader */
-    this.osmZoningReader.initialiseAfterNetworkReadingBeforeZoningReading(createNetworkToZoningReaderData(network));       
+    this.osmZoningReader.initialiseAfterNetworkReadingBeforeZoningReading(createNetworkToZoningReaderData(network));
+    boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
+    osmZoningReader.getSettings().setRemoveDanglingZones(false);
+    boolean originalRemoveDanglingTransferZoneGroups = osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups();
+    osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(false);    
     
     /* then parse the intermodal zoning aspect, i.e., transfer/od zones */
     Zoning zoning = osmZoningReader.read();
     
-    /* remove dangling subnetwork if eligible 
-     * TODO: make compatible with the (transfer) zones, because this also requires removal of these components 
-     * and additional logic that understands interactions between layers such that a danlging subnetwork with a transfer zone
-     * to another network that is not danlging means, it is in fact not dangling at all! 
-     */
-    osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
-    if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
-      osmNetworkReader.removeDanglingSubNetworks(zoning);
+    /* now remove dangling entities if indicated */
+    {
+      /* subnetworks */
+      osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
+      if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
+        osmNetworkReader.removeDanglingSubNetworks(zoning);
+      }
+      
+      /* (transfer) zones */
+      osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
+      if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
+        osmZoningReader.removeDanglingZones();
+      }     
+      
+      /* transfer zone groups */
+      osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
+      if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
+        osmZoningReader.removeDanglingTransferZoneGroups();
+      }        
     }
     
     /* return result */

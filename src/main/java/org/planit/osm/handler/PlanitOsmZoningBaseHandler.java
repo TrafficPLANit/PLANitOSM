@@ -620,6 +620,10 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     TransferZone transferZone = null;
     
+    if(osmEntity.getId()==586156780l) {
+      int bla = 4;
+    }
+    
     /* tagged osm modes */        
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasEligibleOsmMode(modeResult)) {
@@ -631,7 +635,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       /* mapped planit modes are available and we should create the transfer zone*/
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
       PlanitOsmZoningHandlerHelper.addOsmAccessModesToTransferZone(transferZone, modeResult.first());
-    }  
+    }else{
+      /* waiting area with valid osm mode, but not mapped to planit mode, mark as such to avoid logging a warning when this transfer zone is part of stop_area 
+       * and it cannot be found when we try to collect it */
+      getZoningReaderData().getOsmData().addWaitingAreaWithoutMappedPlanitMode(Osm4JUtils.getEntityType(osmEntity),osmEntity.getId());
+    }
     return transferZone;    
   }  
   

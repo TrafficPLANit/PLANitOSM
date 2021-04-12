@@ -839,7 +839,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(type, osmId);
     if(transferZone==null) {
       /* not parsed due to problems, discard */
-      LOGGER.warning(String.format("DISCARD: platform for OSM entity %d (type %s) not available, although referenced by stop_area %d",member.getId(), member.getType().toString(), osmRelation.getId()));
+      if(!getZoningReaderData().getOsmData().isWaitingAreaWithoutMappedPlanitMode(type, osmId)) {
+        LOGGER.warning(String.format("DISCARD: platform for OSM entity %d (type %s) not available, although referenced by stop_area %d",member.getId(), member.getType().toString(), osmRelation.getId()));
+      }
     }else {
       transferZoneGroup.addTransferZone(transferZone);
     }

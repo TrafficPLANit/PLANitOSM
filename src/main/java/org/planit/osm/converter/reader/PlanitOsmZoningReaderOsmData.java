@@ -46,6 +46,10 @@ public class PlanitOsmZoningReaderOsmData {
   
   /** Stop positions found to be invalid and to be excluded from post-processing when converting stop positions to connectoids */
   private final Map<EntityType, Set<Long>> invalidStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
+  
+  /** osm waiting areas (platform, poles) found to be valid but not mapped to a planit mode, used to avoid logging user warnings when referenced by other 
+   * osm entities such as stop_areas */  
+  private final Map<EntityType, Set<Long>> waitingAreaWithoutMappedPlanitMode = new TreeMap<EntityType, Set<Long>>();
       
     
   /* UNPROCESSED RELATED METHODS */  
@@ -303,6 +307,32 @@ public class PlanitOsmZoningReaderOsmData {
     }
     return false;
   }  
+  
+  /** add identified osm entity as valid waiting area (paltform, pole), but it has no mapped planit mode, e.g. a ferry stop
+   * when ferries are not included. By registering this one can check that if a waiting area cannot be collected later on, for example
+   * when a waiting area is part of a stop_area and it cannot be found a warning is issued, unless it is registered here
+   * 
+   * @param type entity type
+   * @param osmId osm entity to mark as waiting area without mapped planit mode
+   */  
+  public void addWaitingAreaWithoutMappedPlanitMode(EntityType type, long osmId) {
+    waitingAreaWithoutMappedPlanitMode.putIfAbsent(type, new TreeSet<Long>());
+    waitingAreaWithoutMappedPlanitMode.get(type).add(osmId);
+  }
+  
+  /** Verify if marked as waiting area without a mapped planit mode
+   * 
+   * @param type entity type
+   * @param osmId osm entity id to verify for if the wainting area is marked as a valid one but simply not mapped to a planit mode
+   * @return  true when marked invalid, false otherwise
+   */  
+  public boolean isWaitingAreaWithoutMappedPlanitMode(EntityType type, long osmId) {
+    if(type != null) {
+      waitingAreaWithoutMappedPlanitMode.putIfAbsent(type, new TreeSet<Long>());
+      return waitingAreaWithoutMappedPlanitMode.get(type).contains(osmId);
+    }
+    return false;
+  }   
 
   /**
    * reset the handler
@@ -313,6 +343,8 @@ public class PlanitOsmZoningReaderOsmData {
     unprocessedStopPositions.clear();
     osmOuterRoleOsmWaysByOsmRelationId.clear();
     osmOuterRoleOsmWaysToKeep.clear();
+    waitingAreaWithoutMappedPlanitMode.clear();
   }
+
 
 }

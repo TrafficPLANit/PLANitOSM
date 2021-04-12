@@ -23,6 +23,14 @@ public class PlanitOsmPublicTransportSettings {
   
   /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
+  
+  /** flag indicating if we should remove (transfer) zones that are dangling, i.e., all (transfer) zones that do not have any
+   * registered connectoids to an underlying network (layer) */
+  private boolean removeDanglingZones = DEFAULT_REMOVE_DANGLING_ZONES;
+  
+  /** flag indicating if we should remove transfer zone groups that are dangling, i.e., all transfer zone groups that do not have any
+   * registered transfer zones */
+  private boolean removeDanglingTransferZoneGroups = DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS;  
 
   /** the maximum search radius used when trying to map stops/platforms to stop positions on the networks, when no explicit
    * relation is made known by OSM */
@@ -56,6 +64,12 @@ public class PlanitOsmPublicTransportSettings {
     
   /** by default the transfer parser is deactivated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
+  
+  /** by default we are removing dangling zones */
+  public static boolean DEFAULT_REMOVE_DANGLING_ZONES = true;
+  
+  /** by default we are removing dangling transfer zone groups */
+  public static boolean DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS = true;
     
   /**
    * default search radius in meters for mapping stops/platforms to stop positions on the networks when they have no explicit reference
@@ -288,6 +302,37 @@ public class PlanitOsmPublicTransportSettings {
   public Long getWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType) {
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
     return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).get(waitingAreaOsmId);    
-  }    
+  }   
+  
+  /**
+   * indicate whether to remove dangling zones or not
+   * @param removeDanglingZones yes or no
+   */
+  public void setRemoveDanglingZones(boolean removeDanglingZones) {
+    this.removeDanglingZones = removeDanglingZones;
+  }
+  
+  /** verify if dangling zones are removed from the final zoning
+   * @return true when we are removing them, false otherwise
+   */
+  public boolean isRemoveDanglingZones() {
+    return this.removeDanglingZones;
+  } 
+  
+  /**
+   * indicate whether to remove dangling transfer zone groups or not
+   * @param removeDanglingTransferZoneGroups yes or no
+   */
+  public void setRemoveDanglingTransferZoneGroups(boolean removeDanglingTransferZoneGroups) {
+    this.removeDanglingTransferZoneGroups = removeDanglingTransferZoneGroups;
+  }
+  
+  /** verify if dangling transfer zone groups are removed from the final zoning
+   * 
+   * @return true when we are removing them, false otherwise 
+   */
+  public boolean isRemoveDanglingTransferZoneGroups() {
+    return this.removeDanglingTransferZoneGroups;
+  }  
   
 }

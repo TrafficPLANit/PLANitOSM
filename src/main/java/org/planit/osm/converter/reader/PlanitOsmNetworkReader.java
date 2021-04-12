@@ -4,7 +4,9 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
+import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.MacroscopicNetwork;
+import org.planit.network.macroscopic.MacroscopicPhysicalNetworkLayers;
 import org.planit.osm.handler.PlanitOsmNetworkHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
@@ -76,9 +78,11 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   }
   
   /**
-   * remove dangling subnetworks when settings dictate it
+   * remove dangling subnetworks when settings dictate it. In case the removal of subnetworks causes zones to become dangling
+   * the user is required to remove those afterwards themselves, by providing the zoning, only the directly impacted connectoids
+   * are removed if affected.
    * 
-   * @param zoning to also remove dangling entities from when they reference removed road/rail subnetworks
+   * @param zoning to also remove connectoids from when they reference removed road/rail subnetworks
    * @throws PlanItException thrown if error
    */  
   public void removeDanglingSubNetworks(Zoning zoning) throws PlanItException {
@@ -87,16 +91,34 @@ public class PlanitOsmNetworkReader implements NetworkReader {
       Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
       Integer discardMaxsize = settings.getDiscardDanglingNetworkAboveSize();
       boolean keepLargest = settings.isAlwaysKeepLargestsubNetwork();
+      
+      /* logging stats  - before */
+      MacroscopicPhysicalNetworkLayers layers = networkData.getOsmNetwork().infrastructureLayers;
+      {
+        LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
+        if (discardMaxsize != Integer.MAX_VALUE) {
+          LOGGER.info(String.format("Removing dangling subnetworks with more than %s vertices", String.valueOf(discardMaxsize)));
+        }        
+        if(zoning == null) {
+          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
+        }else {
+          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d, connectoids %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(), zoning.transferConnectoids.size()));
+        }
+      }      
            
       /* remove dangling subnetworks and account for the connectoids that are to be removed as well in case they reside on a dangling network */
       networkData.getOsmNetwork().removeDanglingSubnetworks(
           discardMinsize, discardMaxsize, keepLargest, Set.of(new UpdateConnectoidsOnSubGraphRemoval<Node, Link, MacroscopicLinkSegment>(zoning)));
       
-      /* since zero or more connectoids have been removed if they were being part of a dangling subnetwork, we must now identify if there are any dangling zones
-       * , i.e., zones that no longer have any connectoids associated with them. If so, remove those zones */
-      zoning.getZoningModifier().removeDanglingZones();
-      /* now zero or more transfer zones have been removed and since they might reside in transfer zone groups, remove any dangling transfer zone groups as well */      
-      zoning.getZoningModifier().removeDanglingTransferZoneGroups();
+      /* logging stats  - after */
+      {
+        if(zoning == null) {
+          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d", layers.size(), layers.size(),layers.size()));
+        }else {
+          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d, connectoids %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(), zoning.transferConnectoids.size()));
+        }
+      }
+            
     }
   }  
   
