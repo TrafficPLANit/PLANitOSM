@@ -435,7 +435,7 @@ public class PlanitOsmZoningHandlerHelper {
   public static Link getClosestLinkWithOsmWayIdToGeometry(
       long osmWayId, Geometry geometry, MacroscopicPhysicalNetwork networkLayer, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     /* collect all planit links that match the osm way id (very slow, but it is rare and not worth the indexing generally) */
-    Collection<Link> nominatedLinks = networkLayer.links.getByExternalId(String.valueOf(osmWayId));
+    Collection<? extends Link> nominatedLinks = networkLayer.links.getByExternalId(String.valueOf(osmWayId));
     /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */
     return (Link) PlanitGraphGeoUtils.findEdgeClosest(geometry, nominatedLinks, geoUtils);
   }

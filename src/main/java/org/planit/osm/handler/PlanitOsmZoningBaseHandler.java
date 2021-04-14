@@ -751,7 +751,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return created connectoids
    * @throws PlanItException thrown if error
    */
-  protected Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicPhysicalNetwork networkLayer, final Collection<EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
+  protected Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicPhysicalNetwork networkLayer, final Collection<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
     Set<DirectedConnectoid> createdConnectoids = new HashSet<DirectedConnectoid>();
     for(EdgeSegment linkSegment : linkSegments) {
       DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
@@ -785,7 +785,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     
-    Collection<EdgeSegment> nominatedLinkSegments = null;
+    Collection<? extends EdgeSegment> nominatedLinkSegments = null;
     if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node)) {
       /* user overwrite */
       
