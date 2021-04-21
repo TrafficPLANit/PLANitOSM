@@ -1,5 +1,6 @@
 package org.planit.osm.settings.network;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -7,6 +8,7 @@ import java.util.logging.Logger;
 import org.planit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.planit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsCategory;
+import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
@@ -132,6 +134,19 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
     deactivateOsmWayType(osmWayValue);      
   } 
   
+  /** deactivate all types for highway except the ones provides
+   * 
+   * @param osmHighwayTypes to not deactivate
+   */
+  public void deactivateAllOsmRailwayTypesExcept(String... osmRailwayTypes) {
+    deactivateAllOsmRailwayTypes();
+    for(String osmWayType : Arrays.asList(osmRailwayTypes)) {
+      if(OsmRailwayTags.isRailBasedRailway(osmWayType)) {
+       activateOsmRailwayType(osmWayType);
+      }
+    }
+  }  
+  
   /**
    * Choose to add given railway type to parsed types on top of the defaults, e.g. railway=rail.
    * 
@@ -144,7 +159,7 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
   /** activate all passed in highway types
    * @param osmRailwayValueTypes
    */
-  public void activateOsmHighwayWayTypes(String... osmRailwayValueTypes) {
+  public void activateOsmRailwayTypes(String... osmRailwayValueTypes) {
     activateOsmWayTypes(osmRailwayValueTypes);
   }  
   
@@ -158,7 +173,7 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
   /**
    * deactivate all types for rail
    */
-  public void deactivateAllOsmRailWayTypes() {
+  public void deactivateAllOsmRailwayTypes() {
     deactivateAllOsmWayTypes();
   } 
   
@@ -282,6 +297,14 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
     Collection<String> toBeRemovedModes = OsmRailModeTags.getSupportedRailModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRailModes);
   }     
+  
+  /** deactivate provided rail modes
+   * 
+   * @param osmRailModes to explicitly deactivate
+   */
+  public void deactivateRailMode(final String... osmRailModes) {
+    deactivateOsmModes(Arrays.asList(osmRailModes));
+  }    
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
    * 

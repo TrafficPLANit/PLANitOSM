@@ -4,7 +4,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
-import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.MacroscopicPhysicalNetworkLayers;
 import org.planit.osm.handler.PlanitOsmNetworkHandler;
@@ -12,6 +11,7 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.graph.modifier.RemoveSubGraphListener;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -107,13 +107,13 @@ public class PlanitOsmNetworkReader implements NetworkReader {
       }      
            
       /* remove dangling subnetworks and account for the connectoids that are to be removed as well in case they reside on a dangling network */
-      networkData.getOsmNetwork().removeDanglingSubnetworks(
-          discardMinsize, discardMaxsize, keepLargest, Set.of(new UpdateConnectoidsOnSubGraphRemoval<Node, Link, MacroscopicLinkSegment>(zoning)));
+      Set<RemoveSubGraphListener<?, ?>> listeners = zoning==null ? null : Set.of(new UpdateConnectoidsOnSubGraphRemoval<Node, Link, MacroscopicLinkSegment>(zoning)); 
+      networkData.getOsmNetwork().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest, listeners);
       
       /* logging stats  - after */
       {
         if(zoning == null) {
-          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d", layers.size(), layers.size(),layers.size()));
+          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
         }else {
           LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d, connectoids %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(), zoning.transferConnectoids.size()));
         }

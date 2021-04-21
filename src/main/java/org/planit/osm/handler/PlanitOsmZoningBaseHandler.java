@@ -619,11 +619,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {  
     
     TransferZone transferZone = null;
-    
-    if(osmEntity.getId()==586156780l) {
-      int bla = 4;
-    }
-    
+        
     /* tagged osm modes */        
     Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasEligibleOsmMode(modeResult)) {

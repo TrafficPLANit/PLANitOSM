@@ -476,11 +476,13 @@ public class PlanitOsmNetworkSettings {
    */
   public void deactivateAllOsmWayTypes() {    
     osmHighwaySettings.deactivateAllOsmHighWayTypes();
-    osmRailwaySettings.deactivateAllOsmRailWayTypes();
+    osmRailwaySettings.deactivateAllOsmRailwayTypes();
   }
 
   /** deactive all osm way types except the ones indicated, meaning that if the ones passed in
-   * are not already active, they will be marked as activate afterwards
+   * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
+   * across both railways and highways. If you want to do this within highways only, use the same method under highway settings.
+   * 
    * @param osmWaytypes to mark as activated
    */
   public void deactivateAllOsmWayTypesExcept(String... osmWaytypes) {

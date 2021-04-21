@@ -670,7 +670,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Collection<String> allowedOsmModes = null;
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       allowedOsmModes =  settings.getHighwaySettings().collectAllowedOsmHighwayModes(osmWayValue);
-    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)) {
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) && settings.isRailwayParserActive()) {
       allowedOsmModes =  settings.getRailwaySettings().collectAllowedOsmRailwayModes(osmWayValue);
     }
     return settings.getMappedPlanitModes(allowedOsmModes);
@@ -770,9 +770,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     }
   
     /* only when way type is marked as supported in settings we parse it */
-    PlanitOsmRailwaySettings railwaySettings = settings.getRailwaySettings();
-    if(railwaySettings.isOsmRailwayTypeActivated(osmWayValue)) {
-      
+    if(settings.isRailwayParserActive() && settings.getRailwaySettings().isOsmRailwayTypeActivated(osmWayValue)) {
+      PlanitOsmRailwaySettings railwaySettings = settings.getRailwaySettings();
       boolean isOverwrite = railwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmRailwayType(osmWayValue);
       
       Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue));

@@ -176,8 +176,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       return;
     }
     
-    /* non-tram mode exists */
-    if(getNetworkToZoningData().getSettings().getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+    /* non-tram mode exists */    
+    if(getNetworkToZoningData().getSettings().isRailwayParserActive() &&
+        getNetworkToZoningData().getSettings().getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
       
       /* train station or halt (not for trams) */
       if(OsmTagUtils.matchesAnyValueTag(ptv1ValueTag, OsmPtv1Tags.STATION, OsmPtv1Tags.HALT)) {
@@ -608,7 +609,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       extractPtv1RailwayPlatform(osmWay, tags, geoUtils);      
     }  
     
-    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
       /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
        * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
        * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
@@ -629,7 +630,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
     
     /* tram stop */
-    if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
+    if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
       
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
         
@@ -739,7 +740,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       
     }
     /* PTv1 railway=* */
-    else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
+    else if(OsmRailwayTags.hasRailwayKeyTag(tags) && getNetworkToZoningData().getSettings().isRailwayParserActive()) {
       
       String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);      
       extractTransferInfrastructurePtv1Railway(osmWay, tags, ptv1ValueTag);       
@@ -1047,11 +1048,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
-    
-    if(osmNode.getId()==32523710l) {
-      int bla = 4;
-    }
-    
+        
     if(skipOsmNode(osmNode)) {
       LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
       return;

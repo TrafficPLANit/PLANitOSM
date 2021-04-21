@@ -1,5 +1,6 @@
 package org.planit.osm.settings.network;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import org.planit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.planit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailModeTags;
+import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -236,6 +238,19 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
     deactivateAllOsmWayTypes();
   }   
   
+  /** deactivate all types for highway except the ones provides
+   * 
+   * @param osmHighwayTypes to not deactivate
+   */
+  public void deactivateAllOsmHighwayTypesExcept(String... osmHighwayTypes) {
+    deactivateAllOsmHighWayTypes();
+    for(String osmWayType : Arrays.asList(osmHighwayTypes)) {
+      if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
+       activateOsmHighwayWayTypes(osmWayType);
+      }
+    }
+  }  
+  
   /**
    * Choose to add given highway type to parsed types on top of the defaults, e.g. highway=road
    * 
@@ -384,6 +399,14 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   public void deactivateAllRoadModesExcept(final String... remainingOsmRoadModes) {
     Collection<String> toBeRemovedModes = OsmRoadModeTags.getSupportedRoadModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRoadModes);
+  }   
+  
+  /** deactivate provided road modes
+   * 
+   * @param osmRoadModes to explicitly deactivate
+   */
+  public void deactivateRoadModes(final String... osmRoadModes) {
+    deactivateOsmModes(Arrays.asList(osmRoadModes));
   }   
   
   /**
