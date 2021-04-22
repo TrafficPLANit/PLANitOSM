@@ -183,7 +183,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
     /* delegate to zonign modifier */
     int originalNumberOfTransferZoneGroups = zoning.transferZoneGroups.size();
     zoning.getZoningModifier().removeDanglingTransferZoneGroups();    
-    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of zones %d (original: %d)", zoning.transferZoneGroups.size(), originalNumberOfTransferZoneGroups));    
+    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)", zoning.transferZoneGroups.size(), originalNumberOfTransferZoneGroups));    
   }  
     
 

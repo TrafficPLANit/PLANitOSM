@@ -12,6 +12,7 @@ import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
+import org.planit.utils.locale.CountryNames;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
@@ -31,10 +32,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkReader.class.getCanonicalName());
-    
-  /** input file to use */
-  private final String inputFile;
-  
+      
   /** network reader data tracked during parsing */
   private final PlanitOsmNetworkReaderData networkData;
   
@@ -125,36 +123,40 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   /**
    * Constructor 
    * 
-   * @param inputFile
-   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
-   * based on a right hand driving approach
    * @param osmNetwork network to populate 
-   * @param settings for populating the network
-   * @throws PlanItException throw if settings are inconsistent with reader configuration (different country name or network used)
    */
-  protected PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetworkSettings settings, PlanitOsmNetwork osmNetwork) throws PlanItException{
-    this.inputFile = inputFile; 
-    this.networkData = new PlanitOsmNetworkReaderData(countryName, osmNetwork);
-    if(!settings.isConsistentWith(networkData)) {
-      throw new PlanItException("provided settings inconsistent with network reader settings");
-    }
-    this.settings = settings;
+  protected PlanitOsmNetworkReader(final PlanitOsmNetwork osmNetwork) throws PlanItException{
+    this(CountryNames.GLOBAL, osmNetwork);
   }  
   
+  /**
+   * Default Constructor 
+   * 
+   * @param countryName to use
+   * @param osmNetwork network to populate 
+   */
+  protected PlanitOsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
+    this.networkData = new PlanitOsmNetworkReaderData(countryName, osmNetwork);
+    this.settings = new PlanitOsmNetworkSettings(countryName, osmNetwork);
+  }  
+    
   /**
    * Constructor 
    * 
    * @param inputFile
-   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
-   * based on a right hand driving approach
    * @param osmNetwork network to populate 
    * @param settings for populating the network
-   * @throws PlanItException never throws 
+   * @throws PlanItException throw if settings are inconsistent with reader configuration (different country name or network used)
    */
-  protected PlanitOsmNetworkReader(String inputFile, String countryName, PlanitOsmNetwork osmNetwork) throws PlanItException {
-    this(inputFile, countryName, new PlanitOsmNetworkSettings(countryName, osmNetwork), osmNetwork);            
-  }
-   
+  protected PlanitOsmNetworkReader(PlanitOsmNetworkSettings settings, PlanitOsmNetwork osmNetwork) throws PlanItException{
+    this.networkData = new PlanitOsmNetworkReaderData(settings.getCountryName(), osmNetwork);
+    this.settings = settings;
+    if(!settings.isConsistentWith(networkData)) {
+      throw new PlanItException("provided settings inconsistent with network reader settings");
+    }
+    
+  }  
+     
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
    * given the configuration options that have been set
@@ -165,12 +167,16 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */  
   @Override
   public MacroscopicNetwork read() throws PlanItException {
+    PlanItException.throwIf(settings.getInputFile()==null || settings.getInputFile().isBlank(),"inputfile not set for osm network to parse");
+    /* pass on country set in settings to the reader data */
+    networkData.setCountryName(settings.getCountryName());
+    
     /* ensure that the network CRS is consistent with the chosen source CRS */
     networkData.getOsmNetwork().transform(settings.getSourceCRS());    
-    logInfo(inputFile);
+    logInfo(settings.getInputFile());
     
     /* reader to parse the actual file */
-    OsmReader osmReader = Osm4JUtils.createOsm4jReader(inputFile);
+    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputFile());
     if(osmReader == null) {
       LOGGER.severe("unable to create OSM reader for network, aborting");
     }else {

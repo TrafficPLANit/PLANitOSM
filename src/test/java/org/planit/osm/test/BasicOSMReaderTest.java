@@ -16,6 +16,7 @@ import org.planit.osm.converter.reader.PlanitOsmNetworkReader;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
+import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.Pair;
 import org.planit.zoning.Zoning;
 
@@ -53,7 +54,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadInfrastructureTest() {
     try {
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_OSM);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
@@ -82,7 +83,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadAndPtTest() {
     try {
-      PlanitOsmIntermodalReader osmReader = PlanitOsmIntermodalReaderFactory.create(SYDNEYCBD_OSM);
+      PlanitOsmIntermodalReader osmReader = PlanitOsmIntermodalReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
@@ -120,7 +121,7 @@ public class BasicOSMReaderTest {
   @Test
   public void pbfReadertest() {
     try {
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_PBF);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_PBF, CountryNames.AUSTRALIA);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {

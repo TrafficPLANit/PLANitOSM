@@ -41,13 +41,12 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   
   /** initialise the network  reader
    * 
-   * @param countryName to use
    * @param networkSettings to use
    * @param osmNetworkToPopulate network to populate
    * @throws PlanItException thrown if error
    */  
-  private void initialiseNetworkReader(String countryName, PlanitOsmNetworkSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
-    this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, networkSettings, osmNetworkToPopulate);    
+  private void initialiseNetworkReader(PlanitOsmNetworkSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+    this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(networkSettings, osmNetworkToPopulate);    
   }  
   
   /** location of the input file to use */
@@ -135,16 +134,15 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param zoning to populate
    * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
-  protected PlanitOsmIntermodalReader(
-      final String inputFile, final String countryName, PlanitOsmNetworkSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
+  protected PlanitOsmIntermodalReader(PlanitOsmNetworkSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
     
-    this.inputFile = inputFile;
+    this.inputFile = networkSettings.getInputFile();
     
     /* NETWORK READER */
-    initialiseNetworkReader(countryName, networkSettings, osmNetworkToPopulate);
+    initialiseNetworkReader(networkSettings, osmNetworkToPopulate);
     
     /* ZONING READER */
-    initialiseZoningReader(countryName, ptSettings, osmNetworkToPopulate);   
+    initialiseZoningReader(networkSettings.getCountryName(), ptSettings, osmNetworkToPopulate);   
   }  
   
    

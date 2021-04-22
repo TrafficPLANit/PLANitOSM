@@ -275,7 +275,7 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   public static OsmSpeedLimitDefaults create(String countryName) {
     OsmSpeedLimitDefaults createdDefaults = null;
-    if(countryName != null && !countryName.isBlank()) {
+    if(countryName != null && !countryName.isBlank() && !countryName.equals(CountryNames.GLOBAL)) {
       createdDefaults = getDefaultsByCountryName(countryName).clone();
     }
     

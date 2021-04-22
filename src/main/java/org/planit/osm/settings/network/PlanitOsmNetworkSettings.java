@@ -49,6 +49,9 @@ public class PlanitOsmNetworkSettings {
   /** network being populated */
   private final PlanitOsmNetwork osmNetwork;
   
+  /** input file to use */
+  private String inputFile;  
+  
   /** all settings specific to osm railway tags */
   protected PlanitOsmRailwaySettings osmRailwaySettings;
   
@@ -154,7 +157,7 @@ public class PlanitOsmNetworkSettings {
   
   /** by default we always keep the largest subnetwork */
   public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
-    
+      
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
    * for various osm highway types in case maximum speed limit information is missing
@@ -611,6 +614,28 @@ public class PlanitOsmNetworkSettings {
       InfrastructureLayersConfigurator planitInfrastructureLayerConfiguration) {
     this.planitInfrastructureLayerConfiguration = planitInfrastructureLayerConfiguration;
   }
- 
- 
+
+
+  /** collect the input file to use
+   * @return input file to use
+   */
+  public String getInputFile() {
+    return inputFile;
+  }
+
+
+  /** set te input file to use
+   * @param inputFile to use
+   */
+  public void setInputFile(String inputFile) {
+    this.inputFile = inputFile;
+  }
+  
+  /** collect the country name used
+   * @return country name
+   */
+  public String getCountryName() {
+    return this.countryName;
+  }
+  
 }

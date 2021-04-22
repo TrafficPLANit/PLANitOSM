@@ -23,7 +23,7 @@ public class PlanitOsmNetworkReaderData {
   
 
   /** the country we are importing for (if any) */
-  private final String countryName;
+  private String countryName = null;
   
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   protected final Map<Long, OsmNode> osmNodes;        
@@ -41,11 +41,25 @@ public class PlanitOsmNetworkReaderData {
    * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */
   public static final double BOUNDINGBOX_NEARNESS_DISTANCE_METERS = 200;  
   
+  /** set the country name
+   * @param countryName to set
+   */
+  protected void setCountryName(String countryName) {
+    this.countryName = countryName;
+  }
+  
+  /** Constructor 
+   * @param osmNetwork to use
+   */
+  public PlanitOsmNetworkReaderData(final PlanitOsmNetwork osmNetwork) {
+    this(null, osmNetwork);    
+  }  
+  
   /** Constructor 
    * @param countryName to use
    * @param osmNetwork to use
    */
-  public PlanitOsmNetworkReaderData(String countryName, PlanitOsmNetwork osmNetwork) {
+  public PlanitOsmNetworkReaderData(final String countryName, final PlanitOsmNetwork osmNetwork) {
     this.countryName = countryName;
     this.osmNetwork = osmNetwork;
     
@@ -59,6 +73,7 @@ public class PlanitOsmNetworkReaderData {
   public void reset() {
     clearOsmCircularWays();    
     osmNodes.clear();
+    countryName = null;
   }  
   
   /** update bounding box to include osm node
