@@ -1,7 +1,7 @@
 package org.planit.osm.converter.reader;
 
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
 import org.planit.utils.locale.CountryNames;
@@ -68,7 +68,7 @@ public class PlanitOsmNetworkReaderFactory {
    * @return created osm reader
    * @throws PlanItException thrown if error
    */
-  public static PlanitOsmNetworkReader create(PlanitOsmNetworkSettings settings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+  public static PlanitOsmNetworkReader create(PlanitOsmNetworkReaderSettings settings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
     return new PlanitOsmNetworkReader(settings, osmNetworkToPopulate);    
   }   
   

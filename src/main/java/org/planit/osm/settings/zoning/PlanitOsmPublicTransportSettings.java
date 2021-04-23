@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.planit.converter.ConverterReaderSettings;
 import org.planit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -19,7 +20,7 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
  * @author markr
  *
  */
-public class PlanitOsmPublicTransportSettings {
+public class PlanitOsmPublicTransportSettings implements ConverterReaderSettings {
   
   /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
@@ -333,6 +334,14 @@ public class PlanitOsmPublicTransportSettings {
    */
   public boolean isRemoveDanglingTransferZoneGroups() {
     return this.removeDanglingTransferZoneGroups;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void reset() {
+    //TODO
   }  
   
 }

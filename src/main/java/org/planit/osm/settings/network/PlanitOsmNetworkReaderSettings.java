@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.planit.converter.ConverterReaderSettings;
 import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.network.InfrastructureLayersConfigurator;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
@@ -32,12 +33,12 @@ import org.planit.utils.mode.Modes;
  * @author markr
  *
  */
-public class PlanitOsmNetworkSettings {
+public class PlanitOsmNetworkReaderSettings implements ConverterReaderSettings{
     
   /**
    * The logger
    */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkSettings.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkReaderSettings.class.getCanonicalName());
     
   /* country name and network are only stored so we can verify the settings used are consistent with the reader ( because in some cases it is desirable
    * to create settings before we create the reader, so we conduct configuration beforehand, in which case we must be able to verify that the settings we
@@ -165,7 +166,7 @@ public class PlanitOsmNetworkSettings {
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
    * @param osmNetworkToPopulate to populate based on (default) mapping
    */
-  public PlanitOsmNetworkSettings(String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
+  public PlanitOsmNetworkReaderSettings(String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
     this.countryName = countryName;
     this.osmNetwork = osmNetworkToPopulate;
     
@@ -195,7 +196,7 @@ public class PlanitOsmNetworkSettings {
    * @param osmNetworkToPopulate to populate
    * 
    */  
-  public PlanitOsmNetworkSettings(PlanitOsmNetwork osmNetworkToPopulate) {
+  public PlanitOsmNetworkReaderSettings(PlanitOsmNetwork osmNetworkToPopulate) {
     this( "", osmNetworkToPopulate);
   }
   
@@ -636,6 +637,14 @@ public class PlanitOsmNetworkSettings {
    */
   public String getCountryName() {
     return this.countryName;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void reset() {
+    // TODO    
   }
   
 }

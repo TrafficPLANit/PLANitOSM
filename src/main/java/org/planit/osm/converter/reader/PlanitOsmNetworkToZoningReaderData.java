@@ -7,7 +7,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
@@ -21,7 +21,7 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 public class PlanitOsmNetworkToZoningReaderData {
   
   /** settings used in network reader */
-  private PlanitOsmNetworkSettings settings;
+  private PlanitOsmNetworkReaderSettings settings;
   
   /** data from the network reader collected during parsing */
   private PlanitOsmNetworkReaderData networkData;  
@@ -29,7 +29,7 @@ public class PlanitOsmNetworkToZoningReaderData {
   /** layer specific data that is to be made available to the zoning reader */
   private Map<InfrastructureLayer, PlanitOsmNetworkReaderLayerData> networkLayerData = new HashMap<InfrastructureLayer, PlanitOsmNetworkReaderLayerData>(); 
 
-  public PlanitOsmNetworkSettings getSettings() {
+  public PlanitOsmNetworkReaderSettings getSettings() {
     return settings;
   }
   
@@ -37,7 +37,7 @@ public class PlanitOsmNetworkToZoningReaderData {
    * @param networkData to use
    * @param settings to use
    */
-  protected PlanitOsmNetworkToZoningReaderData(PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkSettings settings) {
+  protected PlanitOsmNetworkToZoningReaderData(PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkReaderSettings settings) {
     this.networkData = networkData;
     this.settings = settings;
   }

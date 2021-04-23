@@ -8,7 +8,7 @@ import org.planit.network.InfrastructureNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.handler.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
@@ -16,7 +16,8 @@ import org.planit.zoning.Zoning;
 
 /**
  * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the transfer zones
- * of a zoning instance. By default an intermodal reader will activate parsing transfer infrastructure as well as the network infrastructure.
+ * of a zoning instance. By default an intermodal reader will activate parsing transfer infrastructure as well as the network infrastructure (including rail which for a 
+ * "regular" network reader is turned off by default, since we assume that more often than not, once desires to include rail when parsing pt networks.
  * One can manually change these defaults via the various settings made available.
  * 
  * @author markr
@@ -45,7 +46,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param osmNetworkToPopulate network to populate
    * @throws PlanItException thrown if error
    */  
-  private void initialiseNetworkReader(PlanitOsmNetworkSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+  private void initialiseNetworkReader(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
     this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(networkSettings, osmNetworkToPopulate);    
   }  
   
@@ -114,6 +115,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     /* NETWORK READER */
     try {
       this.osmNetworkReader = PlanitOsmNetworkReaderFactory.create(inputFile, countryName, osmNetworkToPopulate);
+      this.osmNetworkReader.getSettings().activateRailwayParser(true);
     }catch(PlanItException e) {
       /* never throws */
       this.osmNetworkReader = null;
@@ -134,7 +136,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param zoning to populate
    * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
-  protected PlanitOsmIntermodalReader(PlanitOsmNetworkSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
+  protected PlanitOsmIntermodalReader(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
     
     this.inputFile = networkSettings.getInputFile();
     
@@ -213,7 +215,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * 
    * @return network settings
    */
-  public PlanitOsmNetworkSettings getNetworkSettings() {
+  public PlanitOsmNetworkReaderSettings getNetworkSettings() {
     return osmNetworkReader.getSettings();
   }
   

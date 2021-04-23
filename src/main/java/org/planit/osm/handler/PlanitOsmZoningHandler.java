@@ -7,7 +7,7 @@ import java.util.logging.Logger;
 
 import org.planit.osm.converter.reader.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.reader.PlanitOsmZoningReaderData;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.settings.zoning.PlanitOsmPublicTransportSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
@@ -593,7 +593,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @throws PlanItException thrown if error
    */ 
   private void extractTransferInfrastructurePtv1Railway(OsmWay osmWay, Map<String, String> tags, String ptv1ValueTag) throws PlanItException {
-    PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
+    PlanitOsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getSettings();
     
     /* platform edge */
     if(OsmPtv1Tags.PLATFORM_EDGE.equals(ptv1ValueTag)) {
@@ -627,7 +627,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @throws PlanItException thrown if error
    */  
   private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    PlanitOsmNetworkSettings networkSettings = getNetworkToZoningData().getSettings();
+    PlanitOsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getSettings();
     
     /* tram stop */
     if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {

@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderData;
 import org.planit.osm.converter.reader.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.planit.network.InfrastructureLayer;
@@ -48,7 +48,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   private final PlanitOsmNetworkReaderData networkData;
 
   /** the settings to adhere to */
-  private final PlanitOsmNetworkSettings settings;
+  private final PlanitOsmNetworkReaderSettings settings;
 
   /** utilities for geographic information */
   private final PlanitJtsCrsUtils geoUtils;
@@ -422,7 +422,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    * @param networkData the data used for populating the network
    * @param settings for the handler
    */
-  public PlanitOsmNetworkHandler(final PlanitOsmNetworkReaderData networkData, final PlanitOsmNetworkSettings settings) {
+  public PlanitOsmNetworkHandler(final PlanitOsmNetworkReaderData networkData, final PlanitOsmNetworkReaderSettings settings) {
     this.networkData = networkData;
     
     /* gis initialisation */

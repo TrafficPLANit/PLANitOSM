@@ -8,7 +8,7 @@ import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.MacroscopicPhysicalNetworkLayers;
 import org.planit.osm.handler.PlanitOsmNetworkHandler;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
@@ -37,7 +37,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   private final PlanitOsmNetworkReaderData networkData;
   
   /** settings to use */
-  private final PlanitOsmNetworkSettings settings;
+  private final PlanitOsmNetworkReaderSettings settings;
     
   /** tha handler responsible for the actual parsing */
   private PlanitOsmNetworkHandler osmHandler;
@@ -137,7 +137,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */
   protected PlanitOsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
     this.networkData = new PlanitOsmNetworkReaderData(countryName, osmNetwork);
-    this.settings = new PlanitOsmNetworkSettings(countryName, osmNetwork);
+    this.settings = new PlanitOsmNetworkReaderSettings(countryName, osmNetwork);
   }  
     
   /**
@@ -148,7 +148,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * @param settings for populating the network
    * @throws PlanItException throw if settings are inconsistent with reader configuration (different country name or network used)
    */
-  protected PlanitOsmNetworkReader(PlanitOsmNetworkSettings settings, PlanitOsmNetwork osmNetwork) throws PlanItException{
+  protected PlanitOsmNetworkReader(PlanitOsmNetworkReaderSettings settings, PlanitOsmNetwork osmNetwork) throws PlanItException{
     this.networkData = new PlanitOsmNetworkReaderData(settings.getCountryName(), osmNetwork);
     this.settings = settings;
     if(!settings.isConsistentWith(networkData)) {
@@ -213,7 +213,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * 
    * @return the settings
    */
-  public PlanitOsmNetworkSettings getSettings() {
+  public PlanitOsmNetworkReaderSettings getSettings() {
     return settings;
   }
 

@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkSettings;
+import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.tags.OsmDirectionTags;
 import org.planit.osm.tags.OsmLaneTags;
 import java.util.Set;
@@ -57,7 +57,7 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * @param networkLayer to identify supported modes on the layer, which is a subset of all mapped modes 
    * @return yes, when these modes are activated, false otherwise
    */
-  public static boolean requireLanesModeSchemeHelper(PlanitOsmNetworkSettings settings, MacroscopicPhysicalNetwork networkLayer) {
+  public static boolean requireLanesModeSchemeHelper(PlanitOsmNetworkReaderSettings settings, MacroscopicPhysicalNetwork networkLayer) {
     return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings, networkLayer);
   }  
   
@@ -70,7 +70,7 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * @param settings to filter for activated modes only
    * @param networkLayer to identify supported modes on the layer, which is a subset of all mapped modes 
    * @return list os OSM modes that would identify such modes */
-  public static Set<String> getEligibleModeLanesSchemeHelperModes(PlanitOsmNetworkSettings settings, MacroscopicPhysicalNetwork networkLayer) {
+  public static Set<String> getEligibleModeLanesSchemeHelperModes(PlanitOsmNetworkReaderSettings settings, MacroscopicPhysicalNetwork networkLayer) {
     return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings, networkLayer);
   }   
   
