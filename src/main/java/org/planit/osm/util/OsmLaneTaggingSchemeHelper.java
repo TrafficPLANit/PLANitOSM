@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.settings.network.PlanitOsmNetworkReaderSettings;
+import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.mode.Mode;
