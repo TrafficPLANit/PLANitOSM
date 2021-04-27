@@ -228,8 +228,10 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */
   @Override
   public void reset() {
-    /* reset last used handler */
-    osmHandler.reset();
+    if(osmHandler != null) {
+      osmHandler.reset();
+    }
+    getSettings().reset();
   }
 
   /** Factory method to create bridging data required for an Osm zongin reader to successfully parse the Pt zones

@@ -11,7 +11,7 @@ import org.planit.utils.locale.CountryNames;
  */
 public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings {
 
-  /** directory to look in */
+  /** directory and file to look in */
   private String inputFile;
   
   /** country name to use to initialise OSM defaults for */
@@ -45,14 +45,14 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
     this.countryName = countryName;
   }  
   
-  /** the input file used
+  /** the input file used including the path
    * @return input file used
    */
   public final String getInputFile() {
     return this.inputFile;
   }
   
-  /** set the inputFile  to use
+  /** set the inputFile  to use including the path
    * @param inputFile to use
    */
   public void setInputFile(final String inputFile) {
