@@ -123,7 +123,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     /* only proceed when there is a valid mapping based on overlapping between reference modes and zone modes, while in absence
      * of reference osm modes, we trust any nearby zone with mapped mode */
-    if(getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(overlappingModes)) {
+    if(getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitMode(overlappingModes)) {
       /* no overlapping mapped modes while both have explicit osm modes available, not a match */
       return true;
     }
@@ -295,12 +295,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param tags of the osm entity
    * @return pair containing eligible osm modes identified and their mapped planit counterparts
    */
-  public Pair<Collection<String>, Collection<Mode>> collectPublicTransportModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {
+  public Pair<Collection<String>, Collection<Mode>> collectPublicTransportModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {    
     Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmPublicTransportModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Collection<Mode> eligiblePlanitModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);      
+    Collection<Mode> eligiblePlanitModes = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModes(eligibleOsmModes);      
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
   
@@ -317,7 +317,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Collection<Mode> eligiblePlanitModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(eligibleOsmModes);      
+    Collection<Mode> eligiblePlanitModes = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModes(eligibleOsmModes);      
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
   
@@ -329,7 +329,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {    
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(osmNodeId);
     if(osmNode != null) {
-      for(InfrastructureLayer networkLayer : network2ZoningData.getOsmNetwork().infrastructureLayers) {        
+      for(InfrastructureLayer networkLayer : transferSettings.getReferenceNetwork().infrastructureLayers) {        
         if(getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)){
           return true;
         }        
@@ -444,7 +444,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
      * would require passengers to cross the road to get to the stop position */
     osmModes = PlanitOsmModeUtils.getPublicTransportModesFrom(osmModes);
     for(String osmMode : osmModes) {
-      Mode accessMode = getNetworkToZoningData().getSettings().getMappedPlanitMode(osmMode);
+      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
       if(accessMode==null) {
         continue;
       }
@@ -504,7 +504,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected Collection<Link> getLinksWithAccessToConnectoidLocation(Point location, Mode accessMode) throws PlanItException {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(accessMode);
+    MacroscopicPhysicalNetwork networkLayer = transferSettings.getReferenceNetwork().infrastructureLayers.get(accessMode);
     PlanitOsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -541,11 +541,11 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     Collection<String> osmLinkModes = new HashSet<String>(); 
     if(link.hasEdgeSegmentAb()) {      
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAvailableModes();
-      osmLinkModes.addAll(getNetworkToZoningData().getSettings().getMappedOsmModes(planitModes));
+      osmLinkModes.addAll(getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModes));
     }
     if(link.hasEdgeSegmentBa()) {      
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentBa()).getLinkSegmentType().getAvailableModes();
-      osmLinkModes.addAll(getNetworkToZoningData().getSettings().getMappedOsmModes(planitModes));
+      osmLinkModes.addAll(getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModes));
     }
     if(osmLinkModes==null || osmLinkModes.isEmpty()) {
       return false;
@@ -706,7 +706,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     /* connectoid(s) */
     for(Mode mode : modeResult.second()) {
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(mode);             
+      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) transferSettings.getReferenceNetwork().infrastructureLayers.get(mode);             
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
@@ -884,7 +884,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
           
     /* break links */
     Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(
-        planitNode, linksToBreak, networkLayer, network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem(), breakLinkListeners);   
+        planitNode, linksToBreak, networkLayer, transferSettings.getReferenceNetwork().getCoordinateReferenceSystem(), breakLinkListeners);   
 
     /* TRACKING DATA CONSISTENCY - AFTER */
     {
@@ -950,7 +950,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   
   protected boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
-    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) transferSettings.getReferenceNetwork().infrastructureLayers.get(planitMode);
     
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
      
@@ -1019,7 +1019,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       return false;
     }
     
-    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) transferSettings.getReferenceNetwork().infrastructureLayers.get(planitMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);                
     
     /* planit access node */

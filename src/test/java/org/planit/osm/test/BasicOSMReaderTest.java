@@ -86,12 +86,12 @@ public class BasicOSMReaderTest {
       PlanitOsmIntermodalReader osmReader = PlanitOsmIntermodalReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
       
       /* test out excluding a particular type highway:road from parsing */
-      osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-      osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-      osmReader.getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+      osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+      osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+      osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
       
       /* activate railways */
-      osmReader.getNetworkSettings().activateRailwayParser(true);
+      osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
                   
       Pair<InfrastructureNetwork<?,?>, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = (MacroscopicNetwork) resultPair.first();

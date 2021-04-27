@@ -1,18 +1,14 @@
 package org.planit.osm.converter.intermodal;
 
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
-import org.planit.converter.ConverterReaderSettings;
 import org.planit.converter.intermodal.IntermodalReader;
 import org.planit.network.InfrastructureNetwork;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.converter.network.PlanitOsmNetworkLayerHandler;
 import org.planit.osm.converter.network.PlanitOsmNetworkReader;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
-import org.planit.osm.converter.network.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
+import org.planit.osm.converter.zoning.PlanitOsmZoningHandlerHelper;
 import org.planit.osm.converter.zoning.PlanitOsmZoningReader;
 import org.planit.osm.converter.zoning.PlanitOsmZoningReaderFactory;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -32,12 +28,52 @@ import org.planit.zoning.Zoning;
 public class PlanitOsmIntermodalReader implements IntermodalReader {
   
   /** the logger */
+  @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmIntermodalReader.class.getCanonicalName());
   
   /** the settings to use */
   private PlanitOsmIntermodalReaderSettings settings;
+  
+  /** the zoning to populate if any */
+  private Zoning zoningToPopulate;
        
     
+  /** make sure settings are consistent for those properties that are assumed to be
+   * 
+   * @return true when valid, false otherwise
+   */
+  private boolean validateSettings() throws PlanItException {
+    PlanitOsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
+    PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
+    
+    /* both source countries must be the same */
+    if( !networkSettings.getCountryName().equals(ptSettings.getCountryName())){
+        LOGGER.severe(String.format(
+            "OSM intermodal reader requires both the network and zoning (pt) to utilise the same source country upon parsing, found %s and %s respctively instead",networkSettings.getCountryName(), ptSettings.getCountryName()));
+      return false;
+    }
+    
+    /* both input files must be the same */
+    if(!networkSettings.getInputFile().equals(ptSettings.getInputFile())) {
+      LOGGER.warning(
+          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same osm input file upon parsing, found %s and %s respctively instead",networkSettings.getInputFile(), ptSettings.getInputFile()));
+      if(networkSettings.getInputFile()!=null) {
+        LOGGER.warning(
+            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,networkSettings.getInputFile()));
+        ptSettings.setInputFile(networkSettings.getInputFile());
+      }else if(ptSettings.getInputFile()!=null) {
+        LOGGER.warning(
+            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,ptSettings.getInputFile()));
+        networkSettings.setInputFile(ptSettings.getInputFile());
+      }else {
+        return false;
+      }
+    }
+    
+    return true;
+       
+  }
+
   /**
    * Constructor 
    * 
@@ -52,22 +88,18 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   /**
    * Constructor 
    * 
-   * @param inputFile to use
+   * @param inputFile to use for all intermodal parsing
    * @param countryName to use for parsing the geometries in desired projection
-   * @param ptSettings to use
    * @param osmNetworkToPopulate to populate
    * @param zoning to populate
    */
-  protected PlanitOsmIntermodalReader(PlanitOsmIntermodalReaderSettings settings, Zoning zoningToPopulate){
-    /* by default activate rail to parse in intermodal settings */
-    getSettings().getNetworkSettings()..activateRailwayParser(true);   
-  }
-  
+  protected PlanitOsmIntermodalReader(final String inputFile, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    this(new PlanitOsmIntermodalReaderSettings(inputFile, countryName, osmNetworkToPopulate), zoningToPopulate);  
+  }     
+    
   /**
    * Constructor 
    * 
-   * @param inputFile to use
-   * @param countryName to use for parsing the geometries in desired projection
    * @param networkSettings to use
    * @param ptSettings to use
    * @param osmNetworkToPopulate to populate
@@ -75,18 +107,24 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
   protected PlanitOsmIntermodalReader(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
-    /* both source countries must be the same */
-    PlanItException.throwIf(
-        !networkSettings.getCountryName().equals(ptSettings.getCountryName()), 
-        String.format(
-            "OSM intermodal reader requires both the network and zoning (pt) to utilise the same source country upon parsing, found %s and %s respctively instead",networkSettings.getCountryName(), ptSettings.getCountryName()));
-    
-    
-    /* NETWORK READER */
-    initialiseNetworkReader(networkSettings, osmNetworkToPopulate);
-    
-    /* ZONING READER */
-    initialiseZoningReader(ptSettings, osmNetworkToPopulate);   
+    this(new PlanitOsmIntermodalReaderSettings(networkSettings, ptSettings), zoningToPopulate);
+    getSettings().getPublicTransportSettings().setReferenceNetwork(osmNetworkToPopulate);
+  }
+  
+  /**
+   * Constructor 
+   * 
+   * @param inputFile to use
+   * @param countryName to use for parsing the geometries in desired projection
+   * @param ptSettings to use
+   * @param osmNetworkToPopulate to populate
+   * @param zoning to populate
+   */
+  protected PlanitOsmIntermodalReader(PlanitOsmIntermodalReaderSettings settings, Zoning zoningToPopulate){
+    this.settings = settings;
+    this.zoningToPopulate = zoningToPopulate;
+    /* by default activate rail to parse in intermodal settings */
+    getSettings().getNetworkSettings().activateRailwayParser(true);   
   }  
   
    
@@ -94,14 +132,22 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network and zoning
    * given the configuration options that have been set
    * 
-   * @return network and zoning that has been parsed
+   * @return network and zoning that has been parsed, or null if detected problem has occurred and logged
    * @throws PlanItException thrown if error
    */  
   @Override
-  public Pair<InfrastructureNetwork<?,?>, Zoning> read() throws PlanItException {     
+  public Pair<InfrastructureNetwork<?,?>, Zoning> read() throws PlanItException {
     
+    /* only proceed when configuration is valid */
+    if(!validateSettings()) {
+      return null;
+    }
+    
+    PlanitOsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
+    PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
+        
     /* OSM network reader */
-    PlanitOsmNetworkReader osmNetworkReader = PlanitOsmNetworkReaderFactory.create(getSettings().getNetworkSettings());
+    PlanitOsmNetworkReader osmNetworkReader = PlanitOsmNetworkReaderFactory.create(networkSettings);
     
     /* disable removing dangling subnetworks, until zoning has been parsed as well */
     boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
@@ -109,10 +155,17 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     
     /* parse OSM network */
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();    
-    PlanitOsmNetworkToZoningReaderData network2ZoningData = osmNetworkReader.createNetworkToZoningReaderData();
     
     /* ZONING READER */
-    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(getSettings().getPublicTransportSettings(), network);
+    if(zoningToPopulate==null) {
+      zoningToPopulate = new Zoning(network.getIdGroupingToken(), network.getNetworkGroupingTokenId());
+    }
+    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(
+        ptSettings.getInputFile(), 
+        ptSettings.getCountryName(), 
+        zoningToPopulate, 
+        network, 
+        osmNetworkReader.createNetworkToZoningReaderData());
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
@@ -120,7 +173,6 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     {
       /* default activate the parser because otherwise there is no point in using an intermodal reader anyway */
       osmZoningReader.getSettings().activateParser(true);    
-      osmZoningReader.getSettings().setNetworkDataForZoningReader(network2ZoningData);
       
       osmZoningReader.getSettings().setRemoveDanglingZones(false);    
       osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(false);      
@@ -141,13 +193,13 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
       /* (transfer) zones */
       osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
       if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
-        osmZoningReader.removeDanglingZones();
+        PlanitOsmZoningHandlerHelper.removeDanglingZones(zoning);
       }     
       
       /* transfer zone groups */
       osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
       if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
-        osmZoningReader.removeDanglingTransferZoneGroups();
+        PlanitOsmZoningHandlerHelper.removeDanglingTransferZoneGroups(zoning);
       }        
     }
     

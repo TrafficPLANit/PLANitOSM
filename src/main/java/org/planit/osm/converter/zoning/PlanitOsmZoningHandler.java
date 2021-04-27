@@ -175,8 +175,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     }
     
     /* non-tram mode exists */    
-    if(getNetworkToZoningData().getSettings().isRailwayParserActive() &&
-        getNetworkToZoningData().getSettings().getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+    if(getNetworkToZoningData().getNetworkSettings().isRailwayParserActive() &&
+        getNetworkToZoningData().getNetworkSettings().getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
       
       /* train station or halt (not for trams) */
       if(OsmTagUtils.matchesAnyValueTag(ptv1ValueTag, OsmPtv1Tags.STATION, OsmPtv1Tags.HALT)) {
@@ -205,7 +205,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     }
     
     /* entrances/exits */
-    if(OsmPtv1Tags.SUBWAY_ENTRANCE.equals(ptv1ValueTag) && getNetworkToZoningData().getSettings().getHighwaySettings().hasMappedPlanitMode(OsmRoadModeTags.FOOT)) {
+    if(OsmPtv1Tags.SUBWAY_ENTRANCE.equals(ptv1ValueTag) && getNetworkToZoningData().getNetworkSettings().getHighwaySettings().hasMappedPlanitMode(OsmRoadModeTags.FOOT)) {
       // entrances are to be converted to connectoids in post_processing
       //TODO
     }   
@@ -591,7 +591,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @throws PlanItException thrown if error
    */ 
   private void extractTransferInfrastructurePtv1Railway(OsmWay osmWay, Map<String, String> tags, String ptv1ValueTag) throws PlanItException {
-    PlanitOsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getSettings();
+    PlanitOsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getNetworkSettings();
     
     /* platform edge */
     if(OsmPtv1Tags.PLATFORM_EDGE.equals(ptv1ValueTag)) {
@@ -625,7 +625,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @throws PlanItException thrown if error
    */  
   private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    PlanitOsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getSettings();
+    PlanitOsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getNetworkSettings();
     
     /* tram stop */
     if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
@@ -738,7 +738,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       
     }
     /* PTv1 railway=* */
-    else if(OsmRailwayTags.hasRailwayKeyTag(tags) && getNetworkToZoningData().getSettings().isRailwayParserActive()) {
+    else if(OsmRailwayTags.hasRailwayKeyTag(tags) && getNetworkToZoningData().getNetworkSettings().isRailwayParserActive()) {
       
       String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);      
       extractTransferInfrastructurePtv1Railway(osmWay, tags, ptv1ValueTag);       
@@ -1016,7 +1016,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     super(transferSettings, zoningReaderData,network2ZoningData, zoningToPopulate, profiler);
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsCrsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
+    this.geoUtils = new PlanitJtsCrsUtils(transferSettings.getReferenceNetwork().getCoordinateReferenceSystem());
   }
   
   /**
@@ -1027,7 +1027,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     reset();
     
     PlanItException.throwIf(
-        this.getNetworkToZoningData().getOsmNetwork().infrastructureLayers == null || this.getNetworkToZoningData().getOsmNetwork().infrastructureLayers.size()<=0,
+        getSettings().getReferenceNetwork().infrastructureLayers == null || getSettings().getReferenceNetwork().infrastructureLayers.size()<=0,
           "network is expected to be populated at start of parsing OSM zoning");
   }  
   

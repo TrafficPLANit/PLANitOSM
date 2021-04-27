@@ -98,7 +98,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   private void initialiseSpatiallyIndexedOsmNodesInternalToPlanitLinks() {
     
     double envelopeMinExtentAbsolute = Double.POSITIVE_INFINITY;
-    for(MacroscopicPhysicalNetwork layer : getNetworkToZoningData().getOsmNetwork().infrastructureLayers) {
+    for(MacroscopicPhysicalNetwork layer : getSettings().getReferenceNetwork().infrastructureLayers) {
       PlanitOsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
       spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new Quadtree());
       Quadtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);            
@@ -155,13 +155,13 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * 
    * @param waitingAreaGeometry the links appear accessible from/to
    * @param eligibleOsmModes of the waiting area
-   * @param linksToVerify the link sto verify
+   * @param linksToVerify the links to verify
    * @return links compatible with the driving direction
    * @throws PlanItException thrown if error
    */
   private Collection<Link> findDrivingDirectionCompatibleLinks(Geometry waitingAreaGeometry, Collection<String> eligibleOsmModes, Collection<Link> linksToVerify) throws PlanItException {
     boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());    
-    Collection<Mode> accessModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(PlanitOsmModeUtils.getPublicTransportModesFrom(eligibleOsmModes));
+    Collection<Mode> accessModes = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModes(PlanitOsmModeUtils.getPublicTransportModesFrom(eligibleOsmModes));
     return PlanitOsmZoningHandlerHelper.removeLinksOnWrongSideOf(waitingAreaGeometry, linksToVerify, isLeftHandDrive, accessModes, geoUtils);
   
   }
@@ -295,8 +295,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }else {      
       
       /* multiple candidates still, filter candidates based on availability of valid stop location checking (mode support, correct location compared to zone etc.) */      
-      Mode accessMode = getNetworkToZoningData().getSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(accessMode);
+      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
+      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().infrastructureLayers.get(accessMode);
       
       @SuppressWarnings("unchecked")
       Set<Link> candidatesToFilter = (Set<Link>) candidatesForStopLocation.second();
@@ -498,7 +498,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    */
   private boolean hasStandAloneTransferZoneValidAccessLinkSegmentForLinkInternalLocationModeCombination(TransferZone transferZone, Link accessLink, Point connectoidLocation, Mode accessMode) throws PlanItException {
     
-    MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().getInfrastructureLayerByMode(accessMode);
+    MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().getInfrastructureLayerByMode(accessMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(connectoidLocation);
     Long osmStopLocationId = osmNode!= null ? osmNode.getId() : null;
     
@@ -1027,8 +1027,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Collection<String> eligibleOsmModes = modeResult.first();
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);
     for(String osmMode: eligibleOsmModes) {
-      Mode planitMode = getNetworkToZoningData().getSettings().getMappedPlanitMode(osmMode);
-      MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
+      Mode planitMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
+      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().infrastructureLayers.get(planitMode);
     
       /* a stop position should be part of an already parsed planit link, if not it is incorrectly tagged */
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isLocationPresentInLayer(osmNodeLocation)) {
@@ -1081,7 +1081,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         
     /* validate mode support */
     Collection<String> accessOsmModes = PlanitOsmModeUtils.getPublicTransportModesFrom(PlanitOsmZoningHandlerHelper.getEligibleOsmModesForTransferZone(transferZone));
-    if(!getNetworkToZoningData().getSettings().hasAnyMappedPlanitMode(accessOsmModes)) {
+    if(!getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitMode(accessOsmModes)) {
       LOGGER.warning(String.format("DISCARD: waiting area (osm id %d) has no supported public transport planit modes present", osmEntityId));
       return;             
     }
@@ -1097,8 +1097,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     
     /* per mode - find links, because if the transfer zone supports both a rail and road mode, we require different links for our connectoids */
     for(String osmAccessMode : accessOsmModes) {      
-      Mode accessMode = getNetworkToZoningData().getSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(accessMode);
+      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
+      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().infrastructureLayers.get(accessMode);
     
       Link selectedAccessLink = null;
       if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmEntityId, osmEntityType)) {
@@ -1223,7 +1223,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     for(Mode planitMode : planitModes) {
       
       /* layer */
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
+      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().infrastructureLayers.get(planitMode);
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: stop_position %d is not present in parsed network layer supporting mode %s, likely it is dangling in original osm file",osmNode.getId(), planitMode.getExternalId()), PlanitOsmNodeUtils.createPoint(osmNode));
@@ -1302,8 +1302,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         
     /* modes */
     for(String osmAccessMode : osmAccessModes) {
-      Mode planitMode = getNetworkToZoningData().getSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicPhysicalNetwork networkLayer = getNetworkToZoningData().getOsmNetwork().infrastructureLayers.get(planitMode);
+      Mode planitMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
+      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().infrastructureLayers.get(planitMode);
       
       
       /* station mode determines where to create stop_locations and how many. It is special in this regard and different from a regular transfer zone (platform/pole) */
@@ -1498,7 +1498,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }
     
     TransferZone foundZone = matchedTransferZones.iterator().next();  
-    accessModes = getNetworkToZoningData().getSettings().getMappedPlanitModes(PlanitOsmZoningHandlerHelper.getEligibleOsmModesForTransferZone(foundZone));
+    accessModes = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModes(PlanitOsmZoningHandlerHelper.getEligibleOsmModesForTransferZone(foundZone));
     if(accessModes == null) {
       LOGGER.warning(String.format("DISCARD: stop_position %d without proper tagging on OSM network, unable to identify access modes from closest transfer zone in stop_area", osmNode.getId()));
       return;             
@@ -1636,7 +1636,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     super(transferSettings, handlerData, network2ZoningData, zoningToPopulate, profiler);
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsCrsUtils(network2ZoningData.getOsmNetwork().getCoordinateReferenceSystem());
+    this.geoUtils = new PlanitJtsCrsUtils(getSettings().getReferenceNetwork().getCoordinateReferenceSystem());
     
   }
   
@@ -1648,7 +1648,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     reset();
     
     PlanItException.throwIf(
-        getNetworkToZoningData().getOsmNetwork().infrastructureLayers == null || getNetworkToZoningData().getOsmNetwork().infrastructureLayers.size()<=0,
+        getSettings().getReferenceNetwork().infrastructureLayers == null || getSettings().getReferenceNetwork().infrastructureLayers.size()<=0,
           "network is expected to be populated at start of parsing OSM zoning");
     
     initialiseSpatiallyIndexedOsmNodesInternalToPlanitLinks();

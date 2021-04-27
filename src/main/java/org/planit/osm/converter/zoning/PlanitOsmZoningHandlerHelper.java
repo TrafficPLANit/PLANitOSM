@@ -37,6 +37,8 @@ import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneType;
+import org.planit.zoning.Zoning;
+
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
@@ -542,6 +544,30 @@ public class PlanitOsmZoningHandlerHelper {
     return mustAvoidCrossingTraffic;
     
   }
+  
+  /**
+   * remove any dangling zones
+   * 
+   * @param zoning to remove them from
+   */
+  public static void removeDanglingZones(Zoning zoning) {
+    /* delegate to zoning modifier */
+    int originalNumberOfTransferZones = zoning.transferZones.size();
+    zoning.getZoningModifier().removeDanglingZones();
+    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)", zoning.transferZones.size(), originalNumberOfTransferZones));
+  }  
+  
+  /**
+   * remove any dangling transfer zone groups
+   * 
+   * @param zoning to remove them from
+   */  
+  public static void removeDanglingTransferZoneGroups(Zoning zoning) {
+    /* delegate to zoning modifier */
+    int originalNumberOfTransferZoneGroups = zoning.transferZoneGroups.size();
+    zoning.getZoningModifier().removeDanglingTransferZoneGroups();    
+    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)", zoning.transferZoneGroups.size(), originalNumberOfTransferZoneGroups));    
+  }    
 
   /** extract the osm entity type from a planit Transfer zone
    * @param transferZone to identify entity type for

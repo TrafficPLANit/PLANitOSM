@@ -244,8 +244,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     }
 
     /* DTO */
-    PlanitOsmNetworkToZoningReaderData network2zoningData = 
-        new PlanitOsmNetworkToZoningReaderData(getNetworkReaderData(), getSettings());
+    PlanitOsmNetworkToZoningReaderData network2zoningData = new PlanitOsmNetworkToZoningReaderData(networkData, getSettings());
         
     /* layer specific data references */
     for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : getOsmNetworkHandler().getLayerHandlers().entrySet()){

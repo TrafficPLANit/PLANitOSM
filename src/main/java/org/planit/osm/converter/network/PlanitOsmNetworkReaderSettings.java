@@ -156,13 +156,21 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   /** by default we always keep the largest subnetwork */
   public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
     
+  /**
+   * Constructor with country to base (i) default speed limits and (ii) mode access on, 
+   * for various osm highway types in case maximum speed limit information is missing
+   * 
+   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   */
+  public PlanitOsmNetworkReaderSettings(String countryName) {
+    this(null, countryName, new PlanitOsmNetwork());
+  }   
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
    * speed limits and mdoe access restrictions (unless manually adjusted by the user)
    * 
    * @param osmNetworkToPopulate to populate
-   * 
    */  
   public PlanitOsmNetworkReaderSettings(PlanitOsmNetwork osmNetworkToPopulate) {
     this( CountryNames.GLOBAL, osmNetworkToPopulate);

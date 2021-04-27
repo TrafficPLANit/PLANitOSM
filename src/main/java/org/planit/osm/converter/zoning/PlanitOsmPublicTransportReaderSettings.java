@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.planit.network.macroscopic.MacroscopicNetwork;
+import org.planit.osm.converter.network.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.PlanitOsmReaderSettings;
 import org.planit.utils.misc.Pair;
@@ -24,8 +24,18 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
  */
 public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSettings {
   
+  // transferred data/settings from network reader
+  
   /** the reference network to use during parsing of the pt zones */
   private PlanitOsmNetwork referenceNetwork = null;
+  
+  /**
+   * the network data required to perform successful parsing of zones, to be obtained from the osm network reader
+   * after parsing the reference network
+   */
+  private PlanitOsmNetworkToZoningReaderData network2ZoningData;  
+  
+  // configuration settings
   
   /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
@@ -137,10 +147,64 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * @param referenceNetwork to use
    */
   public PlanitOsmPublicTransportReaderSettings(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork) {
-    super(inputFile, countryName);
-    setReferenceNetwork(referenceNetwork);
+    this(inputFile, countryName, referenceNetwork, null);
   }
   
+  /** Constructor with user defined source locale
+   * 
+   * @param inputFile to use
+   * @param countryName to base source locale on
+   * @param referenceNetwork to use
+   * @param network2ZoningData to use
+   */
+  public PlanitOsmPublicTransportReaderSettings(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork, PlanitOsmNetworkToZoningReaderData network2ZoningData) {
+    super(inputFile, countryName);
+    setReferenceNetwork(referenceNetwork);
+    setNetworkDataForZoningReader(network2ZoningData);
+  }  
+  
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void reset() {
+    //TODO
+  }
+  
+  // TRANSFERRED FROM NETWOPRK READER
+  
+  /** set the reference network to use
+   * @param referenceNetwork to use
+   */
+  public void setReferenceNetwork(PlanitOsmNetwork referenceNetwork) {
+    this.referenceNetwork = referenceNetwork;
+  }  
+  
+  /** set the reference network to use
+   * @param referenceNetwork
+   */
+  public PlanitOsmNetwork getReferenceNetwork() {
+    return this.referenceNetwork;
+  }
+
+  /** allow one to set the network data required for parsing osm zoning data on the zoning reader
+   * 
+   * @param network2ZoningData to use based on network reader that parsed the used reference network
+   */
+  public void setNetworkDataForZoningReader(PlanitOsmNetworkToZoningReaderData network2ZoningData) {
+    this.network2ZoningData = network2ZoningData;
+  }   
+  
+  /** collect the network data required for parsing osm zoning data on the zoning reader
+   * 
+   * @return network2ZoningData based on network reader that parsed the used reference network
+   */
+  public PlanitOsmNetworkToZoningReaderData  getNetworkDataForZoningReader() {
+    return this.network2ZoningData;
+  }  
+  
+  // USER CONFIGURATION
+
   /** set the flag whether or not the highways should be parsed or not
    * @param activate
    */
@@ -376,27 +440,6 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
   public boolean isRemoveDanglingTransferZoneGroups() {
     return this.removeDanglingTransferZoneGroups;
   }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void reset() {
-    //TODO
-  }
-
-  /** set the reference network to use
-   * @param referenceNetwork to use
-   */
-  public void setReferenceNetwork(PlanitOsmNetwork referenceNetwork) {
-    this.referenceNetwork = referenceNetwork;
-  }  
-  
-  /** set the reference network to use
-   * @param referenceNetwork
-   */
-  public PlanitOsmNetwork getReferenceNetwork() {
-    return this.referenceNetwork;
-  }   
+ 
   
 }

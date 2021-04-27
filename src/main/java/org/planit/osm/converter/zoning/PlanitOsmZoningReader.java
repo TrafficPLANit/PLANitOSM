@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 
 import org.planit.converter.zoning.ZoningReader;
 import org.planit.osm.converter.network.PlanitOsmNetworkToZoningReaderData;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.StringUtils;
@@ -46,36 +47,14 @@ public class PlanitOsmZoningReader implements ZoningReader {
   // references
       
   /** zoning to populate */
-  private final Zoning zoning;
-  
-  /** data from network parsing that is required to successfully complete the zoning parsing */
-  PlanitOsmNetworkToZoningReaderData network2ZoningData;
-     
+  private Zoning zoning;
+       
   /**
    * Log some information about this reader's configuration 
    */
   private void logInfo() {
     LOGGER.info(String.format("OSM (transfer) zoning input file: %s",getSettings().getInputFile()));    
   }       
-  
-  /** conduct reading of data with given reader and handler
-   * 
-   * @param osmReader to use
-   * @param osmHandler to use
-   * @throws PlanItException thrown if error
-   */
-  protected void read(OsmReader osmReader, PlanitOsmZoningBaseHandler osmHandler) throws PlanItException {
-    try {  
-      osmHandler.initialiseBeforeParsing();
-      /* register handler */
-      osmReader.setHandler(osmHandler);
-      /* conduct parsing which will call back the handler*/
-      osmReader.read();  
-    }catch (OsmInputException e) {
-      LOGGER.severe(e.getMessage());
-      throw new PlanItException("error during parsing of osm file",e);
-    }       
-  }  
   
   /**
    * conduct pre-processing step of zoning reader that cannot be conducted as part of the regular processing due to 
@@ -115,7 +94,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
       osmHandler = new PlanitOsmZoningHandler(
           this.transferSettings, 
           this.zoningReaderData, 
-          this.network2ZoningData, 
+          getSettings().getNetworkDataForZoningReader(), 
           this.zoning, 
           profiler);
       read(osmReader, osmHandler);
@@ -139,43 +118,63 @@ public class PlanitOsmZoningReader implements ZoningReader {
       osmPostProcessingHandler = new PlanitOsmZoningPostProcessingHandler(
           this.transferSettings, 
           this.zoningReaderData, 
-          this.network2ZoningData, 
+          getSettings().getNetworkDataForZoningReader(), 
           this.zoning,
           profiler);
       read(osmReader, osmPostProcessingHandler);        
     } 
-  }  
-  
-  /**
-   * remove any dangling zones
+  }       
+
+  /** conduct reading of data with given reader and handler
+   * 
+   * @param osmReader to use
+   * @param osmHandler to use
+   * @throws PlanItException thrown if error
    */
-  protected void removeDanglingZones() {
-    /* delegate to zoning modifier */
-    int originalNumberOfTransferZones = zoning.transferZones.size();
-    zoning.getZoningModifier().removeDanglingZones();
-    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)", zoning.transferZones.size(), originalNumberOfTransferZones));
-  }  
-  
-  /**
-   * remove any dangling transfer zone groups
-   */  
-  protected void removeDanglingTransferZoneGroups() {
-    /* delegate to zoning modifier */
-    int originalNumberOfTransferZoneGroups = zoning.transferZoneGroups.size();
-    zoning.getZoningModifier().removeDanglingTransferZoneGroups();    
-    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)", zoning.transferZoneGroups.size(), originalNumberOfTransferZoneGroups));    
-  }  
-    
+  protected void read(OsmReader osmReader, PlanitOsmZoningBaseHandler osmHandler) throws PlanItException {
+    try {  
+      osmHandler.initialiseBeforeParsing();
+      /* register handler */
+      osmReader.setHandler(osmHandler);
+      /* conduct parsing which will call back the handler*/
+      osmReader.read();  
+    }catch (OsmInputException e) {
+      LOGGER.severe(e.getMessage());
+      throw new PlanItException("error during parsing of osm file",e);
+    }       
+  }
 
   /**
-   * Constructor 
+   * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 
    * 
    * @param settings to use
    * @param zoningToPopulate zoning to populate 
    */
-  protected PlanitOsmZoningReader(PlanitOsmPublicTransportReaderSettings settings, Zoning zoningToPopulate){
+  protected PlanitOsmZoningReader(PlanitOsmPublicTransportReaderSettings settings){
     this.transferSettings = settings;    
-    this.zoning = zoningToPopulate; 
+  }  
+  
+  /**
+   * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 
+   * 
+   * @param inputFile to parse from
+   * @param countryName this zoning is used for
+   * @param zoningToPopulate zoning to populate 
+   */
+  protected PlanitOsmZoningReader(String inputFile, String countryName, Zoning zoningToPopulate){
+    this(inputFile, countryName, zoningToPopulate, null);
+  }
+  
+  /**
+   * Constructor. Requires user to set networkToZoning data manually afterwards 
+   * 
+   * @param inputFile to parse from
+   * @param countryName this zoning is used for
+   * @param zoningToPopulate zoning to populate
+   * @param referenceNetwork to use 
+   */
+  protected PlanitOsmZoningReader(String inputFile, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork){
+    this(inputFile, countryName, zoningToPopulate, referenceNetwork, null); 
   }
   
   /**
@@ -184,13 +183,14 @@ public class PlanitOsmZoningReader implements ZoningReader {
    * @param inputFile to parse from
    * @param countryName this zoning is used for
    * @param zoningToPopulate zoning to populate 
+   * @param referenceNetwork to use
+   * @param network2ZoningData to use
    */
-  protected PlanitOsmZoningReader(String inputFile, String countryName, Zoning zoningToPopulate){
-    this.transferSettings = new PlanitOsmPublicTransportReaderSettings(inputFile, countryName);
-    
-    // output
+  protected PlanitOsmZoningReader(
+      String inputFile, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, PlanitOsmNetworkToZoningReaderData network2ZoningData){
+    this.transferSettings = new PlanitOsmPublicTransportReaderSettings(inputFile, countryName, referenceNetwork, network2ZoningData);    
     this.zoning = zoningToPopulate; 
-  }  
+  }   
      
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
@@ -202,8 +202,15 @@ public class PlanitOsmZoningReader implements ZoningReader {
    */  
   @Override
   public Zoning read() throws PlanItException {
+    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()), "Country not set for OSM zoning reader, unable to proceed");
     PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getInputFile()), "Input file not set for OSM zoning reader, unable to proceed");
     PlanItException.throwIfNull(getSettings().getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
+    PlanItException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (newtork to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
+
+    /* if not set, create zoning to populate here based on network id tokens */
+    if(zoning==null) {
+      this.zoning = new Zoning(getSettings().getReferenceNetwork().getIdGroupingToken(),getSettings().getReferenceNetwork().getNetworkGroupingTokenId());
+    }
     
     /* make country name available in zoning reader data during parsing */
     this.zoningReaderData = new PlanitOsmZoningReaderData(getSettings().getCountryName());
@@ -227,12 +234,12 @@ public class PlanitOsmZoningReader implements ZoningReader {
     
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
     if(getSettings().isRemoveDanglingZones()) {
-      removeDanglingZones();
+      PlanitOsmZoningHandlerHelper.removeDanglingZones(zoning);
     }
     
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
     if(getSettings().isRemoveDanglingTransferZoneGroups()) {    
-      removeDanglingTransferZoneGroups();
+      PlanitOsmZoningHandlerHelper.removeDanglingTransferZoneGroups(zoning);
     }    
     
     LOGGER.info(" OSM zoning parsing...DONE");

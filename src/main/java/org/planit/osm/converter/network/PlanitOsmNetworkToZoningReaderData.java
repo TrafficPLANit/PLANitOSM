@@ -2,6 +2,7 @@ package org.planit.osm.converter.network;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Envelope;
 import org.planit.network.InfrastructureLayer;
@@ -18,6 +19,9 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
  *
  */
 public class PlanitOsmNetworkToZoningReaderData {
+  
+  /** the logger to use */
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkToZoningReaderData.class.getCanonicalName());
   
   /** the network reader settings used */
   private final PlanitOsmNetworkReaderSettings networkReaderSettings;
@@ -41,6 +45,12 @@ public class PlanitOsmNetworkToZoningReaderData {
    * @param settings to use
    */
   protected PlanitOsmNetworkToZoningReaderData(final PlanitOsmNetworkReaderData networkData, final PlanitOsmNetworkReaderSettings networkReaderSettings) {
+    if(networkData==null) {
+      LOGGER.severe("network data provided to PlanitOsmNetworkToZoningReaderData constructor null");
+    }
+    if(networkReaderSettings==null) {
+      LOGGER.severe("network reader settings provided to PlanitOsmNetworkToZoningReaderData constructor null");
+    }
     this.networkData = networkData;
     this.networkReaderSettings = networkReaderSettings;
   }
@@ -72,7 +82,7 @@ public class PlanitOsmNetworkToZoningReaderData {
   /** network reader settings as used for populating the planti network absed on osm data
    * @return network reader settings used
    */
-  public PlanitOsmNetworkReaderSettings getNetworkReaderSettings() {
+  public PlanitOsmNetworkReaderSettings getNetworkSettings() {
     return networkReaderSettings;
   }
     

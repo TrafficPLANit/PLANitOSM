@@ -3,6 +3,7 @@ package org.planit.osm.converter.intermodal;
 import org.planit.converter.ConverterReaderSettings;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -17,7 +18,39 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
   protected final PlanitOsmNetworkReaderSettings networkSettings;
   
   /** the zoning PT settings to use */
-  protected final PlanitOsmPublicTransportReaderSettings zoningPtSettings;    
+  protected final PlanitOsmPublicTransportReaderSettings zoningPtSettings;
+  
+  /**
+   * constructor
+   * 
+   * @param countryName to use
+   */
+  public PlanitOsmIntermodalReaderSettings(final String countryName) {
+    this(countryName, new PlanitOsmNetwork());
+  }  
+  
+  /**
+   * constructor
+   * 
+   * @param countryName to use
+   * @param networkToPopulate to use
+   */
+  public PlanitOsmIntermodalReaderSettings(final String countryName, final PlanitOsmNetwork networkToPopulate) {
+    this(null, countryName, networkToPopulate);
+  }
+  
+  /**
+   * constructor
+   * 
+   * @param inputFile to use
+   * @param countryName to use
+   * @param networkToPopulate to use
+   */
+  public PlanitOsmIntermodalReaderSettings(final String inputFile, final String countryName, final PlanitOsmNetwork networkToPopulate) {
+    this(
+        new PlanitOsmNetworkReaderSettings(inputFile, countryName, networkToPopulate), 
+        new PlanitOsmPublicTransportReaderSettings(inputFile, countryName, networkToPopulate));
+  }  
          
   
   /**
