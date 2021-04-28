@@ -90,4 +90,14 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
     return zoningPtSettings;
   }  
   
+  /** set the inputFile  to use including the path for both the network and public transport settings (both should
+   * use the same file)
+   * 
+   * @param inputFile to use
+   */
+  public void setInputFile(final String inputFile) {
+    getNetworkSettings().setInputFile(inputFile);
+    getPublicTransportSettings().setInputFile(inputFile);
+  }  
+  
 }
