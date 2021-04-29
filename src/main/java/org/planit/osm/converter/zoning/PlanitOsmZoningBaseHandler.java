@@ -142,6 +142,8 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     TransferZone transferZone = getZoning().transferZones.createNew();
     /* type */
     transferZone.setType(transferZoneType);
+    /* xml id = internal id */
+    transferZone.setXmlId(String.valueOf(transferZone.getId()));
     
     getProfiler().logTransferZoneStatus(getZoning().transferZones.size());
     return transferZone;
@@ -730,6 +732,10 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
       DirectedConnectoid connectoid = zoning.transferConnectoids.registerNew(linkSegment,accessZone);
+      
+      /* xml id = internal id */
+      connectoid.setXmlId(String.valueOf(connectoid.getId()));
+      
       /* link connectoid to zone and register modes for access*/
       connectoid.addAllowedModes(accessZone, realAllowedModes);   
       return connectoid;
