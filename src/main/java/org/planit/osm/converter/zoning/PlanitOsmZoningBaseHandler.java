@@ -18,6 +18,7 @@ import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
+import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
@@ -873,8 +874,18 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink = 
         PlanitOsmZoningHandlerHelper.collectConnectoidAccessNodeLocations(linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
+    /* register additional actions on breaking link via callback listeners:
+     * 1) connectoid update (see above)
+     * 2) xml id update on links (and its link segments) by syncing to internal ids so they remain unique. 
+     * 
+     * 2) is needed when persisting based on planit xml ids which otherwise leads to problems due to duplicate xml ids when breaking links (only internal ids remain unique). 
+     * Note that this syncing works because we create planit links such that initially xml ids are in sync with internal ids upon creation. If this is not the case we cannot 
+     * guarantee uniqueness of xml ids using this method.
+     */
     Set<BreakEdgeListener<Node, Link>> breakLinkListeners = 
-        Set.of(new UpdateConnectoidsOnBreakLink<Node, Link, LinkSegment>(connectoidsAccessNodeLocationBeforeBreakLink));
+        Set.of(
+            new UpdateConnectoidsOnBreakLink<Node, Link, LinkSegment>(connectoidsAccessNodeLocationBeforeBreakLink),
+            new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge<Node, Link, LinkSegment>());
         
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
     {      

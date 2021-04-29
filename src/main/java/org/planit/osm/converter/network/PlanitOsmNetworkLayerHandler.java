@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
+import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.tags.OsmAccessTags;
@@ -45,9 +46,11 @@ import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.physical.LinkSegment;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.zoning.listener.UpdateConnectoidsOnBreakLink;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -1324,7 +1327,12 @@ public class PlanitOsmNetworkLayerHandler {
    * 
    */ 
   protected void breakLinksWithInternalConnections() {
-    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");        
+    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");
+
+    /* whenever we start breaking links ensure that the xml ids are updated based on the internal ids for both links and link segments to guarantee they remain unique
+     * Note that this is true because for OSM we set the xml id to the internal id when creating planit entities. We do this to ensure that upon persisting, persisting
+     * based on xml ids is viable and does not lead to duplidate ids in the output */
+    Set<BreakEdgeListener<Node, Link>> breakLinkListeners = Set.of(new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge<Node, Link, LinkSegment>());    
     
     try {
           
@@ -1336,7 +1344,7 @@ public class PlanitOsmNetworkLayerHandler {
         Node node = networkLayer.nodes.get(nodeIndex);    
                 
         // 1. break links when a link's internal node is another existing link's extreme node
-        boolean linksBroken = breakLinksWithInternalNode(node);
+        boolean linksBroken = breakLinksWithInternalNode(node, breakLinkListeners);
         if(linksBroken) {          
           processedOsmNodeIds.add(Long.valueOf(node.getExternalId()));
         }
@@ -1348,7 +1356,7 @@ public class PlanitOsmNetworkLayerHandler {
         if(!processedOsmNodeIds.contains(osmNode.getId())) {
           /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
           Node planitIntersectionNode = extractNode(osmNode.getId());
-          breakLinksWithInternalNode(planitIntersectionNode);                                    
+          breakLinksWithInternalNode(planitIntersectionNode, breakLinkListeners);                                    
         }
       }
       
