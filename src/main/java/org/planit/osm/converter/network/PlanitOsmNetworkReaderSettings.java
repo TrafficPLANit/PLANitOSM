@@ -485,10 +485,10 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   /** indicate to keep the largest subnetwork always even when removing dangling subnetworks and the largest one
    * does not fit the set criteria
    * 
-   * @param alwaysKeepLargestsubNetwork when true we always keep it, otherwise not
+   * @param alwaysKeepLargestSubnetwork when true we always keep it, otherwise not
    */
-  public void setAlwaysKeepLargestsubNetwork(boolean alwaysKeepLargestsubNetwork) {
-    this.alwaysKeepLargestsubNetwork = alwaysKeepLargestsubNetwork;
+  public void setAlwaysKeepLargestSubnetwork(boolean alwaysKeepLargestSubnetwork) {
+    this.alwaysKeepLargestsubNetwork = alwaysKeepLargestSubnetwork;
   }  
 
   /**
@@ -499,7 +499,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     osmRailwaySettings.deactivateAllOsmRailwayTypes();
   }
 
-  /** deactive all osm way types except the ones indicated, meaning that if the ones passed in
+  /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
    * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
    * across both railways and highways. If you want to do this within highways only, use the same method under highway settings.
    * 

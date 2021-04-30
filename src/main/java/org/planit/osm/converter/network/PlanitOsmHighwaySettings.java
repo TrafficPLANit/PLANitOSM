@@ -154,7 +154,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   }  
   
   /**
-   * Default is OSM highway type when the type is not supported is set to PlanitOSMTags.TERTIARY.
+   * Default is OSM highway type when the type is not supported is set to PlanitOsmTags.TERTIARY.
    */
   public static String DEFAULT_HIGHWAY_TYPE_WHEN_UNSUPPORTED = OsmHighwayTags.TERTIARY;  
   
@@ -184,7 +184,6 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   } 
   
   /**
-   * 
    * check if a default type is set when the activate type is not supported
    * @return true when available false otherwise
    **/
