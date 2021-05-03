@@ -170,7 +170,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * @return chosen default
    * 
    **/
-  public final String getDefaultOsmHighwayTypeWhenDeactivated() {
+  public final String getDefaultOsmHighwayTypeWhenUnsupported() {
     return defaultOsmHighwayTypeWhenUnsupported;
   }
 
@@ -179,7 +179,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * 
    * @param defaultOsmHighwayValueWhenUnsupported the default to use, should be a type that is supported.
    */
-  public void setApplyDefaultWhenOsmHighwayTypeDeactivated(String defaultOsmHighwayValueWhenUnsupported) {
+  public void setDefaultWhenOsmHighwayTypeUnsupported(String defaultOsmHighwayValueWhenUnsupported) {
     this.defaultOsmHighwayTypeWhenUnsupported = defaultOsmHighwayValueWhenUnsupported;
   } 
   
@@ -194,7 +194,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   /**
    * remove default type in case activate type is not supported by the reader
    */
-  public final void removeOsmHighwayTypeWhenDeactivated() {
+  public final void removeOsmHighwayTypeWhenUnsupported() {
     defaultOsmHighwayTypeWhenUnsupported=null;
   }    
   
@@ -280,7 +280,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * @param maxDensityPerLane new value pcu/km/lane
    * @param modeProperties new values per mode
    */
-  public void overwriteOsmHighwayTypeDefaultsCapacityMaxDensity(final String osmHighwayType, double capacityPerLanePerHour, double maxDensityPerLane) {
+  public void overwriteCapacityMaxDensityDefaults(final String osmHighwayType, double capacityPerLanePerHour, double maxDensityPerLane) {
     overwriteOsmWayTypeDefaultCapacityMaxDensity(OsmHighwayTags.HIGHWAY, osmHighwayType, capacityPerLanePerHour, maxDensityPerLane);
   }  
   
@@ -357,7 +357,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
     if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
       osmWayKey = OsmHighwayTags.HIGHWAY;      
     }else {
-      throw new PlanItException("no osm highway key contained in provided osmTags when collecting default speed limit by OsmHighwayType");
+      throw new PlanItException("no OSM highway key contained in provided osmTags when collecting default speed limit by OsmHighwayType");
     }
     return getDefaultSpeedLimitByOsmHighwayType(tags.get(osmWayKey));
   }  
@@ -370,7 +370,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    */
   public void setOsmRoadMode2PlanitModeMapping(final String osmRoadMode, final Mode planitMode) {
     if(!OsmRoadModeTags.isRoadModeTag(osmRoadMode)) {
-      LOGGER.warning(String.format("osm road mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRoadMode));
+      LOGGER.warning(String.format("OSM road mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRoadMode));
       return;
     }
     setOsmMode2PlanitModeMapping(osmRoadMode, planitMode);

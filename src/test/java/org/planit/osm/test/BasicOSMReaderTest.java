@@ -60,7 +60,7 @@ public class BasicOSMReaderTest {
       osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
       
       /* test out setting different defaults for the highway:primary type*/
-      osmReader.getSettings().getHighwaySettings().overwriteOsmHighwayTypeDefaultsCapacityMaxDensity(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
+      osmReader.getSettings().getHighwaySettings().overwriteCapacityMaxDensityDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
       osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);

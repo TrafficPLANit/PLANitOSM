@@ -697,7 +697,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       String osmWayValueToUse = osmWayValue;
       if(!supportedOsmRoadLinkSegmentTypes.contains(osmWayValue)){
         /* ...use replacement type instead of activate type to still be able to process OSM ways of this type, if no replacement is set, we revert to null to indicate we cannot support this way type */        
-        osmWayValueToUse = highwaySettings.isApplyDefaultWhenOsmHighwayTypeDeactivated() ? highwaySettings.getDefaultOsmHighwayTypeWhenDeactivated() : null ;
+        osmWayValueToUse = highwaySettings.isApplyDefaultWhenOsmHighwayTypeDeactivated() ? highwaySettings.getDefaultOsmHighwayTypeWhenUnsupported() : null ;
         if(osmWayValueToUse != null) {
           isBackupDefault = true;
           LOGGER.info(String.format("Highway type %s chosen to be included in network, but not available as supported type by reader, reverting to backup default %s", osmWayValue, osmWayValueToUse));
