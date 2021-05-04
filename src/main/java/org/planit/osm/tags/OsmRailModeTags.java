@@ -60,7 +60,7 @@ public class OsmRailModeTags {
   }
   
   /**
-   * provide a all supported rail mode tags (unmoidifable)
+   * provide a all supported rail mode tags (unmodifiable)
    * @return all supported rail modes
    */
   public static Set<String> getSupportedRailModeTags(){

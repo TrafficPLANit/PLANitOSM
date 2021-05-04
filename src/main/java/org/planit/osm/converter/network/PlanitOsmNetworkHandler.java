@@ -321,7 +321,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     else {
       boolean isWayTypeDeactived = isHighway ?
           settings.getHighwaySettings().isOsmHighWayTypeDeactivated(osmTypeValueToUse) : 
-          (settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse) || !settings.isRailwayParserActive());
+          (!settings.isRailwayParserActive() || settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse));
       if(!isWayTypeDeactived) {
         boolean typeConfigurationMissing = isHighway ? OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse) : OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);         
         

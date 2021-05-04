@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -364,10 +365,11 @@ public abstract class PlanitOsmWaySettings {
    * @param toBeRemovedModes remove all these modes, except...
    * @param remainingOsmRoadModes to explicitly keep from the osmModesToRemove
    */
-  protected void deactivateAllModesExcept(Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
+  protected void deactivateAllModesExcept(final Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
     Collection<String> remainingRoadModes = remainingOsmRoadModes==null ? new ArrayList<String>() : remainingOsmRoadModes;
-    toBeRemovedModes.removeAll(remainingRoadModes);
-    deactivateOsmModes(toBeRemovedModes);
+    Collection<String> finalToBeRemovedModes = new TreeSet<String>(toBeRemovedModes);
+    finalToBeRemovedModes.removeAll(remainingRoadModes);
+    deactivateOsmModes(finalToBeRemovedModes);
   }     
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
