@@ -2,6 +2,7 @@ package org.planit.osm.converter.network;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -293,9 +294,17 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
    * @param remainingOsmRailModes to explicitly keep if present
    */
   public void deactivateAllRailModesExcept(final String... remainingOsmRailModes) {
+    deactivateAllRailModesExcept(Arrays.asList(remainingOsmRailModes));
+  } 
+  
+  /** remove all rail modes from mapping except for the passed in ones
+   * 
+   * @param remainingOsmRailModes to explicitly keep if present
+   */
+  public void deactivateAllRailModesExcept(final List<String> remainingOsmRailModes) {
     Collection<String> toBeRemovedModes = OsmRailModeTags.getSupportedRailModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRailModes);
-  }     
+  }   
   
   /** deactivate provided rail modes
    * 

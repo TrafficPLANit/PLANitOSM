@@ -1,6 +1,8 @@
 package org.planit.osm.defaults;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -99,15 +101,23 @@ public class OsmInfrastructureConfiguration {
     deactivatedOsmTypes.add(osmWayValue);
     LOGGER.fine(String.format("deactivating OSM type %s=%s", osmWayKey, osmWayValue));
   }
-    
+  
   /**
    * Choose to add a given way value to be on top of the defaults, e.g. highway=road
    * 
    * @param osmWayValues to activate
    */
   public void activate(String... osmWayValues) {
-    for(int index=0;index<osmWayValues.length;++index) {
-      String osmWayValue = osmWayValues[index];
+    activate(Arrays.asList(osmWayValues));
+  }   
+    
+  /**
+   * Choose to add a given way value to be on top of the defaults, e.g. highway=road
+   * 
+   * @param osmWayValues to activate
+   */
+  public void activate(List<String> osmWayValues) {
+    for(String osmWayValue : osmWayValues) {
       deactivatedOsmTypes.remove(osmWayValue);
       boolean added = activatedOsmTypes.add(osmWayValue);
       if(!added) {

@@ -1,8 +1,11 @@
 package org.planit.osm.converter.network;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -202,9 +205,16 @@ public abstract class PlanitOsmWaySettings {
   /** activate all passed in way types
    * @param osmWayValueTypes
    */
-  public void activateOsmWayTypes(String... osmWayValueTypes) {
-    infrastructureTypeConfiguration.activate(osmWayValueTypes);
+  protected void activateOsmWayTypes(String... osmWayValueTypes) {
+    activateOsmWayTypes(Arrays.asList(osmWayValueTypes));
   }   
+  
+  /** activate all passed in way types
+   * @param osmWayValueTypes
+   */
+  protected void activateOsmWayTypes(List<String> osmWayValueTypes) {
+    infrastructureTypeConfiguration.activate(osmWayValueTypes);
+  }    
   
   /**
    * activate all known OSM railway types 
@@ -354,8 +364,8 @@ public abstract class PlanitOsmWaySettings {
    * @param toBeRemovedModes remove all these modes, except...
    * @param remainingOsmRoadModes to explicitly keep from the osmModesToRemove
    */
-  protected void deactivateAllModesExcept(Collection<String> toBeRemovedModes, final String... remainingOsmRoadModes) {
-    Set<String> remainingRoadModes = remainingOsmRoadModes==null ? new HashSet<String>() : Set.of(remainingOsmRoadModes);
+  protected void deactivateAllModesExcept(Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
+    Collection<String> remainingRoadModes = remainingOsmRoadModes==null ? new ArrayList<String>() : remainingOsmRoadModes;
     toBeRemovedModes.removeAll(remainingRoadModes);
     deactivateOsmModes(toBeRemovedModes);
   }     
@@ -418,7 +428,7 @@ public abstract class PlanitOsmWaySettings {
    * @param osmWayTypeValue to use
    * @param osmModes to allow
    */
-  protected void addAllowedOsmWayModes(final String osmWayTypeValue, final String... osmModes) {
+  protected void addAllowedOsmWayModes(final String osmWayTypeValue, final List<String> osmModes) {
     osmModeAccessDefaults.addAllowedModes(osmWayTypeValue, osmModes);
   }
   

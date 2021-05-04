@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -506,87 +507,108 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
    * @param osmWaytypes to mark as activated
    */
   public void deactivateAllOsmWayTypesExcept(String... osmWaytypes) {
+    deactivateAllOsmWayTypesExcept(Arrays.asList(osmWaytypes));
+  }
+  
+  /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
+   * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
+   * across both railways and highways. If you want to do this within highways only, use the same method under highway settings.
+   * 
+   * @param osmWaytypes to mark as activated
+   */
+  public void deactivateAllOsmWayTypesExcept(List<String> osmWaytypes) {
     deactivateAllOsmWayTypes();
-    for(String osmWayType : Arrays.asList(osmWaytypes)) {
+    for(String osmWayType : osmWaytypes) {
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
-        osmHighwaySettings.activateOsmHighwayWayTypes(osmWayType);
+        osmHighwaySettings.activateOsmHighwayTypes(osmWayType);
       }else if(OsmRailwayTags.isRailBasedRailway(osmWayType)) {
         osmRailwaySettings.activateOsmRailwayType(osmWayType);
       }
     }
-  }
+  }  
   
   /**
    * exclude specific OSM ways from being parsed based on their id
    * 
-   * @param osmWayId to mark as excluded
+   * @param osmWayId to mark as excluded (int or long)
    */
-  public void excludeOsmWayFromParsing(long osmWayId) {
-    if(osmWayId <= 0) {
-      LOGGER.warning(String.format("invalid OSM way id provided to be excluded, ignored", osmWayId));
+  public void excludeOsmWayFromParsing(Number osmWayId) {
+    if(osmWayId.longValue() <= 0) {
+      LOGGER.warning(String.format("invalid OSM way id provided to be excluded, ignored", osmWayId.longValue()));
       return;
     }
-    excludedOsmWays.add(osmWayId);
+    excludedOsmWays.add(osmWayId.longValue());
   }
   
   /**
    * exclude specific OSM ways from being parsed based on their id
    * 
-   * @param osmWayId to mark as excluded
+   * @param osmWayIds to mark as excluded (int or long)
    */
-  public void excludeOsmWaysFromParsing(Long... osmWayIds) {
-    excludeOsmWaysFromParsing(Set.of(osmWayIds));
+  public void excludeOsmWaysFromParsing(Number... osmWayIds) {
+    excludeOsmWaysFromParsing(Arrays.asList(osmWayIds));
   }  
 
   /**
-   * exclude specific OSM ways from being parsed based on their id
+   * exclude specific OSM ways from being parsed based on their id. It is expected that the
+   * way ids are either an integer or long
    * 
    * @param osmWayId to mark as excluded
    */
-  public void excludeOsmWaysFromParsing(Set<Long> osmWayIds) {
+  public void excludeOsmWaysFromParsing(List<Number> osmWayIds) {
     if(osmWayIds==null) {
       LOGGER.warning(String.format("OSM way ids are null, ignored excluding them"));
       return;
     }    
-    osmWayIds.forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId));
-  }  
+    osmWayIds.forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId.longValue()));
+  }
+  
 
   /** Verify if provided way id is excluded or not
    * 
-   * @param osmWayId to verify
+   * @param osmWayId to verify (int or long)
    * @return true if excluded, false otherwise
    */
-  public boolean isOsmWayExcluded(Long osmWayId) {
-    return excludedOsmWays.contains(osmWayId);
+  public boolean isOsmWayExcluded(Number osmWayId) {
+    return excludedOsmWays.contains(osmWayId.longValue());
   }
   
   /** set the mode access for the given osm way id
    * 
-   * @param osmWayId this mode access will be applied on
-   * @param allowedModes to set as the only modes allowed
+   * @param osmWayId this mode access will be applied on (int or long)
+   * @param allowedOsmModes to set as the only modes allowed
    */
-  public void overwriteModeAccessByOsmWayId(Long osmWayId, String...allowedModes) {
-    this.overwriteOsmWayModeAccess.put(osmWayId, Set.of(allowedModes));
+  public void overwriteModeAccessByOsmWayId(Number osmWayId, String...allowedOsmModes) {
+    overwriteModeAccessByOsmWayId(osmWayId, Arrays.asList(allowedOsmModes));    
   }  
+  
+  /** set the mode access for the given osm way id
+   * 
+   * @param osmWayId this mode access will be applied on (int or long)
+   * @param allowedOsmModes to set as the only modes allowed
+   */
+  public void overwriteModeAccessByOsmWayId(Number osmWayId, List<String> allowedOsmModes) {
+    this.overwriteOsmWayModeAccess.put(osmWayId.longValue(), Set.copyOf(allowedOsmModes));
+  }   
   
   /**
    * check if defaults should be overwritten
    * 
-   * @param osmWayId to check
+   * @param osmWayId to check (int or long)
    * @return true when alternative mode access is provided, false otherwise
    */
-  public boolean isModeAccessOverwrittenByOsmWayId(long osmWayId) {
-    return overwriteOsmWayModeAccess.containsKey(osmWayId);
+  public boolean isModeAccessOverwrittenByOsmWayId(Number osmWayId) {
+    return overwriteOsmWayModeAccess.containsKey(osmWayId.longValue());
   }
 
   /**
    * collect the overwrite type values that should be used
    * 
-   * @param osmWayId to collect overwrite values for
+   * @param osmWayId to collect overwrite values for (int or long)
    * @return the osm modes with allowed access
    */
-  public final Set<String> getModeAccessOverwrittenByOsmWayId(long osmWayId) {
-    return overwriteOsmWayModeAccess.get(osmWayId);
+  public final Set<String> getModeAccessOverwrittenByOsmWayId(Number osmWayId) {
+    return overwriteOsmWayModeAccess.get(osmWayId.longValue());
   }   
   
   /**

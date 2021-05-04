@@ -1,7 +1,9 @@
 package org.planit.osm.defaults;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -53,7 +55,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    * @param osmModes to add
    */
   void addDefaultAllowedModes(String type, String... osmModes) {
-   addAllowedModes(type, false /* do not log */, osmModes);
+   addAllowedModes(type, false /* do not log */, Arrays.asList(osmModes));
   }
   
   /**
@@ -63,10 +65,9 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to add
    */
-  protected void addAllowedModes(String type, boolean logChanges, String... osmModes) {
+  protected void addAllowedModes(String type, boolean logChanges, List<String> osmModes) {
     if(OsmHighwayTags.isRoadBasedHighwayValueTag(type)) {
-      for(int index = 0; index < osmModes.length ; ++index) {
-        String osmModeValueTag = osmModes[index];
+      for(String osmModeValueTag : osmModes) {
         if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){
          allowedModesByType.putIfAbsent(type, new HashSet<String>());
          allowedModesByType.get(type).add(osmModeValueTag);
@@ -84,8 +85,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
         }
       } 
     }else if(OsmRailwayTags.isRailBasedRailway(type)) {
-      for(int index = 0; index < osmModes.length ; ++index) {
-        String osmModeValueTag = osmModes[index];
+      for(String osmModeValueTag : osmModes) {
         if( OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmModeValueTag))){
           allowedModesByType.putIfAbsent(type, new HashSet<>());
           allowedModesByType.get(type).add(osmModeValueTag);
@@ -93,7 +93,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
             LOGGER.info(String.format("added additional allowed rail mode %s to railway:%s", osmModeValueTag, type));
           }
         }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to allowed modes access defaults", osmModes[index]));
+          LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to allowed modes access defaults", osmModeValueTag));
         }
       } 
     }else {
@@ -368,8 +368,19 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    * @param osmModes to add
    */
   public void addAllowedModes(String wayType, String... osmModes) {
-   addAllowedModes(wayType, true /* log changes*/, osmModes);    
+   addAllowedModes(wayType, Arrays.asList(osmModes));    
   }
+  
+  /**
+   * add the passed in modes as modes that are explicitly allowed access regardless of the mode category, i.e., this takes precedence over the categories.
+   * Note that rail modes can be explicitly allowed onto roads, e.g. tram, lightrail, indicating a track embedded in the road.
+   * 
+   * @param wayType to use
+   * @param osmModes to add
+   */
+  public void addAllowedModes(String wayType, List<String> osmModes) {
+   addAllowedModes(wayType, true /* log changes*/, osmModes);    
+  }  
   
   /**
    * remove the passed in modes as modes that are no longer allowed access for the given highway type
