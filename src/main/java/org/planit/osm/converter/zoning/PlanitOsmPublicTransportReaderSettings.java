@@ -205,8 +205,8 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
   
   // USER CONFIGURATION
 
-  /** set the flag whether or not the highways should be parsed or not
-   * @param activate
+  /** set the flag whether or not the public transport infrastructure should be parsed or not
+   * @param activate when true activate, when false do not
    */
   public void activateParser(boolean activate) {
     this.isParserActive = activate;
