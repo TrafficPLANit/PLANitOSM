@@ -1,5 +1,6 @@
 package org.planit.osm.converter.network;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -411,7 +412,13 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * @param remainingOsmRoadModes to explicitly keep if present
    */
   public void deactivateAllRoadModesExcept(final String... deactivateAllRoadModesExcept) {
-    deactivateAllRoadModesExcept(Arrays.asList(deactivateAllRoadModesExcept));
+    List<String> exceptionList = null;
+    if(deactivateAllRoadModesExcept==null) {
+      exceptionList = new ArrayList<String>(0);
+    }else {
+      exceptionList = Arrays.asList(deactivateAllRoadModesExcept);
+    }    
+    deactivateAllRoadModesExcept(exceptionList);
   }   
   
   /** remove all road modes from mapping except for the passed in ones
