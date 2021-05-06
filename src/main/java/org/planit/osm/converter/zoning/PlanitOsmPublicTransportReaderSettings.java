@@ -1,11 +1,13 @@
 package org.planit.osm.converter.zoning;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.planit.osm.converter.network.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -23,6 +25,10 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
  *
  */
 public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSettings {
+  
+  /** logger to use */
+  @SuppressWarnings("unused")
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmPublicTransportReaderSettings.class.getCanonicalName());
   
   // transferred data/settings from network reader
   
@@ -224,8 +230,8 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * 
    * @param searchRadiusInMeters to use
    */
-  public void setStopToWaitingAreaSearchRadiusMeters(double searchRadiusInMeters) {
-    this.searchRadiusPlatformToStopInMeters = searchRadiusInMeters;
+  public void setStopToWaitingAreaSearchRadiusMeters(Number searchRadiusInMeters) {
+    this.searchRadiusPlatformToStopInMeters = searchRadiusInMeters.doubleValue();
   }
   
   /** Collect the maximum search radius set when trying to map stops/platforms to stop positions on the networks, 
@@ -242,8 +248,8 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * 
    * @param searchRadiusInMeters to use
    */
-  public void setStationToWaitingAreaSearchRadiusMeters(double searchRadiusInMeters) {
-    this.searchRadiusStationToPlatformInMeters = searchRadiusInMeters;
+  public void setStationToWaitingAreaSearchRadiusMeters(Number searchRadiusInMeters) {
+    this.searchRadiusStationToPlatformInMeters = searchRadiusInMeters.doubleValue();
   }
   
   /** Collect the maximum search radius set when trying to map stations to platforms on the networks, 
@@ -259,8 +265,8 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * 
    * @param searchRadiusInMeters to use
    */
-  public void setStationToParallelTracksSearchRadiusMeters(double searchRadiusInMeters) {
-    this.searchRadiusStationToParallelTracksInMeters = searchRadiusInMeters;
+  public void setStationToParallelTracksSearchRadiusMeters(Number searchRadiusInMeters) {
+    this.searchRadiusStationToParallelTracksInMeters = searchRadiusInMeters.doubleValue();
   }
   
   /** Collect the maximum search radius set when trying to find parallel lines (tracks) for stand-alone stations 
@@ -274,57 +280,75 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
   /** Provide OSM ids of nodes that we are not to parse as public transport infrastructure, for example 
    * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc. tagged as a node
    * 
-   * @param osmIds to exlude
+   * @param osmIds to exclude (int or long)
    */
-  public void excludeOsmNodesById(Long... osmIds) {
-    excludedPtOsmEntities.putIfAbsent(EntityType.Node, new HashSet<Long>());
-    excludedPtOsmEntities.get(EntityType.Node).addAll(Arrays.asList(osmIds));
+  public void excludeOsmNodesById(final Number... osmIds) {
+    excludeOsmNodesById(Arrays.asList(osmIds));
   }
   
   /** Provide OSM ids of nodes that we are not to parse as public transport infrastructure, for example 
    * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc. tagged as a node
    * 
-   * @param osmIds to exclude
+   * @param osmIds to exclude (int or long)
    */
-  public void excludeOsmNodesById(Set<Long> osmIds) {
-    excludeOsmNodesById(osmIds.toArray(new Long[osmIds.size()]));
+  public void excludeOsmNodesById(final Collection<Number> osmIds) {
+    osmIds.forEach( osmId -> excludeOsmNodeById(osmId));
+  }
+  
+  /** Provide OSM id of node that we are not to parse as public transport infrastructure, for example 
+   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc. tagged as a node
+   * 
+   * @param osmId to exclude (int or long)
+   */
+  public void excludeOsmNodeById(final Number osmId) {
+    excludedPtOsmEntities.putIfAbsent(EntityType.Node, new HashSet<Long>());
+    excludedPtOsmEntities.get(EntityType.Node).add(osmId.longValue());
   }  
   
   /** Provide OSM ids of ways that we are not to parse as public transport infrastructure, for example 
    * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way (line, or polygon)
    * 
-   * @param osmIds to exlude
+   * @param osmIds to exclude (int or long)
    */
-  public void excludeOsmWaysById(Long... osmIds) {
-    excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<Long>());
-    excludedPtOsmEntities.get(EntityType.Way).addAll(Arrays.asList(osmIds));
+  public void excludeOsmWaysById(final Number... osmIds) {
+    excludeOsmWaysById(Arrays.asList(osmIds));
   }
   
-  /** Provide OSM ids of nodes that we are not to parse as public transport infrastructure, for example 
+  /** Provide OSM ids of ways that we are not to parse as public transport infrastructure, for example 
    * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way (line or polygon)
    * 
-   * @param osmIds to exclude
+   * @param osmIds to exclude (int or long)
    */
-  public void excludeOsmWaysById(Set<Long> osmIds) {
-    excludeOsmWaysById(osmIds.toArray(new Long[osmIds.size()]));
+  public void excludeOsmWaysById(final Collection<Number> osmIds) {
+    osmIds.forEach( osmId -> excludeOsmWayById(osmId));
   }   
+  
+  /** Provide OSM id of way that we are not to parse as public transport infrastructure, for example 
+   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way (line or polygon)
+   * 
+   * @param osmId to exclude
+   */
+  public void excludeOsmWayById(final Number osmId) {
+    excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<Long>());
+    excludedPtOsmEntities.get(EntityType.Way).add(osmId.longValue());
+  }    
   
   /** Verify if osm id is an excluded node for pt infrastructure parsing
    * 
-   * @param osmId to verify
+   * @param osmId to verify (int or long)
    * @return true when excluded false otherwise
    */
-  public boolean isExcludedOsmNode(long osmId) {
+  public boolean isExcludedOsmNode(Number osmId) {
     excludedPtOsmEntities.putIfAbsent(EntityType.Node, new HashSet<Long>());
     return excludedPtOsmEntities.get(EntityType.Node).contains(osmId);
   }   
   
   /** Verify if osm id is an excluded node for pt infrastructure parsing
    * 
-   * @param osmId to verify
+   * @param osmId to verify (int or long)
    * @return true when excluded false otherwise
    */
-  public boolean isExcludedOsmWay(long osmId) {
+  public boolean isExcludedOsmWay(Number osmId) {
     excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<Long>());
     return excludedPtOsmEntities.get(EntityType.Way).contains(osmId);
   }
@@ -334,38 +358,39 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * This overrides the parser's mapping functionality and immediately maps the stop location to this osm entity. Can be useful to avoid warnings or wrong mapping of
    * stop locations in case of tagging errors.
    * 
-   * @param stopLocationOsmNodeId osm node id of stop location
+   * @param stopLocationOsmNodeId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
-   * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.)
+   * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
    */
-  public void overwriteStopLocationWaitingArea(Long stopLocationOsmNodeId, EntityType waitingAreaEntityType, Long waitingAreaOsmId) {
-    overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId, Pair.of(waitingAreaEntityType, waitingAreaOsmId));    
-  }  
-  
+  public void overwriteStopLocationWaitingArea(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
+    overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));    
+  } 
+    
   /** Verify if stop location's osm id is marked for overwritten platform mapping
    * 
-   * @param stopLocationOsmNodeId to verify
+   * @param stopLocationOsmNodeId to verify (int or long)
    * @return true when present, false otherwise
    */
-  public boolean isOverwriteStopLocationWaitingArea(Long stopLocationOsmNodeId) {
+  public boolean isOverwriteStopLocationWaitingArea(final Number stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.containsKey(stopLocationOsmNodeId);    
   } 
   
   /** Verify if stop location's osm id is marked for overwritten platform mapping
    * 
-   * @param stopLocationOsmNodeId to verify
+   * @param stopLocationOsmNodeId to verify (int or long)
    * @return pair reflecting the entity type and waiting area osm id, null if not present
    */
-  public Pair<EntityType,Long> getOverwrittenStopLocationWaitingArea(Long stopLocationOsmNodeId) {
+  public Pair<EntityType,Long> getOverwrittenStopLocationWaitingArea(final Number stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.get(stopLocationOsmNodeId);    
   }  
   
   /** Verify if the witing area is used as the designated waiting area for a stop location by means of a user explicitly stating it as such
    * 
    * @param waitingAreaType of the waiting area
+   * @param osmWaitingAreaId to use (int or long)
    * @return true when waiting area is defined for a stop location as designated waiting area, false otherwise
    */
-  public boolean isWaitingAreaStopLocationOverwritten(EntityType waitingAreaType, Long osmWaitingAreaId) {
+  public boolean isWaitingAreaStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
     for( Entry<Long, Pair<EntityType, Long>> entry : overwritePtStopLocation2WaitingAreaMapping.entrySet()) {
       if(entry.getValue().first().equals(waitingAreaType) && entry.getValue().second().equals(osmWaitingAreaId)) {
         return true;
@@ -379,33 +404,33 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated osm way. Only use in case the platform has no stop_location
    * and no stop_location maps to this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
    * 
-   * @param stopLocationOsmNodeId osm node id of stop location
+   * @param stopLocationOsmNodeId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
-   * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.)
+   * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
    */
-  public void overwriteWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType, Long OsmWayId) {
+  public void overwriteWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType, final Number OsmWayId) {
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
-    overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId, OsmWayId);    
+    overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId.longValue(), OsmWayId.longValue());    
   }  
   
   /** Verify if waiting area's osm id is marked for overwritten osm way mapping
    * 
-   * @param waitingAreaOsmId to verify
+   * @param waitingAreaOsmId to verify (int or long)
    * @param waitingAreaEntityType type of waiting area
    * @return true when present, false otherwise
    */
-  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType) {
+  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType) {
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
     return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).containsKey(waitingAreaOsmId);    
   } 
   
   /** collect waiting area's osm way id to use for identifying most logical stop_location (connectoid)
    * 
-   * @param waitingAreaOsmId to collect
+   * @param waitingAreaOsmId to collect (int or long)
    * @param waitingAreaEntityType type of waiting area
    * @return osm way id, null if not available
    */
-  public Long getWaitingAreaNominatedOsmWayForStopLocation(Long waitingAreaOsmId, EntityType waitingAreaEntityType) {
+  public Long getWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, EntityType waitingAreaEntityType) {
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
     return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).get(waitingAreaOsmId);    
   }   
