@@ -20,7 +20,6 @@ import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
-import de.topobyte.osm4j.core.model.iface.OsmBounds;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -458,12 +457,6 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     settings.excludeOsmWayTypesWithoutActivatedModes();
     settings.logUnsupportedOsmWayTypes();    
   }  
-
-
-  @Override
-  public void handle(OsmBounds bounds) throws IOException {
-    // not used
-  }
 
   /**
    * construct PLANit nodes from OSM nodes
