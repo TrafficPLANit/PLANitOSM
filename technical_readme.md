@@ -1,1 +1,1 @@
-![Alt text](img/osm_network_reader_class_diagram.png "Title")
+![class diagram of network reader](img/osm_network_reader_class_diagram.png "OSM network reader high level class diagram ")
