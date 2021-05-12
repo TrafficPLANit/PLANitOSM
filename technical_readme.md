@@ -119,6 +119,16 @@ In the main pass, via the `PlanitOsmZoningHandler` as much of the processing of 
 
 ### Pass 3 Postprocessing
 
+In post processing we wrap up the parsing by conducting the following main actions:
 
+**for relations tagged with :**
+* process public transport `stop_area` `stop_position` and convert to PLANit connectoids
+
+**afterwards :**
+* extract remaining flagged OSM entities and convert to appropriate PLANit entities
+
+Now that all transfer zones are known to be available, only then we create the connectoids that might directly reference them, or alternatively, we find the correct transfer zone based on contextual or geographical information available. The creation of connectoids is complex mainly because the OSM guidelines propose to avoid explicit referencing if possible. Hence, in many cases we are left to determine the matching between platform and stop_position based on proximity only, and because of this implicit connectoid and the fact that locations of ways, nodes, and waiting areas change over time, it is not uncommon for mismatches to occur resulting in a different implicit mapping than intended, which in turn can lead to problems in parsing. The process for extracting stop_positions and matching them to existing transfer zones is imlpemented roughly as follows:
+
+When `stop_position` is part of `stop_area`, the stop_position is parsed and matched to a transfer zone in that stop_area if possible. It is however possible that the stop_position is missing tagging regarding its mode access, in which case the parser adopts the allowed modes of the matched transferzone. If it does have explicit modes tagged we utilise those. Finding the appropriate transfer zone within the group (via `findTransferZonesForStopPosition()`) however can still be difficult. First, we attempt to match based on an explicit reference among the transfer zones in the group (`ref=`, or alternatives etc.), or by an identical name between stop_location and waiting area (both via `findAccessibleTransferZonesByReferenceOrName()`). If no matches are found we attempt to find a match spatially (via `findMostLikelyTransferZonesForStopPositionSpatially()`). In this situation we no longer restrict ourselves to transfer zones within the group as it might be that its waiting area is not registered as part of the group. If still no match is found, we consider the situation that there is a tagging error and the stop_position is wrongly tagged as such, if it is also tagged as something else, but it does reside on the raod/rail network, we must assume it is both a stop_position and a transfer zone in which case we create both.
 
 
