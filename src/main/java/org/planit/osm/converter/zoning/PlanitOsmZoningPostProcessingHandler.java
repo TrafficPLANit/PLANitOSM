@@ -1160,7 +1160,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * Connectoids need to be created based on implicit stop_position of vehicles which by OSM standards is defined as based on the nearest node. This is what we will do here.
    * @throws PlanItException thrown if error
    */
-  private void processIncompleteTransferZonesNotPartOfStopArea() throws PlanItException {
+  private void processIncompleteTransferZones() throws PlanItException {
     processIncompleteTransferZones(getZoningReaderData().getPlanitData().getTransferZonesByOsmId(EntityType.Node)); 
     processIncompleteTransferZones(getZoningReaderData().getPlanitData().getTransferZonesByOsmId(EntityType.Way));    
   }
@@ -1440,7 +1440,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     processStopPositionsNotPartOfStopArea();    
         
     /* transfer zones without connectoids, i.e., implicit stop_positions not part of any stop_area, --> create connectoids for remaining transfer zones without connectoids*/
-    processIncompleteTransferZonesNotPartOfStopArea();                  
+    processIncompleteTransferZones();                  
     
   }  
     

@@ -14,7 +14,7 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 /**
  * Handler that is applied before we conduct the actual handling of the zones by exploring the OSM relations
  * in the file and highlighting a subset of ways that we are supposed to retain even though they are not tagged
- * by themselves in a way that warrents keeping them. However, because they are vital to the OSM relations we should
+ * by themselves in a way that warrants keeping them. However, because they are vital to the OSM relations we should
  * keep them.
  * 
  * To avoid keeping all ways and nodes in memory, we preprocess by first identifying which nodes/ways we must keep to be able
