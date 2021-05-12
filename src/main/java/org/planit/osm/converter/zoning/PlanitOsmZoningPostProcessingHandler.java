@@ -217,7 +217,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         if(!hasStandAloneTransferZoneValidAccessLinkSegmentForLinkInternalLocationModeCombination(transferZone, accessLink, connectoidLocation, accessMode)) {
           /* special case: if one way link and internal existing coordinate chosen results in waiting area on the wrong side of geometry (due to bend in the road directly
            * preceding the location (and mode is susceptible to waiting area location). Then we do not accept this existing coordinate and instead try
-           * to use projected location not residing at this (possible) bend, but in between existing corodinates on straight section of road (hopefully), therefore
+           * to use projected location not residing at this (possible) bend, but in between existing coordinates on straight section of road (hopefully), therefore
            * reset location and continue */
           connectoidLocation=null;
         }
