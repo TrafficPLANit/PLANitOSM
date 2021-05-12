@@ -2,8 +2,8 @@
 
 PLANitOSM provides two readers:
 
-* Network reader for road and rail
-* Intermodal reader, that supplements the network reader with public transport infrastructure (not lines, services)
+* [Network reader](#planitosmnetworkreader) for road and rail
+* [Intermodal reader](#planitosmintermodalreader), that supplements the network reader with public transport infrastructure (not lines, services)
 
 In this readme we provide a quick overview of the class structure and design of these readers. Both reader utilise  OSM4J to do the low level parsing of OSM entities (nodes, ways, relations), by implementing the respective callbacks via a handler class. These handlers are internal to the readers, so the user will not see them.
 
@@ -52,8 +52,18 @@ Circular ways are a special case. they are not parsed directly because in PLANit
 
 ### Breaking Links
 
-Similar to processing circular ways, OSM ways that are parsed but intersect internally with other parsed OSM ways, need to be broken in these locations to create a topologically sound network that can be used for traffic assignment (and it is just generally a better way of designing networks). Therefore, PLANit identifies all links that need to be broken and does so (`breakLinksWithInternalConnections()`). PLANit itself provides functionality to break links on graphs/networks and the OSM reader utilises this functionality provided in the various modifiers (`graphModifier.breakEdgesAt()`). However some additional preparation is needed to make this work as expected. The functionality to break edges does only that and in doing so it simply creates a copy of the existing link and modifies the geometry and node connections, it does however not update the xml ids, for this we register a separate callback (the modifier method accepts listeners for additinoal modification), namely the `SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge()`. this ensures that the xml id of the links is synced with the internal id that is guaranteed to remain unique even during the breaking of links.
+Similar to processing circular ways, OSM ways that are parsed but intersect internally with other parsed OSM ways, need to be broken in these locations to create a topologically sound network that can be used for traffic assignment (and it is just generally a better way of designing networks). Therefore, PLANit identifies all links that need to be broken and does so (`breakLinksWithInternalConnections()`). PLANit itself provides functionality to break links on graphs/networks and the OSM reader utilises this functionality provided in the various modifiers (`graphModifier.breakEdgesAt()`).
+
+The OSM reader keeps track of which links have been broken as well during this process because it is likely that some links are broken multiple times in which case we must be able to identify which of the already broken links is the *only* link that needs to be broken again. IF we would take this additional step, all the broken links, or the wrong broken link might be broken again, which leads to incorrect networks.
+
+Also, we providean additional listener to this action, namely the `SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge` listener. This ensures that the xml id of the links is synced with the internal id that is guaranteed to remain unique even during the breaking of links.
+
+> Note this relies on the fact that the OSM reader initially syncs the xml ids to the internal ids, otherwise this does not work.
+
+> There are implementations to break links both for a graph and directed graph, the latter also supports the breaking of edge segments (link segments). Our networks hold a directed graph internally with nodes, links, and link segments as their elements. Hence, breaking links will eventually end up invoking the modification on a directed graph implementation
 
 ### PLANit infrastructure layers
 
-TODO
+PLANit in principle supports multiple infrastructure layers, where one or more modes are exclusively tied to a layer. The OSM reader does support this as well in prinnciple with the functionality always being specific to the layer at hand. Practically though no other implementation exists than one with only a single layer containing all modes. so while most functionality is layer specific in the reader, in practice we only even user a single layer and it has not yet been tested in any other situation.
+
+## PlanitOsmIntermodalReader
