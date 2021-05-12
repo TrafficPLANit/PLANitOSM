@@ -3,7 +3,7 @@
 PLANitOSM provides two readers:
 
 * [Network reader](#planitosmnetworkreader) for road and rail
-* [Intermodal reader](#planitosmintermodalreader), that supplements the network reader with public transport infrastructure (not lines, services)
+* [Intermodal reader](#planitosmintermodalreader-and-planitosmzoningreader), that supplements the network reader with public transport infrastructure (not lines, services)
 
 In this readme we provide a quick overview of the class structure and design of these readers. Both reader utilise  OSM4J to do the low level parsing of OSM entities (nodes, ways, relations), by implementing the respective callbacks via a handler class. These handlers are internal to the readers, so the user will not see them.
 
@@ -66,6 +66,59 @@ Also, we providean additional listener to this action, namely the `SyncDirectedE
 
 PLANit in principle supports multiple infrastructure layers, where one or more modes are exclusively tied to a layer. The OSM reader does support this as well in prinnciple with the functionality always being specific to the layer at hand. Practically though no other implementation exists than one with only a single layer containing all modes. so while most functionality is layer specific in the reader, in practice we only even user a single layer and it has not yet been tested in any other situation.
 
-## PlanitOsmIntermodalReader
+## PlanitOsmIntermodalReader and PlanitOsmZoningReader
+
+The intermodal reader is not much more than a wrapper around both a `PlanitOsmNetworkReader` and a `PlanitOsmZoningReader`. The combination of the two allows for parsing both the road/rail infrastructure as well as the (transfer) zones and (directed) connectoids that are used to represent the public transport (pt) infrastructure extracted from OSM (that is not directly the road/rail network itself). For more information on the network parser see the previous section. In this section we mainly focus on the` PlanitOsmZoningReader` component which extract the pt infrastructure.
+
+Parsing public transport infrastructure (bus stop poles, platforms, stations, etc.) in OSM is more difficult than parsing a network, mainly because of the existence of multiple tagging schemes for pt as well as the fact that these schemes are not trivial to use and therefore many tagging mistakes exist. Also use of some tagging options is somewhat ambiguous. The pt component of this parser supports both the original public transport scheme (Ptv1) and the new public transport scheme (Ptv2). It also attempts to salvage OSM entities that are tagged wrongly or are incomplete if sufficient contextual information is present.
+
+The design of the `PlanitOsmZoningReader` is identical to that of the network, except that it does not manage a single OSM handler, but three. See class diagram below. The user will not see these handlers, but they are there and as a result the reader conducts three passes over the OSM file in order to be able to extract the pt infrastructure. Each of the handlers will be discussed separately in this section. 
+
+Observe that access to the settings is also delegated directly to the underlying settings of the network and zoning reader, e.g., `getSettings().getNetworkSettings()` provides access to the network reader settings, wherease the `getSettings().getPublicTransportSettings()` provides access to the zoning settings (in this case specifically tailored towards pt, hence the name).
 
 ![class diagram of intermodal reader](img/osm_intermodal_reader_class_diagram.png "OSM intermodal reader high level class diagram ")
+
+### Three passes, Three handlers
+
+Since the order in which OSM entities are parsed is fixed (nodes, ways, relations), we sometimes only know what OSM ways need to be parsed after processing the relations. In some cases, the relations reveal that an OSM way that is not explicitly tagged for pt, is in fact a pt platform for example. Therefore, if we would only conduct a single pass over the file, **all** OSM ways would need to be stored in memory until we can parse the relations. To avoid this, we instead conduct multiple passes over the file, where at the sacrifice of some computational speed, we significantly reduce the required memory footprint. In the next sections we discuss what each of the three handlers (each responsible for one pass across the OSM file) does and why in more detail, but in general this is what they do:
+
+* [Pass 1 - preprocessing](#pass-1-preprocessing): No PLANit entities are created yet, only preparation  by flagging some special cases.
+* [Pass 2 - main](#pass-1-main): Create transfer zones where possible (platforms, poles), create transfer zone groups, postpone parsing of OSM stations, stop_positions
+* [Pass 3 - postprocessing](#pass-3-postprocessing): create connectoids (stop_positions) and process stations (resulting in nothing, transfer zone and/or connectoids)
+
+### Pass 1 Preprocessing
+
+The only task of the preprocessing pass via the `PlanitOsmZoningPreProcessingHandler` is to identify OSM Multipolygons that are used as pt platforms. Because they are a multipolygon they do not have any pt specific tags that can identify them as a platform, instead they are a member of a public transport `stop_area` relation and their role reveals they are in fact a platform. Once this is identified (`handle(OsmRelation)`), we flag the OSM way as such and mark that the outer border of this platform is to be used for the geometry of this future transfer zone (platform) via `markOsmRelationOuterRoleOsmWayToKeep()`. Then during the main pass (Pass 2) when the pt platforms are parsed and converted into PLANit transfer zones, it is verified if an OSM way that has no further pt tags is flagged as such (`getOuterRoleOsmWayByOsmWayId()` in `extractPtv2OuterRolePlatformRelation()`), if so, the OSM way is converted into a platform despite it not having the "normal" tagging. Currently the identification of these multipolygons is the only task of the preprocessing pass.
+
+This is the general approach of the various handlers, exceptions to the general tagging rules and special cases are flagged in an earlier pass (and the related OSM data stored) to be able to extract the correct PLANit entities at a later stages where it would otherwise be missed.
+
+### Pass 2 Main
+
+In the main pass, via the `PlanitOsmZoningHandler` as much of the processing of the pt entities is conducted. Due to the dependencies between various pt entities, e.g., a stop_location needs to be matched to a waiting area (platform, bus_stop etc.), and the fact that the order of the OSM entities in the parser is often counterproductive with respect to these relations, the main phase does not yet parse the stop_locations. Instead, its main responsibility is to extract all the waiting areas (platforms, bu_stops, etc., except stations) and convert them into PLANit transfer zones:
+
+> Since Ptv2 tagging is both more recent and more comprehensive, the parser attempts to always first parse absed on Ptv2 tagging. If not present, it reverts to Ptv1 tagging.
+
+**for nodes and ways tagged with `highway=` and/or `public_transport=`:**
+* process platforms with road modes tagged (Ptv2) and convert them into PLANit transfer zones (where possible)
+* process bus_stops, platforms tagged (Ptv1) and convert them into PLANit transfer zones (where possible)
+* Flag identified stop_positions (Ptv2), and bus stations for later processing (postprocessing)
+
+**for nodes and ways tagged with `railay=` and/or `public_transport=`:**
+* process platforms with rail modes tagged (Ptv2) and convert them into PLANit transfer zones (where possible)
+* process platforms, stand alone halts (Ptv1) and convert them into PLANit transfer zones (where possible)
+* Flag identified stop_positions (Ptv2), and train stations for later processing (postprocessing)
+
+**for relations tagged with :**
+* process public transport `stop_area` entities and convert to transfer zone groups (where possible)
+* process `multi-polygons` flagged in pre-processing and process as platform, e.g. convert to transfer zones
+* process members with role information exceeding tagging information, e.g. role is platform, but no such tagging, and convert to transfer zone (where possible)
+* process member without a known role based on tags (whenever possible) and convert to transfer zones if eligible
+
+**general:**
+* Identify as many tagging errors or inconsistencies as possible and log them 
+
+### Pass 3 Postprocessing
+
+
+
+
