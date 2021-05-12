@@ -67,3 +67,5 @@ Also, we providean additional listener to this action, namely the `SyncDirectedE
 PLANit in principle supports multiple infrastructure layers, where one or more modes are exclusively tied to a layer. The OSM reader does support this as well in prinnciple with the functionality always being specific to the layer at hand. Practically though no other implementation exists than one with only a single layer containing all modes. so while most functionality is layer specific in the reader, in practice we only even user a single layer and it has not yet been tested in any other situation.
 
 ## PlanitOsmIntermodalReader
+
+![class diagram of intermodal reader](img/osm_intermodal_reader_class_diagram.png "OSM intermodal reader high level class diagram ")
