@@ -48,9 +48,9 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
    * @throws PlanItException 
    */
   public void initialiseBeforeParsing() throws PlanItException {
-    reset();
+    reset(); 
   } 
-  
+    
   /**
    * {@inheritDoc}
    */  
@@ -87,14 +87,15 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
       for(int index = 0 ;index < numberOfMembers ; ++ index) {
         OsmRelationMember member = osmRelation.getMember(index);
         
-        if( skipOsmPtEntity(member)) {
+        /* skip if explicitly excluded */
+        if(skipOsmPtEntity(member)) {
           continue;
         }            
         
         /* only collect outer area, mapped as ways */
         if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
           /* mark for keeping in regular handler */
-          getZoningReaderData().getOsmData().markOsmRelationOuterRoleOsmWayToKeep(osmRelation.getId(), member.getId());
+          getZoningReaderData().getOsmData().markOsmRelationOuterRoleOsmWayToKeep(member.getId());
         }
       }  
     }   

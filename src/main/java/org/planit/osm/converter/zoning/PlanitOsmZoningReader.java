@@ -56,6 +56,46 @@ public class PlanitOsmZoningReader implements ZoningReader {
     LOGGER.info(String.format("OSM (transfer) zoning input file: %s",getSettings().getInputFile()));    
   }       
   
+  /** Make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box
+   * since it makes little sense to try and parse pt infrastructure outside of the network's geographically parsed area
+   */
+  private void validateZoningBoundingPolygon() {
+    PlanitOsmNetworkToZoningReaderData network2ZoningReaderData = getSettings().getNetworkDataForZoningReader();
+    
+    boolean zoningBoundingPolygonWithinNetworkBoundingPolygon = true;
+    if(getSettings().hasBoundingPolygon() && network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon()){
+      zoningBoundingPolygonWithinNetworkBoundingPolygon = 
+          getSettings().getBoundingPolygon().within(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon());
+    }else if(network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon()) {
+        zoningBoundingPolygonWithinNetworkBoundingPolygon = false;
+    }
+    if(!zoningBoundingPolygonWithinNetworkBoundingPolygon) {
+      LOGGER.warning("SALVAGE: Bounding polygon for network is more restrictive than public transport, truncating to network bounding polygon");
+      getSettings().setBoundingPolygon(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon());
+    }
+  }
+
+  /**
+   * perform final preparation before conducting parsing of OSM pt entities
+   */
+  private void initialiseBeforeParsing() {
+    
+    /* if not set, create zoning to populate here based on network id tokens */
+    if(zoning==null) {
+      this.zoning = new Zoning(getSettings().getReferenceNetwork().getIdGroupingToken(),getSettings().getReferenceNetwork().getNetworkGroupingTokenId());
+    }
+    
+    /* make country name available in zoning reader data during parsing */
+    this.zoningReaderData = new PlanitOsmZoningReaderData(getSettings().getCountryName());    
+    /* spatially index all links to register on data trackers for use in handlers */
+    zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(getSettings().getReferenceNetwork());
+    
+    /* make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box
+     * since it makes little sense to try and parse pt infrastructure outside of the network's geographically parsed area */
+    validateZoningBoundingPolygon();
+
+  }
+
   /**
    * conduct pre-processing step of zoning reader that cannot be conducted as part of the regular processing due to 
    * ordering conflicts
@@ -207,15 +247,8 @@ public class PlanitOsmZoningReader implements ZoningReader {
     PlanItException.throwIfNull(getSettings().getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
     PlanItException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (newtork to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
 
-    /* if not set, create zoning to populate here based on network id tokens */
-    if(zoning==null) {
-      this.zoning = new Zoning(getSettings().getReferenceNetwork().getIdGroupingToken(),getSettings().getReferenceNetwork().getNetworkGroupingTokenId());
-    }
-    
-    /* make country name available in zoning reader data during parsing */
-    this.zoningReaderData = new PlanitOsmZoningReaderData(getSettings().getCountryName());
-    /* spatially index all links to register on data trackers for use in handlers */
-    zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(getSettings().getReferenceNetwork());
+    /* prepare for parsing */
+    initialiseBeforeParsing();
     
     PlanitOsmZoningHandlerProfiler handlerProfiler = new PlanitOsmZoningHandlerProfiler();
     logInfo();

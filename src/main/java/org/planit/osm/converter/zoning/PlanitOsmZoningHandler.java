@@ -824,13 +824,17 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     long osmId = member.getId();
     if(member.getType().equals(EntityType.Relation)) {
       /* special case - if platform is not a regular osm way, but modelled as a multi-polygon, then it is a relation in itself, in which case we
-       * stored its outer boundary (outer role). Use that instead of the relation to collect the transfer zone that was created */
-      if(getZoningReaderData().getOsmData().hasOuterRoleOsmWayByOsmRelationId(member.getId())) {
-        OsmWay outerRoleOsmWay = getZoningReaderData().getOsmData().getOuterRoleOsmWayByOsmRelationId(member.getId());
-        type = EntityType.Way;
-        osmId = outerRoleOsmWay.getId();
-      }else {
-        LOGGER.severe("Identified platform as multi-polygon/relation, however its `outer role` member is not available or converted into a transfer zone");
+       * stored its outer boundary (outer role). Use that instead of the relation to collect the transfer zone that was created */      
+      OsmRelationMember internalMember = 
+          PlanitOsmRelationUtils.findFirstOsmRelationMemberWithRole(osmRelation ,OsmMultiPolygonTags.OUTER_ROLE);
+      if(internalMember!=null) {
+        if(getZoningReaderData().getOsmData().hasOuterRoleOsmWayByOsmWayId(internalMember.getId())) {
+          OsmWay outerRoleOsmWay = getZoningReaderData().getOsmData().getOuterRoleOsmWayByOsmWayId(internalMember.getId());
+          type = EntityType.Way;
+          osmId = outerRoleOsmWay.getId();
+        }else {
+          LOGGER.severe("Identified platform as multi-polygon/relation, however its `outer role` member is not available or converted into a transfer zone");
+        }        
       }
     }
     
@@ -869,7 +873,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
             
       if( skipOsmPtEntity(member)) {
         continue;
-      }      
+      }                
       
       /* platform */
       if(member.getRole().equals(OsmPtv2Tags.PLATFORM_ROLE)) {              
@@ -932,7 +936,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
         LOGGER.severe(String.format("Osm way %d referenced by Ptv2 multipolygon %d not available in parser, this should not happen, relation ignored",member.getId(),osmRelation.getId()));
         return;
       }
-      
+            
       /* create transfer zone, use tags of relation that contain the PT information */
       createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
           unprocessedWay, tags, TransferZoneType.PLATFORM, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags), geoUtils);
@@ -950,19 +954,11 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   private void extractPtv2PlatformRelation(OsmRelation osmRelation, Map<String, String> tags) throws PlanItException {
     
-    for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
-      OsmRelationMember member = osmRelation.getMember(index);
-      
-      if( skipOsmPtEntity(member)) {
-        continue;
-      }      
-      
-      /* role:outer -> extract geometry for transfer zone*/
-      if(member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
-         
-        /* extract platform based on outer role member and geometry */
-        extractPtv2OuterRolePlatformRelation(osmRelation, member, tags);
-      }
+    /* role:outer -> extract geometry for transfer zone*/
+    OsmRelationMember member = PlanitOsmRelationUtils.findFirstOsmRelationMemberWithRole(osmRelation ,OsmMultiPolygonTags.OUTER_ROLE);
+    if(member != null && !skipOsmPtEntity(member)) {         
+      /* extract platform based on outer role member and geometry */
+      extractPtv2OuterRolePlatformRelation(osmRelation, member, tags);
     }
   }
 
@@ -1045,12 +1041,7 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    * @param osmNode node to parse
    */
   @Override
-  public void handle(OsmNode osmNode) throws IOException {
-        
-    if(skipOsmNode(osmNode)) {
-      LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
-      return;
-    }
+  public void handle(OsmNode osmNode) throws IOException {             
     
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);          
     try {              
@@ -1058,6 +1049,17 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       /* only parse nodes that are potentially used for (PT) transfers*/
       OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
       if(ptVersion != OsmPtVersionScheme.NONE) {
+        
+        /* skip if marked explicitly for exclusion */
+        if(skipOsmNode(osmNode)) {
+          LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
+          return;
+        }
+        
+        /* verify if within designated bounding polygon */
+        if(!coveredByZoningBoundingPolygon(osmNode)) {
+          return;
+        }         
         
         /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
         extractTransferInfrastructure(osmNode, ptVersion, tags);
@@ -1074,31 +1076,46 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-                
-    if(skipOsmWay(osmWay)) {
-      LOGGER.fine(String.format("Skipped osm way %d, marked for exclusion", osmWay.getId()));
-      return;
-    }        
-                    
+                                    
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
     try {       
       
       /* only parse ways that are potentially used for (PT) transfers*/
       OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
-      if(ptVersion != OsmPtVersionScheme.NONE) {
+      if(ptVersion != OsmPtVersionScheme.NONE || getZoningReaderData().getOsmData().shouldOsmRelationOuterRoleOsmWayBeKept(osmWay)) {
         
-        /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
-        extractTransferInfrastructure(osmWay, ptVersion, tags);
+        if(skipOsmWay(osmWay)) {
+          LOGGER.fine(String.format("Skipped osm way %d, marked for exclusion", osmWay.getId()));
+          return;
+        }                    
         
-      }else if(getZoningReaderData().getOsmData().shouldOsmRelationOuterRoleOsmWayBeKept(osmWay)) {
+        if(ptVersion != OsmPtVersionScheme.NONE ) {
+          /* regular pt entity*/
+          
+          /* skip if none of the OSM way nodes fall within the zoning bounding box*/
+          if(!coveredByZoningBoundingPolygon(osmWay)) {
+            return;
+          }   
         
-        /* even though osm way itself appears not to be public transport related, it is marked for keeping
-         * so we keep it. This occurs when way is part of relation (multipolygon) where its shape represents for
-         * example the outline of a platform, but all pt tags reside on the relation and not on the way itself. 
-         * Processing of the way is postponed until we parse relations */
-        getZoningReaderData().getOsmData().addOsmRelationOuterRoleOsmWay(osmWay);
-      }
-      
+          /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
+          extractTransferInfrastructure(osmWay, ptVersion, tags);
+        
+        }else{
+          /* multi-polygon used as pt platform */
+          
+          if(coveredByZoningBoundingPolygon(osmWay)) {
+            /* even though osm way itself appears not to be public transport related, it is marked for keeping
+             * so we keep it. This occurs when way is part of relation (multipolygon) where its shape represents for
+             * example the outline of a platform, but all pt tags reside on the relation and not on the way itself. 
+             * Processing of the way is postponed until we parse relations */
+            getZoningReaderData().getOsmData().addOsmRelationOuterRoleOsmWay(osmWay);
+          }else{
+            /* the osm relation's outer role multi-polygon way is marked to keep, but we now know it falls outside the
+             * zoning bounding box, therefore, it can safely be removed as being flagged. It should in fact be ignored */
+            getZoningReaderData().getOsmData().removeOsmRelationOuterRoleOsmWay(osmWay.getId());
+          }
+        }
+      }      
     } catch (PlanItException e) {
       LOGGER.severe(e.getMessage());
       LOGGER.severe(String.format("Error during parsing of OSM way (id:%d) for transfer infrastructure", osmWay.getId())); 

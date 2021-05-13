@@ -167,15 +167,15 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    */
   private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     TransferZone transferZone = null;
-    
-    /* first verify is there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
+        
+    /* Verify if there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
      * regular feedback when nodes are missing, because it lacks context regarding being close to bounding box and would confuse the user */
     Level geometryExtractionLogLevel = LOGGER.getLevel();
     if(Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Way) && !PlanitOsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity, getNetworkToZoningData().getOsmNodes())){
       int availableOsmNodeIndex = PlanitOsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, getNetworkToZoningData().getOsmNodes());
       OsmNode referenceNode = getNetworkToZoningData().getOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
       if(isNearNetworkBoundingBox(PlanitOsmNodeUtils.createPoint(referenceNode), geoUtils)) {
-        LOGGER.info(String.format("osm waiting area way (%d) geometry incomplete due to bounding box cut-off, truncated to available nodes",osmEntity.getId()));
+        LOGGER.info(String.format("osm waiting area way (%d) geometry incomplete due to network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
         geometryExtractionLogLevel = Level.OFF;
       }
     }
@@ -263,6 +263,61 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
       logger.warning(message);
     }
   }    
+  
+  /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
+   * this always returns true
+   * 
+   * @param osmNode to verify
+   * @return true when no bounding area, or covered by bounding area, false otherwise
+   */
+  protected boolean coveredByZoningBoundingPolygon(OsmNode osmNode) {
+    if(osmNode==null) {
+      return false;
+    }
+    
+    /* without explicit bounding polygon all nodes are eligible */
+    if(!getSettings().hasBoundingPolygon()) {
+      return true;
+    }
+    
+    /* within or on bounding polygon yields true, false otherwise */
+    return PlanitOsmNodeUtils.createPoint(osmNode).coveredBy(getSettings().getBoundingPolygon());  
+  }
+  
+  /** Verify if osm way has at least one node that resides within the zoning bounding polygon. If no bounding area is defined
+   * this always returns true
+   * 
+   * @param osmWay to verify
+   * @return true when no bounding area, or covered by bounding area, false otherwise
+   */
+  protected boolean coveredByZoningBoundingPolygon(OsmWay osmWay) {
+    if(osmWay==null) {
+      return false;
+    }
+    
+    /* without explicit bounding polygon all ways are eligible */
+    if(!getSettings().hasBoundingPolygon()) {
+      return true;
+    }
+    
+    /* check if at least a single node of the OSM way is present within bounding box of zoning, implicitly assuming
+     * that zoning bounding box is smaller than that of network, since only nodes within network bounding box are checked
+     * otherwise the node is considered not available by definition */
+    boolean coveredByBoundingPolygon = false;
+    for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+      long osmNodeId = osmWay.getNodeId(index);
+      if(getSettings().getNetworkDataForZoningReader().getOsmNodes().containsKey(osmNodeId)) {
+        OsmNode osmNode = getSettings().getNetworkDataForZoningReader().getOsmNodes().get(osmNodeId);
+        if(coveredByZoningBoundingPolygon(osmNode)) {
+          coveredByBoundingPolygon = true;
+          break;
+        }
+      }
+    }
+    
+    return coveredByBoundingPolygon;  
+  }  
+  
   
   /** skip osm relation member when marked for exclusion in settings
    * 

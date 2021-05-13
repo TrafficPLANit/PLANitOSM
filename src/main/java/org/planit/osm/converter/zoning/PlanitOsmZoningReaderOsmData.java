@@ -37,8 +37,6 @@ public class PlanitOsmZoningReaderOsmData {
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
   private final Set<Long> unprocessedStopPositions= new TreeSet<Long>();
   
-  /** the registered osm ways that we kept based on osmWaysToKeep that were provided, and are processed at a later stage */
-  private final Map<Long, Long> osmOuterRoleOsmWaysByOsmRelationId = new TreeMap<Long, Long>();
   /** the registered osm ways to keep based on their outer_role identification in a multi_polygon */
   private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<Long,OsmWay>();
   
@@ -217,10 +215,16 @@ public class PlanitOsmZoningReaderOsmData {
    * 
    * @param osmWayId to mark
    */
-  public void markOsmRelationOuterRoleOsmWayToKeep(long osmRelationId, long osmWayId) {
-    osmOuterRoleOsmWaysByOsmRelationId.put(osmRelationId, osmWayId);
+  public void markOsmRelationOuterRoleOsmWayToKeep(long osmWayId) {
     osmOuterRoleOsmWaysToKeep.put(osmWayId,null);
-  }  
+  } 
+  
+  /** Remove marked entry for keeping
+   * @param osmWayId to remove from being flagged
+   */
+  public void removeOsmRelationOuterRoleOsmWay(long osmWayId) {
+    osmOuterRoleOsmWaysToKeep.remove(osmWayId);
+  }
   
   /** verify if the passed in osm way should be kept (even if it is not converted to a PLANit link
    * based on its current tags
@@ -241,25 +245,13 @@ public class PlanitOsmZoningReaderOsmData {
     return osmOuterRoleOsmWaysToKeep.put(osmWay.getId(), osmWay);
   }
   
-  /** Verify if osm way id is registered of osm relation id that qualifies as an outer role on that relation
-   * @param osmRelationId to verify
+  /** Verify if osm way id is registered that qualifies as an outer role on that relation
+   * @param osmWayId to verify
    * @return true when present false otherwise
    */
-  public boolean hasOuterRoleOsmWayByOsmRelationId(long osmRelationId) {
-    return osmOuterRoleOsmWaysByOsmRelationId.containsKey(osmRelationId);
+  public boolean hasOuterRoleOsmWayByOsmWayId(long osmWayId) {
+    return osmOuterRoleOsmWaysToKeep.containsKey(osmWayId);
   }
-
-  /** collect an unprocessed osm way that is identified as an outer role that is eligible as a platform/transfer zone
-   * @param osmWayId to verify
-   * @return the way, null if not marked/available
-   */
-  public OsmWay getOuterRoleOsmWayByOsmRelationId(long osmRelationId ) {
-    Long osmWayId = osmOuterRoleOsmWaysByOsmRelationId.get(osmRelationId);
-    if(osmWayId != null) {
-      return osmOuterRoleOsmWaysToKeep.get(osmWayId);
-    }
-    return null;
-  }  
   
   /** collect an unprocessed osm way that is identified as an outer role that is eligible as a platform/transfer zone
    * @param osmWayId to verify
@@ -341,7 +333,6 @@ public class PlanitOsmZoningReaderOsmData {
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_1);
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
     unprocessedStopPositions.clear();
-    osmOuterRoleOsmWaysByOsmRelationId.clear();
     osmOuterRoleOsmWaysToKeep.clear();
     waitingAreaWithoutMappedPlanitMode.clear();
   }
