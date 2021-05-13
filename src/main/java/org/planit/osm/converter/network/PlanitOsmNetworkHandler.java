@@ -466,10 +466,13 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   @Override
   public void handle(OsmNode osmNode) throws IOException {
         
-    /* store for later processing */
-    networkData.addOsmNode(osmNode);   
-    /* track bounding box of parsed osm nodes */
-    networkData.updateBoundingBox(osmNode);
+    /* only track nodes within bounding box (if any is defined) */
+    if(!settings.hasBoundingPolygon() || PlanitOsmNodeUtils.createPoint(osmNode).within(settings.getBoundingPolygon())) {
+      /* store for later processing */
+      networkData.addOsmNode(osmNode);   
+      /* track bounding box of parsed osm nodes */
+      networkData.updateBoundingBox(osmNode);
+    }
   }
 
   /**

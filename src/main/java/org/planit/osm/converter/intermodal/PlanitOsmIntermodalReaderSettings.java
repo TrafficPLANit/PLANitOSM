@@ -1,9 +1,13 @@
 package org.planit.osm.converter.intermodal;
 
+import org.locationtech.jts.geom.Envelope;
+import org.locationtech.jts.geom.Polygon;
 import org.planit.converter.ConverterReaderSettings;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsUtils;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -99,5 +103,31 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
     getNetworkSettings().setInputFile(inputFile);
     getPublicTransportSettings().setInputFile(inputFile);
   }  
+  
+  /** Set a square bounding box based on provided envelope
+   * @param x1, first x coordinate
+   * @param y1, first y coordinate
+   * @param x2, second x coordinate
+   * @param y2, second y coordinate
+   * @throws PlanItException thrown if error
+   */
+  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) throws PlanItException {
+    setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
+  }
+  
+  /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
+   * @param boundingBox to use
+   */
+  public final void setBoundingBox(Envelope boundingBox) {
+    setBoundingPolygon(PlanitJtsUtils.create2DPolygon(boundingBox));
+  }
+  
+  /** Set a polygon based bounding box to restrict parsing to
+   * @param boundingPolygon to use
+   */
+  public final void setBoundingPolygon(Polygon boundingPolygon) {
+    getNetworkSettings().setBoundingPolygon(boundingPolygon);
+    getPublicTransportSettings().setBoundingPolygon(boundingPolygon);
+  }   
   
 }

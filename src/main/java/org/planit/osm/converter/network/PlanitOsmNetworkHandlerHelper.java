@@ -13,7 +13,6 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.util.PlanitOsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.Node;
@@ -108,16 +107,12 @@ public class PlanitOsmNetworkHandlerHelper {
       LOGGER.severe("no OSM node or network layer provided when creating new PLANit node, ignore");
       return null;
     }
-
-    Node node = null;
-    try {
-      Point geometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
-      node = createAndPopulateNode(geometry, networkLayer);
-      node.setExternalId(String.valueOf(osmNode.getId()));
-    } catch (PlanItException e) {
-      LOGGER.severe(String.format("unable to construct location information for osm node (id:%d), node skipped", osmNode.getId()));
-    }
-
+    
+    /* geometry */
+    Point geometry = PlanitOsmNodeUtils.createPoint(osmNode);
+    
+    Node node = createAndPopulateNode(geometry, networkLayer);
+    
     /* external id */
     node.setExternalId(String.valueOf(osmNode.getId()));
     

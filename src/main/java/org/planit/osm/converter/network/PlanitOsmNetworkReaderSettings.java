@@ -61,7 +61,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
       
   /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
   protected final Set<Long>  excludedOsmWays = new HashSet<Long>();  
-  
+    
   /**
    * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file is incorrectly tagged which causes problems
    * in the memory model. Here one can be manually overwrite the allowable modes for this particular way.

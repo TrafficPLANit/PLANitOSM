@@ -83,7 +83,7 @@ Observe that access to the settings is also delegated directly to the underlying
 Since the order in which OSM entities are parsed is fixed (nodes, ways, relations), we sometimes only know what OSM ways need to be parsed after processing the relations. In some cases, the relations reveal that an OSM way that is not explicitly tagged for pt, is in fact a pt platform for example. Therefore, if we would only conduct a single pass over the file, **all** OSM ways would need to be stored in memory until we can parse the relations. To avoid this, we instead conduct multiple passes over the file, where at the sacrifice of some computational speed, we significantly reduce the required memory footprint. In the next sections we discuss what each of the three handlers (each responsible for one pass across the OSM file) does and why in more detail, but in general this is what they do:
 
 * [Pass 1 - preprocessing](#pass-1-preprocessing): No PLANit entities are created yet, only preparation  by flagging some special cases.
-* [Pass 2 - main](#pass-1-main): Create transfer zones where possible (platforms, poles), create transfer zone groups, postpone parsing of OSM stations, stop_positions
+* [Pass 2 - main](#pass-2-main): Create transfer zones where possible (platforms, poles), create transfer zone groups, postpone parsing of OSM stations, stop_positions
 * [Pass 3 - postprocessing](#pass-3-postprocessing): create connectoids (stop_positions) and process stations (resulting in nothing, transfer zone and/or connectoids)
 
 ### Pass 1 Preprocessing
