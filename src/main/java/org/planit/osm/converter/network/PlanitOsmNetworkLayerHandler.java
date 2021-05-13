@@ -1056,21 +1056,18 @@ public class PlanitOsmNetworkLayerHandler {
    * likely due to user specifying an internal bounding box outside of which this osm way resides
    * @throws PlanItException thrown if error
    */
-  private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, int startNodeIndex, boolean changeStartNodeIndexIfNotPresent) throws PlanItException {
+  private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, Integer startNodeIndex, boolean changeStartNodeIndexIfNotPresent) throws PlanItException {
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
     if(nodeFirst==null && changeStartNodeIndexIfNotPresent) {
       startNodeIndex = PlanitOsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
-      nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
-      if(nodeFirst!= null) {
-       
-        if(isNearNetworkBoundingBox(nodeFirst.getPosition(), geoUtils)){
-          LOGGER.fine(String.format("SALVAGED: Osm way %s geometry incomplete from start node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));    
-        }else{
+      if(startNodeIndex!=null) {
+        nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
+        if(nodeFirst!= null && !isNearNetworkBoundingBox(nodeFirst.getPosition(), geoUtils)) {       
           /* quite far from bounding box, so log for user verification to be sure */
           LOGGER.warning(String.format("SALVAGED: Osm way %s geometry incomplete, likely cut-off by network bounding box, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));
         }
       }else {
-        /* ignore, osm way likely completely outside user specified bounding box within input */
+        /* ignore, osm way likely completely outside user specified bounding box within input  and therefore this is most likely intended behaviour */
         return null;
       }
     }
@@ -1082,20 +1079,17 @@ public class PlanitOsmNetworkLayerHandler {
    * @pram startNodeIndex used for the preceding node, if not relevant just provide 0 
    * @param endNodeIndex to use for last node
    * @param changeEndNodeIndexIfNotPresent when true it replaces the startNodeIndex to first available node index that we can find if startNodeIndex is not available, if false not
-   * @return extracted node and end node index used. Null if not even a first node could be extracted, this only happens when no references osm node is available
+   * @return extracted node and end node index used. Null if no node could be extracted, this only happens when no references osm node is available
    * likely due to user specifying an internal bounding box outside of which this osm way resides
    * @throws PlanItException thrown if error
    */
-  private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, int startNodeIndex, int endNodeIndex, boolean changeEndNodeIndexIfNotPresent) throws PlanItException {
-    
+  private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, final Integer startNodeIndex, Integer endNodeIndex, boolean changeEndNodeIndexIfNotPresent) throws PlanItException {    
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
     if(nodeLast==null && changeEndNodeIndexIfNotPresent) {
       endNodeIndex = PlanitOsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
-      nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
-      if(nodeLast!= null) {
-        if(isNearNetworkBoundingBox(nodeLast.getPosition(), geoUtils)) {
-          LOGGER.fine(String.format("SALVAGED: OSM way %s not fully available to end node due to bounding box cut-off, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));    
-        }else {
+      if(endNodeIndex != null) {
+        nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
+        if(nodeLast!= null && !isNearNetworkBoundingBox(nodeLast.getPosition(), geoUtils)) {
           //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
           LOGGER.fine(String.format("OSM way %s not fully available, likely due to network bounding box, please verify, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));
         }

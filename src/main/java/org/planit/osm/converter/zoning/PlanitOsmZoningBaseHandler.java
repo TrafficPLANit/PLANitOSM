@@ -172,12 +172,17 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
      * regular feedback when nodes are missing, because it lacks context regarding being close to bounding box and would confuse the user */
     Level geometryExtractionLogLevel = LOGGER.getLevel();
     if(Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Way) && !PlanitOsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity, getNetworkToZoningData().getOsmNodes())){
-      int availableOsmNodeIndex = PlanitOsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, getNetworkToZoningData().getOsmNodes());
-      OsmNode referenceNode = getNetworkToZoningData().getOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
-      if(isNearNetworkBoundingBox(PlanitOsmNodeUtils.createPoint(referenceNode), geoUtils)) {
-        LOGGER.info(String.format("osm waiting area way (%d) geometry incomplete due to network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
-        geometryExtractionLogLevel = Level.OFF;
-      }
+      Integer availableOsmNodeIndex = PlanitOsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, getNetworkToZoningData().getOsmNodes());
+      if(availableOsmNodeIndex!=null) {
+        OsmNode referenceNode = getNetworkToZoningData().getOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
+        if(isNearNetworkBoundingBox(PlanitOsmNodeUtils.createPoint(referenceNode), geoUtils)) {
+          LOGGER.info(String.format("osm waiting area way (%d) geometry incomplete due to network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
+          geometryExtractionLogLevel = Level.OFF;
+        }
+      }/*else {
+        not a single node present, this implies entire transfer zone is outside of accepted bounding box, something which we could not verify until now
+        in this case, we do not report back to user as this is most likely intended behaviour since bounding box was set by user explicitly
+      }*/
     }
     
     /* geometry, either centroid location or polygon circumference */

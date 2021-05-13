@@ -48,7 +48,10 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */
   private void logInfo() {
     LOGGER.info(String.format("OSM network input file: %s",settings.getInputFile()));
-    LOGGER.info(String.format("setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));    
+    LOGGER.info(String.format("setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));
+    if(getSettings().hasBoundingPolygon()) {
+      LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
+    }
   }    
   
   /** provide the handler that performs the actual parsing

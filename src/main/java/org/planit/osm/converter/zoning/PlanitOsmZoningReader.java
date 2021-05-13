@@ -53,7 +53,10 @@ public class PlanitOsmZoningReader implements ZoningReader {
    * Log some information about this reader's configuration 
    */
   private void logInfo() {
-    LOGGER.info(String.format("OSM (transfer) zoning input file: %s",getSettings().getInputFile()));    
+    LOGGER.info(String.format("OSM (transfer) zoning input file: %s",getSettings().getInputFile()));
+    if(getSettings().hasBoundingPolygon()) {
+      LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
+    }
   }       
   
   /** Make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box
@@ -63,10 +66,12 @@ public class PlanitOsmZoningReader implements ZoningReader {
     PlanitOsmNetworkToZoningReaderData network2ZoningReaderData = getSettings().getNetworkDataForZoningReader();
     
     boolean zoningBoundingPolygonWithinNetworkBoundingPolygon = true;
-    if(getSettings().hasBoundingPolygon() && network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon()){
+    if(getSettings().hasBoundingPolygon() && network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon() &&
+       !getSettings().getBoundingPolygon().equalsTopo(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon())){
+      /* check if it falls within the network bounding polygon */
       zoningBoundingPolygonWithinNetworkBoundingPolygon = 
           getSettings().getBoundingPolygon().within(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon());
-    }else if(network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon()) {
+    }else if(!getSettings().hasBoundingPolygon() && network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon()) {
         zoningBoundingPolygonWithinNetworkBoundingPolygon = false;
     }
     if(!zoningBoundingPolygonWithinNetworkBoundingPolygon) {
