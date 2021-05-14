@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.geo.PlanitOpenGisUtils;
@@ -60,7 +61,15 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   protected final OsmLaneDefaults laneConfiguration = new OsmLaneDefaults();  
       
   /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
-  protected final Set<Long>  excludedOsmWays = new HashSet<Long>();  
+  protected final Set<Long>  excludedOsmWays = new HashSet<Long>();
+  
+  /** Allow users to provide OSM way ids for ways that we are to keep even if they fall (partially) outside a bounding polygon, 
+   * for example when we know the OSM way meanders in and outside the polygon and we want to have a connected network and proper lengths for this way */
+  protected final Set<Long>  includedOutsideBoundingPolygonOsmWays = new HashSet<Long>();
+  
+  /** Allow users to provide OSM node ids for nodes that we are not to keep even if they fall outside a bounding polygon */
+  protected final Set<Long>  includedOutsideBoundingPolygonOsmNodes = new HashSet<Long>();  
+ 
     
   /**
    * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file is incorrectly tagged which causes problems
@@ -479,7 +488,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
    * 
    * @return true when kept false otherwise
    */
-  public boolean isAlwaysKeepLargestsubNetwork() {
+  public boolean isAlwaysKeepLargestSubnetwork() {
     return alwaysKeepLargestsubNetwork;
   }
 
@@ -635,6 +644,87 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     return isHighwayParserActive() ? osmHighwaySettings : null ;
   } 
   
+  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such OSM ways
+   * the complete geometry is available, but this is not known to the parser since it only considers nodes within the bounding box (from which
+   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it is truncated for the portions
+   * outside the bounding box. This method allows the user to explicitly state the full geometry needs to be retained.
+   * 
+   * @param osmWays to keep geometry even if it falls (partially) outside the bounding polygon (int or long)
+   */
+  public void setKeepOsmWaysOutsideBoundingPolygon(Number... osmWays) {
+    setKeepOsmWaysOutsideBoundingPolygon(Arrays.asList(osmWays));
+  }
+  
+  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such OSM ways
+   * the complete geometry is available, but this is not known to the parser since it only considers nodes within the bounding box (from which
+   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it is truncated for the portions
+   * outside the bounding box. This method allows the user to explicitly state the full geometry needs to be retained.
+   * 
+   * @param osmWays to keep geometry even if it falls (partially) outside the bounding polygon (int or long)
+   */  
+  public void setKeepOsmWaysOutsideBoundingPolygon(List<Number> osmWays) {
+    includedOutsideBoundingPolygonOsmWays.addAll(osmWays.stream().map(Number::longValue).collect(Collectors.toList()));
+  }  
+  
+  /** check if any OSM ways are marked for keeping outside bounding polygon
+   * 
+   * @return true when present, false otherwise
+   */  
+  public boolean hasKeepOsmWaysOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmWays!=null && !includedOutsideBoundingPolygonOsmWays.isEmpty();
+  }   
+  
+  /** check if OSM way is marked for keeping outside bounding polygon
+   * 
+   * @param osmWayId to verify (int or long)
+   * @return true when present, false otherwise
+   */  
+  public boolean isKeepOsmWayOutsideBoundingPolygon(Number osmWayId) {
+    return includedOutsideBoundingPolygonOsmWays.contains(osmWayId.longValue());
+  }
+  
+  /** When a bounding polygon is set, some nodes might reside outside this bounding box but you want to make them available anyway for some reason. 
+   * For such OSM nodes this method allows the user to explicitly include the OSM node even if it falls outside the bounding polygon
+   * 
+   * @param osmNodeId to keep
+   */
+  public void setKeepOsmNodeOutsideBoundingPolygon(Number osmNodeId) {
+    includedOutsideBoundingPolygonOsmNodes.add(osmNodeId.longValue());
+  }
+  
+  /** count number of marked OSM nodes to keep
+   * 
+   * @return count
+   */
+  public int getNumberOfKeepOsmNodesOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmNodes.size();
+  }
+  
+  /** count number of marked OSM ways to keep
+   * 
+   * @return count
+   */
+  public long getNumberOfKeepOsmWaysOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmWays.size();
+  }    
+  
+  /** check if any OSM nodes are marked for keeping outside bounding polygon
+   * 
+   * @return true when present, false otherwise
+   */  
+  public boolean hasKeepOsmNodesOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmNodes!=null && !includedOutsideBoundingPolygonOsmNodes.isEmpty();
+  }   
+  
+  /** check if OSM node is marked for keeping outside bounding polygon
+   * 
+   * @param osmNodeId to verify (int or long)
+   * @return true when present, false otherwise
+   */  
+  public boolean isKeepOsmNodeOutsideBoundingPolygon(Number osmNodeId) {
+    return includedOutsideBoundingPolygonOsmNodes.contains(osmNodeId.longValue());
+  }  
+  
   /**
    * Allows access to the current planit infrastructure layer configuration which maps planit modes
    * to an infrastructure layer on the to be created PLANit network
@@ -653,5 +743,6 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
       InfrastructureLayersConfigurator planitInfrastructureLayerConfiguration) {
     this.planitInfrastructureLayerConfiguration = planitInfrastructureLayerConfiguration;
   }
+
   
 }

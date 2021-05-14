@@ -8,20 +8,17 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.network.physical.Link;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
 
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
-import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
@@ -44,15 +41,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   private final PlanitOsmNetworkReaderData networkData;
 
   /** the settings to adhere to */
-  private final PlanitOsmNetworkReaderSettings settings;
-
-  /** utilities for geographic information */
-  private final PlanitJtsCrsUtils geoUtils;
-      
-  
-  /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
-  protected final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> osmLayerHandlers = new HashMap<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler>();
-   
+  private final PlanitOsmNetworkReaderSettings settings;        
     
   /** Verify if there exist any layers where the node is active either as an extreme node or internal to a planit link
    * @param osmNodeId to use
@@ -63,7 +52,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     OsmNode osmNode = networkData.getOsmNode(osmNodeId);
     if(osmNode != null) {      
       for(InfrastructureLayer networkLayer : settings.getOsmNetworkToPopulate().infrastructureLayers) {
-        PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
+        PlanitOsmNetworkLayerParser layerHandler = networkData.getLayerParser((MacroscopicPhysicalNetwork) networkLayer);
         if(layerHandler.getLayerData().isLocationPresentInLayer(PlanitOsmNodeUtils.createPoint(osmNode))){
           return true;
         }        
@@ -115,7 +104,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
       if(createdLinksByLayer!=null) {
         /* register that osm way has multiple planit links mapped (needed in case of subsequent break link actions on nodes of the osm way */
         for( Entry<InfrastructureLayer, Set<Link>> entry : createdLinksByLayer.entrySet()) {
-          PlanitOsmNetworkReaderLayerData layerData = getLayerHandlers().get(entry.getKey()).getLayerData();
+          PlanitOsmNetworkReaderLayerData layerData = networkData.getLayerParsers().get(entry.getKey()).getLayerData();
           layerData.updateOsmWaysWithMultiplePlanitLinks(circularOsmWay.getId(), entry.getValue());
         }
       }
@@ -313,7 +302,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     if(linkSegmentTypes != null) {
       linkSegmentTypes.forEach( (layer, linkSegmentType)  -> {
         if(linkSegmentType != null) {
-          this.osmLayerHandlers.get(layer).getProfiler().incrementOsmTagCounter(osmTypeValueToUse);
+          networkData.getLayerParser((MacroscopicPhysicalNetwork)layer).getProfiler().incrementOsmTagCounter(osmTypeValueToUse);
         } });
     }
     /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/
@@ -394,9 +383,9 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
       Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = entry.getValue();
       
       if(linkSegmentTypes != null && linkSegmentTypes.anyIsNotNull()) {
-        PlanitOsmNetworkLayerHandler layerHandler = osmLayerHandlers.get(networkLayer);
+        PlanitOsmNetworkLayerParser layerHandler = networkData.getLayerParser(networkLayer);
         if(layerHandler == null) {
-          throw new PlanItException("layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
+          throw new PlanItException("Layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
         }
         /* delegate to layer handler */
         Link link = layerHandler.extractPartialOsmWay(osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
@@ -420,43 +409,9 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   public PlanitOsmNetworkHandler(final PlanitOsmNetworkReaderData networkData, final PlanitOsmNetworkReaderSettings settings) {
     this.networkData = networkData;
-    
-    /* gis initialisation */
-    this.geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
-    try {
-      settings.getOsmNetworkToPopulate().transform(settings.getSourceCRS());
-    }catch(PlanItException e) {
-      LOGGER.severe(String.format("unable to update network to CRS %s", settings.getSourceCRS().getName()));
-    }
-    
-    /* prep */
-    this.settings = settings;   
-    
+    this.settings = settings;       
   }
-  
-  /**
-   * Call this BEFORE we parse the OSM network to initialise the handler properly
-   * @throws PlanItException 
-   */
-  public void initialiseBeforeParsing() throws PlanItException {
-    PlanitOsmNetwork network = settings.getOsmNetworkToPopulate();
-    PlanItException.throwIf(network.infrastructureLayers != null && network.infrastructureLayers.size()>0,"network is expected to be empty at start of parsing OSM network, but it has layers already");
-    
-    /* create the supported link segment types on the network */
-    network.initialiseInfrastructureLayers(settings.getPlanitInfrastructureLayerConfiguration());
-    
-    /* for each layer initialise a handler */
-    for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
-      MacroscopicPhysicalNetwork macroNetworkLayer = (MacroscopicPhysicalNetwork)networkLayer;
-      PlanitOsmNetworkLayerHandler layerHandler = new PlanitOsmNetworkLayerHandler(macroNetworkLayer, networkData, settings, geoUtils);
-      osmLayerHandlers.put(macroNetworkLayer, layerHandler);
-    }
-        
-    network.createOsmCompatibleLinkSegmentTypes(settings);
-    /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
-    settings.excludeOsmWayTypesWithoutActivatedModes();
-    settings.logUnsupportedOsmWayTypes();    
-  }  
+   
 
   /**
    * construct PLANit nodes from OSM nodes
@@ -465,13 +420,20 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {
-        
-    /* only track nodes within bounding box (if any is defined) */
-    if(!settings.hasBoundingPolygon() || PlanitOsmNodeUtils.createPoint(osmNode).within(settings.getBoundingPolygon())) {
+
+    /* only track nodes within bounding polygon (if any is defined), or if it is marked to keep even if it outside the bounding polygon */
+    boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());    
+    if(!settings.hasBoundingPolygon() ||
+        keepOutsideBoundingPolygon ||
+        PlanitOsmNodeUtils.createPoint(osmNode).within(settings.getBoundingPolygon())) {
+      
       /* store for later processing */
-      networkData.addOsmNode(osmNode);   
-      /* track bounding box of parsed osm nodes */
-      networkData.updateBoundingBox(osmNode);
+      networkData.addOsmNode(osmNode);
+      
+      if(!keepOutsideBoundingPolygon) {
+        /* track bounding box of osm nodes within bounding polygon (if any) */
+        networkData.updateBoundingBox(osmNode);
+      }
     }
   }
 
@@ -481,7 +443,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-        
+            
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
@@ -534,7 +496,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
         MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
         
         /* collect possibly modified type (per direction) */
-        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerdirectionPair = this.osmLayerHandlers.get(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);                
+        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerdirectionPair = networkData.getLayerParser(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);                
         if(typesPerdirectionPair != null) {
           linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerdirectionPair);
         }
@@ -545,24 +507,16 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
 
   /**
    * {@inheritDoc}
-   */  
-  @Override
-  public void handle(OsmRelation osmRelation) throws IOException {
-    // delegate
-  }
-
-  /**
-   * {@inheritDoc}
    */
   @Override
   public void complete() throws IOException {
     
     /* process circular ways */
     processCircularWays();    
-        
+            
     /* delegate to each layer handler present */
-    for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : osmLayerHandlers.entrySet()) {
-      PlanitOsmNetworkLayerHandler networkLayerHandler = entry.getValue();
+    for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()) {
+      PlanitOsmNetworkLayerParser networkLayerHandler = entry.getValue();
       
       /* break links on layer with internal connections to multiple osm ways */
       networkLayerHandler.complete();      
@@ -576,20 +530,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {
-    networkData.reset();
-    
-    /* reset layer handlers as well */
-    osmLayerHandlers.forEach( (layer, handler) -> {handler.reset();});
-    osmLayerHandlers.clear();
+    networkData.reset();    
   }  
-
-  
-  /** provide reference to the used layer handlers for each of the identified layers
-   * 
-   * @return layerHandlers used
-   */
-  public final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> getLayerHandlers() {
-    return this.osmLayerHandlers;
-  }
   
 }

@@ -360,7 +360,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       /* collect osm node */
       OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
       if(osmNode == null) {
-        LOGGER.warning(String.format("unable to collect osm node %d referenced in stop_area %d", member.getId(), osmRelation.getId()));
+        if(!getSettings().hasBoundingPolygon()) {
+          LOGGER.warning(String.format("unable to collect osm node %d referenced in stop_area %d, this shouldn't happen", member.getId(), osmRelation.getId()));
+        }
         return;
       }
       
@@ -828,8 +830,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
       OsmRelationMember internalMember = 
           PlanitOsmRelationUtils.findFirstOsmRelationMemberWithRole(osmRelation ,OsmMultiPolygonTags.OUTER_ROLE);
       if(internalMember!=null) {
-        if(getZoningReaderData().getOsmData().hasOuterRoleOsmWayByOsmWayId(internalMember.getId())) {
-          OsmWay outerRoleOsmWay = getZoningReaderData().getOsmData().getOuterRoleOsmWayByOsmWayId(internalMember.getId());
+        if(getZoningReaderData().getOsmData().hasOuterRoleOsmWay(internalMember.getId())) {
+          OsmWay outerRoleOsmWay = getZoningReaderData().getOsmData().getOuterRoleOsmWay(internalMember.getId());
           type = EntityType.Way;
           osmId = outerRoleOsmWay.getId();
         }else {
@@ -841,8 +843,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
     /* should be parsed (with or without connectoids), connect to group and let stop_positions create connectoids */
     TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(type, osmId);
     if(transferZone==null) {
-      /* not parsed due to problems, discard */
-      if(!getZoningReaderData().getOsmData().isWaitingAreaWithoutMappedPlanitMode(type, osmId)) {
+      /* not parsed due to problems (or outside bounding box), discard */
+      if(!getZoningReaderData().getOsmData().isWaitingAreaWithoutMappedPlanitMode(type, osmId) && !getSettings().hasBoundingPolygon()) {
         LOGGER.warning(String.format("DISCARD: platform for OSM entity %d (type %s) not available, although referenced by stop_area %d",member.getId(), member.getType().toString(), osmRelation.getId()));
       }
     }else {
@@ -929,9 +931,9 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   private void extractPtv2OuterRolePlatformRelation(OsmRelation osmRelation, OsmRelationMember member, Map<String, String> tags) throws PlanItException {
     /* try if it has been parsed, not if it has no tags (likely), yes if it has PTv2 tags (unlikely for multipolygon member)) */
     TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Way, member.getId());
-    if(transferZone == null) {
+    if(transferZone == null && getZoningReaderData().getOsmData().hasOuterRoleOsmWay(member.getId())) {
       /* collect from unprocessed ways, should be present */
-      OsmWay unprocessedWay = getZoningReaderData().getOsmData().getOuterRoleOsmWayByOsmWayId(member.getId());
+      OsmWay unprocessedWay = getZoningReaderData().getOsmData().getOuterRoleOsmWay(member.getId());
       if(unprocessedWay == null) {
         LOGGER.severe(String.format("Osm way %d referenced by Ptv2 multipolygon %d not available in parser, this should not happen, relation ignored",member.getId(),osmRelation.getId()));
         return;
@@ -1044,8 +1046,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   public void handle(OsmNode osmNode) throws IOException {             
     
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);          
-    try {              
-      
+    try {
+            
       /* only parse nodes that are potentially used for (PT) transfers*/
       OsmPtVersionScheme ptVersion = isActivatedTransferBasedInfrastructure(tags);
       if(ptVersion != OsmPtVersionScheme.NONE) {

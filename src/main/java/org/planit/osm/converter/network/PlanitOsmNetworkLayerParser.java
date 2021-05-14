@@ -60,10 +60,10 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  * @author markr
  *
  */
-public class PlanitOsmNetworkLayerHandler {
+public class PlanitOsmNetworkLayerParser {
   
   /** logger to use */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkLayerHandler.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkLayerParser.class.getCanonicalName());
   
   // local members only
   
@@ -206,7 +206,7 @@ public class PlanitOsmNetworkLayerHandler {
       if(osmnode != null) {
         layerData.registerOsmNodeAsInternalToPlanitLink(osmnode,link);
       }else {
-        throw new PlanItException("osm node %d not available although internal to osm way %d, this should not happen",osmWay.getId(), osmWay.getNodeId(internalLocationIndex));
+        LOGGER.fine(String.format("OSM node %d not available although internal to parseable osm way %d, possibly outside bounding box",osmWay.getNodeId(internalLocationIndex), osmWay.getId()));
       }
     }   
   }   
@@ -828,7 +828,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @throws PlanItException throw if error
    */
   private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) throws PlanItException {
-    LineString lineString = PlanitOsmWayUtils.extractLineString(osmWay, startNodeIndex, endNodeIndex, networkData.getOsmNodes());
+    LineString lineString = PlanitOsmWayUtils.extractLineStringNoThrow(osmWay, startNodeIndex, endNodeIndex, networkData.getOsmNodes());
     lineString = PlanitJtsUtils.createCopyWithoutAdjacentDuplicateCoordinates(lineString);
     
     return lineString;
@@ -1205,7 +1205,7 @@ public class PlanitOsmNetworkLayerHandler {
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected PlanitOsmNetworkLayerHandler(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
+  protected PlanitOsmNetworkLayerParser(MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderData networkData, PlanitOsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
     this.networkLayer = networkLayer;           
     this.networkData = networkData;
     this.geoUtils = geoUtils;

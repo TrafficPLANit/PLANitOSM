@@ -246,13 +246,35 @@ public class PlanitOsmWayUtils {
   public static Coordinate[] createCoordinateArray(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
     
     /* throw when issue */
-    PlanitExceptionConsumer<Set<Long>> missingNodeconsumer = (missingNodes) -> {
+    PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
       if(missingNodes!=null) {
-        throw new PlanItException(String.format("Missing osm nodes when extracting coordinate array for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+        throw new PlanItException(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
       }
     };
     
-    return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeconsumer);
+    return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
+  }  
+  
+  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array for the given range. In case there are missing
+   * nodes we log this but retain as much of the information in the returned coordinate array as possible
+   * 
+   * @param osmWay to extract node coordinates from
+   * @param osmNodes to collect nodes from by reference node ids in the way
+   * @param startNodeIndex to use
+   * @param endNodeIndex to use
+   * @return coordinate array
+   * @throws PlanItException thrown if error
+   */  
+  public static Coordinate[] createCoordinateArrayNoThrow(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    
+    /* log -> no throw */
+    PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
+      if(missingNodes!=null) {
+        LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+      }
+    };
+    
+    return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
   }  
   
   /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case there are missing
@@ -267,7 +289,7 @@ public class PlanitOsmWayUtils {
     /* log -> no throw */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
       if(missingNodes!=null) {
-        LOGGER.warning(String.format("Missing osm nodes when extracting coordinate array for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+        LOGGER.warning(String.format("Missing OSM nodes for for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
       }
     };
     
@@ -349,9 +371,23 @@ public class PlanitOsmWayUtils {
   public static LineString extractLineString(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
     Coordinate[] coordArray = createCoordinateArray(osmWay, startNodeIndex, endNodeIndex, osmNodes);
     return  PlanitJtsUtils.createLineString(coordArray);
+  }
+  
+  /**
+   * Identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+   * 
+   * @param osmWay way to extract geometry from
+   * @param startNodeIndex to use
+   * @param endNodeIndex to use
+   * @return line string instance representing the shape of the way
+   * @throws PlanItException thrown if error
+   */  
+  public static LineString extractLineStringNoThrow(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+    Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, startNodeIndex, endNodeIndex, osmNodes);
+    return  PlanitJtsUtils.createLineString(coordArray);
   }  
 
-  /** identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+  /** Identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
    * @param osmWay to extract geometry for
    * @param osmNodes to collect from
    * @return parsed geometry, can be null if not valid for some reason

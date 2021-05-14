@@ -249,7 +249,7 @@ public class PlanitOsmZoningReaderOsmData {
    * @param osmWayId to verify
    * @return true when present false otherwise
    */
-  public boolean hasOuterRoleOsmWayByOsmWayId(long osmWayId) {
+  public boolean hasOuterRoleOsmWay(long osmWayId) {
     return osmOuterRoleOsmWaysToKeep.containsKey(osmWayId);
   }
   
@@ -257,7 +257,7 @@ public class PlanitOsmZoningReaderOsmData {
    * @param osmWayId to verify
    * @return the way, null if not marked/available
    */
-  public OsmWay getOuterRoleOsmWayByOsmWayId(long osmWayId) {
+  public OsmWay getOuterRoleOsmWay(long osmWayId) {
     return osmOuterRoleOsmWaysToKeep.get(osmWayId);
   }
   

@@ -1526,12 +1526,13 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     if(member.getType() != EntityType.Node) {
       throw new PlanItException("Stop_position %d encountered that it not an OSM node, this is not permitted",member.getId());
     }      
-    
-    
+        
     OsmNode stopPositionNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
     if(stopPositionNode==null) {
       /* likely missing because it falls outside bounding box, ignore */
-      LOGGER.warning(String.format("DISCARD:Unable to extract otv2 stop position %d in stop area %s, osm node missing", member.getId(), transferZoneGroup.getExternalId()));
+      if(!getSettings().hasBoundingPolygon()) {
+        LOGGER.warning(String.format("DISCARD:Unable to extract ptv2 stop position %d in stop area %s, osm node missing", member.getId(), transferZoneGroup.getExternalId()));
+      }
       return;
     }
     

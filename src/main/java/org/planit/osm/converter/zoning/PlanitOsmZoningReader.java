@@ -188,16 +188,17 @@ public class PlanitOsmZoningReader implements ZoningReader {
       throw new PlanItException("error during parsing of osm file",e);
     }       
   }
-
+  
   /**
    * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 
    * 
    * @param settings to use
    * @param zoningToPopulate zoning to populate 
    */
-  protected PlanitOsmZoningReader(PlanitOsmPublicTransportReaderSettings settings){
-    this.transferSettings = settings;    
-  }  
+  protected PlanitOsmZoningReader(PlanitOsmPublicTransportReaderSettings settings, Zoning zoningToPopulate){
+    this.transferSettings = settings;  
+    this.zoning = zoningToPopulate;
+  }    
   
   /**
    * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 

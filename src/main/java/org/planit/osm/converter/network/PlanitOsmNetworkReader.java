@@ -11,6 +11,7 @@ import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
@@ -20,6 +21,7 @@ import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.zoning.Zoning;
 import org.planit.zoning.listener.UpdateConnectoidsOnSubGraphRemoval;
 
+import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
 
@@ -39,10 +41,52 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   
   /** settings to use */
   private final PlanitOsmNetworkReaderSettings settings;
+  
+  /**
+   * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
+   * @throws PlanItException thrown if error
+   */
+  public void initialiseBeforeParsing() throws PlanItException {
+    PlanitOsmNetwork network = settings.getOsmNetworkToPopulate();
+    PlanItException.throwIf(network.infrastructureLayers != null && network.infrastructureLayers.size()>0,"Network is expected to be empty at start of parsing OSM network, but it has layers already");
     
-  /** tha handler responsible for the actual parsing */
-  private PlanitOsmNetworkHandler osmHandler;
-       
+    /* gis initialisation */
+    PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
+    try {
+      settings.getOsmNetworkToPopulate().transform(settings.getSourceCRS());
+    }catch(PlanItException e) {
+      LOGGER.severe(String.format("Unable to update network to CRS %s", settings.getSourceCRS().getName()));
+    }    
+    
+    /* (default) link segment types (on the network) */
+    network.initialiseInfrastructureLayers(settings.getPlanitInfrastructureLayerConfiguration());        
+    network.createOsmCompatibleLinkSegmentTypes(settings);
+    /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
+    settings.excludeOsmWayTypesWithoutActivatedModes();
+    settings.logUnsupportedOsmWayTypes();    
+    
+    /* initialise layer specific parsers */
+    networkData.initialiseLayerParsers(network, settings, geoUtils);    
+  }  
+           
+  /** read based on reader and handler
+   * @param osmReader to use
+   * @param osmHandler to use
+   * @throws PlanItException thorw if error
+   */
+  private void read(OsmReader osmReader, DefaultOsmHandler osmHandler) throws PlanItException {
+    /* register handler */
+    osmReader.setHandler(osmHandler);
+    
+    /* conduct parsing which will call back the handler*/
+    try {
+      osmReader.read();
+    } catch (OsmInputException e) {
+      LOGGER.severe(e.getMessage());
+      throw new PlanItException("error during parsing of osm file",e);
+    }
+  }
+
   /**
    * Log some information about this reader's configuration
    */
@@ -54,13 +98,43 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     }
   }    
   
-  /** provide the handler that performs the actual parsing
-   * 
-   * @return osm handler
+  /**
+   * Perform preprocessing if needed
+   * @throws PlanItException thrown if error
    */
-  protected PlanitOsmNetworkHandler getOsmNetworkHandler() {
-    return osmHandler;
-  }  
+  private void doPreprocessing() throws PlanItException {
+    /* preprocessing currently is only needed in case of bounding polygon present and user specified
+     * OSM ways to keep outside of this bounding polygon, otherwise skip */
+    if(getSettings().hasBoundingPolygon() && 
+        (getSettings().hasKeepOsmWaysOutsideBoundingPolygon() || getSettings().hasKeepOsmNodesOutsideBoundingPolygon())) {
+      
+      /* reader to parse the actual file */
+      OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputFile());
+      if(osmReader == null) {
+        LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
+      }
+      
+      /* set handler to deal with call backs from osm4j */
+      PlanitOsmNetworkPreProcessingHandler osmHandler = new PlanitOsmNetworkPreProcessingHandler(settings);    
+      read(osmReader, osmHandler);  
+    }
+  }
+
+  /** Perform main processing of network reader
+   * @throws PlanItException thrown if error
+   * 
+   */
+  private void doMainProcessing() throws PlanItException{
+    /* reader to parse the actual file */
+    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputFile());
+    if(osmReader == null) {
+      LOGGER.severe("Unable to create OSM reader for network, aborting");
+    }
+    
+    /* set handler to deal with call backs from osm4j */
+    PlanitOsmNetworkHandler osmHandler = new PlanitOsmNetworkHandler(networkData, settings);
+    read(osmReader, osmHandler);     
+  }
   
   /**
    * collect the network data gathered
@@ -91,7 +165,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
 
       Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
       Integer discardMaxsize = settings.getDiscardDanglingNetworkAboveSize();
-      boolean keepLargest = settings.isAlwaysKeepLargestsubNetwork();
+      boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
       
       /* logging stats  - before */
       MacroscopicPhysicalNetworkLayers layers = getSettings().getOsmNetworkToPopulate().infrastructureLayers;
@@ -184,31 +258,18 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     
     logInfo();
     
-    /* reader to parse the actual file */
-    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputFile());
-    if(osmReader == null) {
-      LOGGER.severe("unable to create OSM reader for network, aborting");
-    }else {
+    /* initialise */
+    initialiseBeforeParsing();    
     
-      /* set handler to deal with call backs from osm4j */
-      osmHandler = new PlanitOsmNetworkHandler(networkData, settings);
-      osmHandler.initialiseBeforeParsing();
+    /* preprocessing (if needed)*/
+    doPreprocessing();
+    
+    /* main processing  (always)*/
+    doMainProcessing();    
       
-      /* register handler */
-      osmReader.setHandler(osmHandler);
-      
-      /* conduct parsing which will call back the handler*/
-      try {
-        osmReader.read();
-      } catch (OsmInputException e) {
-        LOGGER.severe(e.getMessage());
-        throw new PlanItException("error during parsing of osm file",e);
-      }
-      
-      /* dangling subnetworks */
-      if(getSettings().isRemoveDanglingSubnetworks()) {
-        removeDanglingSubNetworks();
-      }
+    /* dangling subnetworks */
+    if(getSettings().isRemoveDanglingSubnetworks()) {
+      removeDanglingSubNetworks();
     }
     
     LOGGER.info("OSM full network parsing...DONE");
@@ -231,9 +292,6 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */
   @Override
   public void reset() {
-    if(osmHandler != null) {
-      osmHandler.reset();
-    }
     getSettings().reset();
   }
 
@@ -252,8 +310,8 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     PlanitOsmNetworkToZoningReaderData network2zoningData = new PlanitOsmNetworkToZoningReaderData(networkData, getSettings());
         
     /* layer specific data references */
-    for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerHandler> entry : getOsmNetworkHandler().getLayerHandlers().entrySet()){
-      PlanitOsmNetworkLayerHandler layerHandler = entry.getValue();
+    for(Entry<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
+      PlanitOsmNetworkLayerParser layerHandler = entry.getValue();
       network2zoningData.registerLayerData(entry.getKey(), layerHandler.getLayerData());
     }
     

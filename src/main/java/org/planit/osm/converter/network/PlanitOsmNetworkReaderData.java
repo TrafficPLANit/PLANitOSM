@@ -6,7 +6,11 @@ import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
+import org.planit.network.InfrastructureLayer;
+import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.PlanitOsmNodeUtils;
+import org.planit.utils.geo.PlanitJtsCrsUtils;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -28,9 +32,28 @@ public class PlanitOsmNetworkReaderData {
   /** on the fly tracking of bounding box of all parsed nodes in the network */
   private Envelope networkBoundingBox;
   
+  /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
+  private final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerParser> osmLayerParsers = new HashMap<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerParser>();  
+  
   /** the distance that qualifies as being near to the network bounding box. Used to suppress warnings of incomplete osm ways due to bounding box (which
    * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */
   public static final double BOUNDINGBOX_NEARNESS_DISTANCE_METERS = 200;  
+  
+  /**
+   * initialise the layer parsers
+   * 
+   * @param network to use
+   * @param settings to use
+   * @param geoUtils to use
+   */
+  protected void initialiseLayerParsers(PlanitOsmNetwork network, PlanitOsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
+    /* for each layer initialise a handler */
+    for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
+      MacroscopicPhysicalNetwork macroNetworkLayer = (MacroscopicPhysicalNetwork)networkLayer;
+      PlanitOsmNetworkLayerParser layerHandler = new PlanitOsmNetworkLayerParser(macroNetworkLayer, this, settings, geoUtils);
+      osmLayerParsers.put(macroNetworkLayer, layerHandler);
+    }
+  }    
       
   /** Constructor 
    * @param countryName to use
@@ -47,6 +70,10 @@ public class PlanitOsmNetworkReaderData {
   public void reset() {
     clearOsmCircularWays();    
     osmNodes.clear();
+    
+    /* reset layer handlers as well */
+    osmLayerParsers.forEach( (layer, handler) -> {handler.reset();});
+    osmLayerParsers.clear();    
   }  
   
   /** update bounding box to include osm node
@@ -120,6 +147,23 @@ public class PlanitOsmNetworkReaderData {
    */
   public void clearOsmCircularWays() {
     osmCircularWays.clear();
+  }
+  
+  /** provide reference to a layer parser
+   * 
+   * @param networkLayer to collect parser for
+   * @return layerParser, null if not present
+   */
+  public final PlanitOsmNetworkLayerParser getLayerParser(MacroscopicPhysicalNetwork networkLayer) {
+    return this.osmLayerParsers.get(networkLayer);
+  }   
+  
+  /** provide reference to the used layer parsers for each of the identified layers
+   * 
+   * @return layerParsers used
+   */
+  public final Map<MacroscopicPhysicalNetwork, PlanitOsmNetworkLayerParser> getLayerParsers() {
+    return this.osmLayerParsers;
   }
 
  

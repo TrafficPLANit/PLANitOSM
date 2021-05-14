@@ -144,7 +144,6 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     }
     
     PlanitOsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
-    PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
         
     /* OSM network reader */
     PlanitOsmNetworkReader osmNetworkReader = PlanitOsmNetworkReaderFactory.create(networkSettings);
@@ -157,15 +156,10 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();    
     
     /* ZONING READER */
-    if(zoningToPopulate==null) {
-      zoningToPopulate = new Zoning(network.getIdGroupingToken(), network.getNetworkGroupingTokenId());
-    }
-    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(
-        ptSettings.getInputFile(), 
-        ptSettings.getCountryName(), 
-        zoningToPopulate, 
-        network, 
-        osmNetworkReader.createNetworkToZoningReaderData());
+    PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
+    ptSettings.setReferenceNetwork(network);
+    ptSettings.setNetworkDataForZoningReader(osmNetworkReader.createNetworkToZoningReaderData());
+    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(ptSettings);
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
