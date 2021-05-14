@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.planit.geo.PlanitOpenGisUtils;
 import org.planit.network.InfrastructureLayersConfigurator;
 import org.planit.osm.defaults.OsmLaneDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
@@ -85,7 +84,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   /* SETTINGS */
   
   /** the crs of the OSM source */
-  protected CoordinateReferenceSystem sourceCRS = PlanitOpenGisUtils.DEFAULT_GEOGRAPHIC_CRS;  
+  protected CoordinateReferenceSystem sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;  
                   
   /**
    * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
