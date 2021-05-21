@@ -151,7 +151,7 @@ public class OsmRoadModeTags {
    * @param modeTag to verify
    * @return true when valid tag, otherwise false
    */
-  public static boolean isRoadModeTag(String modeTag) {
+  public static boolean isRoadModeTag(final String modeTag) {
     return MODE_TAGS.contains(modeTag);
   }
   
@@ -176,7 +176,7 @@ public class OsmRoadModeTags {
    * @param osmModes
    * @return true when overlap exists, false otherwise
    */
-  public static boolean containsAnyMode(Collection<String> osmModes) {
+  public static boolean containsAnyMode(final Collection<String> osmModes) {
     return !Collections.disjoint(MODE_TAGS, osmModes);
   }
 

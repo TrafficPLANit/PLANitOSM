@@ -1,0 +1,4 @@
+HIGHWAYTYPE, MODES
+pedestrian, bicycle, foot
+bridleway, bicycle, foot, horse
+cycleway, bicycle, foot
