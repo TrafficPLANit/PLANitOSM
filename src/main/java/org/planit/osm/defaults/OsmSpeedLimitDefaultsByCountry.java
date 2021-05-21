@@ -156,6 +156,11 @@ public class OsmSpeedLimitDefaultsByCountry {
   protected static void populateAustralianSpeedLimits() throws PlanItException {
     OsmSpeedLimitDefaults australianSpeedLimits = new OsmSpeedLimitDefaults(CountryNames.AUSTRALIA, globalSpeedLimits);
     
+    /* TODO: To be replaced by defaults from file (already added, just parsing not -> 
+     * base on parsing for mode access defaults), where if one of the two exists (highway/railway) both need configuring
+     * by cloning and then overwriting for each available record!
+     */
+    
     /* AUSTRALIA */ 
     {
       /*        HIGHWAY -->                                                                   URBAN */

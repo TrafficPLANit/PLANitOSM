@@ -1,0 +1,14 @@
+HIGHWAYTYPE, URBAN SPEED LIMIT, NON-URBAN SPEED LIMIT
+motorway, 100, 100
+motorway_link, 80, 80
+trunk, 60, 100      
+trunk_link, 60, 60           
+primary, 60, 80          
+primary_link, 60, 60      
+secondary, 60, 80          
+secondary_link, 60, 60      
+tertiary, 50, 80          
+tertiary_link, 50, 60
+unclassified, 50, 80      
+residential, 50, 80          
+living_street, 20, 20
