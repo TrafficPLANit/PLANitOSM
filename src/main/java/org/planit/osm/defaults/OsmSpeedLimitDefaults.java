@@ -7,7 +7,7 @@ package org.planit.osm.defaults;
  *
  */
 
-public class OsmSpeedLimitDefaults {
+public class OsmSpeedLimitDefaults implements Cloneable {
   
   /**
    * urban highway speed limit defaults
@@ -22,7 +22,7 @@ public class OsmSpeedLimitDefaults {
   /**
    * country name for the defaults
    */
-  protected final String countryName;
+  protected String countryName;
   
   /**
    * railway speed limit defaults
@@ -34,7 +34,15 @@ public class OsmSpeedLimitDefaults {
   public static final double GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH = 50;  
     
   /** in absence of OSM defined defaults, we make a global rail way speed limit (km/h) available */
-  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;  
+  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
+  
+  /** update country
+   * 
+   * @param countryName to use
+   */
+  protected void setCountry(final String countryName) {
+    this.countryName = countryName;
+  }
   
   /** constructor 
    * @param countryName country

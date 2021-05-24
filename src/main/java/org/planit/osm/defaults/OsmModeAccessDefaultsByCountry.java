@@ -22,6 +22,7 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
 import org.planit.utils.misc.FileUtils;
 import org.planit.utils.misc.StringUtils;
+import org.planit.utils.resource.ResourceUtils;
 import org.planit.utils.locale.CountryNames;
 
 /**
@@ -64,98 +65,14 @@ public class OsmModeAccessDefaultsByCountry {
    
   /* initialise */
   static {    
-    try {
-      /* global */
-      populateGlobalDefaultHighwayModeAccess();
-      populateGlobalDefaultRailwayModeAccess();
-  
-      /* country specific based on resource files*/
-      URL mode_access_url = OsmModeAccessDefaultsByCountry.class.getClassLoader().getResource(MODE_ACCESS_RESOURCE_DIR);
-      String path = mode_access_url.getPath();
-      File[] modeAccessCountryFiles = new File(path).listFiles();
-      for(int index=0;index<modeAccessCountryFiles.length;++index) {
-        populateModeAccessForCountry(modeAccessCountryFiles[index]);
-      }
-      
-    } catch (PlanItException e) {
-      LOGGER.severe(String.format("unable to populate default mode access because: %s", e.getMessage()));
-    }    
+    /* global */
+    populateGlobalDefaultHighwayModeAccess();
+    populateGlobalDefaultRailwayModeAccess();
+    
+    /* country specific for supported countries */
+    populateCountrySpecificDefaultModeAccess();        
   }
-  
-  /** Each file should be named according to ISO366 alpha 2 country code. the mode access defaults are parsed as CSV format and overwrite the 
-   * global defaults for this country. If no explicit value is provided, we revert to the global defaults instead.
-   * 
-   * @param file to extract mode access defaults from
-   * @throws PlanItException thrown if error
-   */
-  private static void populateModeAccessForCountry(File file) throws PlanItException {
-    
-    PlanItException.throwIfNull(file, "Mode access file provided is null");    
-    Path countryModeAccess = file.toPath();
-    
-    String countryCodeFileName = countryModeAccess.getFileName().toString();
-    PlanItException.throwIfNull(countryCodeFileName, "Mode access file name not present");    
-    countryCodeFileName = FileUtils.getFileNameWithoutExtension(countryCodeFileName);
-    
-    final String fullCountryName = LocaleUtils.getCountryNameCodeByIso2Code(countryCodeFileName);
-    if(StringUtils.isNullOrBlank(fullCountryName)) {
-      LOGGER.warning(String.format("IGNORED: Unrecognised country code encountered (%s) when parsing default OSM mode access values fullCountryName", fullCountryName));
-      return;
-    }
-    
-    try {   
-      /* copy the global defaults and make adjustments */
-      OsmModeAccessDefaults countryDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.clone();
-      countryDefaults.setCountry(fullCountryName);
-      
-      /* OSM way key, first entry in record */
-      boolean changeDetected = false;
-      Reader in = new FileReader(countryModeAccess.toAbsolutePath().toString());
-      Iterable<CSVRecord> records = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
-      for(CSVRecord record : records) {
-        String osmWayType = record.get(0);
-        boolean isOsmHighway = OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType);
-        boolean isOsmRailwayTag = false;
-        if(!isOsmHighway) {
-          isOsmRailwayTag = OsmRailwayTags.isRailBasedRailway(osmWayType);
-          if(!isOsmRailwayTag) {
-            LOGGER.warning(String.format("IGNORED: OSM way type (%s) in country specific mode access defaults is not a valid highway or railway type",osmWayType));      
-          }
-        }
-      
-        /* allowed OSM modes */
-        List<String> allowedOsmModes = new ArrayList<String>(record.size()-1);
-        for(int columnIndex = 1; columnIndex< record.size() ; ++columnIndex) {
-          final String osmMode = record.get(columnIndex).trim();
-          if(!StringUtils.isNullOrBlank(osmMode)) {
-            allowedOsmModes.add(osmMode);
-          }
-        }
-        
-        /* register on defaults */
-        if(!allowedOsmModes.isEmpty()) {
-          changeDetected = true;
-          if(isOsmHighway) {
-            countryDefaults.getHighwayModeAccessDefaults().setAllowedModes(osmWayType, false /* no logging */, allowedOsmModes);    
-          }else {
-            countryDefaults.getRailwayModeAccessDefaults().setAllowedModes(osmWayType, false /* no logging */, allowedOsmModes);
-          }
-        }
-        
-      }
-      
-      /* register country defaults */
-      if(changeDetected) {
-        setDefaultsByCountry(countryDefaults);
-      }
-      
-    } catch (Exception e) {
-      LOGGER.severe(e.getMessage());
-      LOGGER.severe(String.format("Parsing of file %s failed", countryModeAccess.toString()));
-    }    
-  }
-  
-  
+     
   /**
    * populate the global defaults for highway types, i.e., roads
    */
@@ -340,10 +257,80 @@ public class OsmModeAccessDefaultsByCountry {
       GLOBAL_MODE_ACCESS_DEFAULTS.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.TRAM, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.TRAM));
       /* often mistakes are made where lightrail tracks are mapped to tram stations, and vice-versa, therefore by default we allow both light rail and tram on light rail tracks */
       GLOBAL_MODE_ACCESS_DEFAULTS.getRailwayModeAccessDefaults().addDefaultAllowedModes(OsmRailwayTags.TRAM, OsmRailModeTags.convertRailwayToMode(OsmRailwayTags.LIGHT_RAIL));
-    }            
-    
+    }                
     
   }
+      
+  /**
+   * for all countries for which a dedicated CSV is available under the resources dir, we parse their mode access defaults
+   * accordingly
+   * @throws PlanItException thrown if error
+   */
+  protected static void populateCountrySpecificDefaultModeAccess(){
+    CountrySpecificDefaultUtils.callForEachFileInResourceDir(
+        MODE_ACCESS_RESOURCE_DIR, OsmModeAccessDefaultsByCountry::populateCountrySpecificDefaultModeAccess);    
+  } 
+  
+  /** Each file should be named according to ISO366 alpha 2 country code. The mode access defaults are parsed as CSV format and overwrite the 
+   * global defaults for this country. If no explicit value is provided, we revert to the global defaults instead.
+   * 
+   * @param file to extract mode access defaults from
+   */
+  protected static void populateCountrySpecificDefaultModeAccess(File file){
+        
+    try {  
+      
+      String fullCountryName = CountrySpecificDefaultUtils.extractCountryNameFromFile(file, "mode access");
+      if(StringUtils.isNullOrBlank(fullCountryName)) {
+        LOGGER.warning(String.format("IGNORED: Unrecognised country code encountered (%s) when parsing default OSM mode access values", fullCountryName));
+        return;
+      }      
+            
+      /* OSM way key, first entry in record */
+      Iterable<CSVRecord> records = CountrySpecificDefaultUtils.collectCsvRecordIterable(file);            
+      for(CSVRecord record : records) {
+        String osmWayType = record.get(0).trim();
+        boolean isOsmHighway = OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType);
+        boolean isOsmRailwayTag = false;
+        if(!isOsmHighway) {
+          isOsmRailwayTag = OsmRailwayTags.isRailBasedRailway(osmWayType);
+          if(!isOsmRailwayTag) {
+            LOGGER.warning(String.format("IGNORED: OSM way type (%s) in country specific mode access defaults is not a valid highway or railway type",osmWayType));      
+          }
+        }
+      
+        /* allowed OSM modes */
+        List<String> allowedOsmModes = new ArrayList<String>(record.size()-1);
+        for(int columnIndex = 1; columnIndex< record.size() ; ++columnIndex) {
+          final String osmMode = record.get(columnIndex).trim();
+          if(!StringUtils.isNullOrBlank(osmMode)) {
+            allowedOsmModes.add(osmMode);
+          }
+        }
+        
+        /* register on defaults */
+        if(!allowedOsmModes.isEmpty()) {
+          /* copy the global defaults and make adjustments */
+          OsmModeAccessDefaults countryDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.clone();
+          countryDefaults.setCountry(fullCountryName);          
+
+          if(isOsmHighway) {
+            countryDefaults.getHighwayModeAccessDefaults().setAllowedModes(osmWayType, false /* no logging */, allowedOsmModes);    
+          }else {
+            countryDefaults.getRailwayModeAccessDefaults().setAllowedModes(osmWayType, false /* no logging */, allowedOsmModes);
+          }
+      
+          /* register country defaults */
+          setDefaultsByCountry(countryDefaults);
+        }
+        
+      }
+      
+    } catch (Exception e) {
+      LOGGER.severe(e.getMessage());
+      LOGGER.severe(String.format("Parsing of file %s failed", file.toString()));
+    }    
+  }  
   
   /** set defaults for a specific county
    * @param countryName to set
