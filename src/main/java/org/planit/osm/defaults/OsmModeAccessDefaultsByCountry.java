@@ -1,17 +1,12 @@
 package org.planit.osm.defaults;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.Reader;
-import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailModeTags;
@@ -20,9 +15,7 @@ import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
-import org.planit.utils.misc.FileUtils;
 import org.planit.utils.misc.StringUtils;
-import org.planit.utils.resource.ResourceUtils;
 import org.planit.utils.locale.CountryNames;
 
 /**

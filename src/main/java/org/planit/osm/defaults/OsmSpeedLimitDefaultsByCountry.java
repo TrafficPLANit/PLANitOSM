@@ -1,14 +1,9 @@
 package org.planit.osm.defaults;
 
 import java.io.File;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.apache.commons.csv.CSVRecord;
@@ -16,10 +11,8 @@ import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
-import org.planit.utils.misc.FileUtils;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.misc.StringUtils;
-import org.planit.utils.resource.ResourceUtils;
 import org.planit.utils.locale.CountryNames;
 
 /**
@@ -229,17 +222,19 @@ public class OsmSpeedLimitDefaultsByCountry {
     }
   }  
   
-  /** set global defaults for highways
+  /** Set global defaults for highways
+   * 
    * @param type of highway
    * @param urbanSpeedLimit urban limit
-   * @param nonUrbanSpeedLimit non-urnam limit
+   * @param nonUrbanSpeedLimit non-urban limit
    */
   protected static void setGlobalHighwaySpeedLimitDefaults(String type, double urbanSpeedLimit, double nonUrbanSpeedLimit) {
     GLOBAL_SPEED_LIMIT_DEFAULTS.getUrbanHighwayDefaults().setSpeedLimitDefault(type, urbanSpeedLimit);
     GLOBAL_SPEED_LIMIT_DEFAULTS.getNonUrbanHighwayDefaults().setSpeedLimitDefault(type, nonUrbanSpeedLimit);
   }
   
-  /** set global defaults for railways
+  /** Set global defaults for railways
+   * 
    * @param type of railway
    * @param speedLimit to use
    */
@@ -248,7 +243,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   }  
              
   /**
-   * populate the global defaults for highway types in case the country is not available, or in case the road type for that country is not available
+   * Populate the global defaults for highway types in case the country is not available, or in case the road type for that country is not available
    * 
    * @throws PlanItException thrown if error
    */
