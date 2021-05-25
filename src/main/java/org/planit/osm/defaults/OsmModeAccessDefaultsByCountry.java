@@ -1,6 +1,6 @@
 package org.planit.osm.defaults;
 
-import java.io.File;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -267,20 +267,14 @@ public class OsmModeAccessDefaultsByCountry {
   /** Each file should be named according to ISO366 alpha 2 country code. The mode access defaults are parsed as CSV format and overwrite the 
    * global defaults for this country. If no explicit value is provided, we revert to the global defaults instead.
    * 
-   * @param file to extract mode access defaults from
+   * @param inputReader to extract speed limit defaults from
+   * @param fullCountryName these defaults relate to
    */
-  protected static void populateCountrySpecificDefaultModeAccess(File file){
-        
-    try {  
-      
-      String fullCountryName = CountrySpecificDefaultUtils.extractCountryNameFromFile(file, "mode access");
-      if(StringUtils.isNullOrBlank(fullCountryName)) {
-        LOGGER.warning(String.format("IGNORED: Unrecognised country code encountered (%s) when parsing default OSM mode access values", fullCountryName));
-        return;
-      }      
-            
+  protected static void populateCountrySpecificDefaultModeAccess(InputStreamReader inputReader, String fullCountryName){
+                 
+    try {
       /* OSM way key, first entry in record */
-      Iterable<CSVRecord> records = CountrySpecificDefaultUtils.collectCsvRecordIterable(file);            
+      Iterable<CSVRecord> records = CountrySpecificDefaultUtils.collectCsvRecordIterable(inputReader);            
       for(CSVRecord record : records) {
         String osmWayType = record.get(0).trim();
         boolean isOsmHighway = OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType);
@@ -321,7 +315,7 @@ public class OsmModeAccessDefaultsByCountry {
       
     } catch (Exception e) {
       LOGGER.severe(e.getMessage());
-      LOGGER.severe(String.format("Parsing of file %s failed", file.toString()));
+      LOGGER.severe(String.format("Parsing of csv input stream with mode access defaults failed for %s", fullCountryName));
     }    
   }  
   
