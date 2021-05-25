@@ -28,7 +28,6 @@ import org.planit.zoning.Zoning;
 public class PlanitOsmIntermodalReader implements IntermodalReader {
   
   /** the logger */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmIntermodalReader.class.getCanonicalName());
   
   /** the settings to use */
@@ -159,7 +158,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     ptSettings.setReferenceNetwork(network);
     ptSettings.setNetworkDataForZoningReader(osmNetworkReader.createNetworkToZoningReaderData());
-    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(ptSettings);
+    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(ptSettings, zoningToPopulate);
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();

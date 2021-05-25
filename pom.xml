@@ -69,6 +69,9 @@
 	    <resources>
 	        <resource>
 	            <directory>src/main/resources</directory>
+	            <includes>
+		          <include>**/*.csv</include>
+		        </includes>
 	            <excludes>
 	            	<!-- only used for internal formatting of logging statements -->
 	                <exclude>*.properties</exclude>
