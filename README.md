@@ -8,12 +8,6 @@ Some technical documentation/introduction for developers regarding the design of
 
 More information on What Open Street Map is can be found on the [Open Street Map wiki](https://wiki.openstreetmap.org/wiki/Main_Page)  
 
-## Maven parent
-
-Projects need to be built from Maven before they can be run. The common maven configuration can be found in the PLANitParentPom project which acts as the parent for this project's pom.xml.
-
-> Make sure you install the PLANitParentPom pom.xml before conducting a maven build (in Eclipse) on this project, otherwise it cannot find the references dependencies, plugins, and other resources.
-
 ## OSM4j
 
 This implementation uses OSM4J to access the OSM data and manipulate it.
@@ -32,3 +26,12 @@ Thus, when processing an OpenStreetMap dataset, you will encounter the contained
 It is important to understand that ways and relations reference other objects using their ids. They do not contain the data of referenced objects themselves. Hence, to work with a way or relation it is usually necessary to resolve those references and find the actual objects they reference.
 For example, a way is just a sequence of node ids. To interpret the geometry of the way, you have to assemble a sequence of coordinates from the references by finding the referenced nodes by their id.
 ```
+## Maven parent
+
+Projects need to be built from Maven before they can be run. The common maven configuration can be found in the PLANitParentPom project which acts as the parent for this project's pom.xml.
+
+> Make sure you install the PLANitParentPom pom.xml before conducting a maven build (in Eclipse) on this project, otherwise it cannot find the references dependencies, plugins, and other resources.
+
+## Git Branching model
+
+We adopt GitFlow as per https://nvie.com/posts/a-successful-git-branching-model/
