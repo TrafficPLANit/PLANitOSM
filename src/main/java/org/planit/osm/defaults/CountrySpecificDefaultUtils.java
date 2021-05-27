@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -59,7 +60,7 @@ public class CountrySpecificDefaultUtils {
         fs = ResourceUtils.getJarFileSystem(uri);
         directoryStream = Files.newDirectoryStream(fs.getPath(resourceDir));        
       } else {
-        directoryStream = Files.newDirectoryStream(Paths.get(ResourceUtils.getResourceUri(resourceDir)));    
+        directoryStream = Files.newDirectoryStream(Paths.get(uri));    
       }
       
       for(Path resourcePath: directoryStream){
@@ -68,9 +69,11 @@ public class CountrySpecificDefaultUtils {
           LOGGER.warning(String.format("DISCARD: Unrecognised country code encountered (%s) when parsing default OSM highway speed limit values", fullCountryName));
           continue;
         }
-        /* input stream reader is created based in uri which in turn is used to determine if we are accessing a resource within a jar or not
-         * if so, we create a resource stream, otherwise a file stream */
-        InputStreamReader inputReader = ResourceUtils.getResourceAsInputStreamReader(resourcePath, uri);
+             
+        /* construct relative file path, so we can let the uri sort out the actual location */
+        String filePath = Path.of(resourceDir, resourcePath.getFileName().toString()).toString();
+        URI fileResourceUri = ResourceUtils.getResourceUri(filePath);
+        InputStreamReader inputReader = ResourceUtils.getResourceAsInputStreamReader(fileResourceUri);
         callBack.accept(inputReader, fullCountryName);
         inputReader.close();
       }
