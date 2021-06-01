@@ -1,5 +1,8 @@
 package org.planit.osm.converter.network;
 
+import java.net.URL;
+import java.nio.file.Paths;
+
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
@@ -33,21 +36,23 @@ public class PlanitOsmNetworkReaderFactory {
   
   /** Create a PLANitOSMReader which will create its own macroscopic network
    * 
-   * @param inputFile to use
+   * @param inputFile local file to use
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @return created osm reader
    * @throws PlanItException thrown if error
    */
   public static PlanitOsmNetworkReader create(String inputFile, String countryName) throws PlanItException {
-    PlanitOsmNetworkReader reader =  create(countryName);
-    reader.getSettings().setInputFile(inputFile);
-    return reader;
+    try {
+      return create(Paths.get(inputFile).toUri().toURL(), countryName);
+    }catch(Exception e) {
+      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
+    }
   }
   
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
-   * @param inputFile to use
+   * @param inputFile local file to use
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @param osmNetworkToPopulate the network to populate
@@ -55,14 +60,45 @@ public class PlanitOsmNetworkReaderFactory {
    * @throws PlanItException thrown if error
    */
   public static PlanitOsmNetworkReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
-    PlanitOsmNetworkReader reader = new PlanitOsmNetworkReader(countryName, osmNetworkToPopulate);
-    reader.getSettings().setInputFile(inputFile);
+    try {
+      return create(Paths.get(inputFile).toUri().toURL(), countryName, osmNetworkToPopulate);
+    }catch(Exception e) {
+      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
+    }
+  }  
+  
+  /** Create a PLANitOSMReader which will create its own macroscopic network by drawing from a cloud based map source
+   * 
+   * @param inputQuery Url location to retrieve OSM XML data from, e.g. new URL("https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204");
+   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
+   * based on a right hand driving approach
+   * @return created osm reader
+   * @throws PlanItException thrown if error
+   */
+  public static PlanitOsmNetworkReader create(URL inputquery, String countryName) throws PlanItException {
+    PlanitOsmNetworkReader reader =  create(countryName);
+    reader.getSettings().setInputSource(inputquery);
     return reader;
   }  
   
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
-   * @param settings to use, make sure they are consistent with the network and country provided here otherwise an exeption will be thrown
+   * @param inputQuery Url location to retrieve OSM XML data from, e.g. new URL("https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204");
+   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
+   * based on a right hand driving approach
+   * @param osmNetworkToPopulate the network to populate
+   * @return created osm reader
+   * @throws PlanItException thrown if error
+   */
+  public static PlanitOsmNetworkReader create(URL inputQuery, String countryName, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+    PlanitOsmNetworkReader reader = new PlanitOsmNetworkReader(countryName, osmNetworkToPopulate);
+    reader.getSettings().setInputSource(inputQuery);
+    return reader;
+  }    
+  
+  /** Create a PLANitOSMReader while providing an OSM network to populate
+   * 
+   * @param settings to use, make sure they are consistent with the network and country provided here otherwise an exception will be thrown
    * @param osmNetworkToPopulate the network to populate
    * @return created osm reader
    * @throws PlanItException thrown if error

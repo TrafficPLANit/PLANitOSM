@@ -1,5 +1,7 @@
 package org.planit.osm.converter.intermodal;
 
+import java.net.URL;
+
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.converter.ConverterReaderSettings;
@@ -8,6 +10,7 @@ import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
+import org.planit.utils.misc.UrlUtils;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -34,7 +37,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
   }  
   
   /**
-   * constructor
+   * Constructor
    * 
    * @param countryName to use
    * @param networkToPopulate to use
@@ -44,21 +47,21 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
   }
   
   /**
-   * constructor
+   * Constructor
    * 
-   * @param inputFile to use
+   * @param inputSource to use
    * @param countryName to use
    * @param networkToPopulate to use
    */
-  public PlanitOsmIntermodalReaderSettings(final String inputFile, final String countryName, final PlanitOsmNetwork networkToPopulate) {
+  public PlanitOsmIntermodalReaderSettings(final URL inputSource, final String countryName, final PlanitOsmNetwork networkToPopulate) {
     this(
-        new PlanitOsmNetworkReaderSettings(inputFile, countryName, networkToPopulate), 
-        new PlanitOsmPublicTransportReaderSettings(inputFile, countryName, networkToPopulate));
+        new PlanitOsmNetworkReaderSettings(inputSource, countryName, networkToPopulate), 
+        new PlanitOsmPublicTransportReaderSettings(inputSource, countryName, networkToPopulate));
   }  
          
   
   /**
-   * constructor
+   * Constructor
    * 
    * @param networkSettings to use
    * @param zoningPtSettings to use
@@ -80,31 +83,45 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
   
   // GETTERS/SETTERS
   
-  /** provide access to the network reader settings
+  /** Provide access to the network reader settings
+   * 
    * @return network reader settings
    */
   public PlanitOsmNetworkReaderSettings getNetworkSettings() {
     return networkSettings;
   }
   
-  /** provide access to the zoning (pt)  reader settings
+  /** Provide access to the zoning (pt)  reader settings
+   * 
    * @return zoning reader pt settings
    */
   public PlanitOsmPublicTransportReaderSettings getPublicTransportSettings() {
     return zoningPtSettings;
   }  
   
-  /** set the inputFile  to use including the path for both the network and public transport settings (both should
-   * use the same file)
+  /** Set the inputSource  to use including for both the network and public transport settings (both should use the same source)
    * 
-   * @param inputFile to use
+   * @param inputSource to use
    */
-  public void setInputFile(final String inputFile) {
-    getNetworkSettings().setInputFile(inputFile);
-    getPublicTransportSettings().setInputFile(inputFile);
+  public void setInputSource(final URL inputSource) {
+    getNetworkSettings().setInputSource(inputSource);
+    getPublicTransportSettings().setInputSource(inputSource);
   }  
   
+  /** Set the input file to use, which is internally converted into a URL
+   * @param inputFile to use
+   * @throws PlanItException thrown if error
+   */
+  public void setInputFile(final String inputFile) throws PlanItException {
+    try{
+      setInputSource(UrlUtils.createFromPath(inputFile));
+    }catch(Exception e) {
+      throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
+    }
+  }     
+  
   /** Set a square bounding box based on provided envelope
+   * 
    * @param x1, first x coordinate
    * @param y1, first y coordinate
    * @param x2, second x coordinate

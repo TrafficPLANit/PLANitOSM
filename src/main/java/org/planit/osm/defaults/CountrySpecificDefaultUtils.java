@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -69,10 +68,10 @@ public class CountrySpecificDefaultUtils {
           LOGGER.warning(String.format("DISCARD: Unrecognised country code encountered (%s) when parsing default OSM highway speed limit values", fullCountryName));
           continue;
         }
-             
+        
         /* construct relative file path, so we can let the uri sort out the actual location */
-        String filePath = Path.of(resourceDir, resourcePath.getFileName().toString()).toString();
-        URI fileResourceUri = ResourceUtils.getResourceUri(filePath);
+        String resourceInDirRelUri = resourceDir + "/" + resourcePath.getFileName().toString();        
+        URI fileResourceUri = ResourceUtils.getResourceUri(resourceInDirRelUri);
         InputStreamReader inputReader = ResourceUtils.getResourceAsInputStreamReader(fileResourceUri);
         callBack.accept(inputReader, fullCountryName);
         inputReader.close();

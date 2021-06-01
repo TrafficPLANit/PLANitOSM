@@ -1,11 +1,13 @@
 package org.planit.osm.util;
 
+import java.net.URL;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.converter.ConverterReaderSettings;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.locale.CountryNames;
+import org.planit.utils.misc.UrlUtils;
 
 /**
  * Settings relevant for a Planit Xml reader
@@ -15,8 +17,8 @@ import org.planit.utils.locale.CountryNames;
  */
 public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings {
 
-  /** directory and file to look in */
-  private String inputFile;
+  /** input source to use */
+  private URL inputSource;
   
   /** country name to use to initialise OSM defaults for */
   private final String countryName;  
@@ -47,33 +49,48 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
    *  @param inputFile to use
    *  @param countryName to use
    */
-  public PlanitOsmReaderSettings(final String inputFile, final String countryName) {
-    this.inputFile = inputFile;
+  public PlanitOsmReaderSettings(final URL inputSource, final String countryName) {
+    this.inputSource = inputSource;
     this.countryName = countryName;
   }  
   
-  /** the input file used including the path
-   * @return input file used
+  /** The input source used 
+   * 
+   * @return input source used
    */
-  public final String getInputFile() {
-    return this.inputFile;
+  public final URL getInputSource() {
+    return this.inputSource;
   }
   
-  /** set the inputFile  to use including the path
-   * @param inputFile to use
+  /** Set the input source  to use
+   * @param inputSource to use
    */
-  public void setInputFile(final String inputFile) {
-    this.inputFile = inputFile;
+  public void setInputSource(final URL inputSource) {
+    this.inputSource = inputSource;
   }  
   
-  /** the country name used to initialise OSM defaults for
+  /** Set the input file to use, which is internally converted into a URL
+   * @param inputFile to use
+   * @throws PlanItException thrown if error
+   */
+  public void setInputFile(final String inputFile) throws PlanItException {
+    try{
+      setInputSource(UrlUtils.createFromPath(inputFile));
+    }catch(Exception e) {
+      throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
+    }
+  }    
+  
+  /** The country name used to initialise OSM defaults for
+   * 
    * @return country name
    */
   public final String getCountryName() {
     return this.countryName;
   } 
   
-  /** Set a square bounding box based on provided envelope
+  /** Set an additional (more restricting) square bounding box based on provided envelope
+   * 
    * @param x1, first x coordinate
    * @param y1, first y coordinate
    * @param x2, second x coordinate
@@ -85,6 +102,7 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
   }
   
   /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
+   * 
    * @param boundingBox to use
    */
   public final void setBoundingBox(Envelope boundingBox) {
@@ -92,6 +110,7 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
   }
   
   /** Set a polygon based bounding box to restrict parsing to
+   * 
    * @param boundingPolygon to use
    */
   public final void setBoundingPolygon(Polygon boundingPolygon) {
@@ -99,6 +118,7 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
   } 
   
   /** Set a polygon based bounding box to restrict parsing to
+   * 
    * @return boundingPolygon used, can be null
    */
   public final Polygon getBoundingPolygon() {
@@ -106,6 +126,7 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
   }  
   
   /** Set a polygon based bounding box to restrict parsing to
+   * 
    * @return boundingPolygon used, can be null
    */
   public final boolean hasBoundingPolygon() {

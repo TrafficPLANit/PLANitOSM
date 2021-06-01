@@ -1,5 +1,8 @@
 package org.planit.osm.converter.intermodal;
 
+import java.net.URL;
+import java.nio.file.Paths;
+
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -18,8 +21,7 @@ public class PlanitOsmIntermodalReaderFactory {
   
   /** Create a PLANitOsmIntermodalReader which will create its own macroscopic network, zoning and non-locale specific defaults for any right hand driving country
    * 
-   * @param inputFile to use
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
    */
   public static PlanitOsmIntermodalReader create() {
     return create(CountryNames.GLOBAL);    
@@ -28,22 +30,26 @@ public class PlanitOsmIntermodalReaderFactory {
   /** Create a PLANitOsmIntermodalReader which will create its own macroscopic network, zoning. Locale based on country name provided
    * 
    * @param countryName to use
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
    */
   public static PlanitOsmIntermodalReader create(String countryName) {
-    return create(null, countryName);    
+    return create((URL)null, countryName);    
   }  
-  
+    
   /** Create a PLANitOsmIntermodalReader which will create its own macroscopic network and zoning
    * 
    * @param inputFile to use
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
+   * @throws PlanItException thrown if error
    */
-  public static PlanitOsmIntermodalReader create(String inputFile, String countryName) {
-    PlanitOsmNetwork networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
-    return create(inputFile, countryName, networkToPopulate, new Zoning(networkToPopulate.getIdGroupingToken(), networkToPopulate.getNetworkGroupingTokenId()));    
+  public static PlanitOsmIntermodalReader create(String inputFile, String countryName) throws PlanItException {
+    try {
+      return create(Paths.get(inputFile).toUri().toURL(), countryName);
+    }catch(Exception e) {
+      throw new PlanItException("Unable to convert input file %s to URL", e, inputFile);
+    }    
   }
   
   /** Create a PLANitOsmIntermodalReader while providing an OSM network, and zoning to populate
@@ -53,17 +59,47 @@ public class PlanitOsmIntermodalReaderFactory {
    * based on a right hand driving approach
    * @param osmNetworkToPopulate the network to populate
    * @param zoningToPopulate the zoning to populate
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
+   * @throws PlanItException thrown if error
    */
-  public static PlanitOsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    return new PlanitOsmIntermodalReader(inputFile, countryName, osmNetworkToPopulate, zoningToPopulate);      
+  public static PlanitOsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException {
+    try {
+      return create(Paths.get(inputFile).toUri().toURL(), countryName, osmNetworkToPopulate, zoningToPopulate);
+    }catch(Exception e) {
+      throw new PlanItException("Unable to convert input file %s to URL", e, inputFile);
+    }       
+  }    
+  
+  /** Create a PLANitOsmIntermodalReader which will create its own macroscopic network and zoning
+   * 
+   * @param inputSource to use
+   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
+   * based on a right hand driving approach
+   * @return create OSM intermodal reader
+   */
+  public static PlanitOsmIntermodalReader create(URL inputSource, String countryName) {
+    PlanitOsmNetwork networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
+    return create(inputSource, countryName, networkToPopulate, new Zoning(networkToPopulate.getIdGroupingToken(), networkToPopulate.getNetworkGroupingTokenId()));    
+  }  
+  
+  /** Create a PLANitOsmIntermodalReader while providing an OSM network, and zoning to populate
+   * 
+   * @param inputSource to use
+   * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
+   * based on a right hand driving approach
+   * @param osmNetworkToPopulate the network to populate
+   * @param zoningToPopulate the zoning to populate
+   * @return create OSM intermodal reader
+   */
+  public static PlanitOsmIntermodalReader create(URL inputSource, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    return new PlanitOsmIntermodalReader(inputSource, countryName, osmNetworkToPopulate, zoningToPopulate);      
   }    
   
   /** Create a PLANitOsmIntermodalReader which requires the user to set the remaining required settings on the provided settings instances
    * 
    * @param networkSettings to use
    * @param ptSettings settings to use for the public transport aspect
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
    * @throws PlanItException throw if error
    */
   public static PlanitOsmIntermodalReader create(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportReaderSettings ptSettings) throws PlanItException {
@@ -74,7 +110,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * 
    * @param networkSettings to use
    * @param osmNetworkToPopulate the network to populate
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
    * @throws PlanItException throw if network settings are inconsistent with provided country and network to populate
    */
   public static PlanitOsmIntermodalReader create(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
@@ -89,7 +125,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @param networkSettings to use
    * @param ptSettings settings to use for the public transport aspect
    * @param osmNetworkToPopulate the network to populate
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
    * @throws PlanItException throw if error
    */
   public static PlanitOsmIntermodalReader create(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
@@ -103,7 +139,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @param ptSettings settings to use for the public transport aspect
    * @param osmNetworkToPopulate the network to populate
    * @param zoningToPopulate the zoning to populate
-   * @return create osm intermodal reader
+   * @return create OSM intermodal reader
    * @throws PlanItException throw if network settings are inconsistent with provided country and network to populate
    */
   public static PlanitOsmIntermodalReader create(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException {

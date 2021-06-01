@@ -2,6 +2,7 @@ package org.planit.osm.test;
 
 import static org.junit.Assert.*;
 
+import java.net.URL;
 import java.util.logging.Logger;
 
 import org.junit.AfterClass;
@@ -16,6 +17,7 @@ import org.planit.osm.converter.network.PlanitOsmNetworkReader;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
+import org.planit.osm.tags.OsmRoadModeTags;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.Pair;
 import org.planit.zoning.Zoning;
@@ -34,7 +36,9 @@ public class BasicOSMReaderTest {
   
   private static final String SYDNEYCBD_OSM = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm");
   
-  private static final String SYDNEYCBD_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm.pbf");  
+  private static final String SYDNEYCBD_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm.pbf");
+  
+  private static final String EXAMPLE_REMOTE_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
   
   @BeforeClass
   public static void setUp() throws Exception {
@@ -130,5 +134,30 @@ public class BasicOSMReaderTest {
       fail();
     }
   }  
+  
+  /**
+   * test if we can parse from cloud based URL instead of local fule
+   */
+  @Test
+  public void osmReaderUrlStreamTest() {
+    try {
+      
+      URL exampleUrl = new URL(EXAMPLE_REMOTE_URL);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(exampleUrl, CountryNames.AUSTRALIA);
+      
+      osmReader.getSettings().getHighwaySettings().deactivateAllOsmHighwayTypesExcept(OsmHighwayTags.FOOTWAY);
+      osmReader.getSettings().getHighwaySettings().deactivateAllRoadModesExcept(OsmRoadModeTags.FOOT);
+                        
+      MacroscopicNetwork network = osmReader.read();
+      assertNotNull(network);
+      
+      //TODO: find a way to test the settings had the intended effect
+      
+    }catch(Exception e) {
+      LOGGER.severe(e.getMessage());      
+      e.printStackTrace();
+      fail();      
+    }    
+  }
 
 }

@@ -1,5 +1,6 @@
 package org.planit.osm.converter.network;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,8 +29,8 @@ import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.Modes;
 
 /**
- * All general settings (and subsettings classes) for the OSM reader pertaining to parsing  network infrastructure.
- * contains additional settings for highway and railway (e.g., highway settings and reailway settings members, respectively).
+ * All general settings (and sub-settings classes) for the OSM reader pertaining to parsing  network infrastructure.
+ * contains additional settings for highway and railway (e.g., highway settings and railway settings members, respectively).
  * 
  * @author markr
  *
@@ -187,7 +188,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
-   * for various osm highway types in case maximum speed limit information is missing
+   * for various OSM highway types in case maximum speed limit information is missing
    * 
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
    * @param osmNetworkToPopulate to populate based on (default) mapping
@@ -198,14 +199,14 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
-   * for various osm highway types in case maximum speed limit information is missing
+   * for various OSM highway types in case maximum speed limit information is missing
    * 
-   * @param inputFile to use
+   * @param inputSource to use
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
    * @param osmNetworkToPopulate to populate based on (default) mapping
    */
-  public PlanitOsmNetworkReaderSettings(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
-    super(inputFile, countryName);
+  public PlanitOsmNetworkReaderSettings(URL inputSource, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
+    super(inputSource, countryName);
     this.osmNetwork = osmNetworkToPopulate;
     
     /* general */

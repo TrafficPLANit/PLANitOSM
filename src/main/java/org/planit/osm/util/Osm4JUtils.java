@@ -1,10 +1,13 @@
 package org.planit.osm.util;
 
 import java.io.File;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.logging.Logger;
 
 import org.planit.utils.misc.FileUtils;
+import org.planit.utils.misc.UrlUtils;
 
 import de.topobyte.osm4j.core.access.OsmReader;
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -31,15 +34,15 @@ public class Osm4JUtils {
   /** osm PBF extension string */
   public static final String OSM_PBF_EXTENSION = "pbf";
   
-  /** depending on the format create either an OSM or PBF reader
+  /** Depending on the format create either an OSM or PBF reader based on local file specified by path
    * 
-   * @param inputFileName file name to create reader for
+   * @param inputFile data source to create reader for
    * @return osmReader created, null if not possible
    */
-  public static OsmReader createOsm4jReader(String inputFileName) {
-    final boolean parseMetaData = false; 
-    try{
-      File inputFile = new File(inputFileName);
+  public static OsmReader createOsm4jReader(final File inputFile) {
+    
+    final boolean parseMetaData = false;
+    try {
       String extension = FileUtils.getExtension(inputFile);
       switch (extension) {
       case Osm4JUtils.OSM_XML_EXTENSION:
@@ -47,11 +50,32 @@ public class Osm4JUtils {
       case Osm4JUtils.OSM_PBF_EXTENSION:
         return new PbfReader(inputFile, parseMetaData);
       default:
-        LOGGER.warning(String.format("unsupported OSM file format for file: (%s), skip parsing", inputFileName));
+        LOGGER.warning(String.format("Unsupported OSM file format for file: (%s), skip parsing", inputFile));
         return null;
       }
     }catch(Exception e) {
-      LOGGER.warning(String.format("open street map input file does not exist: (%s) skip parsing", inputFileName));
+      LOGGER.warning(String.format("open street map input file does not exist: (%s) skip parsing", inputFile));
+    }
+    return null;    
+  }
+  
+  /** Depending on the format create either an OSM or PBF reader
+   * 
+   * @param inputSource data source to create reader for
+   * @return osmReader created, null if not possible
+   */
+  public static OsmReader createOsm4jReader(URL inputSource) {           
+    try{
+      
+      /* special treatment when local file */
+      if(UrlUtils.isLocalFile(inputSource)) {
+        return createOsm4jReader(Paths.get(inputSource.toURI()).toFile());
+      }else {
+        // Create a reader for (remote) XML data
+        return new OsmXmlReader(inputSource.openStream(), false);
+      }
+    }catch(Exception e) {
+      LOGGER.warning(String.format("Open street map input source could not be accessed: (%s) skip parsing", inputSource.toString()));
     }
     return null;
   } 

@@ -1,5 +1,6 @@
 package org.planit.osm.converter.intermodal;
 
+import java.net.URL;
 import java.util.logging.Logger;
 
 import org.planit.converter.intermodal.IntermodalReader;
@@ -53,17 +54,17 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     }
     
     /* both input files must be the same */
-    if(!networkSettings.getInputFile().equals(ptSettings.getInputFile())) {
+    if(!networkSettings.getInputSource().equals(ptSettings.getInputSource())) {
       LOGGER.warning(
-          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same osm input file upon parsing, found %s and %s respctively instead",networkSettings.getInputFile(), ptSettings.getInputFile()));
-      if(networkSettings.getInputFile()!=null) {
+          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same osm input file upon parsing, found %s and %s respctively instead",networkSettings.getInputSource(), ptSettings.getInputSource()));
+      if(networkSettings.getInputSource()!=null) {
         LOGGER.warning(
-            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,networkSettings.getInputFile()));
-        ptSettings.setInputFile(networkSettings.getInputFile());
-      }else if(ptSettings.getInputFile()!=null) {
+            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,networkSettings.getInputSource()));
+        ptSettings.setInputSource(networkSettings.getInputSource());
+      }else if(ptSettings.getInputSource()!=null) {
         LOGGER.warning(
-            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,ptSettings.getInputFile()));
-        networkSettings.setInputFile(ptSettings.getInputFile());
+            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,ptSettings.getInputSource()));
+        networkSettings.setInputSource(ptSettings.getInputSource());
       }else {
         return false;
       }
@@ -87,13 +88,13 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   /**
    * Constructor 
    * 
-   * @param inputFile to use for all intermodal parsing
+   * @param inputSource to use for all intermodal parsing
    * @param countryName to use for parsing the geometries in desired projection
    * @param osmNetworkToPopulate to populate
    * @param zoning to populate
    */
-  protected PlanitOsmIntermodalReader(final String inputFile, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(new PlanitOsmIntermodalReaderSettings(inputFile, countryName, osmNetworkToPopulate), zoningToPopulate);  
+  protected PlanitOsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    this(new PlanitOsmIntermodalReaderSettings(inputSource, countryName, osmNetworkToPopulate), zoningToPopulate);  
   }     
     
   /**

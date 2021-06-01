@@ -1,6 +1,7 @@
 package org.planit.osm.converter.network;
 
 import java.util.Set;
+import java.net.URL;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
@@ -91,8 +92,9 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * Log some information about this reader's configuration
    */
   private void logInfo() {
-    LOGGER.info(String.format("OSM network input file: %s",settings.getInputFile()));
-    LOGGER.info(String.format("setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));
+    LOGGER.info(String.format("OSM network input source: %s",settings.getInputSource()));
+    LOGGER.info(String.format("Country to base defaults on: %s",settings.getCountryName()));
+    LOGGER.info(String.format("Setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));
     if(getSettings().hasBoundingPolygon()) {
       LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
     }
@@ -109,7 +111,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
         (getSettings().hasKeepOsmWaysOutsideBoundingPolygon() || getSettings().hasKeepOsmNodesOutsideBoundingPolygon())) {
       
       /* reader to parse the actual file */
-      OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputFile());
+      OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
       if(osmReader == null) {
         LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
       }
@@ -126,7 +128,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */
   private void doMainProcessing() throws PlanItException{
     /* reader to parse the actual file */
-    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputFile());
+    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for network, aborting");
     }
@@ -219,12 +221,12 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   /**
    * Default Constructor 
    * 
-   * @param inputFile to use
+   * @param inputSource to use
    * @param countryName to use
    * @param osmNetwork network to populate 
    */
-  protected PlanitOsmNetworkReader(final String inputFile, final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
-    this(new PlanitOsmNetworkReaderSettings(inputFile, countryName, osmNetwork));
+  protected PlanitOsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
+    this(new PlanitOsmNetworkReaderSettings(inputSource, countryName, osmNetwork));
   }    
     
   /**
@@ -248,9 +250,9 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    */  
   @Override
   public MacroscopicNetwork read() throws PlanItException {
-    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getInputFile()),"inputfile not set for osm network to parse");
-    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"country name not set for osm network to parse");
-    PlanItException.throwIfNull(getSettings().getOsmNetworkToPopulate(),"planit network to populate not set for osm network to parse");
+    PlanItException.throwIfNull(getSettings().getInputSource(),"input source not set for OSM network to parse");
+    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"country name not set for OSM network to parse");
+    PlanItException.throwIfNull(getSettings().getOsmNetworkToPopulate(),"planit network to populate not set for OSM network to parse");
     
         
     /* ensure that the network CRS is consistent with the chosen source CRS */
@@ -295,7 +297,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     getSettings().reset();
   }
 
-  /** Factory method to create bridging data required for an Osm zongin reader to successfully parse the Pt zones
+  /** Factory method to create bridging data required for an OSM zoning reader to successfully parse the Pt zones
    *  based on the osm network parsed by this network reader. Without this data it is not possible to relate the two
    *  properly
    *  

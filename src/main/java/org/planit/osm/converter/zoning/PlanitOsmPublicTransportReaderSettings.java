@@ -1,5 +1,6 @@
 package org.planit.osm.converter.zoning;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -131,11 +132,11 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
   
   /** Constructor with user defined source locale 
    * 
-   * @param inputFile to extract OSM pt information from
+   * @param inputSource to extract OSM pt information from
    * @param countryName to base source locale on
    */
-  public PlanitOsmPublicTransportReaderSettings(String inputFile, String countryName) {
-    super(inputFile, countryName);
+  public PlanitOsmPublicTransportReaderSettings(URL inputSource, String countryName) {
+    super(inputSource, countryName);
   }  
   
   /** Constructor with user defined source locale 
@@ -148,23 +149,23 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
   
   /** Constructor with user defined source locale
    * 
-   * @param inputFile to use
+   * @param inputSource to use
    * @param countryName to base source locale on
    * @param referenceNetwork to use
    */
-  public PlanitOsmPublicTransportReaderSettings(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork) {
-    this(inputFile, countryName, referenceNetwork, null);
+  public PlanitOsmPublicTransportReaderSettings(URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork) {
+    this(inputSource, countryName, referenceNetwork, null);
   }
   
   /** Constructor with user defined source locale
    * 
-   * @param inputFile to use
+   * @param inputSource to use
    * @param countryName to base source locale on
    * @param referenceNetwork to use
    * @param network2ZoningData to use
    */
-  public PlanitOsmPublicTransportReaderSettings(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork, PlanitOsmNetworkToZoningReaderData network2ZoningData) {
-    super(inputFile, countryName);
+  public PlanitOsmPublicTransportReaderSettings(URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork, PlanitOsmNetworkToZoningReaderData network2ZoningData) {
+    super(inputSource, countryName);
     setReferenceNetwork(referenceNetwork);
     setNetworkDataForZoningReader(network2ZoningData);
   }  
