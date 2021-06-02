@@ -14,9 +14,8 @@ import java.util.Set;
  * to identify which and how many lanes (and indirectly in what direction) are dedicated to a mode.
  * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
  * <p>
- * Methods that help identify modes specified using the /<mode/>:lanes:*=* scheme. since this scheme applies across a number of modes
+ * Methods that help identify modes specified using the {@code <mode>:lanes:*=*} scheme. since this scheme applies across a number of modes
  * it is useful to group the functionality in a separate class
- * </p>
  * 
  * @author markr
  *

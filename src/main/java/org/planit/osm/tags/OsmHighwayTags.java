@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * OSM "highway" values, e.g. highway=<option>. Tags specific to the Ptv1 scheme are collected via the OsmPtv1 tags class
+ * OSM "highway" values, e.g. {@code highway=<option>}. Tags specific to the Ptv1 scheme are collected via the OsmPtv1 tags class
  * and integrated in the collections managed by this class.
  * 
  * @author markr

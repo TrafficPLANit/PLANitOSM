@@ -28,8 +28,6 @@ import org.planit.utils.locale.CountryNames;
  * <li>highway:service, same as road</li>
  * <li>track, same as road</li>
  * </ul>
- * </ul>
- * </p>
  * 
  * @author markr
  *

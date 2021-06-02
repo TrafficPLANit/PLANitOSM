@@ -3,7 +3,7 @@ package org.planit.osm.tags;
 import java.util.Map;
 
 /**
- * Tags related to directions, e.g. direction=<option>, or mode specific direction subtags, e.g. vehicle:backward=yes
+ * Tags related to directions, e.g. {@code direction=<option>}, or mode specific direction subtags, e.g. vehicle:backward=yes
  * 
  * @author markr
  *

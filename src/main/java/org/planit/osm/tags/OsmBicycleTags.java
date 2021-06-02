@@ -8,8 +8,8 @@ import org.planit.osm.util.OsmTagUtils;
 /**
  * Commonly used tags in relation to bicycles or bicycle ways. similar to buses, bicycle ways and lanes can be tagged following two different schemes:
  * <ul>
- * <li>cycleway scheme, relying on location (left or right, and opposite direction or not)/li>
- * <li>bicycle lanes, lane specification for bicycle lanes (in 99% of cases combine with oneway)/li>
+ * <li>cycleway scheme, relying on location (left or right, and opposite direction or not)</li>
+ * <li>bicycle lanes, lane specification for bicycle lanes (in 99% of cases combine with oneway)</li>
  * </ul>
  * 
  * @author markr

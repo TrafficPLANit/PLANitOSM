@@ -3,7 +3,7 @@ package org.planit.osm.tags;
 import java.util.Map;
 
 /**
- * Tags related to junction values, e.g. junction=<option>
+ * Tags related to junction values, e.g. {@code junction=<option>}
  * 
  * @author markr
  *
