@@ -21,6 +21,7 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
 import org.planit.utils.misc.FileUtils;
 import org.planit.utils.misc.StringUtils;
+import org.planit.utils.misc.UriUtils;
 import org.planit.utils.resource.ResourceUtils;
 
 /** Class with some common functionality for defaults that are country specific and stored in CSV files
@@ -55,7 +56,7 @@ public class CountrySpecificDefaultUtils {
        * since a file system is closeable, we must have access to it */
       FileSystem fs = null;
       DirectoryStream<Path> directoryStream = null;
-      if (ResourceUtils.isResourceInJar(uri)) {
+      if (UriUtils.isInJar(uri)) {
         fs = ResourceUtils.getJarFileSystem(uri);
         directoryStream = Files.newDirectoryStream(fs.getPath(resourceDir));        
       } else {
@@ -79,7 +80,7 @@ public class CountrySpecificDefaultUtils {
       
       /* close resources */
       directoryStream.close();
-      if (ResourceUtils.isResourceInJar(uri)) {
+      if (UriUtils.isInJar(uri)) {
         fs.close();
       }
       

@@ -424,13 +424,15 @@ public class OsmSpeedLimitDefaultsByCountry {
   public static OsmSpeedLimitDefaults create(String countryName) {    
     OsmSpeedLimitDefaults createdDefaults = null;
     if(countryName != null && !countryName.isBlank() && !countryName.equals(CountryNames.GLOBAL)) {
-      createdDefaults = getDefaultsByCountryName(countryName).clone();
+      createdDefaults = getDefaultsByCountryName(countryName);
     }
-    
     if(createdDefaults==null) {
-      createdDefaults =create(); 
-      LOGGER.warning(String.format("No OSM speed limit defaults available for country %s, reverting to global defaults",countryName));
-    }
+      createdDefaults = create(); 
+      LOGGER.warning(String.format("No OSM speed limit defaults available for %s, reverting to global defaults",countryName));
+    }else {
+      /* make a copy so true defaults are not changed if user makes changes for project */
+      createdDefaults = createdDefaults.clone(); 
+    }        
     
     return createdDefaults;
   }  

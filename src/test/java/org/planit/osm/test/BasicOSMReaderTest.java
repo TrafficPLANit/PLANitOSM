@@ -143,7 +143,8 @@ public class BasicOSMReaderTest {
     try {
       
       URL exampleUrl = new URL(EXAMPLE_REMOTE_URL);
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(exampleUrl, CountryNames.AUSTRALIA);
+      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(exampleUrl, CountryNames.GERMANY);
+      osmReader.getSettings().setInputSource(EXAMPLE_REMOTE_URL);
       
       osmReader.getSettings().getHighwaySettings().deactivateAllOsmHighwayTypesExcept(OsmHighwayTags.FOOTWAY);
       osmReader.getSettings().getHighwaySettings().deactivateAllRoadModesExcept(OsmRoadModeTags.FOOT);
