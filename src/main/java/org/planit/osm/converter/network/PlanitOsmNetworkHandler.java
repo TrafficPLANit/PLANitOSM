@@ -270,7 +270,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   /**
    * Collect the default settings for this way based on its highway type
    * 
-   * @param way the way
+   * @param osmWay the way
    * @param tags the tags of this way
    * @return the link segment types per layer if available, otherwise null is returned
    */
@@ -364,12 +364,15 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   }
 
   /**
-   * extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being a (partial) section of a circular way, then
+   * Extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being a (partial) section of a circular way, then
    * we only allow the presumed one way direction applicable when creating directional link segments. The result is a newly registered link, its nodes, and linksegment(s) on
    * the network. The parser will try to infer missing/default data by using defaults set by the user.
    * 
    * @param osmWay to parse
    * @param tags related to the OSM way
+   * @param startNodeIndex to start parsing nodes from
+   * @param endNodeIndex to end parsing nodes from
+   * @param isPartOfCircularWay indicates if it is part of a circular way or not
    * @return created link (if any), if no link could be created null is returned
    * @throws PlanItException thrown if error
    */  
@@ -402,7 +405,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
   }         
 
   /**
-   * constructor
+   * Constructor
    * 
    * @param networkData the data used for populating the network
    * @param settings for the handler

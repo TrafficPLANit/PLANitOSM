@@ -115,9 +115,10 @@ public class PlanitOsmNetworkReaderLayerData {
   protected Map<Point, Pair<List<Link>,OsmNode>> originalLinkInternalAvailableLocations = new HashMap<Point, Pair<List<Link>, OsmNode>>();
                  
   
-  /** collect the planit node available for this osm node (if any)
+  /** Collect the planit node available for this osm node (if any)
    * 
-   * @param osmNode found, null otherwise
+   * @param osmNode to find node for
+   * @return PLANit node found, null if not found
    * @throws PlanItException thrown if error
    */
   public Node getPlanitNodeByOsmNode(OsmNode osmNode) throws PlanItException {
@@ -134,7 +135,8 @@ public class PlanitOsmNetworkReaderLayerData {
   
   /** collect the planit node available for the given location
    * 
-   * @param osmNode found, null otherwise
+   * @param location to find for
+   * @return PLANit node found, null if not found
    * @throws PlanItException thrown if error
    */
   public Node getPlanitNodeByLocation(Point location) throws PlanItException {
@@ -150,8 +152,8 @@ public class PlanitOsmNetworkReaderLayerData {
   /** collect the osm node available for the given location (if any), either internal to existing planit node
    * or already available as converted planit node at that location
    * 
-   * @param osmNode found, null otherwise
-   * @throws PlanItException thrown if error
+   * @param location to find for
+   * @param osmNode found null otherwise
    */  
   public OsmNode getOsmNodeByLocation(Point location) {
     if(location != null) {
@@ -174,10 +176,11 @@ public class PlanitOsmNetworkReaderLayerData {
     return Collections.unmodifiableMap(planitNodesByLocation);
   }
   
-  /** register a planit node based on an osm node for this layer
+  /** Register a planit node based on an osm node for this layer
+   * 
    * @param osmNode to index by
    * @param planitNode to register
-   * @throws PlanItException 
+   * @throws PlanItException thrown if error
    */
   public void registerPlanitNodeByOsmNode(OsmNode osmNode, Node planitNode) throws PlanItException {
     Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);
@@ -188,14 +191,15 @@ public class PlanitOsmNetworkReaderLayerData {
    * 
    * @param location to index by
    * @param planitNode to register
-   * @throws PlanItException 
+   * @throws PlanItException thrown if error
    */
   public void registerPlanitNodeByLocation(Point location, Node planitNode) throws PlanItException {
     planitNodesByLocation.put(location, Pair.of(planitNode, null));
   }  
   
-  /** add a mapping from osm node id to the (initial) planit link it is internal to
-   * @param osmNodeId to use
+  /** Add a mapping from osm node id to the (initial) planit link it is internal to
+   * 
+   * @param osmNode to use
    * @param planitLink to register as osm node being internal to
    * @throws PlanItException thrown if error
    */
@@ -251,7 +255,7 @@ public class PlanitOsmNetworkReaderLayerData {
  
   /** Verify if location is registered as internal to a planit link
    * 
-   * @param osmNodeId to verify
+   * @param location to verify
    * @return true when registered as internal, false otherwise
    */
   public boolean isLocationInternalToAnyLink(Point location) {
@@ -260,7 +264,7 @@ public class PlanitOsmNetworkReaderLayerData {
   
   /** verify if osm node is part of this layer either as a planit node, or internal to any planit link 
    * 
-   * @param location to check
+   * @param osmNode to check
    * @return true when part of a geometry in the layer, false otherwise
    * @throws PlanItException thrown if error
    */
@@ -278,9 +282,8 @@ public class PlanitOsmNetworkReaderLayerData {
     return (planitNodesByLocation.containsKey(location) || isLocationInternalToAnyLink(location));
   }
   
-  /** collect all registered locations internal to a planit link (unmoidfiable)
+  /** Collect all registered locations internal to a planit link (unmodifiable)
    * 
-   * @param numberOfLinksNodeMustAtLeastBeInternalTo restriction
    * @return found locations
    */
   public Set<Point> getRegisteredLocationsInternalToAnyPlanitLink() {
@@ -336,7 +339,6 @@ public class PlanitOsmNetworkReaderLayerData {
    * 
    * @param location to use
    * @return found planit links, null if input is null
-   * @throws PlanItException thrown if error
    */
   public List<Link> findPlanitLinksWithInternalLocation(Point location) {
     if(location == null) {

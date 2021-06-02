@@ -187,8 +187,9 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
     this.referenceNetwork = referenceNetwork;
   }  
   
-  /** set the reference network to use
-   * @param referenceNetwork
+  /** Get the reference network to use
+   * 
+   * @return referenceNetwork
    */
   public PlanitOsmNetwork getReferenceNetwork() {
     return this.referenceNetwork;
@@ -405,9 +406,9 @@ public class PlanitOsmPublicTransportReaderSettings extends PlanitOsmReaderSetti
    * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated osm way. Only use in case the platform has no stop_location
    * and no stop_location maps to this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
    * 
-   * @param stopLocationOsmNodeId osm node id of stop location (int or long)
+   * @param waitingAreaOsmId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
-   * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
+   * @param OsmWayId osm id of waiting area (platform, pole, etc.) (int or long)
    */
   public void overwriteWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType, final Number OsmWayId) {
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());

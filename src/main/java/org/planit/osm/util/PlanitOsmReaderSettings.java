@@ -37,7 +37,6 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
   /**
    * Constructor
    * 
-   *  @param inputFile to use
    *  @param countryName to use
    */
   public PlanitOsmReaderSettings(final String countryName) {
@@ -47,7 +46,7 @@ public abstract class PlanitOsmReaderSettings implements ConverterReaderSettings
   /**
    * Constructor
    * 
-   *  @param inputFile to use
+   *  @param inputSource to use
    *  @param countryName to use
    */
   public PlanitOsmReaderSettings(final URL inputSource, final String countryName) {

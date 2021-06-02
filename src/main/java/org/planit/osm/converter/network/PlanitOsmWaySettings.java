@@ -131,6 +131,8 @@ public abstract class PlanitOsmWaySettings {
   /** Constructor
    * 
    * @param infrastructureTypeConfiguration to use
+   * @param speedLimitDefaults to use
+   * @param osmModeAccessDefaults to use
    */
   protected PlanitOsmWaySettings(OsmInfrastructureConfiguration infrastructureTypeConfiguration, OsmSpeedLimitDefaultsCategory speedLimitDefaults, OsmModeAccessDefaultsCategory osmModeAccessDefaults) {
     this.infrastructureTypeConfiguration = infrastructureTypeConfiguration;
@@ -203,29 +205,31 @@ public abstract class PlanitOsmWaySettings {
     infrastructureTypeConfiguration.activate(osmWayValue);
   }  
   
-  /** activate all passed in way types
-   * @param osmWayValueTypes
+  /** Activate all passed in way types
+   * 
+   * @param osmWayValueTypes to activate
    */
   protected void activateOsmWayTypes(String... osmWayValueTypes) {
     activateOsmWayTypes(Arrays.asList(osmWayValueTypes));
   }   
   
-  /** activate all passed in way types
-   * @param osmWayValueTypes
+  /** Activate all passed in way types
+   * 
+   * @param osmWayValueTypes to activate
    */
   protected void activateOsmWayTypes(List<String> osmWayValueTypes) {
     infrastructureTypeConfiguration.activate(osmWayValueTypes);
   }    
   
   /**
-   * activate all known OSM railway types 
+   * Activate all known OSM railway types 
    */
   protected void activateAllOsmWayTypes() {
     infrastructureTypeConfiguration.setOfDeactivatedTypes().forEach( unsupportedType -> activateOsmWayType(unsupportedType));    
   }   
   
   /**
-   * deactivate all types for the infrastructure type we represent
+   * Deactivate all types for the infrastructure type we represent
    */
   protected void deactivateAllOsmWayTypes() {
     infrastructureTypeConfiguration.deactivateAll();
@@ -249,7 +253,6 @@ public abstract class PlanitOsmWaySettings {
    * @param osmWayType the value type to set these values for
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
-   * @param modeProperties new values per mode
    */
   protected void overwriteOsmWayTypeDefaultCapacityMaxDensity(String osmWayKey, String osmWayType, double capacityPerLanePerHour, double maxDensityPerLane) {
     if(!isOsmWayTypeActivated(osmWayType)) {
@@ -260,7 +263,7 @@ public abstract class PlanitOsmWaySettings {
   }          
   
   /**
-   * check if defaults should be overwritten
+   * Check if defaults should be overwritten
    * 
    * @param osmWayType to check
    * @return true when new defaults are provided, false otherwise
@@ -283,7 +286,7 @@ public abstract class PlanitOsmWaySettings {
     
   /** Collect the speed limit for a given railway tag value, e.g. railway=typeValue, based on the defaults provided (typically set by country)
    * 
-   * @param osmRailwayValue way value type to collect default speed limit for
+   * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
    * @throws PlanItException thrown if error
    */
@@ -316,7 +319,7 @@ public abstract class PlanitOsmWaySettings {
     osmMode2PlanitModeMap.put(osmMode, planitMode);
   }    
   
-  /** add/overwrite a mapping from OSM mode to PLANit mode. This means that the osmMode will be added to the PLANit network
+  /** Add/overwrite a mapping from OSM mode to PLANit mode. This means that the osmMode will be added to the PLANit network
    * 
    * @param osmMode to set
    * @param planitMode to map it to
@@ -334,7 +337,7 @@ public abstract class PlanitOsmWaySettings {
     addToModeExternalId(planitMode,osmMode);
   }   
   
-  /** remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
+  /** Remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
    * You can only remove a mode when it is already added, either manually or through the default mapping
    * 
    * @param osmMode to remove
@@ -350,9 +353,9 @@ public abstract class PlanitOsmWaySettings {
     removeFromModeExternalId(planitMode,osmMode);
   }
   
-  /** remove all provided modes from mapping
+  /**Remove all provided modes from mapping
    * 
-   * @param osmMode to deactive
+   * @param osmModes to deactive
    */
   protected void deactivateOsmModes(Collection<String> osmModes) {
     for(String osmMode : osmModes) {

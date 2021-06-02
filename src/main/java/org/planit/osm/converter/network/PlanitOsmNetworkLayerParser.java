@@ -1166,9 +1166,6 @@ public class PlanitOsmNetworkLayerParser {
    *  
    * @param osmWay the tags belong to
    * @param tags of the OSM way to extract the link segment type for
-   * @param direction information already extracted from tags
-   * @param allowedModes modes allowed for this type
-   * @param layer the link segment type is destined for, used to identify the modes that at most can be supported by the link segment type
    * @param linkSegmentType use thus far for this way
    * @return the link segment types for the forward direction and backward direction as per OSM specification of forward and backward. When no allowed modes exist in a direction the link segment type is set to null
    * @throws PlanItException thrown if error
@@ -1201,7 +1198,9 @@ public class PlanitOsmNetworkLayerParser {
   }
 
   /** Constructor
+   * 
    * @param networkLayer to use
+   * @param networkData to use
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
@@ -1232,6 +1231,10 @@ public class PlanitOsmNetworkLayerParser {
    * 
    * @param osmWay to parse
    * @param tags related to the OSM way
+   * @param startNodeIndex to start parsing nodes from
+   * @param endNodeIndex to stop parsing nodes 
+   * @param isPartOfCircularWay flag
+   * @param linkSegmentTypes to use
    * @return created link (if any), if no link could be created null is returned
    * @throws PlanItException thrown if error
    */    
@@ -1267,7 +1270,6 @@ public class PlanitOsmNetworkLayerParser {
    * identical to same method with listener parameters, only now now listeners will be used 
    * 
    * @param thePlanitNode to break links for where it is internal to them (based on its osm node id reference)
-   * @param breakLinkListeners to apply when breaking links
    * @return true when links were broken, false otherwise
    * @throws PlanItException thrown if error
    */ 
@@ -1281,12 +1283,12 @@ public class PlanitOsmNetworkLayerParser {
    * is internal. the end result is a situations where all nodes used by more than one link are extreme 
    * nodes, i.e., start/end nodes.
    * <p>
-   * Osm ways with multiple planit links associated with them can cause problems because in the handler we only register
-   * nodes internal to the original way->link mapping. If a link is broken we adjust the original link and create an additional link
-   * causing the original mapping between internal nodes and planit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
-   * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
+   * Osm ways with multiple PLANit links associated with them can cause problems because in the handler we only register
+   * nodes internal to the original way to link mapping. If a link is broken we adjust the original link and create an additional link
+   * causing the original mapping between internal nodes and PLANit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
+   * map to track these changes so that we can always identify which of multiple PLANit links an internal node currently resides on.  
    * 
-   * @param thePlanitNode to break links for where it is internal to them (based on its osm node id reference)
+   * @param thePlanitNode to break links for where it is internal to them (based on its OSM node id reference)
    * @param breakLinkListeners to apply when breaking links
    * @return true when links were broken, false otherwise
    * @throws PlanItException thrown if error
@@ -1319,9 +1321,9 @@ public class PlanitOsmNetworkLayerParser {
    * nodes, i.e., start/end nodes.
    * <p>
    * Osm ways with multiple planit links associated with them can cause problems because in the handler we only register
-   * nodes internal to the original way->link mapping. If a link is broken we adjust the original link and create an additional link
-   * causing the original mapping between internal nodes and planit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
-   * map to track these changes so that we can always identify which of multiple planit links an internal node currently resides on.  
+   * nodes internal to the original way to link mapping. If a link is broken we adjust the original link and create an additional link
+   * causing the original mapping between internal nodes and PLANit link to be potentially incorrect. We require the osmWaysWithMultiplePlanitLinks
+   * map to track these changes so that we can always identify which of multiple PLANit links an internal node currently resides on.  
    * 
    */ 
   protected void breakLinksWithInternalConnections() {

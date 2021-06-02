@@ -37,14 +37,14 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
    * map more exotic OSM rail modes to more common PLANit rail modes, without imposing its restrictions on this common mode.  
    * 
    * <ul>
-   * <li>FUNICULAR      -> TramMode       </li>
-   * <li>LIGHT_RAIL     -> LightRailMode  </li>
-   * <li>MONO_RAIL      -> TramMode       </li>
-   * <li>NARROW_GAUGE   -> TrainMode      </li>
-   * <li>PRESERVED      -> TrainMode      </li>
-   * <li>RAIL           -> TrainMode      </li>
-   * <li>SUBWAY         -> SubWayMode     </li>
-   * <li>TRAM           -> TramMode       </li>
+   * <li>FUNICULAR      to TramMode       </li>
+   * <li>LIGHT_RAIL     to LightRailMode  </li>
+   * <li>MONO_RAIL      to TramMode       </li>
+   * <li>NARROW_GAUGE   to TrainMode      </li>
+   * <li>PRESERVED      to TrainMode      </li>
+   * <li>RAIL           to TrainMode      </li>
+   * <li>SUBWAY         to SubWayMode     </li>
+   * <li>TRAM           to TramMode       </li>
    * </ul>
    * 
    * 
@@ -237,7 +237,7 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
   
   /** Collect the speed limit for a given railway tag value, e.g. railway=typeValue, based on the defaults provided (typically set by country)
    * 
-   * @param osmRailwayValue way value type to collect default speed limit for
+   * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
    * @throws PlanItException thrown if error
    */
@@ -259,7 +259,7 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
   
   /** add/overwrite a mapping from OSM rail mode to PLANit mode. This means that the osmMode will be added to the PLANit network
    * 
-   * @param osmRoadMode to set
+   * @param osmRailMode to set
    * @param planitMode to map it to
    */
   public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
@@ -271,10 +271,10 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
     setOsmMode2PlanitModeMapping(osmRailMode, planitMode);
   }   
   
-  /** remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
+  /** Remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
    * You can only remove a mode when it is already added, either manually or through the default mapping
    * 
-   * @param osmRoadMode to remove
+   * @param osmRailMode to remove
    */
   public void removeOsmRailModePlanitModeMapping(String osmRailMode) {
     String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);

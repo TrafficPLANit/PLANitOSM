@@ -64,30 +64,30 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * include the mode in the network output.
    * 
    * <ul>
-   * <li>FOOT         -> PedestrianMode </li>
-   * <li>DOG          -> N/A            </li>
-   * <li>HORSE        -> N/A            </li>
-   * <li>BICYCLE      -> BicycleMode    </li>
-   * <li>CARRIAGE     -> N/A            </li>
-   * <li>TRAILER      -> N/A            </li>
-   * <li>CARAVAN      -> N/A            </li>
-   * <li>MOTOR_CYCLE  -> MotorBike      </li>
-   * <li>MOPED        -> N/A            </li>
-   * <li>MOFA         -> N/A            </li>
-   * <li>MOTOR_CAR    -> CarMode        </li>
-   * <li>MOTOR_HOME   -> N/A            </li>
-   * <li>TOURIST_BUS  -> N/A            </li>
-   * <li>COACH        -> N/A            </li>
-   * <li>AGRICULTURAL -> N/A            </li>
-   * <li>GOLF_CART    -> N/A            </li>
-   * <li>ATV          -> N/A            </li>
-   * <li>GOODS        -> GoodsMode      </li>
-   * <li>HEAVY_GOODS  -> HeavyGoodsMode </li>
-   * <li>HEAVY_GOODS_ARTICULATED  -> LargeHeavyGoodsMode </li>
-   * <li>BUS          -> BusMode </li>
-   * <li>TAXI         -> N/A </li>
-   * <li>SHARE_TAXI   -> N/A </li>
-   * <li>MINI_BUS     -> N/A </li>
+   * <li>FOOT         to PedestrianMode </li>
+   * <li>DOG          to N/A            </li>
+   * <li>HORSE        to N/A            </li>
+   * <li>BICYCLE      to BicycleMode    </li>
+   * <li>CARRIAGE     to N/A            </li>
+   * <li>TRAILER      to N/A            </li>
+   * <li>CARAVAN      to N/A            </li>
+   * <li>MOTOR_CYCLE  to MotorBike      </li>
+   * <li>MOPED        to N/A            </li>
+   * <li>MOFA         to N/A            </li>
+   * <li>MOTOR_CAR    to CarMode        </li>
+   * <li>MOTOR_HOME   to N/A            </li>
+   * <li>TOURIST_BUS  to N/A            </li>
+   * <li>COACH        to N/A            </li>
+   * <li>AGRICULTURAL to N/A            </li>
+   * <li>GOLF_CART    to N/A            </li>
+   * <li>ATV          to N/A            </li>
+   * <li>GOODS        to GoodsMode      </li>
+   * <li>HEAVY_GOODS  to HeavyGoodsMode </li>
+   * <li>HEAVY_GOODS_ARTICULATED  to LargeHeavyGoodsMode </li>
+   * <li>BUS          to BusMode </li>
+   * <li>TAXI         to N/A </li>
+   * <li>SHARE_TAXI   to N/A </li>
+   * <li>MINI_BUS     to N/A </li>
    * </ul>
    * 
    * @param planitModes to populate based on (default) mapping
@@ -142,9 +142,10 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   }  
     
   /** Constructor
-   * @param osmModeAccessDefaultsCategory highway mode access configuration
-   * @param urbanHighwayDefaults configuration
-   * @param nonUrbanHighwayDefaults configuration
+   * 
+   * @param urbanSpeedLimitDefaults urban limit defaults to use
+   * @param nonUrbanSpeedLimitDefaults non-urban defaults to use 
+   * @param osmModeAccessHighwayDefaults mode configuration
    */
   protected PlanitOsmHighwaySettings(OsmSpeedLimitDefaultsCategory urbanSpeedLimitDefaults,
       OsmSpeedLimitDefaultsCategory nonUrbanSpeedLimitDefaults, 
@@ -268,22 +269,24 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
     activateOsmWayType(osmWayValue);
   }  
   
-  /** activate all passed in highway types
-   * @param osmHighwayValueTypes
+  /** Activate all passed in highway types
+   * 
+   * @param osmHighwayValueTypes to activate
    */
   public void activateOsmHighwayTypes(final String... osmHighwayValueTypes) {
     activateOsmWayTypes(osmHighwayValueTypes);
   }  
   
-  /** activate all passed in highway types
-   * @param osmHighwayValueTypes
+  /** Activate all passed in highway types
+   * 
+   * @param osmHighwayValueTypes to activate
    */
   public void activateOsmHighwayTypes(final List<String> osmHighwayValueTypes) {
     activateOsmWayTypes(osmHighwayValueTypes);
   }   
   
   /**
-   * activate all known OSM highway types 
+   * Activate all known OSM highway types 
    */
   public void activateAllOsmHighwayTypes() {
     activateAllOsmWayTypes();    
@@ -394,7 +397,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
     removeOsmMode2PlanitModeMapping(osmRoadMode);
   }
   
-  /** remove a mapping from OSM road modes to PLANit modes. This means that the osmModes will not be added to the PLANit network
+  /** Remove a mapping from OSM road modes to PLANit modes. This means that the osmModes will not be added to the PLANit network.
    * You can only remove modes when they are already added, either manually or through the default mapping
    * 
    * @param osmRoadModes to remove
@@ -407,9 +410,9 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   }  
   
   
-  /** remove all road modes from mapping except for the passed in ones
+  /** Remove all road modes from mapping except for the passed in ones
    * 
-   * @param remainingOsmRoadModes to explicitly keep if present
+   * @param deactivateAllRoadModesExcept to explicitly keep if present
    */
   public void deactivateAllRoadModesExcept(final String... deactivateAllRoadModesExcept) {
     List<String> exceptionList = null;

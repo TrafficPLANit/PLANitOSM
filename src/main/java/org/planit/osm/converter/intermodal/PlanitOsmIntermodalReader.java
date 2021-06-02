@@ -79,7 +79,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * 
    * @param countryName to use for parsing the geometries in desired projection
    * @param osmNetworkToPopulate to populate
-   * @param zoning to populate
+   * @param zoningToPopulate to populate
    */
   protected PlanitOsmIntermodalReader(final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
     this(new PlanitOsmIntermodalReaderSettings(countryName, osmNetworkToPopulate), zoningToPopulate);  
@@ -91,7 +91,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param inputSource to use for all intermodal parsing
    * @param countryName to use for parsing the geometries in desired projection
    * @param osmNetworkToPopulate to populate
-   * @param zoning to populate
+   * @param zoningToPopulate to populate
    */
   protected PlanitOsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
     this(new PlanitOsmIntermodalReaderSettings(inputSource, countryName, osmNetworkToPopulate), zoningToPopulate);  
@@ -103,7 +103,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param networkSettings to use
    * @param ptSettings to use
    * @param osmNetworkToPopulate to populate
-   * @param zoning to populate
+   * @param zoningToPopulate to populate
    * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
   protected PlanitOsmIntermodalReader(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
@@ -114,11 +114,8 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   /**
    * Constructor 
    * 
-   * @param inputFile to use
-   * @param countryName to use for parsing the geometries in desired projection
-   * @param ptSettings to use
-   * @param osmNetworkToPopulate to populate
-   * @param zoning to populate
+   * @param settings to use
+   * @param zoningToPopulate to populate
    */
   protected PlanitOsmIntermodalReader(PlanitOsmIntermodalReaderSettings settings, Zoning zoningToPopulate){
     this.settings = settings;

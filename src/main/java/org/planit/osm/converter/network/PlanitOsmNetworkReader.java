@@ -203,6 +203,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * Constructor 
    * 
    * @param osmNetwork network to populate 
+   * @throws PlanItException thrown if error
    */
   protected PlanitOsmNetworkReader(final PlanitOsmNetwork osmNetwork) throws PlanItException{
     this(CountryNames.GLOBAL, osmNetwork);
@@ -212,7 +213,8 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * Default Constructor 
    * 
    * @param countryName to use
-   * @param osmNetwork network to populate 
+   * @param osmNetwork network to populate
+   * @throws PlanItException thrown if error 
    */
   protected PlanitOsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
     this(null, countryName, osmNetwork);
@@ -224,6 +226,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * @param inputSource to use
    * @param countryName to use
    * @param osmNetwork network to populate 
+   * @throws PlanItException thrown if error
    */
   protected PlanitOsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
     this(new PlanitOsmNetworkReaderSettings(inputSource, countryName, osmNetwork));
@@ -244,7 +247,6 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
    * given the configuration options that have been set
    * 
-   * @param inputFile to parse
    * @return macroscopic network that has been parsed
    * @throws PlanItException thrown if error
    */  

@@ -1019,7 +1019,8 @@ public class PlanitOsmZoningHandler extends PlanitOsmZoningBaseHandler {
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler properly
-   * @throws PlanItException 
+   * 
+   * @throws PlanItException thrown if error
    */
   public void initialiseBeforeParsing() throws PlanItException {
     reset();

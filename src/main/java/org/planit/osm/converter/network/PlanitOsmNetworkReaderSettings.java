@@ -78,7 +78,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<Long, Set<String>>();    
   
   /** mapping between PLANit modes and the layer their infrastructure will be mapped to. 
-   * Default is based on {@link InfrastructureLayersConfigurator.createAllInOneConfiguration}, but the user can overwrite these settings if
+   * Default is based on InfrastructureLayersConfigurator.createAllInOneConfiguration, but the user can overwrite these settings if
    * desired */
   protected InfrastructureLayersConfigurator planitInfrastructureLayerConfiguration;
   
@@ -143,8 +143,9 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes(planitModes);
   }
   
-  /** collect the osm network to populate
-   * @return
+  /** Collect the osm network to populate
+   * 
+   * @return osm network
    */
   protected PlanitOsmNetwork getOsmNetworkToPopulate() {
     return this.osmNetwork;
@@ -270,9 +271,9 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     return osmHighwaySettings.isParserActive();
   }   
 
-  /**
-   * chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
-   * @return
+  /** Chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
+   * 
+   * @return source CRS
    */
   public final CoordinateReferenceSystem getSourceCRS() {
     return sourceCRS;
@@ -281,7 +282,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   /**
    * Override source CRS
    * 
-   * @param sourceCRS
+   * @param sourceCRS to use
    */
   public void setSourceCRS(final CoordinateReferenceSystem sourceCRS) {
     this.sourceCRS = sourceCRS;
@@ -300,15 +301,17 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   }
      
   /**
-   * indicate whether to remove dangling subnetworks or not
+   * Indicate whether to remove dangling subnetworks or not
+   * 
    * @param removeDanglingSubnetworks yes or no
    */
   public void setRemoveDanglingSubnetworks(boolean removeDanglingSubnetworks) {
     this.removeDanglingSubNetworks = removeDanglingSubnetworks;
   }
   
-  /** verify if dangling subnetworks are removed from the final network
-   * @return
+  /** Verify if dangling subnetworks are removed from the final network
+   * 
+   * @return flag if dangling networks are removed
    */
   public boolean isRemoveDanglingSubnetworks() {
     return this.removeDanglingSubNetworks;
@@ -341,7 +344,8 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
   /** Collect the number of lanes/tracks for a given OSM way key/value for either direction (not total), 
    * e.g. highway=value, railway=value based on the defaults provided
    * 
-   * @param type highway type to collect default lanes for
+   * @param osmWayKey way key to collect default lanes for
+   * @param osmWayValue way value to collect default lanes for
    * @return number of default lanes
    * @throws PlanItException thrown if error
    */
@@ -349,8 +353,9 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     return this.laneConfiguration.getDefaultDirectionalLanesByWayType(osmWayKey, osmWayValue);    
   }
   
-  /** collect the mapped osm modes based on the provided planit mode
-   * @param planitModes to get mapped planit modes for
+  /** Collect the mapped osm modes based on the provided planit mode
+   * 
+   * @param planitMode to get mapped planit modes for
    * @return mapped osm modes, empty if no matches
    */  
   public Collection<String> getMappedOsmModes(Mode planitMode) {
@@ -360,7 +365,8 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     return theRoadModes;
   }  
   
-  /** collect the mapped osm modes based on the provided planit modes (if any)
+  /** Collect the mapped osm modes based on the provided planit modes (if any)
+   * 
    * @param planitModes to get mapped planit modes for
    * @return mapped osm modes, empty if no matches
    */
@@ -562,7 +568,7 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
    * exclude specific OSM ways from being parsed based on their id. It is expected that the
    * way ids are either an integer or long
    * 
-   * @param osmWayId to mark as excluded
+   * @param osmWayIds to mark as excluded
    */
   public void excludeOsmWaysFromParsing(List<Number> osmWayIds) {
     if(osmWayIds==null) {

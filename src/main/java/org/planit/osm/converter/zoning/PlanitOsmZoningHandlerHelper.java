@@ -134,7 +134,7 @@ public class PlanitOsmZoningHandlerHelper {
   /** Create a new PLANit node required for connectoid access, not based on an existing osm node, but based on an auto-generated location due to missing
    * osm nodes in the input file (within pre-specified distance of transfer zone
    * 
-   * @param osmNode to extract PLANit node for
+   * @param location to extract PLANit node for
    * @param layerData to register location to planit node mapping on
    * @param networkLayer to create it on
    * @return created planit node
@@ -174,6 +174,7 @@ public class PlanitOsmZoningHandlerHelper {
    * @param transferZone to check
    * @param coordA of line 
    * @param coordB of line
+   * @param geoUtils to use
    * @return true when left, false otherwise
    * @throws PlanItException thrown if error
    */
@@ -263,7 +264,9 @@ public class PlanitOsmZoningHandlerHelper {
    * 
    * @param waitingAreaGeometry representing the waiting area (station, platform, pole)
    * @param links to remove ineligible ones from
-   * @param referenceOsmModes eligible for the waiting area
+   * @param isLeftHandDrive flag
+   * @param accessModes to consider
+   * @param geoUtils to use
    * @return remaining links that are deemed eligible
    * @throws PlanItException thrown if error
    */   
@@ -345,7 +348,8 @@ public class PlanitOsmZoningHandlerHelper {
     }
   }
       
-  /** collect the station name for a transfer zone (if any)
+  /** Collect the station name for a transfer zone (if any)
+   * 
    * @param transferZone to collect for
    * @return station name
    */
@@ -353,8 +357,10 @@ public class PlanitOsmZoningHandlerHelper {
     return (String)transferZone.getInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY);
   }
   
-  /** collect the station name for a transfer zone (if any)
-   * @param transferZone to collect for
+  /** Collect the station name for a transfer zone (if any)
+   * 
+   * @param transferZone to use
+   * @param stationName to set
    * @return station name
    */
   public static void  setTransferZoneStationName(TransferZone transferZone, String stationName) {
@@ -468,7 +474,7 @@ public class PlanitOsmZoningHandlerHelper {
   /** extract a JTS line segment based on the closest two coordinates on the link segment geometry in its intended direction to the reference geometry provided
    * 
    * @param referenceGeometry to find closest line segment to 
-   * @param edgeSegment to extract line segment from
+   * @param linkSegment to extract line segment from
    * @param geoUtils for distance calculations
    * @return line segment if found
    * @throws PlanItException  thrown if error
@@ -494,6 +500,7 @@ public class PlanitOsmZoningHandlerHelper {
    * reflected in the returned max matches. The search distance is based on the settings where a road based station utilises the stop to waiting
    * area search distance whereas a rail based one uses the station to waiting area search distance
    * 
+   * @param osmStationId to use
    * @param settings to obtain search distance for
    * @param osmStationMode station modes supported
    * @return search distance and max stop_location matches pair, null if problem occurred

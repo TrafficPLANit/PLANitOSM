@@ -55,9 +55,8 @@ public class PlanitOsmNetworkReaderData {
     }
   }    
       
-  /** Constructor 
-   * @param countryName to use
-   * @param osmNetwork to use
+  /** Default Constructor 
+   * 
    */
   public PlanitOsmNetworkReaderData() {    
     this.osmNodes = new HashMap<Long, OsmNode>();

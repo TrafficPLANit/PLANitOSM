@@ -41,8 +41,9 @@ public class PlanitOsmNetworkToZoningReaderData {
   }   
   
   /** Constructor
+   * 
    * @param networkData to use
-   * @param settings to use
+   * @param networkReaderSettings to use
    */
   protected PlanitOsmNetworkToZoningReaderData(final PlanitOsmNetworkReaderData networkData, final PlanitOsmNetworkReaderSettings networkReaderSettings) {
     if(networkData==null) {
@@ -55,7 +56,8 @@ public class PlanitOsmNetworkToZoningReaderData {
     this.networkReaderSettings = networkReaderSettings;
   }
     
-  /** collect layer specific data
+  /** Collect layer specific data
+   * 
    * @param networkLayer to collect for
    * @return layer data
    */

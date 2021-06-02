@@ -259,7 +259,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * 
    * @param message to log if not too close to bounding box
    * @param geometry to determine distance to bounding box to
-   * @parma logger to log on
+   * @param logger to log on
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
@@ -351,11 +351,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return skipOsmPtEntity(EntityType.Way, osmWay.getId());
   } 
   
-  /** collect the pt modes both osm and mapped planit modes for a pt entity. If no default mode is found based on the tags, a default mode may be 
-   * provided explicitly by the user which will then be added to the osm mode
+  /** collect the pt modes both OSM and mapped planit modes for a pt entity. If no default mode is found based on the tags, a default mode may be 
+   * provided explicitly by the user which will then be added to the OSM mode
    * 
    * @param osmPtEntityId to use
-   * @param tags of the osm entity
+   * @param tags of the OSM entity
+   * @param defaultMode to use
    * @return pair containing eligible osm modes identified and their mapped planit counterparts
    */
   public Pair<Collection<String>, Collection<Mode>> collectPublicTransportModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {    
@@ -367,12 +368,13 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
   
-  /** collect the eligible modes both osm and mapped planit modes for the given osm entity representing pt infrastructure. If no default mode is found based on the tags, a default mode may be 
-   * provided explicitly by the user which will then be added to the osm mode
+  /** collect the eligible modes both osm and mapped planit modes for the given OSM entity representing pt infrastructure. If no default mode is found based on the tags, a default mode may be 
+   * provided explicitly by the user which will then be added to the OSM mode
    * 
    * @param osmPtEntityId to use
-   * @param tags of the osm entity
-   * @return pair containing eligible osm modes identified and their mapped planit counterparts
+   * @param tags of the OSM entity
+   * @param defaultMode to use
+   * @return pair containing eligible OSM modes identified and their mapped planit counterparts
    */
   public Pair<Collection<String>, Collection<Mode>> collectModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {
     Collection<String> eligibleOsmModes = PlanitOsmModeUtils.collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
@@ -562,7 +564,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param location stop_location
    * @param accessMode for stop_location (not used for filteraing accessibility, only for lyaer identification)
    * @return links that can access the stop location.
-   * @throws PlanItException
+   * @throws PlanItException thrown if error
    */
   protected Collection<Link> getLinksWithAccessToConnectoidLocation(Point location, Mode accessMode) throws PlanItException {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
@@ -591,12 +593,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
 
   /** find out if link is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
    * mode that is mapped to a planit mode. If the zone has no known modes, it is by definition not mode compatible. 
-   * When one allows for pseudo comaptibility we relax the restrictions such that any rail/road/water mode
+   * When one allows for pseudo compatibility we relax the restrictions such that any rail/road/water mode
    * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
    * to filter out definite non-matches.
    *  
+   * @param link to verify
    * @param referenceOsmModes to map agains (may be null)
-   * @param potentialTransferZones to extract transfer zone groups from
    * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
    * @return matched transfer zones
    */   
@@ -636,6 +638,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   /** update an existing directed connectoid with new access zone and allowed modes. In case the link segment does not have any of the 
    * passed in modes listed as allowed, the connectoid is not updated with these modes for the given access zone as it would not be possible to utilise it. 
    * 
+   * @param connectoidToUpdate to connectoid to update
    * @param accessZone to relate connectoids to
    * @param allowedModes to add to the connectoid for the given access zone
    */  
@@ -707,8 +710,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @param osmEntity to extract transfer zone for
    * @param tags to use
    * @param transferZoneType to apply
+   * @param eligibleOsmModes the eligible osm modes considered
    * @param geoUtils to use
-   * @return transfer zone created, null if something happenned making it impossible to create the zone
+   * @return transfer zone created, null if something happened making it impossible to create the zone
    * @throws PlanItException thrown if error
    */
   protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
@@ -1286,9 +1290,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     this.zoningReaderData = zoningReaderData;
   }
   
-  /**
-   * Call this BEFORE we parse the OSM network to initialise the handler properly
-   * @throws PlanItException 
+  /** Call this BEFORE we parse the OSM network to initialise the handler properly
+   * 
+   * @throws PlanItException  thrown if error
    */
   public abstract void initialiseBeforeParsing() throws PlanItException;
   
