@@ -174,7 +174,7 @@ public class OsmHighwayTags {
     private static final String REST_AREA = "rest_area";
     
             
-    /** verify if passed in tag is indeed a highway tag that represents a road like piece of infrastructure
+    /** Verify if passed in tag is indeed a highway tag that represents a road like piece of infrastructure
      * 
      * @param highwayTag to verify
      * @return true when valid tag, otherwise false
@@ -183,18 +183,17 @@ public class OsmHighwayTags {
       return ROADBASED_HIGHWAY_VALUE_TAGS.containsKey(highwayTag);
     }
     
-    /** some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
+    /** Some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
      * although technically platforms can be ways, but since we do not model them (as ways), we regard them as areas in all cases for now
 
-     * @param osmWay the way
-     * @param tags the tags
+     * @param highwayTag the way
      * @return is the way an area and not a line based railway
      */
     public static boolean isAreaBasedHighway(String highwayTag) {
       return AREABASED_OSM_HIGHWAY_VALUE_TAGS.contains(highwayTag);
     }     
     
-    /** verify if passed in tag is indeed a highway tag that represents a non-road like piece of infrastructure
+    /** Verify if passed in tag is indeed a highway tag that represents a non-road like piece of infrastructure
      * 
      * @param highwayTag to verify
      * @return true when valid tag, otherwise false
@@ -220,9 +219,10 @@ public class OsmHighwayTags {
       return tags.containsKey(OsmHighwayTags.HIGHWAY);
     }
 
-    /** compare highway types where we return a negative, zero, or positive value when highwayType is less, equal, or more important than the other
+    /** Compare highway types where we return a negative, zero, or positive value when highwayType is less, equal, or more important than the other
+     * 
      * @param highwayType to compare to other
-     * @param other to compare to highway type
+     * @param otherHighwayType to compare to highway type
      * @return negative, equal, or zero depending on if highway type is less, equal, or more important than other 
      */
     public static int compareHighwayType(String highwayType, String otherHighwayType) {

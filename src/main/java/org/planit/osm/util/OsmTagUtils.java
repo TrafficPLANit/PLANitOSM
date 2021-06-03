@@ -16,7 +16,7 @@ public class OsmTagUtils {
   public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";  
 
   
-  /** verify if the passed in value tag is present in the list of value tags provided
+  /** Verify if the passed in value tag is present in the list of value tags provided
    * 
    * @param valueTag to check
    * @param valueTags to check against
@@ -31,10 +31,10 @@ public class OsmTagUtils {
     return false;
   }
     
-  /** verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+  /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
-   * @param keyTags to check 
+   * @param keyTag to check 
    * @param valueTags to check
    * @return true when match is present, false otherwise
    */    
@@ -42,7 +42,7 @@ public class OsmTagUtils {
     return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
   }   
   
-  /** verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+  /** Verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
    * @param keyTags to check 
@@ -53,10 +53,10 @@ public class OsmTagUtils {
     return anyKeyMatchesAnyValueTag(tags, VALUETAG_SPECIALCHAR_STRIP_REGEX, keyTags, valueTags);
   }
   
-  /** verify if any of the passed in keys matches and of the passed in values in the tags provided
+  /** Verify if any of the passed in keys matches and of the passed in values in the tags provided
    * 
    * @param tags to check existence from
-   * @param regexFilter filter each value tag in tags by applying this regular expressions and replace matches with "", can be used to strip whitespaces or unwanted characters that cause a mistmach
+   * @param regEx filter each value tag in tags by applying this regular expressions and replace matches with "", can be used to strip whitespaces or unwanted characters that cause a mistmach
    * @param keyTags to check 
    * @param valueTags to check
    * @return true when match is present, false otherwise
@@ -73,9 +73,10 @@ public class OsmTagUtils {
     return false;
   }       
 
-  /** construct composite key "currentKey:subTag1:subTag2:etc."
+  /** Construct composite key "currentKey:subTag1:subTag2:etc."
+   * 
    * @param currentKey the currentKey
-   * @param subTags to add
+   * @param subTagConditions to add
    * @return composite version separated by colons
    */
   public static String createCompositeOsmKey(final String currentKey, final String... subTagConditions) {
@@ -89,7 +90,8 @@ public class OsmTagUtils {
     return compositeKey;
   }
 
-  /** determine if any of the potential keys is listed in the passed in tags
+  /** Determine if any of the potential keys is listed in the passed in tags
+   * 
    * @param tags to check
    * @param potentialKeys to check
    * @return true when present, false otherwise

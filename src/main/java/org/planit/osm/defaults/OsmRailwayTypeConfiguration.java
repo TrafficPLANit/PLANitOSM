@@ -50,7 +50,6 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>TRAM</li>
    * </ul>
    * 
-   * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultActivatedOsmRailwayTypes() throws PlanItException {
@@ -79,7 +78,6 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>PROPOSED</li>
    * </ul>
    * 
-   * @return the default created unsupported types
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultDeactivatedOsmRailwayTypes() throws PlanItException {

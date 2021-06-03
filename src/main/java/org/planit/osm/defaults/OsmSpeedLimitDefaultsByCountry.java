@@ -80,7 +80,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   }   
   
   /**
-   * populate the country specific defaults for highway/railway types for supported countries
+   * Populate the country specific defaults for highway/railway types for supported countries
    * 
    * @throws PlanItException thrown if error
    */  
@@ -97,7 +97,6 @@ public class OsmSpeedLimitDefaultsByCountry {
    * 
    * @param inputReader to extract speed limit defaults from
    * @param fullCountryName these defaults relate to
-   * @throws PlanItException thrown if error
    */
   protected static void populateCountrySpecificRailwayDefaultSpeedLimits(InputStreamReader inputReader, String fullCountryName){  
     try {            
@@ -154,7 +153,6 @@ public class OsmSpeedLimitDefaultsByCountry {
    * 
    * @param inputReader to extract speed limit defaults from
    * @param fullCountryName these defaults relate to
-   * @throws PlanItException thrown if error
    */
   protected static void populateCountrySpecificHighwayDefaultSpeedLimits(InputStreamReader inputReader, String fullCountryName ){  
     try {      
@@ -267,13 +265,10 @@ public class OsmSpeedLimitDefaultsByCountry {
   }    
   
   /**
-   * populate the defaults for railway types for given country (or global)
-   * 
+   * Populate the defaults for railway types for given country (or global).
    * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for all modes. This can overridden by the user if required 
    * 
-   * 
    * @param speedLimitsToPopulate to populate
-   * @throws PlanItException thrown if error
    */  
   protected static void populateDefaultRailwaySpeedLimits(OsmSpeedLimitDefaultsCategory speedLimitsToPopulate) {
     speedLimitsToPopulate.setSpeedLimitDefault(OsmRailwayTags.FUNICULAR,     OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH);
@@ -290,7 +285,6 @@ public class OsmSpeedLimitDefaultsByCountry {
    * 
    * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for all modes. This can overridden by the user if required 
    * 
-   * 
    * @throws PlanItException thrown if error
    */
   protected static void populateGlobalDefaultRailwaySpeedLimits() throws PlanItException {        
@@ -299,7 +293,8 @@ public class OsmSpeedLimitDefaultsByCountry {
   }     
   
   /**
-   * populate the defaults for Australia
+   * Populate the defaults for Australia
+   * 
    * @throws PlanItException thrown if error
    */
   protected static void populateAustralianSpeedLimits() throws PlanItException {
@@ -350,9 +345,11 @@ public class OsmSpeedLimitDefaultsByCountry {
     }
   }
   
-  /** collect the speed limit based on the highway type, e.g. highway=type, inside an urban area. Speed limit is collected based on the chosen country. If either the country
+  /** Collect the speed limit based on the highway type, e.g. highway=type, inside an urban area. Speed limit is collected based on the chosen country. If either the country
    * is not defined or the highway type is not available on the country's defaults, the global defaults will be used
    * 
+   * @param countryDefaults to use
+   * @param outside indicates to use urban or non-urban defaults
    * @param type highway type value
    * @return speed limit inside urban area for this type
    * @throws PlanItException thrown if error
@@ -373,9 +370,8 @@ public class OsmSpeedLimitDefaultsByCountry {
   }
     
   /**
-   * register speed limits for a specific country
+   * Register speed limits for a specific country
    * 
-   * @param countryName full country name (for english Locale) 
    * @param countrySpeedLimits speed limits by highway type
    * @throws PlanItException thrown if error
    */
@@ -408,6 +404,7 @@ public class OsmSpeedLimitDefaultsByCountry {
   /**
    * Factory method to create global defaults only. 
    * 
+   * @return created defaults
    */
   public static OsmSpeedLimitDefaults create() {
     OsmSpeedLimitDefaults createdDefaults = null;
@@ -419,7 +416,8 @@ public class OsmSpeedLimitDefaultsByCountry {
    * Factory method to create speed limits for a particular country. It will utilise this country's defaults. If not available, or particular road type's are not available
    * it will revert to the globally set defaults 
    * 
-   * @param countryName
+   * @param countryName to use
+   * @return created defaults
    */
   public static OsmSpeedLimitDefaults create(String countryName) {    
     OsmSpeedLimitDefaults createdDefaults = null;

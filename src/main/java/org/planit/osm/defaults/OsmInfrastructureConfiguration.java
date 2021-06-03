@@ -42,7 +42,7 @@ public class OsmInfrastructureConfiguration {
   }  
     
   /**
-   * default constructor
+   * Default constructor
    * 
    * @param osmWayKey to apply
    */
@@ -52,12 +52,11 @@ public class OsmInfrastructureConfiguration {
     this.deactivatedOsmTypes = new HashSet<String>();
   }
   
-  /** construct with defaults being populated 
+  /** Construct with defaults being populated 
    * 
    * @param osmWayKey to apply
    * @param activatedOsmTypes to use
    * @param deactivatedOsmTypes to use
-   * @param unactivatableOsmTypes to use
    */
   public OsmInfrastructureConfiguration(String osmWayKey, Set<String> activatedOsmTypes, Set<String> deactivatedOsmTypes) {
     this.osmWayKey = osmWayKey;

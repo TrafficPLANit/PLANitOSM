@@ -240,11 +240,9 @@ public class PlanitOsmZoningReader implements ZoningReader {
   }   
      
   /**
-   * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
-   * given the configuration options that have been set
+   * Parse a local *.osm or *.osm.pbf file and convert it into a PLANit Zoning instance given the configuration options that have been set
    * 
-   * @param inputFile to parse
-   * @return macroscopic network that has been parsed
+   * @return macroscopic zoning that has been parsed
    * @throws PlanItException thrown if error
    */  
   @Override

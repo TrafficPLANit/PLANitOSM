@@ -45,7 +45,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
   /**
    * Call this BEFORE we apply the handler
    * 
-   * @throws PlanItException 
+   * @throws PlanItException thrown if error
    */
   public void initialiseBeforeParsing() throws PlanItException {
     reset(); 

@@ -85,9 +85,10 @@ public class OsmPedestrianTags {
     return osmPedestrianKeyTags;
   }  
   
-  /** verify from the passed in tags if a side walk or footway osmkey is present with any of these value tags
+  /** Verify from the passed in tags if a side walk or footway osmkey is present with any of these value tags
    * 
    * @param tags to verify
+   * @param accessValueTags to consider
    * @return true when one or more of the tag values is found, false otherwise
    */
   public static boolean hasExplicitSidewalkOrFootwayWithAccessValue(Map<String, String> tags, String... accessValueTags) {
@@ -97,7 +98,7 @@ public class OsmPedestrianTags {
     return false;    
   }
   
-  /** verify from the passed in tags if a side walk or footway is present that is accessible to pedestrians
+  /** Verify from the passed in tags if a side walk or footway is present that is accessible to pedestrians
    * 
    *  sidewalk=
    * <ul>

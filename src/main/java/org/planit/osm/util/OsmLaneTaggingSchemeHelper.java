@@ -108,7 +108,8 @@ public class OsmLaneTaggingSchemeHelper{
 
  
   /** Constructor
-   * @param eligibleOsmModes (or road mode categories) to consider for the lane modes scheme
+   * 
+   * @param theEligibleOsmModes (or road mode categories) to consider for the lane modes scheme
    */
   public OsmLaneTaggingSchemeHelper(final Set<String> theEligibleOsmModes) {   
     eligibleOsmModes = new HashSet<>(theEligibleOsmModes);
@@ -118,7 +119,8 @@ public class OsmLaneTaggingSchemeHelper{
   }
   
   /** Verify if any eligible modes are present
-   * @return
+   * 
+   * @return true when available, false otherwise
    */
   public boolean hasEligibleModes() {
     return !eligibleOsmModes.isEmpty();

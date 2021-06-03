@@ -119,9 +119,10 @@ public class ModifiedLinkSegmentTypes {
 
   /** Verify if a modified link segment type with the provided added/removed modes exist for the given original link segment type
    * 
+   * @param original original type
    * @param addedModes the added modes, can be null or empty in case no modes were added
    * @param removedModes the removed modes, can be null or empty in case no modes were added
-   * @return true when ona modified link segment type exists with these mode modifications
+   * @return true when a modified link segment type exists with these mode modifications
    */
   public boolean containsModifiedLinkSegmentType(final MacroscopicLinkSegmentType original, final Set<Mode> addedModes, final Set<Mode> removedModes) {
     if(modifiedLinkSegmentTypeModes.containsKey(original)) {
@@ -130,8 +131,9 @@ public class ModifiedLinkSegmentTypes {
     return false;
   }
   
-  /** collect a modified link segment type with the provided added/removed modes if it exists
+  /** Collect a modified link segment type with the provided added/removed modes if it exists
    * 
+   * @param original original type
    * @param addedModes the added modes, can be null or empty in case no modes were added
    * @param removedModes the removed modes, can be null or empty in case no modes were added
    * @return the modified link segment type if it exists, null otherwise

@@ -1619,14 +1619,13 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   
 
   /**
-   * constructor
+   * Constructor
    * 
    * @param transferSettings for the handler
-   * @param hanlderData the handler data gathered by preceding handlers for zoning parsing
+   * @param handlerData the handler data gathered by preceding handlers for zoning parsing
    * @param network2ZoningData data collated from parsing network required to successfully popualte the zoning
    * @param zoningToPopulate to populate
-   * @param profiler to use
-   * are not of interest and would otherwise be discarded 
+   * @param profiler to use 
    */
   public PlanitOsmZoningPostProcessingHandler(
       final PlanitOsmPublicTransportReaderSettings transferSettings, 
@@ -1643,7 +1642,8 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler properly
-   * @throws PlanItException 
+   * 
+   * @throws PlanItException thrown if error
    */
   public void initialiseBeforeParsing() throws PlanItException {
     reset();

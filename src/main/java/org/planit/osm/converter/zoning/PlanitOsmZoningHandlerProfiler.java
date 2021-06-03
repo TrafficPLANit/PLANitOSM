@@ -55,7 +55,7 @@ public class PlanitOsmZoningHandlerProfiler {
   private long moduloLoggingConnectoids = 500;
        
   /**
-   * @param nodesInNetworkOffset
+   * Default constructor
    */
   public PlanitOsmZoningHandlerProfiler() {
   }

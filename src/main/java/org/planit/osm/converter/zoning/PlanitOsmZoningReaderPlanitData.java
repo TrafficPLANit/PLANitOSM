@@ -87,9 +87,10 @@ public class PlanitOsmZoningReaderPlanitData {
         
   /* TRANSFER ZONE RELATED METHODS */    
 
-  /** collect the potentially incomplete transfer zone by entity type and osm id
+  /** Collect the potentially incomplete transfer zone by entity type and osm id
+   * 
    * @param entityType to collect for (node, way)
-   * @param osm id (node id/way id)
+   * @param osmEntityId id (node id/way id)
    * @return transfer zone registered, null if not present
    */
   public TransferZone getIncompleteTransferZoneByOsmId(EntityType entityType, long osmEntityId) {
@@ -101,9 +102,10 @@ public class PlanitOsmZoningReaderPlanitData {
     }
   }
   
-  /** collect the complete transfer zone by entity type and osm id
+  /** Collect the complete transfer zone by entity type and osm id
+   * 
    * @param entityType to collect for (node, way)
-   * @param osm id (node id/way id)
+   * @param osmEntityId id (node id/way id)
    * @return transfer zone registered, null if not present
    */
   public TransferZone getCompleteTransferZoneByOsmId(EntityType entityType, long osmEntityId) {
@@ -115,9 +117,9 @@ public class PlanitOsmZoningReaderPlanitData {
     }
   }  
   
-  /** find transfer zone either incomplete or complete by osm is
-   * @param type osm entity type
-   * @param osmId osm id of transfer zone
+  /** Find transfer zone either incomplete or complete by osm is
+   * @param type OSM entity type
+   * @param osmId OSM id of transfer zone
    * @return transfer zone if present as incomplete or complete, null otherwise
    */
   public TransferZone getTransferZoneByOsmId(EntityType type, long osmId) {
@@ -126,7 +128,7 @@ public class PlanitOsmZoningReaderPlanitData {
   }  
   
 
-  /** collect the transfer zones by entity type, unmoidifiable
+  /** Collect the transfer zones by entity type, unmodifiable
    * 
    * @param entityType to collect for
    * @return available transfer zones by osm id
@@ -145,10 +147,9 @@ public class PlanitOsmZoningReaderPlanitData {
     }
   }  
   
-  /** collect the transfer zones by spatial bounding box. Collect all created transfer zones
+  /** Collect the transfer zones by spatial bounding box. Collect all created transfer zones
    * that fall within or intersect with this bounding box. They might or might not have connectoids at this point.
    * 
-   * @param entityType to collect for (node, way)
    * @param boundingBox to identify transfer zones spatially
    * @return list of found transfer zones, caller needs to cast entries to TransferZone type
    */
@@ -201,20 +202,20 @@ public class PlanitOsmZoningReaderPlanitData {
     return Collections.unmodifiableMap(directedConnectoidsByOsmNodeId.get(networkLayer));
   }
   
-  /**collect the registered connectoids by given locations and network layer (unmodifiable)
+  /** Collect the registered connectoids by given locations and network layer (unmodifiable)
    * 
    * @param nodeLocation to verify
-   * @param networkLayerto extract from
+   * @param networkLayer to extract from
    * @return found connectoids (if any), otherwise null or empty set
    */
   public List<DirectedConnectoid> getDirectedConnectoidsByLocation(Point nodeLocation, MacroscopicPhysicalNetwork networkLayer) {
     return getDirectedConnectoidsByLocation(networkLayer).get(nodeLocation);
   }  
   
-  /** add a connectoid to the registered connectoids indexed by their osm id
+  /** Add a connectoid to the registered connectoids indexed by their OSM id
    * 
    * @param networkLayer to register for
-   * @param osmAccessNodeid this connectoid relates to
+   * @param connectoidLocation this connectoid relates to
    * @param connectoid to add
    * @return true when successful, false otherwise
    */
@@ -229,7 +230,8 @@ public class PlanitOsmZoningReaderPlanitData {
     return false;
   }
   
-  /** check if any connectoids have been registered for the given location on any layer
+  /** Check if any connectoids have been registered for the given location on any layer
+   * 
    * @param location to verify
    * @return true when present, false otherwise
    */
@@ -242,20 +244,21 @@ public class PlanitOsmZoningReaderPlanitData {
     return false;
   }  
   
-  /** check if any connectoid has been registered for the given location for this layer
-   * @param location to verify
+  /** Check if any connectoid has been registered for the given location for this layer
+   * 
    * @param networkLayer to check for
+   * @param point to use
    * @return true when present, false otherwise
    */  
-  public boolean hasDirectedConnectoidForLocation(InfrastructureLayer networkLayer, Point createPoint) {
+  public boolean hasDirectedConnectoidForLocation(InfrastructureLayer networkLayer, Point point) {
     Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
-    return connectoidsForLayer != null && connectoidsForLayer.get(createPoint) != null && !connectoidsForLayer.get(createPoint).isEmpty();
+    return connectoidsForLayer != null && connectoidsForLayer.get(point) != null && !connectoidsForLayer.get(point).isEmpty();
   }  
   
-  /** register a known mapping from transfer zone to connectoid
+  /** Register a known mapping from transfer zone to connectoid
    * 
    * @param transferZone to map to...
-   * @param newConnectoid ...this connectoid
+   * @param connectoid ...this connectoid
    */
   public void addConnectoidByTransferZone(TransferZone transferZone, DirectedConnectoid connectoid) {    
     connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<DirectedConnectoid>(1));
@@ -266,14 +269,15 @@ public class PlanitOsmZoningReaderPlanitData {
   }  
   
   /** Verify if transfer zone has connectoids present
-   * @param transferZone
+   * 
+   * @param transferZone to check for
    * @return true when there exist connectoids that reference this transfer zone, false otherwise
    */
   public boolean hasConnectoids(TransferZone transferZone) {
     return getConnectoidsByTransferZone(transferZone) != null && !getConnectoidsByTransferZone(transferZone).isEmpty();
   }
   
-  /** register a known mapping from transfer zone to connectoid
+  /** Register a known mapping from transfer zone to connectoid
    * 
    * @param transferZone to map to...
    * @param newConnectoid ...this connectoid
@@ -288,15 +292,16 @@ public class PlanitOsmZoningReaderPlanitData {
   
   /* TRANSFER ZONE GROUP RELATED METHODS */  
   
-  /** collect a parsed transfer zone group by osm id
-   * @param osmId
+  /** collect a parsed transfer zone group by OSM id
+   * @param osmId to use
    * @return transfer zone group
    */
   public TransferZoneGroup getTransferZoneGroupByOsmId(long osmId) {
     return transferZoneGroupsByOsmId.get(osmId);
   }  
   
-  /** add a transfer zone group by its osm id
+  /** Add a transfer zone group by its OSM id
+   * 
    * @param osmId to use
    * @param transferZoneGroup group to add
    * @return group in container location before this one was added, null if none existed
@@ -306,7 +311,7 @@ public class PlanitOsmZoningReaderPlanitData {
   }
 
   /**
-   * reset the planit data tracking containers
+   * Reset the PLANit data tracking containers
    */
   public void reset() {
     transferZonesByOsmEntityId.clear();
@@ -317,7 +322,8 @@ public class PlanitOsmZoningReaderPlanitData {
 
   /* SPATIAL LINK INDEX RELATED METHODS */
     
-  /** remove provided links from local spatial index based on links
+  /** Remove provided links from local spatial index based on links
+   * 
    * @param links to remove
    */
   public void removeLinksFromSpatialLinkIndex(Collection<Link> links) {
@@ -326,7 +332,8 @@ public class PlanitOsmZoningReaderPlanitData {
     }
   }  
   
-  /** add provided links to local spatial index based on their bounding box
+  /** Add provided links to local spatial index based on their bounding box
+   * 
    * @param links to add
    */  
   public void addLinksToSpatialLinkIndex(Collection<Link> links) {
@@ -335,7 +342,8 @@ public class PlanitOsmZoningReaderPlanitData {
     }
   }   
     
-  /** find links spatially based on the provided bounding box
+  /** Find links spatially based on the provided bounding box
+   * 
    * @param searchBoundingBox to use
    * @return links found intersecting or within bounding box provided
    */

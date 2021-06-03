@@ -41,6 +41,8 @@ public class OsmModeAccessDefaults implements Cloneable {
   
   /**
    * Default constructor
+   * 
+   * @param countryName to use
    */
   public OsmModeAccessDefaults(String countryName) {
     this.countryName = countryName;
@@ -50,6 +52,8 @@ public class OsmModeAccessDefaults implements Cloneable {
   
   /**
    * Copy constructor
+   * 
+   * @param other to use
    */
   public OsmModeAccessDefaults(OsmModeAccessDefaults other) {
     this.countryName = other.countryName;

@@ -96,7 +96,6 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>RACE_WAY</li>
    * </ul>
    * 
-   * @return the default created unsupported types
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultDeactivatedOsmHighwayTypes() throws PlanItException {

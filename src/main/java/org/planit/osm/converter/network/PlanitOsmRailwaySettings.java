@@ -207,7 +207,6 @@ public class PlanitOsmRailwaySettings extends PlanitOsmWaySettings {
    * @param osmRailwayType the type to set these values for
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
-   * @param modeProperties new values per mode
    */
   public void overwriteCapacityMaxDensityDefaults(String osmRailwayType, Number capacityPerLanePerHour, Number maxDensityPerLane) {
     overwriteOsmWayTypeDefaultCapacityMaxDensity(OsmRailwayTags.RAILWAY, osmRailwayType, capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue());

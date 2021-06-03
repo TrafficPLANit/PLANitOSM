@@ -13,7 +13,6 @@ import org.planit.osm.tags.OsmRailModeTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
-import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.locale.LocaleUtils;
 import org.planit.utils.misc.StringUtils;
 import org.planit.utils.locale.CountryNames;
@@ -253,9 +252,9 @@ public class OsmModeAccessDefaultsByCountry {
   }
       
   /**
-   * for all countries for which a dedicated CSV is available under the resources dir, we parse their mode access defaults
+   * For all countries for which a dedicated CSV is available under the resources dir, we parse their mode access defaults
    * accordingly
-   * @throws PlanItException thrown if error
+   * 
    */
   protected static void populateCountrySpecificDefaultModeAccess(){
     CountrySpecificDefaultUtils.callForEachFileInResourceDir(
@@ -317,8 +316,8 @@ public class OsmModeAccessDefaultsByCountry {
     }    
   }  
   
-  /** set defaults for a specific county
-   * @param countryName to set
+  /** Set defaults for a specific county
+   * 
    * @param modeAccessDefaults defaults to use
    */
   protected static void setDefaultsByCountry(OsmModeAccessDefaults modeAccessDefaults) {
@@ -331,6 +330,8 @@ public class OsmModeAccessDefaultsByCountry {
   
   /**
    * Default factory method for creating global defaults
+   * 
+   * @return created mode access defaults
    */
   public static OsmModeAccessDefaults create() {
     OsmModeAccessDefaults theDefaults = null;
@@ -346,6 +347,10 @@ public class OsmModeAccessDefaultsByCountry {
   /**
    * Factory method to create defaults based on a given country. If country cannot be found or cannot be converted
    * into ISO2 country code, we revert to global defaults
+   * 
+   * @param countryName to base on
+   * @return created mode access defaults
+   * 
    */
   public static OsmModeAccessDefaults create(String countryName) {
     OsmModeAccessDefaults theDefaults = null;

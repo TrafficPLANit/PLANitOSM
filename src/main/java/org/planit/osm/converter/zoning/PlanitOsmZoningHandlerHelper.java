@@ -357,17 +357,17 @@ public class PlanitOsmZoningHandlerHelper {
     return (String)transferZone.getInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY);
   }
   
-  /** Collect the station name for a transfer zone (if any)
+  /** Set the station name for a transfer zone
    * 
    * @param transferZone to use
    * @param stationName to set
-   * @return station name
    */
   public static void  setTransferZoneStationName(TransferZone transferZone, String stationName) {
     transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
   }  
   
   /** Verify if the transfer zone has a station name set
+   * 
    * @param transferZone to verify
    * @return true when present, false otherwise
    */  
@@ -532,10 +532,12 @@ public class PlanitOsmZoningHandlerHelper {
   }
 
   /** Verify if the waiting area for a stop_position for the given mode must be on the logical relative location (left hadn side for left hand drive) or not
+   * 
    * @param accessMode to check
    * @param transferZone required in case of user overwrite
    * @param osmStopLocationNodeId may be null if not available
-   * @param settings to see if user has provided any overwrite information 
+   * @param settings to see if user has provided any overwrite information
+   * @return true when restricted for driving direction, false otherwise 
    */
   public static boolean isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(
       final Mode accessMode, final TransferZone transferZone, final Long osmStopLocationNodeId, final PlanitOsmPublicTransportReaderSettings settings) {

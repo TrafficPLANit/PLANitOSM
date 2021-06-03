@@ -161,18 +161,19 @@ public class OsmRailwayTags {
   public static final String WORKSHOP = "workshop";
         
 
-  /** verify if passed in tag is indeed a railway mode value tag
-   * @param railwayTag to verify
+  /** Verify if passed in tag is indeed a railway mode value tag
+   * 
+   * @param railwayTagValue to verify
    * @return true when valid tag, otherwise false
    */
   public static boolean isRailBasedRailway(String railwayTagValue) {
     return RAILBASED_OSM_RAILWAY_VALUE_TAGS.contains(railwayTagValue);
   }
   
-  /** some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
+  /** Some rail based ways can be areas when tagged in a certain way. currently we do this for both stations and platforms
    * although technically platforms can be ways, but since we do not model them (as ways), we regard them as areas in all cases for now
 
-   * @param osmWay the way
+   * @param railwayTagValue the way
    * @param tags the tags
    * @return is the way an area and not a line based railway
    */
@@ -180,10 +181,10 @@ public class OsmRailwayTags {
     return AREABASED_OSM_RAILWAY_VALUE_TAGS.contains(railwayTagValue);
   } 
   
-  /** some railways are in fact valid railway value tags but do not represent a rail track. any such value tags that our parser is aware of can be verified through this method
+  /** Some railways are in fact valid railway value tags but do not represent a rail track. any such value tags that our parser is aware of can be verified through this method
    * using the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS}
    * 
-   * @param osmWay the way
+   * @param railwayTagValue the way
    * @param tags the tags
    * @return is the way an area and not a line based railway
    */

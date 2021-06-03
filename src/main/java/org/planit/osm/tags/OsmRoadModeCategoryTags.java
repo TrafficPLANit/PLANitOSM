@@ -162,8 +162,10 @@ public class OsmRoadModeCategoryTags {
     return osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<String>()).contains(osmModeCategory); 
   }
 
-  /** given the mode, find the related mode category
+  /** Given the mode, find the related mode category
+   * 
    * @param osmMode to get its categories for, null if not in a category
+   * @return road mode categories for mode
    */
   public static Set<String> getRoadModeCategoriesByMode(String osmMode) {    
     if(!OsmRoadModeTags.isRoadModeTag(osmMode)) {
@@ -176,8 +178,11 @@ public class OsmRoadModeCategoryTags {
     return osmMode2Categories.get(osmMode);
   }   
   
-  /** given the mode, find the related mode category
+  /** Given the mode, find the related mode category
+   * 
    * @param osmMode to get its categories for, null if not in a category
+   * @param osmModeCategory category to consider
+   * @return true when category false otherwise
    */
   public static boolean isRoadModeInCategory(String osmMode, String osmModeCategory) {
     Set<String> modeCategories = getRoadModeCategoriesByMode(osmMode);

@@ -186,14 +186,15 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    *  Create an OSM default link segment type
    *  
    * @param name name of the type
-   * @param maxSpeed of this type
-   * @param capacity capacity in pcu/h
+   * @param capacityPcuPerhour capacity in pcu/h
+   * @param maxSpeedKmh of this type
    * @param modes to identify layers to register link segment types on
    * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single entry, otherwise it might have more
    * @throws PlanItException thrown if error
    */
-  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createDefaultOsmLinkSegmentType(String name, double capacityPcuPerhour, double maxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createOsmLinkSegmentType(name, capacityPcuPerhour, PlanitOsmConstants.DEFAULT_MAX_DENSITY_LANE, maxSpeed, modes);
+  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createDefaultOsmLinkSegmentType(
+      String name, double capacityPcuPerhour, double maxSpeedKmh, Collection<Mode> modes) throws PlanItException {
+    return createOsmLinkSegmentType(name, capacityPcuPerhour, PlanitOsmConstants.DEFAULT_MAX_DENSITY_LANE, maxSpeedKmh, modes);
   }
   
   
@@ -818,6 +819,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   
   /**
    * Constructor
+   * 
+   * @param groupId to use for id generation
    */
   public PlanitOsmNetwork(final IdGroupingToken groupId) {
     super(groupId);    
@@ -825,9 +828,9 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   }
 
   /**
-   * find the link segment type (per layer) by the Highway=value, where we pass in the "value"
+   * Find the link segment type (per layer) by the Highway=value, where we pass in the "value"
    *  
-   * @param OSMHighwayTagValue the type of road to find
+   * @param osmHighwayTagValue the type of road to find
    * @return the link segment type that is registered per layer
    */
   public Map<InfrastructureLayer, MacroscopicLinkSegmentType> getDefaultLinkSegmentTypeByOsmTag(final String osmHighwayTagValue) {
@@ -838,6 +841,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * Create the link segment types that are marked in the passed in settings. As long as they have defaults that
    * are supported, these will be created as indicated. If not available a warning is issued and a link segment type is created based on the default chosen in settings
    * 
+   * @param settings to use
    * @return the default created supported types 
    * @throws PlanItException thrown when error
    */

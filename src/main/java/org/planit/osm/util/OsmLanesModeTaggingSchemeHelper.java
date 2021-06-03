@@ -14,7 +14,7 @@ import java.util.Set;
  * to identify which of the lanes belongs to a mode but it does allow one to identify how many lanes (and possibly in what direction) are dedicated to a mode.
  * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
  * <p>
- * Methods that help identify modes specified using the lanes:/<mode/>:*=* scheme. since this scheme applies across a number of modes
+ * Methods that help identify modes specified using the {@code lanes:<mode>:*=*} scheme. since this scheme applies across a number of modes
  * it is useful to group the functionality in a separate class
  * </p>
  * 
@@ -23,18 +23,18 @@ import java.util.Set;
  */
 public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
       
-  /** lanes:<mode> tags */
+  /** {@code lanes:<mode>} tags */
   protected Map<String,String> lanesModeKeyTags = new HashMap<String, String>();
   
-  /** lanes:<mode>:forward tags */
+  /** {@code lanes:<mode>:forward} tags */
   protected final Map<String,String> lanesModeForwardKeyTags = new HashMap<String, String>();
   
-  /** lanes:<mode>:backward tags */
+  /** {@code lanes:<mode>:backward} tags */
   protected final Map<String,String> lanesModeBackwardKeyTags = new HashMap<String, String>();  
    
     
   /**
-   * initialise all the relevant keys for which to check that pertain to this scheme in combination with the chosen modes
+   * Initialise all the relevant keys for which to check that pertain to this scheme in combination with the chosen modes
    */
   private void initialise() {    
     if(hasEligibleModes()) {
@@ -80,7 +80,8 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   } 
   
   /** Constructor
-   * @param eligibleOsmModes (or road mode categories) to consider for the lane modes scheme
+   * 
+   * @param theEligibleOsmModes (or road mode categories) to consider for the lane modes scheme
    */
   public OsmLanesModeTaggingSchemeHelper(final Set<String> theEligibleOsmModes) {   
     super(theEligibleOsmModes);
@@ -88,7 +89,7 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   }
     
   /**
-   * collect the registered eligible Osm modes with lanes present without any further direction information via the lanes:/<mode/> mode tags
+   * Collect the registered eligible Osm modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
    * 
    * @param tags to use
    */
@@ -97,10 +98,11 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   }
   
   /**
-   * collect the registered eligible Osm modes with lanes present without any further direction information via the lanes:/<mode/> mode tags
+   * Collect the registered eligible Osm modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
    * 
    * @param tags to use
    * @param isForwardDirection when true explore only forward direction, when false only backward direction
+   * @return modes with lanes in direction indicated
    */
   public Set<String> getModesWithLanesInDirection(Map<String,String> tags, boolean isForwardDirection) {
     Map<String,String> directionalKeyTags = isForwardDirection ? lanesModeForwardKeyTags : lanesModeBackwardKeyTags;

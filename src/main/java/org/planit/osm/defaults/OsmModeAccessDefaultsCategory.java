@@ -350,6 +350,8 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
   
   /**
    * Default constructor
+   * 
+   * @param countryName to use
    */
   public OsmModeAccessDefaultsCategory(String countryName) {
     this.countryName = countryName;
@@ -360,6 +362,8 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
   
   /**
    * Copy constructor
+   * 
+   * @param other to copy from
    */
   public OsmModeAccessDefaultsCategory(OsmModeAccessDefaultsCategory other) {
     this();
@@ -377,8 +381,9 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
     return this.countryName;
   }
   
-  /** set the country name that represents these defaults
-   * @param countryName
+  /** Set the country name that represents these defaults
+   * 
+   * @param countryName to set
    */
   public void setCountry(String countryName) {
     this.countryName = countryName;
@@ -466,7 +471,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
   }
   
   /**
-   * remove the passed in modes as modes that are NOT allowed access for the given highway type
+   * Remove the passed in modes as modes that are NOT allowed access for the given highway type
    * 
    * @param wayType to use
    * @param osmModes to remove from disallowing
@@ -480,6 +485,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    * Verify if mode is allowed for given way type. If none of the allowed/disallowed configuration options includes the passed in mode
    * it is assumed the mode is not allowed
    * 
+   * @paam osmWayValue to check for
    * @param osmMode to verify
    * @return true when allowed, false when disallowed, false if unknown
    */

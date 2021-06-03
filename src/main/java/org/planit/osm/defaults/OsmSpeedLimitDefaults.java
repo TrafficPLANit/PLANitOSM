@@ -66,13 +66,15 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   }  
 
   
-  /** constructor 
+  /** Constructor
+   *  
    * @param countryName country
    * @param urbanHighwayDefaults defaults
    * @param nonUrbanHighwayDefaults defaults
-   * @param nonUrbanHighwayDefaults defaults
+   * @param railwayDefaults defaults
    */
-  public OsmSpeedLimitDefaults(String countryName, OsmSpeedLimitDefaultsCategory urbanHighwayDefaults, OsmSpeedLimitDefaultsCategory nonUrbanHighwayDefaults, OsmSpeedLimitDefaultsCategory railwayDefaults) {
+  public OsmSpeedLimitDefaults(
+      String countryName, OsmSpeedLimitDefaultsCategory urbanHighwayDefaults, OsmSpeedLimitDefaultsCategory nonUrbanHighwayDefaults, OsmSpeedLimitDefaultsCategory railwayDefaults) {
     this.countryName = countryName;
     this.urbanHighwayDefaults =urbanHighwayDefaults;
     this.nonUrbanHighwayDefaults =nonUrbanHighwayDefaults;
@@ -80,8 +82,8 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   }
   
   /** Copy constructor 
+   * 
    * @param other
-   * @throws CloneNotSupportedException  thrown if error
    */
   public OsmSpeedLimitDefaults(OsmSpeedLimitDefaults other) {
     if(other != null) {

@@ -55,8 +55,9 @@ public class OsmWaterModeTags {
     return MODE_TAGS.toArray(new String[MODE_TAGS.size()]);
   }  
   
-  /** verify if any of the passed in osmModes can be qualified as a water mode
-   * @param osmModes
+  /** Verify if any of the passed in osmModes can be qualified as a water mode
+   * 
+   * @param osmModes to consider
    * @return true when overlap exists, false otherwise
    */
   public static boolean containsAnyMode(Collection<String> osmModes) {

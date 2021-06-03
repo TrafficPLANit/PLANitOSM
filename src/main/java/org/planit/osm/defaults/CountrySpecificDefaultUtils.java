@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -35,10 +34,10 @@ public class CountrySpecificDefaultUtils {
   private static final Logger LOGGER = Logger.getLogger(CountrySpecificDefaultUtils.class.getCanonicalName());
 
   
-  /** call consumer for each country specific file in resource dir
+  /** Call consumer for each country specific file in resource dir
+   * 
    * @param resourceDir to use
    * @param callBack to use
-   * @throws URISyntaxException thrown if error
    */
   public static void callForEachFileInResourceDir(final String resourceDir, final BiConsumer<InputStreamReader, String> callBack) {
     try {
@@ -94,7 +93,7 @@ public class CountrySpecificDefaultUtils {
    * Each file should be named according to ISO366 alpha 2 country code. If valid the full country name
    * is returned 
    * 
-   * @param path to validate
+   * @param filePath to validate
    * @return full country name, otherwise null
    * @throws PlanItException thrown if error
    */

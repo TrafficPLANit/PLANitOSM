@@ -133,7 +133,7 @@ public class PlanitOsmNetworkReaderLayerData {
     return null;
   } 
   
-  /** collect the planit node available for the given location
+  /** Collect the PLANit node available for the given location
    * 
    * @param location to find for
    * @return PLANit node found, null if not found
@@ -149,11 +149,11 @@ public class PlanitOsmNetworkReaderLayerData {
     return null;
   }  
   
-  /** collect the osm node available for the given location (if any), either internal to existing planit node
-   * or already available as converted planit node at that location
+  /** Collect the OSM node available for the given location (if any), either internal to existing PLANit node
+   * or already available as converted PLANit node at that location
    * 
    * @param location to find for
-   * @param osmNode found null otherwise
+   * @return osmNode found null otherwise
    */  
   public OsmNode getOsmNodeByLocation(Point location) {
     if(location != null) {
@@ -168,7 +168,7 @@ public class PlanitOsmNetworkReaderLayerData {
     return null;
   }  
   
-  /** provide read access to the registered planit nodes (and original osm node if any was used) by location
+  /** provide read access to the registered PLANit nodes (and original OSM node if any was used) by location
    * 
    * @return mapping of locations for which planit nodes are created, potentially based on osm node
    */

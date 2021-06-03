@@ -347,16 +347,15 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
    * @param osmWayKey way key to collect default lanes for
    * @param osmWayValue way value to collect default lanes for
    * @return number of default lanes
-   * @throws PlanItException thrown if error
    */
   public Integer getDefaultDirectionalLanesByWayType(String osmWayKey, String osmWayValue) {
     return this.laneConfiguration.getDefaultDirectionalLanesByWayType(osmWayKey, osmWayValue);    
   }
   
-  /** Collect the mapped osm modes based on the provided planit mode
+  /** Collect the mapped OSM modes based on the provided PLANit mode
    * 
-   * @param planitMode to get mapped planit modes for
-   * @return mapped osm modes, empty if no matches
+   * @param planitMode to get mapped PLANit modes for
+   * @return mapped OSM modes, empty if no matches
    */  
   public Collection<String> getMappedOsmModes(Mode planitMode) {
     Collection<String> theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitMode);
@@ -365,10 +364,10 @@ public class PlanitOsmNetworkReaderSettings extends PlanitOsmReaderSettings{
     return theRoadModes;
   }  
   
-  /** Collect the mapped osm modes based on the provided planit modes (if any)
+  /** Collect the mapped OSM modes based on the provided PLANit modes (if any)
    * 
-   * @param planitModes to get mapped planit modes for
-   * @return mapped osm modes, empty if no matches
+   * @param planitModes to get mapped PLANit modes for
+   * @return mapped OSM modes, empty if no matches
    */
   public Set<String> getMappedOsmModes(Collection<Mode> planitModes) {
     HashSet<String> mappedOsmModes = new HashSet<String>();

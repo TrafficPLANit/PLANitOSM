@@ -137,6 +137,8 @@ public class OsmBicycleTags {
   
   /** Collect basic cycleway key tags based on {@code BASIC_CYCLEWAY_KEY_TAGS}, when includeLocationSubKey is true, we also include the subtags left and right consistent with
    * {@code BASIC_AND_LOCATION_BASED_KEY_TAGS}
+   * 
+   * @param includeLocationSubflag
    * @return request key tags
    */
   public static final String[] getCycleWayKeyTags(boolean includeLocationSubKey) {
@@ -148,6 +150,7 @@ public class OsmBicycleTags {
    }
   
   /** Collect our used cycleway key tags (including subtags) based on {@code ONEWAY_LOCATION_BASED_CYCLEWAY_KEY_TAGS}
+   * 
    * @return location based (left,right) one way cycleway keys
    */
   public static String[] getCycleWayOneWayLocationBasedKeyTags() {  
@@ -155,7 +158,7 @@ public class OsmBicycleTags {
    }
   
 
-  /** collect all value tags that are deemed to represent a cycleway in the main direction(s) of travel, based on
+  /** Collect all value tags that are deemed to represent a cycleway in the main direction(s) of travel, based on
    *  {@code CYCLEWAY_VALUE_TAGS_MAIN_DIRECTION} protected member
    * 
    * @return main direction value tags indicating a cycleway
@@ -230,8 +233,9 @@ public class OsmBicycleTags {
   }   
   
 
-  /** Verify if a bi directional cycle way is present on either the left or right hand side of the way, e.g. cycleway:left:oneway =<negative access value> or
-   * cycleway:right:oneway =<negative access value>
+  /** Verify if a bi directional cycle way is present on either the left or right hand side of the way, e.g. {@code cycleway:left:oneway =<negative access value>} or
+   * {@code cycleway:right:oneway =<negative access value>}
+   * 
    * @param tags to verify
    * @return true when present, false otherwise
    */

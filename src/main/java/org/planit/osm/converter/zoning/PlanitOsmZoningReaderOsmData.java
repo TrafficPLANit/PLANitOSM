@@ -226,7 +226,7 @@ public class PlanitOsmZoningReaderOsmData {
     osmOuterRoleOsmWaysToKeep.remove(osmWayId);
   }
   
-  /** verify if the passed in osm way should be kept (even if it is not converted to a PLANit link
+  /** verify if the passed in OSM way should be kept (even if it is not converted to a PLANit link
    * based on its current tags
    * 
    * @param osmWay to verify
@@ -236,10 +236,10 @@ public class PlanitOsmZoningReaderOsmData {
     return osmOuterRoleOsmWaysToKeep.containsKey(osmWay.getId());
   }
   
-  /** add osm way to keep. Should be based on a positive result from {@link shouldOsmWayBeKept}
+  /** Add OSM way to keep. Should be based on a positive result from shouldOsmWayBeKept
    * 
    * @param osmWay to keep
-   * @return osm way that was located in positino of new osmWay, or null if none
+   * @return osm way that was located in position of new osmWay, or null if none
    */
   public OsmWay addOsmRelationOuterRoleOsmWay(OsmWay osmWay) {
     return osmOuterRoleOsmWaysToKeep.put(osmWay.getId(), osmWay);

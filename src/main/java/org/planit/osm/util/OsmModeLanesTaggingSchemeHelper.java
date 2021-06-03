@@ -22,17 +22,17 @@ import java.util.Set;
  */
 public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     
-  /** /<mode/>:lanes tags */
+  /** {@code <mode>:lanes} tags */
   protected final Map<String,String> modeLanesKeyTags = new HashMap<String, String>();
   
-  /** /<mode/>:lanes:forward tags */
+  /** {@code <mode>:lanes:forward} tags */
   protected final Map<String,String> modeLanesForwardKeyTags = new HashMap<String, String>();
   
-  /**  /<mode/>:lanes:backward tags */
+  /**  {@code <mode>:lanes:backward} tags */
   protected final Map<String,String> modeLanesBackwardKeyTags = new HashMap<String, String>();      
     
   /**
-   * initialise all the relevant keys for which to check that pertain to this scheme in combination with the chosen modes
+   * Initialise all the relevant keys for which to check that pertain to this scheme in combination with the chosen modes
    */
   private void initialise() {    
     if(hasEligibleModes()) {
@@ -45,13 +45,14 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     }
   }
   
-  /** Verify if any modes that can be identified via the /<mode/>:lanes tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme. 
+  /** Verify if any modes that can be identified via the {@code <mode>:lanes} tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme. 
    * Currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
    * <li>hgv</li>
    * </ul>
+   * 
    * @param settings containing the activated and mapped Osm to PLANit modes
    * @param networkLayer to identify supported modes on the layer, which is a subset of all mapped modes 
    * @return yes, when these modes are activated, false otherwise
@@ -60,7 +61,7 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings, networkLayer);
   }  
   
-  /** collect activated modes(and their mode categories) that can be identified via the /<mode/>:lanes tagging scheme are currently supported. currently we only consider:
+  /** collect activated modes(and their mode categories) that can be identified via the {@code <mode>:lanes} tagging scheme are currently supported. currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
@@ -74,28 +75,30 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   }   
   
   /** Constructor
-   * @param eligibleOsmModes (or road mode categories) to consider for the lane modes scheme
+   * 
+   * @param theEligibleOsmModes (or road mode categories) to consider for the lane modes scheme
    */
   public OsmModeLanesTaggingSchemeHelper(final Set<String> theEligibleOsmModes) {   
     super(theEligibleOsmModes);
     initialise();
   }
-  
-  
+    
   /**
-   * collect the registered eligible Osm modes with lanes present without any further direction information via the lanes:/<mode/> mode tags
+   * Collect the registered eligible OSM modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
    * 
    * @param tags to use
+   * @return modes found
    */
   public Set<String> getModesWithLanesWithoutDirection(Map<String,String> tags) {
     return getMappedModesForAvailableKeys(tags, modeLanesKeyTags);
   }
   
   /**
-   * collect the registered eligible Osm modes with lanes present for a praticular direction via the lanes:/<mode/> mode tags
+   * collect the registered eligible OSM modes with lanes present for a particular direction via the {@code lanes:<mode>} mode tags
    * 
    * @param tags to use
    * @param isForwardDirection when true explore only forward direction, when false only backward direction
+   * @return modes in given direction
    */
   public Set<String> getModesWithLanesInDirection(Map<String,String> tags, boolean isForwardDirection) {
     Map<String,String> directionalKeyTags = isForwardDirection ? modeLanesForwardKeyTags : modeLanesBackwardKeyTags;

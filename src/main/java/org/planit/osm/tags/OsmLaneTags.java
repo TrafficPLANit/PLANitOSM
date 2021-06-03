@@ -47,7 +47,7 @@ public static final String LANES_BUS_FORWARD = OsmTagUtils.createCompositeOsmKey
    * 
    * @param tags to verify
    * @param keys eligible keys
-   * @return true when <key>=lane is present, false otherwise
+   * @return true when {@code <key>=lane} is present, false otherwise
    */
   public static boolean isLaneIncludedForAnyOf(Map<String, String> tags, String... keys) {
     return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.LANE);
@@ -57,7 +57,7 @@ public static final String LANES_BUS_FORWARD = OsmTagUtils.createCompositeOsmKey
    * 
    * @param tags to verify
    * @param keys eligible keys
-   * @return true when <key>=opposite_lane is present, false otherwise
+   * @return true when {@code <key>=opposite_lane} is present, false otherwise
    */
   public static boolean isOppositeLaneIncludedForAnyOf(Map<String, String> tags, String... keys) {
     return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, keys, OsmLaneTags.OPPOSITE_LANE);

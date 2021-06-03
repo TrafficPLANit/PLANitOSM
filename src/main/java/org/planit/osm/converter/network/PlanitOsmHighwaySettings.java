@@ -57,7 +57,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * that are mapped here are also mapped by the writer to the output format to ensure a correct I/O mapping of modes
    * 
    * The default mapping is provided below. It is important to realise that modes that are marked as N/A have no predefined
-   * equivalent in PLANit, as a result they are ignored. One could add them to a known predefined mode, e.g., MOPED -> MotorBikeMode, 
+   * equivalent in PLANit, as a result they are ignored. One could add them to a known predefined mode, e.g., MOPED to MotorBikeMode, 
    * however, this would mean that a restriction on for example mopeds would also be imposed on motor bikes and this is something you 
    * likely do not want. If you must include mopeds, then add a custom mapping to a custom mode afterwards, so it is modelled 
    * separately. Again, when also persisting using a network converter, make sure the custom mode is also used in the writer to 
@@ -298,7 +298,6 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
    * @param osmHighwayType the type to set these values for
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
-   * @param modeProperties new values per mode
    */
   public void overwriteCapacityMaxDensityDefaults(final String osmHighwayType, Number capacityPerLanePerHour, Number maxDensityPerLane) {
     overwriteOsmWayTypeDefaultCapacityMaxDensity(OsmHighwayTags.HIGHWAY, osmHighwayType, capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue());

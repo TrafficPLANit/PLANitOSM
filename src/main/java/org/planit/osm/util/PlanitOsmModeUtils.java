@@ -100,11 +100,12 @@ public class PlanitOsmModeUtils {
     return foundModes;
   }  
   
-  /** Collect the osm modes that are deemed eligible for this entity (platform, station, halt, etc.). A mode is eligible when
+  /** Collect the OSM modes that are deemed eligible for this entity (platform, station, halt, etc.). A mode is eligible when
    * marked as yes, e.g. ferry=yes, or when none are marked explicitly we assume the the default (if provided). When modes are marked
    * as non-accessible, they are removed from the explicitly included modes. We use a selected set of supported modes passed in to select from 
    * 
    * @param tags related to the node
+   * @param selectableOsmModes to choose from
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
@@ -123,7 +124,7 @@ public class PlanitOsmModeUtils {
     return explicitlyIncludedOsmModes;       
   }  
   
-  /** collect all OSM road going modes with key=\<OSM mode name\> value=the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM road going modes with {@code key=<OSM mode name>} value=the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
@@ -134,7 +135,7 @@ public class PlanitOsmModeUtils {
     return getPostfixedOsmRoadModesWithValueTag(null, tags, modeAccessValueTags);
   }
   
-  /** collect all OSM rail modes with key=\<OSM mode name\> value=the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM rail modes with {@code key=<OSM mode name> value=the access value tags that are passed in}. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
@@ -145,7 +146,7 @@ public class PlanitOsmModeUtils {
     return getOsmModesWithValueTag(tags, OsmRailModeTags.getSupportedRailModeTags(), modeAccessValueTags);        
   }  
   
-  /** collect all OSM modes with key=\<OSM mode name\>:postFix= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM modes with {@code key=<OSM mode name>:postFix=} any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param postFix to utilise
@@ -157,7 +158,7 @@ public class PlanitOsmModeUtils {
     return getPrefixedOrPostfixedOsmRoadModesWithValueTag(false, postFix, tags, modeAccessValueTags);
   }  
   
-  /** collect all OSM modes with key=preFix:\<OSM mode name\>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM modes with {@code key=preFix:<OSM mode name>= any of the modeAccessValueTags} that are passed in. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
@@ -307,8 +308,9 @@ public class PlanitOsmModeUtils {
    * <li>railway=stop gives train</li>
    * <li>railway=tram_stop gives tram</li>
    * </ul> 
+   * 
    * @param tags to extract information from
-   * @param backupDefaultMode if none can be found, this mode is used, may be null
+   * @return default mode found, null if nothing is found
    */
   public static String identifyPtv1DefaultMode(Map<String, String> tags) {
    return identifyPtv1DefaultMode(tags, null);
@@ -327,6 +329,7 @@ public class PlanitOsmModeUtils {
    * <li>railway=stop gives train</li>
    * <li>railway=tram_stop gives tram</li>
    * </ul> 
+   * 
    * @param tags to extract information from
    * @param backupDefaultMode if none can be found, this mode is used, may be null
    * @return default mode, null if no match could be made

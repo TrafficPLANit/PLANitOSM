@@ -140,7 +140,8 @@ public class OsmLaneDefaults implements Cloneable {
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).
    * In case no number of lanes is specified for the type, we revert to the missing default
    * 
-   * @param type highway type value
+   * @param osmWayKey OSM highway key
+   * @param osmWayValue OSM highway value
    * @return number of lanes for this type (if any), otherwise null is returned
    */
   public Integer getDefaultDirectionalLanesByWayType(String osmWayKey, String osmWayValue) {

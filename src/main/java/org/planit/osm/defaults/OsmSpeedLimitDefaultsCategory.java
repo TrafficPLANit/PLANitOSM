@@ -51,7 +51,7 @@ public class OsmSpeedLimitDefaultsCategory implements Cloneable {
   }   
   
   /**
-   * copy constructor
+   * Copy constructor
    *  
    * @param other to use
    * 
@@ -62,17 +62,16 @@ public class OsmSpeedLimitDefaultsCategory implements Cloneable {
     this.speedLimitDefaults =  new HashMap<String,Double>(other.speedLimitDefaults);
   }
   
-  /** set a speed default for a given type
+  /** Set a speed default for a given type
    * 
    * @param type of the way to set speed default for
    * @param speedLimitKmH the physical speed limit (km/h)
-   * @param nonUrbanSpeedLimit the physical speed limit (km/h)
    */
   public void setSpeedLimitDefault(final String type, double speedLimitKmH){
     speedLimitDefaults.put(type, speedLimitKmH);
   }
   
-  /** get a speed limit default for a given way type
+  /** Get a speed limit default for a given way type
    * 
    * @param type of way to get speed default for
    * @return the physical speed limit (km/h)
