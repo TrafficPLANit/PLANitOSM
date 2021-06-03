@@ -83,7 +83,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
   
   /** Copy constructor 
    * 
-   * @param other
+   * @param other to copy from
    */
   public OsmSpeedLimitDefaults(OsmSpeedLimitDefaults other) {
     if(other != null) {

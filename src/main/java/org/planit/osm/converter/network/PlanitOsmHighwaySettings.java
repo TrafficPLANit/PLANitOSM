@@ -304,7 +304,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   }    
   
   /**
-   * collect the overwrite type values that should be used
+   * Collect the overwrite type values that should be used
    * 
    * @param osmWayType to collect overwrite values for
    * @return the new values capacity (pcu/lane/h) and maxDensity (pcu/km/lane)
@@ -314,7 +314,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   }
   
   /**
-   * check if defaults should be overwritten
+   * Check if defaults should be overwritten
    * 
    * @param osmWayType to check
    * @return true when new defaults are provided, false otherwise

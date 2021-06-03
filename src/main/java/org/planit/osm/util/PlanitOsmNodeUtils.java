@@ -111,24 +111,27 @@ public class PlanitOsmNodeUtils {
     return Double.POSITIVE_INFINITY;    
   }  
   
-  /** collect the coordinate from the osm node information
-   * @param osmNode
-   * @return
+  /** Collect the coordinate from the osm node information
+   * 
+   * @param osmNode to use
+   * @return created coordinate
    */
   public static Coordinate createCoordinate(OsmNode osmNode) {
     return new Coordinate(getX(osmNode), getY(osmNode));
   }
   
-  /** create a point from the node
+  /** Create a point from the node
+   * 
    * @param osmNode to create point for
-   * @return point
+   * @return point created
    * @throws PlanItException thrown if error
    */
   public static Point createPoint(OsmNode osmNode) {
     return PlanitJtsUtils.createPoint(createCoordinate(osmNode));
   }  
   
-  /** create a point based on the osm node 
+  /** Create a point based on the OSMnode
+   *  
    * @param osmNodeId to create point for
    * @param osmNodes to collect node from
    * @return created node, or null of osmNodeId is unknown is passed in osmNodes
@@ -242,7 +245,7 @@ public class PlanitOsmNodeUtils {
     return null;
   }
   
-  /** create a coordinate at the location that represents the closest point between the osmNode and the passed in geometry
+  /** Create a coordinate at the location that represents the closest point between the osmNode and the passed in geometry
    * 
    * @param osmNode reference node
    * @param geometry geometry to find closest location to node on
@@ -255,12 +258,12 @@ public class PlanitOsmNodeUtils {
     return geoUtils.getClosestProjectedCoordinateOnLineString(osmNodeLocation, geometry);
   }  
   
-  /** find the closest link to the node location. This method computes the actual distance between any location on any line segment of the geometry of the link
-   * and the reference point (osm node) and it is therefore very precise.
+  /** Find the closest link to the node location. This method computes the actual distance between any location on any line segment of the geometry of the link
+   * and the reference point (OSM node) and it is therefore very precise.
    * 
    * 
    * @param osmNode reference node
-   * @param zones to check against using their geometries
+   * @param edges to check against using their geometries
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
    * @throws PlanItException thrown if error
@@ -269,12 +272,12 @@ public class PlanitOsmNodeUtils {
     return findEdgeClosest(osmNode, edges, Double.POSITIVE_INFINITY, geoUtils);    
   }    
   
-  /** find the closest edge to the node location. This method computes the actual distance between any location on any line segment of geometry
-   * of the link and the reference point (osm node) and it therefore very precise. A cap is placed on how far a zone is allowed to be to still be regarded as closest
+  /** Find the closest edge to the node location. This method computes the actual distance between any location on any line segment of geometry
+   * of the link and the reference point (OSM node) and it therefore very precise. A cap is placed on how far a zone is allowed to be to still be regarded as closest
    * via maxDistanceMeters.
    * 
    * @param osmNode reference node
-   * @param zones to check against using their geometries
+   * @param edges to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria

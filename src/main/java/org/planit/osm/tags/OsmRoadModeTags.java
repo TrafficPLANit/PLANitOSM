@@ -172,15 +172,16 @@ public class OsmRoadModeTags {
     return MODE_TAGS.toArray(modeTagsArray);
   }
 
-  /** verify if any of the passed in osmModes can be qualified as a road mode
-   * @param osmModes
+  /** Verify if any of the passed in osmModes can be qualified as a road mode
+   * 
+   * @param osmModes to consider
    * @return true when overlap exists, false otherwise
    */
   public static boolean containsAnyMode(final Collection<String> osmModes) {
     return !Collections.disjoint(MODE_TAGS, osmModes);
   }
 
-  /** collect the modes that represent the intersection of the passed in modes and available modes of this class
+  /** Collect the modes that represent the intersection of the passed in modes and available modes of this class
    * 
    * @param eligibleOsmModes to use
    * @return intersection with modes in this class

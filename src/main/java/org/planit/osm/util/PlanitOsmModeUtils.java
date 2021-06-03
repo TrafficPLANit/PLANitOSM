@@ -33,12 +33,13 @@ public class PlanitOsmModeUtils {
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmModeUtils.class.getCanonicalName());
  
   
-  /** collect all OSM modes with either preFix:<OSM mode name>= or postFix:<OSM mode name>= any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
-   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+  /** Collect all OSM modes with either {@code preFix:<OSM mode name>=} or {@code postFix:<OSM mode name>= any of the modeAccessValueTags that are passed in}. 
+   * Note that the actual value of the tags will be stripped from special characters to make it more universal to match the pre-specified mode 
+   * access value tags that we expect to be passed in.
    * 
    * @param isprefix when true prefix applied, when false, postfix
    * @param alteration, the post or prefix alteration of the mode key
-   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param tags to find explicitly included/excluded (PLANit) modes from
    * @param modeAccessValueTags used to filter the modes by
    * @return modes found with specified value tag
    */    
@@ -75,7 +76,7 @@ public class PlanitOsmModeUtils {
     return foundModes;
   }   
   
-  /** collect all OSM modes with key=\<OSM mode name\> value=the access value tags that are passed in and available from the supported modes (also passed in). 
+  /** Collect all OSM modes with {@code key=<OSM mode name>} value=the access value tags that are passed in and available from the supported modes (also passed in). 
    * Note that the actual value of the tags will be stripped from special characters to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
@@ -161,6 +162,7 @@ public class PlanitOsmModeUtils {
   /** collect all OSM modes with {@code key=preFix:<OSM mode name>= any of the modeAccessValueTags} that are passed in. Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
+   * @param prefix considered
    * @param tags to find explicitly included/excluded (planit) modes from
    * @param modeAccessValueTags used to filter the modes by
    * @return modes found with specified value tag

@@ -130,16 +130,17 @@ public class PlanitOsmUtils {
     return false;
   }
   
-  /** find the zone closest to the passed in osm Entity
+  /** Find the zone closest to the passed in OSM Entity
    * 
    * @param osmEntity to find closest zone for
-   * @param matchedTransferZones to check against
+   * @param transferZoneGroups to check against
    * @param osmNodes to extract geo information from if needed
-   * @param geoUtils used to cmpute distances
+   * @param geoUtils used to compute distances
    * @return closest zone found
    * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosestByTransferGroup(OsmEntity osmEntity, Collection<? extends TransferZoneGroup> transferZoneGroups, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosestByTransferGroup(
+      OsmEntity osmEntity, Collection<? extends TransferZoneGroup> transferZoneGroups, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     Set<Zone> closestPerGroup = new HashSet<Zone>();
     for(TransferZoneGroup group : transferZoneGroups) {
       Zone closestOfGroup = findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, geoUtils);
@@ -149,10 +150,10 @@ public class PlanitOsmUtils {
     return findZoneClosest(osmEntity, closestPerGroup, osmNodes, geoUtils);
   }    
 
-  /** find the zone closest to the passed in osm Entity
+  /** Find the zone closest to the passed in OSM Entity
    * 
    * @param osmEntity to find closest zone for
-   * @param matchedTransferZones to check against
+   * @param zones to check against
    * @param osmNodes to extract geo information from if needed
    * @param geoUtils used to compute distances
    * @return closest zone found

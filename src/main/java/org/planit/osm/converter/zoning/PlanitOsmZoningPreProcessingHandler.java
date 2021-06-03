@@ -32,7 +32,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmZoningPreProcessingHandler.class.getCanonicalName());         
 
   /**
-   * constructor
+   * Constructor
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers

@@ -68,14 +68,15 @@ public class OsmRailModeTags {
   }
   
   /**
-   * provide a copy of all supported rail mode tags
+   * Provide a copy of all supported rail mode tags
+   * 
    * @return all supported rail modes
    */  
   public static String[] getSupportedRailModeTagsAsArray() {
     return MODE_TAGS.toArray(new String[MODE_TAGS.size()]);
   }  
 
-  /** convert the rail mode to the related railway type. In all cases they are the same, except for mode "train" which translates to railway=rail
+  /** Convert the rail mode to the related railway type. In all cases they are the same, except for mode "train" which translates to railway=rail
    * 
    * @param osmMode to convert
    * @return converted railway value that goes with the mode
@@ -84,7 +85,7 @@ public class OsmRailModeTags {
     return TRAIN.equals(osmMode) ? OsmRailwayTags.RAIL : osmMode; 
   }
   
-  /** convert the railway to the related  mode. In all cases they are the same, except for mode "train" which translates to railway=rail
+  /** Convert the railway to the related  mode. In all cases they are the same, except for mode "train" which translates to railway=rail
    * 
    * @param osmRailwayValue to convert
    * @return converted mode that goes with the railway 
@@ -93,15 +94,16 @@ public class OsmRailModeTags {
     return OsmRailwayTags.RAIL.equals(osmRailwayValue) ? TRAIN : osmRailwayValue;
   } 
   
-  /** verify if any of the passed in osmModes can be qualified as a rail mode
-   * @param osmModes
+  /** Verify if any of the passed in osmModes can be qualified as a rail mode
+   * 
+   * @param osmModes to consider
    * @return true when overlap exists, false otherwise
    */
   public static boolean containsAnyMode(Collection<String> osmModes) {
     return !Collections.disjoint(MODE_TAGS, osmModes);
   }  
   
-  /** collect the modes that represent the intersection of the passed in modes and available modes of this class
+  /** Collect the modes that represent the intersection of the passed in modes and available modes of this class
    * 
    * @param eligibleOsmModes to use
    * @return intersection with modes in this class

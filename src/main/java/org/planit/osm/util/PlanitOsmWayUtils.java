@@ -43,10 +43,11 @@ public class PlanitOsmWayUtils {
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmWayUtils.class.getCanonicalName());
   
-  /** find the closest planit entity to the way from the available entities. This method computes the actual distance between any location on any line segment of the 
+  /** find the closest PLANit entity to the way from the available entities. This method computes the actual distance between any location on any line segment of the 
    * geometry of the entity and any node on the way and it is therefore is very precise.
    * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
-   * 
+   *
+   * @param <T> type of the PLANit entity
    * @param osmWay reference way
    * @param planitEntities to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
@@ -55,7 +56,8 @@ public class PlanitOsmWayUtils {
    * @return closest, null if none matches criteria
    * @throws PlanItException thrown if error
    */
-  protected static <T> T findPlanitEntityClosest(final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  protected static <T> T findPlanitEntityClosest(
+      final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
     T closestPlanitEntity = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
@@ -97,7 +99,7 @@ public class PlanitOsmWayUtils {
     return false;
   }  
   
-  /** Verify if the osm way is a perfect loop, i.e., its first node equates to the last node
+  /** Verify if the OSM way is a perfect loop, i.e., its first node equates to the last node
    *
    * @param osmWay to check
    * @return true when circular way, i.e., enclosed area, false otherwise
@@ -106,9 +108,9 @@ public class PlanitOsmWayUtils {
     return osmWay.getNodeId(0) == osmWay.getNodeId(osmWay.getNumberOfNodes()-1);
   }
 
-  /** find the start and end index of the first circular component of the passed in way (if any).
+  /** Find the start and end index of the first circular component of the passed in way (if any).
    * 
-   * @param circularOsmWay to check
+   * @param osmWay to check
    * @param initialNodeIndex offset to use, when set it uses it as the starting point to start looking
    * @return pair of indices demarcating the first two indices with the same node conditional on the offset, null if not found 
    */
@@ -124,7 +126,7 @@ public class PlanitOsmWayUtils {
     return null;
   }  
       
-  /** the OSM default driving direction on a roundabout is either anticlockwise (right hand drive countries) or
+  /** The OSM default driving direction on a roundabout is either anticlockwise (right hand drive countries) or
    * clockwise (left hand drive countries), here we verify, based on the country name, if the default is
    * clockwise or not (anticlockwise)
    * 
@@ -165,10 +167,13 @@ public class PlanitOsmWayUtils {
    * 
    * @param osmWay to extract node coordinates from
    * @param osmNodes to collect nodes from by reference node ids in the way
+   * @param startNodeIndex reference
+   * @param endNodeIndex reference
+   * @param missingNodeConsumer callback in case of missing node found
    * @return coordinate array found, empty when no nodes were found available
    * @throws PlanItException thrown if error
    */
-  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes, int startNodeIndex, int endNodeIndex, PlanitExceptionConsumer<Set<Long>> missingNodeconsumer) throws PlanItException{
+  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes, int startNodeIndex, int endNodeIndex, PlanitExceptionConsumer<Set<Long>> missingNodeConsumer) throws PlanItException{
     Set<Long> missingNodes = null;
         
     /* in the special case the end node index is smaller than start node index (circular way) we "loop around" to accommodate this */
@@ -210,8 +215,8 @@ public class PlanitOsmWayUtils {
     }
     
     /* call consumer */
-    if(missingNodes!=null && missingNodeconsumer != null) {
-      missingNodeconsumer.accept(missingNodes);
+    if(missingNodes!=null && missingNodeConsumer != null) {
+      missingNodeConsumer.accept(missingNodes);
       
       /* resize based on missing nodes*/
       coordArray = PlanitJtsUtils.copyWithoutNullEntries(coordArray);
@@ -350,6 +355,7 @@ public class PlanitOsmWayUtils {
    * Extract the geometry for the passed in way as line string
    * 
    * @param osmWay way to extract geometry from
+   * @param osmNodes to consider
    * @return line string instance representing the shape of the way
    * @throws PlanItException thrown if error
    */
@@ -364,6 +370,7 @@ public class PlanitOsmWayUtils {
    * @param osmWay way to extract geometry from
    * @param startNodeIndex to use
    * @param endNodeIndex to use
+   * @param osmNodes to consider
    * @return line string instance representing the shape of the way
    * @throws PlanItException thrown if error
    */  
@@ -378,6 +385,7 @@ public class PlanitOsmWayUtils {
    * @param osmWay way to extract geometry from
    * @param startNodeIndex to use
    * @param endNodeIndex to use
+   * @param osmNodes to consider
    * @return line string instance representing the shape of the way
    * @throws PlanItException thrown if error
    */  
@@ -471,13 +479,13 @@ public class PlanitOsmWayUtils {
     return null;
   }
   
-  /** create a (Rectangular) bounding box around the osm ways geometry based on the provided offset
+  /** Create a (Rectangular) bounding box around the osm ways geometry based on the provided offset
    * 
    * @param osmWay to collect bounding box for
    * @param offsetInMeters around extreme points of osmWay
    * @param osmNodes potentially references by osmWay
    * @param geoUtils to extract length based on crs
-   * @return
+   * @return created bounding box as Envelope
    */
   public static Envelope createBoundingBox(final OsmWay osmWay, double offsetInMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) {
     double minX = Double.POSITIVE_INFINITY;
@@ -496,12 +504,13 @@ public class PlanitOsmWayUtils {
     return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
   }   
   
-  /** find the closest zone to the way . This method computes the actual distance between any location on any linesegment of the outer boundary
+  /** Find the closest zone to the way . This method computes the actual distance between any location on any line segment of the outer boundary
    * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it is therefore is very precise
    * 
    * 
    * @param osmWay reference way
    * @param zones to check against using their geometries
+   * @param osmNodes to consider
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
    * @throws PlanItException thrown if error
@@ -510,7 +519,7 @@ public class PlanitOsmWayUtils {
     return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
   }  
 
-  /** find the closest zone to the way . This method computes the actual distance between any location on any line segment of the outer boundary
+  /** Find the closest zone to the way . This method computes the actual distance between any location on any line segment of the outer boundary
    * of the zones (or its centroid if no polygon/linestring is available) and any node on the way and it is therefore is very precise.
    * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
    * 
@@ -638,9 +647,10 @@ public class PlanitOsmWayUtils {
     return null;
   }
   
-  /** verify that all osm nodes in the osm way are available
+  /** Verify that all OSM nodes in the OSM way are available
+   * 
    * @param osmWay to verify
-   * @param osmNodes to check existence of osm way nodes
+   * @param osmNodes to check existence of OSM way nodes
    * @return true when complete, false otherwise
    */  
   public static boolean isAllOsmWayNodesAvailable(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
@@ -652,13 +662,13 @@ public class PlanitOsmWayUtils {
     return true;
   }  
   
-  /** collect index by location within the way. first collect node from all nodes and then extract location because
+  /** Collect index by location within the way. first collect node from all nodes and then extract location because
    * if duplicate nodes in the same location exist, collecting by location directly from layer data could yield the wrong node. this way
-   * we are certain to extract the location from the right osm node
+   * we are certain to extract the location from the right OSM node
    * 
    * @param osmWay way to use
-   * @param layerData to use
-   * @param osmNodeId id to find
+   * @param nodePosition node position to find
+   * @param networkData to use
    * @return the index, null if nothing is found
    */
   public static Integer getOsmWayNodeIndexByLocation(OsmWay osmWay, Point nodePosition, PlanitOsmNetworkReaderData networkData){
@@ -672,12 +682,13 @@ public class PlanitOsmWayUtils {
     return null;
   }  
 
-  /** finds the last consecutive available osm node index after the offset, i.e. the index before the first unavailable node
+  /** Finds the last consecutive available OSM node index after the offset, i.e. the index before the first unavailable node
    * 
    * @param offsetIndex to start search from
    * @param osmWay to collect from
    * @param osmNodes to check existence of osm way nodes
    * @return last index of node that is available, null otherwise
+   * @throws PlanItException thrown if error
    */  
   public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes) throws PlanItException {
     for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      

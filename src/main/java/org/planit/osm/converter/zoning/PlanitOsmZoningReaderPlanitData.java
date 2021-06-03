@@ -277,10 +277,10 @@ public class PlanitOsmZoningReaderPlanitData {
     return getConnectoidsByTransferZone(transferZone) != null && !getConnectoidsByTransferZone(transferZone).isEmpty();
   }
   
-  /** Register a known mapping from transfer zone to connectoid
+  /** Collect transfer zone's registered connectoids
    * 
    * @param transferZone to map to...
-   * @param newConnectoid ...this connectoid
+   * @return connectoids found
    */
   public Collection<DirectedConnectoid> getConnectoidsByTransferZone(TransferZone transferZone) {
     if(transferZone == null) {

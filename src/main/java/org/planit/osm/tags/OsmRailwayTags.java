@@ -174,7 +174,6 @@ public class OsmRailwayTags {
    * although technically platforms can be ways, but since we do not model them (as ways), we regard them as areas in all cases for now
 
    * @param railwayTagValue the way
-   * @param tags the tags
    * @return is the way an area and not a line based railway
    */
   public static boolean isAreaBasedRailway(String railwayTagValue) {
@@ -185,14 +184,14 @@ public class OsmRailwayTags {
    * using the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS}
    * 
    * @param railwayTagValue the way
-   * @param tags the tags
    * @return is the way an area and not a line based railway
    */
   public static boolean isNonRailBasedRailway(String railwayTagValue) {
     return NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS.contains(railwayTagValue);
   }   
   
-  /** verify if passed in tag is indeed the railway key tag
+  /** Verify if passed in tag is indeed the railway key tag
+   * 
    * @param railwayTag to verify
    * @return true when valid tag, otherwise false
    */

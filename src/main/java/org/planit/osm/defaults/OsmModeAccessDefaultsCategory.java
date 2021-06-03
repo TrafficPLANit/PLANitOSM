@@ -485,7 +485,7 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    * Verify if mode is allowed for given way type. If none of the allowed/disallowed configuration options includes the passed in mode
    * it is assumed the mode is not allowed
    * 
-   * @paam osmWayValue to check for
+   * @param osmWayValue to check for
    * @param osmMode to verify
    * @return true when allowed, false when disallowed, false if unknown
    */

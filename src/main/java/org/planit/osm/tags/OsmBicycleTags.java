@@ -138,7 +138,7 @@ public class OsmBicycleTags {
   /** Collect basic cycleway key tags based on {@code BASIC_CYCLEWAY_KEY_TAGS}, when includeLocationSubKey is true, we also include the subtags left and right consistent with
    * {@code BASIC_AND_LOCATION_BASED_KEY_TAGS}
    * 
-   * @param includeLocationSubflag
+   * @param includeLocationSubflag to consider
    * @return request key tags
    */
   public static final String[] getCycleWayKeyTags(boolean includeLocationSubKey) {

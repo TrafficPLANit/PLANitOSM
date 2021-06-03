@@ -47,8 +47,8 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     }
   }
   
-  /** Verify if any modes that can be identified via the lanes:/<mode/> tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme.
-   * Note that if the passed in layer does not support the activated planit mode the helper is not required either, since the layer will not support
+  /** Verify if any modes that can be identified via the {@code lanes:<mode>} tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme.
+   * Note that if the passed in layer does not support the activated PLANit mode the helper is not required either, since the layer will not support
    * any of these modes.
    * 
    * Currently we only consider:
@@ -58,7 +58,8 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * <li>bicycle</li>
    * <li>hgv</li>
    * </ul>
-   * @param settings containing the activated and mapped Osm to PLANit modes 
+   * 
+   * @param settings containing the activated and mapped OSM to PLANit modes 
    * @param networkLayer to identify supported modes on the layer, which is a subset of all mapped modes
    * @return yes, when these modes are activated, false otherwise
    */
@@ -66,12 +67,13 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings, networkLayer);
   }    
   
-  /** collect activated modes that can be identified via the lanes:/<mode/> tagging scheme are currently supported. currently we only consider:
+  /** collect activated modes that can be identified via the {@code lanes:<mode>} tagging scheme are currently supported. currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
    * <li>hgv</li>
    * </ul>
+   * 
    * @param settings to filter for activated modes only
    * @param networkLayer to restrict the eligible modes based on the modes supported by the layer
    * @return list os OSM modes that would identify such modes */
@@ -89,16 +91,17 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
   }
     
   /**
-   * Collect the registered eligible Osm modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
+   * Collect the registered eligible OSM modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
    * 
    * @param tags to use
+   * @return modes found
    */
   public Set<String> getModesWithLanesWithoutDirection(Map<String,String> tags) {
     return getMappedModesForAvailableKeys(tags, lanesModeKeyTags);
   }
   
   /**
-   * Collect the registered eligible Osm modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
+   * Collect the registered eligible OSM modes with lanes present without any further direction information via the {@code lanes:<mode>} mode tags
    * 
    * @param tags to use
    * @param isForwardDirection when true explore only forward direction, when false only backward direction

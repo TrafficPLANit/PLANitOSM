@@ -55,7 +55,6 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>ROAD</li>
    * </ul>
    * 
-   * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
   protected static void initialiseDefaultActivatedOsmHighwayTypes() throws PlanItException {

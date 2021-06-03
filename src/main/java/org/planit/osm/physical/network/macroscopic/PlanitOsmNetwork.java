@@ -842,7 +842,6 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * are supported, these will be created as indicated. If not available a warning is issued and a link segment type is created based on the default chosen in settings
    * 
    * @param settings to use
-   * @return the default created supported types 
    * @throws PlanItException thrown when error
    */
   public void createOsmCompatibleLinkSegmentTypes(PlanitOsmNetworkReaderSettings settings) throws PlanItException {

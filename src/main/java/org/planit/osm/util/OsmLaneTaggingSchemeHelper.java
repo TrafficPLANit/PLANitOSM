@@ -45,6 +45,7 @@ public class OsmLaneTaggingSchemeHelper{
    * <li>bicycle</li>
    * <li>hgv</li>
    * </ul>
+   * 
    * @param settings containing the activated and mapped Osm to PLANit modes 
    * @param networkLayer to identify subset of modes relevant for the layer at hand
    * @return yes, when these modes are activated, false otherwise
@@ -87,6 +88,7 @@ public class OsmLaneTaggingSchemeHelper{
   /** Collect all the mapped OsmModes for keys that are found to be present in the passed in tags map
    * 
    * @param tags to use
+   * @param osmModeKeyMap to consider
    * @return osmModes for which the modeKeyMap is available (possibly extracted from road mode category when osmModeKeyMap contains a road mode category instead)
    */
   protected Set<String> getMappedModesForAvailableKeys(Map<String,String> tags, Map<String,String> osmModeKeyMap){
