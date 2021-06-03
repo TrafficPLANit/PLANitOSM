@@ -124,7 +124,6 @@ public class PlanitOsmNodeUtils {
    * 
    * @param osmNode to create point for
    * @return point created
-   * @throws PlanItException thrown if error
    */
   public static Point createPoint(OsmNode osmNode) {
     return PlanitJtsUtils.createPoint(createCoordinate(osmNode));
