@@ -56,7 +56,10 @@ public class PlanitOsmTransferZoneParser {
   private final PlanitOsmZoningHandlerProfiler profiler;
   
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
-  private final PlanitOsmPublicTransportModeParser publicTransportModeParser;   
+  private final PlanitOsmPublicTransportModeParser publicTransportModeParser;
+  
+  /** parser funcionality regarding the creation of PLANit connectoids from OSM entities */
+  private final PlanitOsmConnectoidParser connectoidParser;  
     
 
   /** create a new but unpopulated transfer zone
@@ -193,20 +196,9 @@ public class PlanitOsmTransferZoneParser {
     
     /* parser for identifying pt PLANit modes from OSM entities */
     this.publicTransportModeParser = new PlanitOsmPublicTransportModeParser(network2ZoningData.getNetworkSettings());
-  }
-
-  /** create a dummy transfer zone without access to underlying osmNode or way and without any geometry or populated
-   * content other than its ids and type
-   * 
-   * @param osmId to use
-   * @param transferZoneType to use
-   * @return created transfer zone
-   */
-  protected TransferZone createDummyTransferZone(long osmId, TransferZoneType transferZoneType) {
-    TransferZone transferZone = createEmptyTransferZone(transferZoneType);
-    transferZone.setXmlId(String.valueOf(osmId));
-    transferZone.setExternalId(transferZone.getXmlId());
-    return transferZone;
+    
+    /* parser for identifying pt PLANit modes from OSM entities */
+    this.connectoidParser = new PlanitOsmConnectoidParser(zoning, zoningReaderData, transferSettings, network2ZoningData, profiler);    
   }
 
   /** attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
@@ -223,7 +215,7 @@ public class PlanitOsmTransferZoneParser {
    * @return transfer zone created, null if something happened making it impossible or not useful to create the zone
    * @throws PlanItException thrown if error
    */
-  protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
+  public TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
       OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {  
     
     TransferZone transferZone = null;
@@ -258,7 +250,7 @@ public class PlanitOsmTransferZoneParser {
    * @return transfer zone created, null if something happened making it impossible to create the zone
    * @throws PlanItException thrown if error
    */
-  protected TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
+  public TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
       OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM, geoUtils);
     if(transferZone != null) {
@@ -279,7 +271,7 @@ public class PlanitOsmTransferZoneParser {
    * @return created transfer zone (if not already in existence)
    * @throws PlanItException thrown if error
    */  
-  protected TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
+  public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
       OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {        
         
     Pair<Collection<String>, Collection<Mode>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
@@ -303,7 +295,7 @@ public class PlanitOsmTransferZoneParser {
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
-      createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, mode, geoUtils);      
+      connectoidParser.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, mode, geoUtils);      
     }    
     
     return transferZone;

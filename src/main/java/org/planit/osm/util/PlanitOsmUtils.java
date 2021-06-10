@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmPtv1Tags;

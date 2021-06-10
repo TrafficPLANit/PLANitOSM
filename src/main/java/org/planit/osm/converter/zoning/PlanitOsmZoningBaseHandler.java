@@ -1,42 +1,31 @@
 package org.planit.osm.converter.zoning;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 
-import org.planit.osm.converter.network.PlanitOsmNetworkHandlerHelper;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.converter.network.PlanitOsmNetworkToZoningReaderData;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
 import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
-import org.planit.utils.graph.EdgeSegment;
-import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.LinkSegment;
 import org.planit.utils.network.physical.Node;
 import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
-import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
-import org.planit.zoning.listener.UpdateConnectoidsOnBreakLink;
-
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
@@ -82,6 +71,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
   private final PlanitOsmPublicTransportModeParser publicTransportModeParser;  
+  
+  /** parser funcionality regarding the creation of PLANit connectoids from OSM entities */
+  private final PlanitOsmConnectoidParser connectoidParser;
     
   /** Verify if passed in tags reflect transfer based infrastructure that is eligible (and supported) to be parsed by this class, e.g.
    * tags related to original PT scheme stops ( railway=halt, railway=tram_stop, highway=bus_stop and highway=platform),
@@ -252,72 +244,6 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return false;
   }   
   
-  /** Find the link segments that are accessible for the given acces link, node, mode combination taking into account the relative location of the transfer zone if needed and
-   * mode compatibility.
-   * 
-   * @param transferZone these link segments pertain to
-   * @param accessLink that is nominated
-   * @param node extreme node of the link
-   * @param accessMode eligible access mode
-   * @param mustAvoidCrossingTraffic indicates of transfer zone must be on the logical side of the road or if it does not matter
-   * @param geoUtils to use
-   * @return found link segments that are deemed valid given the constraints
-   * @throws PlanItException thrown if error
-   */
-  protected Collection<EdgeSegment> findAccessLinkSegmentsForStandAloneTransferZone(
-      TransferZone transferZone, Link accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-        
-    Long osmWaitingAreaId = Long.valueOf(transferZone.getExternalId());
-    Long osmNodeIdOfLinkExtremeNode = node.getExternalId()!= null ? Long.valueOf(node.getExternalId()) : null;
-    EntityType osmWaitingAreaEntityType = PlanitOsmZoningHandlerHelper.getOsmEntityType(transferZone);
-    
-    /* potential link segments based on mode compatibility and access link restriction */ 
-    Collection<EdgeSegment> accessLinkSegments = new ArrayList<EdgeSegment>(4);
-    for(EdgeSegment linkSegment : node.getEntryEdgeSegments()) {
-      if( ((MacroscopicLinkSegment)linkSegment).isModeAllowed(accessMode) && (linkSegment.getParentEdge().idEquals(accessLink))){      
-        accessLinkSegments.add(linkSegment);
-      }
-    }  
-    
-    if(accessLinkSegments==null || accessLinkSegments.isEmpty()) {
-      return accessLinkSegments;
-    }
-        
-    /* user overwrite checks and special treatment */
-    boolean removeInvalidAccessLinkSegmentsIfNoMatchLeft = true;
-    {
-      /* in both cases: When a match, we must use the user overwrite value. We will still try to remove access link segments
-       * that are invalid, but if due to this check no matches remain, we revert this and instead use all entry link segments on the osm way
-       * since the user has indicated to explicitly use this combination which overrules the automatic filter we would ordinarily apply */
-          
-      /* stopLocation -> waiting area overwrite */
-      if(node.getExternalId()!=null && getSettings().isOverwriteStopLocationWaitingArea(osmNodeIdOfLinkExtremeNode)) {      
-        Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmNodeIdOfLinkExtremeNode);      
-        removeInvalidAccessLinkSegmentsIfNoMatchLeft = osmWaitingAreaId == result.second();
-      }    
-      /* waiting area -> osm way (stop_location) overwrite */
-      else if (getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmWaitingAreaId, osmWaitingAreaEntityType)) {        
-        long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmWaitingAreaId, osmWaitingAreaEntityType);
-        removeInvalidAccessLinkSegmentsIfNoMatchLeft = !(Long.valueOf(accessLink.getExternalId()).equals(osmWayId));
-      }
-    }
-  
-    /* accessible link segments for planit node based on relative location of waiting area compared to infrastructure*/    
-    if(mustAvoidCrossingTraffic) { 
-                          
-      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
-      Collection<EdgeSegment> toBeRemoveAccessLinkSegments = 
-          PlanitOsmZoningHandlerHelper.identifyInvalidTransferZoneAccessLinkSegmentsBasedOnRelativeLocationToInfrastructure(accessLinkSegments, transferZone, accessMode, isLeftHandDrive, geoUtils);
-      
-      if(removeInvalidAccessLinkSegmentsIfNoMatchLeft || toBeRemoveAccessLinkSegments.size() < accessLinkSegments.size()) {
-        /* filter because "normal" situation or there are still matches left even after filtering despite the explicit user override for this  combination */
-        accessLinkSegments.removeAll(toBeRemoveAccessLinkSegments);
-      }
-      /* else  keep the access link segments to far */
-    }
-    return accessLinkSegments;
-  }
-
   /** find out if transfer zone is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
    * mode that is mapped to a planit mode.If the zone has no known modes, it is by definition not mode compatible. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
    * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
@@ -539,112 +465,6 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }
   }      
   
-  /** break a planit link at the planit node location while also updating all osm related tracking indices and/or planit network link and link segment reference 
-   * that might be affected by this process:
-   * <ul>
-   * <li>tracking of osmways with multiple planit links</li>
-   * <li>connectoid access link segments affected by breaking of link (if any)</li>
-   * </ul>
-   * 
-   * @param planitNode to break link at
-   * @param networkLayer the node and link(s) reside on
-   * @param linksToBreak the links to break 
-   * @throws PlanItException thrown if error
-   */
-  protected void breakLinksAtPlanitNode(Node planitNode, MacroscopicPhysicalNetwork networkLayer, List<Link> linksToBreak) throws PlanItException {
-    PlanitOsmNetworkReaderLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
-
-    /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
-     * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
-     * downstream vertex identified */
-    Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink = 
-        PlanitOsmZoningHandlerHelper.collectConnectoidAccessNodeLocations(linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
-    
-    /* register additional actions on breaking link via callback listeners:
-     * 1) connectoid update (see above)
-     * 2) xml id update on links (and its link segments) by syncing to internal ids so they remain unique. 
-     * 
-     * 2) is needed when persisting based on planit xml ids which otherwise leads to problems due to duplicate xml ids when breaking links (only internal ids remain unique). 
-     * Note that this syncing works because we create planit links such that initially xml ids are in sync with internal ids upon creation. If this is not the case we cannot 
-     * guarantee uniqueness of xml ids using this method.
-     */
-    Set<BreakEdgeListener<Node, Link>> breakLinkListeners = 
-        Set.of(
-            new UpdateConnectoidsOnBreakLink<Node, Link, LinkSegment>(connectoidsAccessNodeLocationBeforeBreakLink),
-            new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge<Node, Link, LinkSegment>());
-        
-    /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
-    {      
-      /* remove links from spatial index when they are broken up and their geometry changes, after breaking more links exist with smaller geometries... insert those after as replacements*/
-      getZoningReaderData().getPlanitData().removeLinksFromSpatialLinkIndex(linksToBreak); 
-    }    
-          
-    /* break links */
-    Map<Long, Set<Link>> newlyBrokenLinks = PlanitOsmNetworkHandlerHelper.breakLinksWithInternalNode(
-        planitNode, linksToBreak, networkLayer, transferSettings.getReferenceNetwork().getCoordinateReferenceSystem(), breakLinkListeners);   
-
-    /* TRACKING DATA CONSISTENCY - AFTER */
-    {
-      /* insert created/updated links and their geometries to spatial index instead */
-      newlyBrokenLinks.forEach( (id, links) -> {getZoningReaderData().getPlanitData().addLinksToSpatialLinkIndex(links);});
-                    
-      /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct planit links for (internal) osm nodes */
-      layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);                            
-    }
-          
-  }  
-  
-  /** extract the connectoid access node based on the given location. Either it already exists as a planit node, or it is internal to an existing link. In the latter case
-   * a new node is created and the existing link is broken. In the former case, we simply collect the planit node
-   *
-   * @param osmNodeLocation to collect/create planit node for 
-   * @param networkLayer to extract node on
-   * @return planit node collected/created
-   * @throws PlanItException thrown if error
-   */  
-  protected Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-    final PlanitOsmNetworkReaderLayerData layerData = network2ZoningData.getNetworkLayerData(networkLayer);
-    
-    /* check if already exists */
-    Node planitNode = layerData.getPlanitNodeByLocation(osmNodeLocation);
-    if(planitNode == null) {
-      /* does not exist yet...create */
-      
-      /* find the links with the location registered as internal */
-      List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
-      if(linksToBreak != null) {
-      
-        /* location is internal to an existing link, create it based on osm node if possible, otherwise base it solely on location provided*/
-        OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
-        if(osmNode != null) {
-          /* all regular cases */
-          planitNode = PlanitOsmZoningHandlerHelper.createPlanitNodeForConnectoidAccess(osmNode, layerData, networkLayer);
-        }else {
-          /* special cases whenever parser decided that location required planit node even though there exists no osm node at this location */ 
-          planitNode = PlanitOsmZoningHandlerHelper.createPlanitNodeForConnectoidAccess(osmNodeLocation, layerData, networkLayer);
-        }
-        getProfiler().logConnectoidStatus(getZoning().transferConnectoids.size());
-                             
-        /* now perform the breaking of links at the given node and update related tracking/reference information to broken link(segment)(s) where needed */
-        breakLinksAtPlanitNode(planitNode, networkLayer, linksToBreak);
-      }
-    }
-    return planitNode;
-  }
-
-  /** extract the connectoid access node. either it already exists as a planit node, or it is internal to an existing link. In the latter case
-   * a new node is created and the existing link is broken. In the former case, we simply collect the planit node
-   * 
-   * @param osmNode to collect planit node version for
-   * @param networkLayer to extract node on
-   * @return planit node collected/created
-   * @throws PlanItException thrown if error
-   */
-  protected Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {        
-    Point osmNodeLocation = PlanitOsmNodeUtils.createPoint(osmNode);    
-    return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
-  }
-
   /** Method that will attempt to create both a transfer zone and its connectoids at the location of the osm node, unless the user has overwritten the default behaviour
    * with a custom mapping of stop_location to waiting area. In that case, we mark the stop_position as unprocessed, because then it will be processed later in post processing where
    * the stop_position is converted into a connectoid and the appropriate user mapper waiting area (Transfer zone) is collected to match. 
@@ -767,6 +587,14 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected PlanitOsmPublicTransportModeParser getPtModeParser() {
     return this.publicTransportModeParser;
   }  
+  
+  /** Get the connectoid parser
+   * 
+   * @return connectoidParser parser 
+   */
+  protected PlanitOsmConnectoidParser getConnectoidParser() {
+    return this.connectoidParser;
+  }    
     
   /**
    * constructor
@@ -798,6 +626,9 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     
     /* parser for identifying pt PLANit modes from OSM entities */
     this.publicTransportModeParser = new PlanitOsmPublicTransportModeParser(network2ZoningData.getNetworkSettings());
+    
+    /* parser for creating PLANit connectoids */
+    this.connectoidParser = new PlanitOsmConnectoidParser(zoningToPopulate, zoningReaderData, transferSettings, network2ZoningData, profiler);
   }
   
   /** Call this BEFORE we parse the OSM network to initialise the handler properly

@@ -31,14 +31,11 @@ import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
-import org.planit.utils.graph.EdgeSegment;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.misc.StringUtils;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.Node;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
@@ -122,7 +119,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
    * @return true when supporting it, false otherwise
    * @throws PlanItException thrown if error
    */
-  public boolean supportsMultipleStopPositions(TransferZone transferZone) throws PlanItException {
+  private boolean supportsMultipleStopPositions(TransferZone transferZone) throws PlanItException {
     EntityType osmEntityType = PlanitOsmZoningHandlerHelper.getOsmEntityType(transferZone);
     if(osmEntityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(Long.valueOf(transferZone.getExternalId()))) {
         return false;
@@ -164,81 +161,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     Collection<Mode> accessModes = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModes(PlanitOsmModeUtils.getPublicTransportModesFrom(eligibleOsmModes));
     return PlanitOsmZoningHandlerHelper.removeLinksOnWrongSideOf(waitingAreaGeometry, linksToVerify, isLeftHandDrive, accessModes, geoUtils);
   
-  }
-
-  /** find a suitable connectoid location on the given link based on the constraints that it must be able to reside on a linksegment that is in the correct relative position
-   * to the transfer zone and supports the access mode on at least one of the designated link segment(s) that is eligible (if any). If not possible null is returned 
-   *  
-   * @param transferZone to find location for
-   * @param accessLink to find location on
-   * @param accessMode to be compatible with
-   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
-   * @param networkLayer to use
-   * @return found location either exisiting osm node or projected location that is nearest and does not exist as a shape point on the link yet, or null if no valid position could be found
-   * @throws PlanItException thrown if error
-   */
-  private Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
-
-    Coordinate closestExistingCoordinate = geoUtils.getClosestExistingLineStringCoordinateToGeometry(transferZone.getGeometry(), accessLink.getGeometry());
-    double distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestExistingCoordinate), transferZone.getGeometry());        
-    
-    /* if close enough break at existing osm node to create stop_position/connectoid, otherwise create artificial non-osm node in closest projected location which
-     * in most cases will be closer and within threshold */
-    Point connectoidLocation = null;
-    if(distanceToExistingCoordinateOnLinkInMeters < maxAllowedStopToTransferZoneDistanceMeters) {
-      
-      /* close enough, see if it can be reused: 
-       * 1) node is an extreme node
-       * 2) or node is internal to link
-       * */
-      
-      /* 1) verify if extreme node */
-      if(accessLink.getVertexA().isPositionEqual2D(closestExistingCoordinate)) {
-        /* because it is an extreme node there is only one of the two directions accessible since an access link segments are assumed to be directly upstream of the node. This
-         * can result in choosing a connectoid location that is not feasible when only considering the proximity and not the link segment specific information such as the mode
-         * and relative location to the transfer zone (left or right of the road). Therefore we must check this here before accepting this pre-existing extreme node. If this is a problem,
-         * we do not create the location on the existing location, but instead break the link so that we can use the access link segment in the opposite direction instead */
-        if(hasStandAloneTransferZoneValidAccessLinkSegmentForLinkNodeModeCombination(transferZone, accessLink, accessLink.getNodeA(), accessMode)) {       
-          connectoidLocation = PlanitJtsUtils.createPoint(closestExistingCoordinate);
-        }
-      }else if(accessLink.getVertexB().isPositionEqual2D(closestExistingCoordinate)) {
-          if(hasStandAloneTransferZoneValidAccessLinkSegmentForLinkNodeModeCombination(transferZone, accessLink, accessLink.getNodeB(), accessMode)){
-            connectoidLocation = PlanitJtsUtils.createPoint(closestExistingCoordinate);  
-          }        
-      }else {
-      
-        /* 2) must be internal if not an extreme node */
-        int coordinateIndex = PlanitJtsUtils.getCoordinateIndexOf(closestExistingCoordinate, accessLink.getGeometry().getCoordinates());
-        if(coordinateIndex <= 0 || coordinateIndex==(accessLink.getGeometry().getCoordinates().length-1)) {
-          throw new PlanItException("Unable to locate link internal osm node even though it is expected to exist when creating stop locations for osm entity %s",transferZone.getExternalId());
-        }
-        
-        connectoidLocation = PlanitJtsUtils.createPoint(closestExistingCoordinate);
-        if(!hasStandAloneTransferZoneValidAccessLinkSegmentForLinkInternalLocationModeCombination(transferZone, accessLink, connectoidLocation, accessMode)) {
-          /* special case: if one way link and internal existing coordinate chosen results in waiting area on the wrong side of geometry (due to bend in the road directly
-           * preceding the location (and mode is susceptible to waiting area location). Then we do not accept this existing coordinate and instead try
-           * to use projected location not residing at this (possible) bend, but in between existing coordinates on straight section of road (hopefully), therefore
-           * reset location and continue */
-          connectoidLocation=null;
-        }
-      }
-    }
-     
-    if(connectoidLocation == null) {
-      /* too far, or identified existing location is not suitable, so we must break the existing link in appropriate location instead */
-      LinearLocation projectedLinearLocationOnLink = PlanitOsmZoningHandlerHelper.getClosestProjectedLinearLocationOnEdgeForTransferZone(transferZone,accessLink, geoUtils);      
-      
-      /* verify projected location is valid */
-      Coordinate closestProjectedCoordinate = projectedLinearLocationOnLink.getCoordinate(accessLink.getGeometry());
-      if( closestExistingCoordinate.equals2D(closestProjectedCoordinate) || 
-          geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestProjectedCoordinate), transferZone.getGeometry()) > maxAllowedStopToTransferZoneDistanceMeters) {
-        /* no need to break link, the projected closest point is too far away or deemed not suitable */
-      }else {
-        connectoidLocation = PlanitJtsUtils.createPoint(closestProjectedCoordinate);
-      }
-    }
-    
-    return connectoidLocation;
   }
 
 
@@ -310,7 +232,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       Iterator<? extends Edge> iterator = candidatesToFilter.iterator();
       while(iterator.hasNext()) {      
         Edge candidateLink = iterator.next();
-        Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(
+        Point connectoidLocation = getConnectoidParser().findConnectoidLocationForstandAloneTransferZoneOnLink(
             transferZone, (Link)candidateLink, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters(), networkLayer);
         if(connectoidLocation == null) {
           iterator.remove();
@@ -461,71 +383,6 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     return chosenLinksForStopLocations;
   }  
         
-
-  /** Verify if any valid access link segments exist for the given combination of link, on of its extreme nodes, and the access mode.
-   * 
-   * @param transferZone to check
-   * @param accessLink nominated
-   * @param node that is nominated
-   * @param accessMode used
-   * @return true when at least one valid access link segment exists, false otherwise
-   * @throws PlanItException thrown if error
-   */
-  private boolean hasStandAloneTransferZoneValidAccessLinkSegmentForLinkNodeModeCombination(TransferZone transferZone, Link accessLink, Node node, Mode accessMode) throws PlanItException {
-    /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
-     * have no doors at the right side, e.g., travellers have to cross the road to get to the vehicle, which should not happen... */
-    Long osmStopLocationId = node.getExternalId()!= null ? Long.valueOf(node.getExternalId()) : null;
-    boolean mustAvoidCrossingTraffic = PlanitOsmZoningHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(accessMode, transferZone, osmStopLocationId, getSettings());
-    
-    /* now collect the available access link segments (if any) - switch of logging of issues, since we are only interested in determining if this is feasible, we are not creating anything yet */    
-    Collection<EdgeSegment> accessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone, accessLink, node, accessMode, mustAvoidCrossingTraffic, geoUtils);         
-    
-    return !accessLinkSegments.isEmpty();
-  }
-
-
-  /** Verify if the provided existing internal location of the link would be valid as access node with upstream access link segment if it were to
-   * be used, i,e., if the link were to be broken at this point. Only in case the upstream link segment of this point is one-way and if extraoplated to the transfer zone
-   * geometry would reside on the wrong side of it (for modes where this matters such as bus). Then this method will return false. In all other situation, e.g. two-way roads
-   * or relative location of waitnig area is valid, or mode does not require a specific location relative to road (train), then it will return true
-   * 
-   * @param transferZone for which to check location
-   * @param accessLink the location resides on
-   * @param connectoidLocation to verify
-   * @param accessMode for the location
-   * @return true when deemed valid for the restrictions checked, false otherwise
-   * @throws PlanItException thrown if error
-   */
-  private boolean hasStandAloneTransferZoneValidAccessLinkSegmentForLinkInternalLocationModeCombination(TransferZone transferZone, Link accessLink, Point connectoidLocation, Mode accessMode) throws PlanItException {
-    
-    MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().getInfrastructureLayerByMode(accessMode);
-    OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(connectoidLocation);
-    Long osmStopLocationId = osmNode!= null ? osmNode.getId() : null;
-    
-    boolean mustAvoidCrossingTraffic = PlanitOsmZoningHandlerHelper.isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(accessMode, transferZone, osmStopLocationId, getSettings());
-    MacroscopicLinkSegment oneWayLinkSegment = PlanitOsmZoningHandlerHelper.getLinkSegmentIfLinkIsOneWayForMode(accessLink, accessMode);
-    if(mustAvoidCrossingTraffic && oneWayLinkSegment != null) {
-      /* special case: one way link and internal existing coordinate chosen. If the upstream geometry of this coordinate (when extrapolated to the waiting area)
-       * is on the wrong side of the waiting area, it would be discarded, yet it might be that a projected location closest to the waiting area would be valid
-       * due to a bend in the road in the downstream direction at this very coordinate. Hence, we only accept this existing coordinate when we are sure
-       * it will not be discarded due to residing on the wrong side of the road infrastructure (when extrapolated) */
-      Coordinate[] linkCoordinates = accessLink.getGeometry().getCoordinates();
-      int coordinateIndex = PlanitJtsUtils.getCoordinateIndexOf(connectoidLocation.getCoordinate(), linkCoordinates);
-      if(coordinateIndex <= 0) {
-        throw new PlanItException("Unable to locate link internal location %s for osm way even though it is expected to exist for osm entity %s",accessLink.getExternalId(), transferZone.getExternalId());
-      }
-      
-      LineSegment lineSegment = new LineSegment(linkCoordinates[coordinateIndex-1], linkCoordinates[coordinateIndex]);
-      boolean reverseLinearLocationGeometry = oneWayLinkSegment.isDirectionAb()!=oneWayLinkSegment.getParentEdge().isGeometryInAbDirection();
-      if(reverseLinearLocationGeometry) {
-        lineSegment.reverse();
-      }
-      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
-      return (isLeftHandDrive == PlanitOsmZoningHandlerHelper.isTransferZoneLeftOf(transferZone, lineSegment.p0, lineSegment.p1, geoUtils));
-    }
-    return true;
-  }
-
 
   /**Attempt to find the transfer zones by the use of the passed in tags containing references via key tag:
    * 
@@ -1045,7 +902,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       
       /* create connectoid(s) for stop_location/transferzone/mode combination */
       for(TransferZone transferZone : matchedTransferZones) {
-        extractDirectedConnectoidsForMode(osmNode, transferZone, planitMode, geoUtils);          
+        getConnectoidParser().extractDirectedConnectoidsForMode(osmNode, transferZone, planitMode, geoUtils);          
       }           
     }
          
@@ -1182,7 +1039,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicPhysicalNetwork networkLayer) throws PlanItException {
     
     /* determine distance to closest osm node on existing planit link to create stop location (connectoid) for*/
-    Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(
+    Point connectoidLocation = getConnectoidParser().findConnectoidLocationForstandAloneTransferZoneOnLink(
         transferZone, accessLink, accessMode, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     
     if(connectoidLocation !=null) {
@@ -1234,7 +1091,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       for(TransferZone transferZone : transferZones) {
         
         /* connectoid(s) */
-        success = extractDirectedConnectoidsForMode(osmNode, transferZone, planitMode, geoUtils) || success;
+        success = getConnectoidParser().extractDirectedConnectoidsForMode(osmNode, transferZone, planitMode, geoUtils) || success;
         if(success && transferZoneGroup != null && !transferZone.isInTransferZoneGroup(transferZoneGroup)) {
           /* in some rare cases only the stop locations are part of the stop_area, but not the platforms next to the road/rail, only then this situation is triggered and we salve the situation */
           LOGGER.info(String.format("Platform/pole %s identified for stop_position %d, platform/pole not in stop_area %s of stop_position, added it",transferZone.getExternalId(), osmNode.getId(), transferZoneGroup.getExternalId()));
@@ -1285,7 +1142,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     }            
           
     /* create connectoids at identified location for mode and restricted to the accessLink identified (or update existing connectoid with mode access if valid) */
-    extractDirectedConnectoidsForMode(connectoidLocation, transferZone, accessMode, Collections.singleton(accessLink), geoUtils);
+    getConnectoidParser().extractDirectedConnectoidsForMode(connectoidLocation, transferZone, accessMode, Collections.singleton(accessLink), geoUtils);
   }
 
   /** Once a station is identified as stand-alone during processing and the transfer zone is created/identified we create its connectoids here.
