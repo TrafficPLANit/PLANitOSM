@@ -40,7 +40,7 @@ public class PlanitOsmNetworkReaderData {
   public static final double BOUNDINGBOX_NEARNESS_DISTANCE_METERS = 200;  
   
   /**
-   * initialise the layer parsers
+   * initialise for each layer
    * 
    * @param network to use
    * @param settings to use

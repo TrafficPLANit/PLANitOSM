@@ -42,7 +42,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * 
    * @return true when valid, false otherwise
    */
-  private boolean validateSettings() throws PlanItException {
+  private boolean isSettingsValid() throws PlanItException {
     PlanitOsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
     PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     
@@ -72,6 +72,31 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     
     return true;
        
+  }
+
+  /** Based on configuration remove any dangling subnetworks if required
+   * 
+   * @param osmNetworkReader to use
+   * @param osmZoningReader to use
+   * @param zoning to use
+   * @throws PlanItException thrown if error
+   */
+  private void removeDanglingSubNetworks(PlanitOsmNetworkReader osmNetworkReader, PlanitOsmZoningReader osmZoningReader, Zoning zoning) throws PlanItException {
+    
+    /* subnetworks */
+    if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
+      osmNetworkReader.removeDanglingSubNetworks(zoning);
+    }
+    
+    /* (transfer) zones */
+    if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
+      PlanitOsmZoningHandlerHelper.removeDanglingZones(zoning);
+    }     
+    
+    /* transfer zone groups */
+    if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
+      PlanitOsmZoningHandlerHelper.removeDanglingTransferZoneGroups(zoning);
+    } 
   }
 
   /**
@@ -136,20 +161,17 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
   public Pair<InfrastructureNetwork<?,?>, Zoning> read() throws PlanItException {
     
     /* only proceed when configuration is valid */
-    if(!validateSettings()) {
+    if(!isSettingsValid()) {
       return null;
     }
-    
-    PlanitOsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
-        
-    /* OSM network reader */
-    PlanitOsmNetworkReader osmNetworkReader = PlanitOsmNetworkReaderFactory.create(networkSettings);
+            
+    /* NETWORK READER */
+    PlanitOsmNetworkReader osmNetworkReader = PlanitOsmNetworkReaderFactory.create(getSettings().getNetworkSettings());
     
     /* disable removing dangling subnetworks, until zoning has been parsed as well */
     boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
     osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(false);
     
-    /* parse OSM network */
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();    
     
     /* ZONING READER */
@@ -168,31 +190,14 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
       osmZoningReader.getSettings().setRemoveDanglingZones(false);    
       osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(false);      
     }            
-           
-    
-    /* then parse the intermodal zoning aspect, i.e., transfer/od zones */
+               
     Zoning zoning = osmZoningReader.read();
     
     /* now remove dangling entities if indicated */
-    {
-      /* subnetworks */
-      osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
-      if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
-        osmNetworkReader.removeDanglingSubNetworks(zoning);
-      }
-      
-      /* (transfer) zones */
-      osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
-      if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
-        PlanitOsmZoningHandlerHelper.removeDanglingZones(zoning);
-      }     
-      
-      /* transfer zone groups */
-      osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
-      if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
-        PlanitOsmZoningHandlerHelper.removeDanglingTransferZoneGroups(zoning);
-      }        
-    }
+    osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
+    osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
+    osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
+    removeDanglingSubNetworks(osmNetworkReader, osmZoningReader, zoning);
     
     /* return result */
     return Pair.of(network, zoning);

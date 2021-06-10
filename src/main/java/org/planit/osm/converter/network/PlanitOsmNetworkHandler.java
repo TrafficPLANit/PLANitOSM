@@ -225,7 +225,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
       if(linkSegmentTypesByLayer!=null && !linkSegmentTypesByLayer.isEmpty() && linkSegmentTypesByLayer.values().stream().findAny().get().anyIsNotNull()) {
         /* yet circular way is of a viable type, i.e., it has mapped link segment type(s), but not a single connection to currently parsed network exists, this may indicate a problem */
         LOGGER.fine(String.format("circular way %d appears to have no connections to activated OSM way types ", circularOsmWay.getId()));
-        /* still we continue parsing it by simply creating a new planit nodes, marked by setting partialLinkStartNodeIndex to 0  and continue */ 
+        /* still we continue parsing it by simply creating a new planit node, marked by setting partialLinkStartNodeIndex to 0  and continue */ 
         partialLinkStartNodeIndex = 0;
       }
     }

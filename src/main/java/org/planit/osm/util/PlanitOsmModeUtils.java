@@ -29,7 +29,6 @@ import org.planit.osm.tags.OsmWaterModeTags;
 public class PlanitOsmModeUtils {
   
   /** the logger */
-  @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmModeUtils.class.getCanonicalName());
  
   
@@ -374,7 +373,7 @@ public class PlanitOsmModeUtils {
   }
 
   /** find out if modes to check are compatible with the reference osm modes. Mode compatible means at least one overlapping
-   * osm mode. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
+   * OSM mode. When one allows for pseudo compatibility we relax the restrictions such that any rail/road/water mode
    * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
    * to filter out definite non-matches.
    *  
@@ -406,7 +405,7 @@ public class PlanitOsmModeUtils {
     return overlappingModes;
   }
   
-  /** collect all pt modes available from the passed in modes across all major mode types (road, rail, water)
+  /** Collect all pt modes available from the passed in modes across all major mode types (road, rail, water)
    * 
    * @param eligibleOsmModes to extract from
    * @return found public transport based modes, can be null

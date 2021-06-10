@@ -196,31 +196,6 @@ public class PlanitOsmUtils {
     return null;
   }  
   
-  /** create a bounding box based on the provided offset and osm entity geometry. The bounding box adds the offset to the extremes of the geometry
-   * 
-   * @param osmEntity to create bounding box fos
-   * @param offsetInMeters buffer in meters
-   * @param osmNodes used in case osm entity is not a node and we require to obtain geometry information from underlying referenced nodes
-   * @param geoUtils used to extract distances based on underlying crs
-   * @return bounding box
-   */
-  public static Envelope createBoundingBox(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
-    /* search bounding box */
-    Envelope boundingBox = null; 
-    switch (Osm4JUtils.getEntityType(osmEntity)) {
-    case Node:
-      boundingBox = PlanitOsmNodeUtils.createBoundingBox((OsmNode)osmEntity,offsetInMeters, geoUtils);
-      break;
-    case Way:
-      boundingBox = PlanitOsmWayUtils.createBoundingBox((OsmWay)osmEntity, offsetInMeters, osmNodes, geoUtils);
-      break;  
-    default:
-      LOGGER.severe(String.format("unknown entity type %s when identifying bounding box for osm entity %s",Osm4JUtils.getEntityType(osmEntity).toString(), osmEntity.getId()));
-      break;
-    }
-    return boundingBox;
-  }
-
   /** extract geometry from the osm entity, either a point, line string or polygon
    * 
    * @param osmEntity to extract from

@@ -18,7 +18,7 @@ import java.util.Map.Entry;
  * The tagging scheme helper is the base class for different lane based tagging schemes. Currently there exist two different type of mode specific lane based tagging schemes
  * namely a ModeLaneBased one and a LaneModeBased one. 
  * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
- * <p>
+ *
  * 
  * @author markr
  *

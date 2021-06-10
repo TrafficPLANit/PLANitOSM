@@ -10,6 +10,7 @@ import org.planit.utils.locale.CountryNames;
 
 /**
  * Factory for creating PLANitOSMReaders
+ * 
  * @author markr
  *
  */

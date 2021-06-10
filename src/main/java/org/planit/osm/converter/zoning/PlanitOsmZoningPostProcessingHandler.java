@@ -828,7 +828,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         /* no potential transfer zones AND Ptv1 tagged (bus_stop, station, halt, trams_stop), meaning that while we tried to match to
          * separate waiting area, none is present. Instead, we accept the stop_location is in fact also the waiting area and we create a
          * transfer zone in this location as well */
-        TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmNode, tags, TransferZoneType.PLATFORM, eligibleOsmModes, geoUtils);          
+        TransferZone transferZone = getTransferZoneParser().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmNode, tags, TransferZoneType.PLATFORM, eligibleOsmModes, geoUtils);          
         if(transferZone== null) {
           LOGGER.fine(String.format("Unable to convert stop_location %d residing on road infrastucture into a transfer zone for modes %s",osmNode.getId(), eligibleOsmModes.toString()));
         }else {
@@ -883,7 +883,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);
                 
     /* eligible modes for station, must at least support one or more mapped modes */
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
+    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeParser().collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, PlanitOsmModeUtils.identifyPtv1DefaultMode(tags));
     Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
     Set<TransferZone> matchedTransferZones = new HashSet<TransferZone>();
     Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getTransferZonesSpatially(eligibleSearchBoundingBox);
@@ -953,7 +953,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
     if(unprocessedStations != null) {
       for(OsmEntity osmStation : unprocessedStations){
         
-        Envelope boundingBox = PlanitOsmUtils.createBoundingBox(osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getNetworkToZoningData().getOsmNodes(), geoUtils);        
+        Envelope boundingBox = PlanitOsmBoundingBoxUtils.createBoundingBox(osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getNetworkToZoningData().getOsmNodes(), geoUtils);        
         if(boundingBox!= null) {
           
           /* process based on bounding box */
@@ -1018,7 +1018,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         
     /* modes for stop_position */
     String defaultOsmMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags);
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeParser().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {
       /* no eligible modes mapped to planit mode, ignore stop_position */
       return;
@@ -1332,7 +1332,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
       
         /* regular approach */
         /* accessible links for station conditioned on found modes, proximity, relative location to transfer zone and importance of osm way type (if applicable) */
-        Envelope searchBoundingBox = PlanitOsmUtils.createBoundingBox(osmStation, maxSearchDistance , getNetworkToZoningData().getOsmNodes(), geoUtils);
+        Envelope searchBoundingBox = PlanitOsmBoundingBoxUtils.createBoundingBox(osmStation, maxSearchDistance , getNetworkToZoningData().getOsmNodes(), geoUtils);
         accessLinks = findStopLocationLinksForStation(osmStation, stationTransferZone, osmAccessMode, searchBoundingBox, maxStopLocations);
       }
       
@@ -1365,7 +1365,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         
     /* modes */
     String defaultMode = PlanitOsmModeUtils.identifyPtv1DefaultMode(tags, OsmRailModeTags.TRAIN);
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
+    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeParser().collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
     if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {
       return;
     }
@@ -1397,7 +1397,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
         }else {
           
           /* transfer zone not on track, so create separately from connectoids */ 
-          stationTransferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmStation, tags, TransferZoneType.SMALL_STATION, defaultMode, geoUtils);          
+          stationTransferZone = getTransferZoneParser().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmStation, tags, TransferZoneType.SMALL_STATION, defaultMode, geoUtils);          
         }
             
         if(stationTransferZone == null) {
@@ -1454,7 +1454,7 @@ public class PlanitOsmZoningPostProcessingHandler extends PlanitOsmZoningBaseHan
   private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {    
           
     /* supported modes */
-    Pair<Collection<String>, Collection<Mode>> modeResult = collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
+    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeParser().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
     if(!PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {
       return;
     }

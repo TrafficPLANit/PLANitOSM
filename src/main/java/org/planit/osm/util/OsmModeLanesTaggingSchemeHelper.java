@@ -69,7 +69,7 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
    * </ul>
    * @param settings to filter for activated modes only
    * @param networkLayer to identify supported modes on the layer, which is a subset of all mapped modes 
-   * @return list os OSM modes that would identify such modes */
+   * @return list of OSM modes that would identify such modes */
   public static Set<String> getEligibleModeLanesSchemeHelperModes(PlanitOsmNetworkReaderSettings settings, MacroscopicPhysicalNetwork networkLayer) {
     return OsmLaneTaggingSchemeHelper.getEligibleTaggingSchemeHelperModes(settings, networkLayer);
   }   

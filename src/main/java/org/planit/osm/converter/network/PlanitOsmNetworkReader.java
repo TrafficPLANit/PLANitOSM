@@ -45,6 +45,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
+   * 
    * @throws PlanItException thrown if error
    */
   public void initialiseBeforeParsing() throws PlanItException {
@@ -70,17 +71,16 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     networkData.initialiseLayerParsers(network, settings, geoUtils);    
   }  
            
-  /** read based on reader and handler
+  /** Read based on reader and handler where the reader performs a callback to the handler provided
+   * 
    * @param osmReader to use
    * @param osmHandler to use
    * @throws PlanItException thorw if error
    */
   private void read(OsmReader osmReader, DefaultOsmHandler osmHandler) throws PlanItException {
-    /* register handler */
-    osmReader.setHandler(osmHandler);
-    
-    /* conduct parsing which will call back the handler*/
+       
     try {
+      osmReader.setHandler(osmHandler);      
       osmReader.read();
     } catch (OsmInputException e) {
       LOGGER.severe(e.getMessage());
@@ -92,25 +92,29 @@ public class PlanitOsmNetworkReader implements NetworkReader {
    * Log some information about this reader's configuration
    */
   private void logInfo() {
+    
     LOGGER.info(String.format("OSM network input source: %s",settings.getInputSource()));
     LOGGER.info(String.format("Country to base defaults on: %s",settings.getCountryName()));
     LOGGER.info(String.format("Setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));
     if(getSettings().hasBoundingPolygon()) {
       LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
     }
+    
   }    
   
-  /**
-   * Perform preprocessing if needed
+  /** Perform preprocessing if needed, only needed when we have set a bounding box and we need to restrict the OSM entities
+   *  parsed to this bounding box
+   * 
    * @throws PlanItException thrown if error
    */
   private void doPreprocessing() throws PlanItException {
+    
     /* preprocessing currently is only needed in case of bounding polygon present and user specified
      * OSM ways to keep outside of this bounding polygon, otherwise skip */
     if(getSettings().hasBoundingPolygon() && 
         (getSettings().hasKeepOsmWaysOutsideBoundingPolygon() || getSettings().hasKeepOsmNodesOutsideBoundingPolygon())) {
       
-      /* reader to parse the actual file */
+      /* reader to parse the actual file or source location */
       OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
       if(osmReader == null) {
         LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
@@ -122,32 +126,30 @@ public class PlanitOsmNetworkReader implements NetworkReader {
     }
   }
 
-  /** Perform main processing of network reader
-   * @throws PlanItException thrown if error
+  /** Perform main processing of OSM network reader
    * 
+   * @throws PlanItException thrown if error
    */
   private void doMainProcessing() throws PlanItException{
-    /* reader to parse the actual file */
+
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for network, aborting");
-    }
-    
-    /* set handler to deal with call backs from osm4j */
+    }   
     PlanitOsmNetworkHandler osmHandler = new PlanitOsmNetworkHandler(networkData, settings);
     read(osmReader, osmHandler);     
   }
   
-  /**
-   * collect the network data gathered
+  /** Collect the network data gathered
+   * 
    * @return network data
    */
   protected PlanitOsmNetworkReaderData getNetworkReaderData() {
     return networkData;
   }
   
-  /**
-   * remove dangling subnetworks when settings dictate it 
+  /** Remove dangling subnetworks when settings dictate it
+   *  
    * @throws PlanItException thrown if error
    */
   protected void removeDanglingSubNetworks() throws PlanItException {
@@ -210,7 +212,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   }  
   
   /**
-   * Default Constructor 
+   * Constructor 
    * 
    * @param countryName to use
    * @param osmNetwork network to populate
@@ -221,7 +223,7 @@ public class PlanitOsmNetworkReader implements NetworkReader {
   }  
   
   /**
-   * Default Constructor 
+   * Constructor 
    * 
    * @param inputSource to use
    * @param countryName to use

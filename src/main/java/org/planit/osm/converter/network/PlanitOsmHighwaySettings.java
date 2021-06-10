@@ -51,7 +51,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   protected boolean speedLimitDefaultsBasedOnUrbanArea = DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA;  
     
   /**
-   * each OSM road mode is mapped to a PLANit mode by default so that the memory model's modes
+   * Each OSM road mode is mapped to a PLANit mode by default so that the memory model's modes
    * are user configurable yet linked to the original format. Note that when the reader is used
    * i.c.w. a network writer to convert one network to the other. It is paramount that the PLANit modes
    * that are mapped here are also mapped by the writer to the output format to ensure a correct I/O mapping of modes
@@ -370,7 +370,7 @@ public class PlanitOsmHighwaySettings extends PlanitOsmWaySettings {
   }  
   
   /** add/overwrite a mapping from OSM road mode to PLANit mode. This means that the osmMode will be added to the PLANit network, but also any of its restrictions
-   *  will be imposed on the planit mode that is provided. 
+   *  will be imposed on the PLANit mode that is provided. 
    * 
    * @param osmRoadMode to set
    * @param planitMode to map it to

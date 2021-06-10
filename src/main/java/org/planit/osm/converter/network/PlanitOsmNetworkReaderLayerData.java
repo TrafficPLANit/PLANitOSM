@@ -104,7 +104,7 @@ public class PlanitOsmNetworkReaderLayerData {
    */
   protected final Map<Point, Pair<Node, OsmNode>> planitNodesByLocation = new HashMap<Point,  Pair<Node, OsmNode>>();
   
-  /** Mapping from locations (representing known osm nodes or auto-generated planit nodes without osm node, in the latter case, no osm node is stored in the pair) to the links they are internal to. When initial parsing is done, 
+  /** Mapping from locations (representing known OSM nodes or auto-generated PLANit nodes without OSM node, in the latter case, no OSM node is stored in the pair) to the links they are internal to. When initial parsing is done, 
    * we verify if any entry in the map contains more than one link in which case the two link intersect at a point other than the extremes
    * and we must break the link. Also, in case any existing link's extreme node is internal to any other link, the link where
    * this location is internal to must be split into two because a PLANit network requires all intersections of links to occur
@@ -176,7 +176,7 @@ public class PlanitOsmNetworkReaderLayerData {
     return Collections.unmodifiableMap(planitNodesByLocation);
   }
   
-  /** Register a planit node based on an osm node for this layer
+  /** Register a PLANit node based on an OSM node for this layer
    * 
    * @param osmNode to index by
    * @param planitNode to register
@@ -187,7 +187,7 @@ public class PlanitOsmNetworkReaderLayerData {
     planitNodesByLocation.put(osmNodeLocation, Pair.of(planitNode, osmNode));
   }
   
-  /** register a planit node based on a location only, instead of based on an osm node
+  /** register a PLANit node based on a location only, instead of based on an osm node
    * 
    * @param location to index by
    * @param planitNode to register
@@ -197,7 +197,7 @@ public class PlanitOsmNetworkReaderLayerData {
     planitNodesByLocation.put(location, Pair.of(planitNode, null));
   }  
   
-  /** Add a mapping from osm node id to the (initial) planit link it is internal to
+  /** Add a mapping from OSM node id to the (initial) planit link it is internal to
    * 
    * @param osmNode to use
    * @param planitLink to register as osm node being internal to
@@ -209,7 +209,8 @@ public class PlanitOsmNetworkReaderLayerData {
     registerLocationAsInternalToPlanitLink(location, planitLink);
   }  
   
-  /** add a mapping from location to the (initial) planit link it is internal to
+  /** add a mapping from location to the (initial) PLANit link it is internal to
+   * 
    * @param location to use
    * @param planitLink to register as location being internal to (location either being a known osm node, or, for example, an auto-generated stop_position, not absed on a planit node)
    */  
@@ -218,9 +219,9 @@ public class PlanitOsmNetworkReaderLayerData {
     originalLinkInternalAvailableLocations.get(location).first().add(planitLink);
   }  
   
-  /** update all known osm ways with multiple planit links. To use whenever a planit link is broken and split into multiple
-   * planit links that cover the same original osm way. This registration is used to find the correct planit links that are internal
-   * to osm nodes when needed.
+  /** update all known OSM ways with multiple PLANit links. To use whenever a PLANit link is broken and split into multiple
+   * PLANit links that cover the same original OSM way. This registration is used to find the correct PLANit links that are internal
+   * to OSM nodes when needed.
    * 
    * @param newOsmWayToPlanitLinkMapping contains new mapping from osm way id to known planit links that cover this osm way
    */
@@ -228,12 +229,12 @@ public class PlanitOsmNetworkReaderLayerData {
     PlanitOsmNetworkHandlerHelper.addAllTo(newOsmWayToPlanitLinkMapping, osmWaysWithMultiplePlanitLinks);    
   }
   
-  /** update all known osm ways with multiple planit links. To use whenever a planit link is broken and split into multiple
-   * planit links that cover the same original osm way. This registration is used to find the correct planit links that are internal
-   * to osm nodes when needed.
+  /** update all known OSM ways with multiple PLANit links. To use whenever a PLANit link is broken and split into multiple
+   * PLANit links that cover the same original OSM way. This registration is used to find the correct PLANit links that are internal
+   * to OSM nodes when needed.
    * 
    * @param osmWayId to add links for
-   * @param newOsmWayToPlanitLinkMapping contains additional planit links created for this osm way
+   * @param newOsmWayToPlanitLinkMapping contains additional PLANit links created for this OSM way
    */
   public void updateOsmWaysWithMultiplePlanitLinks(Long osmWayId, Set<Link> newOsmWayToPlanitLinkMapping) {
     if(newOsmWayToPlanitLinkMapping.size() < 2) {
@@ -246,14 +247,15 @@ public class PlanitOsmNetworkReaderLayerData {
     }    
   }    
   
-  /** the number of osm ways with multiple planit links created for them
+  /** the number of OSM ways with multiple PLANit links created for them
+   * 
    * @return total
    */
   public long getNumberOfOsmWaysWithMultiplePlanitLinks() {
     return osmWaysWithMultiplePlanitLinks.size();
   }  
  
-  /** Verify if location is registered as internal to a planit link
+  /** Verify if location is registered as internal to a PLANit link
    * 
    * @param location to verify
    * @return true when registered as internal, false otherwise
@@ -262,7 +264,7 @@ public class PlanitOsmNetworkReaderLayerData {
     return originalLinkInternalAvailableLocations.containsKey(location);
   }
   
-  /** verify if osm node is part of this layer either as a planit node, or internal to any planit link 
+  /** verify if OSM node is part of this layer either as a PLANit node, or internal to any PLANit link 
    * 
    * @param osmNode to check
    * @return true when part of a geometry in the layer, false otherwise

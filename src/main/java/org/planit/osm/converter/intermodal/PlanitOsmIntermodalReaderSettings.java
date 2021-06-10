@@ -14,7 +14,7 @@ import org.planit.utils.misc.UrlUtils;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
- * and zoning reader. Hence these settings rpovide access to OSM network and zoning reader settings
+ * and zoning reader. Hence these settings provide access to OSM network and zoning reader settings
  * 
  * @author markr
  *
@@ -28,7 +28,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
   protected final PlanitOsmPublicTransportReaderSettings zoningPtSettings;
   
   /**
-   * constructor
+   * Constructor
    * 
    * @param countryName to use
    */
