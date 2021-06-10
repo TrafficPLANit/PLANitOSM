@@ -12,7 +12,7 @@ import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 
 /**
- * Track statistics on Osm network handler
+ * Track statistics on OSM network handler
  * 
  * @author markr
  *

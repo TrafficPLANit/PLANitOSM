@@ -182,4 +182,106 @@ public class PlanitOsmConnectoidParser {
     return extractDirectedConnectoidsForMode(osmNodeLocation, transferZone, planitMode, geoUtils);
   }
 
+  /** create directed connectoid for the link segment provided, all related to the given transfer zone and with access modes provided. When the link segment does not have any of the 
+   * passed in modes listed as allowed, no connectoid is created and null is returned
+   * 
+   * @param accessZone to relate connectoids to
+   * @param linkSegment to create connectoid for
+   * @param allowedModes used for the connectoid
+   * @return created connectoid when at least one of the allowed modes is also allowed on the link segment
+   * @throws PlanItException thrown if error
+   */
+  protected DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes) throws PlanItException {
+    final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
+    if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
+      DirectedConnectoid connectoid = zoning.transferConnectoids.registerNew(linkSegment,accessZone);
+      
+      /* xml id = internal id */
+      connectoid.setXmlId(String.valueOf(connectoid.getId()));
+      
+      /* link connectoid to zone and register modes for access*/
+      connectoid.addAllowedModes(accessZone, realAllowedModes);   
+      return connectoid;
+    }
+    return null;
+  }
+
+  /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with access modes provided. connectoids are only created
+   * when the access link segment has at least one of the allowed modes as an eligible mode
+   * 
+   * @param transferZone to relate connectoids to
+   * @param networkLayer of the modes and link segments used
+   * @param linkSegments to create connectoids for (one per segment)
+   * @param allowedModes used for each connectoid
+   * @return created connectoids
+   * @throws PlanItException thrown if error
+   */
+  protected Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicPhysicalNetwork networkLayer, final Collection<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
+    Set<DirectedConnectoid> createdConnectoids = new HashSet<DirectedConnectoid>();
+    for(EdgeSegment linkSegment : linkSegments) {
+      DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
+      if(newConnectoid != null) {
+        createdConnectoids.add(newConnectoid);
+        
+        /* update planit data tracking information */ 
+        /* 1) index by access link segment's downstream node location */
+        zoningReaderData.getPlanitData().addDirectedConnectoidByLocation(networkLayer, newConnectoid.getAccessLinkSegment().getDownstreamVertex().getPosition() ,newConnectoid);
+        /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
+        zoningReaderData.getPlanitData().addConnectoidByTransferZone(transferZone, newConnectoid);
+      }
+    }         
+    
+    return createdConnectoids;
+  }
+
+  /** Create directed connectoids for transfer zones that reside on osw ways. For such transfer zones, we simply create connectoids in both directions for all eligible incoming 
+   * link segments. This is a special case because due to residing on the osm way it is not possible to distinguish what intended direction of the osm way is serviced (it is neither
+   * left nor right of the way). Therefore any attempt to extract this information is bypassed here.
+   * 
+   * @param transferZone residing on an osm way
+   * @param networkLayer related to the mode
+   * @param planitMode the connectoid is accessible for
+   * @param geoUtils to use
+   * @return created connectoids, null if it was not possible to create any due to some reason
+   * @throws PlanItException thrown if error
+   */
+  protected Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
+      TransferZone transferZone, MacroscopicPhysicalNetwork networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+    /* collect the osmNode for this transfer zone */
+    OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
+    
+    Collection<? extends EdgeSegment> nominatedLinkSegments = null;
+    if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node)) {
+      /* user overwrite */
+      
+      long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node);
+      Link nominatedLink = PlanitOsmZoningHandlerHelper.getClosestLinkWithOsmWayIdToGeometry( osmWayId, PlanitOsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
+      if(nominatedLink != null) {
+        nominatedLinkSegments = nominatedLink.getEdgeSegments(); 
+      }else {
+        LOGGER.severe(String.format("User nominated osm way not available for waiting area on road infrastructure %d",osmWayId));
+      }                      
+      
+    }else {
+      /* regular approach */
+      
+      /* create/collect planit node with access link segment */
+      Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);
+      if(planitNode == null) {
+        LOGGER.warning(String.format("DISCARD: osm node (%d) could not be converted to access node for transfer zone osm entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
+        return null;
+      }
+      
+      nominatedLinkSegments = planitNode.getEntryLinkSegments();
+    }
+    
+    
+    
+    /* connectoid(s) */
+        
+    /* create connectoids on top of transfer zone */
+    /* since located on osm way we cannot deduce direction of the stop, so create connectoid for both incoming directions (if present), so we can service any line using the way */        
+    return createAndRegisterDirectedConnectoids(transferZone, networkLayer, nominatedLinkSegments, Collections.singleton(planitMode));    
+  }
+
 }
