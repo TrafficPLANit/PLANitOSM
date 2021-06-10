@@ -5,16 +5,16 @@
 	
 	<parent>
     <groupId>org.planit.parentpom</groupId>
-    <artifactId>PLANitParentPom</artifactId>
+    <artifactId>planit-parentpom</artifactId>
 		<version>0.2.1a1</version>
 	</parent>
 
 	<groupId>org.planit.osm</groupId>
-	<artifactId>PLANitOSM</artifactId>
+	<artifactId>planit-osm</artifactId>
 	<description>PLANit OSM  parses Open Street Map networks</description>
 	<packaging>jar</packaging>
 
-	<name>PLANitOSM</name>
+	<name>planit-osm</name>
 	<url>https://github.com/TrafficPLANit/planitosm</url>
 
 	<!-- license based on the one published on the website -->
@@ -32,7 +32,7 @@
 	
 	   <dependency>
         <groupId>org.planit</groupId>
-        <artifactId>PLANit</artifactId>
+        <artifactId>planit-core</artifactId>
     </dependency> 
 
 		<dependency>
