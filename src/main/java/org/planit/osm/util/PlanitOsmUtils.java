@@ -28,7 +28,7 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
- * Utilities in relation to parsing osm data and constructing a PLANit model from it that are too general to
+ * Utilities in relation to parsing OSM data and constructing a PLANit model from it that are too general to
  * be moved to any of the more specific PlanitOSMXXXUtils classes.
  * 
  * @author markr

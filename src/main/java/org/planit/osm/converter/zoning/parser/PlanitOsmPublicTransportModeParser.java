@@ -1,8 +1,9 @@
-package org.planit.osm.converter.zoning;
+package org.planit.osm.converter.zoning.parser;
 
 import java.util.Collection;
 import java.util.Map;
 
+import org.planit.osm.converter.PlanitOsmModeParser;
 import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
 import org.planit.osm.util.PlanitOsmModeUtils;
 import org.planit.utils.misc.Pair;
@@ -15,17 +16,14 @@ import org.planit.utils.mode.Mode;
  * @author markr
  *
  */
-public class PlanitOsmPublicTransportModeParser {
+public class PlanitOsmPublicTransportModeParser extends PlanitOsmModeParser {
   
-  /** settings to use */
-  private final PlanitOsmNetworkReaderSettings settings;
-
   /**Constructor
    *  
    * @param settings to use
    */
   public PlanitOsmPublicTransportModeParser(PlanitOsmNetworkReaderSettings settings) {
-    this.settings = settings;
+    super(settings);
   }
 
   /** collect the pt modes both OSM and mapped PLANit modes for a pt entity. If no default mode is found based on the tags, a default mode may be 
@@ -41,7 +39,7 @@ public class PlanitOsmPublicTransportModeParser {
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Collection<Mode> eligiblePlanitModes = settings.getMappedPlanitModes(eligibleOsmModes);      
+    Collection<Mode> eligiblePlanitModes = getSettings().getMappedPlanitModes(eligibleOsmModes);      
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
   
@@ -59,7 +57,7 @@ public class PlanitOsmPublicTransportModeParser {
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Collection<Mode> eligiblePlanitModes = settings.getMappedPlanitModes(eligibleOsmModes);      
+    Collection<Mode> eligiblePlanitModes = getSettings().getMappedPlanitModes(eligibleOsmModes);      
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
 }

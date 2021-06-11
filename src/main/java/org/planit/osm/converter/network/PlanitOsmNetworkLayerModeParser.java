@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.osm.converter.PlanitOsmModeParser;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmBicycleTags;
 import org.planit.osm.tags.OsmBusWayTags;
@@ -33,14 +34,11 @@ import org.planit.utils.mode.Mode;
  * @author markr
  *
  */
-public class PlanitOsmNetworkLayerModeParser {
+public class PlanitOsmNetworkLayerModeParser extends PlanitOsmModeParser {
   
   /** the network layer to use */
   private final MacroscopicPhysicalNetwork networkLayer;  
-  
-  /** settings relevant to this parser */
-  private final PlanitOsmNetworkReaderSettings settings;
-  
+    
   /** helper class to deal with parsing tags under the lanesMode tagging scheme for eligible modes */
   private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper = null;
   
@@ -57,7 +55,7 @@ public class PlanitOsmNetworkLayerModeParser {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
     String[] accessValueTags = included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
     /* found modes with given access value tags in explored direction */
-    Set<Mode> foundModes = settings.getMappedPlanitModes(PlanitOsmModeUtils.getPostfixedOsmRoadModesWithValueTag(osmDirectionCondition, tags, accessValueTags));
+    Set<Mode> foundModes = getSettings().getMappedPlanitModes(PlanitOsmModeUtils.getPostfixedOsmRoadModesWithValueTag(osmDirectionCondition, tags, accessValueTags));
     return foundModes;
   }
 
@@ -78,7 +76,7 @@ public class PlanitOsmNetworkLayerModeParser {
    * @return the mapped PLANitModes found
    */
   private Set<Mode> getExplicitlyIncludedModesNonOneWay(Map<String, String> tags) {
-    return settings.getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
+    return getSettings().getMappedPlanitModes(PlanitOsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
   }
 
   /** Collect explicitly included modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
@@ -100,22 +98,22 @@ public class PlanitOsmNetworkLayerModeParser {
     /* TAGGING SCHEMES - BUSWAY/CYCLEWAY */
     {
       /*... bicycles --> include when inclusion indicating tag is present for correct location [explored direction]*/
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE)) {                  
+      if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE)) {                  
           if(OsmBicycleTags.isCyclewayIncludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY)) {
             /* both directions implicit*/
-            includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+            includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
           }else if(OsmBicycleTags.isCyclewayIncludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBicycleTags.CYCLEWAY_LEFT : OsmBicycleTags.CYCLEWAY_RIGHT)) {
             /* cycleway scheme, location based (single) direction, see also https://wiki.openstreetmap.org/wiki/Bicycle example T4 */
-            includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+            includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
           }else if(OsmBicycleTags.isNoOneWayCyclewayInAnyLocation(tags)) {
             /* location is explicitly in both directions (non-oneway on either left or right hand side, see also https://wiki.openstreetmap.org/wiki/Bicycle example T2 */
-            includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+            includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
           }
       }      
             
       /*... buses --> include when inclusion indicating tag is present for correct location [explored direction], see https://wiki.openstreetmap.org/wiki/Bus_lanes */
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBusWayTags.BUSWAY_LEFT : OsmBusWayTags.BUSWAY_LEFT)) {
-        includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BUS)); 
+      if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBusWayTags.BUSWAY_LEFT : OsmBusWayTags.BUSWAY_LEFT)) {
+        includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BUS)); 
       }       
       
     }      
@@ -140,8 +138,8 @@ public class PlanitOsmNetworkLayerModeParser {
     /* TAGGING SCHEMES - BUSWAY/CYCLEWAY */
     {
       /*... bicycles --> exclude when explicitly excluded in location of explored driving direction*/
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayExcludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBicycleTags.CYCLEWAY_LEFT : OsmBicycleTags.CYCLEWAY_RIGHT)) {                  
-        excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+      if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayExcludedForAnyOf(tags, isDrivingDirectionLocationLeft ? OsmBicycleTags.CYCLEWAY_LEFT : OsmBicycleTags.CYCLEWAY_RIGHT)) {                  
+        excludedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
       }      
             
       /*... for buses --> left and/or right non-presence explicit exclusions hardly exist, so not worthwhile checking for */      
@@ -182,11 +180,11 @@ public class PlanitOsmNetworkLayerModeParser {
       /* see example of both lanes:mode and mode:lanes schemes specific for bus on https://wiki.openstreetmap.org/wiki/Bus_lanes, but works the same way for other modes */
       if(lanesModeSchemeHelper!=null && lanesModeSchemeHelper.hasEligibleModes()) {
         /* lanes:<mode>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
-        lanesModeSchemeHelper.getModesWithLanesWithoutDirection(tags).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
+        lanesModeSchemeHelper.getModesWithLanesWithoutDirection(tags).forEach(osmMode -> includedModes.add(getSettings().getMappedPlanitMode(osmMode)));
       }
       if(modeLanesSchemeHelper!=null && modeLanesSchemeHelper.hasEligibleModes()) {
         /* <mode>:lanes=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
-        modeLanesSchemeHelper.getModesWithLanesWithoutDirection(tags).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
+        modeLanesSchemeHelper.getModesWithLanesWithoutDirection(tags).forEach(osmMode -> includedModes.add(getSettings().getMappedPlanitMode(osmMode)));
       }          
     }        
     
@@ -195,13 +193,13 @@ public class PlanitOsmNetworkLayerModeParser {
       /* RIGHT and LEFT on a oneway street DO NOT imply direction (unless possibly in the value but not via the key)
       
       /*... bicycles explore location specific (left, right) presence [main direction]*/
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayIncludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY_LEFT, OsmBicycleTags.CYCLEWAY_RIGHT)) {
-        includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+      if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayIncludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY_LEFT, OsmBicycleTags.CYCLEWAY_RIGHT)) {
+        includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
       }          
       
       /*... for buses adopting the busway scheme approach [main direction] */   
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_RIGHT)) {
-          includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BUS));
+      if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isLaneIncludedForAnyOf(tags, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_RIGHT)) {
+          includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BUS));
       }            
     }  
     
@@ -228,8 +226,8 @@ public class PlanitOsmNetworkLayerModeParser {
       /* alternatively the busway or cycleway scheme can be used, which has to be checked separately by mode since it is less generic */
       
       /*... bicycles --> left or right non-presence [explored direction] */
-      if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayExcludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY_LEFT, OsmBicycleTags.CYCLEWAY_RIGHT)) {
-        excludedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+      if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayExcludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY_LEFT, OsmBicycleTags.CYCLEWAY_RIGHT)) {
+        excludedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
       }          
       
       /*... for buses --> left and/or right non-presence explicit exclusions hardly exist, so not worthwhile checking for */              
@@ -253,13 +251,13 @@ public class PlanitOsmNetworkLayerModeParser {
     /* TAGGING SCHEMES - BUSWAY/CYCLEWAY is the only scheme with opposite direction specific tags for oneway OSM ways*/
   
     /*... bicycle location [opposite direction], as per https://wiki.openstreetmap.org/wiki/Key:cycleway cycleway:left=opposite or cycleway:right=opposite are not valid*/
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isOppositeCyclewayIncludedForAnyOf(tags, OsmBicycleTags.getCycleWayKeyTags(false /* no left right*/ ))) {
-      includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
+    if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isOppositeCyclewayIncludedForAnyOf(tags, OsmBicycleTags.getCycleWayKeyTags(false /* no left right*/ ))) {
+      includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));
     }
     
     /*... buses for busway scheme [opposite direction], see https://wiki.openstreetmap.org/wiki/Bus_lanes */
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isOppositeLaneIncludedForAnyOf(tags, OsmBusWayTags.getBuswaySchemeKeyTags())) {
-      includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BUS));  
+    if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && OsmLaneTags.isOppositeLaneIncludedForAnyOf(tags, OsmBusWayTags.getBuswaySchemeKeyTags())) {
+      includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BUS));  
     }          
     
     return includedModes;
@@ -280,7 +278,7 @@ public class PlanitOsmNetworkLayerModeParser {
     Collection<String> excludedModes = OsmRoadModeCategoryTags.getRoadModesByCategory(OsmRoadModeCategoryTags.VEHICLE);
     /* in case rail way is marked as one way, we exclude all rail modes as well */
     excludedModes.addAll(OsmRailModeTags.getSupportedRailModeTags());
-    return settings.getMappedPlanitModes(excludedModes);
+    return getSettings().getMappedPlanitModes(excludedModes);
   }
 
   /** Collect explicitly included modes from the passed in tags but only for tags that have the same meaning regarldess if the way is tagged as one way or not
@@ -316,21 +314,21 @@ public class PlanitOsmNetworkLayerModeParser {
       /* see example of both lanes:mode and mode:lanes schemes specific for bus on https://wiki.openstreetmap.org/wiki/Bus_lanes, but works the same way for other modes */
       if(lanesModeSchemeHelper!=null && lanesModeSchemeHelper.hasEligibleModes()) {
         /* lanes:<mode>:<direction>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
-        lanesModeSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
+        lanesModeSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(getSettings().getMappedPlanitMode(osmMode)));
       }if(modeLanesSchemeHelper!=null && modeLanesSchemeHelper.hasEligibleModes()) {
         /* <mode>:lanes:<direction>=* scheme, collect the modes available this way, e.g. bicycle, hgv, bus if eligible */        
-        modeLanesSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(settings.getMappedPlanitMode(osmMode)));
+        modeLanesSchemeHelper.getModesWithLanesInDirection(tags, isForwardDirection).forEach(osmMode -> includedModes.add(getSettings().getMappedPlanitMode(osmMode)));
       }
     }
     
     /*...bicycle --> explicitly tagged cycleway being available in both directions */
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayIncludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY_BOTH)) {
-        includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE));      
+    if(getSettings().hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && OsmBicycleTags.isCyclewayIncludedForAnyOf(tags, OsmBicycleTags.CYCLEWAY_BOTH)) {
+        includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.BICYCLE));      
     }
       
     /* ...pedestrian modes can also be added by means of defined sidewalks, footways, etc. Note that pedestrians can always move in both direction is any infrastructure is present */
-    if(settings.hasMappedPlanitMode(OsmRoadModeTags.FOOT) && OsmPedestrianTags.hasExplicitlyIncludedSidewalkOrFootway(tags)) {
-      includedModes.add(settings.getMappedPlanitMode(OsmRoadModeTags.FOOT));
+    if(getSettings().hasMappedPlanitMode(OsmRoadModeTags.FOOT) && OsmPedestrianTags.hasExplicitlyIncludedSidewalkOrFootway(tags)) {
+      includedModes.add(getSettings().getMappedPlanitMode(OsmRoadModeTags.FOOT));
     }
     
     return includedModes;
@@ -389,7 +387,8 @@ public class PlanitOsmNetworkLayerModeParser {
    * @param networkLayer this parser is applied to
    */
   public PlanitOsmNetworkLayerModeParser(PlanitOsmNetworkReaderSettings settings, MacroscopicPhysicalNetwork networkLayer) {
-    this.settings = settings;
+    super(settings);
+    
     this.networkLayer = networkLayer;
     
     /* initialise the tagging scheme helpers based on the registered modes */
@@ -524,9 +523,9 @@ public class PlanitOsmNetworkLayerModeParser {
       /* collect all modes the type of road supports...*/
       Set<Mode> allowedModes = null;
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        allowedModes = settings.getMappedPlanitModes(OsmRoadModeTags.getSupportedRoadModeTags());  
+        allowedModes = getSettings().getMappedPlanitModes(OsmRoadModeTags.getSupportedRoadModeTags());  
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        allowedModes = settings.getMappedPlanitModes(OsmRailModeTags.getSupportedRailModeTags());
+        allowedModes = getSettings().getMappedPlanitModes(OsmRailModeTags.getSupportedRailModeTags());
       }else {
         /* no other major types yet supported */
       }
@@ -541,7 +540,7 @@ public class PlanitOsmNetworkLayerModeParser {
     /* access=<mode>*/
     else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmRoadModeTags.getSupportedRoadModeTagsAsArray()) || OsmTagUtils.matchesAnyValueTag(accessValue, OsmRailModeTags.getSupportedRailModeTagsAsArray())){
       /* access limited to a particular road/rail mode */
-      includedModesToUpdate.add(settings.getMappedPlanitMode(accessValue));
+      includedModesToUpdate.add(getSettings().getMappedPlanitMode(accessValue));
       excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
       excludedModesToUpdate.removeAll(includedModesToUpdate);
     }

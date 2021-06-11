@@ -25,6 +25,22 @@ public class PlanitOsmBoundingBoxUtils {
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmBoundingBoxUtils.class.getCanonicalName());
 
   
+  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
+   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
+   * more confusing than helpful in those situation and is therefore ignored
+   * 
+   * @param message to log if not too close to bounding box
+   * @param geometry to determine distance to bounding box to
+   * @param logger to log on
+   * @param geoUtils to use
+   * @throws PlanItException thrown if error
+   */
+  public static void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Envelope boundingBox, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+    if(!isNearNetworkBoundingBox(geometry, boundingBox, geoUtils)) {
+      LOGGER.warning(message);
+    }
+  }  
+  
   /** check if geometry is near network bounding box using buffer based on PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS
    * 
    * @param geometry to check

@@ -302,7 +302,7 @@ public class PlanitOsmNetworkHandler extends DefaultOsmHandler {
     if(linkSegmentTypes != null) {
       linkSegmentTypes.forEach( (layer, linkSegmentType)  -> {
         if(linkSegmentType != null) {
-          networkData.getLayerParser((MacroscopicPhysicalNetwork)layer).getProfiler().incrementOsmTagCounter(osmTypeValueToUse);
+          networkData.getLayerParser((MacroscopicPhysicalNetwork)layer).getLayerData().getProfiler().incrementOsmTagCounter(osmTypeValueToUse);
         } });
     }
     /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/

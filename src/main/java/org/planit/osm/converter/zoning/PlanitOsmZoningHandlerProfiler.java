@@ -53,6 +53,12 @@ public class PlanitOsmZoningHandlerProfiler {
    * while still providing information, hence the modulo use is dynamic
    */  
   private long moduloLoggingConnectoids = 500;
+  
+  /**
+   * for logging we log each x number of entities parsed, this is done to minimise number of logging
+   * while still providing information, hence the modulo use is dynamic
+   */  
+  private long moduloLoggingTransferZoneGroups = 500;  
        
   /**
    * Default constructor
@@ -179,6 +185,18 @@ public class PlanitOsmZoningHandlerProfiler {
     }  
   }
   
+  /**
+   * log user information based on currently number of registered transfer zone groups 
+   * 
+   * @param numberOfTransferZoneGroups registered transfer zone groups so far
+   */  
+  public void logTransferZoneGroupStatus(int numberOfTransferZoneGroups) {
+    if(numberOfTransferZoneGroups >= moduloLoggingTransferZoneGroups) {
+      LOGGER.info(String.format("Created %d transfer zone groups out of OSM stop_areas",moduloLoggingTransferZoneGroups));
+      moduloLoggingTransferZoneGroups *=2;
+    } 
+  }
+
   /**
    * reset the profiler
    */

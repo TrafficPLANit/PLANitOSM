@@ -139,8 +139,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
       /* handler to deal with callbacks from osm4j */
       osmHandler = new PlanitOsmZoningHandler(
           this.transferSettings, 
-          this.zoningReaderData, 
-          getSettings().getNetworkDataForZoningReader(), 
+          this.zoningReaderData,  
           this.zoning, 
           profiler);
       read(osmReader, osmHandler);
@@ -163,8 +162,7 @@ public class PlanitOsmZoningReader implements ZoningReader {
       /* handler to deal with callbacks from osm4j */
       osmPostProcessingHandler = new PlanitOsmZoningPostProcessingHandler(
           this.transferSettings, 
-          this.zoningReaderData, 
-          getSettings().getNetworkDataForZoningReader(), 
+          this.zoningReaderData,  
           this.zoning,
           profiler);
       read(osmReader, osmPostProcessingHandler);        

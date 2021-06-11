@@ -33,6 +33,9 @@ public class PlanitOsmNetworkReaderLayerData {
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkReaderLayerData.class.getCanonicalName());
   
+  /** profiler for the network layer */
+  private final PlanitOsmNetworkHandlerProfiler profiler = new PlanitOsmNetworkHandlerProfiler();  
+  
   /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only track globally when
    * part of intermodal reader where follow up components require this information, otherwise it is locally discarded after use */
   protected Map<Long, Set<Link>> osmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
@@ -367,6 +370,14 @@ public class PlanitOsmNetworkReaderLayerData {
     planitNodesByLocation.clear();
     originalLinkInternalAvailableLocations.clear();
     osmWaysWithMultiplePlanitLinks.clear();
+  }
+
+  /** Collect the profiler
+   * 
+   * @return profiler for this layer
+   */
+  public PlanitOsmNetworkHandlerProfiler getProfiler() {
+    return profiler;
   }
 
 

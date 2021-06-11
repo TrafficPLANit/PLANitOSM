@@ -1,29 +1,21 @@
 package org.planit.osm.converter.zoning;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderLayerData;
 import org.planit.osm.converter.network.PlanitOsmNetworkToZoningReaderData;
+import org.planit.osm.converter.zoning.parser.PlanitOsmConnectoidParser;
+import org.planit.osm.converter.zoning.parser.PlanitOsmPublicTransportModeParser;
+import org.planit.osm.converter.zoning.parser.PlanitOsmTransferZoneGroupParser;
+import org.planit.osm.converter.zoning.parser.PlanitOsmTransferZoneParser;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.Point;
-import org.planit.network.InfrastructureLayer;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
-import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.Node;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.zoning.TransferZone;
-import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
 import org.planit.zoning.Zoning;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
@@ -56,10 +48,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   
   /** the settings to adhere to regarding the parsing of PLAnit transfer infrastructure from OSM */
   private final PlanitOsmPublicTransportReaderSettings transferSettings;   
-  
-  /** network2ZoningData data collated from parsing network required to successfully popualte the zoning */
-  private final PlanitOsmNetworkToZoningReaderData network2ZoningData;
-  
+    
   /** holds, add to all the tracking data required for parsing zones */
   private final PlanitOsmZoningReaderData zoningReaderData;
   
@@ -69,10 +58,13 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   /** parser functionality regarding the creation of PLANit transfer zones from OSM entities */
   private final PlanitOsmTransferZoneParser transferZoneParser;
   
+  /** parser functionality regarding the creation of PLANit transfer zone groups from OSM entities */  
+  private final PlanitOsmTransferZoneGroupParser transferZoneGroupParser;
+  
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
   private final PlanitOsmPublicTransportModeParser publicTransportModeParser;  
   
-  /** parser funcionality regarding the creation of PLANit connectoids from OSM entities */
+  /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
   private final PlanitOsmConnectoidParser connectoidParser;
     
   /** Verify if passed in tags reflect transfer based infrastructure that is eligible (and supported) to be parsed by this class, e.g.
@@ -103,46 +95,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
         ||
         (entityType.equals(EntityType.Way) && getSettings().isExcludedOsmWay(osmId)); 
   }    
-  
-  /** find out if link osmModesToCheck are compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
-   * mode that is mapped to a planit mode. When one allows for pseudo comaptibility we relax the restrictions such that any rail/road/water mode
-   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
-   * to filter out definite non-matches.
-   *  
-   * @param referenceOsmModes to map against (may be null)
-   * @param potentialTransferZones to extract transfer zone groups from
-   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
-   * @return matched transfer zones
-   */   
-  private boolean isModeCompatible(Collection<String> osmModesToCheck, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    /* collect compatible modes */
-    Collection<String> overlappingModes = PlanitOsmModeUtils.getCompatibleModes(osmModesToCheck, referenceOsmModes, allowPseudoMatches);    
-    
-    /* only proceed when there is a valid mapping based on overlapping between reference modes and zone modes, while in absence
-     * of reference osm modes, we trust any nearby zone with mapped mode */
-    if(getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitMode(overlappingModes)) {
-      /* no overlapping mapped modes while both have explicit osm modes available, not a match */
-      return true;
-    }
-    return false;    
-
-  }       
-  
-  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
-   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
-   * more confusing than helpful in those situation and is therefore ignored
-   * 
-   * @param message to log if not too close to bounding box
-   * @param geometry to determine distance to bounding box to
-   * @param logger to log on
-   * @param geoUtils to use
-   * @throws PlanItException thrown if error
-   */
-  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Logger logger, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    if(!PlanitOsmBoundingBoxUtils.isNearNetworkBoundingBox(geometry, getNetworkToZoningData().getNetworkBoundingBox(), geoUtils)) {
-      logger.warning(message);
-    }
-  }    
+           
   
   /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
    * this always returns true
@@ -227,174 +180,17 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   } 
    
   
-  /** Verify if there exist any layers where the node is active either as an extreme node or internal to a planit link
+  /** Verify if there exist any layers where the node is active either as an extreme node or internal to a PLANit link
+   * 
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {    
-    OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(osmNodeId);
-    if(osmNode != null) {
-      for(InfrastructureLayer networkLayer : transferSettings.getReferenceNetwork().infrastructureLayers) {        
-        if(getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)){
-          return true;
-        }        
-      }
-    }
-    return false;
+  protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {
+    return PlanitOsmZoningHandlerHelper.hasNetworkLayersWithActiveOsmNode(
+        osmNodeId, getNetworkToZoningData().getOsmNodes(),getSettings().getReferenceNetwork(), getNetworkToZoningData());
   }   
-  
-  /** find out if transfer zone is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
-   * mode that is mapped to a planit mode.If the zone has no known modes, it is by definition not mode compatible. When one allows for psuedo comaptibility we relax the restrictions such that any rail/road/water mode
-   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
-   * to filter out definite non-matches.
-   *  
-   * @param transferZone to verify
-   * @param referenceOsmModes to macth against
-   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
-   * @return matched transfer zones
-   */   
-  protected boolean isTransferZoneModeCompatible(TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Collection<String> transferZoneSupportedModes = PlanitOsmZoningHandlerHelper.getEligibleOsmModesForTransferZone(transferZone);
-    if(transferZoneSupportedModes==null) {       
-      /* zone has no known modes, not a trustworthy match */ 
-      return false;
-    } 
-    
-    /* check mode compatibility on extracted transfer zone supported modes*/
-    return isModeCompatible(transferZoneSupportedModes, referenceOsmModes, allowPseudoMatches);    
-  }
-  
-  /** create a subset of transfer zones from the passed in ones, removing all transfer zones for which we can be certain they are located on the wrong side of the road infrastructure.
-   * This is verified by checking if the stop_location resides on a one-way link. If so, we can be sure (based on the driving direction of the country) if a transfer zone is located on
-   * the near or far side of the road, i.e., do people have to cross the road to egt to the stop position. If so, it is not eligible and we remove it, otherwise we keep it.
-   * 
-   * @param osmNode representing the stop location
-   * @param transferZones to create subset for
-   * @param osmModes eligible for the stop
-   * @param geoUtils to use
-   * @return subset of transfer zones
-   * @throws PlanItException thrown if error
-   */
-  protected Collection<TransferZone> removeTransferZonesOnWrongSideOfRoadOfStopLocation(OsmNode osmNode, Collection<TransferZone> transferZones, Collection<String> osmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    Collection<TransferZone> matchedTransferZones = new HashSet<TransferZone>(transferZones);
-    boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
-    
-    /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we exclude the matches that lie on the wrong side of the road, i.e.,
-     * would require passengers to cross the road to get to the stop position */
-    osmModes = PlanitOsmModeUtils.getPublicTransportModesFrom(osmModes);
-    for(String osmMode : osmModes) {
-      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
-      if(accessMode==null) {
-        continue;
-      }
-            
-      /* remove all link's that are not reachable without experiencing cross-traffic */
-      for(TransferZone transferZone : transferZones) { 
-        if(isTransferZoneOnWrongSideOfRoadOfStopLocation(PlanitOsmNodeUtils.createPoint(osmNode),transferZone, isLeftHandDrive, accessMode, geoUtils)) {
-          LOGGER.fine(String.format(
-              "DISCARD: Platform/pole %s matched on name to stop_position %d, but discarded based on placement on the wrong side of the road",transferZone.getExternalId(), osmNode.getId()));
-          matchedTransferZones.remove(transferZone);
-        }
-      }
-    }
-    
-    return matchedTransferZones;
-  }
-  
-  /** Verify based on the stop_position location that is assumed to be located on earlier parsed road infrastructure, if the transfer zone is located
-   * on an eligible side of the road. Meaning that the closest experienced driving direction of the nearby road is the logical one, i.e., when
-   * transfer zone is on the left the closest driving direction should be left hand drive and vice versa.
-   * 
-   * @param location representation stop_location
-   * @param transferZone representing waiting area
-   * @param isLeftHandDrive is driving direction left hand drive
-   * @param accessMode to verify
-   * @param geoUtils to use
-   * @return true when not on the wrong side, false otherwise
-   * @throws PlanItException thrown if error
-   */
-  protected boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    
-    /* first collect links that can access the connectoid location */
-    Collection<Link> planitLinksToCheck = getLinksWithAccessToConnectoidLocation(location, accessMode);
-        
-    /* remove all link's that are not reachable without experiencing cross-traffic from the perspective of the transfer zone*/
-    if(planitLinksToCheck!=null){
-      Collection<Link> accessibleLinks = PlanitOsmZoningHandlerHelper.removeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
-      if(accessibleLinks==null || accessibleLinks.isEmpty()) {
-        /* all links experience cross-traffic, so not reachable */
-        return true;
-      }
-    }
-    
-    /* reachable, not on wrong side */
-    return false;    
-    
-  }    
-  
-  /** Find links that can access the stop_location by the given mode. if location is on extreme node, we provide all links attached, otherwise only the
-   * link on which the location resides
-   * 
-   * @param location stop_location
-   * @param accessMode for stop_location (not used for filteraing accessibility, only for lyaer identification)
-   * @return links that can access the stop location.
-   * @throws PlanItException thrown if error
-   */
-  protected Collection<Link> getLinksWithAccessToConnectoidLocation(Point location, Mode accessMode) throws PlanItException {
-    /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
-     * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicPhysicalNetwork networkLayer = transferSettings.getReferenceNetwork().infrastructureLayers.get(accessMode);
-    PlanitOsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
-    OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
-    
-    /* links that can reach stop_location */
-    Collection<Link> planitLinksToCheck = null;
-    Node planitNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getPlanitNodeByLocation(location);
-    if(planitNode != null) {        
-      /* not internal to planit link, so regular match to planit node --> consider all incoming link segments as potentially usable  */
-      planitLinksToCheck = planitNode.<Link>getLinks();              
-    }else {      
-      /* not an extreme node, must be a node internal to a link up until now --> consider only link in question the location resides on */ 
-      planitLinksToCheck = getNetworkToZoningData().getNetworkLayerData(networkLayer).findPlanitLinksWithInternalLocation(location);  
-      if(planitLinksToCheck!=null){
-        if(planitLinksToCheck.size()>1) {
-          throw new PlanItException("location is internal to multiple planit links, should not happen %s", osmNode!=null ? "osm node "+osmNode.getId() : "");  
-        }                             
-      }
-    }
-    return planitLinksToCheck;
-  }
-
-  /** find out if link is mode compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
-   * mode that is mapped to a planit mode. If the zone has no known modes, it is by definition not mode compatible. 
-   * When one allows for pseudo compatibility we relax the restrictions such that any rail/road/water mode
-   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
-   * to filter out definite non-matches.
-   *  
-   * @param link to verify
-   * @param referenceOsmModes to map agains (may be null)
-   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
-   * @return matched transfer zones
-   */   
-  protected boolean isLinkModeCompatible(Link link, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Collection<String> osmLinkModes = new HashSet<String>(); 
-    if(link.hasEdgeSegmentAb()) {      
-      Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAvailableModes();
-      osmLinkModes.addAll(getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModes));
-    }
-    if(link.hasEdgeSegmentBa()) {      
-      Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentBa()).getLinkSegmentType().getAvailableModes();
-      osmLinkModes.addAll(getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModes));
-    }
-    if(osmLinkModes==null || osmLinkModes.isEmpty()) {
-      return false;
-    }
-    
-    /* check mode compatibility on extracted link supported modes*/
-    return isModeCompatible(osmLinkModes, referenceOsmModes, allowPseudoMatches);
-  }  
-                                                          
+                                                             
 
   /** verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
    * and is also activated for parsing based on the related settings
@@ -427,44 +223,6 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     return transferZoneParser.createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmNode, tags, defaultOsmMode, ptv1TransferZoneType, geoUtils);    
   }
 
-  /** process an osm entity that is classified as a (train) station. For this to register on the group, we only see if we can utilise its name and use it for the group, but only
-   * if the group does not already have a name
-   *   
-   * @param transferZoneGroup the osm station relates to 
-   * @param osmEntityStation of the relation to process
-   * @param tags of the osm entity representation a station
-   */
-  protected void updateTransferZoneGroupStationName(TransferZoneGroup transferZoneGroup, OsmEntity osmEntityStation, Map<String, String> tags) {
-    
-    if(!transferZoneGroup.hasName()) {
-      String stationName = tags.get(OsmTags.NAME);
-      if(stationName!=null) {
-        transferZoneGroup.setName(stationName);
-      }
-    }
-      
-  }  
-  
-  /** process an osm entity that is classified as a (train) station. For this to register on the transfer zone, we try to utilise its name and use it for the zone
-   * name if it is empty. We also record it as an input property for future reference, e.g. key=station and value the name of the osm station
-   *   
-   * @param transferZone the osm station relates to 
-   * @param tags of the osm entity representation a station
-   */  
-  protected void updateTransferZoneStationName(TransferZone transferZone, Map<String, String> tags) {
-    
-    String stationName = tags.get(OsmTags.NAME);
-    if(!transferZone.hasName()) {      
-      if(stationName!=null) {
-        transferZone.setName(stationName);
-      }
-    }
-    /* only set when not already set, because when already set it is likely the existing station name is more accurate */
-    if(!PlanitOsmZoningHandlerHelper.hasTransferZoneStationName(transferZone)) {
-      PlanitOsmZoningHandlerHelper.setTransferZoneStationName(transferZone, stationName);
-    }
-  }      
-  
   /** Method that will attempt to create both a transfer zone and its connectoids at the location of the osm node, unless the user has overwritten the default behaviour
    * with a custom mapping of stop_location to waiting area. In that case, we mark the stop_position as unprocessed, because then it will be processed later in post processing where
    * the stop_position is converted into a connectoid and the appropriate user mapper waiting area (Transfer zone) is collected to match. 
@@ -526,7 +284,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     }    
 
     Pair<Collection<String>, Collection<Mode>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
-    if(PlanitOsmZoningHandlerHelper.hasMappedPlanitMode(modeResult)) {               
+    if(PlanitOsmZoningHandlerHelper.containsMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
       transferZoneParser.createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first(), geoUtils);
     }
@@ -561,7 +319,7 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * @return network to zoning data
    */
   protected final PlanitOsmNetworkToZoningReaderData getNetworkToZoningData() {
-    return this.network2ZoningData;
+    return getSettings().getNetworkDataForZoningReader();
   }
   
   /** Get PT settings
@@ -579,6 +337,14 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
   protected PlanitOsmTransferZoneParser getTransferZoneParser() {
     return this.transferZoneParser;
   }
+  
+  /** Get the transfer zone group parser
+   * 
+   * @return transfer zone group parser 
+   */
+  protected PlanitOsmTransferZoneGroupParser getTransferZoneGroupParser() {
+    return this.transferZoneGroupParser;
+  }  
   
   /** Get the public transport mode parser
    * 
@@ -601,14 +367,12 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
-   * @param network2ZoningData data collated from parsing network required to successfully popualte the zoning
    * @param zoningToPopulate to populate
    * @param profiler to keep track of created/parsed entities across zone handlers
    */
   public PlanitOsmZoningBaseHandler(
       final PlanitOsmPublicTransportReaderSettings transferSettings, 
-      PlanitOsmZoningReaderData zoningReaderData, 
-      final PlanitOsmNetworkToZoningReaderData network2ZoningData, 
+      PlanitOsmZoningReaderData zoningReaderData,  
       final Zoning zoningToPopulate,
       final PlanitOsmZoningHandlerProfiler profiler) {
 
@@ -616,19 +380,21 @@ public abstract class PlanitOsmZoningBaseHandler extends DefaultOsmHandler {
     this.profiler = profiler;
     
     /* references */
-    this.network2ZoningData = network2ZoningData;
     this.zoning = zoningToPopulate;       
     this.transferSettings = transferSettings;
     this.zoningReaderData = zoningReaderData;
     
     /* parser for creating PLANit transfer zones */
-    this.transferZoneParser = new PlanitOsmTransferZoneParser(zoningToPopulate, zoningReaderData, transferSettings, network2ZoningData, profiler);
+    this.transferZoneParser = new PlanitOsmTransferZoneParser(zoningToPopulate, zoningReaderData, transferSettings, profiler);
+    
+    /* parser for creating PLANit transfer zone groups */
+    this.transferZoneGroupParser = new PlanitOsmTransferZoneGroupParser(zoningToPopulate, zoningReaderData, transferSettings, profiler);    
     
     /* parser for identifying pt PLANit modes from OSM entities */
-    this.publicTransportModeParser = new PlanitOsmPublicTransportModeParser(network2ZoningData.getNetworkSettings());
+    this.publicTransportModeParser = new PlanitOsmPublicTransportModeParser(transferSettings.getNetworkDataForZoningReader().getNetworkSettings());
     
     /* parser for creating PLANit connectoids */
-    this.connectoidParser = new PlanitOsmConnectoidParser(zoningToPopulate, zoningReaderData, transferSettings, network2ZoningData, profiler);
+    this.connectoidParser = new PlanitOsmConnectoidParser(zoningToPopulate, zoningReaderData, transferSettings, profiler);
   }
   
   /** Call this BEFORE we parse the OSM network to initialise the handler properly

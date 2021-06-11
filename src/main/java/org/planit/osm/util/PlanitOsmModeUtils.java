@@ -17,12 +17,9 @@ import org.planit.osm.tags.OsmTags;
 import org.planit.osm.tags.OsmWaterModeTags;
 
 /**
- * Utilities in relation to parsing osm modes when constructing a PLANit model from it
+ * Utilities in relation to parsing OSM modes when constructing a PLANit model from it. All utility methods are static in that they do not require
+ * any additional information regarding the configuration of the OSM reader, i.e., only generic utilities regarding OSM modes are included here.
  * 
- * @author markr
- *
- */
-/**
  * @author markr
  *
  */

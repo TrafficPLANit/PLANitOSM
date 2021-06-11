@@ -66,7 +66,8 @@ public class PlanitOsmNetworkToZoningReaderData {
     return data;
   }  
   
-  /** collect osm nodes
+  /** Collect OSM nodes
+   * 
    * @return osm nodes
    */
   public Map<Long, OsmNode> getOsmNodes() {

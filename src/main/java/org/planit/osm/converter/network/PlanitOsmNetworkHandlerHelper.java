@@ -138,6 +138,49 @@ public class PlanitOsmNetworkHandlerHelper {
     
     return node;
   }  
+  
+  /**
+   * Extract a PLANit node from the osmNode information and register it on the provided layer
+   * 
+   * @param osmNode to create PLANit node for
+   * @param networkLayer to create node on
+   * @param layerData to register on
+   * @return created node, null when something went wrong
+   * @throws PlanItException thrown if error
+   */
+  public static Node createPopulateAndRegisterNode(
+      OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer, PlanitOsmNetworkReaderLayerData layerData) throws PlanItException  {
+    
+    /* create */
+    Node node = createAndPopulateNode(osmNode, networkLayer);            
+    if(node!= null) {
+      /* register */
+      layerData.registerPlanitNodeByOsmNode(osmNode, node);       
+      layerData.getProfiler().logNodeStatus(networkLayer.nodes.size());
+    }
+    return node;
+  }
+  
+  /**
+   * Extract a PLANit node from the location information and register it on the provided layer
+   * 
+   * @param osmNodeLocation to create PLANit node for
+   * @param networkLayer to create node on
+   * @param layerData to register on
+   * @return created node, null when something went wrong
+   * @throws PlanItException thrown if error
+   */  
+  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicPhysicalNetwork networkLayer,
+      PlanitOsmNetworkReaderLayerData layerData) throws PlanItException {
+    /* create */
+    Node node = createAndPopulateNode(osmNodeLocation, networkLayer);            
+    if(node!= null) {
+      /* register */
+      layerData.registerPlanitNodeByLocation(osmNodeLocation, node);       
+      layerData.getProfiler().logNodeStatus(networkLayer.nodes.size());
+    }
+    return node;
+  }  
    
 
   /** add addition to destination

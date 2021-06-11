@@ -52,10 +52,7 @@ public class PlanitOsmNetworkLayerParser {
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkLayerParser.class.getCanonicalName());
   
   // local members only
-  
-  /** utility class for profiling this layer for logging purposes */
-  private final PlanitOsmNetworkHandlerProfiler profiler;
-       
+         
   /** track all data that maps osm entities to PLANit entities here */
   private final PlanitOsmNetworkReaderLayerData layerData; 
     
@@ -380,7 +377,7 @@ public class PlanitOsmNetworkLayerParser {
       }else
       { /* no speed limit information, revert to defaults */
         nonDirectionalSpeedLimitKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
-        profiler.incrementMissingSpeedLimitCounter();
+        layerData.getProfiler().incrementMissingSpeedLimitCounter();
       }
       
       if(nonDirectionalSpeedLimitKmh!=null) {
@@ -455,7 +452,7 @@ public class PlanitOsmNetworkLayerParser {
     if(lanesForward==null && lanesBackward==null) {
       lanesForward = settings.getDefaultDirectionalLanesByWayType(osmWayKey, tags.get(osmWayKey));
       lanesBackward = lanesForward;
-      profiler.incrementMissingLaneCounter();
+      layerData.getProfiler().incrementMissingLaneCounter();
     }
     
     /* when no lanes are allocated for vehicle modes, but direction has activated modes (for example due to presence of opposite lanes, or active modes -> assign 1 lane */
@@ -469,7 +466,7 @@ public class PlanitOsmNetworkLayerParser {
       missingLaneInformation = true;
     }
     if(missingLaneInformation) {
-      profiler.incrementMissingLaneCounter();
+      layerData.getProfiler().incrementMissingLaneCounter();
     }
     
     return Pair.of(lanesForward, lanesBackward);
@@ -501,7 +498,7 @@ public class PlanitOsmNetworkLayerParser {
     /* link segment type */
     linkSegment.setLinkSegmentType(linkSegmentType);
         
-    profiler.logLinkSegmentStatus(networkLayer.linkSegments.size());      
+    layerData.getProfiler().logLinkSegmentStatus(networkLayer.linkSegments.size());      
     return linkSegment;
   }  
   
@@ -616,14 +613,9 @@ public class PlanitOsmNetworkLayerParser {
     
     /* planit node */
     Node node = this.layerData.getPlanitNodeByOsmNode(osmNode);
-    if(node == null) {
-      
-      /* create */
-      node = PlanitOsmNetworkHandlerHelper.createAndPopulateNode(osmNode, networkLayer);            
-      if(node!= null) {
-        this.layerData.registerPlanitNodeByOsmNode(osmNode, node);       
-        profiler.logNodeStatus(networkLayer.nodes.size());
-      }
+    if(node == null) {      
+      /* create and register */
+      node = PlanitOsmNetworkHandlerHelper.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
     }
     
     return node;
@@ -653,7 +645,7 @@ public class PlanitOsmNetworkLayerParser {
       
       /* register internal nodes for breaking links later on during parsing */
       registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);                  
-      profiler.logLinkStatus(networkLayer.links.size());
+      layerData.getProfiler().logLinkStatus(networkLayer.links.size());
     }
     return link;
   }  
@@ -686,15 +678,6 @@ public class PlanitOsmNetworkLayerParser {
     return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
   }    
   
-  /**
-   * provide access to the profiler for this layer
-   * 
-   * @return profiler of this layer
-   */
-  protected PlanitOsmNetworkHandlerProfiler getProfiler() {
-    return this.profiler;
-  }
-
   /** Constructor
    * 
    * @param networkLayer to use
@@ -708,7 +691,6 @@ public class PlanitOsmNetworkLayerParser {
     this.geoUtils = geoUtils;
     this.settings = settings;
     
-    this.profiler  = new PlanitOsmNetworkHandlerProfiler();
     this.layerData = new PlanitOsmNetworkReaderLayerData();
     
     this.modeParser = new PlanitOsmNetworkLayerModeParser(settings, networkLayer);   
@@ -865,10 +847,10 @@ public class PlanitOsmNetworkLayerParser {
   }   
   
   /**
-   * log progile information gathered during parsing (so far)
+   * log profile information gathered during parsing (so far)
    */
   public void logProfileInformation() {
-    this.profiler.logProfileInformation(networkLayer);;
+    this.layerData.getProfiler().logProfileInformation(networkLayer);
   }
 
   /**

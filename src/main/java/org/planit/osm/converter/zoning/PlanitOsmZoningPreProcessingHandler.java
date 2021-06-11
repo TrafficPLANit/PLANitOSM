@@ -39,7 +39,7 @@ public class PlanitOsmZoningPreProcessingHandler extends PlanitOsmZoningBaseHand
    * @param profiler to use
    */
   public PlanitOsmZoningPreProcessingHandler(final PlanitOsmPublicTransportReaderSettings transferSettings, PlanitOsmZoningReaderData zoningReaderData, PlanitOsmZoningHandlerProfiler profiler) {   
-    super(transferSettings, zoningReaderData, null, null, profiler);    
+    super(transferSettings, zoningReaderData, null, profiler);    
   }
   
   /**
