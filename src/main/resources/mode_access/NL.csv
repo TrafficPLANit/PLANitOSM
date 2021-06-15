@@ -1,0 +1,4 @@
+HIGHWAYTYPE, MODES
+trunk, motorcar, motorcycle, goods, hgv, bus
+trunk_link, motorcar, motorcycle, goods, hgv, bus
+cycleway, mofa, bicycle, foot
