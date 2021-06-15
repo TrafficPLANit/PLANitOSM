@@ -13,12 +13,12 @@ import org.planit.network.InfrastructureLayer;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
-import org.planit.osm.converter.network.PlanitOsmHighwaySettings;
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
-import org.planit.osm.converter.network.PlanitOsmRailwaySettings;
+import org.planit.osm.converter.network.OsmHighwaySettings;
+import org.planit.osm.converter.network.OsmNetworkReaderSettings;
+import org.planit.osm.converter.network.OsmRailwaySettings;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
-import org.planit.osm.util.PlanitOsmConstants;
+import org.planit.osm.util.OsmConstants;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
 import org.planit.utils.misc.Pair;
@@ -194,7 +194,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createDefaultOsmLinkSegmentType(
       String name, double capacityPcuPerhour, double maxSpeedKmh, Collection<Mode> modes) throws PlanItException {
-    return createOsmLinkSegmentType(name, capacityPcuPerhour, PlanitOsmConstants.DEFAULT_MAX_DENSITY_LANE, maxSpeedKmh, modes);
+    return createOsmLinkSegmentType(name, capacityPcuPerhour, OsmConstants.DEFAULT_MAX_DENSITY_LANE, maxSpeedKmh, modes);
   }
   
   
@@ -210,7 +210,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createMotorway(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.MOTORWAY, PlanitOsmConstants.MOTORWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.MOTORWAY, OsmConstants.MOTORWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
   
   /**
@@ -225,7 +225,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createMotorwayLink(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.MOTORWAY_LINK, PlanitOsmConstants.MOTORWAY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.MOTORWAY_LINK, OsmConstants.MOTORWAY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -240,7 +240,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTrunk(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRUNK, PlanitOsmConstants.TRUNK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRUNK, OsmConstants.TRUNK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
   
   /**
@@ -255,7 +255,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTrunkLink(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRUNK_LINK, PlanitOsmConstants.TRUNK_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRUNK_LINK, OsmConstants.TRUNK_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -269,7 +269,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createPrimary(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PRIMARY, PlanitOsmConstants.PRIMARY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PRIMARY, OsmConstants.PRIMARY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
   
   /**
@@ -284,7 +284,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createPrimaryLink(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PRIMARY_LINK, PlanitOsmConstants.PRIMARY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PRIMARY_LINK, OsmConstants.PRIMARY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -299,7 +299,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createSecondary(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SECONDARY, PlanitOsmConstants.SECONDARY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SECONDARY, OsmConstants.SECONDARY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
   
   /**
@@ -313,7 +313,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createSecondaryLink(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SECONDARY_LINK, PlanitOsmConstants.SECONDARY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SECONDARY_LINK, OsmConstants.SECONDARY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -327,7 +327,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTertiary(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TERTIARY, PlanitOsmConstants.TERTIARY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TERTIARY, OsmConstants.TERTIARY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
   
   /**
@@ -341,7 +341,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTertiaryLink(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TERTIARY_LINK, PlanitOsmConstants.TERTIARY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TERTIARY_LINK, OsmConstants.TERTIARY_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -355,7 +355,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createUnclassified(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.UNCLASSIFIED, PlanitOsmConstants.UNCLASSIFIED_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.UNCLASSIFIED, OsmConstants.UNCLASSIFIED_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -369,7 +369,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createResidential(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.RESIDENTIAL, PlanitOsmConstants.RESIDENTIAL_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.RESIDENTIAL, OsmConstants.RESIDENTIAL_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -383,7 +383,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createLivingStreet(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.LIVING_STREET, PlanitOsmConstants.LIVING_STREET_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.LIVING_STREET, OsmConstants.LIVING_STREET_LINK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -397,7 +397,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createService(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SERVICE, PlanitOsmConstants.SERVICE_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.SERVICE, OsmConstants.SERVICE_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }      
   
   /**
@@ -411,7 +411,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createPedestrian(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PEDESTRIAN, PlanitOsmConstants.PEDESTRIAN_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PEDESTRIAN, OsmConstants.PEDESTRIAN_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -425,7 +425,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createPath(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PATH, PlanitOsmConstants.PATH_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.PATH, OsmConstants.PATH_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -439,7 +439,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createSteps(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.STEPS, PlanitOsmConstants.STEPS_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.STEPS, OsmConstants.STEPS_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -453,7 +453,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createFootway(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.FOOTWAY, PlanitOsmConstants.FOOTWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.FOOTWAY, OsmConstants.FOOTWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -467,7 +467,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createCycleway(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.CYCLEWAY, PlanitOsmConstants.CYCLEWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.CYCLEWAY, OsmConstants.CYCLEWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
   
   /**
@@ -481,7 +481,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createBridleway(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.BRIDLEWAY, PlanitOsmConstants.BRIDLEWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.BRIDLEWAY, OsmConstants.BRIDLEWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -495,7 +495,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTrack(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRACK, PlanitOsmConstants.TRACK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.TRACK, OsmConstants.TRACK_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -510,7 +510,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createRoad(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmHighwayTags.ROAD, PlanitOsmConstants.ROAD_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmHighwayTags.ROAD, OsmConstants.ROAD_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }
   
   /**
@@ -523,7 +523,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createFunicular(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.FUNICULAR, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.FUNICULAR, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -536,7 +536,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createLightRail(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.LIGHT_RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.LIGHT_RAIL, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }   
   
   /**
@@ -549,7 +549,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createMonoRail(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.MONO_RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.MONO_RAIL, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -562,7 +562,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createNarrowGauge(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.NARROW_GAUGE, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.NARROW_GAUGE, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -575,7 +575,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createRail(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.RAIL, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.RAIL, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }    
   
   /**
@@ -588,7 +588,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createSubway(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.SUBWAY, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.SUBWAY, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   } 
   
   /**
@@ -601,7 +601,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @throws PlanItException thrown if error
    */
   protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createTram(double osmHighwayTypeMaxSpeed, Collection<Mode> modes) throws PlanItException {
-    return createDefaultOsmLinkSegmentType(OsmRailwayTags.TRAM, PlanitOsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
+    return createDefaultOsmLinkSegmentType(OsmRailwayTags.TRAM, OsmConstants.RAILWAY_CAPACITY, osmHighwayTypeMaxSpeed, modes);    
   }  
    
   /**
@@ -667,7 +667,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param settings to collect from
    * @return mappedPLANitModes, empty if no modes are mapped
    */
-  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, PlanitOsmNetworkReaderSettings settings) {
+  protected Collection<Mode> collectMappedPlanitModes(String osmWayKey, String osmWayValue, OsmNetworkReaderSettings settings) {
     Collection<String> allowedOsmModes = null;
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       allowedOsmModes =  settings.getHighwaySettings().collectAllowedOsmHighwayModes(osmWayValue);
@@ -684,11 +684,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return created (or already existing) default link segment type for the given OSM highway type per layer
    * @throws PlanItException thrown if error
    */
-  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRoadLinkSegmentTypeByLayer(final String osmWayValue, final PlanitOsmNetworkReaderSettings settings) throws PlanItException {
+  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRoadLinkSegmentTypeByLayer(final String osmWayValue, final OsmNetworkReaderSettings settings) throws PlanItException {
     Map<InfrastructureLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null; 
     
     /* only when way type is marked as supported in settings we parse it */
-    PlanitOsmHighwaySettings highwaySettings = settings.getHighwaySettings();
+    OsmHighwaySettings highwaySettings = settings.getHighwaySettings();
     if(highwaySettings.isOsmHighwayTypeActivated(osmWayValue)) {           
       
       boolean isOverwrite = highwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmHighwayType(osmWayValue);
@@ -762,7 +762,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return created (or already existing) default link segment type per layer for the given OSM highway type
    * @throws PlanItException thrown if error
    */
-  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRailLinkSegmentTypeByLayer(final String osmWayValue, final PlanitOsmNetworkReaderSettings settings) throws PlanItException {
+  protected Map<InfrastructureLayer, MacroscopicLinkSegmentType> createOsmCompatibleRailLinkSegmentTypeByLayer(final String osmWayValue, final OsmNetworkReaderSettings settings) throws PlanItException {
     Map<InfrastructureLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;     
     
     if(!settings.isRailwayParserActive()) {
@@ -772,7 +772,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   
     /* only when way type is marked as supported in settings we parse it */
     if(settings.isRailwayParserActive() && settings.getRailwaySettings().isOsmRailwayTypeActivated(osmWayValue)) {
-      PlanitOsmRailwaySettings railwaySettings = settings.getRailwaySettings();
+      OsmRailwaySettings railwaySettings = settings.getRailwaySettings();
       boolean isOverwrite = railwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmRailwayType(osmWayValue);
       
       Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue));
@@ -844,7 +844,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param settings to use
    * @throws PlanItException thrown when error
    */
-  public void createOsmCompatibleLinkSegmentTypes(PlanitOsmNetworkReaderSettings settings) throws PlanItException {
+  public void createOsmCompatibleLinkSegmentTypes(OsmNetworkReaderSettings settings) throws PlanItException {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 

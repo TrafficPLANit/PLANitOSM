@@ -5,8 +5,8 @@ import java.net.URL;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 import org.planit.converter.ConverterReaderSettings;
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
-import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
+import org.planit.osm.converter.network.OsmNetworkReaderSettings;
+import org.planit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
@@ -22,10 +22,10 @@ import org.planit.utils.misc.UrlUtils;
 public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSettings {
   
   /** the network settings to use */
-  protected final PlanitOsmNetworkReaderSettings networkSettings;
+  protected final OsmNetworkReaderSettings networkSettings;
   
   /** the zoning PT settings to use */
-  protected final PlanitOsmPublicTransportReaderSettings zoningPtSettings;
+  protected final OsmPublicTransportReaderSettings zoningPtSettings;
   
   /**
    * Constructor
@@ -55,8 +55,8 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    */
   public PlanitOsmIntermodalReaderSettings(final URL inputSource, final String countryName, final PlanitOsmNetwork networkToPopulate) {
     this(
-        new PlanitOsmNetworkReaderSettings(inputSource, countryName, networkToPopulate), 
-        new PlanitOsmPublicTransportReaderSettings(inputSource, countryName, networkToPopulate));
+        new OsmNetworkReaderSettings(inputSource, countryName, networkToPopulate), 
+        new OsmPublicTransportReaderSettings(inputSource, countryName, networkToPopulate));
   }  
          
   
@@ -66,7 +66,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * @param networkSettings to use
    * @param zoningPtSettings to use
    */
-  public PlanitOsmIntermodalReaderSettings(final PlanitOsmNetworkReaderSettings networkSettings, final PlanitOsmPublicTransportReaderSettings zoningPtSettings) {
+  public PlanitOsmIntermodalReaderSettings(final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
     this.networkSettings = networkSettings;
     this.zoningPtSettings = zoningPtSettings;
   } 
@@ -87,7 +87,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * 
    * @return network reader settings
    */
-  public PlanitOsmNetworkReaderSettings getNetworkSettings() {
+  public OsmNetworkReaderSettings getNetworkSettings() {
     return networkSettings;
   }
   
@@ -95,7 +95,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * 
    * @return zoning reader pt settings
    */
-  public PlanitOsmPublicTransportReaderSettings getPublicTransportSettings() {
+  public OsmPublicTransportReaderSettings getPublicTransportSettings() {
     return zoningPtSettings;
   }  
   

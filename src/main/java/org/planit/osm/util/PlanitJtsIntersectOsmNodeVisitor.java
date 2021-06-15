@@ -46,7 +46,7 @@ public class PlanitJtsIntersectOsmNodeVisitor implements ItemVisitor{
     public void visitItem(Object osmNode) {
       
       try {
-        if(geometryFilter.intersects(PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.createCoordinate((OsmNode)osmNode)))){
+        if(geometryFilter.intersects(PlanitJtsUtils.createPoint(OsmNodeUtils.createCoordinate((OsmNode)osmNode)))){
           filteredResultToPopulate.add((OsmNode)osmNode); 
         }
       }catch(Exception e) {

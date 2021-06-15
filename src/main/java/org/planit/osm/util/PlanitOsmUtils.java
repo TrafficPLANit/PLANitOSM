@@ -1,27 +1,18 @@
 package org.planit.osm.util;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.locationtech.jts.geom.Geometry;
-import org.planit.osm.tags.OsmHighwayTags;
-import org.planit.osm.tags.OsmPtv1Tags;
-import org.planit.osm.tags.OsmPtv2Tags;
-import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmSpeedTags;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
-import org.planit.utils.zoning.TransferZoneGroup;
-import org.planit.utils.zoning.Zone;
-
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -46,7 +37,7 @@ public class PlanitOsmUtils {
    * @return multiplier the multiplier from x to km/h
    * @throws PlanItException thrown when conversion not available
    */
-  protected static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
+  private static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
     switch (unitString) {
     case OsmSpeedTags.MILES_PER_HOUR:
       return 0.621371;
@@ -106,72 +97,8 @@ public class PlanitOsmUtils {
     }
     return speedLimitKmh;
   }  
-  
-  /**
-   * check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node that might reflect
-   * a platform, stop, etc.
-   *  
-   * @param scheme to check against
-   * @param tags to verify
-   * @return true when present, false otherwise
-   */
-  public static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
-    if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        return OsmPtv1Tags.hasPtv1ValueTag(tags);
-      }
-    }else if(scheme.equals(OsmPtVersionScheme.VERSION_2)) {
-      return OsmPtv2Tags.hasPtv2ValueTag(tags);
-    }else {
-     LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility with, ignored",scheme.value()));
+      
 
-    }
-    return false;
-  }
-  
-  /** Find the zone closest to the passed in OSM Entity
-   * 
-   * @param osmEntity to find closest zone for
-   * @param transferZoneGroups to check against
-   * @param osmNodes to extract geo information from if needed
-   * @param geoUtils used to compute distances
-   * @return closest zone found
-   * @throws PlanItException thrown if error
-   */
-  public static Zone findZoneClosestByTransferGroup(
-      OsmEntity osmEntity, Collection<? extends TransferZoneGroup> transferZoneGroups, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    Set<Zone> closestPerGroup = new HashSet<Zone>();
-    for(TransferZoneGroup group : transferZoneGroups) {
-      Zone closestOfGroup = findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, geoUtils);
-      closestPerGroup.add(closestOfGroup);
-    }
-    /* now find closest across all groups */
-    return findZoneClosest(osmEntity, closestPerGroup, osmNodes, geoUtils);
-  }    
-
-  /** Find the zone closest to the passed in OSM Entity
-   * 
-   * @param osmEntity to find closest zone for
-   * @param zones to check against
-   * @param osmNodes to extract geo information from if needed
-   * @param geoUtils used to compute distances
-   * @return closest zone found
-   * @throws PlanItException thrown if error
-   */
-  public static Zone findZoneClosest(OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    EntityType type = Osm4JUtils.getEntityType(osmEntity);
-    switch (type) {
-    case Node:
-      return PlanitOsmNodeUtils.findZoneClosest((OsmNode)osmEntity, zones, geoUtils);
-    case Way:
-      return PlanitOsmWayUtils.findZoneClosest((OsmWay)osmEntity, zones, osmNodes, geoUtils);      
-    default:
-      LOGGER.warning(String.format("unsupported osm entity type when finding closest zone to %d",osmEntity.getId()));
-      break;
-    }
-    return null;
-  }
-  
   /** find the link closest to the passed in osm Entity
    * 
    * @param osmEntity to find closest link for
@@ -185,9 +112,9 @@ public class PlanitOsmUtils {
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
-      return PlanitOsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, geoUtils);
+      return OsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, geoUtils);
     case Way:
-      return PlanitOsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, geoUtils);      
+      return OsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, geoUtils);      
     default:
       LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
       break;
@@ -221,14 +148,14 @@ public class PlanitOsmUtils {
     if(osmEntity instanceof OsmNode){
       OsmNode osmNode = OsmNode.class.cast(osmEntity);
       try {
-        theGeometry = PlanitJtsUtils.createPoint(PlanitOsmNodeUtils.getX(osmNode), PlanitOsmNodeUtils.getY(osmNode));
+        theGeometry = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));
       } catch (PlanItException e) {
         LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
       }
     }else if(osmEntity instanceof OsmWay) {
       /* either area or linestring */
       OsmWay osmWay = OsmWay.class.cast(osmEntity);
-      theGeometry = PlanitOsmWayUtils.extractGeometry(osmWay, osmNodes, logLevel);       
+      theGeometry = OsmWayUtils.extractGeometry(osmWay, osmNodes, logLevel);       
     }
     LOGGER.setLevel(originalLogLevel);
     return theGeometry;

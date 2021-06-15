@@ -5,14 +5,14 @@ import java.util.logging.Logger;
 
 import org.planit.converter.intermodal.IntermodalReader;
 import org.planit.network.InfrastructureNetwork;
-import org.planit.osm.converter.network.PlanitOsmNetworkReader;
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderSettings;
-import org.planit.osm.converter.zoning.PlanitOsmPublicTransportReaderSettings;
-import org.planit.osm.converter.zoning.PlanitOsmZoningHandlerHelper;
-import org.planit.osm.converter.zoning.PlanitOsmZoningReader;
-import org.planit.osm.converter.zoning.PlanitOsmZoningReaderFactory;
+import org.planit.osm.converter.network.OsmNetworkReader;
+import org.planit.osm.converter.network.OsmNetworkReaderFactory;
+import org.planit.osm.converter.network.OsmNetworkReaderSettings;
+import org.planit.osm.converter.zoning.OsmPublicTransportReaderSettings;
+import org.planit.osm.converter.zoning.OsmZoningReader;
+import org.planit.osm.converter.zoning.OsmZoningReaderFactory;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.planit.osm.util.PlanitZoningUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
 import org.planit.zoning.Zoning;
@@ -43,8 +43,8 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @return true when valid, false otherwise
    */
   private boolean isSettingsValid() throws PlanItException {
-    PlanitOsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
-    PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
+    OsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
+    OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     
     /* both source countries must be the same */
     if( !networkSettings.getCountryName().equals(ptSettings.getCountryName())){
@@ -81,7 +81,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param zoning to use
    * @throws PlanItException thrown if error
    */
-  private void removeDanglingSubNetworks(PlanitOsmNetworkReader osmNetworkReader, PlanitOsmZoningReader osmZoningReader, Zoning zoning) throws PlanItException {
+  private void removeDanglingSubNetworks(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) throws PlanItException {
     
     /* subnetworks */
     if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
@@ -90,12 +90,12 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     
     /* (transfer) zones */
     if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
-      PlanitOsmZoningHandlerHelper.removeDanglingZones(zoning);
+      PlanitZoningUtils.removeDanglingZones(zoning);
     }     
     
     /* transfer zone groups */
     if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
-      PlanitOsmZoningHandlerHelper.removeDanglingTransferZoneGroups(zoning);
+      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning);
     } 
   }
 
@@ -131,7 +131,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param zoningToPopulate to populate
    * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
-  protected PlanitOsmIntermodalReader(PlanitOsmNetworkReaderSettings networkSettings, PlanitOsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
+  protected PlanitOsmIntermodalReader(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
     this(new PlanitOsmIntermodalReaderSettings(networkSettings, ptSettings), zoningToPopulate);
     getSettings().getPublicTransportSettings().setReferenceNetwork(osmNetworkToPopulate);
   }
@@ -166,7 +166,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     }
             
     /* NETWORK READER */
-    PlanitOsmNetworkReader osmNetworkReader = PlanitOsmNetworkReaderFactory.create(getSettings().getNetworkSettings());
+    OsmNetworkReader osmNetworkReader = OsmNetworkReaderFactory.create(getSettings().getNetworkSettings());
     
     /* disable removing dangling subnetworks, until zoning has been parsed as well */
     boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
@@ -175,10 +175,10 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();    
     
     /* ZONING READER */
-    PlanitOsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
+    OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     ptSettings.setReferenceNetwork(network);
     ptSettings.setNetworkDataForZoningReader(osmNetworkReader.createNetworkToZoningReaderData());
-    PlanitOsmZoningReader osmZoningReader = PlanitOsmZoningReaderFactory.create(ptSettings, zoningToPopulate);
+    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(ptSettings, zoningToPopulate);
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();

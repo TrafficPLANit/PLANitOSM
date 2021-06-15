@@ -13,8 +13,8 @@ import org.planit.network.InfrastructureNetwork;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReader;
 import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReaderFactory;
-import org.planit.osm.converter.network.PlanitOsmNetworkReader;
-import org.planit.osm.converter.network.PlanitOsmNetworkReaderFactory;
+import org.planit.osm.converter.network.OsmNetworkReader;
+import org.planit.osm.converter.network.OsmNetworkReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.osm.tags.OsmRoadModeTags;
@@ -58,7 +58,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadInfrastructureTest() {
     try {
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
@@ -125,7 +125,7 @@ public class BasicOSMReaderTest {
   @Test
   public void pbfReadertest() {
     try {
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(SYDNEYCBD_PBF, CountryNames.AUSTRALIA);
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_PBF, CountryNames.AUSTRALIA);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {
@@ -143,7 +143,7 @@ public class BasicOSMReaderTest {
     try {
       
       URL exampleUrl = new URL(EXAMPLE_REMOTE_URL);
-      PlanitOsmNetworkReader osmReader = PlanitOsmNetworkReaderFactory.create(exampleUrl, CountryNames.GERMANY);
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(exampleUrl, CountryNames.GERMANY);
       osmReader.getSettings().setInputSource(EXAMPLE_REMOTE_URL);
       
       osmReader.getSettings().getHighwaySettings().deactivateAllOsmHighwayTypesExcept(OsmHighwayTags.FOOTWAY);

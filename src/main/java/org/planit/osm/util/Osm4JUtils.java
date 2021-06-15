@@ -94,9 +94,10 @@ public class Osm4JUtils {
     };
   }
   
-  /** collect entity type based on the entity
+  /** Collect entity type based on the entity
+   * 
    * @param entity to check
-   * @return type
+   * @return type extracted
    */
   public static EntityType getEntityType(OsmEntity entity) {
     if(entity instanceof OsmNode) {
