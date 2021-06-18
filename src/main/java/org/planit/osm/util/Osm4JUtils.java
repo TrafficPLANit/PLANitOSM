@@ -68,7 +68,7 @@ public class Osm4JUtils {
     try{
       
       /* special treatment when local file */
-      if(UrlUtils.isLocalFile(inputSource)) {
+      if(UrlUtils.isLocal(inputSource)) {
         return createOsm4jReader(Paths.get(inputSource.toURI()).toFile());
       }else {
         // Create a reader for (remote) XML data
