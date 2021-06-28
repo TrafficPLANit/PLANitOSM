@@ -197,7 +197,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    */
   private boolean hasStandAloneTransferZoneValidAccessLinkSegmentForLinkInternalLocationModeCombination(TransferZone transferZone, Link accessLink, Point connectoidLocation, Mode accessMode) throws PlanItException {
     
-    MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().getInfrastructureLayerByMode(accessMode);
+    MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(connectoidLocation);
     Long osmStopLocationId = osmNode!= null ? osmNode.getId() : null;
     
@@ -418,7 +418,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
 
   private boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
-    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().infrastructureLayers.get(planitMode);
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().transportLayers.get(planitMode);
     
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
      
@@ -729,7 +729,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
       return false;
     }
     
-    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().infrastructureLayers.get(planitMode);
+    MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().transportLayers.get(planitMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);                
     
     /* planit access node */
@@ -809,7 +809,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
     for(Mode planitMode : planitModes) {
       
       /* layer */
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().infrastructureLayers.get(planitMode);
+      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().transportLayers.get(planitMode);
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: stop_position %d is not present in parsed network layer supporting mode %s, likely it is dangling in original osm file",osmNode.getId(), planitMode.getExternalId()), OsmNodeUtils.createPoint(osmNode));

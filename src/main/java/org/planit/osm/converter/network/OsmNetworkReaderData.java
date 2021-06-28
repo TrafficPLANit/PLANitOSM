@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.planit.network.InfrastructureLayer;
+import org.planit.network.TransportLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.OsmNodeUtils;
@@ -48,7 +48,7 @@ public class OsmNetworkReaderData {
    */
   protected void initialiseLayerParsers(PlanitOsmNetwork network, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
     /* for each layer initialise a handler */
-    for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
+    for(TransportLayer networkLayer : network.transportLayers) {
       MacroscopicPhysicalNetwork macroNetworkLayer = (MacroscopicPhysicalNetwork)networkLayer;
       OsmNetworkLayerParser layerHandler = new OsmNetworkLayerParser(macroNetworkLayer, this, settings, geoUtils);
       osmLayerParsers.put(macroNetworkLayer, layerHandler);

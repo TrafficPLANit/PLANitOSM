@@ -1,7 +1,7 @@
 package org.planit.osm.util;
 
-import org.planit.network.InfrastructureLayer;
-import org.planit.network.InfrastructureNetwork;
+import org.planit.network.TransportLayer;
+import org.planit.network.TransportLayerNetwork;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.network.OsmNetworkLayerParser;
 import org.planit.osm.converter.network.OsmNetworkReaderData;
@@ -27,10 +27,10 @@ public class PlanitNetworkLayerUtils {
    * @throws PlanItException thrown if error
    */
   public static boolean hasNetworkLayersWithActiveOsmNode(
-      long osmNodeId, InfrastructureNetwork<?, ?> network, OsmNetworkToZoningReaderData networkToZoningData) throws PlanItException {    
+      long osmNodeId, TransportLayerNetwork<?, ?> network, OsmNetworkToZoningReaderData networkToZoningData) throws PlanItException {    
     OsmNode osmNode = networkToZoningData.getOsmNodes().get(osmNodeId);
     if(osmNode != null) {
-      for(InfrastructureLayer networkLayer : network.infrastructureLayers) {        
+      for(TransportLayer networkLayer : network.transportLayers) {        
         if(networkToZoningData.getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)){
           return true;
         }        
@@ -47,10 +47,10 @@ public class PlanitNetworkLayerUtils {
    * @return true when one or more layers are found, false otherwise
    * @throws PlanItException thrown if error
    */
-  public static boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId, InfrastructureNetwork<?, ?> network, OsmNetworkReaderData networkData) throws PlanItException {    
+  public static boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId, TransportLayerNetwork<?, ?> network, OsmNetworkReaderData networkData) throws PlanItException {    
     OsmNode osmNode = networkData.getOsmNode(osmNodeId);
     if(osmNode != null) {      
-      for(InfrastructureLayer networkLayer : network.infrastructureLayers) {
+      for(TransportLayer networkLayer : network.transportLayers) {
         OsmNetworkLayerParser layerHandler = networkData.getLayerParser((MacroscopicPhysicalNetwork) networkLayer);
         if(layerHandler.getLayerData().isOsmNodePresentInLayer(osmNode)){
           return true;

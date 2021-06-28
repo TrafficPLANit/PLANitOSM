@@ -50,7 +50,7 @@ public class OsmNetworkReader implements NetworkReader {
    */
   public void initialiseBeforeParsing() throws PlanItException {
     PlanitOsmNetwork network = settings.getOsmNetworkToPopulate();
-    PlanItException.throwIf(network.infrastructureLayers != null && network.infrastructureLayers.size()>0,"Network is expected to be empty at start of parsing OSM network, but it has layers already");
+    PlanItException.throwIf(network.transportLayers != null && network.transportLayers.size()>0,"Network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* gis initialisation */
     PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
@@ -61,7 +61,7 @@ public class OsmNetworkReader implements NetworkReader {
     }    
     
     /* (default) link segment types (on the network) */
-    network.initialiseInfrastructureLayers(settings.getPlanitInfrastructureLayerConfiguration());        
+    network.initialiseLayers(settings.getPlanitInfrastructureLayerConfiguration());        
     network.createOsmCompatibleLinkSegmentTypes(settings);
     /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
     settings.excludeOsmWayTypesWithoutActivatedModes();
@@ -172,7 +172,7 @@ public class OsmNetworkReader implements NetworkReader {
       boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
       
       /* logging stats  - before */
-      MacroscopicPhysicalNetworkLayers layers = getSettings().getOsmNetworkToPopulate().infrastructureLayers;
+      MacroscopicPhysicalNetworkLayers layers = getSettings().getOsmNetworkToPopulate().transportLayers;
       {
         LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
         if (discardMaxsize != Integer.MAX_VALUE) {
@@ -308,7 +308,7 @@ public class OsmNetworkReader implements NetworkReader {
    * @return created network to zoning reader data to use
    */
   public OsmNetworkToZoningReaderData createNetworkToZoningReaderData() {
-    if(getSettings().getOsmNetworkToPopulate().infrastructureLayers.isNoLayers() || getSettings().getOsmNetworkToPopulate().infrastructureLayers.getFirst().isEmpty()) {
+    if(getSettings().getOsmNetworkToPopulate().transportLayers.isNoLayers() || getSettings().getOsmNetworkToPopulate().transportLayers.getFirst().isEmpty()) {
       LOGGER.warning("Can only perform network->zoning data transfer when network has been populated by OSM network reader, i.e., first invoke the read() method before this call");
     }
 

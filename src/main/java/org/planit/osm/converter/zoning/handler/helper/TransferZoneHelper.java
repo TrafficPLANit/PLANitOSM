@@ -89,7 +89,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private Collection<Link> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) throws PlanItException {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().infrastructureLayers.get(accessMode);
+    MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -673,7 +673,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     
     /* connectoid(s) */
     for(Mode mode : modeResult.second()) {
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().infrastructureLayers.get(mode);             
+      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) getSettings().getReferenceNetwork().transportLayers.get(mode);             
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        

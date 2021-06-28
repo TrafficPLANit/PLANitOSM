@@ -4,7 +4,7 @@ import java.net.URL;
 import java.util.logging.Logger;
 
 import org.planit.converter.intermodal.IntermodalReader;
-import org.planit.network.InfrastructureNetwork;
+import org.planit.network.TransportLayerNetwork;
 import org.planit.osm.converter.network.OsmNetworkReader;
 import org.planit.osm.converter.network.OsmNetworkReaderFactory;
 import org.planit.osm.converter.network.OsmNetworkReaderSettings;
@@ -158,7 +158,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @throws PlanItException thrown if error
    */  
   @Override
-  public Pair<InfrastructureNetwork<?,?>, Zoning> read() throws PlanItException {
+  public Pair<TransportLayerNetwork<?,?>, Zoning> read() throws PlanItException {
     
     /* only proceed when configuration is valid */
     if(!isSettingsValid()) {

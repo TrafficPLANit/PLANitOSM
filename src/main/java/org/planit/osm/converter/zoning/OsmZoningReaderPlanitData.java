@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.index.quadtree.Quadtree;
-import org.planit.network.InfrastructureLayer;
+import org.planit.network.TransportLayer;
 import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.utils.exceptions.PlanItException;
@@ -52,7 +52,7 @@ public class OsmZoningReaderPlanitData {
   /* OSM <-> CONNECTOID TRACKING */
   
   /** track created connectoids by their location and layer they reside on, needed to avoid creating duplicates when dealing with multiple modes/layers */
-  private final Map<InfrastructureLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<InfrastructureLayer,Map<Point, List<DirectedConnectoid>>>();
+  private final Map<TransportLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<TransportLayer,Map<Point, List<DirectedConnectoid>>>();
   
   
   /* TRANSFER ZONE <-> CONNECTOID TRACKING */
@@ -78,7 +78,7 @@ public class OsmZoningReaderPlanitData {
    */
   protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
     Collection<Edges<Link>> linksCollection = new ArrayList<Edges<Link>>();
-    for(MacroscopicPhysicalNetwork layer : osmNetwork.infrastructureLayers) {
+    for(MacroscopicPhysicalNetwork layer : osmNetwork.transportLayers) {
       linksCollection.add(layer.links);
     }
     spatiallyIndexedPlanitLinks = PlanitGraphGeoUtils.createSpatiallyIndexedPlanitEdges(linksCollection);
@@ -236,7 +236,7 @@ public class OsmZoningReaderPlanitData {
    * @return true when present, false otherwise
    */
   public boolean hasAnyDirectedConnectoidsForLocation(Point location) {
-    for( Entry<InfrastructureLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
+    for( Entry<TransportLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
       if(hasDirectedConnectoidForLocation(entry.getKey(), location)) {
         return true;
       }
@@ -250,7 +250,7 @@ public class OsmZoningReaderPlanitData {
    * @param point to use
    * @return true when present, false otherwise
    */  
-  public boolean hasDirectedConnectoidForLocation(InfrastructureLayer networkLayer, Point point) {
+  public boolean hasDirectedConnectoidForLocation(TransportLayer networkLayer, Point point) {
     Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
     return connectoidsForLayer != null && connectoidsForLayer.get(point) != null && !connectoidsForLayer.get(point).isEmpty();
   }  
