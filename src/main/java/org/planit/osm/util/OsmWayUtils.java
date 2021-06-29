@@ -25,7 +25,7 @@ import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
-import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.layer.physical.Link;
 import org.planit.utils.zoning.Zone;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;

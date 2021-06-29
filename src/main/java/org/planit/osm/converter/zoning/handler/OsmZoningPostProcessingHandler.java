@@ -13,6 +13,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
 import org.planit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.planit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.planit.osm.converter.zoning.OsmZoningReaderData;
@@ -27,7 +28,6 @@ import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.index.quadtree.Quadtree;
 import org.locationtech.jts.linearref.LinearLocation;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
@@ -36,7 +36,7 @@ import org.planit.utils.graph.Edge;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.Link;
+import org.planit.utils.network.layer.physical.Link;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.utils.zoning.TransferZoneType;
@@ -72,7 +72,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   /** to be able to find osm nodes internal to parsed planit links that we want to break to for example create stop locations for stand alone station, 
    * we must be able to spatially find those nodes spatially because they are not referenced by the station or planit link eplicitly, this is what we do here. 
    * It is not placed in the zoning data as it is only utilised in post-processing */
-  private Map<MacroscopicPhysicalNetwork, Quadtree> spatiallyIndexedOsmNodesInternalToPlanitLinks = null;
+  private Map<MacroscopicPhysicalLayer, Quadtree> spatiallyIndexedOsmNodesInternalToPlanitLinks = null;
   
   /** A stand alone station can either support a single platform when it is road based or two stop_locations for rail (on either side). This is 
    * reflected in the returned max matches. The search distance is based on the settings where a road based station utilises the stop to waiting
@@ -115,7 +115,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void initialiseSpatiallyIndexedOsmNodesInternalToPlanitLinks() {
     
     double envelopeMinExtentAbsolute = Double.POSITIVE_INFINITY;
-    for(MacroscopicPhysicalNetwork layer : getSettings().getReferenceNetwork().transportLayers) {
+    for(MacroscopicPhysicalLayer layer : getSettings().getReferenceNetwork().transportLayers) {
       OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(layer);
       spatiallyIndexedOsmNodesInternalToPlanitLinks.put(layer, new Quadtree());
       Quadtree spatialcontainer = spatiallyIndexedOsmNodesInternalToPlanitLinks.get(layer);            
@@ -202,7 +202,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       
       /* multiple candidates still, filter candidates based on availability of valid stop location checking (mode support, correct location compared to zone etc.) */      
       Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
+      MacroscopicPhysicalLayer networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
       
       @SuppressWarnings("unchecked")
       Set<Link> candidatesToFilter = (Set<Link>) candidatesForStopLocation.second();
@@ -530,7 +530,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     for(String osmMode: eligibleOsmModes) {
       Mode planitMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
-      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().transportLayers.get(planitMode);
+      MacroscopicPhysicalLayer networkLayer = getSettings().getReferenceNetwork().transportLayers.get(planitMode);
     
       /* a stop position should be part of an already parsed planit link, if not it is incorrectly tagged */
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isLocationPresentInLayer(osmNodeLocation)) {
@@ -601,7 +601,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* per mode - find links, because if the transfer zone supports both a rail and road mode, we require different links for our connectoids */
     for(String osmAccessMode : accessOsmModes) {      
       Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
+      MacroscopicPhysicalLayer networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
     
       Link selectedAccessLink = null;
       if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmEntityId, osmEntityType)) {
@@ -685,7 +685,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* modes */
     for(String osmAccessMode : osmAccessModes) {
       Mode planitMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicPhysicalNetwork networkLayer = getSettings().getReferenceNetwork().transportLayers.get(planitMode);
+      MacroscopicPhysicalLayer networkLayer = getSettings().getReferenceNetwork().transportLayers.get(planitMode);
       
       
       /* station mode determines where to create stop_locations and how many. It is special in this regard and different from a regular transfer zone (platform/pole) */
@@ -1092,7 +1092,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {  
-    spatiallyIndexedOsmNodesInternalToPlanitLinks = new HashMap<MacroscopicPhysicalNetwork, Quadtree>();
+    spatiallyIndexedOsmNodesInternalToPlanitLinks = new HashMap<MacroscopicPhysicalLayer, Quadtree>();
   }
   
 }

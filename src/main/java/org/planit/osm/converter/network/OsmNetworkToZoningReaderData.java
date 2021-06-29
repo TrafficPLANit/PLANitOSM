@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.locationtech.jts.geom.Envelope;
-import org.planit.network.TransportLayer;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.utils.network.layer.TransportLayer;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
@@ -36,7 +36,7 @@ public class OsmNetworkToZoningReaderData {
    * @param networkLayer to register for
    * @param layerData the data to register
    */
-  protected void registerLayerData(MacroscopicPhysicalNetwork networkLayer, OsmNetworkReaderLayerData layerData) {
+  protected void registerLayerData(MacroscopicPhysicalLayer networkLayer, OsmNetworkReaderLayerData layerData) {
     networkLayerData.put(networkLayer, layerData);    
   }   
   

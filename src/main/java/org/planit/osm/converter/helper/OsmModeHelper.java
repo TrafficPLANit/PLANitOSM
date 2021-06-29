@@ -7,8 +7,8 @@ import java.util.Set;
 import org.planit.osm.converter.network.OsmNetworkReaderSettings;
 import org.planit.osm.util.OsmModeUtils;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.network.layer.physical.Link;
 
 /**
  * Class to support parsing and other functionality that depends on the configuration of the readers regarding OSM modes and their mappng to PLANit modes

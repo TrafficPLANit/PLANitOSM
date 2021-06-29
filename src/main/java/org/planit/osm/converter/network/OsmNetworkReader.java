@@ -6,9 +6,9 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
 import org.planit.network.macroscopic.MacroscopicNetwork;
-import org.planit.network.macroscopic.MacroscopicPhysicalNetworkLayers;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.network.macroscopic.MacroscopicNetworkLayers;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
@@ -16,9 +16,9 @@ import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
-import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.Node;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.network.layer.physical.Link;
+import org.planit.utils.network.layer.physical.Node;
 import org.planit.zoning.Zoning;
 import org.planit.zoning.listener.UpdateConnectoidsOnSubGraphRemoval;
 
@@ -172,7 +172,7 @@ public class OsmNetworkReader implements NetworkReader {
       boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
       
       /* logging stats  - before */
-      MacroscopicPhysicalNetworkLayers layers = getSettings().getOsmNetworkToPopulate().transportLayers;
+      MacroscopicNetworkLayers layers = getSettings().getOsmNetworkToPopulate().transportLayers;
       {
         LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
         if (discardMaxsize != Integer.MAX_VALUE) {
@@ -316,7 +316,7 @@ public class OsmNetworkReader implements NetworkReader {
     OsmNetworkToZoningReaderData network2zoningData = new OsmNetworkToZoningReaderData(networkData, getSettings());
         
     /* layer specific data references */
-    for(Entry<MacroscopicPhysicalNetwork, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
+    for(Entry<MacroscopicPhysicalLayer, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
       OsmNetworkLayerParser layerHandler = entry.getValue();
       network2zoningData.registerLayerData(entry.getKey(), layerHandler.getLayerData());
     }

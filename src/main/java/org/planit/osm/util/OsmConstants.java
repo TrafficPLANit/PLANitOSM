@@ -1,6 +1,6 @@
 package org.planit.osm.util;
 
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 
 /**
  * Some constants used by PLANit OSM

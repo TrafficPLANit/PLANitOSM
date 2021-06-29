@@ -10,12 +10,12 @@ import java.util.logging.Logger;
 
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
-import org.planit.network.TransportLayer;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
-import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.utils.network.layer.TransportLayer;
+import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.utils.network.layer.physical.Link;
 
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -212,7 +212,7 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
     
     if(partialLinkStartNodeIndex < 0) {
       /* nothing parsed yet... */
-      Map<MacroscopicPhysicalNetwork,Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayer = extractLinkSegmentTypes(circularOsmWay, osmWayTags);
+      Map<MacroscopicPhysicalLayer,Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayer = extractLinkSegmentTypes(circularOsmWay, osmWayTags);
       if(linkSegmentTypesByLayer!=null && !linkSegmentTypesByLayer.isEmpty() && linkSegmentTypesByLayer.values().stream().findAny().get().anyIsNotNull()) {
         /* yet circular way is of a viable type, i.e., it has mapped link segment type(s), but not a single connection to currently parsed network exists, this may indicate a problem */
         LOGGER.fine(String.format("circular way %d appears to have no connections to activated OSM way types ", circularOsmWay.getId()));
@@ -293,7 +293,7 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
     if(linkSegmentTypes != null) {
       linkSegmentTypes.forEach( (layer, linkSegmentType)  -> {
         if(linkSegmentType != null) {
-          networkData.getLayerParser((MacroscopicPhysicalNetwork)layer).getLayerData().getProfiler().incrementOsmTagCounter(osmTypeValueToUse);
+          networkData.getLayerParser((MacroscopicPhysicalLayer)layer).getLayerData().getProfiler().incrementOsmTagCounter(osmTypeValueToUse);
         } });
     }
     /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/
@@ -371,9 +371,9 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
         
     Map<TransportLayer,Link> linksByLayer = null;
     
-    Map<MacroscopicPhysicalNetwork, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay,tags);
-    for(Entry<MacroscopicPhysicalNetwork, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> entry : linkSegmentTypesByLayer.entrySet()) {
-      MacroscopicPhysicalNetwork networkLayer = entry.getKey();
+    Map<MacroscopicPhysicalLayer, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay,tags);
+    for(Entry<MacroscopicPhysicalLayer, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> entry : linkSegmentTypesByLayer.entrySet()) {
+      MacroscopicPhysicalLayer networkLayer = entry.getKey();
       Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes = entry.getValue();
       
       if(linkSegmentTypes != null && linkSegmentTypes.anyIsNotNull()) {
@@ -478,15 +478,15 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
    * @return appropriate link segment types for forward and backward direction per network layer. If no modes are allowed in a direction, the link segment type will be null
    * @throws PlanItException thrown if error
    */
-  protected Map<MacroscopicPhysicalNetwork, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> extractLinkSegmentTypes(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
-    Map<MacroscopicPhysicalNetwork, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayerByDirection = new HashMap<>(); 
+  protected Map<MacroscopicPhysicalLayer, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> extractLinkSegmentTypes(OsmWay osmWay, Map<String, String> tags) throws PlanItException {
+    Map<MacroscopicPhysicalLayer, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayerByDirection = new HashMap<>(); 
     /* a default link segment type should be available as starting point*/
     Map<TransportLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer = getDefaultLinkSegmentTypeByOsmWayType(osmWay, tags);
     if(linkSegmentTypesByLayer != null) {      
       
       /* per layer identify the directional link segment types based on additional access changes from osm tags */      
       for(Entry<TransportLayer, MacroscopicLinkSegmentType> entry : linkSegmentTypesByLayer.entrySet()) {
-        MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork) entry.getKey();
+        MacroscopicPhysicalLayer networkLayer = (MacroscopicPhysicalLayer) entry.getKey();
         MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
         
         /* collect possibly modified type (per direction) */
@@ -509,7 +509,7 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
     processCircularWays();    
             
     /* delegate to each layer handler present */
-    for(Entry<MacroscopicPhysicalNetwork, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()) {
+    for(Entry<MacroscopicPhysicalLayer, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()) {
       OsmNetworkLayerParser networkLayerHandler = entry.getValue();
       
       /* break links on layer with internal connections to multiple osm ways */

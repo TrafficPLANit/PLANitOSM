@@ -9,10 +9,9 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import org.planit.network.TransportLayer;
+import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
 import org.planit.network.macroscopic.MacroscopicNetwork;
-import org.planit.network.macroscopic.physical.MacroscopicModePropertiesFactory;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
 import org.planit.osm.converter.network.OsmHighwaySettings;
 import org.planit.osm.converter.network.OsmNetworkReaderSettings;
 import org.planit.osm.converter.network.OsmRailwaySettings;
@@ -23,7 +22,8 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.id.IdGroupingToken;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.utils.network.layer.TransportLayer;
+import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 
 /**
  * Macroscopic network with additional OSM functionality
@@ -160,7 +160,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<TransportLayer, MacroscopicLinkSegmentType> typesPerLayer = new HashMap<TransportLayer, MacroscopicLinkSegmentType>(); 
     for(Mode mode : modes) {
       MacroscopicLinkSegmentType linkSegmentType = null;
-      MacroscopicPhysicalNetwork networkLayer = (MacroscopicPhysicalNetwork)getLayerByMode(mode);
+      MacroscopicPhysicalLayer networkLayer = (MacroscopicPhysicalLayer)getLayerByMode(mode);
       
       if(!typesPerLayer.containsKey(networkLayer)){
         /* new type */

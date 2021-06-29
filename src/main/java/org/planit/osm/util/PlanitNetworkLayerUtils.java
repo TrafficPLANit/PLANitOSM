@@ -1,12 +1,12 @@
 package org.planit.osm.util;
 
-import org.planit.network.TransportLayer;
 import org.planit.network.TransportLayerNetwork;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
 import org.planit.osm.converter.network.OsmNetworkLayerParser;
 import org.planit.osm.converter.network.OsmNetworkReaderData;
 import org.planit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.planit.utils.exceptions.PlanItException;
+import org.planit.utils.network.layer.TransportLayer;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
@@ -51,7 +51,7 @@ public class PlanitNetworkLayerUtils {
     OsmNode osmNode = networkData.getOsmNode(osmNodeId);
     if(osmNode != null) {      
       for(TransportLayer networkLayer : network.transportLayers) {
-        OsmNetworkLayerParser layerHandler = networkData.getLayerParser((MacroscopicPhysicalNetwork) networkLayer);
+        OsmNetworkLayerParser layerHandler = networkData.getLayerParser((MacroscopicPhysicalLayer) networkLayer);
         if(layerHandler.getLayerData().isOsmNodePresentInLayer(osmNode)){
           return true;
         }        

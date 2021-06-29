@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.collections4.map.HashedMap;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.physical.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 
 /**
  * Helper class that tracks all modified, i.e., custom link segment types, that differ from the default link segment types

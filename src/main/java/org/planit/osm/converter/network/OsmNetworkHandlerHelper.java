@@ -10,12 +10,13 @@ import java.util.stream.Collectors;
 
 import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.planit.network.macroscopic.physical.MacroscopicPhysicalNetwork;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
 import org.planit.osm.util.OsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.graph.modifier.BreakEdgeListener;
-import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.Node;
+import org.planit.utils.network.layer.physical.Link;
+import org.planit.utils.network.layer.physical.Node;
+
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
@@ -67,7 +68,7 @@ public class OsmNetworkHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(
-      Node theNode, List<Link> linksToBreak, MacroscopicPhysicalNetwork networkLayer, CoordinateReferenceSystem crs, Set<BreakEdgeListener<Node, Link>> breakLinkListeners) throws PlanItException {
+      Node theNode, List<Link> linksToBreak, MacroscopicPhysicalLayer networkLayer, CoordinateReferenceSystem crs, Set<BreakEdgeListener<Node, Link>> breakLinkListeners) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     
     if(linksToBreak != null) {
@@ -102,7 +103,7 @@ public class OsmNetworkHandlerHelper {
    * @param networkLayer to create node on
    * @return created node, null when something went wrong
    */
-  public static Node createAndPopulateNode(OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer)  {
+  public static Node createAndPopulateNode(OsmNode osmNode, MacroscopicPhysicalLayer networkLayer)  {
     if(osmNode == null || networkLayer == null) {
       LOGGER.severe("no OSM node or network layer provided when creating new PLANit node, ignore");
       return null;
@@ -126,7 +127,7 @@ public class OsmNetworkHandlerHelper {
    * @param networkLayer to create node on
    * @return created node, null when something went wrong
    */
-  public static Node createAndPopulateNode(Point geometry, MacroscopicPhysicalNetwork networkLayer)  {
+  public static Node createAndPopulateNode(Point geometry, MacroscopicPhysicalLayer networkLayer)  {
     /* create and register */
     Node node = networkLayer.nodes.registerNew();
     
@@ -149,7 +150,7 @@ public class OsmNetworkHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Node createPopulateAndRegisterNode(
-      OsmNode osmNode, MacroscopicPhysicalNetwork networkLayer, OsmNetworkReaderLayerData layerData) throws PlanItException  {
+      OsmNode osmNode, MacroscopicPhysicalLayer networkLayer, OsmNetworkReaderLayerData layerData) throws PlanItException  {
     
     /* create */
     Node node = createAndPopulateNode(osmNode, networkLayer);            
@@ -170,7 +171,7 @@ public class OsmNetworkHandlerHelper {
    * @return created node, null when something went wrong
    * @throws PlanItException thrown if error
    */  
-  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicPhysicalNetwork networkLayer,
+  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicPhysicalLayer networkLayer,
       OsmNetworkReaderLayerData layerData) throws PlanItException {
     /* create */
     Node node = createAndPopulateNode(osmNodeLocation, networkLayer);            

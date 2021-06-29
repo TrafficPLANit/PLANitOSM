@@ -17,8 +17,8 @@ import org.planit.osm.util.OsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.misc.Pair;
-import org.planit.utils.network.physical.Link;
-import org.planit.utils.network.physical.Node;
+import org.planit.utils.network.layer.physical.Link;
+import org.planit.utils.network.layer.physical.Node;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
