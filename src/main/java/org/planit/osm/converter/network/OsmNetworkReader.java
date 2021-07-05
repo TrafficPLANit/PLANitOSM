@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.network.macroscopic.MacroscopicNetworkLayers;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -316,7 +316,7 @@ public class OsmNetworkReader implements NetworkReader {
     OsmNetworkToZoningReaderData network2zoningData = new OsmNetworkToZoningReaderData(networkData, getSettings());
         
     /* layer specific data references */
-    for(Entry<MacroscopicPhysicalLayer, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
+    for(Entry<MacroscopicPhysicalLayerImpl, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
       OsmNetworkLayerParser layerHandler = entry.getValue();
       network2zoningData.registerLayerData(entry.getKey(), layerHandler.getLayerData());
     }

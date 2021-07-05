@@ -5,7 +5,7 @@ import java.util.HashSet;
 
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
@@ -74,7 +74,7 @@ public class PlanitLinkUtils {
    * @throws PlanItException thrown if error
    */
   public static Link getClosestLinkWithOsmWayIdToGeometry(
-      long osmWayId, Geometry geometry, MacroscopicPhysicalLayer networkLayer, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      long osmWayId, Geometry geometry, MacroscopicPhysicalLayerImpl networkLayer, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     /* collect all PLANit links that match the OSM way id (very slow, but it is rare and not worth the indexing generally) */
     Collection<? extends Link> nominatedLinks = networkLayer.links.getByExternalId(String.valueOf(osmWayId));
     /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */

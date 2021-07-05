@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.osm.converter.network.OsmNetworkReaderSettings;
 import org.planit.osm.tags.OsmRoadModeCategoryTags;
 import org.planit.osm.tags.OsmRoadModeTags;
@@ -50,7 +50,7 @@ public class OsmLaneTaggingSchemeHelper{
    * @param networkLayer to identify subset of modes relevant for the layer at hand
    * @return yes, when these modes are activated, false otherwise
    */
-  protected static boolean requireTaggingSchemeHelper(OsmNetworkReaderSettings settings, MacroscopicPhysicalLayer networkLayer) {    
+  protected static boolean requireTaggingSchemeHelper(OsmNetworkReaderSettings settings, MacroscopicPhysicalLayerImpl networkLayer) {    
     if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS)) {
       List<String> modesRequiringTaggingScheme = Arrays.asList(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS);
       for(String osmMode : modesRequiringTaggingScheme) {
@@ -72,7 +72,7 @@ public class OsmLaneTaggingSchemeHelper{
    * @param settings to filter for activated modes only
    * @param networkLayer to identify subset of modes relevant for the layer at hand 
    * @return list os OSM modes that would identify such modes */
-  protected static Set<String> getEligibleTaggingSchemeHelperModes(OsmNetworkReaderSettings settings, MacroscopicPhysicalLayer networkLayer) {
+  protected static Set<String> getEligibleTaggingSchemeHelperModes(OsmNetworkReaderSettings settings, MacroscopicPhysicalLayerImpl networkLayer) {
     Set<String> eligibleModes = new HashSet<>();
     if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.BUS))){
       eligibleModes.add(OsmRoadModeTags.BUS);

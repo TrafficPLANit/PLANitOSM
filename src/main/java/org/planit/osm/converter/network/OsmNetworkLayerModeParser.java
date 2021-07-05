@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.osm.converter.helper.OsmLanesModeTaggingSchemeHelper;
 import org.planit.osm.converter.helper.OsmModeHelper;
 import org.planit.osm.converter.helper.OsmModeLanesTaggingSchemeHelper;
@@ -37,7 +37,7 @@ import org.planit.utils.mode.Mode;
 public class OsmNetworkLayerModeParser extends OsmModeHelper {
   
   /** the network layer to use */
-  private final MacroscopicPhysicalLayer networkLayer;  
+  private final MacroscopicPhysicalLayerImpl networkLayer;  
     
   /** helper class to deal with parsing tags under the lanesMode tagging scheme for eligible modes */
   private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper = null;
@@ -386,7 +386,7 @@ public class OsmNetworkLayerModeParser extends OsmModeHelper {
    * @param settings to use
    * @param networkLayer this parser is applied to
    */
-  public OsmNetworkLayerModeParser(OsmNetworkReaderSettings settings, MacroscopicPhysicalLayer networkLayer) {
+  public OsmNetworkLayerModeParser(OsmNetworkReaderSettings settings, MacroscopicPhysicalLayerImpl networkLayer) {
     super(settings);
     
     this.networkLayer = networkLayer;

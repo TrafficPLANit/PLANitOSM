@@ -6,7 +6,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
 import org.planit.utils.network.layer.TransportLayer;
@@ -68,7 +68,7 @@ public class OsmNetworkHandlerProfiler {
    * 
    * @param networkLayer for which information  was tracked
    */
-  public void logProfileInformation(MacroscopicPhysicalLayer networkLayer) {
+  public void logProfileInformation(MacroscopicPhysicalLayerImpl networkLayer) {
     for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
       long count = entry.getValue().longValue();
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {

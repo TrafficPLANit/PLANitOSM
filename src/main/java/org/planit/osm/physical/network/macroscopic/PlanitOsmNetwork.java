@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.converter.network.OsmHighwaySettings;
 import org.planit.osm.converter.network.OsmNetworkReaderSettings;
@@ -160,7 +160,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<TransportLayer, MacroscopicLinkSegmentType> typesPerLayer = new HashMap<TransportLayer, MacroscopicLinkSegmentType>(); 
     for(Mode mode : modes) {
       MacroscopicLinkSegmentType linkSegmentType = null;
-      MacroscopicPhysicalLayer networkLayer = (MacroscopicPhysicalLayer)getLayerByMode(mode);
+      MacroscopicPhysicalLayerImpl networkLayer = (MacroscopicPhysicalLayerImpl)getLayerByMode(mode);
       
       if(!typesPerLayer.containsKey(networkLayer)){
         /* new type */

@@ -10,7 +10,7 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
 import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayer;
+import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
 import org.planit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -69,7 +69,7 @@ public class OsmNetworkLayerParser {
   private final OsmNetworkReaderSettings settings;
     
   /** the network layer to use */
-  private final MacroscopicPhysicalLayer networkLayer;
+  private final MacroscopicPhysicalLayerImpl networkLayer;
   
   /** dedicated functionality to parse supported OSM modes */
   private final OsmNetworkLayerModeParser modeParser;
@@ -686,7 +686,7 @@ public class OsmNetworkLayerParser {
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected OsmNetworkLayerParser(MacroscopicPhysicalLayer networkLayer, OsmNetworkReaderData networkData, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
+  protected OsmNetworkLayerParser(MacroscopicPhysicalLayerImpl networkLayer, OsmNetworkReaderData networkData, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
     this.networkLayer = networkLayer;           
     this.networkData = networkData;
     this.geoUtils = geoUtils;
