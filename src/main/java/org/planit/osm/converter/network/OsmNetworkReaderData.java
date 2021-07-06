@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
-import org.planit.network.layer.macroscopic.MacroscopicPhysicalLayerImpl;
+import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.OsmNodeUtils;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
@@ -33,7 +33,7 @@ public class OsmNetworkReaderData {
   private Envelope networkBoundingBox;
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
-  private final Map<MacroscopicPhysicalLayerImpl, OsmNetworkLayerParser> osmLayerParsers = new HashMap<MacroscopicPhysicalLayerImpl, OsmNetworkLayerParser>();  
+  private final Map<MacroscopicNetworkLayerImpl, OsmNetworkLayerParser> osmLayerParsers = new HashMap<MacroscopicNetworkLayerImpl, OsmNetworkLayerParser>();  
   
   /** the distance that qualifies as being near to the network bounding box. Used to suppress warnings of incomplete osm ways due to bounding box (which
    * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */
@@ -49,7 +49,7 @@ public class OsmNetworkReaderData {
   protected void initialiseLayerParsers(PlanitOsmNetwork network, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
     /* for each layer initialise a handler */
     for(TransportLayer networkLayer : network.transportLayers) {
-      MacroscopicPhysicalLayerImpl macroNetworkLayer = (MacroscopicPhysicalLayerImpl)networkLayer;
+      MacroscopicNetworkLayerImpl macroNetworkLayer = (MacroscopicNetworkLayerImpl)networkLayer;
       OsmNetworkLayerParser layerHandler = new OsmNetworkLayerParser(macroNetworkLayer, this, settings, geoUtils);
       osmLayerParsers.put(macroNetworkLayer, layerHandler);
     }
@@ -153,7 +153,7 @@ public class OsmNetworkReaderData {
    * @param networkLayer to collect parser for
    * @return layerParser, null if not present
    */
-  public final OsmNetworkLayerParser getLayerParser(MacroscopicPhysicalLayerImpl networkLayer) {
+  public final OsmNetworkLayerParser getLayerParser(MacroscopicNetworkLayerImpl networkLayer) {
     return this.osmLayerParsers.get(networkLayer);
   }   
   
@@ -161,7 +161,7 @@ public class OsmNetworkReaderData {
    * 
    * @return layerParsers used
    */
-  public final Map<MacroscopicPhysicalLayerImpl, OsmNetworkLayerParser> getLayerParsers() {
+  public final Map<MacroscopicNetworkLayerImpl, OsmNetworkLayerParser> getLayerParsers() {
     return this.osmLayerParsers;
   }
 
