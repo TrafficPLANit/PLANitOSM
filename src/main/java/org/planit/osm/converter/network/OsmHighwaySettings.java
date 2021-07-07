@@ -96,14 +96,14 @@ public class OsmHighwaySettings extends OsmWaySettings {
   protected void initialiseDefaultMappingFromOsmRoadModes2PlanitModes(Modes planitModes) throws PlanItException {
     /* initialise road modes on planit side that we are about to map */
     {
-      planitModes.registerNew(PredefinedModeType.PEDESTRIAN);
-      planitModes.registerNew(PredefinedModeType.BICYCLE);
-      planitModes.registerNew(PredefinedModeType.MOTOR_BIKE);
-      planitModes.registerNew(PredefinedModeType.CAR);
-      planitModes.registerNew(PredefinedModeType.GOODS_VEHICLE);
-      planitModes.registerNew(PredefinedModeType.HEAVY_GOODS_VEHICLE);
-      planitModes.registerNew(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE);
-      planitModes.registerNew(PredefinedModeType.BUS);
+      planitModes.getFactory().registerNew(PredefinedModeType.PEDESTRIAN);
+      planitModes.getFactory().registerNew(PredefinedModeType.BICYCLE);
+      planitModes.getFactory().registerNew(PredefinedModeType.MOTOR_BIKE);
+      planitModes.getFactory().registerNew(PredefinedModeType.CAR);
+      planitModes.getFactory().registerNew(PredefinedModeType.GOODS_VEHICLE);
+      planitModes.getFactory().registerNew(PredefinedModeType.HEAVY_GOODS_VEHICLE);
+      planitModes.getFactory().registerNew(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE);
+      planitModes.getFactory().registerNew(PredefinedModeType.BUS);
     }
     
     /* add default mapping */

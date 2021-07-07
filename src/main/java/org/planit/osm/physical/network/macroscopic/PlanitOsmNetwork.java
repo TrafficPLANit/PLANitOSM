@@ -164,7 +164,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       
       if(!typesPerLayer.containsKey(networkLayer)){
         /* new type */
-        linkSegmentType = networkLayer.linkSegmentTypes.createAndRegisterNew(externalId, capacityPcuPerhour, maxDensityPcuPerKm);
+        linkSegmentType = networkLayer.linkSegmentTypes.getFactory().registerNew(externalId, capacityPcuPerhour, maxDensityPcuPerKm);
         /* XML id */
         linkSegmentType.setXmlId(Long.toString(linkSegmentType.getId()));
         /* external id */

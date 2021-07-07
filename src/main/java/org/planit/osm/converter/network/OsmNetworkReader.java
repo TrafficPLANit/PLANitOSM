@@ -16,9 +16,6 @@ import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
-import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
-import org.planit.utils.network.layer.physical.Link;
-import org.planit.utils.network.layer.physical.Node;
 import org.planit.zoning.Zoning;
 import org.planit.zoning.listener.UpdateConnectoidsOnSubGraphRemoval;
 
@@ -186,7 +183,7 @@ public class OsmNetworkReader implements NetworkReader {
       }      
            
       /* remove dangling subnetworks and account for the connectoids that are to be removed as well in case they reside on a dangling network */
-      Set<RemoveSubGraphListener<?, ?>> listeners = zoning==null ? null : Set.of(new UpdateConnectoidsOnSubGraphRemoval<Node, Link, MacroscopicLinkSegment>(zoning)); 
+      Set<RemoveSubGraphListener> listeners = zoning==null ? null : Set.of(new UpdateConnectoidsOnSubGraphRemoval(zoning)); 
       getSettings().getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest, listeners);
       
       /* logging stats  - after */

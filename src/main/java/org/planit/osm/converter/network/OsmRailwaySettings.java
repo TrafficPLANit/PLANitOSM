@@ -54,10 +54,10 @@ public class OsmRailwaySettings extends OsmWaySettings {
   protected void initialiseDefaultMappingFromOsmRailModes2PlanitModes(Modes planitModes) throws PlanItException {
     /* initialise rail modes on planit side that we are about to map */
     {
-      planitModes.registerNew(PredefinedModeType.TRAM);
-      planitModes.registerNew(PredefinedModeType.LIGHTRAIL);
-      planitModes.registerNew(PredefinedModeType.TRAIN);
-      planitModes.registerNew(PredefinedModeType.SUBWAY);
+      planitModes.getFactory().registerNew(PredefinedModeType.TRAM);
+      planitModes.getFactory().registerNew(PredefinedModeType.LIGHTRAIL);
+      planitModes.getFactory().registerNew(PredefinedModeType.TRAIN);
+      planitModes.getFactory().registerNew(PredefinedModeType.SUBWAY);
     }
     
     /* add default mapping */

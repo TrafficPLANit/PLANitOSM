@@ -141,7 +141,7 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
    */  
   public TransferZoneGroup createAndPopulateTransferZoneGroup(OsmRelation osmRelation, Map<String, String> tags) {
       /* create */
-      TransferZoneGroup transferZoneGroup = zoning.transferZoneGroups.createNew();
+      TransferZoneGroup transferZoneGroup = zoning.transferZoneGroups.getFactory().createNew();
             
       /* XML id = internal id*/
       transferZoneGroup.setXmlId(String.valueOf(transferZoneGroup.getId()));

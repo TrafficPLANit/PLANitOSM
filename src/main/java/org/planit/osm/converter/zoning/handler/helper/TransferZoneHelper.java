@@ -37,6 +37,7 @@ import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.misc.StringUtils;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.network.layer.macroscopic.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
 import org.planit.utils.network.layer.physical.Node;
 import org.planit.utils.zoning.TransferZone;
@@ -89,7 +90,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private Collection<Link> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) throws PlanItException {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicNetworkLayerImpl networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -135,7 +136,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private TransferZone createEmptyTransferZone(TransferZoneType transferZoneType) {
     
     /* create */
-    TransferZone transferZone = zoning.transferZones.createNew();
+    TransferZone transferZone = zoning.transferZones.getFactory().createNew();
     /* type */
     transferZone.setType(transferZoneType);
     /* xml id = internal id */

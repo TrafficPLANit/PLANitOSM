@@ -68,7 +68,7 @@ public class OsmNetworkHandlerHelper {
    * @throws PlanItException thrown if error
    */
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(
-      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayerImpl networkLayer, CoordinateReferenceSystem crs, Set<BreakEdgeListener<Node, Link>> breakLinkListeners) throws PlanItException {
+      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayerImpl networkLayer, CoordinateReferenceSystem crs, Set<BreakEdgeListener> breakLinkListeners) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     
     if(linksToBreak != null) {
@@ -129,7 +129,7 @@ public class OsmNetworkHandlerHelper {
    */
   public static Node createAndPopulateNode(Point geometry, MacroscopicNetworkLayerImpl networkLayer)  {
     /* create and register */
-    Node node = networkLayer.nodes.registerNew();
+    Node node = networkLayer.nodes.getFactory().registerNew();
     
     /* XML id */
     node.setXmlId(Long.toString(node.getId()));

@@ -34,7 +34,6 @@ import org.planit.utils.mode.Mode;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.planit.utils.network.layer.physical.Link;
-import org.planit.utils.network.layer.physical.LinkSegment;
 import org.planit.utils.network.layer.physical.Node;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -109,7 +108,7 @@ public class OsmNetworkLayerParser {
       if(finalLinkSegmentType==null) {
         
         /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = networkLayer.linkSegmentTypes.registerUniqueCopyOf(linkSegmentType);        
+        finalLinkSegmentType = networkLayer.linkSegmentTypes.getFactory().registerUniqueCopyOf(linkSegmentType);        
         /* XML id */
         finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
         
@@ -215,7 +214,7 @@ public class OsmNetworkLayerParser {
       linkLength = geoUtils.getDistanceInKilometres(lineString);
       
       /* create link */
-      link = networkLayer.links.registerNew(nodeFirst, nodeLast, linkLength, true);
+      link = networkLayer.links.getFactory().registerNew(nodeFirst, nodeLast, linkLength, true);
       /* geometry */
       link.setGeometry(lineString);      
       /* XML id */
@@ -486,7 +485,7 @@ public class OsmNetworkLayerParser {
   private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb) throws PlanItException {
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = networkLayer.linkSegments.registerNew(link, directionAb, true /*register on nodes and link*/);
+      linkSegment = networkLayer.linkSegments.getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
       /* Xml id */
       linkSegment.setXmlId(Long.toString(linkSegment.getId()));
       /* external id, identical to link since OSM has no directional ids */
@@ -768,7 +767,7 @@ public class OsmNetworkLayerParser {
    * @return true when links were broken, false otherwise
    * @throws PlanItException thrown if error
    */ 
-  protected boolean breakLinksWithInternalNode(final Node thePlanitNode, Set<BreakEdgeListener<Node, Link>> breakLinkListeners) throws PlanItException {
+  protected boolean breakLinksWithInternalNode(final Node thePlanitNode, Set<BreakEdgeListener> breakLinkListeners) throws PlanItException {
     
     Point osmNodeLocation = OsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodes());
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
@@ -807,7 +806,7 @@ public class OsmNetworkLayerParser {
     /* whenever we start breaking links ensure that the xml ids are updated based on the internal ids for both links and link segments to guarantee they remain unique
      * Note that this is true because for OSM we set the xml id to the internal id when creating planit entities. We do this to ensure that upon persisting, persisting
      * based on xml ids is viable and does not lead to duplidate ids in the output */
-    Set<BreakEdgeListener<Node, Link>> breakLinkListeners = Set.of(new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge<Node, Link, LinkSegment>());    
+    Set<BreakEdgeListener> breakLinkListeners = Set.of(new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge());    
     
     try {
           

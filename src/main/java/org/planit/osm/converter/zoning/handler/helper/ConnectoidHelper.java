@@ -38,8 +38,8 @@ import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.TrackModeType;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.planit.utils.network.layer.macroscopic.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
-import org.planit.utils.network.layer.physical.LinkSegment;
 import org.planit.utils.network.layer.physical.Node;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
@@ -184,9 +184,9 @@ public class ConnectoidHelper extends ZoningHelperBase {
 
 
   /** Verify if the provided existing internal location of the link would be valid as access node with upstream access link segment if it were to
-   * be used, i,e., if the link were to be broken at this point. Only in case the upstream link segment of this point is one-way and if extraoplated to the transfer zone
+   * be used, i,e., if the link were to be broken at this point. Only in case the upstream link segment of this point is one-way and if extrapolated to the transfer zone
    * geometry would reside on the wrong side of it (for modes where this matters such as bus). Then this method will return false. In all other situation, e.g. two-way roads
-   * or relative location of waitnig area is valid, or mode does not require a specific location relative to road (train), then it will return true
+   * or relative location of waiting area is valid, or mode does not require a specific location relative to road (train), then it will return true
    * 
    * @param transferZone for which to check location
    * @param accessLink the location resides on
@@ -197,7 +197,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    */
   private boolean hasStandAloneTransferZoneValidAccessLinkSegmentForLinkInternalLocationModeCombination(TransferZone transferZone, Link accessLink, Point connectoidLocation, Mode accessMode) throws PlanItException {
     
-    MacroscopicNetworkLayerImpl networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(connectoidLocation);
     Long osmStopLocationId = osmNode!= null ? osmNode.getId() : null;
     
@@ -338,10 +338,10 @@ public class ConnectoidHelper extends ZoningHelperBase {
      * Note that this syncing works because we create planit links such that initially xml ids are in sync with internal ids upon creation. If this is not the case we cannot 
      * guarantee uniqueness of xml ids using this method.
      */
-    Set<BreakEdgeListener<Node, Link>> breakLinkListeners = 
+    Set<BreakEdgeListener> breakLinkListeners = 
         Set.of(
-            new UpdateConnectoidsOnBreakLink<Node, Link, LinkSegment>(connectoidsAccessNodeLocationBeforeBreakLink),
-            new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge<Node, Link, LinkSegment>());
+            new UpdateConnectoidsOnBreakLink(connectoidsAccessNodeLocationBeforeBreakLink),
+            new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge());
         
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
     {      
@@ -376,7 +376,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
   private DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes) throws PlanItException {
     final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      DirectedConnectoid connectoid = zoning.transferConnectoids.registerNew(linkSegment,accessZone);
+      DirectedConnectoid connectoid = zoning.transferConnectoids.getFactory().registerNew(linkSegment,accessZone);
       
       /* xml id = internal id */
       connectoid.setXmlId(String.valueOf(connectoid.getId()));
@@ -534,7 +534,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @throws PlanItException thrown if error
    */
   private Point extractConnectoidLocationForstandAloneTransferZoneOnLink(
-      TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayerImpl networkLayer) throws PlanItException {
+      TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayer networkLayer) throws PlanItException {
     
     /* determine distance to closest osm node on existing planit link to create stop location (connectoid) for*/
     Point connectoidLocation = findConnectoidLocationForstandAloneTransferZoneOnLink(
@@ -595,7 +595,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @return found location either exisiting osm node or projected location that is nearest and does not exist as a shape point on the link yet, or null if no valid position could be found
    * @throws PlanItException thrown if error
    */
-  public Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayerImpl networkLayer) throws PlanItException {
+  public Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayer networkLayer) throws PlanItException {
 
     Coordinate closestExistingCoordinate = geoUtils.getClosestExistingLineStringCoordinateToGeometry(transferZone.getGeometry(), accessLink.getGeometry());
     double distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestExistingCoordinate), transferZone.getGeometry());        
@@ -846,7 +846,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @throws PlanItException thrown if error
    */
   public void extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
-      long osmWaitingAreaId, Geometry waitingAreaGeometry , Link accessLink, TransferZone transferZone, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayerImpl networkLayer) throws PlanItException {
+      long osmWaitingAreaId, Geometry waitingAreaGeometry , Link accessLink, TransferZone transferZone, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayer networkLayer) throws PlanItException {
                
     /* geo location on planit link, possibly inserted for this purpose by this method if no viable osm node/existing coordinate is present */
     Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(transferZone, accessLink, accessMode, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);

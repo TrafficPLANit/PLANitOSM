@@ -21,9 +21,10 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.planit.utils.geo.PlanitJtsUtils;
-import org.planit.utils.graph.Edges;
 import org.planit.utils.network.layer.TransportLayer;
+import org.planit.utils.network.layer.macroscopic.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
+import org.planit.utils.network.layer.physical.Links;
 import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
@@ -77,9 +78,9 @@ public class OsmZoningReaderPlanitData {
    * @param osmNetwork to use
    */
   protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
-    Collection<Edges<Link>> linksCollection = new ArrayList<Edges<Link>>();
-    for(MacroscopicNetworkLayerImpl layer : osmNetwork.transportLayers) {
-      linksCollection.add(layer.links);
+    Collection<Links> linksCollection = new ArrayList<Links>();
+    for(MacroscopicNetworkLayer layer : osmNetwork.transportLayers) {
+      linksCollection.add(layer.getLinks());
     }
     spatiallyIndexedPlanitLinks = PlanitGraphGeoUtils.createSpatiallyIndexedPlanitEdges(linksCollection);
   }
