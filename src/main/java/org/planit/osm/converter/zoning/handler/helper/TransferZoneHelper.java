@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.planit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.planit.osm.converter.zoning.OsmZoningReaderData;
@@ -37,7 +36,7 @@ import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.misc.StringUtils;
 import org.planit.utils.mode.Mode;
-import org.planit.utils.network.layer.macroscopic.MacroscopicNetworkLayer;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
 import org.planit.utils.network.layer.physical.Node;
 import org.planit.utils.zoning.TransferZone;
@@ -90,7 +89,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private Collection<Link> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) throws PlanItException {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().transportLayers.get(accessMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -674,7 +673,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     
     /* connectoid(s) */
     for(Mode mode : modeResult.second()) {
-      MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) getSettings().getReferenceNetwork().transportLayers.get(mode);             
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(mode);             
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        

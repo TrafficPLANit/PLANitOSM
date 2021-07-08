@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.planit.network.TransportLayersConfigurator;
+import org.planit.network.MacroscopicNetworkLayerConfigurator;
 import org.planit.osm.converter.OsmReaderSettings;
 import org.planit.osm.defaults.OsmLaneDefaults;
 import org.planit.osm.defaults.OsmModeAccessDefaults;
@@ -80,7 +80,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** mapping between PLANit modes and the layer their infrastructure will be mapped to. 
    * Default is based on InfrastructureLayersConfigurator.createAllInOneConfiguration, but the user can overwrite these settings if
    * desired */
-  protected TransportLayersConfigurator planitInfrastructureLayerConfiguration;
+  protected MacroscopicNetworkLayerConfigurator planitInfrastructureLayerConfiguration;
   
   /* SETTINGS */
   
@@ -223,10 +223,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         this.speedLimitConfiguration.getRailwayDefaults(), 
         this.modeAccessConfiguration.getRailwayModeAccessDefaults());
     
-    initialise(osmNetworkToPopulate.modes);   
+    initialise(osmNetworkToPopulate.getModes());   
     
     /* default will map all modes to a single layer */
-    this.planitInfrastructureLayerConfiguration = TransportLayersConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.modes);
+    this.planitInfrastructureLayerConfiguration = MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
   }   
         
   /**
@@ -736,7 +736,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * 
    * @return infrastructure layer to mode configuration
    */
-  public TransportLayersConfigurator getPlanitInfrastructureLayerConfiguration() {
+  public MacroscopicNetworkLayerConfigurator getPlanitInfrastructureLayerConfiguration() {
     return planitInfrastructureLayerConfiguration;
   }
 
@@ -745,7 +745,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param planitInfrastructureLayerConfiguration to use
    */
   public void setPlanitInfrastructureLayerConfiguration(
-      TransportLayersConfigurator planitInfrastructureLayerConfiguration) {
+      MacroscopicNetworkLayerConfigurator planitInfrastructureLayerConfiguration) {
     this.planitInfrastructureLayerConfiguration = planitInfrastructureLayerConfiguration;
   }
 

@@ -9,8 +9,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.planit.logging.Logging;
+import org.planit.network.MacroscopicNetwork;
 import org.planit.network.TransportLayerNetwork;
-import org.planit.network.macroscopic.MacroscopicNetwork;
 import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReader;
 import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReaderFactory;
 import org.planit.osm.converter.network.OsmNetworkReader;
@@ -105,8 +105,8 @@ public class BasicOSMReaderTest {
       assertNotNull(network);
       assertNotNull(zoning);
       
-      assertFalse(network.transportLayers.isNoLayers());
-      assertFalse(network.transportLayers.getFirst().isEmpty());
+      assertFalse(network.getTransportLayers().isNoLayers());
+      assertFalse(network.getTransportLayers().getFirst().isEmpty());
       assertTrue(zoning.odZones.isEmpty());
       assertFalse(zoning.transferZones.isEmpty());
       

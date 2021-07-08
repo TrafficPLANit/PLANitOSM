@@ -10,7 +10,6 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
 import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -31,6 +30,7 @@ import org.planit.utils.graph.Edge;
 import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.planit.utils.network.layer.physical.Link;
@@ -68,7 +68,7 @@ public class OsmNetworkLayerParser {
   private final OsmNetworkReaderSettings settings;
     
   /** the network layer to use */
-  private final MacroscopicNetworkLayerImpl networkLayer;
+  private final MacroscopicNetworkLayer networkLayer;
   
   /** dedicated functionality to parse supported OSM modes */
   private final OsmNetworkLayerModeParser modeParser;
@@ -108,7 +108,7 @@ public class OsmNetworkLayerParser {
       if(finalLinkSegmentType==null) {
         
         /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = networkLayer.linkSegmentTypes.getFactory().registerUniqueCopyOf(linkSegmentType);        
+        finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().registerUniqueCopyOf(linkSegmentType);        
         /* XML id */
         finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
         
@@ -214,7 +214,7 @@ public class OsmNetworkLayerParser {
       linkLength = geoUtils.getDistanceInKilometres(lineString);
       
       /* create link */
-      link = networkLayer.links.getFactory().registerNew(nodeFirst, nodeLast, linkLength, true);
+      link = networkLayer.getLinks().getFactory().registerNew(nodeFirst, nodeLast, linkLength, true);
       /* geometry */
       link.setGeometry(lineString);      
       /* XML id */
@@ -485,7 +485,7 @@ public class OsmNetworkLayerParser {
   private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb) throws PlanItException {
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = networkLayer.linkSegments.getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
+      linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
       /* Xml id */
       linkSegment.setXmlId(Long.toString(linkSegment.getId()));
       /* external id, identical to link since OSM has no directional ids */
@@ -498,7 +498,7 @@ public class OsmNetworkLayerParser {
     /* link segment type */
     linkSegment.setLinkSegmentType(linkSegmentType);
         
-    layerData.getProfiler().logLinkSegmentStatus(networkLayer.linkSegments.size());      
+    layerData.getProfiler().logLinkSegmentStatus(networkLayer.getNumberOfLinkSegments());      
     return linkSegment;
   }  
   
@@ -645,7 +645,7 @@ public class OsmNetworkLayerParser {
       
       /* register internal nodes for breaking links later on during parsing */
       registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);                  
-      layerData.getProfiler().logLinkStatus(networkLayer.links.size());
+      layerData.getProfiler().logLinkStatus(networkLayer.getNumberOfLinks());
     }
     return link;
   }  
@@ -685,7 +685,7 @@ public class OsmNetworkLayerParser {
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected OsmNetworkLayerParser(MacroscopicNetworkLayerImpl networkLayer, OsmNetworkReaderData networkData, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
+  protected OsmNetworkLayerParser(MacroscopicNetworkLayer networkLayer, OsmNetworkReaderData networkData, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
     this.networkLayer = networkLayer;           
     this.networkData = networkData;
     this.geoUtils = geoUtils;
@@ -811,11 +811,11 @@ public class OsmNetworkLayerParser {
     try {
           
       long nodeIndex = -1;
-      long originalNumberOfNodes = networkLayer.nodes.size();
+      long originalNumberOfNodes = networkLayer.getNumberOfNodes();
             
       HashSet<Long> processedOsmNodeIds = new HashSet<Long>();
       while(++nodeIndex<originalNumberOfNodes) {
-        Node node = networkLayer.nodes.get(nodeIndex);    
+        Node node = networkLayer.getNodes().get(nodeIndex);    
                 
         // 1. break links when a link's internal node is another existing link's extreme node
         boolean linksBroken = breakLinksWithInternalNode(node, breakLinkListeners);

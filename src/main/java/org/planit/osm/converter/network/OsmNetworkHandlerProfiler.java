@@ -6,9 +6,9 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.osm.tags.OsmHighwayTags;
 import org.planit.osm.tags.OsmRailwayTags;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.TransportLayer;
 
 /**
@@ -68,7 +68,7 @@ public class OsmNetworkHandlerProfiler {
    * 
    * @param networkLayer for which information  was tracked
    */
-  public void logProfileInformation(MacroscopicNetworkLayerImpl networkLayer) {
+  public void logProfileInformation(MacroscopicNetworkLayer networkLayer) {
     for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
       long count = entry.getValue().longValue();
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {
@@ -79,11 +79,11 @@ public class OsmNetworkHandlerProfiler {
     }
     
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format("%s [STATS] created PLANit %d nodes",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.nodes.size()));
-    LOGGER.info(String.format("%s [STATS] created PLANit %d links",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.links.size()));
-    LOGGER.info(String.format("%s [STATS] created PLANit %d links segments ",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.linkSegments.size()));    
+    LOGGER.info(String.format("%s [STATS] created PLANit %d nodes",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
+    LOGGER.info(String.format("%s [STATS] created PLANit %d links",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
+    LOGGER.info(String.format("%s [STATS] created PLANit %d links segments ",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));    
     
-    double numberOfParsedLinks = (double)networkLayer.links.size();
+    double numberOfParsedLinks = (double)networkLayer.getNumberOfLinks();
     double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
     double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
     LOGGER.info(String.format("%s [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", TransportLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
@@ -107,7 +107,7 @@ public class OsmNetworkHandlerProfiler {
    * 
    * @param numberOfLinks registered links so far
    */
-  public void logLinkStatus(int numberOfLinks) {
+  public void logLinkStatus(long numberOfLinks) {
     if(numberOfLinks == moduloLoggingCounterLinks) {
       LOGGER.info(String.format("Created %d links out of OSM ways",numberOfLinks));
       moduloLoggingCounterLinks *=2;
@@ -119,7 +119,7 @@ public class OsmNetworkHandlerProfiler {
    * 
    * @param numberOfNodes registered number of nodes so far
    */
-  public void logNodeStatus(int numberOfNodes) {
+  public void logNodeStatus(long numberOfNodes) {
     if(numberOfNodes >= moduloLoggingCounterNodes) {
       LOGGER.info(String.format("Created %d nodes out of OSM nodes",numberOfNodes));
       moduloLoggingCounterNodes *=2;

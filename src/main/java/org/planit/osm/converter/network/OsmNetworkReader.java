@@ -6,9 +6,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.planit.converter.network.NetworkReader;
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
-import org.planit.network.macroscopic.MacroscopicNetwork;
-import org.planit.network.macroscopic.MacroscopicNetworkLayers;
+import org.planit.network.MacroscopicNetwork;
 import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
@@ -16,6 +14,8 @@ import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
+import org.planit.utils.network.layers.MacroscopicNetworkLayers;
 import org.planit.zoning.Zoning;
 import org.planit.zoning.listener.UpdateConnectoidsOnSubGraphRemoval;
 
@@ -47,7 +47,7 @@ public class OsmNetworkReader implements NetworkReader {
    */
   public void initialiseBeforeParsing() throws PlanItException {
     PlanitOsmNetwork network = settings.getOsmNetworkToPopulate();
-    PlanItException.throwIf(network.transportLayers != null && network.transportLayers.size()>0,"Network is expected to be empty at start of parsing OSM network, but it has layers already");
+    PlanItException.throwIf(network.getTransportLayers() != null && network.getTransportLayers().size()>0,"Network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* gis initialisation */
     PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
@@ -169,7 +169,7 @@ public class OsmNetworkReader implements NetworkReader {
       boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
       
       /* logging stats  - before */
-      MacroscopicNetworkLayers layers = getSettings().getOsmNetworkToPopulate().transportLayers;
+      MacroscopicNetworkLayers layers = getSettings().getOsmNetworkToPopulate().getTransportLayers();
       {
         LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
         if (discardMaxsize != Integer.MAX_VALUE) {
@@ -305,7 +305,7 @@ public class OsmNetworkReader implements NetworkReader {
    * @return created network to zoning reader data to use
    */
   public OsmNetworkToZoningReaderData createNetworkToZoningReaderData() {
-    if(getSettings().getOsmNetworkToPopulate().transportLayers.isNoLayers() || getSettings().getOsmNetworkToPopulate().transportLayers.getFirst().isEmpty()) {
+    if(getSettings().getOsmNetworkToPopulate().getTransportLayers().isNoLayers() || getSettings().getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
       LOGGER.warning("Can only perform network->zoning data transfer when network has been populated by OSM network reader, i.e., first invoke the read() method before this call");
     }
 
@@ -313,7 +313,7 @@ public class OsmNetworkReader implements NetworkReader {
     OsmNetworkToZoningReaderData network2zoningData = new OsmNetworkToZoningReaderData(networkData, getSettings());
         
     /* layer specific data references */
-    for(Entry<MacroscopicNetworkLayerImpl, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
+    for(Entry<MacroscopicNetworkLayer, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()){
       OsmNetworkLayerParser layerHandler = entry.getValue();
       network2zoningData.registerLayerData(entry.getKey(), layerHandler.getLayerData());
     }

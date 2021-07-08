@@ -10,8 +10,8 @@ import org.planit.utils.geo.PlanitGraphGeoUtils;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.TrackModeType;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
-import org.planit.utils.network.layer.macroscopic.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
 
 /**

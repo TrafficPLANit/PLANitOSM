@@ -8,11 +8,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.planit.network.layer.MacroscopicNetworkLayerImpl;
 import org.planit.osm.tags.*;
 import org.planit.osm.util.*;
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.misc.Pair;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.TransportLayer;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.planit.utils.network.layer.physical.Link;
@@ -509,7 +510,7 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
     processCircularWays();    
             
     /* delegate to each layer handler present */
-    for(Entry<MacroscopicNetworkLayerImpl, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()) {
+    for(Entry<MacroscopicNetworkLayer, OsmNetworkLayerParser> entry : networkData.getLayerParsers().entrySet()) {
       OsmNetworkLayerParser networkLayerHandler = entry.getValue();
       
       /* break links on layer with internal connections to multiple osm ways */

@@ -17,7 +17,6 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
 import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.osm.converter.network.OsmNetworkHandlerHelper;
 import org.planit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.planit.osm.converter.zoning.OsmPublicTransportReaderSettings;
@@ -37,8 +36,8 @@ import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.mode.TrackModeType;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
-import org.planit.utils.network.layer.macroscopic.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
 import org.planit.utils.network.layer.physical.Node;
 import org.planit.utils.zoning.DirectedConnectoid;
@@ -321,7 +320,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param linksToBreak the links to break 
    * @throws PlanItException thrown if error
    */
-  private void breakLinksAtPlanitNode(Node planitNode, MacroscopicNetworkLayerImpl networkLayer, List<Link> linksToBreak) throws PlanItException {
+  private void breakLinksAtPlanitNode(Node planitNode, MacroscopicNetworkLayer networkLayer, List<Link> linksToBreak) throws PlanItException {
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
   
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
@@ -398,7 +397,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @return created connectoids
    * @throws PlanItException thrown if error
    */
-  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayerImpl networkLayer, final Collection<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
+  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Collection<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
     Set<DirectedConnectoid> createdConnectoids = new HashSet<DirectedConnectoid>();
     for(EdgeSegment linkSegment : linkSegments) {
       DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
@@ -418,7 +417,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
 
   private boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
-    MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) getSettings().getReferenceNetwork().transportLayers.get(planitMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
     
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
      
@@ -477,7 +476,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @return planit node collected/created
    * @throws PlanItException thrown if error
    */  
-  private Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicNetworkLayerImpl networkLayer) throws PlanItException {
+  private Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer) throws PlanItException {
     final OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     
     /* check if already exists */
@@ -507,15 +506,15 @@ public class ConnectoidHelper extends ZoningHelperBase {
     return planitNode;
   }
 
-  /** extract the connectoid access node. either it already exists as a planit node, or it is internal to an existing link. In the latter case
-   * a new node is created and the existing link is broken. In the former case, we simply collect the planit node
+  /** extract the connectoid access node. either it already exists as a PLANit node, or it is internal to an existing link. In the latter case
+   * a new node is created and the existing link is broken. In the former case, we simply collect the PLANit node
    * 
-   * @param osmNode to collect planit node version for
+   * @param osmNode to collect PLANit node version for
    * @param networkLayer to extract node on
-   * @return planit node collected/created
+   * @return PLANit node collected/created
    * @throws PlanItException thrown if error
    */
-  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicNetworkLayerImpl networkLayer) throws PlanItException {        
+  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicNetworkLayer networkLayer) throws PlanItException {        
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);    
     return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
   }
@@ -672,7 +671,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @throws PlanItException thrown if error
    */
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-      TransferZone transferZone, MacroscopicNetworkLayerImpl networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      TransferZone transferZone, MacroscopicNetworkLayer networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     
@@ -729,7 +728,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
       return false;
     }
     
-    MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) getSettings().getReferenceNetwork().transportLayers.get(planitMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);                
     
     /* planit access node */
@@ -809,7 +808,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
     for(Mode planitMode : planitModes) {
       
       /* layer */
-      MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) getSettings().getReferenceNetwork().transportLayers.get(planitMode);
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: stop_position %d is not present in parsed network layer supporting mode %s, likely it is dangling in original osm file",osmNode.getId(), planitMode.getExternalId()), OsmNodeUtils.createPoint(osmNode));

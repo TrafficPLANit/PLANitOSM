@@ -998,7 +998,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     reset();
     
     PlanItException.throwIf(
-        getSettings().getReferenceNetwork().transportLayers == null || getSettings().getReferenceNetwork().transportLayers.size()<=0,
+        getSettings().getReferenceNetwork().getTransportLayers() == null || getSettings().getReferenceNetwork().getTransportLayers().size()<=0,
           "Network is expected to be populated at start of parsing OSM zoning");
   }    
 

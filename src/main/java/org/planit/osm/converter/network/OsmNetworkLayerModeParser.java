@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.planit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.planit.osm.converter.helper.OsmLanesModeTaggingSchemeHelper;
 import org.planit.osm.converter.helper.OsmModeHelper;
 import org.planit.osm.converter.helper.OsmModeLanesTaggingSchemeHelper;
@@ -27,6 +26,7 @@ import org.planit.osm.util.OsmModeUtils;
 import org.planit.osm.util.OsmWayUtils;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.mode.Mode;
+import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 
 /**
  * Class to support parsing of OSM modes on OSM ways given the configuration provided for each PLANit network layer
@@ -37,7 +37,7 @@ import org.planit.utils.mode.Mode;
 public class OsmNetworkLayerModeParser extends OsmModeHelper {
   
   /** the network layer to use */
-  private final MacroscopicNetworkLayerImpl networkLayer;  
+  private final MacroscopicNetworkLayer networkLayer;  
     
   /** helper class to deal with parsing tags under the lanesMode tagging scheme for eligible modes */
   private OsmLanesModeTaggingSchemeHelper lanesModeSchemeHelper = null;
@@ -386,7 +386,7 @@ public class OsmNetworkLayerModeParser extends OsmModeHelper {
    * @param settings to use
    * @param networkLayer this parser is applied to
    */
-  public OsmNetworkLayerModeParser(OsmNetworkReaderSettings settings, MacroscopicNetworkLayerImpl networkLayer) {
+  public OsmNetworkLayerModeParser(OsmNetworkReaderSettings settings, MacroscopicNetworkLayer networkLayer) {
     super(settings);
     
     this.networkLayer = networkLayer;
