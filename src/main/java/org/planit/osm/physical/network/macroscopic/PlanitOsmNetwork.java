@@ -433,7 +433,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * 
    * For flights of steps (stairs) on footways    
    * 
-    * @param osmHighwayTypeMaxSpeed speed limit of highway type 
+   * @param osmHighwayTypeMaxSpeed speed limit of highway type 
    * @param modes to identify layers to register link segment types on
    * @return created types per layer (depending on how modes are mapped to layers)
    * @throws PlanItException thrown if error
@@ -712,7 +712,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         /* when way value has not been registered yet,duplicates may occur when way value is replaced with default when not supported */ 
         if(!defaultPlanitOsmLinkSegmentTypes.containsKey(osmWayValueToUse)) {
         
-          /* Only when one or more OSM modes are mapped to PLANit modes, the osm way type will be used, otherwise it is ignored */
+          /* Only when one or more OSM modes are mapped to PLANit modes, the OSM way type will be used, otherwise it is ignored */
           Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(highwaySettings.collectAllowedOsmHighwayModes(osmWayValueToUse));          
           if(!activatedPlanitModes.isEmpty()) {            
             

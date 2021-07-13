@@ -438,7 +438,7 @@ public class OsmNetworkHandler extends DefaultOsmHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-            
+                
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          

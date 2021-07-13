@@ -520,18 +520,19 @@ public class OsmNetworkLayerModeParser extends OsmModeHelper {
     /* access=<positive>*/
     if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
       
-      /* collect all modes the type of road supports...*/
-      Set<Mode> allowedModes = null;
+      /* collect all modes the type of road supports and are allowed upon...*/
+      Collection<String> osmAllowedModesForWayType = null;
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        allowedModes = getSettings().getMappedPlanitModes(OsmRoadModeTags.getSupportedRoadModeTags());  
+        osmAllowedModesForWayType = getSettings().getHighwaySettings().collectAllowedOsmHighwayModes(tags.get(OsmHighwayTags.HIGHWAY)); 
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        allowedModes = getSettings().getMappedPlanitModes(OsmRailModeTags.getSupportedRailModeTags());
+        osmAllowedModesForWayType = getSettings().getRailwaySettings().collectAllowedOsmRailwayModes(tags.get(OsmRailwayTags.RAILWAY));
       }else {
         /* no other major types yet supported */
       }
       
       /*... retain all that are supported by the layer */
-      if(allowedModes!= null) {
+      if(osmAllowedModesForWayType!= null) {
+        Set<Mode> allowedModes = getSettings().getMappedPlanitModes(osmAllowedModesForWayType);
         allowedModes.retainAll(networkLayer.getSupportedModes());
         includedModesToUpdate.addAll(allowedModes);
       }
