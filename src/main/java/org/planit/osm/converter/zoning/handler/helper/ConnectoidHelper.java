@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.djutils.event.EventType;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
@@ -557,7 +558,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
     }
         
     return connectoidLocation;
-  }
+  }  
 
   /** Constructor 
    * 
