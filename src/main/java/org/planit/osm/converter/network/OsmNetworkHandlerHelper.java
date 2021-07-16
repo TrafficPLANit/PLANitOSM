@@ -12,7 +12,6 @@ import org.locationtech.jts.geom.Point;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.planit.osm.util.OsmNodeUtils;
 import org.planit.utils.exceptions.PlanItException;
-import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layer.physical.Link;
 import org.planit.utils.network.layer.physical.Node;
@@ -62,20 +61,19 @@ public class OsmNetworkHandlerHelper {
    * @param linksToBreak contains the links that (at least at some point) had theNode as an internal link
    * @param networkLayer the node resides on
    * @param crs of the network layer 
-   * @param breakLinkListeners to apply when breaking edges
-   * @return newly broken planit links by their original osmWayId 
+   * @return newly broken PLANit links by their original osmWayId 
    *  
    * @throws PlanItException thrown if error
    */
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(
-      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs, Set<BreakEdgeListener> breakLinkListeners) throws PlanItException {
+      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
     
     if(linksToBreak != null) {
             
       try {
         /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-        Map<Long, Set<Link>> localBrokenLinks = networkLayer.breakAt(linksToBreak, theNode, crs, breakLinkListeners);                 
+        Map<Long, Set<Link>> localBrokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, theNode, crs);                 
         /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
         if(localBrokenLinks != null) {
           localBrokenLinks.forEach((id, links) -> {

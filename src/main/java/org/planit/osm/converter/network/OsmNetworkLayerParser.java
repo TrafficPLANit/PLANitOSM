@@ -8,7 +8,8 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
+import org.planit.graph.listener.SyncXmlIdToInternalIdOnBreakEdgeSegment;
+import org.planit.graph.listener.SyncXmlIdToInternalIdOnBreakEdge;
 import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
 import org.planit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.planit.osm.tags.OsmAccessTags;
@@ -27,7 +28,6 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.Edge;
-import org.planit.utils.graph.modifier.BreakEdgeListener;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
 import org.planit.utils.network.layer.MacroscopicNetworkLayer;
@@ -74,19 +74,38 @@ public class OsmNetworkLayerParser {
   private final OsmNetworkLayerModeParser modeParser;
   
   /** geo utility instance based on network wide crs this layer is part of */
-  private final PlanitJtsCrsUtils geoUtils;   
+  private final PlanitJtsCrsUtils geoUtils;
   
+  /** listener with functionality to sync XML ids to unique internal id upon breaking a link, ensures that when persisting
+   * OSM network by XML id,  we do not have duplicate ids */
+  private final SyncXmlIdToInternalIdOnBreakEdge syncXmlIdToIdOnBreakLink = new SyncXmlIdToInternalIdOnBreakEdge();
+  
+  /** listener with functionality to sync XML ids to unique internal id upon breaking a link segment, ensures that when persisting
+   * OSM network by XML id,  we do not have duplicate ids */
+  private final SyncXmlIdToInternalIdOnBreakEdgeSegment syncXmlIdToIdOnBreakLinkSegment = new SyncXmlIdToInternalIdOnBreakEdgeSegment();  
+  
+  /**
+   * Initialise the layer specific event listeners, for example when modifications are made to the underlying network and based on user configuration
+   * additional action by this parser is required to maintain a consistent network layer result during parsing or after
+   */
+  private void initialiseEventListeners() {
+    networkLayer.getLayerModifier().removeAllListeners();
+    /* whenever a link(segment) is broken we ensure that its XML id is synced with the internal id to ensure it remains unique */
+    networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLink);
+    networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLinkSegment);
+  }
+
   /** Check if geometry is near network bounding box
    * 
    * @param geometry to check
    * @param geoUtils to use
-   * @return truw when near, false otherwise
+   * @return true when near, false otherwise
    * @throws PlanItException thrown if error
    */
-  protected boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
-  }  
-    
+  }
+
   /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on
    * the available tags. The updated link segment type is returned, which in turn is registered properly on the network if it is indeed changed from the passed in existing one
    * 
@@ -691,9 +710,10 @@ public class OsmNetworkLayerParser {
     this.geoUtils = geoUtils;
     this.settings = settings;
     
-    this.layerData = new OsmNetworkReaderLayerData();
+    this.layerData = new OsmNetworkReaderLayerData();    
+    this.modeParser = new OsmNetworkLayerModeParser(settings, networkLayer);
     
-    this.modeParser = new OsmNetworkLayerModeParser(settings, networkLayer);   
+    initialiseEventListeners();        
   }
 
 
@@ -739,18 +759,7 @@ public class OsmNetworkLayerParser {
     }    
     return link;
   }
-  
-  /**
-   * identical to same method with listener parameters, only now now listeners will be used 
-   * 
-   * @param thePlanitNode to break links for where it is internal to them (based on its osm node id reference)
-   * @return true when links were broken, false otherwise
-   * @throws PlanItException thrown if error
-   */ 
-  protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
-    return breakLinksWithInternalNode(thePlanitNode, null);    
-  }  
-  
+    
   /**
    * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
    * on an existing link but also an internal link on another node, we break the links where this node
@@ -763,11 +772,10 @@ public class OsmNetworkLayerParser {
    * map to track these changes so that we can always identify which of multiple PLANit links an internal node currently resides on.  
    * 
    * @param thePlanitNode to break links for where it is internal to them (based on its OSM node id reference)
-   * @param breakLinkListeners to apply when breaking links
    * @return true when links were broken, false otherwise
    * @throws PlanItException thrown if error
    */ 
-  protected boolean breakLinksWithInternalNode(final Node thePlanitNode, Set<BreakEdgeListener> breakLinkListeners) throws PlanItException {
+  protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
     
     Point osmNodeLocation = OsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodes());
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
@@ -776,8 +784,7 @@ public class OsmNetworkLayerParser {
                   
       /* break links */
       Map<Long, Set<Link>> newOsmWaysWithMultipleLinks = 
-          OsmNetworkHandlerHelper.breakLinksWithInternalNode(
-              thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem(), breakLinkListeners);                
+          OsmNetworkHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());                
       
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct
        * planit links for which osm nodes are internal */
@@ -801,13 +808,7 @@ public class OsmNetworkLayerParser {
    * 
    */ 
   protected void breakLinksWithInternalConnections() {
-    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");
-
-    /* whenever we start breaking links ensure that the xml ids are updated based on the internal ids for both links and link segments to guarantee they remain unique
-     * Note that this is true because for OSM we set the xml id to the internal id when creating planit entities. We do this to ensure that upon persisting, persisting
-     * based on xml ids is viable and does not lead to duplidate ids in the output */
-    Set<BreakEdgeListener> breakLinkListeners = Set.of(new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge());    
-    
+    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");      
     try {
           
       long nodeIndex = -1;
@@ -818,7 +819,7 @@ public class OsmNetworkLayerParser {
         Node node = networkLayer.getNodes().get(nodeIndex);    
                 
         // 1. break links when a link's internal node is another existing link's extreme node
-        boolean linksBroken = breakLinksWithInternalNode(node, breakLinkListeners);
+        boolean linksBroken = breakLinksWithInternalNode(node);
         if(linksBroken) {          
           processedOsmNodeIds.add(Long.valueOf(node.getExternalId()));
         }
@@ -833,7 +834,7 @@ public class OsmNetworkLayerParser {
           if(planitIntersectionNode == null) {
             LOGGER.severe(String.format("OSM node %d internal to one or more OSM ways could not be extracted as PLANit node when breaking links at its location, this should not happen", osmNode.getId()));
           }
-          breakLinksWithInternalNode(planitIntersectionNode, breakLinkListeners);                                    
+          breakLinksWithInternalNode(planitIntersectionNode);                                    
         }
       }
       
@@ -858,7 +859,8 @@ public class OsmNetworkLayerParser {
    */
   public void reset() {
     layerData.reset();
-    modifiedLinkSegmentTypes.reset();    
+    modifiedLinkSegmentTypes.reset();  
+    initialiseEventListeners();
   }
     
 

@@ -12,12 +12,13 @@ import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.modifier.RemoveSubGraphListener;
+import org.planit.utils.graph.modifier.event.GraphModifierListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
 import org.planit.utils.network.layer.MacroscopicNetworkLayer;
 import org.planit.utils.network.layers.MacroscopicNetworkLayers;
 import org.planit.zoning.Zoning;
-import org.planit.zoning.listener.UpdateConnectoidsOnSubGraphRemoval;
+import org.planit.zoning.listener.UpdateConnectoidsOnVertexRemoval;
 
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.access.OsmInputException;
@@ -62,8 +63,8 @@ public class OsmNetworkReader implements NetworkReader {
     network.createOsmCompatibleLinkSegmentTypes(settings);
     /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
     settings.excludeOsmWayTypesWithoutActivatedModes();
-    settings.logUnsupportedOsmWayTypes();    
-    
+    settings.logUnsupportedOsmWayTypes();
+        
     /* initialise layer specific parsers */
     networkData.initialiseLayerParsers(network, settings, geoUtils);    
   }  
@@ -182,9 +183,22 @@ public class OsmNetworkReader implements NetworkReader {
         }
       }      
            
-      /* remove dangling subnetworks and account for the connectoids that are to be removed as well in case they reside on a dangling network */
-      Set<RemoveSubGraphListener> listeners = zoning==null ? null : Set.of(new UpdateConnectoidsOnSubGraphRemoval(zoning)); 
-      getSettings().getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest, listeners);
+      if(layers.size()!=1) {
+        LOGGER.warning("Currently OSM networks only support a single infrastructure layer in PLANit");
+      }
+      
+      /* account for the connectoids that are to be removed as well in case they reside on a dangling network 
+       * TODO: refactor this listener and instead make sure it is automatically dealt with by the zoning as an internal listener in some way
+       * as this always needs to happen not only in OSM 
+       * TODO: this listener and zoning in general does not properly support layers since vertices across layers might have the same id whereas 
+       * zone connectoids are now globally stored on the zoning and not per layer. This should be changed to avoid this problem possibly easier when this functionality
+       * is not separate but dealt with within the zoning */ 
+      GraphModifierListener listener = new UpdateConnectoidsOnVertexRemoval(zoning);
+      layers.getFirst().getLayerModifier().addListener(listener);
+      /* remove dangling subnetworks */ 
+      getSettings().getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest);
+      /* remove listener as it is currently meant for local use only due to expensive initialisation which is also not kept up to date */
+      layers.getFirst().getLayerModifier().removeListener(listener);
       
       /* logging stats  - after */
       {

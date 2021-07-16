@@ -10,14 +10,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.djutils.event.EventType;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
-import org.planit.graph.listener.SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge;
 import org.planit.osm.converter.network.OsmNetworkHandlerHelper;
 import org.planit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.planit.osm.converter.zoning.OsmPublicTransportReaderSettings;
@@ -32,7 +30,7 @@ import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.geo.PlanitJtsUtils;
 import org.planit.utils.graph.EdgeSegment;
-import org.planit.utils.graph.modifier.BreakEdgeListener;
+import org.planit.utils.graph.modifier.event.GraphModifierListener;
 import org.planit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.planit.utils.misc.Pair;
 import org.planit.utils.mode.Mode;
@@ -45,7 +43,7 @@ import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.zoning.Zoning;
-import org.planit.zoning.listener.UpdateConnectoidsOnBreakLink;
+import org.planit.zoning.listener.UpdateDirectedConnectoidsOnBreakLinkSegment;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -330,18 +328,11 @@ public class ConnectoidHelper extends ZoningHelperBase {
     Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink = 
         collectConnectoidAccessNodeLocations(linksToBreak, zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
-    /* register additional actions on breaking link via callback listeners:
-     * 1) connectoid update (see above)
-     * 2) xml id update on links (and its link segments) by syncing to internal ids so they remain unique. 
-     * 
-     * 2) is needed when persisting based on planit xml ids which otherwise leads to problems due to duplicate xml ids when breaking links (only internal ids remain unique). 
-     * Note that this syncing works because we create planit links such that initially xml ids are in sync with internal ids upon creation. If this is not the case we cannot 
-     * guarantee uniqueness of xml ids using this method.
+    /* register additional actions on breaking link via listener for onnectoid update (see above)
+     * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly than now
      */
-    Set<BreakEdgeListener> breakLinkListeners = 
-        Set.of(
-            new UpdateConnectoidsOnBreakLink(connectoidsAccessNodeLocationBeforeBreakLink),
-            new SyncDirectedEdgeXmlIdsToInternalIdOnBreakEdge());
+    GraphModifierListener listener = new UpdateDirectedConnectoidsOnBreakLinkSegment(connectoidsAccessNodeLocationBeforeBreakLink);
+    networkLayer.getLayerModifier().addListener(listener);
         
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
     {      
@@ -351,7 +342,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
           
     /* break links */
     Map<Long, Set<Link>> newlyBrokenLinks = OsmNetworkHandlerHelper.breakLinksWithInternalNode(
-        planitNode, linksToBreak, networkLayer, getSettings().getReferenceNetwork().getCoordinateReferenceSystem(), breakLinkListeners);   
+        planitNode, linksToBreak, networkLayer, getSettings().getReferenceNetwork().getCoordinateReferenceSystem());   
   
     /* TRACKING DATA CONSISTENCY - AFTER */
     {
@@ -361,7 +352,8 @@ public class ConnectoidHelper extends ZoningHelperBase {
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct planit links for (internal) osm nodes */
       layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);                            
     }
-          
+    
+    networkLayer.getLayerModifier().removeListener(listener);          
   }
 
   /** create directed connectoid for the link segment provided, all related to the given transfer zone and with access modes provided. When the link segment does not have any of the 
