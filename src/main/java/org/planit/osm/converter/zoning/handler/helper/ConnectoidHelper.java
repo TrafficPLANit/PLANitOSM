@@ -43,7 +43,7 @@ import org.planit.utils.zoning.DirectedConnectoid;
 import org.planit.utils.zoning.TransferZone;
 import org.planit.utils.zoning.TransferZoneGroup;
 import org.planit.zoning.Zoning;
-import org.planit.zoning.listener.UpdateDirectedConnectoidsOnBreakLinkSegment;
+import org.planit.zoning.modifier.event.handler.UpdateDirectedConnectoidsOnBreakLinkSegmentHandler;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -331,7 +331,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
     /* register additional actions on breaking link via listener for onnectoid update (see above)
      * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly than now
      */
-    GraphModifierListener listener = new UpdateDirectedConnectoidsOnBreakLinkSegment(connectoidsAccessNodeLocationBeforeBreakLink);
+    GraphModifierListener listener = new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsAccessNodeLocationBeforeBreakLink);
     networkLayer.getLayerModifier().addListener(listener);
         
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    

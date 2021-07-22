@@ -1,6 +1,5 @@
 package org.planit.osm.converter;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
@@ -78,7 +77,14 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
   public void setInputSource(final String inputSource) throws PlanItException {
     try {
       setInputSource(new URL(inputSource));
-    } catch (MalformedURLException e) {
+      return;
+    } catch (Exception e) {
+    }
+    
+    /* try again, now as local file rather than web based */
+    try {
+      setInputSource(UrlUtils.createFromPath(inputSource));
+    }catch (Exception e) {
       throw new PlanItException("Unable to extract URL from input source %s",inputSource);
     }
   }    

@@ -8,8 +8,8 @@ import java.util.logging.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
-import org.planit.graph.listener.SyncXmlIdToInternalIdOnBreakEdgeSegment;
-import org.planit.graph.listener.SyncXmlIdToInternalIdOnBreakEdge;
+import org.planit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
+import org.planit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
 import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
 import org.planit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.planit.osm.tags.OsmAccessTags;
@@ -78,11 +78,11 @@ public class OsmNetworkLayerParser {
   
   /** listener with functionality to sync XML ids to unique internal id upon breaking a link, ensures that when persisting
    * OSM network by XML id,  we do not have duplicate ids */
-  private final SyncXmlIdToInternalIdOnBreakEdge syncXmlIdToIdOnBreakLink = new SyncXmlIdToInternalIdOnBreakEdge();
+  private final SyncXmlIdToIdBreakEdgeHandler syncXmlIdToIdOnBreakLink = new SyncXmlIdToIdBreakEdgeHandler();
   
   /** listener with functionality to sync XML ids to unique internal id upon breaking a link segment, ensures that when persisting
    * OSM network by XML id,  we do not have duplicate ids */
-  private final SyncXmlIdToInternalIdOnBreakEdgeSegment syncXmlIdToIdOnBreakLinkSegment = new SyncXmlIdToInternalIdOnBreakEdgeSegment();  
+  private final SyncXmlIdToIdBreakEdgeSegmentHandler syncXmlIdToIdOnBreakLinkSegment = new SyncXmlIdToIdBreakEdgeSegmentHandler();  
   
   /**
    * Initialise the layer specific event listeners, for example when modifications are made to the underlying network and based on user configuration
