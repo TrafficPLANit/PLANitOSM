@@ -1,6 +1,5 @@
 package org.planit.osm.converter.network;
 
-import java.util.Set;
 import java.net.URL;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
@@ -11,7 +10,6 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
-import org.planit.utils.graph.modifier.RemoveSubGraphListener;
 import org.planit.utils.graph.modifier.event.GraphModifierListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
