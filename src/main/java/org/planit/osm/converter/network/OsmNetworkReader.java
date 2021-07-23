@@ -10,6 +10,7 @@ import org.planit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
+import org.planit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.planit.utils.graph.modifier.event.GraphModifierListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
@@ -190,13 +191,20 @@ public class OsmNetworkReader implements NetworkReader {
        * as this always needs to happen not only in OSM 
        * TODO: this listener and zoning in general does not properly support layers since vertices across layers might have the same id whereas 
        * zone connectoids are now globally stored on the zoning and not per layer. This should be changed to avoid this problem possibly easier when this functionality
-       * is not separate but dealt with within the zoning */ 
-      GraphModifierListener listener = new UpdateConnectoidsOnVertexRemovalHandler(zoning);
-      layers.getFirst().getLayerModifier().addListener(listener);
+       * is not separate but dealt with within the zoning */
+      DirectedGraphModifierListener listener = null;
+      if(zoning != null) {
+        listener = new UpdateConnectoidsOnVertexRemovalHandler(zoning);
+        layers.getFirst().getLayerModifier().addListener(listener);
+      }
+      
       /* remove dangling subnetworks */ 
       getSettings().getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest);
+      
       /* remove listener as it is currently meant for local use only due to expensive initialisation which is also not kept up to date */
-      layers.getFirst().getLayerModifier().removeListener(listener);
+      if(zoning != null) {
+        layers.getFirst().getLayerModifier().removeListener(listener);
+      }
       
       /* logging stats  - after */
       {
