@@ -11,7 +11,6 @@ import org.planit.osm.util.Osm4JUtils;
 import org.planit.utils.exceptions.PlanItException;
 import org.planit.utils.geo.PlanitJtsCrsUtils;
 import org.planit.utils.graph.modifier.event.DirectedGraphModifierListener;
-import org.planit.utils.graph.modifier.event.GraphModifierListener;
 import org.planit.utils.locale.CountryNames;
 import org.planit.utils.misc.StringUtils;
 import org.planit.utils.network.layer.MacroscopicNetworkLayer;
