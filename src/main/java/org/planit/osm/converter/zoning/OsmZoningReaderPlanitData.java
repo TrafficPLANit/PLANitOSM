@@ -328,7 +328,7 @@ public class OsmZoningReaderPlanitData {
    */
   public void removeLinksFromSpatialLinkIndex(Collection<Link> links) {
     if(links != null) {
-      links.forEach( link -> spatiallyIndexedPlanitLinks.remove(link.getEnvelope(), link));
+      links.forEach( link -> spatiallyIndexedPlanitLinks.remove(link.createEnvelope(), link));
     }
   }  
   
@@ -338,7 +338,7 @@ public class OsmZoningReaderPlanitData {
    */  
   public void addLinksToSpatialLinkIndex(Collection<Link> links) {
     if(links != null) {
-      links.forEach( link -> spatiallyIndexedPlanitLinks.insert(link.getEnvelope(), link));
+      links.forEach( link -> spatiallyIndexedPlanitLinks.insert(link.createEnvelope(), link));
     }
   }   
     
