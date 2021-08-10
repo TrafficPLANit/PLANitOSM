@@ -10,8 +10,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.planit.logging.Logging;
 import org.planit.network.MacroscopicNetwork;
-import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReader;
-import org.planit.osm.converter.intermodal.PlanitOsmIntermodalReaderFactory;
+import org.planit.osm.converter.intermodal.OsmIntermodalReader;
+import org.planit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.planit.osm.converter.network.OsmNetworkReader;
 import org.planit.osm.converter.network.OsmNetworkReaderFactory;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -86,7 +86,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadAndPtTest() {
     try {
-      PlanitOsmIntermodalReader osmReader = PlanitOsmIntermodalReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
+      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);

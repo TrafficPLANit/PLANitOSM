@@ -26,13 +26,13 @@ import org.planit.zoning.Zoning;
  * @author markr
  *
  */
-public class PlanitOsmIntermodalReader implements IntermodalReader {
+public class OsmIntermodalReader implements IntermodalReader {
   
   /** the logger */
-  private static final Logger LOGGER = Logger.getLogger(PlanitOsmIntermodalReader.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReader.class.getCanonicalName());
   
   /** the settings to use */
-  private PlanitOsmIntermodalReaderSettings settings;
+  private OsmIntermodalReaderSettings settings;
   
   /** the zoning to populate if any */
   private Zoning zoningToPopulate;
@@ -106,8 +106,8 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param osmNetworkToPopulate to populate
    * @param zoningToPopulate to populate
    */
-  protected PlanitOsmIntermodalReader(final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(new PlanitOsmIntermodalReaderSettings(countryName, osmNetworkToPopulate), zoningToPopulate);  
+  protected OsmIntermodalReader(final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    this(new OsmIntermodalReaderSettings(countryName, osmNetworkToPopulate), zoningToPopulate);  
   }   
   
   /**
@@ -118,8 +118,8 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param osmNetworkToPopulate to populate
    * @param zoningToPopulate to populate
    */
-  protected PlanitOsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(new PlanitOsmIntermodalReaderSettings(inputSource, countryName, osmNetworkToPopulate), zoningToPopulate);  
+  protected OsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    this(new OsmIntermodalReaderSettings(inputSource, countryName, osmNetworkToPopulate), zoningToPopulate);  
   }     
     
   /**
@@ -131,8 +131,8 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param zoningToPopulate to populate
    * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
-  protected PlanitOsmIntermodalReader(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
-    this(new PlanitOsmIntermodalReaderSettings(networkSettings, ptSettings), zoningToPopulate);
+  protected OsmIntermodalReader(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
+    this(new OsmIntermodalReaderSettings(networkSettings, ptSettings), zoningToPopulate);
     getSettings().getPublicTransportSettings().setReferenceNetwork(osmNetworkToPopulate);
   }
   
@@ -142,7 +142,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * @param settings to use
    * @param zoningToPopulate to populate
    */
-  protected PlanitOsmIntermodalReader(PlanitOsmIntermodalReaderSettings settings, Zoning zoningToPopulate){
+  protected OsmIntermodalReader(OsmIntermodalReaderSettings settings, Zoning zoningToPopulate){
     this.settings = settings;
     this.zoningToPopulate = zoningToPopulate;
     /* by default activate rail to parse in intermodal settings */
@@ -216,7 +216,7 @@ public class PlanitOsmIntermodalReader implements IntermodalReader {
    * {@inheritDoc}
    */
   @Override
-  public PlanitOsmIntermodalReaderSettings getSettings() {
+  public OsmIntermodalReaderSettings getSettings() {
     return settings;
   }  
   

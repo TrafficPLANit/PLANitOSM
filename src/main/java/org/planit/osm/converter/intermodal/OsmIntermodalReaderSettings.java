@@ -19,7 +19,7 @@ import org.planit.utils.misc.UrlUtils;
  * @author markr
  *
  */
-public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSettings {
+public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   
   /** the network settings to use */
   protected final OsmNetworkReaderSettings networkSettings;
@@ -32,7 +32,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * 
    * @param countryName to use
    */
-  public PlanitOsmIntermodalReaderSettings(final String countryName) {
+  public OsmIntermodalReaderSettings(final String countryName) {
     this(countryName, new PlanitOsmNetwork());
   }  
   
@@ -42,7 +42,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * @param countryName to use
    * @param networkToPopulate to use
    */
-  public PlanitOsmIntermodalReaderSettings(final String countryName, final PlanitOsmNetwork networkToPopulate) {
+  public OsmIntermodalReaderSettings(final String countryName, final PlanitOsmNetwork networkToPopulate) {
     this(null, countryName, networkToPopulate);
   }
   
@@ -53,7 +53,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * @param countryName to use
    * @param networkToPopulate to use
    */
-  public PlanitOsmIntermodalReaderSettings(final URL inputSource, final String countryName, final PlanitOsmNetwork networkToPopulate) {
+  public OsmIntermodalReaderSettings(final URL inputSource, final String countryName, final PlanitOsmNetwork networkToPopulate) {
     this(
         new OsmNetworkReaderSettings(inputSource, countryName, networkToPopulate), 
         new OsmPublicTransportReaderSettings(inputSource, countryName, networkToPopulate));
@@ -66,7 +66,7 @@ public class PlanitOsmIntermodalReaderSettings implements ConverterReaderSetting
    * @param networkSettings to use
    * @param zoningPtSettings to use
    */
-  public PlanitOsmIntermodalReaderSettings(final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
+  public OsmIntermodalReaderSettings(final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
     this.networkSettings = networkSettings;
     this.zoningPtSettings = zoningPtSettings;
   } 

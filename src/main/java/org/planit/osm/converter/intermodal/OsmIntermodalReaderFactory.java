@@ -17,13 +17,13 @@ import org.planit.zoning.Zoning;
  * @author markr
  *
  */
-public class PlanitOsmIntermodalReaderFactory {
+public class OsmIntermodalReaderFactory {
   
   /** Create a PLANitOsmIntermodalReader which will create its own macroscopic network, zoning and non-locale specific defaults for any right hand driving country
    * 
    * @return create OSM intermodal reader
    */
-  public static PlanitOsmIntermodalReader create() {
+  public static OsmIntermodalReader create() {
     return create(CountryNames.GLOBAL);    
   }    
   
@@ -32,7 +32,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @param countryName to use
    * @return create OSM intermodal reader
    */
-  public static PlanitOsmIntermodalReader create(String countryName) {
+  public static OsmIntermodalReader create(String countryName) {
     return create((URL)null, countryName);    
   }  
     
@@ -44,7 +44,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @return create OSM intermodal reader
    * @throws PlanItException thrown if error
    */
-  public static PlanitOsmIntermodalReader create(String inputFile, String countryName) throws PlanItException {
+  public static OsmIntermodalReader create(String inputFile, String countryName) throws PlanItException {
     try {
       return create(Paths.get(inputFile).toUri().toURL(), countryName);
     }catch(Exception e) {
@@ -62,7 +62,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @return create OSM intermodal reader
    * @throws PlanItException thrown if error
    */
-  public static PlanitOsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException {
+  public static OsmIntermodalReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException {
     try {
       return create(Paths.get(inputFile).toUri().toURL(), countryName, osmNetworkToPopulate, zoningToPopulate);
     }catch(Exception e) {
@@ -77,7 +77,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * based on a right hand driving approach
    * @return create OSM intermodal reader
    */
-  public static PlanitOsmIntermodalReader create(URL inputSource, String countryName) {
+  public static OsmIntermodalReader create(URL inputSource, String countryName) {
     PlanitOsmNetwork networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
     return create(inputSource, countryName, networkToPopulate, new Zoning(networkToPopulate.getIdGroupingToken(), networkToPopulate.getNetworkGroupingTokenId()));    
   }  
@@ -91,8 +91,8 @@ public class PlanitOsmIntermodalReaderFactory {
    * @param zoningToPopulate the zoning to populate
    * @return create OSM intermodal reader
    */
-  public static PlanitOsmIntermodalReader create(URL inputSource, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    return new PlanitOsmIntermodalReader(inputSource, countryName, osmNetworkToPopulate, zoningToPopulate);      
+  public static OsmIntermodalReader create(URL inputSource, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    return new OsmIntermodalReader(inputSource, countryName, osmNetworkToPopulate, zoningToPopulate);      
   }    
   
   /** Create a PLANitOsmIntermodalReader which requires the user to set the remaining required settings on the provided settings instances
@@ -102,7 +102,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @return create OSM intermodal reader
    * @throws PlanItException throw if error
    */
-  public static PlanitOsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings) throws PlanItException {
+  public static OsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings) throws PlanItException {
     return create(networkSettings, ptSettings, new PlanitOsmNetwork());    
   }    
     
@@ -113,7 +113,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @return create OSM intermodal reader
    * @throws PlanItException throw if network settings are inconsistent with provided country and network to populate
    */
-  public static PlanitOsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+  public static OsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
     return create(
         networkSettings, 
         new OsmPublicTransportReaderSettings(
@@ -128,7 +128,7 @@ public class PlanitOsmIntermodalReaderFactory {
    * @return create OSM intermodal reader
    * @throws PlanItException throw if error
    */
-  public static PlanitOsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+  public static OsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
     return create(
         networkSettings, ptSettings, osmNetworkToPopulate, new Zoning(osmNetworkToPopulate.getIdGroupingToken(), osmNetworkToPopulate.getNetworkGroupingTokenId()));    
   }  
@@ -142,8 +142,8 @@ public class PlanitOsmIntermodalReaderFactory {
    * @return create OSM intermodal reader
    * @throws PlanItException throw if network settings are inconsistent with provided country and network to populate
    */
-  public static PlanitOsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException {
-    return new PlanitOsmIntermodalReader(networkSettings, ptSettings, osmNetworkToPopulate, zoningToPopulate);      
+  public static OsmIntermodalReader create(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException {
+    return new OsmIntermodalReader(networkSettings, ptSettings, osmNetworkToPopulate, zoningToPopulate);      
   }  
           
 }
