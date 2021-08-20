@@ -10,7 +10,7 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.planit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.planit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
-import org.planit.network.layer.macroscopic.MacroscopicModePropertiesFactory;
+import org.planit.network.layer.macroscopic.LinkSegmentTypeAccessPropertiesFactory;
 import org.planit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.planit.osm.tags.OsmAccessTags;
 import org.planit.osm.tags.OsmHighwayTags;
@@ -134,10 +134,10 @@ public class OsmNetworkLayerParser {
         /* update mode properties */
         if(!toBeAddedModes.isEmpty()) {
           double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);          
-          MacroscopicModePropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, toBeAddedModes, osmWayTypeMaxSpeed);
+          LinkSegmentTypeAccessPropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, osmWayTypeMaxSpeed, toBeAddedModes);
         }
         if(!toBeRemovedModes.isEmpty()) {
-          finalLinkSegmentType.removeModeProperties(toBeRemovedModes);
+          finalLinkSegmentType.removeModeAccess(toBeRemovedModes);
         }
         
         /* register modification */
