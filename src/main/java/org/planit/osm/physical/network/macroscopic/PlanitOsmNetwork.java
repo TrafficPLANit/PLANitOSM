@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import org.planit.network.MacroscopicNetwork;
 import org.planit.network.layer.MacroscopicNetworkLayerImpl;
-import org.planit.network.layer.macroscopic.LinkSegmentTypeAccessPropertiesFactory;
+import org.planit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.planit.osm.converter.network.OsmHighwaySettings;
 import org.planit.osm.converter.network.OsmNetworkReaderSettings;
 import org.planit.osm.converter.network.OsmRailwaySettings;
@@ -177,7 +177,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       /* collect and register mode properties */
       linkSegmentType = typesPerLayer.get(networkLayer);
       double cappedMaxSpeed = Math.min(maxSpeed, mode.getMaximumSpeedKmH());
-      LinkSegmentTypeAccessPropertiesFactory.createOnLinkSegmentType(linkSegmentType, mode, cappedMaxSpeed);      
+      AccessGroupPropertiesFactory.createOnLinkSegmentType(linkSegmentType, mode, cappedMaxSpeed);      
     }
     return typesPerLayer;
   }  
