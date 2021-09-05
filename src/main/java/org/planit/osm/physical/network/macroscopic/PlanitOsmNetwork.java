@@ -733,9 +733,9 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
               MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
               
               /** convert to comma separated string by mode name */
-              String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
+              String csvModeString = String.join(",", linkSegmentType.getAllowedModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
               LOGGER.info(String.format("%s %s%s highway:%s - modes: %s speed: %.2f (km/h) capacity: %.2f (pcu/lane/h), max density: %.2f (pcu/km/lane)", 
-                  TransportLayer.createLayerLogPrefix(layer),isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getCapacityPerLaneOrDefault(),linkSegmentType.getMaximumDensityPerLaneOrDefault()));              
+                  TransportLayer.createLayerLogPrefix(layer),isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", isBackupDefault ? "[BACKUP]" : "", osmWayValueToUse, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getExplicitCapacityPerLaneOrDefault(),linkSegmentType.getExplicitMaximumDensityPerLaneOrDefault()));              
             }            
           }else {
             linkSegmentTypes = defaultPlanitOsmLinkSegmentTypes.get(osmWayValueToUse);
@@ -794,7 +794,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           TransportLayer layer = entry.getKey();
           MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
           
-          String csvModeString = String.join(",", linkSegmentType.getAvailableModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
+          String csvModeString = String.join(",", linkSegmentType.getAllowedModes().stream().map( (mode) -> {return mode.getName();}).collect(Collectors.joining(",")));
           LOGGER.info(String.format("%s %s railway:%s - modes: %s speed: %s (km/h)", TransportLayer.createLayerLogPrefix(layer), isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", osmWayValue, csvModeString, railwayMaxSpeed));
         }
         

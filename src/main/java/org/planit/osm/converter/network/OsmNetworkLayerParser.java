@@ -293,8 +293,8 @@ public class OsmNetworkLayerParser {
         allowedPlanitModes.retainAll(networkLayer.getSupportedModes());
       }      
       
-      toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(allowedPlanitModes);
-      toBeRemovedModes = linkSegmentType.getAvailableModesNotIn(allowedPlanitModes);
+      toBeAddedModes = linkSegmentType.getDisallowedModesFrom(allowedPlanitModes);
+      toBeRemovedModes = linkSegmentType.getAllowedModesNotIn(allowedPlanitModes);
       
     }else {
       /*regular approach based on available tags */
@@ -321,8 +321,8 @@ public class OsmNetworkLayerParser {
       }
       
       /* identify differences with default link segment type in terms of mode access */
-      toBeAddedModes = linkSegmentType.getUnAvailableModesFrom(includedModes);
-      toBeRemovedModes = linkSegmentType.getAvailableModesFrom(excludedModes);        
+      toBeAddedModes = linkSegmentType.getDisallowedModesFrom(includedModes);
+      toBeRemovedModes = linkSegmentType.getAllowedModesFrom(excludedModes);        
     }
       
     /* use the identified changes to the modes to update the link segment type (and register it if needed) */
@@ -687,10 +687,10 @@ public class OsmNetworkLayerParser {
     MacroscopicLinkSegmentType  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
     
     /* reset when no modes are available, in which case no link segment should be created for the direction */
-    if(!forwardDirectionLinkSegmentType.hasAvailableModes()) {
+    if(!forwardDirectionLinkSegmentType.hasAllowedModes()) {
       forwardDirectionLinkSegmentType = null;
     }
-    if(!backwardDirectionLinkSegmentType.hasAvailableModes()) {
+    if(!backwardDirectionLinkSegmentType.hasAllowedModes()) {
       backwardDirectionLinkSegmentType = null;
     }    
         

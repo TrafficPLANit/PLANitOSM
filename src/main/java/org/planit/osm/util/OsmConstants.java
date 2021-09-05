@@ -1,6 +1,6 @@
 package org.planit.osm.util;
 
-import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
+import org.planit.utils.macroscopic.MacroscopicConstants;
 
 /**
  * Some constants used by PLANit OSM
@@ -11,7 +11,7 @@ import org.planit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 public class OsmConstants {
 
   /** pcu/km/lane */
-  public static final double DEFAULT_MAX_DENSITY_LANE= MacroscopicLinkSegmentType.DEFAULT_MAX_DENSITY_LANE;
+  public static final double DEFAULT_MAX_DENSITY_LANE= MacroscopicConstants.DEFAULT_MAX_DENSITY_PCU_KM_LANE;
   
   /** pcu/h/lane */
   public static final double DEFAULT_MINIMUM_CAPACITY_LANE = 600;  
