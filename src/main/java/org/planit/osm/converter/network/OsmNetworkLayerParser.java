@@ -127,7 +127,8 @@ public class OsmNetworkLayerParser {
       if(finalLinkSegmentType==null) {
         
         /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().registerUniqueCopyOf(linkSegmentType);        
+        finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().createUniqueCopyOf(linkSegmentType);
+        networkLayer.getLinkSegmentTypes().register(finalLinkSegmentType);
         /* XML id */
         finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
         
