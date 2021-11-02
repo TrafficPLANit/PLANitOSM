@@ -2,7 +2,7 @@
 
 PLANitOSM provides parsers that are able to parse Open Street Map data and convert these into a PLANit compatible networks. A large number of options is provided to manipulate and filter the OSM data to extract the network that the user desires. The resulting networks are topologically sound and particularly aimed at being useful for traffic assignment and simulatino purposes, although they can also be used to just filter our particular aspects of the OSM data. The created networks can in turn be exported to other formats, or manipulated in memory. 
 
-User documentation on how to use this reader can be found on the PLANit website: https://trafficplanit.github.io/PLANitManual/.
+User documentation on how to use this reader can be found on the PLANit website: [www.goPLANit.org](http://www.goplanit.org).
 
 Some technical documentation/introduction for developers regarding the design of the reader can be found in the [Technical Readme](./technical_readme.md)
 
