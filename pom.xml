@@ -4,12 +4,12 @@
 	<modelVersion>4.0.0</modelVersion>	
 	
 	<parent>
-    <groupId>org.planit.parentpom</groupId>
+    <groupId>org.goplanit.parentpom</groupId>
     <artifactId>planit-parentpom</artifactId>
 		<version>0.2.1a1</version>
 	</parent>
 
-	<groupId>org.planit.osm</groupId>
+	<groupId>org.goplanit.osm</groupId>
 	<artifactId>planit-osm</artifactId>
 	<description>PLANit OSM  parses Open Street Map networks</description>
 	<packaging>jar</packaging>
@@ -31,7 +31,7 @@
 	<dependencies>
 	
 	   <dependency>
-        <groupId>org.planit</groupId>
+        <groupId>org.goplanit</groupId>
         <artifactId>planit-core</artifactId>
     </dependency> 
 
