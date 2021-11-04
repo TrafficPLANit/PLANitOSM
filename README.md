@@ -28,12 +28,19 @@ Thus, when processing an OpenStreetMap dataset, you will encounter the contained
 It is important to understand that ways and relations reference other objects using their ids. They do not contain the data of referenced objects themselves. Hence, to work with a way or relation it is usually necessary to resolve those references and find the actual objects they reference.
 For example, a way is just a sequence of node ids. To interpret the geometry of the way, you have to assemble a sequence of coordinates from the references by finding the referenced nodes by their id.
 ```
-## Maven parent
+
+## Development
+
+### Maven parent
 
 Projects need to be built from Maven before they can be run. The common maven configuration can be found in the PLANitParentPom project which acts as the parent for this project's pom.xml.
 
 > Make sure you install the PLANitParentPom pom.xml before conducting a maven build (in Eclipse) on this project, otherwise it cannot find the references dependencies, plugins, and other resources.
 
-## Git Branching model
+### Maven deploy
+
+Distribution management is setup via the parent pom such that Maven deploys this project to the PLANit online repository (also specified in the parent pom). To enable deployment ensure that you setup your credentials correctly in your settings.xml as otherwise the deployment will fail.
+
+### Git Branching model
 
 We adopt GitFlow as per https://nvie.com/posts/a-successful-git-branching-model/
