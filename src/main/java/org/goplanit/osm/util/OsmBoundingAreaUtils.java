@@ -57,7 +57,7 @@ public class OsmBoundingAreaUtils {
    * 
    * @param message to log if not too close to bounding box
    * @param geometry to determine distance to bounding box to
-   * @param logger to log on
+   * @param boundingBox to use
    * @param geoUtils to use
    * @throws PlanItException thrown if error
    */
@@ -70,7 +70,7 @@ public class OsmBoundingAreaUtils {
   /** check if geometry is near network bounding box using buffer based on PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS
    * 
    * @param geometry to check
-   * @param boundingBox to consider
+   * @param networkBoundingBox to consider
    * @param geoUtils to use
    * @return true when near, false otherwise
    * @throws PlanItException thrown if error

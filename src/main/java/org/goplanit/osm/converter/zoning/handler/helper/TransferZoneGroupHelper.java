@@ -136,7 +136,6 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
    * 
    * @param osmRelation the stop_area is based on 
    * @param tags tags to extract features from
-   * @param transferZoneGroupType the type of the transfer zone group 
    * @return transfer zone group created
    */  
   public TransferZoneGroup createAndPopulateTransferZoneGroup(OsmRelation osmRelation, Map<String, String> tags) {
@@ -159,8 +158,7 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
   /** Create a transfer zone group based on the passed in OSM entity, tags for feature extraction and access and register it
    * 
    * @param osmRelation the stop_area is based on 
-   * @param tags tags to extract features from
-   * @param transferZoneGroupType the type of the transfer zone group 
+   * @param tags tags to extract features from 
    * @return transfer zone group created
    */  
   public TransferZoneGroup createPopulateAndRegisterTransferZoneGroup(OsmRelation osmRelation, Map<String, String> tags) {
@@ -227,6 +225,7 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
    * false is returned and it is not registered.
    *  
    * @param osmNode to collect transfer zone for and register
+   * @param tags to use
    * @param transferZoneGroup to register on
    * @return true when registered on the group, false otherwise
    */  

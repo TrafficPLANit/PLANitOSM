@@ -507,7 +507,7 @@ public class OsmNetworkLayerModeParser extends OsmModeHelper {
     return excludedModes;
   }
   
-  /** Update the included and excluded mode sets passed in based on the key/value information available in the access=<?> tag.
+  /** Update the included and excluded mode sets passed in based on the key/value information available in the access=? tag.
    * 
    * @param tags where we extract the access information from
    * @param includedModesToUpdate the set to supplement with found access information of allowed modes, e.g. access=yes, access=bus, etc.

@@ -557,7 +557,6 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param zoning to parse on
    * @param zoningReaderData to use
    * @param transferSettings to use
-   * @param network2ZoningData to use
    * @param profiler to use
    */
   public ConnectoidHelper(
@@ -789,7 +788,6 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param osmNode to relate to planit network's incoming link segments as access points
    * @param tags to use
    * @param transferZones connectoids are assumed to provide access to
-   * @param transferZoneGroup the connectoids belong to
    * @param planitModes this connectoid is allowed access for
    * @param transferZoneGroup it belongs to, when zone is not yet in the group the zone is added to the group (group is allowed to be null)
    * @return true when at least connectoids where created for one of the transfer zones identified

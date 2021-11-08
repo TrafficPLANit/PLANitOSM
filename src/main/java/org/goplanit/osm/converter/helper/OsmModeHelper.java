@@ -42,8 +42,8 @@ public class OsmModeHelper {
    * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
    * to filter out definite non-matches.
    *  
+   * @param osmModesToCheck to check
    * @param referenceOsmModes to map against (may be null)
-   * @param potentialTransferZones to extract transfer zone groups from
    * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
    * @return matched transfer zones
    */   

@@ -47,7 +47,7 @@ public class OsmPtVersionSchemeUtils {
    * tags related to original PT scheme stops ( railway=halt, railway=tram_stop, highway=bus_stop and highway=platform),
    * or the current v2 PT scheme (public_transport=stop_position, platform, station, stop_area)
    * 
-   * @param tags
+   * @param tags to use
    * @return which scheme it is compatible with, NONE if none could be found
    */
   public static OsmPtVersionScheme isPublicTransportBasedInfrastructure(Map<String, String> tags) {

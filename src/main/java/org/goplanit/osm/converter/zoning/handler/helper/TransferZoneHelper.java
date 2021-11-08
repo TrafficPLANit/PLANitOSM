@@ -538,7 +538,6 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param zoning to use
    * @param zoningReaderData to use
    * @param transferSettings to use
-   * @param network2ZoningData to use
    * @param profiler to use
    */
   public TransferZoneHelper(
@@ -568,7 +567,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in reference osm modes
    * In case no eligible modes are provided (null), we allow any transfer zone with at least one valid mapped mode
    *  
-   * @param referenceOsmModes to map against (may be null)
+   * @param eligibleOsmModes to map against (may be null)
    * @param potentialTransferZones to extract mode compatible transfer zones
    * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
    * @return matched transfer zones
@@ -766,7 +765,6 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param osmNode representing the stop_location
    * @param tags of the node
    * @param eligibleOsmModes eligible modes for the stop_location, may be null
-   * @param transferZoneGroup the node belongs to
    * @return found transfer zone matches
    * @throws PlanItException thrown if error
    */

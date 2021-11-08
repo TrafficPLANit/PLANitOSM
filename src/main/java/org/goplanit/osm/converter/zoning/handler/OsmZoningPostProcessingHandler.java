@@ -1006,7 +1006,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param transferSettings for the handler
    * @param handlerData the handler data gathered by preceding handlers for zoning parsing
-   * @param network2ZoningData data collated from parsing network required to successfully popualte the zoning
    * @param zoningToPopulate to populate
    * @param profiler to use 
    */
