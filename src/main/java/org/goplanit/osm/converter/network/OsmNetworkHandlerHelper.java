@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
@@ -68,17 +69,17 @@ public class OsmNetworkHandlerHelper {
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(
       Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
-    
+          
     if(linksToBreak != null) {
             
       try {
         /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-        Map<Long, Set<Link>> localBrokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, theNode, crs);                 
+        Map<Long, Pair<Link,Link>> localBrokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, theNode, crs);                 
         /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
         if(localBrokenLinks != null) {
           localBrokenLinks.forEach((id, links) -> {
-            links.forEach( brokenLink -> {
-              Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
+            List.of(links.first(),links.second()).forEach( brokenLink -> {
+              final Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
               newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
               newOsmWaysWithMultiplePlanitLinks.get(brokenLinkOsmId).add(brokenLink);
             });
