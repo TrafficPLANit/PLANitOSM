@@ -82,7 +82,7 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
         }
         
         if(logDiscardWarning) {
-          LOGGER.warning(String.format("DISCARD: waiting area OSM entity %d (type %s) not available, although referenced by stop_area %s and mode compatible, unable to register on transfer zone group",osmId, type.toString(), transferZoneGroup.getExternalId()));
+          LOGGER.warning(String.format("DISCARD: Waiting area OSM entity %d (type %s) not available, referenced by stop_area %s, problem unless geometry lies outside parsed area",osmId, type.toString(), transferZoneGroup.getExternalId()));
         }
       }
       return false;      

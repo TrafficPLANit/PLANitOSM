@@ -59,7 +59,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    */  
   @Override
   public void handle(OsmRelation osmRelation) throws IOException {
-    
+       
     boolean preserveOuterRole = false;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);          
     /* only parse when parser is active and type is available */

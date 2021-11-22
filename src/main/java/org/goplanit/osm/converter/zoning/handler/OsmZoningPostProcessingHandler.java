@@ -1054,7 +1054,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             
           }else {
             /* anything else is not expected */
-            LOGGER.info(String.format("Unknown public_transport relation %s encountered for relation %d, ignored",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
+            LOGGER.info(String.format("DISCARD: Unsupported public_transport relation %s referenced by relation %d",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
           }          
           
         }

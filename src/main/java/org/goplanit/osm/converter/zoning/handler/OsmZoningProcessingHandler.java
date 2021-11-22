@@ -361,7 +361,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
       OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(member.getId());
       if(osmNode == null) {
         if(!getSettings().hasBoundingPolygon()) {
-          LOGGER.warning(String.format("unable to collect osm node %d referenced in stop_area %d, this shouldn't happen", member.getId(), osmRelation.getId()));
+          LOGGER.warning(String.format("DISCARD: Unable to collect osm node %d referenced in stop_area %d, verify it lies outside the parsed area", member.getId(), osmRelation.getId()));
         }
         return;
       }
@@ -376,7 +376,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
       processPtv2StopAreaMemberWayWithoutRole(transferZoneGroup, osmRelation, member);     
       
     }else {      
-      LOGGER.info(String.format("stop_area (%d) member without a role found (%d) that is not a node or way, ignored",osmRelation.getId(),member.getId()));
+      LOGGER.info(String.format("DISCARD: top_area (%d) member without a role found (%d) that is not a node or way",osmRelation.getId(),member.getId()));
     }
   }                     
 
@@ -1039,12 +1039,13 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * parse an osm way to extract for example platforms, or other transfer zone related geometry
+   * parse an OSM way to extract for example platforms, or other transfer zone related geometry
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
                                     
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);  
+    
     try {       
       
       /* only parse ways that are potentially used for (PT) transfers*/
@@ -1113,7 +1114,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
             
           }else {
             /* anything else is not expected */
-            LOGGER.info(String.format("unsupported public_transport relation `%s` (%d) ignored",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
+            LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
           }          
           
         }
