@@ -748,6 +748,5 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
       MacroscopicNetworkLayerConfigurator planitInfrastructureLayerConfiguration) {
     this.planitInfrastructureLayerConfiguration = planitInfrastructureLayerConfiguration;
   }
-
   
 }

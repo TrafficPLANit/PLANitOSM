@@ -63,13 +63,22 @@ public class OsmRailwaySettings extends OsmWaySettings {
     
     /* add default mapping */
     {
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.TRAIN, planitModes.get(PredefinedModeType.TRAIN));
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
-      addOsmMode2PlanitModeMapping(OsmRailModeTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.TRAIN, planitModes.get(PredefinedModeType.TRAIN));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
+      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
+      
+      /* activate all defaults */
+      activateOsmMode(OsmRailModeTags.FUNICULAR);
+      activateOsmMode(OsmRailModeTags.LIGHT_RAIL);
+      activateOsmMode(OsmRailModeTags.MONO_RAIL);
+      activateOsmMode(OsmRailModeTags.NARROW_GAUGE);
+      activateOsmMode(OsmRailModeTags.TRAIN);
+      activateOsmMode(OsmRailModeTags.SUBWAY);
+      activateOsmMode(OsmRailModeTags.TRAM);  
       
       /* ensure external id is set based on OSM name */
       setModeExternalIdsBasedOnMappedOsmModes();
@@ -257,18 +266,17 @@ public class OsmRailwaySettings extends OsmWaySettings {
   
   /* mode */
   
-  /** add/overwrite a mapping from OSM rail mode to PLANit mode. This means that the osmMode will be added to the PLANit network
+  /** activate an OSM rail mode based on its (default) mapping to a PLANit mode. This means that the osmMode will be added to the PLANit network
    * 
-   * @param osmRailMode to set
-   * @param planitMode to map it to
+   * @param osmRailMode to activate
    */
-  public void setOsmRailMode2PlanitModeMapping(String osmRailMode, Mode planitMode) {
+  public void activateOsmRailMode(String osmRailMode) {
     String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);
     if(!OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
-    setOsmMode2PlanitModeMapping(osmRailMode, planitMode);
+    activateOsmMode(osmRailMode);
   }   
   
   /** Remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
@@ -276,13 +284,13 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * 
    * @param osmRailMode to remove
    */
-  public void removeOsmRailModePlanitModeMapping(String osmRailMode) {
+  public void deactivateOsmRailMode(String osmRailMode) {
     String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);
     if(!OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
       LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
       return;
     }
-    removeOsmMode2PlanitModeMapping(osmRailMode);
+    deactivateOsmMode(osmRailMode);
   }
   
   /** remove a mapping from OSM rail modes to PLANit modes. This means that the osmModes will not be added to the PLANit network
@@ -290,13 +298,21 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * 
    * @param osmRailModes to remove
    */
-  public void removeOsmRailModePlanitModeMapping(final List<String> osmRailModes) {
+  public void deactivateOsmRailModes(final List<String> osmRailModes) {
     if(osmRailModes == null) {
       return;
     }
-    osmRailModes.forEach( osmRailMode -> removeOsmRailModePlanitModeMapping(osmRailMode));
+    osmRailModes.forEach( osmRailMode -> deactivateOsmRailMode(osmRailMode));
   }   
   
+  /** deactivate provided rail modes
+   * 
+   * @param osmRailModes to explicitly deactivate
+   */
+  public void deactivateOsmRailModes(final String... osmRailModes) {
+    deactivateOsmRailModes(Arrays.asList(osmRailModes));
+  }
+
   /** remove all rail modes from mapping
    * 
    */
@@ -321,22 +337,6 @@ public class OsmRailwaySettings extends OsmWaySettings {
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRailModes);
   }   
   
-  /** deactivate provided rail modes
-   * 
-   * @param osmRailModes to explicitly deactivate
-   */
-  public void deactivateRailModes(final String... osmRailModes) {
-    deactivateRailModes(Arrays.asList(osmRailModes));
-  }  
-  
-  /** deactivate provided rail modes
-   * 
-   * @param osmRailModes to explicitly deactivate
-   */
-  public void deactivateRailModes(final List<String> osmRailModes) {
-    deactivateOsmModes(osmRailModes);
-  }   
-  
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
    * 
    * @param osmMode to collect mapped mode for (if any)
@@ -344,7 +344,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    */
   public Mode getMappedPlanitRailMode(final String osmMode) {
     if(OsmRailModeTags.isRailModeTag(osmMode)) {
-      return getMappedPlanitMode(osmMode);
+      return getPlanitModeIfActivated(osmMode);
     }
     return null;
   }  
@@ -355,7 +355,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @return mapped osm modes, if not available empty collection is returned
    */  
   public final Collection<String> getMappedOsmRailModes(final Mode planitMode) {    
-    return getMappedOsmModes(planitMode);
+    return getAcivatedOsmModes(planitMode);
   }   
     
   /**

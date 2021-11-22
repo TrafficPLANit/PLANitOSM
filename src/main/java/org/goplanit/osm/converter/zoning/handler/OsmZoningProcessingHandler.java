@@ -177,7 +177,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     
     /* non-tram mode exists */    
     if(getNetworkToZoningData().getNetworkSettings().isRailwayParserActive() &&
-        getNetworkToZoningData().getNetworkSettings().getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+        getNetworkToZoningData().getNetworkSettings().getRailwaySettings().hasActivatedOsmModeOtherThan(OsmRailwayTags.TRAM)) {
       
       /* train station or halt (not for trams) */
       if(OsmTagUtils.matchesAnyValueTag(ptv1ValueTag, OsmPtv1Tags.STATION, OsmPtv1Tags.HALT)) {
@@ -205,7 +205,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     }
     
     /* entrances/exits */
-    if(OsmPtv1Tags.SUBWAY_ENTRANCE.equals(ptv1ValueTag) && getNetworkToZoningData().getNetworkSettings().getHighwaySettings().hasMappedPlanitMode(OsmRoadModeTags.FOOT)) {
+    if(OsmPtv1Tags.SUBWAY_ENTRANCE.equals(ptv1ValueTag) && getNetworkToZoningData().getNetworkSettings().getHighwaySettings().isOsmModeActivated(OsmRoadModeTags.FOOT)) {
       // entrances are to be converted to connectoids in post_processing
       //TODO
     }   
@@ -625,7 +625,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
       extractPtv1RailwayPlatform(osmWay, tags, getGeoUtils());      
     }  
     
-    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasActivatedOsmModeOtherThan(OsmRailwayTags.TRAM)) {
       /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
        * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
        * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
@@ -646,7 +646,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     OsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getNetworkSettings();
     
     /* tram stop */
-    if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().hasMappedPlanitMode(OsmRailwayTags.TRAM)) {
+    if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.isRailwayParserActive() && networkSettings.getRailwaySettings().isOsmModeActivated(OsmRailwayTags.TRAM)) {
       
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
         
@@ -671,7 +671,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     }          
     
     /* train halt (not for trams)*/
-    if(OsmPtv1Tags.HALT.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+    if(OsmPtv1Tags.HALT.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasActivatedOsmModeOtherThan(OsmRailwayTags.TRAM)) {
             
       if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
         
@@ -689,7 +689,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     }
     
     /* train station (not for trams) */
-    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasAnyMappedPlanitModeOtherThan(OsmRailwayTags.TRAM)) {
+    if(OsmPtv1Tags.STATION.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().hasActivatedOsmModeOtherThan(OsmRailwayTags.TRAM)) {
       
       /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
        * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
