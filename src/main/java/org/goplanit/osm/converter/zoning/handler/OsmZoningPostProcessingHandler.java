@@ -579,7 +579,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void processIncompleteTransferZone(TransferZone transferZone) throws PlanItException {
     
     EntityType osmEntityType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
-    long osmEntityId = Long.valueOf(transferZone.getExternalId());      
+    long osmEntityId = Long.valueOf(transferZone.getExternalId());     
         
     /* validate mode support */
     Collection<String> accessOsmModes = 

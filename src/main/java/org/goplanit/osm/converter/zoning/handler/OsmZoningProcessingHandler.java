@@ -395,40 +395,29 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
       return;
     }  
     
+    if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
+      /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it */
+      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
+      return;
+    }    
+    
     /* Ptv1 tags as well, use this context to determine if a tagging mistake has occurred and/or how to process in case special treatment is needed due
      * to user error or contextual interpretation that indicates we should use the Ptv1 tag instead of the Ptv2 tag to process this entity */        
     if(OsmPtv1Tags.isTramStop(tags)) {
-            
-      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
-        /* tagging error */
-        LOGGER.info(String.format("DISCARD: Ptv2 stop_location with railway=tram_stop (%d) does not reside on tram tracks", osmNode.getId()));
-        return;
-      }
-      /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it */
-      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
-      
+      /* tagging error */
+      LOGGER.info(String.format("DISCARD: Ptv2 stop_location with railway=tram_stop (%d) does not reside on parsed tram tracks", osmNode.getId()));     
     }else if(OsmPtv1Tags.isBusStop(tags)) {
-      /* bus_stop */
-      
-      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
-        /* tagging error */
-        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 bus_stop (%d), yet it does not reside on road infrastructure, parse as pole instead", osmNode.getId()));
-        extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
-      }else {
-        /* ok, a bus_stop should normally not be on the road, but since it is tagged as stop_location, the stop_lcoation takes precendence, mark as unprocessed stop position*/
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());          
-      }
+      /* tagging error */
+      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 bus_stop (%d), yet does not reside on parsed road infrastructure, attempt to parse as pole instead", osmNode.getId()));
+      extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
     }else if(OsmPtv1Tags.isHalt(tags)) {
-      /* halt */
-      
-      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
-        /* tagging error */
-        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_location also tagged as Ptv1 halt (%d), yet it does not reside on road infrastructure, parse as small station instead", osmNode.getId()));
-        extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
-      }else {
-        /* ok, a halt can be on the rail track and is stop position, mark as regular unprocessed stop_position */
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());          
-      }
+      /* tagging error */
+      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 halt (%d), yet it does not reside on parsed road infrastructure, attempt to parse as small station instead", osmNode.getId()));
+      extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
+    }else if(OsmPtv1Tags.isStation(tags)) {
+      /* tagging error */
+      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));
+      extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());      
     }else {
       LOGGER.warning(String.format("Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, this shouldn't happen", osmNode.getId()));        
     }
