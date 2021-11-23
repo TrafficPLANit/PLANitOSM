@@ -41,7 +41,8 @@ public class OsmZoningReaderData {
     this.countryName = countryName;
   }
   
-  /** collect the country name
+  /** Collect the country name
+   * 
    * @return country name
    */
   public String getCountryName() {
@@ -64,7 +65,7 @@ public class OsmZoningReaderData {
     return planitData;
   }
   
-  /** collect the osm related tracking data 
+  /** collect the OSM related tracking data 
    * 
    * @return osm data
    */

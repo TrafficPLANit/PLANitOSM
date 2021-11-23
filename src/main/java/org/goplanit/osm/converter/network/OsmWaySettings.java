@@ -159,8 +159,8 @@ public abstract class OsmWaySettings {
    * 
    */
   public void excludeOsmWayTypesWithoutActivatedModes() {
-    if(isParserActive()) {
-      Set<String> originallySupportedTypes = getSetOfActivatedOsmWayTypes();
+    Set<String> originallySupportedTypes = getSetOfActivatedOsmWayTypes();
+    if(originallySupportedTypes != null) {
       for(String supportedWayType : originallySupportedTypes) {
         Collection<String> allowedOsmModes = collectAllowedOsmWayModes(supportedWayType);
         excludeOsmWayTypesWithoutModes(supportedWayType, allowedOsmModes);      
@@ -178,7 +178,7 @@ public abstract class OsmWaySettings {
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
   protected boolean isOsmWayTypeDeactivated(final String osmWayValueType) {
-      return infrastructureTypeConfiguration.isDeactivated(osmWayValueType);
+      return !isOsmWayTypeActivated(osmWayValueType);
   }
     
   /**
@@ -189,7 +189,7 @@ public abstract class OsmWaySettings {
    * @return true when supported, false if not (which means it is unsupported, or not registered)
    */
   protected boolean isOsmWayTypeActivated(String osmWayValue) {
-    return infrastructureTypeConfiguration.isActivated(osmWayValue);
+    return isParserActive() && infrastructureTypeConfiguration.isActivated(osmWayValue);
   }  
   
   /**
@@ -202,12 +202,14 @@ public abstract class OsmWaySettings {
   } 
   
   /**
-   * Choose to add given way  value type to parsed types on top of the defaults, e.g. railway=rail, highway=primary, etc.
+   * Choose to add given way value type to parsed types on top of the defaults, e.g. railway=rail, highway=primary, etc.
+   * Activates parser implicitly as well as it is assumed any activation of a type requires parsing it
    * 
    * @param osmWayValue to use
    */
   protected void activateOsmWayType(String osmWayValue) {
     infrastructureTypeConfiguration.activate(osmWayValue);
+    activateParser(true);
   }  
   
   /** Activate all passed in way types
@@ -223,27 +225,30 @@ public abstract class OsmWaySettings {
    * @param osmWayValueTypes to activate
    */
   protected void activateOsmWayTypes(List<String> osmWayValueTypes) {
-    infrastructureTypeConfiguration.activate(osmWayValueTypes);
+    osmWayValueTypes.forEach(type -> activateOsmWayType(type));
   }    
   
   /**
    * Activate all known OSM railway types 
    */
   protected void activateAllOsmWayTypes() {
-    infrastructureTypeConfiguration.setOfDeactivatedTypes().forEach( unsupportedType -> activateOsmWayType(unsupportedType));    
+    infrastructureTypeConfiguration.setOfDeactivatedTypes().forEach( unsupportedType -> activateOsmWayType(unsupportedType));
+    activateParser(true);
   }   
   
   /**
-   * Deactivate all types for the infrastructure type we represent
+   * Deactivate all types for the infrastructure type we represent.
+   * Also deactivates the parser since if no types are activate, the parser should not parse anything
    */
   protected void deactivateAllOsmWayTypes() {
     infrastructureTypeConfiguration.deactivateAll();
+    activateParser(false);
   } 
   
   /* overwrite */
   
   /**
-   * Log all de-activated OSM way types
+   * Log all de-activated OSM way types (irrespective of parser being active or not)
    */  
   protected void logUnsupportedOsmWayTypes() {
     infrastructureTypeConfiguration.logDeactivatedTypes();
@@ -252,7 +257,8 @@ public abstract class OsmWaySettings {
   /* overwrite */  
 
   /**
-   * Choose to overwrite the given highway type defaults with the given values
+   * Choose to overwrite the given highway type defaults with the given values. Activates the parser implicitly since it is assumed
+   * this type is to be parsed
    * 
    * @param osmWayKey the way key
    * @param osmWayType the value type to set these values for
@@ -324,7 +330,8 @@ public abstract class OsmWaySettings {
     defaultOsmMode2PlanitModeMap.put(osmMode, planitMode);
   } 
   
-  /** activate an OSM mode based on its default mapping to a PLANit mode
+  /** Activate an OSM mode based on its default mapping to a PLANit mode
+   * 
    * @param osmMode to map from
    * @param planitMode mode to map to
    */
@@ -388,22 +395,30 @@ public abstract class OsmWaySettings {
     deactivateOsmModes(finalToBeRemovedModes);
   }     
   
-  /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
+  /** Convenience method that collects the currently mapped PLANit mode for the given OSM mode if the parser is active
+   * otherwise null is returned
    * 
    * @param osmMode to collect mapped mode for (if any)
-   * @return mapped PLANit mode, if not available null is returned
+   * @return mapped PLANit mode, if not available or parser is not active null is returned
    */
   protected Mode getPlanitModeIfActivated(final String osmMode) {
+    if(!isParserActive()) {
+      return null;
+    }
     return this.activatedOsmMode2PlanitModeMap.get(osmMode);
   }  
   
   /** convenience method that collects the currently mapped OSM modes for the given PLANit mode
    * 
    * @param planitMode to collect mapped mode for (if any)
-   * @return mapped osm modes, if not available empty collection is returned
+   * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
    */  
   protected Collection<String> getAcivatedOsmModes(final Mode planitMode) {
     Set<String> mappedOsmModes = new HashSet<String>();
+    if(!isParserActive()) {
+      return mappedOsmModes;
+    }
+    
     for( Entry<String, Mode> entry : activatedOsmMode2PlanitModeMap.entrySet()) {
       if(entry.getValue().idEquals(planitMode)) {
         mappedOsmModes.add(entry.getKey());
@@ -426,7 +441,7 @@ public abstract class OsmWaySettings {
   /** collect all allowed modes on the given OSM way
    * 
    * @param osmWayValueType to collect osm modes for
-   * @return allowed osm modes
+   * @return allowed OSM modes
    */
   protected abstract Collection<String> collectAllowedOsmWayModes(String osmWayValueType);
   
@@ -452,8 +467,12 @@ public abstract class OsmWaySettings {
   
   /* public */
   
-  /** set the flag whether or not the ways represented by these settings should be parsed or not
-   * @param activate actate when true, deactivate otherwise
+  /** Determine whether or not the ways represented by these settings should be parsed or not. It has no impact
+   * on the settings themselves, except that all queries related to whether or not modes or types are activated
+   * will respond negatively when the parser is deactived, despite the underlying settings remaining in memory and
+   * will be reinstated when the parser is re-activated.
+   * 
+   * @param activate parser when true, deactivate otherwise
    */
   public void activateParser(boolean activate) {
     this.isParserActive = activate;
@@ -466,29 +485,30 @@ public abstract class OsmWaySettings {
     return this.isParserActive;
   }
   
-  /** Verify if the passed in osmMode is mapped to a mode, i.e., if it is actively included when reading the network
+  /** Verify if the passed in osmMode is mapped to a mode, i.e., if it is actively included when reading the network. When
+   * the parser is not active false is returned in all cases
    * 
    * @param osmMode to verify
-   * @return true if mapped, false otherwise
+   * @return true if mapped and parser is active, false otherwise
    */
   public boolean isOsmModeActivated(final String osmMode) {
-    return getPlanitModeIfActivated(osmMode) != null;    
+    return isParserActive() && getPlanitModeIfActivated(osmMode) != null;    
   }  
   
-  /** Verify if any mode other than the passed in OSM mode is active
+  /** Verify if any mode other than the passed in OSM mode is active (in case the parser is active)
    * @param osmMode to check
-   * @return true when other mapped mode is present false otherwise
+   * @return true when other mapped mode is present (and parser is active), false otherwise
    */
   public boolean hasActivatedOsmModeOtherThan(final String osmMode) {
-    return this.activatedOsmMode2PlanitModeMap.keySet().stream().filter( mode -> (!mode.equals(osmMode))).findFirst().isPresent();
+    return isParserActive() && this.activatedOsmMode2PlanitModeMap.keySet().stream().filter( mode -> (!mode.equals(osmMode))).findFirst().isPresent();
   }   
     
-  /** collect all activated types as a set (copy)
+  /** collect all activated types as a set (copy) in case the parser is active
    * 
-   * @return set of currently activated osm way types, modifications to this set have no effect on configuration
+   * @return set of currently activated osm way types (when parser is active), modifications to this set have no effect on configuration, null if not applicable
    */
   public final Set<String> getSetOfActivatedOsmWayTypes(){
-    return infrastructureTypeConfiguration.setOfActivatedTypes();    
+    return isParserActive() ? infrastructureTypeConfiguration.setOfActivatedTypes() : null;    
   }    
   
 }

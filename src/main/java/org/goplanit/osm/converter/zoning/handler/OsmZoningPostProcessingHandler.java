@@ -870,11 +870,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* not a proper stop_position, so we must infer its properties (eligible modes, transfer zone) */
     Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, null, transferZoneGroup);
             
-    /* access modes */
     Set<Mode> accessModes;    
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-      logWarningIfNotNearBoundingBox(
-        String.format("DISCARD: stop_position %d without proper tagging on OSM network could not be mapped to closeby transfer zone in stop_area", osmNode.getId()), OsmNodeUtils.createPoint(osmNode));
+      
+      /* log warning unless it relates to stop_position without any activate modes and/or near bounding box */
+      if(OsmModeUtils.hasMappedPlanitMode(getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(tags)))) {      
+        logWarningIfNotNearBoundingBox(
+            String.format("DISCARD: stop_position %d without proper tagging on OSM network could not be mapped to closeby transfer zone in stop_area", osmNode.getId()), OsmNodeUtils.createPoint(osmNode));
+      }      
       return;
     }else if(matchedTransferZones.size()>1){
       throw new PlanItException("Identified more than one spatially closest transfer zone for stop_position %d that was not tagged as such in stop_area %s, this should nto happen",osmNode.getId(), transferZoneGroup.getExternalId());
@@ -899,12 +902,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractPtv2StopAreaStopPosition(final OsmRelationMember member, final TransferZoneGroup transferZoneGroup) throws PlanItException {
     PlanItException.throwIfNull(member, "Stop_area stop_position member null");
-    getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_POSITION);
     
     /* only proceed when not marked as invalid earlier */
-    if(getZoningReaderData().getOsmData().isInvalidStopAreaStopPosition(member.getType(), member.getId())) {
+    if(getZoningReaderData().getOsmData().isIgnoreStopAreaStopPosition(member.getType(), member.getId())) {
       return;
     }          
+    
+    getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_POSITION);
+    
     /* validate state and input */
     if(member.getType() != EntityType.Node) {
       throw new PlanItException("Stop_position %d encountered that it not an OSM node, this is not permitted",member.getId());

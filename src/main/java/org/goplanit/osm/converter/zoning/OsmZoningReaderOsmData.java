@@ -43,8 +43,8 @@ public class OsmZoningReaderOsmData {
   
   /* INVALID OSM */
   
-  /** Stop positions found to be invalid and to be excluded from post-processing when converting stop positions to connectoids */
-  private final Map<EntityType, Set<Long>> invalidStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
+  /** Stop positions found to be invalid or not needed due to inactive modes and are therefore to be ignored */
+  private final Map<EntityType, Set<Long>> ignoreStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
   
   /** osm waiting areas (platform, poles) found to be valid but not mapped to a planit mode, used to avoid logging user warnings when referenced by other 
    * osm entities such as stop_areas */  
@@ -276,27 +276,27 @@ public class OsmZoningReaderOsmData {
     return osmOuterRoleOsmWaysToKeep.size();
   }  
     
-  /** add identified osm entity as invalid stop_position. When converting stop_positions to connectoids
+  /** add identified OSM entity to be ignored as stop_area stop_position. When converting stop_positions to connectoids
    * it will be skipped without further issue or warning
    * 
    * @param type entity type
    * @param osmId osm entity to mark as invalid stop_position
    */
-  public void addInvalidStopAreaStopPosition(EntityType type, long osmId) {
-    invalidStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
-    invalidStopAreaStopPositions.get(type).add(osmId);
+  public void addIgnoreStopAreaStopPosition(EntityType type, long osmId) {
+    ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
+    ignoreStopAreaStopPositions.get(type).add(osmId);
   }
   
-  /** Verify if marked as invalid
+  /** Verify if marked as to be ignored
    * 
    * @param type entity type
-   * @param osmId osm entity id to verify for invalidity
+   * @param osmId OSM entity id to verify for invalidity
    * @return  true when marked invalid, false otherwise
    */
-  public boolean isInvalidStopAreaStopPosition(EntityType type, long osmId) {
+  public boolean isIgnoreStopAreaStopPosition(EntityType type, long osmId) {
     if(type != null) {
-      invalidStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
-      return invalidStopAreaStopPositions.get(type).contains(osmId);
+      ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
+      return ignoreStopAreaStopPositions.get(type).contains(osmId);
     }
     return false;
   }  
@@ -316,7 +316,7 @@ public class OsmZoningReaderOsmData {
   /** Verify if marked as waiting area without a mapped planit mode
    * 
    * @param type entity type
-   * @param osmId osm entity id to verify for if the wainting area is marked as a valid one but simply not mapped to a planit mode
+   * @param osmId OSM entity id to verify for if the wainting area is marked as a valid one but simply not mapped to a planit mode
    * @return  true when marked invalid, false otherwise
    */  
   public boolean isWaitingAreaWithoutMappedPlanitMode(EntityType type, long osmId) {
@@ -335,7 +335,8 @@ public class OsmZoningReaderOsmData {
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
     unprocessedStopPositions.clear();
     osmOuterRoleOsmWaysToKeep.clear();
-    waitingAreaWithoutMappedPlanitMode.clear();
+    waitingAreaWithoutMappedPlanitMode.clear();    
+    ignoreStopAreaStopPositions.clear();
   }
 
 
