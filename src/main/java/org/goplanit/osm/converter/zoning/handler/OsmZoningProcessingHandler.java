@@ -15,10 +15,12 @@ import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
 import org.goplanit.zoning.Zoning;
+import org.locationtech.jts.geom.Envelope;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -402,24 +404,43 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
     }    
     
     /* Ptv1 tags as well, use this context to determine if a tagging mistake has occurred and/or how to process in case special treatment is needed due
-     * to user error or contextual interpretation that indicates we should use the Ptv1 tag instead of the Ptv2 tag to process this entity */        
+     * to user error or contextual interpretation that indicates we should use the Ptv1 tag instead of the Ptv2 tag to process this entity */
     if(OsmPtv1Tags.isTramStop(tags)) {
-      /* tagging error */
-      LOGGER.info(String.format("DISCARD: Ptv2 stop_location with railway=tram_stop (%d) does not reside on parsed tram tracks", osmNode.getId()));     
-    }else if(OsmPtv1Tags.isBusStop(tags)) {
-      /* tagging error */
-      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 bus_stop (%d), yet does not reside on parsed road infrastructure, attempt to parse as pole instead", osmNode.getId()));
+      /* tagging error because Ptv1 tram stop must also be on a tram track */
+      LOGGER.info(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) does not reside on parsed tram tracks", osmNode.getId()));     
+    }else{
+      /* potentially transform to alternative Ptv1 type if tag indicates it and which does not require it to be on a road. 
+       * Note that a stop_position that does not reside on a network layer can also be a result of the underlyng road not being parsed. Hence, if we can transform it
+       * which requires mapping it to a nearby road/rail later on, we first ensure such a road is nearby. If not, then it is highly likely the stop_position is not to
+       * be parsed due to a coarser network and roads being excluded (in which case we simply discard the entry). */
+      double searchRadius = getSettings().getStopToWaitingAreaSearchRadiusMeters();
+      if(OsmPtv1Tags.isHalt(tags) || OsmPtv1Tags.isStation(tags)) {
+        searchRadius = getSettings().getStationToParallelTracksSearchRadiusMeters();
+      }      
+      
+      /* ensure nearby mode compatible links exist to match the potentially salvaged Ptv1 entry to spatially */
+      Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBox(osmNode, searchRadius, getGeoUtils());
+      Collection<Link> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);      
+      spatiallyMatchedLinks = getPtModeHelper().filterModeCompatibleLinks(getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(modeResult.second()), spatiallyMatchedLinks, false /*only exact matches allowed */);
+      if(spatiallyMatchedLinks == null || spatiallyMatchedLinks.isEmpty()) {
+        /* tagging error: discard, most likely stop_position resides on deactivated OSM road type that has not been parsed and if not it could not be mapped anyway*/
+        LOGGER.info(String.format("DISCARD: Ptv2 stop_position %d on deactivated/non-existent infrastructure (Ptv1 tag conversion infeasible, no nearby compatible infrastructure)", osmNode.getId()));
+        return;
+      } 
+      
+      /* expected to be salvageable, log user feedback and do it */
+      if(OsmPtv1Tags.isBusStop(tags)) {
+        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 bus_stop (%d), yet does not reside on parsed road infrastructure, attempt to parse as pole instead", osmNode.getId()));
+      }else if(OsmPtv1Tags.isHalt(tags)) {
+        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 halt (%d), yet it does not reside on parsed road infrastructure, attempt to parse as small station instead", osmNode.getId()));
+      }else if(OsmPtv1Tags.isStation(tags)) {
+        LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));     
+      }else {
+        LOGGER.warning(String.format("Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, this shouldn't happen", osmNode.getId()));
+        return;
+      }
+    
       extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
-    }else if(OsmPtv1Tags.isHalt(tags)) {
-      /* tagging error */
-      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 halt (%d), yet it does not reside on parsed road infrastructure, attempt to parse as small station instead", osmNode.getId()));
-      extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
-    }else if(OsmPtv1Tags.isStation(tags)) {
-      /* tagging error */
-      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));
-      extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());      
-    }else {
-      LOGGER.warning(String.format("Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, this shouldn't happen", osmNode.getId()));        
     }
   }
 

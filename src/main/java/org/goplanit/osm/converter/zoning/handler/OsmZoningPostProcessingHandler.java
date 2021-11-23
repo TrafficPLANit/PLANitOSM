@@ -956,7 +956,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
         
     
-    /* stop location via Osm node */    
+    /* stop location via OSM node */    
     if(isKnownPtv2StopPosition) {
       
       /* process as regular stop_position */
