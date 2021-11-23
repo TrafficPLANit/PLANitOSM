@@ -802,7 +802,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
       MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
         logWarningIfNotNearBoundingBox(
-            String.format("DISCARD: stop_position %d is not present in parsed network layer supporting mode %s, likely it is dangling in original osm file",osmNode.getId(), planitMode.getExternalId()), OsmNodeUtils.createPoint(osmNode));
+            String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type deactivated or node dangling)",osmNode.getId(), planitMode.getExternalId()), OsmNodeUtils.createPoint(osmNode));
         continue;
       }
       
