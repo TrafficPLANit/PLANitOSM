@@ -253,9 +253,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
 
-  /** Find all links that are within the given search bounding box and are mode compatible with the given mode. Also make sure the waiting area location is 
-   * compatible with the driving direction of the supported modes, e.g. for bus it must be situated on the same side as the countries driving direction (left for left-hand drive),
-   * otherwise it has no doors for passengers to enter in this location). 
+  /** Find all links that are within the given search bounding box and are mode compatible with the given mode. 
    * 
    * @param osmEntityId the osm id of the waiting area
    * @param waitingAreaGeometry to collect accessible links for 
@@ -270,17 +268,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* match links spatially */
     Collection<Link> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);    
     if(spatiallyMatchedLinks == null || spatiallyMatchedLinks.isEmpty()) {
-      /* only issue warning when lack of matching links is likely not caused by waiting area being on the boundary of the network */
-      logWarningIfNotNearBoundingBox(
-          String.format("Waiting area (osm id %d) has no nearby infrastructure that qualifies for pt modes %s as stop locations", osmEntityId, OsmModeUtils.extractPublicTransportModesFrom(eligibleOsmModes).toString()), waitingAreaGeometry);
       return null;
     }    
   
     /* filter based on mode compatibility */
     Collection<Link> modeAndSpatiallyCompatibleLinks = getPtModeHelper().filterModeCompatibleLinks(eligibleOsmModes, spatiallyMatchedLinks, false /*only exact matches allowed */);    
     if(modeAndSpatiallyCompatibleLinks == null || modeAndSpatiallyCompatibleLinks.isEmpty()) {
-      LOGGER.warning(String.format("OSM entitity (%d) has no compatible modes (%s) on nearby infrastructure that qualifies for stop location",
-          osmEntityId, OsmModeUtils.extractPublicTransportModesFrom(eligibleOsmModes).toString()));
       return null;
     }
     
@@ -622,7 +615,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         /* collect spatially, mode, direction compatible links */
         Collection<Link> directionModeSpatiallyCompatibleLinks = findModeBBoxCompatibleLinksForOsmGeometry(osmEntityId, transferZone.getGeometry(), osmAccessMode, searchBoundingBox);        
         if(directionModeSpatiallyCompatibleLinks == null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
-          logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links within maximum search distance (%.2fm) found for waiting area %s and mode %s", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
+          logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s, mode %s (tag error or consider activating more road types)", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
           return;
         }
         
@@ -719,7 +712,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       }
       
       if(accessLinks == null) {
-        logWarningIfNotNearBoundingBox(String.format("DISCARD: station %d has no eligible links to qualify for pt vehicles as stop locations",osmStation.getId()),stationTransferZone.getGeometry() );
+        logWarningIfNotNearBoundingBox(String.format("DISCARD: station %d has no eligible accessible links to qualify for pt vehicles as stop locations",osmStation.getId()),stationTransferZone.getGeometry() );
         return;
       }                   
       

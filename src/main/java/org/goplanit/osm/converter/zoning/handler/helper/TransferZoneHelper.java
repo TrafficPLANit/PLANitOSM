@@ -172,7 +172,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
       if(availableOsmNodeIndex!=null) {
         OsmNode referenceNode = getNetworkToZoningData().getOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
         if(OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(referenceNode), getNetworkToZoningData().getNetworkBoundingBox(), geoUtils)) {
-          LOGGER.info(String.format("osm waiting area way (%d) geometry incomplete due to network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
+          LOGGER.info(String.format("OSM waiting area way (%d) geometry incomplete, network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
           geometryExtractionLogLevel = Level.OFF;
         }
       }/*else {
