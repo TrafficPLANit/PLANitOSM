@@ -8,7 +8,9 @@ Some technical documentation/introduction for developers regarding the design of
 
 More information on What Open Street Map is can be found on the [Open Street Map wiki](https://wiki.openstreetmap.org/wiki/Main_Page)
 
-> Implementation of PLANitOSM is partially funded by the University of Sydney and the Australian Transport Research Cloud ([ATRC](https://ardc.edu.au/project/australian-transport-research-cloud-atrc/)). ATRC is a project instigated by the Australian Research Data Cloud ([ARDC](www.ardc.edu.au)).
+> This repository has been implemented by the University of Sydney for the ATRC project. The ATRC is a project lead by the Australian Urban Research Infrastructure Network (AURIN) and is supported by the Australian Research Data Commons (ARDC). AURIN and the ARDC are funded by the National Collaborative Research Infrastructure Strategy (NCRIS).  
+ATRC Investment: https://doi.org/10.47486/PL104  
+ATRC RAiD: https://hdl.handle.net/102.100.100/102.100.100/399880 
 
 ## OSM4j
 
