@@ -333,7 +333,6 @@ public abstract class OsmWaySettings {
   /** Activate an OSM mode based on its default mapping to a PLANit mode
    * 
    * @param osmMode to map from
-   * @param planitMode mode to map to
    */
   protected void activateOsmMode(String osmMode) {
     activatedOsmMode2PlanitModeMap.put(osmMode, defaultOsmMode2PlanitModeMap.get(osmMode));
