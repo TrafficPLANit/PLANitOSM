@@ -245,7 +245,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
   /**
    * deactivate all types for highway
    */
-  public void deactivateAllOsmHighWayTypes() {
+  public void deactivateAllOsmHighwayTypes() {
     deactivateAllOsmWayTypes();
   }   
   
@@ -262,7 +262,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmHighwayTypes to not deactivate
    */
   public void deactivateAllOsmHighwayTypesExcept(List<String> osmHighwayTypes) {
-    deactivateAllOsmHighWayTypes();
+    deactivateAllOsmHighwayTypes();
     for(String osmWayType : osmHighwayTypes) {
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
        activateOsmHighwayTypes(osmWayType);

@@ -510,7 +510,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * deactivate all types for both rail and highway
    */
   public void deactivateAllOsmWayTypes() {    
-    osmHighwaySettings.deactivateAllOsmHighWayTypes();
+    osmHighwaySettings.deactivateAllOsmHighwayTypes();
     osmRailwaySettings.deactivateAllOsmRailwayTypes();
   }
 
