@@ -613,7 +613,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
       PlanitTransferZoneUtils.registerOsmModesOnTransferZone(transferZone, modeResult.first());
     }else{
-      /* waiting area with valid osm mode, but not mapped to planit mode, mark as such to avoid logging a warning when this transfer zone is part of stop_area 
+      /* waiting area with valid OSM mode, but not mapped to PLANit mode, mark as such to avoid logging a warning when this transfer zone is part of stop_area 
        * and it cannot be found when we try to collect it */
       zoningReaderData.getOsmData().addWaitingAreaWithoutMappedPlanitMode(Osm4JUtils.getEntityType(osmEntity),osmEntity.getId());
     }

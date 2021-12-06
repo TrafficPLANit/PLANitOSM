@@ -157,7 +157,7 @@ public class OsmZoningHandlerProfiler {
     {
       LOGGER.info(String.format("[STATS] created PLANit %d transfer zone groups",zoning.transferZoneGroups.size()));
       LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.transferZones.size()));    
-      LOGGER.info(String.format("[STATS] created PLANit %d transfer connectoids",zoning.transferConnectoids.size())); 
+      LOGGER.info(String.format("[STATS] created PLANit %d transfer connectoids",zoning.getTransferConnectoids().size())); 
     }
   }
   

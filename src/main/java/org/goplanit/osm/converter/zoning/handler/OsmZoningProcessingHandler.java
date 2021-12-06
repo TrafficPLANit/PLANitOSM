@@ -1048,7 +1048,7 @@ public class OsmZoningProcessingHandler extends OsmZoningHandlerBase {
    */
   @Override
   public void handle(OsmNode osmNode) throws IOException {             
-        
+            
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);          
     try {
             

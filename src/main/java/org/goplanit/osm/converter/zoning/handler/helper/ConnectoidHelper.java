@@ -368,7 +368,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
   private DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes) throws PlanItException {
     final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      DirectedConnectoid connectoid = zoning.transferConnectoids.getFactory().registerNew(linkSegment,accessZone);
+      var connectoid = zoning.getTransferConnectoids().getFactory().registerNew(linkSegment,accessZone);
       
       /* xml id = internal id */
       connectoid.setXmlId(String.valueOf(connectoid.getId()));
@@ -490,7 +490,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
           /* special cases whenever parser decided that location required planit node even though there exists no OSM node at this location */ 
           planitNode = OsmNetworkHandlerHelper.createPopulateAndRegisterNode(osmNodeLocation, networkLayer, layerData);
         }
-        profiler.logConnectoidStatus(zoning.transferConnectoids.size());
+        profiler.logConnectoidStatus(zoning.getTransferConnectoids().size());
                              
         /* now perform the breaking of links at the given node and update related tracking/reference information to broken link(segment)(s) where needed */
         breakLinksAtPlanitNode(planitNode, networkLayer, linksToBreak);
