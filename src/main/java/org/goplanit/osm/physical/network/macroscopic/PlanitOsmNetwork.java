@@ -10,8 +10,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.goplanit.network.MacroscopicNetwork;
-import org.goplanit.network.layer.MacroscopicNetworkLayerImpl;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
+import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmHighwaySettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.OsmRailwaySettings;

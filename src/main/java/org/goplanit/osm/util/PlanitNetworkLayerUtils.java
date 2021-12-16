@@ -1,7 +1,7 @@
 package org.goplanit.osm.util;
 
 import org.goplanit.network.TransportLayerNetwork;
-import org.goplanit.network.layer.MacroscopicNetworkLayerImpl;
+import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
