@@ -18,7 +18,7 @@ import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.TransportLayer;
+import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Links;
 import org.goplanit.utils.zoning.DirectedConnectoid;
@@ -52,7 +52,7 @@ public class OsmZoningReaderPlanitData {
   /* OSM <-> CONNECTOID TRACKING */
   
   /** track created connectoids by their location and layer they reside on, needed to avoid creating duplicates when dealing with multiple modes/layers */
-  private final Map<TransportLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<TransportLayer,Map<Point, List<DirectedConnectoid>>>();
+  private final Map<NetworkLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<NetworkLayer,Map<Point, List<DirectedConnectoid>>>();
   
   
   /* TRANSFER ZONE <-> CONNECTOID TRACKING */
@@ -236,7 +236,7 @@ public class OsmZoningReaderPlanitData {
    * @return true when present, false otherwise
    */
   public boolean hasAnyDirectedConnectoidsForLocation(Point location) {
-    for( Entry<TransportLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
+    for( Entry<NetworkLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
       if(hasDirectedConnectoidForLocation(entry.getKey(), location)) {
         return true;
       }
@@ -250,7 +250,7 @@ public class OsmZoningReaderPlanitData {
    * @param point to use
    * @return true when present, false otherwise
    */  
-  public boolean hasDirectedConnectoidForLocation(TransportLayer networkLayer, Point point) {
+  public boolean hasDirectedConnectoidForLocation(NetworkLayer networkLayer, Point point) {
     Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
     return connectoidsForLayer != null && connectoidsForLayer.get(point) != null && !connectoidsForLayer.get(point).isEmpty();
   }  

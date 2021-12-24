@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.TransportLayer;
+import org.goplanit.utils.network.layer.NetworkLayer;
 
 /**
  * Track statistics on OSM network handler
@@ -72,22 +72,22 @@ public class OsmNetworkHandlerProfiler {
     for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
       long count = entry.getValue().longValue();
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d", TransportLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+        LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d", NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
       }else if(OsmRailwayTags.isRailBasedRailway(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed railway:%s count:%d", TransportLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+        LOGGER.info(String.format("%s [STATS] processed railway:%s count:%d", NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
       }
     }
     
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format("%s [STATS] created PLANit %d nodes",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
-    LOGGER.info(String.format("%s [STATS] created PLANit %d links",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
-    LOGGER.info(String.format("%s [STATS] created PLANit %d links segments ",TransportLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));    
+    LOGGER.info(String.format("%s [STATS] created PLANit %d nodes",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
+    LOGGER.info(String.format("%s [STATS] created PLANit %d links",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
+    LOGGER.info(String.format("%s [STATS] created PLANit %d links segments ",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));    
     
     double numberOfParsedLinks = (double)networkLayer.getNumberOfLinks();
     double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
     double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
-    LOGGER.info(String.format("%s [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", TransportLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
-    LOGGER.info(String.format("%s [STATS] applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", TransportLayer.createLayerLogPrefix(networkLayer), percentageDefaultLanes, 100-percentageDefaultLanes));
+    LOGGER.info(String.format("%s [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
+    LOGGER.info(String.format("%s [STATS] applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultLanes, 100-percentageDefaultLanes));
   }
 
   /**

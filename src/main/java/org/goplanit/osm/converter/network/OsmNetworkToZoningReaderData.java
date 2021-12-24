@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.TransportLayer;
+import org.goplanit.utils.network.layer.NetworkLayer;
 import org.locationtech.jts.geom.Envelope;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -30,7 +30,7 @@ public class OsmNetworkToZoningReaderData {
   private final OsmNetworkReaderData networkData;  
   
   /** layer specific data that is to be made available to the zoning reader */
-  private final Map<TransportLayer, OsmNetworkReaderLayerData> networkLayerData = new HashMap<TransportLayer, OsmNetworkReaderLayerData>();
+  private final Map<NetworkLayer, OsmNetworkReaderLayerData> networkLayerData = new HashMap<NetworkLayer, OsmNetworkReaderLayerData>();
   
   /** register layer specific data
    * @param networkLayer to register for
@@ -61,7 +61,7 @@ public class OsmNetworkToZoningReaderData {
    * @param networkLayer to collect for
    * @return layer data
    */
-  public OsmNetworkReaderLayerData  getNetworkLayerData(TransportLayer networkLayer) {
+  public OsmNetworkReaderLayerData  getNetworkLayerData(NetworkLayer networkLayer) {
     OsmNetworkReaderLayerData data =  networkLayerData.get(networkLayer);
     return data;
   }  
