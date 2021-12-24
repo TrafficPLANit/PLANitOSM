@@ -390,7 +390,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @return created connectoids
    * @throws PlanItException thrown if error
    */
-  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Collection<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
+  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Iterable<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
     Set<DirectedConnectoid> createdConnectoids = new HashSet<DirectedConnectoid>();
     for(EdgeSegment linkSegment : linkSegments) {
       DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
@@ -667,7 +667,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     
-    Collection<? extends EdgeSegment> nominatedLinkSegments = null;
+    Iterable<? extends EdgeSegment> nominatedLinkSegments = null;
     if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node)) {
       /* user overwrite */
       
