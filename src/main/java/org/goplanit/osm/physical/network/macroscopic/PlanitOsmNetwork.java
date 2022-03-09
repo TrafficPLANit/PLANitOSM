@@ -877,7 +877,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) && OsmRailwayTags.isRailBasedRailway(osmWayValueToUse)) {             
           linkSegmentTypesByLayer = createOsmCompatibleRailLinkSegmentTypeByLayer(osmWayValueToUse, settings);
         }else {
-          LOGGER.severe(String.format("osm way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));
+          LOGGER.severe(String.format("OSM way key:value combination is not recognised as a valid tag for (%s:%s), ignored when creating OSM compatible link segment types",osmWayKey, osmWayValueToUse));
         }
         /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
         
