@@ -105,8 +105,8 @@ public class BasicOSMReaderTest {
       
       assertFalse(network.getTransportLayers().isNoLayers());
       assertFalse(network.getTransportLayers().getFirst().isEmpty());
-      assertTrue(zoning.odZones.isEmpty());
-      assertFalse(zoning.transferZones.isEmpty());
+      assertTrue(zoning.getOdZones().isEmpty());
+      assertFalse(zoning.getTransferZones().isEmpty());
       
       //TODO: find a way to test the settings had the intended effect
       

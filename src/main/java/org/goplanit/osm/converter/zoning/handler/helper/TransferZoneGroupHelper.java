@@ -140,7 +140,7 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
    */  
   public TransferZoneGroup createAndPopulateTransferZoneGroup(OsmRelation osmRelation, Map<String, String> tags) {
       /* create */
-      TransferZoneGroup transferZoneGroup = zoning.transferZoneGroups.getFactory().createNew();
+      TransferZoneGroup transferZoneGroup = zoning.getTransferZoneGroups().getFactory().createNew();
             
       /* XML id = internal id*/
       transferZoneGroup.setXmlId(String.valueOf(transferZoneGroup.getId()));
@@ -166,10 +166,10 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
       TransferZoneGroup transferZoneGroup = createAndPopulateTransferZoneGroup(osmRelation, tags);
             
       /* register */
-      zoning.transferZoneGroups.register(transferZoneGroup);
+      zoning.getTransferZoneGroups().register(transferZoneGroup);
       zoningReaderData.getPlanitData().addTransferZoneGroupByOsmId(osmRelation.getId(), transferZoneGroup);     
       
-      profiler.logTransferZoneGroupStatus(zoning.transferZoneGroups.size());
+      profiler.logTransferZoneGroupStatus(zoning.getTransferZoneGroups().size());
       return transferZoneGroup;
   }   
   
