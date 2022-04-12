@@ -23,7 +23,7 @@ import org.goplanit.osm.util.PlanitTransferZoneUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
-import org.goplanit.utils.graph.EdgeSegment;
+import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
