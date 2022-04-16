@@ -215,7 +215,7 @@ public class OsmNetworkLayerParser {
     Link link = null;
     /* osm way can be direction directional, PLANit link is never, check existence */
     if(nodeFirst != null) {
-      Set<Edge> potentialEdges = nodeFirst.getEdges(nodeLast);
+      var potentialEdges = nodeFirst.getEdges(nodeLast);
       for(Edge potentialEdge : potentialEdges) {
         Link potentialLink = ((Link)potentialEdge);
         if(link != null && potentialLink.getGeometry().equals(lineString)) {
