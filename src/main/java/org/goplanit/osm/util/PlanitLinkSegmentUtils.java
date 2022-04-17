@@ -49,15 +49,15 @@ public class PlanitLinkSegmentUtils {
    */
   public static LineSegment extractClosestLineSegmentToGeometryFromLinkSegment(Geometry referenceGeometry, MacroscopicLinkSegment linkSegment, PlanitJtsCrsUtils geoUtils) throws PlanItException {
     
-    LineString linkSegmentGeometry = linkSegment.getParentEdge().getGeometry();
+    LineString linkSegmentGeometry = linkSegment.getParent().getGeometry();
     if(linkSegmentGeometry == null) {
-      throw new PlanItException("geometry not available on osm way %s, unable to determine if link (segment) is closest to reference geometry, this shouldn't happen", linkSegment.getParentEdge().getExternalId());
+      throw new PlanItException("geometry not available on osm way %s, unable to determine if link (segment) is closest to reference geometry, this shouldn't happen", linkSegment.getParent().getExternalId());
     }
     
     LinearLocation linearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(referenceGeometry, linkSegmentGeometry);
-    boolean reverseLinearLocationGeometry = linkSegment.isDirectionAb()!=linkSegment.getParentEdge().isGeometryInAbDirection();
+    boolean reverseLinearLocationGeometry = linkSegment.isDirectionAb()!=linkSegment.getParent().isGeometryInAbDirection();
     
-    LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParentEdge().getGeometry());
+    LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParent().getGeometry());
     if(reverseLinearLocationGeometry) {
       lineSegment.reverse();
     }

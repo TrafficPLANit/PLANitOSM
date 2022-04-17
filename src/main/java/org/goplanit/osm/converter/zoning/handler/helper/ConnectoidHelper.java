@@ -213,7 +213,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
       }
       
       LineSegment lineSegment = new LineSegment(linkCoordinates[coordinateIndex-1], linkCoordinates[coordinateIndex]);
-      boolean reverseLinearLocationGeometry = oneWayLinkSegment.isDirectionAb()!=oneWayLinkSegment.getParentEdge().isGeometryInAbDirection();
+      boolean reverseLinearLocationGeometry = oneWayLinkSegment.isDirectionAb()!=oneWayLinkSegment.getParent().isGeometryInAbDirection();
       if(reverseLinearLocationGeometry) {
         lineSegment.reverse();
       }
@@ -246,7 +246,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
     /* potential link segments based on mode compatibility and access link restriction */ 
     Collection<EdgeSegment> accessLinkSegments = new ArrayList<EdgeSegment>(4);
     for(EdgeSegment linkSegment : node.getEntryEdgeSegments()) {
-      if( ((MacroscopicLinkSegment)linkSegment).isModeAllowed(accessMode) && (linkSegment.getParentEdge().idEquals(accessLink))){      
+      if( ((MacroscopicLinkSegment)linkSegment).isModeAllowed(accessMode) && (linkSegment.getParent().idEquals(accessLink))){      
         accessLinkSegments.add(linkSegment);
       }
     }  
