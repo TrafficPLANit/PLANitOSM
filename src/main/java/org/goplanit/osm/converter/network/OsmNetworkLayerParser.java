@@ -359,56 +359,68 @@ public class OsmNetworkLayerParser {
   private Pair<Double,Double> extractDirectionalSpeedLimits(Link link, Map<String, String> tags) throws PlanItException {
     Double speedLimitForwardKmh = null;
     Double speedLimitBackwardKmh = null;
+    Double nonDirectionalSpeedLimitKmh = null;
+    boolean useNonDirectionalDefault = false;
     
-    /* (lane specific) backward or forward speed limits */
-    if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)|| tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
-      /* check for backward speed limit */
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)) {
-        speedLimitBackwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD));        
+    try {
+      /* (lane specific) backward or forward speed limits */
+      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)|| tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
+        /* check for backward speed limit */
+        if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD)) {
+          speedLimitBackwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD));        
+        }
+        /* check for backward speed limit per lane */
+        if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
+          double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
+          speedLimitBackwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
+        }
       }
-      /* check for backward speed limit per lane */
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
-        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
-        speedLimitBackwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
-      }
-    }
-    if( tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD) || tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)){
-      /* check for forward speed limit */
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD)) {
-        speedLimitForwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD));  
-      }
-      /* check for forward speed limit per lane */
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)) {
-        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)); 
-        speedLimitForwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);   
-      }
-    }
-    
-    /* if any of the two are not yet found, find general speed limit information not tied to direction */
-    if(speedLimitBackwardKmh==null || speedLimitForwardKmh==null) {
-      Double nonDirectionalSpeedLimitKmh = null;
-      if(tags.containsKey(OsmSpeedTags.MAX_SPEED)) {
-        /* regular speed limit for all available directions and across all modes */
-        nonDirectionalSpeedLimitKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED));
-      }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_LANES)) {
-        /* check for lane specific speed limit */
-        double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_LANES));
-        /* Note: PLANit does not support lane specific speeds at the moment, maximum speed across lanes is selected */      
-        nonDirectionalSpeedLimitKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);
-      }else
-      { /* no speed limit information, revert to defaults */
-        nonDirectionalSpeedLimitKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
-        layerData.getProfiler().incrementMissingSpeedLimitCounter();
+      if( tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD) || tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)){
+        /* check for forward speed limit */
+        if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD)) {
+          speedLimitForwardKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD));  
+        }
+        /* check for forward speed limit per lane */
+        if(tags.containsKey(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)) {
+          double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_FORWARD_LANES)); 
+          speedLimitForwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);   
+        }
       }
       
-      if(nonDirectionalSpeedLimitKmh!=null) {
-        speedLimitForwardKmh = (speedLimitForwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitForwardKmh;
-        speedLimitBackwardKmh = (speedLimitBackwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitBackwardKmh;
-      }else {
-        throw new PlanItException(String.format("no default speed limit available for OSM way %s",link.getExternalId()));
+      /* if any of the two are not yet found, find general speed limit information not tied to direction */
+      if(speedLimitBackwardKmh==null || speedLimitForwardKmh==null) {
+        if(tags.containsKey(OsmSpeedTags.MAX_SPEED)) {
+          /* regular speed limit for all available directions and across all modes */
+          nonDirectionalSpeedLimitKmh = PlanitOsmUtils.parseMaxSpeedValueKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED));
+        }else if(tags.containsKey(OsmSpeedTags.MAX_SPEED_LANES)) {
+          /* check for lane specific speed limit */
+          double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_LANES));
+          /* Note: PLANit does not support lane specific speeds at the moment, maximum speed across lanes is selected */      
+          nonDirectionalSpeedLimitKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);
+        }else { 
+          /* no speed limit information, revert to defaults */
+          useNonDirectionalDefault = true;
+        }        
       }
+    }catch(PlanItException e) {
+      LOGGER.warning(e.getMessage());
+      // something went wrong revert to defaults
+      LOGGER.info(String.format("Reverting to default speed limit for OSM way (id:%s)",link.getExternalId()));
+      useNonDirectionalDefault = true;
     }
-            
+    
+    if(useNonDirectionalDefault) {
+      nonDirectionalSpeedLimitKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
+      layerData.getProfiler().incrementMissingSpeedLimitCounter();
+    }
+    
+    if(nonDirectionalSpeedLimitKmh!=null) {
+      speedLimitForwardKmh = (speedLimitForwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitForwardKmh;
+      speedLimitBackwardKmh = (speedLimitBackwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitBackwardKmh;
+    }else if(speedLimitForwardKmh==null && speedLimitBackwardKmh==null) {
+      throw new PlanItException(String.format("no default speed limit available for OSM way %s",link.getExternalId()));
+    }    
+                    
     /* mode specific speed limits*/
     //TODO
     
@@ -428,45 +440,51 @@ public class OsmNetworkLayerParser {
     Integer lanesForward = null;
     Integer lanesBackward = null;    
 
-    /* collect total and direction specific road based lane information */
     String osmWayKey = null;
-    if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
-      osmWayKey = OsmHighwayTags.HIGHWAY;
-      
-      if(tags.containsKey(OsmLaneTags.LANES)) {
-        totalLanes = Integer.parseInt(tags.get(OsmLaneTags.LANES));
-      }    
-      if(tags.containsKey(OsmLaneTags.LANES_FORWARD)) {
-        lanesForward = Integer.parseInt(tags.get(OsmLaneTags.LANES_FORWARD));
-      }
-      if(tags.containsKey(OsmLaneTags.LANES_BACKWARD)) {
-        lanesBackward = Integer.parseInt(tags.get(OsmLaneTags.LANES_BACKWARD));
-      }
-         
-      /* one way exceptions or implicit directional lanes */
-      if(totalLanes!=null && (lanesForward==null || lanesBackward==null)) {
-        if(OsmOneWayTags.isOneWay(tags)) {
-          boolean isReversedOneWay = OsmOneWayTags.isReversedOneWay(tags);
-          if(isReversedOneWay && lanesBackward==null) {
-            lanesBackward = totalLanes;
-          }else if(!isReversedOneWay && lanesForward==null) {
-            lanesForward = totalLanes;          
-          }else if( (lanesForward==null && lanesBackward==null) && totalLanes%2==0) {
-            /* two directions, with equal number of lanes does not require directional tags, simply split in two */
-            lanesBackward = totalLanes/2;
-            lanesForward = lanesBackward;
+    try {
+      /* collect total and direction specific road based lane information */
+      if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
+        osmWayKey = OsmHighwayTags.HIGHWAY;
+        
+        if(tags.containsKey(OsmLaneTags.LANES)) {
+          totalLanes = Integer.parseInt(tags.get(OsmLaneTags.LANES));
+        }    
+        if(tags.containsKey(OsmLaneTags.LANES_FORWARD)) {
+          lanesForward = Integer.parseInt(tags.get(OsmLaneTags.LANES_FORWARD));
+        }
+        if(tags.containsKey(OsmLaneTags.LANES_BACKWARD)) {
+          lanesBackward = Integer.parseInt(tags.get(OsmLaneTags.LANES_BACKWARD));
+        }
+           
+        /* one way exceptions or implicit directional lanes */
+        if(totalLanes!=null && (lanesForward==null || lanesBackward==null)) {
+          if(OsmOneWayTags.isOneWay(tags)) {
+            boolean isReversedOneWay = OsmOneWayTags.isReversedOneWay(tags);
+            if(isReversedOneWay && lanesBackward==null) {
+              lanesBackward = totalLanes;
+            }else if(!isReversedOneWay && lanesForward==null) {
+              lanesForward = totalLanes;          
+            }else if( (lanesForward==null && lanesBackward==null) && totalLanes%2==0) {
+              /* two directions, with equal number of lanes does not require directional tags, simply split in two */
+              lanesBackward = totalLanes/2;
+              lanesForward = lanesBackward;
+            }
           }
         }
+              
+      /* convert number of tracks to lanes */
+      }else if(tags.containsKey(OsmRailwayTags.RAILWAY)) {
+        osmWayKey = OsmRailwayTags.RAILWAY;
+        if(tags.containsKey(OsmRailFeatureTags.TRACKS)) {
+          /* assumption is that same rail is used in both directions */
+          lanesForward = Integer.parseInt(tags.get(OsmRailFeatureTags.TRACKS));
+          lanesBackward = lanesForward;
+        }       
       }
-            
-    /* convert number of tracks to lanes */
-    }else if(tags.containsKey(OsmRailwayTags.RAILWAY)) {
-      osmWayKey = OsmRailwayTags.RAILWAY;
-      if(tags.containsKey(OsmRailFeatureTags.TRACKS)) {
-        /* assumption is that same rail is used in both directions */
-        lanesForward = Integer.parseInt(tags.get(OsmRailFeatureTags.TRACKS));
-        lanesBackward = lanesForward;
-      }       
+    }catch(Exception e) {
+      LOGGER.warning(String.format("Something went wrong when parsing number of lanes for OSM way (id:%s), possible tagging error, reverting to default bi-direactional configuration",link.getExternalId()));
+      lanesForward = null;
+      lanesBackward = null;
     }
     
     /* we assume that only when both are not set something went wrong, otherwise it is assumed it is a one-way link and it is properly configured */
