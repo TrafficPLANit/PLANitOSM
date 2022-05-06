@@ -79,7 +79,8 @@ public class OsmNetworkReader implements NetworkReader {
       osmReader.setHandler(osmHandler);      
       osmReader.read();
     } catch (OsmInputException e) {
-      LOGGER.severe(e.getMessage());
+      String cause = e.getCause()!=null ? e.getCause().getMessage() : "";
+      LOGGER.severe(e.getMessage() + "cause:" + cause);
       throw new PlanItException("error during parsing of osm file",e);
     }
   }

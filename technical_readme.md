@@ -22,7 +22,7 @@ The parser adopts the following strategy:
 
 0) Initialise the PLANit in memory network to populate using the default/configuration of the user. This includes the activated modes, highway and railway types, and the default link segment types that are mapped to these OSM types.
 1) Parse and store **all nodes in memory**. While this inflates memory usage since not all nodes are in fact part of roads and not all roads are parsed, it ensures that we can always construct all our roads within a single pass of the OSM file, speeding up the parsing process. 
-2) Then parse all OSM ways as is - even if they are not topologically sorrect, meaning that they might intersect with other OSM ways. 
+2) Then parse all OSM ways as is - even if they are not topologically correct, meaning that they might intersect with other OSM ways. 
 3) After parsing the roads, we then identify issues regarding the topological validity of the parsed network and break links where needed, construct our roundabouts, and possibly remove any dangling subnetworks (if so configured).
 
 ### Parsing OSM nodes
