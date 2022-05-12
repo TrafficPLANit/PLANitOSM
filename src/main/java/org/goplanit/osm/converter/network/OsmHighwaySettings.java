@@ -353,9 +353,8 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * 
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
-   * @throws PlanItException thrown if error
    */
-  public double getDefaultSpeedLimitByOsmHighwayType(final String osmWayValue) throws PlanItException {
+  public double getDefaultSpeedLimitByOsmHighwayType(final String osmWayValue){
     if(isSpeedLimitDefaultsBasedOnUrbanArea()) {
       return getDefaultSpeedLimitByOsmWayType(osmWayValue);
     }else {

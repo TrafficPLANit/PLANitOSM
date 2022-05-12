@@ -7,7 +7,6 @@ import java.util.logging.Logger;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.tags.*;
-import org.goplanit.utils.exceptions.PlanItException;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
@@ -27,12 +26,12 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
  * 
  *
  */
-public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
+public class OsmZoningPreProcessingPlatformRelationHandler extends OsmZoningHandlerBase {
 
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(OsmZoningPreProcessingHandler.class.getCanonicalName());         
+  private static final Logger LOGGER = Logger.getLogger(OsmZoningPreProcessingPlatformRelationHandler.class.getCanonicalName());         
 
   /**
    * Constructor
@@ -41,16 +40,15 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
    * @param profiler to use
    */
-  public OsmZoningPreProcessingHandler(final OsmPublicTransportReaderSettings transferSettings, OsmZoningReaderData zoningReaderData, OsmZoningHandlerProfiler profiler) {   
+  public OsmZoningPreProcessingPlatformRelationHandler(final OsmPublicTransportReaderSettings transferSettings, OsmZoningReaderData zoningReaderData, OsmZoningHandlerProfiler profiler) {   
     super(transferSettings, zoningReaderData, null, profiler);    
   }
   
   /**
    * Call this BEFORE we apply the handler
    * 
-   * @throws PlanItException thrown if error
    */
-  public void initialiseBeforeParsing() throws PlanItException {
+  public void initialiseBeforeParsing(){
     reset(); 
   } 
     
@@ -83,13 +81,13 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
       }
     }
     
-    /* preserve information is outer role osm way so we can parse it as a transfer zone if needed in post_processing */
+    /* preserve information is outer role OSM way so we can parse it as a transfer zone if needed in post_processing */
     if(preserveOuterRole) {
       
       int numberOfMembers = osmRelation.getNumberOfMembers();
       for(int index = 0 ;index < numberOfMembers ; ++ index) {
         OsmRelationMember member = osmRelation.getMember(index);
-        
+                
         /* skip if explicitly excluded */
         if(skipOsmPtEntity(member)) {
           continue;

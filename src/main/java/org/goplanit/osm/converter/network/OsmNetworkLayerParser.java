@@ -23,6 +23,7 @@ import org.goplanit.osm.util.OsmWayUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.arrays.ArrayUtils;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
@@ -42,7 +43,7 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 /**
  * Takes care of populating a PLANit layer based on the OSM way information that has been identified
- * as relevant to this layer by the {@link OsmNetworkHandler}
+ * as relevant to this layer by the {@link OsmNetworkMainProcessingHandler}
  * 
  * @author markr
  *
@@ -101,9 +102,8 @@ public class OsmNetworkLayerParser {
    * @param geometry to check
    * @param geoUtils to use
    * @return true when near, false otherwise
-   * @throws PlanItException thrown if error
    */
-  private boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils){
     return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
   }
 
@@ -116,10 +116,9 @@ public class OsmNetworkLayerParser {
    * @param linkSegmentType existing link segment type deemed appropriate
    * @return updated link segment type, which if different is not a modification of the existing one but a unique copy with the required changes that is considered a modification of the original, 
    * yet its own unique new type
-   * @throws PlanItException thrown if error
    */
   private MacroscopicLinkSegmentType updateExistingLinkSegmentType(
-      final Set<Mode> toBeAddedModes, final Set<Mode> toBeRemovedModes, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
+      final Set<Mode> toBeAddedModes, final Set<Mode> toBeRemovedModes, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType){
     
     MacroscopicLinkSegmentType finalLinkSegmentType = linkSegmentType;
     if(!toBeAddedModes.isEmpty() || !toBeRemovedModes.isEmpty()) {
@@ -156,9 +155,8 @@ public class OsmNetworkLayerParser {
    * @param startIndex the start index
    * @param endIndex the end index
    * @param osmWay the link corresponds to
-   * @throws PlanItException thrown if error
    */
-  private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay) throws PlanItException {
+  private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay){
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
     for(int internalLocationIndex = startIndex; internalLocationIndex <= endIndex;++internalLocationIndex) {
       OsmNode osmnode = networkData.getOsmNode(osmWay.getNodeId(internalLocationIndex));
@@ -180,12 +178,11 @@ public class OsmNetworkLayerParser {
    * @param endNodeIndex of the OSM way that will represent end node of this link
    * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return created or fetched link
-   * @throws PlanItException thrown if error
    */
-  private Link createAndPopulateLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete) throws PlanItException {
+  private Link createAndPopulateLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
     
-    PlanItException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
-    PlanItException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
+    PlanItRunTimeException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
+    PlanItRunTimeException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
          
     /* collect memory model nodes */
     Pair<Node,Integer> nodeFirstResult = extractFirstNode(osmWay, startNodeIndex, allowTruncationIfGeometryIncomplete);
@@ -277,10 +274,9 @@ public class OsmNetworkLayerParser {
    * @param tags of the OSM way to extract the link segment type for
    * @param direction information already extracted from tags
    * @param linkSegmentType use thus far for this way
-   * @return the link segment types for the main direction and contraflow direction
-   * @throws PlanItException thrown if error
+   * @return the link segment types for the main direction and contra-flow direction
    */  
-  private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmWay(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection) throws PlanItException {  
+  private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmWay(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection){  
 
     Set<Mode> toBeAddedModes = null;
     Set<Mode> toBeRemovedModes = null;
@@ -354,9 +350,8 @@ public class OsmNetworkLayerParser {
    * @param link pertaining to the osmway tags
    * @param tags assumed to contain speed limit information
    * @return speed limtis in forward and backward direction
-   * @throws PlanItException thrown if error
    */
-  private Pair<Double,Double> extractDirectionalSpeedLimits(Link link, Map<String, String> tags) throws PlanItException {
+  private Pair<Double,Double> extractDirectionalSpeedLimits(Link link, Map<String, String> tags){
     Double speedLimitForwardKmh = null;
     Double speedLimitBackwardKmh = null;
     Double nonDirectionalSpeedLimitKmh = null;
@@ -418,7 +413,7 @@ public class OsmNetworkLayerParser {
       speedLimitForwardKmh = (speedLimitForwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitForwardKmh;
       speedLimitBackwardKmh = (speedLimitBackwardKmh==null) ? nonDirectionalSpeedLimitKmh : speedLimitBackwardKmh;
     }else if(speedLimitForwardKmh==null && speedLimitBackwardKmh==null) {
-      throw new PlanItException(String.format("no default speed limit available for OSM way %s",link.getExternalId()));
+      throw new PlanItRunTimeException(String.format("no default speed limit available for OSM way %s",link.getExternalId()));
     }    
                     
     /* mode specific speed limits*/
@@ -519,9 +514,8 @@ public class OsmNetworkLayerParser {
    * @param linkSegmentType the link segment type corresponding to this way
    * @param directionAb the direction to create the segment for  
    * @return created link segment, or null if already exists
-   * @throws PlanItException thrown if error
    */  
-  private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb) throws PlanItException {
+  private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, Link link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb){
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
       linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
@@ -547,9 +541,8 @@ public class OsmNetworkLayerParser {
    * @param link the link corresponding to this way
    * @param linkSegmentTypes the link segment types for the forward and backward direction of this way  
    * @return created link segment, or null if already exists
-   * @throws PlanItException thrown if error
    */
-  private void extractMacroscopicLinkSegments(OsmWay osmWay, Map<String, String> tags, Link link, Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes) throws PlanItException {
+  private void extractMacroscopicLinkSegments(OsmWay osmWay, Map<String, String> tags, Link link, Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes){
                 
     /* match A->B of PLANit link to geometric forward/backward direction of OSM paradigm */
     boolean directionAbIsForward = link.isGeometryInAbDirection() ? true : false;
@@ -587,9 +580,8 @@ public class OsmNetworkLayerParser {
    * @param changeStartNodeIndexIfNotPresent when true it replaces the startNodeIndex to first available node index that we can find if startNodeIndex is not available, if false not
    * @return extracted node (first node to use for OSM way), and start nod index used. Null if not even a first node could be extracted, this only happens when no references osm node is available
    * likely due to user specifying an internal bounding box outside of which this osm way resides
-   * @throws PlanItException thrown if error
    */
-  private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, Integer startNodeIndex, boolean changeStartNodeIndexIfNotPresent) throws PlanItException {
+  private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, Integer startNodeIndex, boolean changeStartNodeIndexIfNotPresent){
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
     if(nodeFirst==null && changeStartNodeIndexIfNotPresent) {
       startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
@@ -610,14 +602,13 @@ public class OsmNetworkLayerParser {
   /** Extract the last node of the osm way based on the provided end node index
    * 
    * @param osmWay to parse
-   * @pram startNodeIndex used for the preceding node, if not relevant just provide 0 
+   * @param startNodeIndex used for the preceding node, if not relevant just provide 0 
    * @param endNodeIndex to use for last node
    * @param changeEndNodeIndexIfNotPresent when true it replaces the endNodeIndex to first available node index that we can find if endNodeIndex is not available, if false not
    * @return extracted node and end node index used. Null if no node could be extracted, this only happens when no references osm node is available
    * likely due to user specifying an internal bounding box outside of which this osm way resides
-   * @throws PlanItException thrown if error
    */
-  private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, final Integer startNodeIndex, Integer endNodeIndex, boolean changeEndNodeIndexIfNotPresent) throws PlanItException {    
+  private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, final Integer startNodeIndex, Integer endNodeIndex, boolean changeEndNodeIndexIfNotPresent){    
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
     if(nodeLast==null && changeEndNodeIndexIfNotPresent) {
       endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodes());
@@ -640,9 +631,8 @@ public class OsmNetworkLayerParser {
    * 
    * @param osmNodeId to convert
    * @return created or retrieved node, null if not able to create node
-   * @throws PlanItException  thrown if error
    */
-  private Node extractNode(final long osmNodeId) throws PlanItException {    
+  private Node extractNode(final long osmNodeId){    
     
     /* osm node */
     OsmNode osmNode = networkData.getOsmNode(osmNodeId);
@@ -668,9 +658,8 @@ public class OsmNetworkLayerParser {
    * @param startNodeIndex for this link compared to the full OSM way
    * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return the link corresponding to this way
-   * @throws PlanItException thrown if error
    */
-  private Link extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete) throws PlanItException {
+  private Link extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
     
     /* create the link */
     Link link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);   
@@ -697,9 +686,8 @@ public class OsmNetworkLayerParser {
    * @param tags of the OSM way to extract the link segment type for
    * @param linkSegmentType use thus far for this way
    * @return the link segment types for the forward direction and backward direction as per OSM specification of forward and backward. When no allowed modes exist in a direction the link segment type is set to null
-   * @throws PlanItException thrown if error
    */
-  protected Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> updatedLinkSegmentTypeBasedOnOsmWay(final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType) throws PlanItException {
+  protected Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> updatedLinkSegmentTypeBasedOnOsmWay(final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType){
     
     /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry, and backward, i.e., the opposite of the geometry)*/
     boolean forwardDirection = true;
@@ -750,10 +738,9 @@ public class OsmNetworkLayerParser {
    * @param isPartOfCircularWay flag
    * @param linkSegmentTypes to use
    * @return created link (if any), if no link could be created null is returned
-   * @throws PlanItException thrown if error
    */    
   public Link extractPartialOsmWay(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex,
-      boolean isPartOfCircularWay, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes) throws PlanItException {
+      boolean isPartOfCircularWay, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes) {
     
     Link link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {

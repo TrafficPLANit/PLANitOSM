@@ -8,12 +8,13 @@ import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerBase;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningPostProcessingHandler;
-import org.goplanit.osm.converter.zoning.handler.OsmZoningPreProcessingHandler;
-import org.goplanit.osm.converter.zoning.handler.OsmZoningProcessingHandler;
+import org.goplanit.osm.converter.zoning.handler.OsmZoningPreProcessingPlatformRelationHandler;
+import org.goplanit.osm.converter.zoning.handler.OsmZoningMainProcessingHandler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.PlanitZoningUtils;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.zoning.Zoning;
 
@@ -37,10 +38,10 @@ public class OsmZoningReader implements ZoningReader {
   private static final Logger LOGGER = Logger.getLogger(OsmZoningReader.class.getCanonicalName());
   
   /** the handler conducting parsing in preparation for the osmHandler*/
-  private OsmZoningPreProcessingHandler osmPreProcessingHandler = null;  
+  private OsmZoningPreProcessingPlatformRelationHandler osmPreProcessingHandler = null;  
       
   /** the handler conducting the main parsing pass */
-  private OsmZoningProcessingHandler osmHandler = null;   
+  private OsmZoningMainProcessingHandler osmHandler = null;   
   
   /** the handler for the final parsing as post-processing step of the reader */
   private OsmZoningPostProcessingHandler osmPostProcessingHandler = null;
@@ -109,24 +110,37 @@ public class OsmZoningReader implements ZoningReader {
   }
 
   /**
-   * conduct pre-processing step of zoning reader that cannot be conducted as part of the regular processing due to 
-   * ordering conflicts
-   * @param profiler  to use
-   * 
-   * @throws PlanItException thrown if error
+   * conduct pre-processing pass to identify the platform relation OSM ways that we should mark to register (its nodes) to be available
+   * in memory when conducting the actual parsing of features later on. 
+   * @param profiler to use
    */
-  private void doPreprocessing(OsmZoningHandlerProfiler profiler) throws PlanItException {
+  private void preProcessPlatformRelations(final OsmZoningHandlerProfiler profiler) {
     /* reader to parse the actual file for preprocessing  */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(getSettings().getInputSource());
     if(osmReader == null) {
       LOGGER.severe("unable to create OSM reader for pre-processing zones, aborting");
     }else {    
-
-      /* preprocessing handler to deal with callbacks from osm4j */
-      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData, profiler);
+      osmPreProcessingHandler = new OsmZoningPreProcessingPlatformRelationHandler(this.transferSettings, this.zoningReaderData, profiler);
       read(osmReader, osmPreProcessingHandler);     
     }
+  }
+
+  /**
+   * Conduct pre-processing step of zoning reader that cannot be conducted as part of the regular processing due to 
+   * ordering conflicts of parsing OSM entities.
+   * 
+   * @param profiler  to use
+   */
+  private void doPreprocessing(final OsmZoningHandlerProfiler profiler){
     
+    /* identify all relations that represent a (single) platform either as a single polygon, or multi-polygon 
+     * and mark their ways to be kept, which then in the next pass ensures those way's nodes are pre-registered to be kept as well */
+    LOGGER.info("Pre-processing: Identifying relations representing public transport platforms");
+    preProcessPlatformRelations(profiler);  
+    
+    //TODO: continue here -> do another pass where we identify the nodes of the platform relation ways and pre-register them using the
+    // base handler wrapping method with triconsumer
+        
   }  
   
   /**
@@ -143,7 +157,7 @@ public class OsmZoningReader implements ZoningReader {
     }else {
 
       /* handler to deal with callbacks from osm4j */
-      osmHandler = new OsmZoningProcessingHandler(
+      osmHandler = new OsmZoningMainProcessingHandler(
           this.transferSettings, 
           this.zoningReaderData,  
           this.zoning, 
@@ -179,9 +193,8 @@ public class OsmZoningReader implements ZoningReader {
    * 
    * @param osmReader to use
    * @param osmHandler to use
-   * @throws PlanItException thrown if error
    */
-  protected void read(OsmReader osmReader, OsmZoningHandlerBase osmHandler) throws PlanItException {
+  protected void read(OsmReader osmReader, OsmZoningHandlerBase osmHandler){
     try {  
       osmHandler.initialiseBeforeParsing();
       /* register handler */
@@ -190,7 +203,7 @@ public class OsmZoningReader implements ZoningReader {
       osmReader.read();  
     }catch (OsmInputException e) {
       LOGGER.severe(e.getMessage());
-      throw new PlanItException("error during parsing of osm file",e);
+      throw new PlanItRunTimeException("Error during parsing of OSMfile",e);
     }       
   }
   
@@ -262,7 +275,7 @@ public class OsmZoningReader implements ZoningReader {
     OsmZoningHandlerProfiler handlerProfiler = new OsmZoningHandlerProfiler();
     logInfo();
                 
-    /* preprocessing (multi-polygon relation: osm way identification)*/
+    /* preprocessing (multi-polygon relation: OSM way identification)*/
     doPreprocessing(handlerProfiler);
     
     /* main processing  (all but stop_positions)*/

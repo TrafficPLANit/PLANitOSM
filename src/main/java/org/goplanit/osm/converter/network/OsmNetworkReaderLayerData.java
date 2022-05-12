@@ -124,7 +124,7 @@ public class OsmNetworkReaderLayerData {
    * @return PLANit node found, null if not found
    * @throws PlanItException thrown if error
    */
-  public Node getPlanitNodeByOsmNode(OsmNode osmNode) throws PlanItException {
+  public Node getPlanitNodeByOsmNode(OsmNode osmNode){
     if(osmNode != null) {
       Node planitNode = getPlanitNodeByLocation(OsmNodeUtils.createPoint(osmNode));
       if(planitNode!=null && osmNode.getId() != Long.valueOf(planitNode.getExternalId())) {
@@ -140,9 +140,8 @@ public class OsmNetworkReaderLayerData {
    * 
    * @param location to find for
    * @return PLANit node found, null if not found
-   * @throws PlanItException thrown if error
    */
-  public Node getPlanitNodeByLocation(Point location) throws PlanItException {
+  public Node getPlanitNodeByLocation(Point location){
     if(location != null) {
       Pair<Node, OsmNode> result = planitNodesByLocation.get(location);
       if(result != null) {
@@ -173,7 +172,7 @@ public class OsmNetworkReaderLayerData {
   
   /** provide read access to the registered PLANit nodes (and original OSM node if any was used) by location
    * 
-   * @return mapping of locations for which planit nodes are created, potentially based on osm node
+   * @return mapping of locations for which planit nodes are created, potentially based on OSM node
    */
   public Map<Point, Pair<Node, OsmNode>> getCreatedPlanitNodesByLocation() {
     return Collections.unmodifiableMap(planitNodesByLocation);
@@ -183,30 +182,27 @@ public class OsmNetworkReaderLayerData {
    * 
    * @param osmNode to index by
    * @param planitNode to register
-   * @throws PlanItException thrown if error
    */
-  public void registerPlanitNodeByOsmNode(OsmNode osmNode, Node planitNode) throws PlanItException {
+  public void registerPlanitNodeByOsmNode(OsmNode osmNode, Node planitNode){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     planitNodesByLocation.put(osmNodeLocation, Pair.of(planitNode, osmNode));
   }
   
-  /** register a PLANit node based on a location only, instead of based on an osm node
+  /** register a PLANit node based on a location only, instead of based on an OSM node
    * 
    * @param location to index by
    * @param planitNode to register
-   * @throws PlanItException thrown if error
    */
-  public void registerPlanitNodeByLocation(Point location, Node planitNode) throws PlanItException {
+  public void registerPlanitNodeByLocation(Point location, Node planitNode){
     planitNodesByLocation.put(location, Pair.of(planitNode, null));
   }  
   
-  /** Add a mapping from OSM node id to the (initial) planit link it is internal to
+  /** Add a mapping from OSM node id to the (initial) PLANit link it is internal to
    * 
    * @param osmNode to use
-   * @param planitLink to register as osm node being internal to
-   * @throws PlanItException thrown if error
+   * @param planitLink to register as OSM node being internal to
    */
-  public void registerOsmNodeAsInternalToPlanitLink(OsmNode osmNode, Link planitLink) throws PlanItException {
+  public void registerOsmNodeAsInternalToPlanitLink(OsmNode osmNode, Link planitLink){
     Point location = OsmNodeUtils.createPoint(osmNode);
     originalLinkInternalAvailableLocations.putIfAbsent(location, Pair.of(new ArrayList<Link>(), osmNode ));
     registerLocationAsInternalToPlanitLink(location, planitLink);
@@ -271,9 +267,8 @@ public class OsmNetworkReaderLayerData {
    * 
    * @param osmNode to check
    * @return true when part of a geometry in the layer, false otherwise
-   * @throws PlanItException thrown if error
    */
-  public boolean isOsmNodePresentInLayer(OsmNode osmNode) throws PlanItException {
+  public boolean isOsmNodePresentInLayer(OsmNode osmNode){
     return isLocationPresentInLayer(OsmNodeUtils.createPoint(osmNode));
   }     
   

@@ -28,6 +28,7 @@ import org.goplanit.osm.util.PlanitLinkUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.osm.util.PlanitTransferZoneUtils;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
@@ -159,9 +160,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param transferZoneType the type of the transfer zone 
    * @param geoUtils to use
    * @return transfer zone created
-   * @throws PlanItException thrown if error
    */
-  private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
     TransferZone transferZone = null;
         
     /* Verify if there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
@@ -222,10 +222,9 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param tags to use
    * @param transferZoneType to apply
    * @param geoUtils to use
-   * @return transfer zone created, null if something happenned making it impossible to create the zone
-   * @throws PlanItException thrown if error
+   * @return transfer zone created, null if something happened making it impossible to create the zone
    */
-  private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
     /* create and register */
     TransferZone transferZone = createAndPopulateTransferZone(osmEntity,tags, transferZoneType, geoUtils);
     if(transferZone != null) {
@@ -594,10 +593,9 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param defaultOsmMode to apply
    * @param geoUtils to use
    * @return transfer zone created, null if something happened making it impossible or not useful to create the zone
-   * @throws PlanItException thrown if error
    */
   public TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {  
+      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsCrsUtils geoUtils){  
     
     TransferZone transferZone = null;
         
@@ -629,10 +627,9 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param eligibleOsmModes the eligible osm modes considered
    * @param geoUtils to use
    * @return transfer zone created, null if something happened making it impossible to create the zone
-   * @throws PlanItException thrown if error
    */
   public TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
-      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, Collection<String> eligibleOsmModes, PlanitJtsCrsUtils geoUtils){
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM, geoUtils);
     if(transferZone != null) {
       PlanitTransferZoneUtils.registerOsmModesOnTransferZone(transferZone, eligibleOsmModes);
@@ -650,14 +647,13 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param defaultTransferZoneType in case a transfer zone needs to be created in this location
    * @param geoUtils to use
    * @return created transfer zone (if not already in existence)
-   * @throws PlanItException thrown if error
    */  
   public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
-      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils) throws PlanItException {        
+      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils){        
         
     Pair<Collection<String>, Collection<Mode>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {    
-      throw new PlanItException("Should not attempt to parse osm node %d when no planit modes are activated for it", osmNode.getId());
+      throw new PlanItRunTimeException("Should not attempt to parse osm node %d when no planit modes are activated for it", osmNode.getId());
     }
       
     /* transfer zone */
@@ -666,7 +662,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
       /* not created for other layer; create and register transfer zone */
       transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, defaultTransferZoneType, defaultOsmMode, geoUtils);
       if(transferZone == null) {
-        throw new PlanItException("Unable to create transfer zone for osm node %d",osmNode.getId());
+        throw new PlanItRunTimeException("Unable to create transfer zone for osm node %d",osmNode.getId());
       }
     }
     

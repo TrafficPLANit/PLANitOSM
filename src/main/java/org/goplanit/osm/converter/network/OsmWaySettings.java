@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
-import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 
@@ -299,9 +299,8 @@ public abstract class OsmWaySettings {
    * 
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
-   * @throws PlanItException thrown if error
    */
-  protected double getDefaultSpeedLimitByOsmWayType(String osmWayValue) throws PlanItException {
+  protected double getDefaultSpeedLimitByOsmWayType(String osmWayValue){
     return speedLimitDefaults.getSpeedLimit(osmWayValue);    
   }  
   
@@ -310,13 +309,12 @@ public abstract class OsmWaySettings {
    * @param osmWayKey that is considered valid and should be used to collect way type value
    * @param tags to extract way key value pair from (highway,railway keys currently supported)
    * @return speedLimit in km/h 
-   * @throws PlanItException thrown if error
    */  
-  protected Double getDefaultSpeedLimitByOsmWayType(String osmWayKey, Map<String, String> tags) throws PlanItException {
+  protected Double getDefaultSpeedLimitByOsmWayType(String osmWayKey, Map<String, String> tags){
     if(tags.containsKey(osmWayKey)){
       return getDefaultSpeedLimitByOsmWayType(tags.get(osmWayKey));      
     }else {
-      throw new PlanItException("no key %s contained in provided osmTags when collecting default speed limit by OsmRailwayType", osmWayKey);
+      throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit by OsmRailwayType", osmWayKey);
     }    
   }   
   

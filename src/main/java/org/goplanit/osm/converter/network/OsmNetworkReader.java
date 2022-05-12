@@ -106,10 +106,12 @@ public class OsmNetworkReader implements NetworkReader {
    */
   private void doPreprocessing() throws PlanItException {
     
-    /* preprocessing currently is only needed in case of bounding polygon present and user specified
-     * OSM ways to keep outside of this bounding polygon, otherwise skip */
-    if(getSettings().hasBoundingPolygon() && 
-        (getSettings().hasKeepOsmWaysOutsideBoundingPolygon() || getSettings().hasKeepOsmNodesOutsideBoundingPolygon())) {
+    LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes");
+    
+//    /* preprocessing currently is only needed in case of bounding polygon present and user specified
+//     * OSM ways to keep outside of this bounding polygon, otherwise skip */
+//    if(getSettings().hasBoundingPolygon() && 
+//        (getSettings().hasKeepOsmWaysOutsideBoundingPolygon() || getSettings().hasKeepOsmNodesOutsideBoundingPolygon())) {
       
       /* reader to parse the actual file or source location */
       OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
@@ -118,9 +120,9 @@ public class OsmNetworkReader implements NetworkReader {
       }
       
       /* set handler to deal with call backs from osm4j */
-      OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(settings);    
+      OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(networkData, settings);    
       read(osmReader, osmHandler);  
-    }
+//    }
   }
 
   /** Perform main processing of OSM network reader
@@ -133,7 +135,7 @@ public class OsmNetworkReader implements NetworkReader {
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for network, aborting");
     }   
-    OsmNetworkHandler osmHandler = new OsmNetworkHandler(networkData, settings);
+    OsmNetworkMainProcessingHandler osmHandler = new OsmNetworkMainProcessingHandler(networkData, settings);
     read(osmReader, osmHandler);     
   }
   

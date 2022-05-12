@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.goplanit.osm.util.OsmNodeUtils;
-import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.physical.Link;
@@ -64,10 +64,9 @@ public class OsmNetworkHandlerHelper {
    * @param crs of the network layer 
    * @return newly broken PLANit links by their original osmWayId 
    *  
-   * @throws PlanItException thrown if error
    */
   public static Map<Long, Set<Link>> breakLinksWithInternalNode(
-      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs) throws PlanItException {
+      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs){
     Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
           
     if(linksToBreak != null) {
@@ -85,9 +84,9 @@ public class OsmNetworkHandlerHelper {
             });
           });        
         }
-      }catch(PlanItException e) {
+      }catch(PlanItRunTimeException e) {
         LOGGER.severe(e.getMessage());
-        LOGGER.severe(String.format("unable to break links %s for node %s, something unexpected went wrong",
+        LOGGER.severe(String.format("Unable to break links %s for node %s, something unexpected went wrong",
             linksToBreak.stream().map( link -> link.getExternalId()).collect(Collectors.toSet()).toString(), theNode.getExternalId()));
       }
     } 
@@ -146,10 +145,9 @@ public class OsmNetworkHandlerHelper {
    * @param networkLayer to create node on
    * @param layerData to register on
    * @return created node, null when something went wrong
-   * @throws PlanItException thrown if error
    */
   public static Node createPopulateAndRegisterNode(
-      OsmNode osmNode, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData) throws PlanItException  {
+      OsmNode osmNode, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
     
     /* create */
     Node node = createAndPopulateNode(osmNode, networkLayer);            
@@ -168,10 +166,8 @@ public class OsmNetworkHandlerHelper {
    * @param networkLayer to create node on
    * @param layerData to register on
    * @return created node, null when something went wrong
-   * @throws PlanItException thrown if error
    */  
-  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer,
-      OsmNetworkReaderLayerData layerData) throws PlanItException {
+  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
     /* create */
     Node node = createAndPopulateNode(osmNodeLocation, networkLayer);            
     if(node!= null) {

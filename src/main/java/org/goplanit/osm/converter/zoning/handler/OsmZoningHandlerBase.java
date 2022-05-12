@@ -12,6 +12,8 @@ import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneHelper;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.functionalinterface.TriConsumer;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Geometry;
@@ -21,6 +23,7 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
  * Base Handler for all zoning handlers. Contains shared functionality that is used across the different zoning handlers 
@@ -141,9 +144,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * 
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
-   * @throws PlanItException thrown if error
    */
-  protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {
+  protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
     return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getSettings().getReferenceNetwork(), getNetworkToZoningData());
   }   
                                                              
@@ -171,6 +173,36 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry) throws PlanItException {
     OsmBoundingAreaUtils.logWarningIfNotNearBoundingBox(message, geometry, getNetworkToZoningData().getNetworkBoundingBox(), geoUtils);
   }
+  
+  /** Wrap the handling of OSM way for OSM zoning by checking if it is eligible and catch any run time PLANit exceptions, if eligible delegate to consumer.
+   * 
+   * @param osmWay to parse
+   * @param osmWayConsumer to apply to eligible OSM way
+   */
+  protected void wrapHandleOsmWay(OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);  
+    
+    try {       
+      
+      /* only parse ways that are potentially used for (PT) transfers*/
+      OsmPtVersionScheme ptVersion = isActivatedPublicTransportInfrastructure(tags);
+      if(ptVersion != OsmPtVersionScheme.NONE || getZoningReaderData().getOsmData().shouldOsmRelationOuterRoleOsmWayBeKept(osmWay)) {
+        
+        if(skipOsmWay(osmWay)) {
+          LOGGER.fine(String.format("Skipped OSM way %d, marked for exclusion", osmWay.getId()));
+          return;
+        }                    
+        
+        // Delegate, deemed eligible
+        osmWayConsumer.accept(osmWay, ptVersion, tags);
+        
+      }      
+    } catch (PlanItRunTimeException e) {
+      LOGGER.severe(e.getMessage());
+      LOGGER.severe(String.format("Error during parsing of OSM way (id:%d) for public transport (zoning transfer) infrastructure", osmWay.getId())); 
+    }      
+
+  }  
   
   /** Get geo utils
    * 
@@ -292,9 +324,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   
   /** Call this BEFORE we parse the OSM network to initialise the handler properly
    * 
-   * @throws PlanItException  thrown if error
    */
-  public abstract void initialiseBeforeParsing() throws PlanItException;
+  public abstract void initialiseBeforeParsing();
   
   /**
    * reset the contents, mainly to free up unused resources 

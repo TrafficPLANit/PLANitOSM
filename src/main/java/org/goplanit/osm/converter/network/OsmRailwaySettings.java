@@ -248,9 +248,8 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * 
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
-   * @throws PlanItException thrown if error
    */
-  public double getDefaultSpeedLimitByOsmRailwayType(String osmWayValue) throws PlanItException {
+  public double getDefaultSpeedLimitByOsmRailwayType(String osmWayValue){
     return getDefaultSpeedLimitByOsmWayType(osmWayValue);    
   }  
   
@@ -258,9 +257,8 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * 
    * @param tags to extract way key value pair from (highway,railway keys currently supported)
    * @return speedLimit in km/h 
-   * @throws PlanItException thrown if error
    */  
-  public Double getDefaultSpeedLimitByOsmRailwayType(Map<String, String> tags) throws PlanItException {
+  public Double getDefaultSpeedLimitByOsmRailwayType(Map<String, String> tags){
     return getDefaultSpeedLimitByOsmWayType(OsmRailwayTags.RAILWAY, tags);
   }   
   

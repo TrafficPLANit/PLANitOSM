@@ -318,15 +318,14 @@ public class OsmWayUtils {
     return extractGeometry(osmWay, osmNodes, LOGGER.getLevel());
   }   
   
-  /** extract geometry from the osm way which can either be a line string or polygon
+  /** extract geometry from the OSM way which can either be a line string or polygon
    * 
    * @param osmWay to extract geometry for
    * @param osmNodes to extract geo features from
    * @param logLevel logLevel
    * @return created geometry
-   * @throws PlanItException thrown if error
    */
-  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
+  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Level logLevel){
 
     Level originalLevel = LOGGER.getLevel();
     LOGGER.setLevel(logLevel);
@@ -417,15 +416,14 @@ public class OsmWayUtils {
     return lineString;
   }
   
-  /** creates a point geoetry using the first available node from the nodes on the osm way. Only to be used when no line string or polygon could be extract
+  /** creates a point geometry using the first available node from the nodes on the OSM way. Only to be used when no line string or polygon could be extract
    * due to missing nodes for example
    * 
    * @param osmWay to extract point geometry for
    * @param osmNodes to collect from
    * @return parsed geometry, can be null if not valid for some reason
-   * @throws PlanItException thrown if error
    */
-  public static Point extractPoint(OsmWay osmWay, Map<Long, OsmNode> osmNodes) throws PlanItException {
+  public static Point extractPoint(OsmWay osmWay, Map<Long, OsmNode> osmNodes){
     Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
     /* create point when enough coordinates are available */
     if(coordArray!= null && coordArray.length>=1) {
@@ -663,9 +661,8 @@ public class OsmWayUtils {
    * @param osmWay to collect from
    * @param osmNodes to check existence of osm way nodes
    * @return last index of node that is available, null otherwise
-   * @throws PlanItException thrown if error
    */  
-  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes) throws PlanItException {
+  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
     for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
       if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
         return nodeIndex-1;

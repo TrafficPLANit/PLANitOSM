@@ -134,15 +134,14 @@ public class PlanitOsmUtils {
     return extractGeometry(osmEntity, osmNodes, LOGGER.getLevel());
   } 
   
-  /** extract geometry from the osm entity, either a point, line string or polygon
+  /** extract geometry from the OSM entity, either a point, line string or polygon
    * 
    * @param osmEntity to extract from
    * @param osmNodes to extract geo information from referenced nodes from in entity
-   * @param logLevel change to this logLevel during the method call (reinstate original loglevel after)
+   * @param logLevel change to this logLevel during the method call (reinstate original log level after)
    * @return geometry created
-   * @throws PlanItException thrown if error
    */
-  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
+  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes, Level logLevel){
     Level originalLogLevel = LOGGER.getLevel();
     LOGGER.setLevel(logLevel);  
     Geometry theGeometry = null;

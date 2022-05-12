@@ -71,10 +71,9 @@ public class PlanitLinkUtils {
    * @param networkLayer the link must reside on
    * @param geoUtils to use for closeness computations
    * @return found link (null if none)
-   * @throws PlanItException thrown if error
    */
   public static Link getClosestLinkWithOsmWayIdToGeometry(
-      long osmWayId, Geometry geometry, MacroscopicNetworkLayer networkLayer, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      long osmWayId, Geometry geometry, MacroscopicNetworkLayer networkLayer, PlanitJtsCrsUtils geoUtils){
     /* collect all PLANit links that match the OSM way id (very slow, but it is rare and not worth the indexing generally) */
     Collection<? extends Link> nominatedLinks = networkLayer.getLinks().getByExternalId(String.valueOf(osmWayId));
     /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */

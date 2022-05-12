@@ -73,9 +73,8 @@ public class OsmBoundingAreaUtils {
    * @param networkBoundingBox to consider
    * @param geoUtils to use
    * @return true when near, false otherwise
-   * @throws PlanItException thrown if error
    */
-  public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils) throws PlanItException {    
+  public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils){    
     return geoUtils.isGeometryNearBoundingBox(geometry, networkBoundingBox, OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
   }
   

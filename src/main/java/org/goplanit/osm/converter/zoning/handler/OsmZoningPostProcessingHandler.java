@@ -21,6 +21,7 @@ import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
@@ -548,7 +549,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
   /**
    * process any remaining unprocessed stop_positions that are not part of any stop_area. This means the stop_position has not yet been matched
-   * to any platform/pole, i.e., transferzone. It is our task to do that now (if possible).
+   * to any platform/pole, i.e., transfer zone. It is our task to do that now (if possible).
    *  
    * @throws PlanItException thrown if error
    */
@@ -1020,10 +1021,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @throws PlanItException thrown if error
    */
-  public void initialiseBeforeParsing() throws PlanItException {
+  public void initialiseBeforeParsing(){
     reset();
     
-    PlanItException.throwIf(
+    PlanItRunTimeException.throwIf(
         getSettings().getReferenceNetwork().getTransportLayers() == null || getSettings().getReferenceNetwork().getTransportLayers().size()<=0,
           "network is expected to be populated at start of parsing OSM zoning");
     

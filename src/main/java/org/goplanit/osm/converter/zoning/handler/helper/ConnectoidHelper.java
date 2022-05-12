@@ -307,19 +307,18 @@ public class ConnectoidHelper extends ZoningHelperBase {
     }
   }
 
-  /** break a planit link at the planit node location while also updating all osm related tracking indices and/or planit network link and link segment reference 
+  /** break a PLANit link at the PLANit node location while also updating all OSM related tracking indices and/or PLANit network link and link segment reference 
    * that might be affected by this process:
    * <ul>
-   * <li>tracking of osmways with multiple planit links</li>
+   * <li>tracking of OSM ways with multiple PLANit links</li>
    * <li>connectoid access link segments affected by breaking of link (if any)</li>
    * </ul>
    * 
    * @param planitNode to break link at
    * @param networkLayer the node and link(s) reside on
    * @param linksToBreak the links to break 
-   * @throws PlanItException thrown if error
    */
-  private void breakLinksAtPlanitNode(Node planitNode, MacroscopicNetworkLayer networkLayer, List<Link> linksToBreak) throws PlanItException {
+  private void breakLinksAtPlanitNode(Node planitNode, MacroscopicNetworkLayer networkLayer, List<Link> linksToBreak){
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
   
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
@@ -363,9 +362,8 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param linkSegment to create connectoid for
    * @param allowedModes used for the connectoid
    * @return created connectoid when at least one of the allowed modes is also allowed on the link segment
-   * @throws PlanItException thrown if error
    */
-  private DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes) throws PlanItException {
+  private DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes){
     final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
       var connectoid = zoning.getTransferConnectoids().getFactory().registerNew(linkSegment,accessZone);
@@ -388,9 +386,8 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param linkSegments to create connectoids for (one per segment)
    * @param allowedModes used for each connectoid
    * @return created connectoids
-   * @throws PlanItException thrown if error
    */
-  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Iterable<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes) throws PlanItException {
+  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Iterable<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes){
     Set<DirectedConnectoid> createdConnectoids = new HashSet<DirectedConnectoid>();
     for(EdgeSegment linkSegment : linkSegments) {
       DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
@@ -461,15 +458,14 @@ public class ConnectoidHelper extends ZoningHelperBase {
     return extractDirectedConnectoidsForMode(location, transferZone, planitMode, null, geoUtils);
   }
 
-  /** extract the connectoid access node based on the given location. Either it already exists as a planit node, or it is internal to an existing link. In the latter case
-   * a new node is created and the existing link is broken. In the former case, we simply collect the planit node
+  /** extract the connectoid access node based on the given location. Either it already exists as a PLANit node, or it is internal to an existing link. In the latter case
+   * a new node is created and the existing link is broken. In the former case, we simply collect the PLANit node
    *
-   * @param osmNodeLocation to collect/create planit node for 
+   * @param osmNodeLocation to collect/create PLANit node for 
    * @param networkLayer to extract node on
-   * @return planit node collected/created
-   * @throws PlanItException thrown if error
+   * @return PLANit node collected/created
    */  
-  private Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer) throws PlanItException {
+  private Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer){
     final OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     
     /* check if already exists */
@@ -505,9 +501,8 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param osmNode to collect PLANit node version for
    * @param networkLayer to extract node on
    * @return PLANit node collected/created
-   * @throws PlanItException thrown if error
    */
-  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicNetworkLayer networkLayer) throws PlanItException {        
+  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicNetworkLayer networkLayer){        
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);    
     return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
   }
@@ -651,8 +646,8 @@ public class ConnectoidHelper extends ZoningHelperBase {
   }   
 
 
-  /** Create directed connectoids for transfer zones that reside on osw ways. For such transfer zones, we simply create connectoids in both directions for all eligible incoming 
-   * link segments. This is a special case because due to residing on the osm way it is not possible to distinguish what intended direction of the osm way is serviced (it is neither
+  /** Create directed connectoids for transfer zones that reside on OSM ways. For such transfer zones, we simply create connectoids in both directions for all eligible incoming 
+   * link segments. This is a special case because due to residing on the OSM way it is not possible to distinguish what intended direction of the osm way is serviced (it is neither
    * left nor right of the way). Therefore any attempt to extract this information is bypassed here.
    * 
    * @param transferZone residing on an osm way
@@ -660,10 +655,9 @@ public class ConnectoidHelper extends ZoningHelperBase {
    * @param planitMode the connectoid is accessible for
    * @param geoUtils to use
    * @return created connectoids, null if it was not possible to create any due to some reason
-   * @throws PlanItException thrown if error
    */
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-      TransferZone transferZone, MacroscopicNetworkLayer networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      TransferZone transferZone, MacroscopicNetworkLayer networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils){
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     

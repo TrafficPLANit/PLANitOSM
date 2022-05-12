@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.network;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -22,6 +23,9 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class OsmNetworkReaderData {
+  
+  /** the logger  */
+  private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderData.class.getCanonicalName());
     
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   protected final Map<Long, OsmNode> osmNodes;        
@@ -94,7 +98,7 @@ public class OsmNetworkReaderData {
     return networkBoundingBox;
   }
   
-  /** collect the osm nodes (unmoidifable)
+  /** collect the OSM nodes (unmodifiable)
    * 
    * @return osm nodes
    */
@@ -102,13 +106,23 @@ public class OsmNetworkReaderData {
     return Collections.unmodifiableMap(osmNodes);
   }
   
-  /** add an osm node
-   * @param osmNode to add
+  /** Add the actual OSM node to an already eligible marked OSM node entry
+   * @param osmNode to register
    */
-  public void addOsmNode(OsmNode osmNode) {
-    osmNodes.put(osmNode.getId(), osmNode);
+  public void registerEligibleOsmNode(OsmNode osmNode) {
+    if(!osmNodes.containsKey(osmNode.getId())) {
+      LOGGER.severe("Only OSM nodes that have already been marked as eligible can be complemented with the actual OSM node contents");
+    }
+    osmNodes.put(osmNode.getId(), osmNode);    
   } 
   
+  /** Pre-register an OSM node for future population with the actual node contents (see {@link #registerEligibleOsmNode(OsmNode)}
+   * @param osmNodeId to pre-register
+   */
+  public void preRegisterEligibleOsmNode(long osmNodeId) {
+    osmNodes.put(osmNodeId, null);
+  }
+
   /** collect an osm node
    * @param osmNodeId to collect
    * @return osm node, null if not present
@@ -117,12 +131,20 @@ public class OsmNetworkReaderData {
     return osmNodes.get(osmNodeId);
   }  
   
-  /** Verify if osm node is available
+  /** Verify if OSM node itself is registered and available
    * @param osmNodeId to verify
    * @return true when available, false otherwise
    */
-  public boolean hasOsmNode(long osmNodeId) {
+  public boolean containsOsmNode(long osmNodeId) {
     return getOsmNode(osmNodeId)!=null;
+  }
+
+  /** Verify if OSM node pre-registered while actual node may not yet be available
+   * @param osmNodeId to verify
+   * @return true when pre-registered, false otherwise
+   */
+  public boolean containsPreRegisteredOsmNode(long osmNodeId) {
+    return osmNodes.containsKey(osmNodeId);
   }
 
   /** collect the identified circular ways (unmodifiable)

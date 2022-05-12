@@ -22,6 +22,7 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.mode.Mode;
@@ -329,15 +330,14 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * 
    * @param tags to extract way key value pair from (highway,railway keys currently supported)
    * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
-   * @throws PlanItException thrown if error
    */    
-  public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags) throws PlanItException {
+  public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags){
     if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
       return osmHighwaySettings.getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.HIGHWAY));   
     }else if(tags.containsKey(OsmRailwayTags.RAILWAY)){
       return osmRailwaySettings.getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.RAILWAY));
     }else {
-      throw new PlanItException("no default speed limit available, tags do not contain activated highway or railway key");
+      throw new PlanItRunTimeException("no default speed limit available, tags do not contain activated highway or railway key");
     }
   }   
 
