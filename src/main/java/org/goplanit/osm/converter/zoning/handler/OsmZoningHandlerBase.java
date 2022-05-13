@@ -72,7 +72,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       
   /** Skip OSM pt entity when marked for exclusion in settings
    * 
-   * @param type of entity to verify
+   * @param entityType of entity to verify
    * @param osmId id to verify
    * @return true when it should be skipped, false otherwise
    */  
@@ -135,7 +135,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     if(!getSettings().hasBoundingPolygon()) {
       return true;
     }else {
-      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmWay, getSettings().getNetworkDataForZoningReader().getOsmNodes(), getSettings().getBoundingPolygon());      
+      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmWay, getSettings().getNetworkDataForZoningReader().getRegisteredOsmNodes(), getSettings().getBoundingPolygon());
     }
   }  
   
@@ -168,9 +168,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * 
    * @param message to log if not too close to bounding box
    * @param geometry to determine distance to bounding box to
-   * @throws PlanItException thrown if error
    */
-  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry) throws PlanItException {
+  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry) {
     OsmBoundingAreaUtils.logWarningIfNotNearBoundingBox(message, geometry, getNetworkToZoningData().getNetworkBoundingBox(), geoUtils);
   }
   
@@ -179,7 +178,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmWay to parse
    * @param osmWayConsumer to apply to eligible OSM way
    */
-  protected void wrapHandleOsmWay(OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
+  protected void wrapHandlePtOsmWay(OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);  
     
     try {       
@@ -202,7 +201,41 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       LOGGER.severe(String.format("Error during parsing of OSM way (id:%d) for public transport (zoning transfer) infrastructure", osmWay.getId())); 
     }      
 
-  }  
+  }
+
+  /** Wrap the handling of OSM node by checking if it is eligible (PT specific) and catch any run time PLANit exceptions, if eligible delegate to consumer.
+   *
+   * @param osmNode to parse
+   * @param osmNodeConsumer to apply to eligible OSM way
+   */
+  protected void wrapHandlePtOsmNode(OsmNode osmNode, TriConsumer<OsmNode, OsmPtVersionScheme, Map<String, String>> osmNodeConsumer) {
+
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
+    try {
+
+      /* only parse nodes that are potentially used for (PT) transfers*/
+      OsmPtVersionScheme ptVersion = isActivatedPublicTransportInfrastructure(tags);
+      if(ptVersion != OsmPtVersionScheme.NONE) {
+
+        /* skip if marked explicitly for exclusion */
+        if(skipOsmNode(osmNode)) {
+          LOGGER.fine(String.format("Skipped osm node %d, marked for exclusion", osmNode.getId()));
+          return;
+        }
+
+        /* verify if within designated bounding polygon */
+        if(!isCoveredByZoningBoundingPolygon(osmNode)) {
+          return;
+        }
+
+        osmNodeConsumer.accept(osmNode,ptVersion, tags);
+      }
+
+    } catch (PlanItRunTimeException e) {
+      LOGGER.severe(e.getMessage());
+      LOGGER.severe(String.format("Error during parsing of OSM node (id:%d) for public transport infrastructure", osmNode.getId()));
+    }
+  }
   
   /** Get geo utils
    * 

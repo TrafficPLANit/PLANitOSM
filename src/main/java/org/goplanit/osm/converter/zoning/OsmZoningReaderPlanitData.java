@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
@@ -132,9 +133,8 @@ public class OsmZoningReaderPlanitData {
    * 
    * @param entityType to collect for
    * @return available transfer zones by osm id
-   * @throws PlanItException thrown if error
    */
-  public Collection<TransferZone> getTransferZonesByOsmId(EntityType entityType) throws PlanItException {
+  public Collection<TransferZone> getTransferZonesByOsmId(EntityType entityType) {
     switch (entityType) {
       case Node:
           transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
@@ -143,7 +143,7 @@ public class OsmZoningReaderPlanitData {
         transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
         return Collections.unmodifiableCollection(transferZonesByOsmEntityId.get(entityType).values());
       default:
-        throw new PlanItException("Unspported entity type encountered for transfer zone tracked in zoning reader, this shoudn't happen");
+        throw new PlanItRunTimeException("Unspported entity type encountered for transfer zone tracked in zoning reader, this shoudn't happen");
     }
   }  
   

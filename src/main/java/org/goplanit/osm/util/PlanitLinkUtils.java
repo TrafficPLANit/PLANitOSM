@@ -32,9 +32,8 @@ public class PlanitLinkUtils {
    * @param accessModes to consider
    * @param geoUtils to use
    * @return remaining links that are deemed eligible
-   * @throws PlanItException thrown if error
-   */   
-  public static Collection<Link> excludeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsCrsUtils geoUtils) throws PlanItException{
+     */
+  public static Collection<Link> excludeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsCrsUtils geoUtils) {
     Collection<Link> matchedLinks = new HashSet<Link>(links);  
     for(Link link : links) {            
       for(Mode accessMode : accessModes){

@@ -628,7 +628,7 @@ public class OsmWayUtils {
    */  
   public static boolean isAllOsmWayNodesAvailable(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
     for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
+      if(osmNodes.get(osmWay.getNodeId(nodeIndex))  == null ) {
         return false;
       }
     }

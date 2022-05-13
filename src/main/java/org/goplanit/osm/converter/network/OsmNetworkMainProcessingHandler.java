@@ -63,7 +63,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       
       /* only process circular ways that are complete, e.g. not near bounding box causing some nodes to be missing
        * in which case we do not parse the entire circular way to avoid issues */
-      if(!OsmWayUtils.isAllOsmWayNodesAvailable(circularOsmWay, getNetworkData().getOsmNodes())){
+      if(!OsmWayUtils.isAllOsmWayNodesAvailable(circularOsmWay, getNetworkData().getRegisteredOsmNodes())){
         return;
       }
       
@@ -215,7 +215,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           createdLinkByLayer.forEach( (layer, link) -> {
             createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
             createdLinksByLayer.get(layer).add(link);} );
-        }        
+        }
+        
         partialLinkStartNodeIndex = partialLinkEndNodeIndex;
         partialLinkEndNodeIndex = finalNodeIndex;
         createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);

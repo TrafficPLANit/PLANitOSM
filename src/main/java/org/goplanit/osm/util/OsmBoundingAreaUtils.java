@@ -59,9 +59,8 @@ public class OsmBoundingAreaUtils {
    * @param geometry to determine distance to bounding box to
    * @param boundingBox to use
    * @param geoUtils to use
-   * @throws PlanItException thrown if error
    */
-  public static void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Envelope boundingBox, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Envelope boundingBox, PlanitJtsCrsUtils geoUtils) {
     if(!isNearNetworkBoundingBox(geometry, boundingBox, geoUtils)) {
       LOGGER.warning(message);
     }
@@ -114,12 +113,10 @@ public class OsmBoundingAreaUtils {
     boolean coveredByBoundingPolygon = false;
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
       long osmNodeId = osmWay.getNodeId(index);
-      if(osmNodes.containsKey(osmNodeId)) {
-        OsmNode osmNode = osmNodes.get(osmNodeId);
-        if(isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
-          coveredByBoundingPolygon = true;
-          break;
-        }
+      OsmNode osmNode = osmNodes.get(osmNodeId);
+      if(osmNode!=null && isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
+        coveredByBoundingPolygon = true;
+        break;
       }
     }
     

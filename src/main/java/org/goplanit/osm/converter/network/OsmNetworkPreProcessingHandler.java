@@ -93,7 +93,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   public void complete() throws IOException {
     super.complete();
     int totalOsmNodes = (int) nodeCounter.sum();
-    int preRegisteredOsmNodes = getNetworkData().getOsmNodes().size();
+    int preRegisteredOsmNodes = getNetworkData().getRegisteredOsmNodes().size();
     LOGGER.info(String.format("Total OSM nodes in source: %d",totalOsmNodes));
     LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double)totalOsmNodes));
   }

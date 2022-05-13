@@ -85,9 +85,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param location stop_location
    * @param accessMode for stop_location (not used for filtering accessibility, only for lyaer identification)
    * @return links that can access the stop location.
-   * @throws PlanItException thrown if error
    */
-  private Collection<Link> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) throws PlanItException {
+  private Collection<Link> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
     MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
@@ -105,7 +104,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
       planitLinksToCheck = getNetworkToZoningData().getNetworkLayerData(networkLayer).findPlanitLinksWithInternalLocation(location);  
       if(planitLinksToCheck!=null){
         if(planitLinksToCheck.size()>1) {
-          throw new PlanItException("location is internal to multiple planit links, should not happen %s", osmNode!=null ? "osm node "+osmNode.getId() : "");  
+          throw new PlanItRunTimeException("Location is internal to multiple planit links, should not happen %s", osmNode!=null ? "osm node "+osmNode.getId() : "");
         }                             
       }
     }
@@ -118,9 +117,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * 
    * @param transferZone to verify if supports multiple stop positions
    * @return true when supporting it, false otherwise
-   * @throws PlanItException thrown if error
    */
-  private boolean supportsMultipleStopPositions(TransferZone transferZone) throws PlanItException {
+  private boolean supportsMultipleStopPositions(TransferZone transferZone) {
     EntityType osmEntityType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
     if(osmEntityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(Long.valueOf(transferZone.getExternalId()))) {
         return false;
@@ -167,10 +165,10 @@ public class TransferZoneHelper extends ZoningHelperBase{
     /* Verify if there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
      * regular feedback when nodes are missing, because it lacks context regarding being close to bounding box and would confuse the user */
     Level geometryExtractionLogLevel = LOGGER.getLevel();
-    if(Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Way) && !OsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity, getNetworkToZoningData().getOsmNodes())){
-      Integer availableOsmNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, getNetworkToZoningData().getOsmNodes());
+    if(Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Way) && !OsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity, getNetworkToZoningData().getRegisteredOsmNodes())){
+      Integer availableOsmNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, getNetworkToZoningData().getRegisteredOsmNodes());
       if(availableOsmNodeIndex!=null) {
-        OsmNode referenceNode = getNetworkToZoningData().getOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
+        OsmNode referenceNode = getNetworkToZoningData().getRegisteredOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
         if(OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(referenceNode), getNetworkToZoningData().getNetworkBoundingBox(), geoUtils)) {
           LOGGER.info(String.format("OSM waiting area way (%d) geometry incomplete, network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
           geometryExtractionLogLevel = Level.OFF;
@@ -182,7 +180,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     }
     
     /* geometry, either centroid location or polygon circumference */
-    Geometry theGeometry = PlanitOsmUtils.extractGeometry(osmEntity, getNetworkToZoningData().getOsmNodes(), geometryExtractionLogLevel);
+    Geometry theGeometry = PlanitOsmUtils.extractGeometry(osmEntity, getNetworkToZoningData().getRegisteredOsmNodes(), geometryExtractionLogLevel);
     if(theGeometry != null && !theGeometry.isEmpty()) {
     
       /* create */
@@ -246,9 +244,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param osmModes eligible for the stop
    * @param geoUtils to use
    * @return subset of transfer zones
-   * @throws PlanItException thrown if error
    */
-  private Collection<TransferZone> removeTransferZonesOnWrongSideOfRoadOfStopLocation(OsmNode osmNode, Collection<TransferZone> transferZones, Collection<String> osmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private Collection<TransferZone> removeTransferZonesOnWrongSideOfRoadOfStopLocation(OsmNode osmNode, Collection<TransferZone> transferZones, Collection<String> osmModes, PlanitJtsCrsUtils geoUtils) {
     Collection<TransferZone> matchedTransferZones = new HashSet<TransferZone>(transferZones);
     boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(zoningReaderData.getCountryName());
     
@@ -284,9 +281,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param accessMode to verify
    * @param geoUtils to use
    * @return true when not on the wrong side, false otherwise
-   * @throws PlanItException thrown if error
    */
-  private boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsCrsUtils geoUtils) {
     
     /* first collect links that can access the connectoid location */
     Collection<Link> planitLinksToCheck = getLinksWithAccessToLocationForMode(location, accessMode);
@@ -347,12 +343,11 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param tags to search for reference keys in
    * @param availableTransferZones to choose from
    * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode to be deemed accessible, if not user is informed
-  
+
    * @return found transfer zones that have been parsed before, null if no match is found
-   * @throws PlanItException thrown if error
    */
   private Collection<TransferZone> findClosestTransferZonesByTagReference(
-      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> availableTransferZones, Collection<String> referenceOsmModes) throws PlanItException {
+      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> availableTransferZones, Collection<String> referenceOsmModes) {
     
     Map<String, TransferZone> foundTransferZones = null;
     /* ref value, can be a list of multiple values */
@@ -441,12 +436,12 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * 
    * @param osmNode node representing the stop_position
    * @param tags of the node
+   * @param stopAreaTransferZones the transfer zones of the stop_area this stop_position belongs to
    * @param referenceOsmModes the osm modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
-   * @param stopAreaTransferzones the transfer zones of the stop_area this stop_position belongs to
-   * @throws PlanItException thrown if error
-   */   
+   * @param geoUtils to use
+   */
   private Collection<TransferZone> findAccessibleTransferZonesByReferenceOrName(
-      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones, Collection<String> referenceOsmModes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones, Collection<String> referenceOsmModes, PlanitJtsCrsUtils geoUtils) {
     
     /* first try explicit reference matching to platform, i.e. transfer zone */
     Collection<TransferZone> matchedTransferZones = findClosestTransferZonesByTagReference(osmNode, tags, stopAreaTransferZones, referenceOsmModes);    
@@ -489,11 +484,9 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param osmNode representing a stop position
    * @param tags of the node
    * @param referenceOsmModes the osm modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible 
-   * @param planitModes the stop is compatible with
    * @return most likely transfer zone(s). Multiple matches only in case the node has multiple references to eligible transfer zones tagged
-   * @throws PlanItException thrown if error
    */
-  private Collection<TransferZone> findMostLikelyTransferZonesForStopPositionSpatially(OsmNode osmNode, Map<String, String> tags, Collection<String> referenceOsmModes) throws PlanItException {
+  private Collection<TransferZone> findMostLikelyTransferZonesForStopPositionSpatially(OsmNode osmNode, Map<String, String> tags, Collection<String> referenceOsmModes) {
     TransferZone foundZone = null;
         
     /* collect potential transfer zones based on spatial search*/
@@ -687,9 +680,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param eligibleOsmModes eligible modes for the stop_location, may be null
    * @param transferZoneGroup the node belongs to, may be null
    * @return found transfer zone matches, can be multiple if multiple are serviced by the same stop position
-   * @throws PlanItException thrown if error
    */
-  public Collection<TransferZone> findTransferZonesForStopPosition(OsmNode osmNode, Map<String, String> tags, Collection<String> eligibleOsmModes, TransferZoneGroup transferZoneGroup) throws PlanItException {
+  public Collection<TransferZone> findTransferZonesForStopPosition(OsmNode osmNode, Map<String, String> tags, Collection<String> eligibleOsmModes, TransferZoneGroup transferZoneGroup) {
     Collection<TransferZone> matchedTransferZones = null;
     
     /* USER OVERWRITE */
@@ -762,9 +754,8 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param tags of the node
    * @param eligibleOsmModes eligible modes for the stop_location, may be null
    * @return found transfer zone matches
-   * @throws PlanItException thrown if error
    */
-  public Collection<TransferZone> findTransferZonesForStopPosition(OsmNode osmNode, Map<String, String> tags, Collection<String> eligibleOsmModes) throws PlanItException {
+  public Collection<TransferZone> findTransferZonesForStopPosition(OsmNode osmNode, Map<String, String> tags, Collection<String> eligibleOsmModes) {
     return findTransferZonesForStopPosition(osmNode, tags, eligibleOsmModes, null);
   }   
   

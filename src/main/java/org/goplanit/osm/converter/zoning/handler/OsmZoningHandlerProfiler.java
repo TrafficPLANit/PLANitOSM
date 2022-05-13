@@ -134,10 +134,7 @@ public class OsmZoningHandlerProfiler {
       if(platformRelationCount.longValue()>0) {
         LOGGER.info(String.format("[STATS] identified %d platforms tagged as relations ",platformRelationCount.longValue()));
       }
-      
-      if(!planitOsmZoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
-        LOGGER.info(String.format("[STATS] marked %d osm ways that are outer roles of osm relations and eligible to be converted to platforms",planitOsmZoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
-      }  
+
     }   
     
     /* main processing */

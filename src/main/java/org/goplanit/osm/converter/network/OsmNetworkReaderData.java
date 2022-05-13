@@ -98,11 +98,11 @@ public class OsmNetworkReaderData {
     return networkBoundingBox;
   }
   
-  /** collect the OSM nodes (unmodifiable)
+  /** Collect the OSM nodes (unmodifiable)
    * 
    * @return osm nodes
    */
-  public Map<Long, OsmNode> getOsmNodes() {
+  public Map<Long, OsmNode> getRegisteredOsmNodes() {
     return Collections.unmodifiableMap(osmNodes);
   }
   
@@ -123,7 +123,7 @@ public class OsmNetworkReaderData {
     osmNodes.put(osmNodeId, null);
   }
 
-  /** collect an osm node
+  /** Collect an OSM node
    * @param osmNodeId to collect
    * @return osm node, null if not present
    */

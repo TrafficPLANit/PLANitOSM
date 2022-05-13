@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.goplanit.osm.tags.OsmSpeedTags;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
@@ -149,8 +150,8 @@ public class PlanitOsmUtils {
       OsmNode osmNode = OsmNode.class.cast(osmEntity);
       try {
         theGeometry = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));
-      } catch (PlanItException e) {
-        LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
+      } catch (PlanItRunTimeException e) {
+        LOGGER.severe(String.format("Unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
       }
     }else if(osmEntity instanceof OsmWay) {
       /* either area or linestring */

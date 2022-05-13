@@ -47,10 +47,10 @@ public class OsmNetworkToZoningReaderData {
    */
   protected OsmNetworkToZoningReaderData(final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings networkReaderSettings) {
     if(networkData==null) {
-      LOGGER.severe("network data provided to PlanitOsmNetworkToZoningReaderData constructor null");
+      LOGGER.severe("Network data provided to PlanitOsmNetworkToZoningReaderData constructor null");
     }
     if(networkReaderSettings==null) {
-      LOGGER.severe("network reader settings provided to PlanitOsmNetworkToZoningReaderData constructor null");
+      LOGGER.severe("Network reader settings provided to PlanitOsmNetworkToZoningReaderData constructor null");
     }
     this.networkData = networkData;
     this.networkReaderSettings = networkReaderSettings;
@@ -64,16 +64,54 @@ public class OsmNetworkToZoningReaderData {
   public OsmNetworkReaderLayerData  getNetworkLayerData(NetworkLayer networkLayer) {
     OsmNetworkReaderLayerData data =  networkLayerData.get(networkLayer);
     return data;
-  }  
-  
-  /** Collect OSM nodes
-   * 
-   * @return osm nodes
-   */
-  public Map<Long, OsmNode> getOsmNodes() {
-    return networkData.getOsmNodes();
   }
-  
+
+  /** Pre-register an OSM node for future population with the actual node contents (see {@link #registerEligibleOsmNode(OsmNode)}
+   * @param osmNodeId to pre-register
+   */
+  public void preRegisterEligibleOsmNode(long osmNodeId) {
+    networkData.preRegisterEligibleOsmNode(osmNodeId);
+  }
+
+  /** Add the actual OSM node to an already eligible marked OSM node entry
+   * @param osmNode to register
+   */
+  public void registerEligibleOsmNode(OsmNode osmNode) {
+    networkData.registerEligibleOsmNode(osmNode);
+  }
+
+  /** Verify if OSM node pre-registered while actual node may not yet be available
+   * @param osmNodeId to verify
+   * @return true when pre-registered, false otherwise
+   */
+  public boolean isPreRegisteredOsmNode(long osmNodeId) {
+    return networkData.containsPreRegisteredOsmNode(osmNodeId);
+  }
+
+  /** Verify if OSM node itself is registered and available
+   * @param osmNodeId to verify
+   * @return true when available, false otherwise
+   */
+  public boolean containsOsmNode(long osmNodeId) {
+    return networkData.containsOsmNode(osmNodeId);
+  }
+
+  /** Collect an OSM node
+   * @param osmNodeId to collect
+   * @return osm node, null if not present
+   */
+  public OsmNode getRegisteredOsmNode(long osmNodeId) {
+    return networkData.getOsmNode(osmNodeId);
+  }
+
+  /** Collect the OSM nodes (unmodifiable)
+   *
+   * @return registered OSM nodes
+   */
+  public Map<Long,OsmNode> getRegisteredOsmNodes() {
+    return networkData.getRegisteredOsmNodes();
+  }
+
   /** collect the bounding box of the network that is parsed
    * 
    * @return network bounding box
@@ -88,5 +126,5 @@ public class OsmNetworkToZoningReaderData {
   public OsmNetworkReaderSettings getNetworkSettings() {
     return networkReaderSettings;
   }
-    
+
 }

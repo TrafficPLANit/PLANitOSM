@@ -26,7 +26,7 @@ public class PlanitNetworkLayerUtils {
    */
   public static boolean hasNetworkLayersWithActiveOsmNode(
       long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkToZoningReaderData networkToZoningData){    
-    OsmNode osmNode = networkToZoningData.getOsmNodes().get(osmNodeId);
+    OsmNode osmNode = networkToZoningData.getRegisteredOsmNodes().get(osmNodeId);
     if(osmNode != null) {
       for(NetworkLayer networkLayer : network.getTransportLayers()) {        
         if(networkToZoningData.getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)){

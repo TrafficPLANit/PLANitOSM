@@ -33,15 +33,13 @@ public class OsmNodeUtils {
    * of the planit entities geometry (or its point location if no polygon/linestring is available) and the reference node and it is therefore very precise. 
    * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
    * 
-   * @param osmId reference to where point originated from
    * @param osmNode reference node location
    * @param planitEntities to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param geoUtils to compute projected distances
    * @return planitEntity closest and distance in meters, null if none matches criteria
-   * @throws PlanItException thrown if error
-   */  
-  static <T> Pair<T, Double> findPlanitEntityClosest(OsmNode osmNode, Collection<? extends T> planitEntities, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+   */
+  static <T> Pair<T, Double> findPlanitEntityClosest(OsmNode osmNode, Collection<? extends T> planitEntities, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils)  {
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     double distanceMeters = minDistanceMeters;    
     T closestEntity = null;         
@@ -52,7 +50,7 @@ public class OsmNodeUtils {
       }else if(entity instanceof Edge) {
         distanceMeters = getDistanceToEdge(osmNode, (Edge)entity, geoUtils);
       }else {
-        LOGGER.warning(String.format("unsupported planit entity to compute closest distance to %s",entity.getClass().getCanonicalName()));
+        LOGGER.warning(String.format("unsupported PLANit entity to compute closest distance to %s",entity.getClass().getCanonicalName()));
       }      
      
       if(distanceMeters < minDistanceMeters) {
@@ -77,16 +75,15 @@ public class OsmNodeUtils {
    * @param zone to check against using its geometry
    * @param geoUtils to compute projected distances
    * @return distance to zone, if not possible to compute positive infinity is returned
-   * @throws PlanItException thrown if error
    */
-  public static double getDistanceToZone(final OsmNode osmNode, final Zone zone, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static double getDistanceToZone(final OsmNode osmNode, final Zone zone, final PlanitJtsCrsUtils geoUtils) {
     Point point = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));    
     if(zone.hasGeometry()) {
       return geoUtils.getClosestDistanceInMeters(point,zone.getGeometry());
     }else if(zone.getCentroid().hasPosition()) {
       return geoUtils.getDistanceInMetres(point.getCoordinate(), zone.getCentroid().getPosition().getCoordinate());
     }else {
-      LOGGER.warning(String.format("zone has no geographic information to determine closesness to osm entity %d",osmNode.getId()));
+      LOGGER.warning(String.format("Zone has no geographic information to determine closeness to osm entity %d",osmNode.getId()));
     }
     return Double.POSITIVE_INFINITY;
   }
@@ -98,14 +95,13 @@ public class OsmNodeUtils {
    * @param edge to check against using its geometry
    * @param geoUtils to compute projected distances
    * @return distance to edge, if not possible to compute positive infinity is returned
-   * @throws PlanItException thrown if error
    */
-  static double getDistanceToEdge(final OsmNode osmNode, final Edge edge, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  static double getDistanceToEdge(final OsmNode osmNode, final Edge edge, final PlanitJtsCrsUtils geoUtils) {
     Point point = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));
     if(edge.hasGeometry()) {
       return geoUtils.getClosestDistanceInMeters(point,edge.getGeometry());
     }else {
-      LOGGER.warning(String.format("Edge has no geographic information to determine closesness to osm entity %d",osmNode.getId()));
+      LOGGER.warning(String.format("Edge has no geographic information to determine closeness to osm entity %d",osmNode.getId()));
     }
     return Double.POSITIVE_INFINITY;    
   }  
@@ -218,9 +214,8 @@ public class OsmNodeUtils {
    * @param zones to check against using their geometries
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosest(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsCrsUtils geoUtils) {
     return findZoneClosest(osmNode, zones, Double.POSITIVE_INFINITY, geoUtils);    
   }  
 
@@ -233,9 +228,8 @@ public class OsmNodeUtils {
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmNode osmNode, final Collection<? extends Zone> zones, double maxDistanceMeters, final PlanitJtsCrsUtils geoUtils) throws PlanItException {        
+  public static Zone findZoneClosest(final OsmNode osmNode, final Collection<? extends Zone> zones, double maxDistanceMeters, final PlanitJtsCrsUtils geoUtils) {
     Pair<Zone,Double> result = findPlanitEntityClosest(osmNode, zones, maxDistanceMeters, geoUtils);
     if(result!=null) {
       return result.first();

@@ -8,7 +8,8 @@ import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerBase;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningPostProcessingHandler;
-import org.goplanit.osm.converter.zoning.handler.OsmZoningPreProcessingPlatformRelationHandler;
+import org.goplanit.osm.converter.zoning.handler.OsmZoningPreProcessingHandler;
+import org.goplanit.osm.converter.zoning.handler.OsmZoningPreProcessingHandler.Stage;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningMainProcessingHandler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
@@ -38,7 +39,7 @@ public class OsmZoningReader implements ZoningReader {
   private static final Logger LOGGER = Logger.getLogger(OsmZoningReader.class.getCanonicalName());
   
   /** the handler conducting parsing in preparation for the osmHandler*/
-  private OsmZoningPreProcessingPlatformRelationHandler osmPreProcessingHandler = null;  
+  private OsmZoningPreProcessingHandler osmPreProcessingHandler = null;
       
   /** the handler conducting the main parsing pass */
   private OsmZoningMainProcessingHandler osmHandler = null;   
@@ -118,12 +119,27 @@ public class OsmZoningReader implements ZoningReader {
     /* reader to parse the actual file for preprocessing  */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(getSettings().getInputSource());
     if(osmReader == null) {
-      LOGGER.severe("unable to create OSM reader for pre-processing zones, aborting");
+      LOGGER.severe("Unable to create OSM reader for pre-processing platforms modelled as polygons, aborting");
     }else {    
-      osmPreProcessingHandler = new OsmZoningPreProcessingPlatformRelationHandler(this.transferSettings, this.zoningReaderData, profiler);
+      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData, Stage.IDENTIFY_PLATFORM_AS_RELATIONS, profiler);
       read(osmReader, osmPreProcessingHandler);     
     }
   }
+
+  /**
+   * Conduct pre-processing pass to identify the nodes required to perform platform parsing of platforms identified earlier as being coded as relations, see {@link #preProcessPlatformRelations(OsmZoningHandlerProfiler)}
+   * @param profiler to use
+   */
+  private void preProcessPtNodePreregistration(final OsmZoningHandlerProfiler profiler) {
+    /* reader to parse the actual file for preprocessing  */
+    OsmReader osmReader = Osm4JUtils.createOsm4jReader(getSettings().getInputSource());
+    if(osmReader == null) {
+      LOGGER.severe("Unable to create OSM reader for pre-processing public transport node pre-registration, aborting");
+    }else {
+      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData, Stage.IDENTIFY_PT_NODES, profiler);
+      read(osmReader, osmPreProcessingHandler);
+    }
+  }  
 
   /**
    * Conduct pre-processing step of zoning reader that cannot be conducted as part of the regular processing due to 
@@ -134,10 +150,16 @@ public class OsmZoningReader implements ZoningReader {
   private void doPreprocessing(final OsmZoningHandlerProfiler profiler){
     
     /* identify all relations that represent a (single) platform either as a single polygon, or multi-polygon 
-     * and mark their ways to be kept, which then in the next pass ensures those way's nodes are pre-registered to be kept as well */
+     * and mark their ways to be kept, which then in the next pass ensures these way's nodes are pre-registered to be kept as well */
     LOGGER.info("Pre-processing: Identifying relations representing public transport platforms");
-    preProcessPlatformRelations(profiler);  
-    
+    preProcessPlatformRelations(profiler);
+    if(zoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
+      LOGGER.info(String.format("Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms",zoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
+    }
+
+    LOGGER.info("Pre-processing: Identifying OSM nodes for public transport");
+    preProcessPtNodePreregistration(profiler);
+
     //TODO: continue here -> do another pass where we identify the nodes of the platform relation ways and pre-register them using the
     // base handler wrapping method with triconsumer
         

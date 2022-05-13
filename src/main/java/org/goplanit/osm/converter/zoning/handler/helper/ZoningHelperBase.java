@@ -37,9 +37,8 @@ class ZoningHelperBase {
    * 
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
-   * @throws PlanItException thrown if error
    */
-  protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) throws PlanItException {
+  protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) {
     return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId ,getSettings().getReferenceNetwork(), getNetworkToZoningData());    
   }  
 
