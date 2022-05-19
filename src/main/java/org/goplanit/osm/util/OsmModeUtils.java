@@ -357,7 +357,7 @@ public class OsmModeUtils {
           foundMode = OsmRailModeTags.TRAIN;
         }else {
           LOGGER.warning(String.format(
-              "unsupported Ptv1 value tag railway=%s used when identifying default mode, ignored",tags.get(OsmRailwayTags.RAILWAY)));  
+              "Unsupported Ptv1 value tag railway=%s used when identifying default mode, ignored",tags.get(OsmRailwayTags.RAILWAY)));
         }
       }else {
         LOGGER.warning("unknown Ptv1 key tag used when identifying default mode, ignored");

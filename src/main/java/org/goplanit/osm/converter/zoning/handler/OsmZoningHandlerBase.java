@@ -1,8 +1,10 @@
 package org.goplanit.osm.converter.zoning.handler;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
+import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
@@ -10,6 +12,8 @@ import org.goplanit.osm.converter.zoning.handler.helper.ConnectoidHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.OsmPublicTransportModeHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneHelper;
+import org.goplanit.osm.tags.OsmPtv2Tags;
+import org.goplanit.osm.tags.OsmRelationTypeTags;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
@@ -19,10 +23,6 @@ import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Geometry;
 
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
-import de.topobyte.osm4j.core.model.iface.EntityType;
-import de.topobyte.osm4j.core.model.iface.OsmNode;
-import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
-import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
@@ -201,6 +201,48 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       LOGGER.severe(String.format("Error during parsing of OSM way (id:%d) for public transport (zoning transfer) infrastructure", osmWay.getId())); 
     }      
 
+  }
+
+  /**
+   * Wrap the handling of OSM relation by performing basic checks on eligibility and wrapping any run time excpetions thrown
+   *
+   * @param osmRelation to wrap parsing of
+   * @param osmRelationConsumer to apply when relation is has Ptv2 public transport tags and is either a stop area or multipolygon transport platform
+   */
+  protected void wrapHandlePtOsmRelation(OsmRelation osmRelation, BiConsumer<OsmRelation, Map<String, String>> osmRelationConsumer){
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);
+    try {
+
+      /* only parse when parser is active and type is available */
+      if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE) && OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
+
+        /* public transport type */
+        String ptv2Type = tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT);
+        String relationType = tags.get(OsmRelationTypeTags.TYPE);
+        if(relationType.equals(OsmRelationTypeTags.PUBLIC_TRANSPORT)) {
+          /* stop_area: is only supported/expected type under PT relation */
+          if(!ptv2Type.equals(OsmPtv2Tags.STOP_AREA)) {
+            /* anything else is not expected */
+            LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported", tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));
+            return;
+          }
+        }else if(relationType.equals(OsmRelationTypeTags.MULTIPOLYGON)) {
+          /* multi_polygons are only accepted when  representing public transport platforms */
+          if(!ptv2Type.equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+            return;
+          }
+        }else{
+          return;
+        }
+
+        /* when not returned, it represents a potentially supported OSM Pt relation */
+        osmRelationConsumer.accept(osmRelation, tags);
+      }
+
+    } catch (PlanItRunTimeException e) {
+      LOGGER.severe(e.getMessage());
+      LOGGER.severe(String.format("Error during parsing of OSM relation (id:%d) for transfer infrastructure", osmRelation.getId()));
+    }
   }
 
   /** Wrap the handling of OSM node by checking if it is eligible (PT specific) and catch any run time PLANit exceptions, if eligible delegate to consumer.

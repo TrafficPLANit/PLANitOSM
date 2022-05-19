@@ -20,9 +20,16 @@ import org.goplanit.osm.util.OsmPtVersionScheme;
  * in the file and highlighting a subset of ways that we are supposed to retain even though they are not tagged
  * by themselves in a way that warrants keeping them. However, because they are vital to the OSM relations we should
  * keep them.
- * 
+ * <p>
  * To avoid keeping all ways and nodes in memory, we preprocess by first identifying which nodes/ways we must keep to be able
  * to properly parse the OSM relations (that are always parsed last).
+ * </p>
+ * <p>
+ *     Run pre-preocessing twice, first stage with IDENTIFY_PLATFORM_AS_RELATIONS, then when these platforms have been identified
+ *     run again with IDENTIFY_PT_NODES which will pre-register all nodes for the ways that were identified as platform AND
+ *     will pre-register all remaining unregistered OSM nodes part of relations that are not part of the physical network, such as
+ *     station nodes
+ * </p>
  * 
  * @author markr
  * 
@@ -46,35 +53,26 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   /** track processing stage within pre-processor */
   private final Stage stage;
 
-  /** determine if relation represents a platform worth retaining
-   *
+  /** Determine if relation represents a platform worth retaining
+   * @param osmRelation to verify
+   * @param tags of relation
    */
-  private void identifyPlatformAsRelation(OsmRelation osmRelation) {
+  private void identifyPlatformAsRelation(OsmRelation osmRelation, Map<String, String> tags) {
 
+    /* conditions to pre-process/mark for keeping a relation representing a pt platform by its outer-role geometry */
     boolean preserveOuterRole = false;
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);
-    /* only parse when parser is active and type is available */
-    if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE)) {
-
-      /* multi_polygons can represent public transport platforms */
-      if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.MULTIPOLYGON)) {
-
-        /* only consider public_transport=platform multi-polygons */
-        if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
-
-          getProfiler().incrementMultiPolygonPlatformCounter();
-          preserveOuterRole = true;
-
-        }
-      }else if( tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) &&
-              OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
-
-        getProfiler().incrementPlatformRelationCounter();
-        preserveOuterRole = true;
-      }
+    if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.MULTIPOLYGON) &&
+            tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+      /* only consider multi-polygons representing public_transport=platform to be parsed as relation based pt platforms*/
+      getProfiler().incrementMultiPolygonPlatformCounter();
+      preserveOuterRole = true;
+    }else if( tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) &&
+            tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+      /* alternatively mark relations that represent a complex platform to keep the outer role geometry to be parsed */        getProfiler().incrementPlatformRelationCounter();
+      preserveOuterRole = true;
     }
 
-    /* preserve information is outer role OSM way so we can parse it as a transfer zone if needed in post_processing */
+    /* preserve information is outer role OSM way, so we can parse it as a transfer zone if needed in post_processing */
     if(preserveOuterRole) {
 
       int numberOfMembers = osmRelation.getNumberOfMembers();
@@ -88,7 +86,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
         /* only collect outer area, mapped as ways */
         if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
-          /* mark for keeping in regular handler */
+          /* mark for keeping in regular handler despite not having specific PT tags */
           getZoningReaderData().getOsmData().markOsmRelationOuterRoleOsmWayToKeep(member.getId());
         }
       }
@@ -175,9 +173,14 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
     if(stage != Stage.IDENTIFY_PLATFORM_AS_RELATIONS){
       return;
+
     }
 
-    identifyPlatformAsRelation(osmRelation);
+    /* delegate to identifyPlatformAsRelation when eligible */
+    //TODO: pre-register ALL public transport tagged nodes within an eligible osm relation for
+    // pre-registration (NOT ON NETWORK DATA BUT ON PT DATA -> NEW), -> see if the same is needed for
+    // the PT OSM way registered nodes? -> then they should be registered in main pass of zoning handler so they are available
+    wrapHandlePtOsmRelation(osmRelation, this::identifyPlatformAsRelation);
   }
 
 

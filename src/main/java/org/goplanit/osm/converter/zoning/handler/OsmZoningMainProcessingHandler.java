@@ -136,12 +136,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
    * @param tags of the node
-   * @throws PlanItException thrown if error
-   */   
-  private void processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+   */
+  private void processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
     String ptv1ValueTag = tags.get(OsmHighwayTags.HIGHWAY);
     if(ptv1ValueTag==null) {
-      LOGGER.severe(String.format("highway tag not present for alleged Ptv1 highway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
+      LOGGER.severe(String.format("Highway tag not present for alleged Ptv1 highway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
       return;
     }
 
@@ -157,7 +156,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, OsmRoadModeTags.BUS, getGeoUtils());
       
     }else {
-      LOGGER.warning(String.format("unsupported Ptv1 higway=%s tag encountered, ignored",ptv1ValueTag));
+      LOGGER.warning(String.format("Unsupported Ptv1 highway=%s tag encountered, ignored",ptv1ValueTag));
     }     
     
   }  
@@ -223,9 +222,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
    * @param tags of the node
-   * @throws PlanItException thrown if error
    */
-  private void processPtv2StopAreaMemberNodePtv1WithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) throws PlanItException {
+  private void processPtv2StopAreaMemberNodePtv1WithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
     
     if(OsmRailwayTags.hasRailwayKeyTag(tags)) {     
       
@@ -264,9 +262,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
-   * @throws PlanItException thrown if error
-   */  
-  private void processPtv2StopAreaMemberNodeWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode) throws PlanItException {
+   */
+  private void processPtv2StopAreaMemberNodeWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode) {
     
     /* determine pt version */
     Map<String, String> osmNodeTags = OsmModelUtil.getTagsAsMap(osmNode);
@@ -353,9 +350,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
    * @param member of the relation to process
-   * @throws PlanItException thrown if error
    */
-  private void processPtv2StopAreaMemberWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) throws PlanItException {
+  private void processPtv2StopAreaMemberWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
     
     if(member.getType() == EntityType.Node) {
             
@@ -409,7 +405,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.info(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) does not reside on parsed tram tracks", osmNode.getId()));     
     }else{
       /* potentially transform to alternative Ptv1 type if tag indicates it and which does not require it to be on a road. 
-       * Note that a stop_position that does not reside on a network layer can also be a result of the underlyng road not being parsed. Hence, if we can transform it
+       * Note that a stop_position that does not reside on a network layer can also be a result of the underlying road not being parsed. Hence, if we can transform it
        * which requires mapping it to a nearby road/rail later on, we first ensure such a road is nearby. If not, then it is highly likely the stop_position is not to
        * be parsed due to a coarser network and roads being excluded (in which case we simply discard the entry). */
       double searchRadius = getSettings().getStopToWaitingAreaSearchRadiusMeters();
@@ -435,7 +431,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       }else if(OsmPtv1Tags.isStation(tags)) {
         LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));     
       }else {
-        LOGGER.warning(String.format("Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, this shouldn't happen", osmNode.getId()));
+        LOGGER.warning(String.format("Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, while not residing on parsed road infrastructure, possible tagging error and/or dangling node", osmNode.getId()));
         return;
       }
     
@@ -863,10 +859,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param osmRelation to extract stop_area for
    * @param tags of the stop_area relation
-   * @throws PlanItException thrown if error
    */
-  private void extractPtv2StopAreaRelation(OsmRelation osmRelation, Map<String, String> tags) throws PlanItException{
-  
+  private void extractPtv2StopAreaRelation(OsmRelation osmRelation, Map<String, String> tags){
+
     /* transfer zone group */
     TransferZoneGroup transferZoneGroup = getTransferZoneGroupHelper().createPopulateAndRegisterTransferZoneGroup(osmRelation, tags);    
     
@@ -928,16 +923,15 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation of the platform
    * @param member representing the outer boundary
    * @param tags to use
-   * @throws PlanItException thrown if error
    */
-  private void extractPtv2OuterRolePlatformRelation(OsmRelation osmRelation, OsmRelationMember member, Map<String, String> tags) throws PlanItException {
+  private void extractPtv2OuterRolePlatformRelation(OsmRelation osmRelation, OsmRelationMember member, Map<String, String> tags) {
     /* try if it has been parsed, not if it has no tags (likely), yes if it has PTv2 tags (unlikely for multipolygon member)) */
     TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Way, member.getId());
     if(transferZone == null && getZoningReaderData().getOsmData().hasOuterRoleOsmWay(member.getId())) {
       /* collect from unprocessed ways, should be present */
       OsmWay unprocessedWay = getZoningReaderData().getOsmData().getOuterRoleOsmWay(member.getId());
       if(unprocessedWay == null) {
-        LOGGER.severe(String.format("Osm way %d referenced by Ptv2 multipolygon %d not available in parser, this should not happen, relation ignored",member.getId(),osmRelation.getId()));
+        LOGGER.severe(String.format("OSM way %d referenced by Ptv2 multipolygon %d not available in parser, this should not happen, relation ignored",member.getId(),osmRelation.getId()));
         return;
       }
             
@@ -947,16 +941,15 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-  /** extract Ptv2 platforms from the multi-polygon. Do not create connectoids for them as the stop_positions
+  /** Extract Ptv2 platforms from the multi-polygon. Do not create connectoids for them as the stop_positions
    * might not have been parsed yet. For multi-polygons we use the outer polygon as their shape and ignore the rest.
    * Since this shape is modelled as an Osmway, we must find it. Since the Osmway is not tagged as public transport (likely), we must use 
    * the unprocessed ways we identified for this purpose in pre-processing. For the found OsmWay we create a transfer zone (without connectoids)
    * 
    * @param osmRelation to extract platform from
    * @param tags to use
-   * @throws PlanItException thrown if error
    */
-  private void extractPtv2PlatformRelation(OsmRelation osmRelation, Map<String, String> tags) throws PlanItException {
+  private void extractPtv2PlatformRelation(OsmRelation osmRelation, Map<String, String> tags) {
     
     /* role:outer -> extract geometry for transfer zone*/
     OsmRelationMember member = OsmRelationUtils.findFirstOsmRelationMemberWithRole(osmRelation ,OsmMultiPolygonTags.OUTER_ROLE);
@@ -1032,6 +1025,26 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
+  /**
+   * Handle eligible PT OSM relation to either extract an OSM Ptv2 stop area or multipolygon that represents a public transport platform
+   * @param osmRelation to handle
+   * @param tags of the relation
+   */
+  protected void handleOsmPtRelation(OsmRelation osmRelation, Map<String,String> tags){
+
+    /* public transport type */
+    String relationType = tags.get(OsmRelationTypeTags.TYPE);
+
+    if(relationType.equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
+      /* stop_area: process all but stop_positions (parsed in post-processing)*/
+        getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_AREA);
+        extractPtv2StopAreaRelation(osmRelation, tags);
+    }else if(relationType.equals(OsmRelationTypeTags.MULTIPOLYGON) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+      /* multi_polygons representing public transport platform */
+      getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM_ROLE);
+      extractPtv2PlatformRelation(osmRelation, tags);
+    }
+  }
 
   /**
    * Constructor
@@ -1068,25 +1081,27 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmNode node to parse
    */
   @Override
-  public void handle(OsmNode osmNode) throws IOException {             
+  public void handle(OsmNode osmNode) throws IOException {
 
     /* parse as stand-alone PT-entity node */
     wrapHandlePtOsmNode(osmNode, this::extractTransferInfrastructure);
 
-    /* When earmarked to be needed by PT OSM ways/relations during pre-processing but not yet available, we now register the entire node in memory for OSM way/relations
-    *  which are handled after handling ll nodes */
+    /* When earmarked to be needed by PT OSM ways/relations during pre-processing but not yet fully registered, we now register the entire node in memory for OSM way/relations/node
+     *  handling during main process */
     if(getNetworkToZoningData().isPreRegisteredOsmNode(osmNode.getId()) && !getNetworkToZoningData().containsOsmNode(osmNode.getId())){
       getNetworkToZoningData().registerEligibleOsmNode(osmNode);
     }
-
   }
 
   /**
-   * parse an OSM way to extract for example platforms, or other transfer zone related geometry
+   * Parse an OSM way to extract for example platforms, or other transfer zone related geometry
+   *
+   * @param osmWay to handle
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-                                    
+
+    /* delegate after verifying eligibility */
     super.wrapHandlePtOsmWay(osmWay, this::handlePtOsmWay);
             
   }
@@ -1097,45 +1112,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmRelation osmRelation) throws IOException {
 
-    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);          
-    try {              
-            
-      /* only parse when parser is active and type is available */
-      if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE)) {
-        
-        /* public transport type */
-        if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT)) {
-          
-          /* stop_area: all but stop_positions (parsed in post-processing)*/
-          if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
-            
-            getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_AREA);
-            extractPtv2StopAreaRelation(osmRelation, tags);
-            
-          }else {
-            /* anything else is not expected */
-            LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported",tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));          
-          }          
-          
-        }
-        
-        /* multi_polygons can represent public transport platforms */ 
-        if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.MULTIPOLYGON)) {
-          
-          /* only consider public_transport=platform multi-polygons */
-          if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
-            
-            getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM_ROLE);
-            extractPtv2PlatformRelation(osmRelation, tags);
-            
-          }          
-        }
-      }      
-      
-    } catch (PlanItException e) {
-      LOGGER.severe(e.getMessage());
-      LOGGER.severe(String.format("Error during parsing of OSM relation (id:%d) for transfer infrastructure", osmRelation.getId())); 
-    }
+    /* delegate after verifying eligibility */
+    wrapHandlePtOsmRelation(osmRelation, this::handleOsmPtRelation);
+
   }
 
 
