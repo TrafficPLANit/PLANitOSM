@@ -96,6 +96,15 @@
 			</plugin>
 		</plugins> 		    	
 	    
-	</build>	
+	</build>
+
+	<repositories>
+		<!-- PLANit repository to obtain parentpom from-->
+		<repository>
+			<id>planit-repository.goplanit.org</id>
+			<name>PLANit Repository</name>
+			<url>https://repository.goplanit.org</url>
+		</repository>
+	</repositories>
 
 </project>
