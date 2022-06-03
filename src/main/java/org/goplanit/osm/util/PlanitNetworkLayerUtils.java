@@ -26,7 +26,7 @@ public class PlanitNetworkLayerUtils {
    */
   public static boolean hasNetworkLayersWithActiveOsmNode(
       long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkToZoningReaderData networkToZoningData){    
-    OsmNode osmNode = networkToZoningData.getRegisteredOsmNodes().get(osmNodeId);
+    OsmNode osmNode = networkToZoningData.getNetworkOsmNodes().get(osmNodeId);
     if(osmNode != null) {
       for(NetworkLayer networkLayer : network.getTransportLayers()) {        
         if(networkToZoningData.getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)){
@@ -44,8 +44,8 @@ public class PlanitNetworkLayerUtils {
    * @param networkData to extract layer specific data from
    * @return true when one or more layers are found, false otherwise
    */
-  public static boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkReaderData networkData){    
-    OsmNode osmNode = networkData.getOsmNode(osmNodeId);
+  public static boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkReaderData networkData){
+    OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);
     if(osmNode != null) {      
       for(NetworkLayer networkLayer : network.getTransportLayers()) {
         OsmNetworkLayerParser layerHandler = networkData.getLayerParser((MacroscopicNetworkLayerImpl) networkLayer);

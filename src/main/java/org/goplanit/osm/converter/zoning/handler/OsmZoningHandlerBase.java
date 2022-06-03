@@ -15,7 +15,6 @@ import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneHelper;
 import org.goplanit.osm.tags.OsmPtv2Tags;
 import org.goplanit.osm.tags.OsmRelationTypeTags;
 import org.goplanit.osm.util.*;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.functionalinterface.TriConsumer;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -135,7 +134,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     if(!getSettings().hasBoundingPolygon()) {
       return true;
     }else {
-      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmWay, getSettings().getNetworkDataForZoningReader().getRegisteredOsmNodes(), getSettings().getBoundingPolygon());
+      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(
+              osmWay, zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getSettings().getBoundingPolygon());
     }
   }  
   

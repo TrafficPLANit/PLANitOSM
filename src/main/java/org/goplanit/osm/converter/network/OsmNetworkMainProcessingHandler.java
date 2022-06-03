@@ -57,7 +57,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   private void handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
         
-    Map<NetworkLayer, Set<Link>> createdLinksByLayer = null;    
+    Map<NetworkLayer, Set<Link>> createdLinksByLayer;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
       
@@ -212,7 +212,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
         if(createdLinkByLayer != null) {
           createdLinkByLayer.forEach( (layer, link) -> {
-            createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
+            createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
             createdLinksByLayer.get(layer).add(link);} );
         }
         
@@ -417,13 +417,13 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are 
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());    
-    if(getNetworkData().containsPreRegisteredOsmNode(osmNode.getId()) &&
+    if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId()) &&
         (   !settings.hasBoundingPolygon() ||
             keepOutsideBoundingPolygon ||
             OsmNodeUtils.createPoint(osmNode).within(settings.getBoundingPolygon()))) {
       
       /* store actual OSM node for later processing in memory */
-      getNetworkData().registerEligibleOsmNode(osmNode);
+      getNetworkData().getOsmNodeData().registerEligibleOsmNode(osmNode);
       
       if(!keepOutsideBoundingPolygon) {
         /* track bounding box of OSM nodes within bounding polygon (if any) */

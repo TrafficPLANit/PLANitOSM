@@ -29,8 +29,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
  
   /** Mark all nodes of eligible OSM ways (e.g., road, rail, etc.) to be parsed during the main processing phase
    * 
-   * @param osmWay
-   * @param tags
+   * @param osmWay to handle
+   * @param tags of the OSM way
    */
   protected void handleEligibleOsmWay(OsmWay osmWay, Map<String,String> tags) {
     var settings = getSettings();
@@ -50,7 +50,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     
     /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail) */
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-      getNetworkData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+      getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
     }
   }
     
@@ -70,7 +70,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    * Count total number of nodes in OSM file
    */
   @Override
-  public void handle(OsmNode node) throws IOException {
+  public void handle(OsmNode node) {
     nodeCounter.increment();
   }
 
@@ -81,7 +81,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    * PlanitOsmNetworkHandler
    */
   @Override
-  public void handle(OsmWay osmWay) throws IOException {
+  public void handle(OsmWay osmWay) {
     
     wrapHandleOsmWay(osmWay, this::handleEligibleOsmWay);
                         
@@ -93,7 +93,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   public void complete() throws IOException {
     super.complete();
     int totalOsmNodes = (int) nodeCounter.sum();
-    int preRegisteredOsmNodes = getNetworkData().getRegisteredOsmNodes().size();
+    int preRegisteredOsmNodes = getNetworkData().getOsmNodeData().getRegisteredOsmNodes().size();
     LOGGER.info(String.format("Total OSM nodes in source: %d",totalOsmNodes));
     LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double)totalOsmNodes));
   }

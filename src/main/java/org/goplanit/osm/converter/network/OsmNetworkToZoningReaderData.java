@@ -81,4 +81,13 @@ public class OsmNetworkToZoningReaderData {
     return networkReaderSettings;
   }
 
+  /**
+   * Collect the retained OSM nodes used to extract PLANit network infrastructure
+   *
+   * @return retained OSM  nodes
+   */
+  public Map<Long, OsmNode> getNetworkOsmNodes(){
+    return networkData.getOsmNodeData().getRegisteredOsmNodes();
+  }
+
 }

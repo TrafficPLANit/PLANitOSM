@@ -274,7 +274,7 @@ public class OsmWayUtils {
     /* log -> no throw */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
       if(missingNodes!=null) {
-        LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+        LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes));
       }
     };
     
@@ -379,7 +379,7 @@ public class OsmWayUtils {
   }
   
   /**
-   * Identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+   * Identical to {@link OsmWayUtils#extractLineString}, except it does not throw exceptions, but simply logs any issues found
    * 
    * @param osmWay way to extract geometry from
    * @param startNodeIndex to use
@@ -393,7 +393,7 @@ public class OsmWayUtils {
     return  PlanitJtsUtils.createLineString(coordArray);
   }  
 
-  /** Identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+  /** Identical to {@link OsmWayUtils#extractLineString}, except it does not throw exceptions, but simply logs any issues found
    * @param osmWay to extract geometry for
    * @param osmNodes to collect from
    * @return parsed geometry, can be null if not valid for some reason
@@ -446,7 +446,7 @@ public class OsmWayUtils {
     return PlanitJtsUtils.createPolygon(coordArray);
   }   
   
-  /** identical to {@link extractPolygon}, except it does not throw exceptions, but simply logs any issues found
+  /** identical to {@link OsmWayUtils#extractPolygon(OsmWay, Map)}, except it does not throw exceptions, but simply logs any issues found
    * and tries to salvage the polygon by creating it out of the coordinates that are available as lnog as we can still create
    * a closed 2D shape.
    * 
@@ -647,7 +647,7 @@ public class OsmWayUtils {
   public static Integer getOsmWayNodeIndexByLocation(OsmWay osmWay, Point nodePosition, OsmNetworkReaderData networkData){
     for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
       long osmNodeId = osmWay.getNodeId(nodeIndex);
-      OsmNode osmNode = networkData.getOsmNode(osmNodeId);      
+      OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);
       if(osmNode != null && OsmNodeUtils.nodeLocationEquals2D(osmNode, nodePosition.getCoordinate())) {
         return nodeIndex;
       }

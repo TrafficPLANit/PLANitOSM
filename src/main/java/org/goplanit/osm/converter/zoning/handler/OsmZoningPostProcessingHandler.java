@@ -324,9 +324,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           Point osmStationLocation = PlanitJtsUtils.createPoint(OsmNodeUtils.createCoordinate((OsmNode)stationEntity));
           stationToClosestPointOnClosestLinkSegment = PlanitJtsUtils.createLineSegment(osmStationLocation.getCoordinate(),closestCoordinate);
         }else if(Osm4JUtils.getEntityType(stationEntity) == EntityType.Way) {
-          stationToClosestPointOnClosestLinkSegment = OsmWayUtils.findMinimumLineSegmentBetween((OsmWay)stationEntity, idealAccessLink.getGeometry(), getNetworkToZoningData().getRegisteredOsmNodes(), getGeoUtils());
+          stationToClosestPointOnClosestLinkSegment = OsmWayUtils.findMinimumLineSegmentBetween(
+                  (OsmWay)stationEntity, idealAccessLink.getGeometry(), getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
         }else {
-          throw new PlanItException("unknown entity type %s for osm station encountered, this should not happen", Osm4JUtils.getEntityType(stationEntity).toString());
+          throw new PlanItException("Unknown entity type %s for osm station encountered, this should not happen", Osm4JUtils.getEntityType(stationEntity).toString());
         }      
         final LineSegment interSectionLineSegment = getGeoUtils().createExtendedLineSegment(stationToClosestPointOnClosestLinkSegment, getSettings().getStationToParallelTracksSearchRadiusMeters(), true, true);
         final Geometry virtualInterSectionGeometryForParallelTracks = PlanitJtsUtils.createLineString(interSectionLineSegment.getCoordinate(0),interSectionLineSegment.getCoordinate(1));
@@ -393,7 +394,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
            * then update all transfer zones within that group with this station information...
            * (in case multiple stations are close together we only want to update the right one) 
            */      
-          TransferZone closestZone = PlanitTransferZoneUtils.findTransferZoneClosestByTransferGroup(osmStation, potentialTransferZoneGroups, getNetworkToZoningData().getRegisteredOsmNodes(), getGeoUtils());
+          TransferZone closestZone = PlanitTransferZoneUtils.findTransferZoneClosestByTransferGroup(
+                  osmStation, potentialTransferZoneGroups, getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
           Set<TransferZoneGroup> groups = closestZone.getTransferZoneGroups();
           for(TransferZoneGroup group : groups) {
             TransferZoneGroupHelper.updateTransferZoneGroupStationName(group, osmStation, tags);
@@ -446,7 +448,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(unprocessedStations != null) {
       for(OsmEntity osmStation : unprocessedStations){
         
-        Envelope boundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmWay(osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getNetworkToZoningData().getRegisteredOsmNodes(), getGeoUtils());
+        Envelope boundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmWay(
+                osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
         if(boundingBox!= null) {
           
           /* process based on bounding box */
@@ -485,17 +488,17 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
     /* Ptv1 way station */
     if(!osmData.getUnprocessedPtv1Stations(EntityType.Way).isEmpty()) {
-      Set<OsmEntity> unprocessedStations = new HashSet<OsmEntity>(osmData.getUnprocessedPtv1Stations(EntityType.Way).values());
+      Set<OsmEntity> unprocessedStations = new HashSet<>(osmData.getUnprocessedPtv1Stations(EntityType.Way).values());
       processStationsNotPartOfStopArea(unprocessedStations, EntityType.Way, OsmPtVersionScheme.VERSION_1);                       
     }
     /* Ptv2 node station */    
     if(!osmData.getUnprocessedPtv2Stations(EntityType.Node).isEmpty()) {
-      Set<OsmEntity> unprocessedStations = new HashSet<OsmEntity>(osmData.getUnprocessedPtv2Stations(EntityType.Node).values());
+      Set<OsmEntity> unprocessedStations = new HashSet<>(osmData.getUnprocessedPtv2Stations(EntityType.Node).values());
       processStationsNotPartOfStopArea(unprocessedStations, EntityType.Node, OsmPtVersionScheme.VERSION_2);            
     }
     /* Ptv2 way station */    
     if(!osmData.getUnprocessedPtv2Stations(EntityType.Way).isEmpty()) {
-      Set<OsmEntity> unprocessedStations = new HashSet<OsmEntity>(osmData.getUnprocessedPtv2Stations(EntityType.Way).values());
+      Set<OsmEntity> unprocessedStations = new HashSet<>(osmData.getUnprocessedPtv2Stations(EntityType.Way).values());
       processStationsNotPartOfStopArea(unprocessedStations, EntityType.Way, OsmPtVersionScheme.VERSION_2);                
     }       
   }
@@ -529,7 +532,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       }
   
       /* locate transfer zone(s) for stop_location/mode combination */
-      Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, Collections.singleton(osmMode));      
+      Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, Collections.singleton(osmMode));
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
         logWarningIfNotNearBoundingBox(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode),osmNodeLocation);
         return;
@@ -551,8 +554,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void processStopPositionsNotPartOfStopArea() {
     Set<Long> unprocessedStopPositions = new TreeSet<Long>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
     if(!unprocessedStopPositions.isEmpty()) {
+      var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
       for(Long osmNodeId : unprocessedStopPositions) {
-        OsmNode osmNode = getNetworkToZoningData().getRegisteredOsmNode(osmNodeId);
+        OsmNode osmNode = osmNodeData.getRegisteredOsmNode(osmNodeId);
         if(osmNode == null){
           LOGGER.severe(String.format("OSM node %d representing stop position not available in memory, unable to extract stop position", osmNodeId));
           return;
@@ -692,7 +696,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
         /* user override for what link to use for connectoids */        
         long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmStation.getId(), osmStationEntityType);
-        Link nominatedLink = PlanitLinkUtils.getClosestLinkWithOsmWayIdToGeometry( osmWayId, stationTransferZone.getGeometry(), networkLayer, geoUtils);
+        Link nominatedLink = PlanitLinkUtils.getClosestLinkWithOsmWayIdToGeometry(osmWayId, stationTransferZone.getGeometry(), networkLayer, geoUtils);
         if(nominatedLink != null) {
           accessLinks = Collections.singleton(nominatedLink); 
         }else {
@@ -703,7 +707,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       
         /* regular approach */
         /* accessible links for station conditioned on found modes, proximity, relative location to transfer zone and importance of osm way type (if applicable) */
-        Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmWay(osmStation, maxSearchDistance , getNetworkToZoningData().getRegisteredOsmNodes(), geoUtils);
+        Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmWay(
+                osmStation, maxSearchDistance , getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), geoUtils);
         accessLinks = findStopLocationLinksForStation(osmStation, stationTransferZone, osmAccessMode, searchBoundingBox, maxStopLocations);
       }
       
@@ -749,7 +754,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* transfer zone + connectoids */
             
       /* station is stop_location as well as transfer zone, create both transfer zone and connectoids based on this location */      
-      OsmNode osmStationNode = getNetworkToZoningData().getRegisteredOsmNodes().get(osmStation.getId());
+      OsmNode osmStationNode = getNetworkToZoningData().getNetworkOsmNodes().get(osmStation.getId());
+      if(osmStationNode == null){
+        LOGGER.severe(String.format("DISCARD: Station node (%d) expected to be also a stop location, yet OSM node not present on underlying network",osmStation.getId()));
+      }
       TransferZoneType ptv1TransferZoneType = PlanitTransferZoneUtils.extractTransferZoneTypeFromPtv1Tags(osmStationNode, tags);
       getTransferZoneHelper().createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmStationNode, tags, defaultMode, ptv1TransferZoneType, geoUtils);      
       
@@ -903,12 +911,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(member.getType() != EntityType.Node) {
       throw new PlanItException("Stop_position %d encountered that it not an OSM node, this is not permitted",member.getId());
     }      
-        
-    OsmNode stopPositionNode = getNetworkToZoningData().getRegisteredOsmNodes().get(member.getId());
+
+    OsmNode stopPositionNode = getNetworkToZoningData().getNetworkOsmNodes().get(member.getId());
     if(stopPositionNode==null) {
       /* likely missing because it falls outside bounding box, ignore */
       if(!getSettings().hasBoundingPolygon()) {
-        LOGGER.warning(String.format("DISCARD:Unable to extract ptv2 stop position %d in stop area %s, osm node missing", member.getId(), transferZoneGroup.getExternalId()));
+        LOGGER.warning(String.format("DISCARD:Unable to extract ptv2 stop position %d in stop area %s, OSM node missing", member.getId(), transferZoneGroup.getExternalId()));
       }
       return;
     }
@@ -930,7 +938,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         boolean alreadyProcessed = getZoningReaderData().getPlanitData().hasAnyDirectedConnectoidsForLocation(OsmNodeUtils.createPoint(stopPositionNode)); 
         if(isPtv2NodeOnly && alreadyProcessed) {
           /* stop_position resides in multiple stop_areas, this is strongly discouraged by OSM, but does occur still so we identify and skip (no need to process twice anyway)*/
-          LOGGER.fine(String.format("Stop_position %d present in multiple stop_areas, discouraged tagging behaviour, consider retagging",member.getId(), transferZoneGroup.getExternalId()));
+          LOGGER.fine(String.format("Stop_position %d present in multiple stop_areas, discouraged tagging behaviour, consider retagging",member.getId()));
         }
         if(alreadyProcessed) {
           /* already matched to at least one transfer zone (platform/pole), no need to attempt and create connectoid again. In case it serves more than one transferzone
@@ -964,15 +972,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   /** extract stop area relation of Ptv2 scheme. We create connectoids for all now already present transfer zones.
    * 
    * @param osmRelation to extract stop_area for
-   * @param tags of the stop_area relation
    * @throws PlanItException thrown if error
    */
-  private void extractPtv2StopAreaPostProcessingEntities(OsmRelation osmRelation, Map<String, String> tags) throws PlanItException{
+  private void extractPtv2StopAreaPostProcessingEntities(OsmRelation osmRelation) throws PlanItException{
   
     /* transfer zone group */
     TransferZoneGroup transferZoneGroup = getZoningReaderData().getPlanitData().getTransferZoneGroupByOsmId(osmRelation.getId());
     if(transferZoneGroup == null) {
-      LOGGER.severe(String.format("found stop_area %d in post-processing for which not PLANit transfer zone group has been created, this should not happen",osmRelation.getId()));
+      LOGGER.severe(String.format("Found stop_area %d in post-processing for which not PLANit transfer zone group has been created, this should not happen",osmRelation.getId()));
     }
         
     /* process only stop_positions */
@@ -1044,7 +1051,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           /* stop_area: stop_positions only */
           if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
                         
-            extractPtv2StopAreaPostProcessingEntities(osmRelation, tags);
+            extractPtv2StopAreaPostProcessingEntities(osmRelation);
             
           }else {
             /* anything else is not expected */

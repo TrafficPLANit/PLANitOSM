@@ -652,7 +652,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
       TransferZone transferZone, MacroscopicNetworkLayer networkLayer, Mode planitMode, PlanitJtsCrsUtils geoUtils){
     /* collect the osmNode for this transfer zone */
-    OsmNode osmNode = getNetworkToZoningData().getRegisteredOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
+    OsmNode osmNode = getNetworkToZoningData().getNetworkOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     
     Iterable<? extends EdgeSegment> nominatedLinkSegments = null;
     if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node)) {
@@ -713,9 +713,9 @@ public class ConnectoidHelper extends ZoningHelperBase {
     Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
     if(planitNode==null) {
       if(osmNode != null) {
-        LOGGER.warning(String.format("DISCARD: osm node %d could not be converted to access node for transfer zone representation of osm entity %s",osmNode.getId(), transferZone.getXmlId(), transferZone.getExternalId()));
+        LOGGER.warning(String.format("DISCARD: OSM node %d could not be converted to access node for transfer zone representation of OSM entity %s",osmNode.getId(), transferZone.getExternalId()));
       }else {
-        LOGGER.warning(String.format("DISCARD: location (%s) could not be converted to access node for transfer zone representation of osm entity %s",location.toString(), transferZone.getXmlId(), transferZone.getExternalId()));
+        LOGGER.warning(String.format("DISCARD: Location (%s) could not be converted to access node for transfer zone representation of OSM entity %s",location, transferZone.getExternalId()));
       }
       return false;
     }
