@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
+import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -26,15 +27,17 @@ public class OsmNetworkReaderData {
   
   /** the logger  */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderData.class.getCanonicalName());
-    
-  /** temporary storage of osmNodes before converting the useful ones to actual nodes */
-  protected final Map<Long, OsmNode> osmNodes;        
 
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
-  protected final Map<Long, OsmWay> osmCircularWays;  
+  private final Map<Long, OsmWay> osmCircularWays =new HashMap<>();
     
   /** on the fly tracking of bounding box of all parsed nodes in the network */
   private Envelope networkBoundingBox;
+
+  /**
+   * Track OSM nodes to retain in memory during network parsing
+   */
+  private OsmNodeData osmNodeData = new OsmNodeData();
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
   private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<MacroscopicNetworkLayer, OsmNetworkLayerParser>();  
@@ -57,21 +60,13 @@ public class OsmNetworkReaderData {
       osmLayerParsers.put(macroNetworkLayer, layerHandler);
     }
   }    
-      
-  /** Default Constructor 
-   * 
-   */
-  public OsmNetworkReaderData() {    
-    this.osmNodes = new HashMap<Long, OsmNode>();
-    this.osmCircularWays = new HashMap<Long, OsmWay>();
-  }
-  
+
   /**
    * reset
    */
   public void reset() {
     clearOsmCircularWays();    
-    osmNodes.clear();
+    osmNodeData.reset();
     
     /* reset layer handlers as well */
     osmLayerParsers.forEach( (layer, handler) -> {handler.reset();});
@@ -97,54 +92,13 @@ public class OsmNetworkReaderData {
   public Envelope getBoundingBox() {
     return networkBoundingBox;
   }
-  
-  /** Collect the OSM nodes (unmodifiable)
-   * 
-   * @return osm nodes
-   */
-  public Map<Long, OsmNode> getRegisteredOsmNodes() {
-    return Collections.unmodifiableMap(osmNodes);
-  }
-  
-  /** Add the actual OSM node to an already eligible marked OSM node entry
-   * @param osmNode to register
-   */
-  public void registerEligibleOsmNode(OsmNode osmNode) {
-    if(!osmNodes.containsKey(osmNode.getId())) {
-      LOGGER.severe("Only OSM nodes that have already been marked as eligible can be complemented with the actual OSM node contents");
-    }
-    osmNodes.put(osmNode.getId(), osmNode);    
-  } 
-  
-  /** Pre-register an OSM node for future population with the actual node contents (see {@link #registerEligibleOsmNode(OsmNode)}
-   * @param osmNodeId to pre-register
-   */
-  public void preRegisterEligibleOsmNode(long osmNodeId) {
-    osmNodes.put(osmNodeId, null);
-  }
 
-  /** Collect an OSM node
-   * @param osmNodeId to collect
-   * @return osm node, null if not present
+  /**
+   * Access to OSM node data
+   * @return OSM node data
    */
-  public OsmNode getOsmNode(long osmNodeId) {
-    return osmNodes.get(osmNodeId);
-  }  
-  
-  /** Verify if OSM node itself is registered and available
-   * @param osmNodeId to verify
-   * @return true when available, false otherwise
-   */
-  public boolean containsOsmNode(long osmNodeId) {
-    return getOsmNode(osmNodeId)!=null;
-  }
-
-  /** Verify if OSM node pre-registered while actual node may not yet be available
-   * @param osmNodeId to verify
-   * @return true when pre-registered, false otherwise
-   */
-  public boolean containsPreRegisteredOsmNode(long osmNodeId) {
-    return osmNodes.containsKey(osmNodeId);
+  public OsmNodeData getOsmNodeData(){
+  return osmNodeData;
   }
 
   /** collect the identified circular ways (unmodifiable)

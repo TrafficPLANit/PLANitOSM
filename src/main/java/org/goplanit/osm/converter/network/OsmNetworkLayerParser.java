@@ -159,7 +159,7 @@ public class OsmNetworkLayerParser {
   private void registerLinkInternalOsmNodes(Link link, int startIndex, int endIndex, OsmWay osmWay){
     /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
     for(int internalLocationIndex = startIndex; internalLocationIndex <= endIndex;++internalLocationIndex) {
-      OsmNode osmnode = networkData.getOsmNode(osmWay.getNodeId(internalLocationIndex));
+      OsmNode osmnode = networkData.getOsmNodeData().getRegisteredOsmNode(osmWay.getNodeId(internalLocationIndex));
       if(osmnode != null) {
         layerData.registerOsmNodeAsInternalToPlanitLink(osmnode,link);
       }else {
@@ -272,7 +272,6 @@ public class OsmNetworkLayerParser {
    *  
    * @param osmWay the tags belong to
    * @param tags of the OSM way to extract the link segment type for
-   * @param direction information already extracted from tags
    * @param linkSegmentType use thus far for this way
    * @return the link segment types for the main direction and contra-flow direction
    */  
@@ -339,7 +338,7 @@ public class OsmNetworkLayerParser {
    * @throws PlanItException throw if error
    */
   private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) throws PlanItException {
-    LineString lineString = OsmWayUtils.extractLineStringNoThrow(osmWay, startNodeIndex, endNodeIndex, networkData.getRegisteredOsmNodes());
+    LineString lineString = OsmWayUtils.extractLineStringNoThrow(osmWay, startNodeIndex, endNodeIndex, networkData.getOsmNodeData().getRegisteredOsmNodes());
     lineString = PlanitJtsUtils.createCopyWithoutAdjacentDuplicateCoordinates(lineString);
     
     return lineString;
@@ -584,7 +583,7 @@ public class OsmNetworkLayerParser {
   private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, Integer startNodeIndex, boolean changeStartNodeIndexIfNotPresent){
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
     if(nodeFirst==null && changeStartNodeIndexIfNotPresent) {
-      startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getRegisteredOsmNodes());
+      startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(startNodeIndex!=null) {
         nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
         if(nodeFirst!= null && !isNearNetworkBoundingBox(nodeFirst.getPosition(), geoUtils)) {       
@@ -611,7 +610,7 @@ public class OsmNetworkLayerParser {
   private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, final Integer startNodeIndex, Integer endNodeIndex, boolean changeEndNodeIndexIfNotPresent){    
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
     if(nodeLast==null && changeEndNodeIndexIfNotPresent) {
-      endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getRegisteredOsmNodes());
+      endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(endNodeIndex != null) {
         nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
         if(nodeLast!= null && !isNearNetworkBoundingBox(nodeLast.getPosition(), geoUtils)) {
@@ -635,7 +634,7 @@ public class OsmNetworkLayerParser {
   private Node extractNode(final long osmNodeId){    
     
     /* osm node */
-    OsmNode osmNode = networkData.getOsmNode(osmNodeId);
+    OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);
     if(osmNode == null) {
       return null;
     }
@@ -784,7 +783,7 @@ public class OsmNetworkLayerParser {
    */ 
   protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
     
-    Point osmNodeLocation = OsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getRegisteredOsmNodes());
+    Point osmNodeLocation = OsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodeData().getRegisteredOsmNodes());
     if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
       /* links to break */
       List<Link> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);

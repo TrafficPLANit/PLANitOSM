@@ -86,7 +86,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     
     boolean wronglyTaggedRole = false;
     if(member.getType() == EntityType.Node) {
-      OsmNode osmNode = getNetworkToZoningData().getRegisteredOsmNode(member.getId());
+      OsmNode osmNode = getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNode(member.getId());
       if(osmNode == null) {
         /* node not available, likely outside bounding box, since unknown we cannot claim it is wrongly tagged */
         return false;
@@ -356,10 +356,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(member.getType() == EntityType.Node) {
             
       /* collect osm node */
-      OsmNode osmNode = getNetworkToZoningData().getRegisteredOsmNode(member.getId());
+      OsmNode osmNode = getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNode(member.getId());
       if(osmNode == null) {
         if(!getSettings().hasBoundingPolygon()) {
-          LOGGER.warning(String.format("DISCARD: Unable to collect OSM node %d referenced in stop_area %d, verify it lies outside the parsed area", member.getId(), osmRelation.getId()));
+          LOGGER.warning(String.format("DISCARD: Unable to collect OSM node %d (without role tag) referenced in stop_area %d, verify it lies outside the parsed area", member.getId(), osmRelation.getId()));
         }
         return;
       }
@@ -1088,8 +1088,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
     /* When earmarked to be needed by PT OSM ways/relations during pre-processing but not yet fully registered, we now register the entire node in memory for OSM way/relations/node
      *  handling during main process */
-    if(getNetworkToZoningData().isPreRegisteredOsmNode(osmNode.getId()) && !getNetworkToZoningData().containsOsmNode(osmNode.getId())){
-      getNetworkToZoningData().registerEligibleOsmNode(osmNode);
+    var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
+    if(osmNodeData.containsPreregisteredOsmNode(osmNode.getId()) && !osmNodeData.containsOsmNode(osmNode.getId())){
+      osmNodeData.registerEligibleOsmNode(osmNode);
     }
   }
 

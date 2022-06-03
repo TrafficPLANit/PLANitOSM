@@ -66,52 +66,6 @@ public class OsmNetworkToZoningReaderData {
     return data;
   }
 
-  /** Pre-register an OSM node for future population with the actual node contents (see {@link #registerEligibleOsmNode(OsmNode)}
-   * @param osmNodeId to pre-register
-   */
-  public void preRegisterEligibleOsmNode(long osmNodeId) {
-    networkData.preRegisterEligibleOsmNode(osmNodeId);
-  }
-
-  /** Add the actual OSM node to an already eligible marked OSM node entry
-   * @param osmNode to register
-   */
-  public void registerEligibleOsmNode(OsmNode osmNode) {
-    networkData.registerEligibleOsmNode(osmNode);
-  }
-
-  /** Verify if OSM node pre-registered while actual node may not yet be available
-   * @param osmNodeId to verify
-   * @return true when pre-registered, false otherwise
-   */
-  public boolean isPreRegisteredOsmNode(long osmNodeId) {
-    return networkData.containsPreRegisteredOsmNode(osmNodeId);
-  }
-
-  /** Verify if OSM node itself is registered and available
-   * @param osmNodeId to verify
-   * @return true when available, false otherwise
-   */
-  public boolean containsOsmNode(long osmNodeId) {
-    return networkData.containsOsmNode(osmNodeId);
-  }
-
-  /** Collect an OSM node
-   * @param osmNodeId to collect
-   * @return osm node, null if not present
-   */
-  public OsmNode getRegisteredOsmNode(long osmNodeId) {
-    return networkData.getOsmNode(osmNodeId);
-  }
-
-  /** Collect the OSM nodes (unmodifiable)
-   *
-   * @return registered OSM nodes
-   */
-  public Map<Long,OsmNode> getRegisteredOsmNodes() {
-    return networkData.getRegisteredOsmNodes();
-  }
-
   /** collect the bounding box of the network that is parsed
    * 
    * @return network bounding box

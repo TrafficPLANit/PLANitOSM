@@ -1,12 +1,9 @@
 package org.goplanit.osm.converter.zoning;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmPtVersionScheme;
 import org.goplanit.utils.misc.Pair;
@@ -49,8 +46,19 @@ public class OsmZoningReaderOsmData {
   /** osm waiting areas (platform, poles) found to be valid but not mapped to a planit mode, used to avoid logging user warnings when referenced by other 
    * osm entities such as stop_areas */  
   private final Map<EntityType, Set<Long>> waitingAreaWithoutMappedPlanitMode = new TreeMap<EntityType, Set<Long>>();
-      
-    
+
+  /** temporary storage of osmNodes before converting the useful ones to actual nodes */
+  private final OsmNodeData osmNodeData = new OsmNodeData();
+
+
+  /**
+   * Access to OSM node data
+   * @return OSM node data
+   */
+  public OsmNodeData getOsmNodeData(){
+    return osmNodeData;
+  }
+
   /* UNPROCESSED RELATED METHODS */  
 
   /** Collect an unprocessed station if it exists
@@ -337,6 +345,7 @@ public class OsmZoningReaderOsmData {
     osmOuterRoleOsmWaysToKeep.clear();
     waitingAreaWithoutMappedPlanitMode.clear();    
     ignoreStopAreaStopPositions.clear();
+    osmNodeData.reset();
   }
 
 

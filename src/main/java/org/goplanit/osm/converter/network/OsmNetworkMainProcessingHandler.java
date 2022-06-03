@@ -63,7 +63,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       
       /* only process circular ways that are complete, e.g. not near bounding box causing some nodes to be missing
        * in which case we do not parse the entire circular way to avoid issues */
-      if(!OsmWayUtils.isAllOsmWayNodesAvailable(circularOsmWay, getNetworkData().getRegisteredOsmNodes())){
+      if(!OsmWayUtils.isAllOsmWayNodesAvailable(circularOsmWay, getNetworkData().getOsmNodeData().getRegisteredOsmNodes())){
         return;
       }
       
@@ -87,7 +87,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param circularOsmWay to process
    * @param osmWayTags tags of the way
    * @param initialNodeIndex offset for starting point, part of the recursion
-   * @param finalNodeIndex offset of the final point, part of the recursion
    * @return set of created links per layer for this circular way if any, empty set if none
    * @throws PlanItException thrown if error
    */
@@ -229,7 +228,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       
       /* possibly no links created, for example when circular way is not of a viable type, or access is private, or some other valid reason*/
       if(createdLinkByLayer != null) {
-        createdLinkByLayer.forEach( (layer, link) -> { createdLinksByLayer.get(layer).add(link);} );
+        createdLinkByLayer.forEach( (layer, link) -> createdLinksByLayer.get(layer).add(link));
       }
     }
     return createdLinksByLayer;    

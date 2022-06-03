@@ -21,7 +21,7 @@ public class OsmZoningReaderData {
   
   /* UNPROCESSED OSM */
   
-  /* planit entity related tracking during parsing */
+  /* PLANit entity related tracking during parsing */
   OsmZoningReaderPlanitData planitData = new OsmZoningReaderPlanitData();
   
   /* osm entity related tracking during parsing */

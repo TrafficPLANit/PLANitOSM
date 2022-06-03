@@ -12,8 +12,8 @@ import org.goplanit.osm.tags.*;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
-import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.util.OsmPtVersionScheme;
+import org.goplanit.utils.misc.StringUtils;
 
 /**
  * Handler that is applied before we conduct the actual handling of the zones by exploring the OSM relations
@@ -68,7 +68,8 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
       preserveOuterRole = true;
     }else if( tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) &&
             tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
-      /* alternatively mark relations that represent a complex platform to keep the outer role geometry to be parsed */        getProfiler().incrementPlatformRelationCounter();
+      /* alternatively mark relations that represent a complex platform to keep the outer role geometry to be parsed */
+      getProfiler().incrementPlatformRelationCounter();
       preserveOuterRole = true;
     }
 
@@ -99,7 +100,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    */
   private void preRegisterPtNodes(final OsmWay osmWay) {
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-      getNetworkToZoningData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+      getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
     }
   }
 
@@ -122,10 +123,34 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * @param osmPtVersionScheme to use
    * @param tags tags
    */
-  private void identifyEligiblePublicTransportNodes(OsmWay osmWay, OsmPtVersionScheme osmPtVersionScheme, Map<String, String> tags) {
+  private void preRegisterEligiblePtNodesOfWay(OsmWay osmWay, OsmPtVersionScheme osmPtVersionScheme, Map<String, String> tags) {
     // all nodes of eligible OSM ways are to be pre-registered for in-memory storage during main pass
     preRegisterPtNodes(osmWay);
   }
+
+  private void preRegisterEligiblePtNodesOfRelation(OsmRelation osmRelation, Map<String, String> stringStringMap) {
+
+    for(int index = 0 ;index < osmRelation.getNumberOfMembers() ; ++index) {
+      OsmRelationMember member = osmRelation.getMember(index);
+
+      if (skipOsmPtEntity(member)) {
+        continue;
+      }
+
+      if (member.getType().equals(EntityType.Node) && StringUtils.isNullOrBlank(member.getRole())) {
+        // node member without role, but possibly  representing a platform, pole, or other supported infrastructure
+        // so pre-register for retaining in memory such that it accessible in main pass when revisiting/salvaging by inferring role
+        // based on underlying tagging
+        getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(member.getId());
+      }
+
+      /* platform */
+      if (member.getRole().equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+
+      }
+    }
+  }
+
 
   /**
    * Constructor
@@ -161,7 +186,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
     identifyPlatformOuterRoleNodes(osmWay);
 
     /* regular OSM way handling of eligible PT identified OSM ways */
-    wrapHandlePtOsmWay(osmWay, this::identifyEligiblePublicTransportNodes);
+    wrapHandlePtOsmWay(osmWay, this::preRegisterEligiblePtNodesOfWay);
 
   }
 
@@ -177,10 +202,10 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
     }
 
     /* delegate to identifyPlatformAsRelation when eligible */
-    //TODO: pre-register ALL public transport tagged nodes within an eligible osm relation for
-    // pre-registration (NOT ON NETWORK DATA BUT ON PT DATA -> NEW), -> see if the same is needed for
-    // the PT OSM way registered nodes? -> then they should be registered in main pass of zoning handler so they are available
     wrapHandlePtOsmRelation(osmRelation, this::identifyPlatformAsRelation);
+
+    /* delegate to identify OSM nodes to be collected in memory for when processing relations they are contained in later on */
+    wrapHandlePtOsmRelation(osmRelation, this::preRegisterEligiblePtNodesOfRelation);
   }
 
 
