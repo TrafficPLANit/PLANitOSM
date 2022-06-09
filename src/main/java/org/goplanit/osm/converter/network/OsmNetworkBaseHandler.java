@@ -32,7 +32,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   
   /**
    * Constructor
-   * 
+   *
+   * @param networkData to use
    * @param settings for the handler
    */
   protected OsmNetworkBaseHandler(final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {

@@ -1065,7 +1065,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   /**
    * Call this before we parse the OSM network to initialise the handler properly
    * 
-   * @throws PlanItException thrown if error
    */
   public void initialiseBeforeParsing(){
     reset();

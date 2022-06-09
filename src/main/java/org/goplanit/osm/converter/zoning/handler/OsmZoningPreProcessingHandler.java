@@ -157,6 +157,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
+   * @param stage indicating what stage this pre-processing is in.Depending on the stage different pre-processing actinos are undertaken
    * @param profiler to use
    */
   public OsmZoningPreProcessingHandler(final OsmPublicTransportReaderSettings transferSettings, OsmZoningReaderData zoningReaderData, Stage stage, OsmZoningHandlerProfiler profiler) {
