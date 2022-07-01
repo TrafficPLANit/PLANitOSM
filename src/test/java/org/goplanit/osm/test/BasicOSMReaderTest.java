@@ -38,6 +38,20 @@ public class BasicOSMReaderTest {
   private static final String SYDNEYCBD_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm.pbf");
   
   private static final String EXAMPLE_REMOTE_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
+
+  /** configure for parsing road and pt infrastructure networks
+   *
+   * @param osmReader to configure
+   */
+  private void configureForRoadAndPt(final OsmIntermodalReader osmReader){
+    /* test out excluding a particular type highway:road from parsing */
+    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+
+    /* activate railways */
+    osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
+  }
   
   @BeforeClass
   public static void setUp() throws Exception {
@@ -79,6 +93,8 @@ public class BasicOSMReaderTest {
       fail();      
     }
   }
+
+
   
   /**
    * test *.osm format parsing on small network collecting both road, rail AND stops, platforms, stations, e.g. inter-modal support
@@ -87,15 +103,8 @@ public class BasicOSMReaderTest {
   public void osmReaderRoadAndPtTest() {
     try {
       OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
-      
-      /* test out excluding a particular type highway:road from parsing */
-      osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-      osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-      osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
-      
-      /* activate railways */
-      osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
-                  
+      configureForRoadAndPt(osmReader);
+
       Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = resultPair.first();
       Zoning zoning = resultPair.second();
@@ -115,8 +124,8 @@ public class BasicOSMReaderTest {
       e.printStackTrace();
       fail();      
     }
-  }  
-  
+  }
+
   /**
    * test *.osm.pbf format parsing on small network
    */
@@ -131,7 +140,32 @@ public class BasicOSMReaderTest {
       e.printStackTrace();
       fail();
     }
-  }  
+  }
+
+  /**
+   * test *.pbf format parsing on small network collecting both road, rail AND stops, platforms, stations, e.g. inter-modal support as well
+   * as the GTFS infusion. Predicated on the assumption that {@link #osmReaderRoadAndPtTest()} succeeds
+   */
+  @Test
+  public void osmReaderRoadAndPtAndGtfsTest() {
+    try {
+      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_PBF, CountryNames.AUSTRALIA);
+      configureForRoadAndPt(osmReader);
+
+      /* GTFS configuration */
+      //TODO
+
+      Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
+      MacroscopicNetwork network = resultPair.first();
+      Zoning zoning = resultPair.second();
+
+
+    }catch(Exception e) {
+      LOGGER.severe(e.getMessage());
+      e.printStackTrace();
+      fail();
+    }
+  }
   
   /**
    * test if we can parse from cloud based URL instead of local fule

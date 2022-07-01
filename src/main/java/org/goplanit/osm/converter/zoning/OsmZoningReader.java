@@ -160,9 +160,6 @@ public class OsmZoningReader implements ZoningReader {
     LOGGER.info("Pre-processing: Identifying OSM nodes for public transport");
     preProcessPtNodePreregistration(profiler);
 
-    //TODO: continue here -> do another pass where we identify the nodes of the platform relation ways and pre-register them using the
-    // base handler wrapping method with triconsumer
-        
   }  
   
   /**

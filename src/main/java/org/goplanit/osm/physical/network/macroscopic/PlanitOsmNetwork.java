@@ -177,7 +177,14 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       /* collect and register mode properties */
       linkSegmentType = typesPerLayer.get(networkLayer);
       double cappedMaxSpeed = Math.min(maxSpeed, mode.getMaximumSpeedKmH());
-      AccessGroupPropertiesFactory.createOnLinkSegmentType(linkSegmentType, mode, cappedMaxSpeed);      
+
+      var accessGroupProperties = AccessGroupPropertiesFactory.create(cappedMaxSpeed, mode);
+      var matchedExistingAccessGroupProperties = linkSegmentType.findEqualAccessPropertiesForAnyMode(accessGroupProperties);
+      if(matchedExistingAccessGroupProperties != null){
+        linkSegmentType.registerModeOnAccessGroup(mode, matchedExistingAccessGroupProperties);
+      }else {
+        linkSegmentType.setAccessGroupProperties(accessGroupProperties);
+      }
     }
     return typesPerLayer;
   }  

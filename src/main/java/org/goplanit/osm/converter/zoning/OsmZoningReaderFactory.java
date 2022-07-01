@@ -25,7 +25,7 @@ public class OsmZoningReaderFactory {
    * @throws PlanItException thrown if error 
    */
   public static OsmZoningReader create(Zoning zoningToPopulate) throws PlanItException {
-    PlanItException.throwIfNull(zoningToPopulate, "no zoning instance provided to OSM zoning reader factory method");
+    PlanItException.throwIfNull(zoningToPopulate, "No zoning instance provided to OSM zoning reader factory method");
     return create(new OsmPublicTransportReaderSettings(), zoningToPopulate);    
   }   
     
@@ -36,7 +36,7 @@ public class OsmZoningReaderFactory {
    * @throws PlanItException thrown if error
    */
   public static OsmZoningReader create(OsmPublicTransportReaderSettings settings) throws PlanItException {
-    PlanItException.throwIfNull(settings, "no settings instance provided to OSM zoning reader factory method");
+    PlanItException.throwIfNull(settings, "No settings instance provided to OSM zoning reader factory method");
     PlanItException.throwIfNull(settings.getReferenceNetwork(),"Unable to initialise OSM zoning reader, network not available to base zoning instance from");
     return create(settings, new Zoning(settings.getReferenceNetwork().getIdGroupingToken(),settings.getReferenceNetwork().getNetworkGroupingTokenId()));    
   }  

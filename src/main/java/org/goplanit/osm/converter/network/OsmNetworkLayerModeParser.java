@@ -462,9 +462,9 @@ public class OsmNetworkLayerModeParser extends OsmModeHelper {
   /** Collect explicitly excluded modes from the passed in tags. Given the many ways this can be tagged we distinguish between:
    * 
    * <ul>
-   * <li>mode exclusions agnostic to the way being tagged as oneway or not {@link getExplicitlyExcludedModesOneWayAgnostic}</li>
-   * <li>mode exclusions when way is tagged as oneway and exploring the one way direction {@link getExplicitlyExcludedModesOneWayMainDirection}</li>
-   * <li>mode exclusions when way is tagged as oneway and exploring the opposite direction of oneway direction {@link getExplicitlyExcludedModesOneWayOppositeDirection}</li>
+   * <li>mode exclusions agnostic to the way being tagged as oneway or not {@link #getExplicitlyExcludedModesOneWayAgnostic(Map, boolean, OsmNetworkReaderSettings)}</li>
+   * <li>mode exclusions when way is tagged as oneway and exploring the one way direction {@link #getExplicitlyExcludedModesOneWayMainDirection(Map)}</li>
+   * <li>mode exclusions when way is tagged as oneway and exploring the opposite direction of oneway direction {@link #getExplicitlyExcludedModesOneWayOppositeDirection()}</li>
    * </ul>
    * 
    * 

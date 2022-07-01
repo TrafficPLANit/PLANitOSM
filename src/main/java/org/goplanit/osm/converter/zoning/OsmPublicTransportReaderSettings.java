@@ -20,7 +20,7 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
 /**
  * Capture all the user configurable settings regarding how to
  * parse (if at all) (public transport) transfer infrastructure such as stations, poles, platforms, and other
- * stop and tranfer related infrastructure 
+ * stop and transfer related infrastructure
  * 
  * @author markr
  *

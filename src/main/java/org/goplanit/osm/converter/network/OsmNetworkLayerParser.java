@@ -120,31 +120,56 @@ public class OsmNetworkLayerParser {
   private MacroscopicLinkSegmentType updateExistingLinkSegmentType(
       final Set<Mode> toBeAddedModes, final Set<Mode> toBeRemovedModes, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType){
     
-    MacroscopicLinkSegmentType finalLinkSegmentType = linkSegmentType;
-    if(!toBeAddedModes.isEmpty() || !toBeRemovedModes.isEmpty()) {
-      
-      finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
-      if(finalLinkSegmentType==null) {
-        
-        /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-        finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().createUniqueCopyOf(linkSegmentType);
-        networkLayer.getLinkSegmentTypes().register(finalLinkSegmentType);
-        /* XML id */
-        finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
-        
-        /* update mode properties */
-        if(!toBeAddedModes.isEmpty()) {
-          double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);          
-          AccessGroupPropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, osmWayTypeMaxSpeed, toBeAddedModes);
+    if(toBeAddedModes.isEmpty() && toBeRemovedModes.isEmpty()) {
+      return linkSegmentType;
+    }
+
+    if(linkSegmentType.getAllowedModes().size() + toBeAddedModes.size() - toBeRemovedModes.size() <= 0){
+      return linkSegmentType;
+    }
+
+    MacroscopicLinkSegmentType finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
+    if(finalLinkSegmentType==null) {
+
+      /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
+      finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().createUniqueCopyOf(linkSegmentType);
+      networkLayer.getLinkSegmentTypes().register(finalLinkSegmentType);
+      /* XML id */
+      finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
+
+      final String MODIFIED = "_modified";
+      /* External id */
+      if(finalLinkSegmentType.hasExternalId()) {
+        finalLinkSegmentType.setExternalId(finalLinkSegmentType.getExternalId() + MODIFIED);
+      }
+
+      /* name */
+      if(finalLinkSegmentType.hasName()) {
+        finalLinkSegmentType.setExternalId(finalLinkSegmentType.getName() + MODIFIED);
+      }
+
+      /* update mode properties */
+      if(!toBeAddedModes.isEmpty()) {
+        double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);
+        for(var newMode: toBeAddedModes) {
+          double modeMaxSpeedOnLinkType = Math.min(newMode.getMaximumSpeedKmH(),osmWayTypeMaxSpeed);
+          var accessGroup = AccessGroupPropertiesFactory.create(modeMaxSpeedOnLinkType, newMode);
+          var matchedGroup = linkSegmentType.findEqualAccessPropertiesForAnyMode(accessGroup);
+          if(matchedGroup != null){
+            finalLinkSegmentType.registerModeOnAccessGroup(newMode, accessGroup);
+          }else {
+            AccessGroupPropertiesFactory.createOnLinkSegmentType(finalLinkSegmentType, newMode, modeMaxSpeedOnLinkType);
+          }
         }
-        if(!toBeRemovedModes.isEmpty()) {
-          finalLinkSegmentType.removeModeAccess(toBeRemovedModes);
-        }
-        
-        /* register modification */
-        modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
-      }      
-    }       
+
+      }
+      if(!toBeRemovedModes.isEmpty()) {
+        finalLinkSegmentType.removeModeAccess(toBeRemovedModes);
+      }
+
+      /* register modification */
+      modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
+    }
     
     return finalLinkSegmentType;
   }  
@@ -321,7 +346,7 @@ public class OsmNetworkLayerParser {
       toBeAddedModes = linkSegmentType.getDisallowedModesFrom(includedModes);
       toBeRemovedModes = linkSegmentType.getAllowedModesFrom(excludedModes);        
     }
-      
+
     /* use the identified changes to the modes to update the link segment type (and register it if needed) */
     MacroscopicLinkSegmentType finalLinkSegmentType = updateExistingLinkSegmentType(toBeAddedModes, toBeRemovedModes, tags, linkSegmentType);
     return finalLinkSegmentType;
@@ -692,15 +717,7 @@ public class OsmNetworkLayerParser {
     boolean forwardDirection = true;
     MacroscopicLinkSegmentType  forwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, forwardDirection);
     MacroscopicLinkSegmentType  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
-    
-    /* reset when no modes are available, in which case no link segment should be created for the direction */
-    if(!forwardDirectionLinkSegmentType.hasAllowedModes()) {
-      forwardDirectionLinkSegmentType = null;
-    }
-    if(!backwardDirectionLinkSegmentType.hasAllowedModes()) {
-      backwardDirectionLinkSegmentType = null;
-    }    
-        
+
     return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
   }    
   

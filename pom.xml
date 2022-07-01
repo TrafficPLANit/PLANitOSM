@@ -31,9 +31,14 @@
 	<dependencies>
 	
 	   <dependency>
-        <groupId>org.goplanit</groupId>
-        <artifactId>planit-core</artifactId>
-    </dependency> 
+			<groupId>org.goplanit</groupId>
+			<artifactId>planit-core</artifactId>
+	   </dependency>
+
+		<dependency>
+			<groupId>org.goplanit.gtfs</groupId>
+			<artifactId>planit-gtfs</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.geotools</groupId>

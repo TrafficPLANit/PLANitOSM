@@ -38,7 +38,7 @@ public class OsmIntermodalReader implements IntermodalReader {
   private Zoning zoningToPopulate;
        
     
-  /** make sure settings are consistent for those properties that are assumed to be
+  /** Make sure settings are consistent for those properties that are assumed to be
    * 
    * @return true when valid, false otherwise
    */
