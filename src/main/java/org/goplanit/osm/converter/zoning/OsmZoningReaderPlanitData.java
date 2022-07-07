@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.geo.GeoContainerUtils;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
@@ -48,7 +49,7 @@ public class OsmZoningReaderPlanitData {
   private final Map<EntityType, Map<Long, TransferZone>> transferZonesByOsmEntityId = new TreeMap<EntityType,Map<Long,TransferZone>>();
   
   /** in addition to tracking transfer zones by their Osm entity id, we also track them spatially, to be able to map them to close by stop positions if needed */  
-  private final Map<EntityType, Quadtree> transferZonesBySpatialIndex = new TreeMap<EntityType, Quadtree>();
+  private final Map<EntityType, Quadtree> transferZonesBySpatialIndex = new TreeMap<>();
     
   /* OSM <-> CONNECTOID TRACKING */
   
@@ -78,11 +79,11 @@ public class OsmZoningReaderPlanitData {
    * @param osmNetwork to use
    */
   protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
-    Collection<Links> linksCollection = new ArrayList<Links>();
+    Collection<Links> linksCollection = new ArrayList<>();
     for(MacroscopicNetworkLayer layer : osmNetwork.getTransportLayers()) {
       linksCollection.add(layer.getLinks());
     }
-    spatiallyIndexedPlanitLinks = PlanitGraphGeoUtils.createSpatiallyIndexedPlanitEdges(linksCollection);
+    spatiallyIndexedPlanitLinks = GeoContainerUtils.toGeoIndexed(linksCollection);
   }
       
         
@@ -156,10 +157,10 @@ public class OsmZoningReaderPlanitData {
   public Collection<TransferZone> getTransferZonesSpatially(Envelope boundingBox) {
     
     final Set<TransferZone> correctZones = new HashSet<TransferZone>();
-    final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor = 
-        new PlanitJtsIntersectZoneVisitor<TransferZone>(PlanitJtsUtils.create2DPolygon(boundingBox), correctZones);          
+    final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor =
+            new PlanitJtsIntersectZoneVisitor<>(PlanitJtsUtils.create2DPolygon(boundingBox), correctZones);
     
-    /* query the spatially indexed entries AND apply the visitor that filteres out false positives due to the coarseness of the quadtrees grid */
+    /* query the spatially indexed entries AND apply the visitor that filters out false positives due to the coarseness of the quadtrees grid */
     for( Entry<EntityType, Quadtree> entry : transferZonesBySpatialIndex.entrySet()) {
       transferZonesBySpatialIndex.get(entry.getKey()).query(boundingBox, spatialZoneFilterVisitor);
     }
@@ -175,7 +176,7 @@ public class OsmZoningReaderPlanitData {
    * @return previous entry in container, if any
    */
   public TransferZone addTransferZoneByOsmId(EntityType entityType, long osmEntityId, TransferZone transferZone) {
-    transferZonesByOsmEntityId.putIfAbsent(entityType, new HashMap<Long,TransferZone>());
+    transferZonesByOsmEntityId.putIfAbsent(entityType, new HashMap<>());
     transferZonesBySpatialIndex.putIfAbsent(entityType, new Quadtree());    
     
     /* spatial index */
@@ -348,7 +349,7 @@ public class OsmZoningReaderPlanitData {
    * @return links found intersecting or within bounding box provided
    */
   public Collection<Link> findLinksSpatially(Envelope searchBoundingBox) {
-    return PlanitGraphGeoUtils.<Link>findEdgesSpatially(searchBoundingBox,spatiallyIndexedPlanitLinks);    
+    return PlanitGraphGeoUtils.findEdgesSpatially(searchBoundingBox,spatiallyIndexedPlanitLinks);
   }
   
 

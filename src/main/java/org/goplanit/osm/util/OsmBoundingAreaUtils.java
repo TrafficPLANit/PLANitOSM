@@ -156,8 +156,8 @@ public class OsmBoundingAreaUtils {
    * @return bounding box
    */
   public static Envelope createBoundingBox(OsmNode osmNode, double offsetInMeters, PlanitJtsCrsUtils geoUtils) {
-    double xCoord = OsmNodeUtils.getX(((OsmNode)osmNode));
-    double yCoord = OsmNodeUtils.getY(((OsmNode)osmNode));
+    double xCoord = OsmNodeUtils.getX(osmNode);
+    double yCoord = OsmNodeUtils.getY(osmNode);
     return geoUtils.createBoundingBox(xCoord, yCoord, offsetInMeters);
   }  
  
