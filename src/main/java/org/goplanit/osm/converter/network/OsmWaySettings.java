@@ -49,19 +49,19 @@ public abstract class OsmWaySettings {
   
   /* mode mapping */
     
-  /** mapping from each supported osm mode to a PLANit mode on this instance */
-  private  final Map<String, Mode> activatedOsmMode2PlanitModeMap = new HashMap<String, Mode>();
+  /** mapping from each supported OSM mode to a PLANit mode on this instance */
+  private  final Map<String, Mode> activatedOsmMode2PlanitModeMap = new HashMap<>();
   
   /** Default mapping (specific to this network) from each supported OSM mode to an available PLANit mode. Can be used
    * to re-activate OSM modes if needed */
-  private  final Map<String, Mode> defaultOsmMode2PlanitModeMap= new HashMap<String, Mode>();  
+  private  final Map<String, Mode> defaultOsmMode2PlanitModeMap= new HashMap<>();
   
   /* overwriting of defaults */
   
   /**
    * track overwrite values for OSM way types where we want different defaults for capacity and max density
    */
-  protected final Map<String, Pair<Double,Double>> overwriteOsmWayTypeCapacityDensityDefaults = new HashMap<String, Pair<Double,Double>>();
+  protected final Map<String, Pair<Double,Double>> overwriteOsmWayTypeCapacityDensityDefaults = new HashMap<>();
     
   /* other */
 
@@ -100,7 +100,7 @@ public abstract class OsmWaySettings {
         /* first */
         planitMode.setExternalId(planitMode.getExternalId().substring(startIndex+osModeId.length()));
       }else {
-        /* not first, so preceded by underscore "*_<name>" */
+        /* not first, so preceded by another" */
         String before = planitMode.getExternalId().substring(0,startIndex-1);
         String after = planitMode.getExternalId().substring(startIndex+osModeId.length());
         planitMode.setExternalId(before.concat(after));
@@ -111,7 +111,6 @@ public abstract class OsmWaySettings {
   /**
    * explicitly exclude all osmWay type:value in case none of the passed in osmModes is marked as mapped
    * 
-   * @param osmWayKey to check
    * @param osmWayValue to check
    * @param osmModes of which at least one should be active on the key:value pair
    */
@@ -270,7 +269,7 @@ public abstract class OsmWaySettings {
       activateOsmWayType(osmWayType);
     }
     overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.of(capacityPerLanePerHour,maxDensityPerLane));
-    LOGGER.info(String.format("overwriting defaults for osm road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
+    LOGGER.info(String.format("Overwriting defaults for osm road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
   }          
   
   /**
@@ -343,11 +342,11 @@ public abstract class OsmWaySettings {
    */
   protected void setOsmMode2PlanitModeMapping(String osmMode, Mode planitMode) {
     if(osmMode == null) {
-      LOGGER.warning("osm mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode, ignored");
+      LOGGER.warning("OSM mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode, ignored");
       return;
     }
     if(planitMode == null) {
-      LOGGER.warning(String.format("planit mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode %s, ignored", osmMode));
+      LOGGER.warning(String.format("PLANit mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode %s, ignored", osmMode));
       return;
     }
     activatedOsmMode2PlanitModeMap.put(osmMode, planitMode);
@@ -361,10 +360,10 @@ public abstract class OsmWaySettings {
    */
   protected void deactivateOsmMode(String osmMode) {
     if(osmMode == null) {
-      LOGGER.warning("osm mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode, ignored");
+      LOGGER.warning("OSM mode is null, cannot deactivate, ignored");
       return;
     }
-    LOGGER.fine(String.format("osm mode %s is deactivated", osmMode));
+    LOGGER.fine(String.format("OSM mode %s is deactivated", osmMode));
     
     Mode planitMode = activatedOsmMode2PlanitModeMap.remove(osmMode);
     removeFromModeExternalId(planitMode,osmMode);
@@ -386,8 +385,8 @@ public abstract class OsmWaySettings {
    * @param remainingOsmRoadModes to explicitly keep from the osmModesToRemove
    */
   protected void deactivateAllModesExcept(final Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
-    Collection<String> remainingRoadModes = remainingOsmRoadModes==null ? new ArrayList<String>() : remainingOsmRoadModes;
-    Collection<String> finalToBeRemovedModes = new TreeSet<String>(toBeRemovedModes);
+    Collection<String> remainingRoadModes = remainingOsmRoadModes==null ? new ArrayList<>() : remainingOsmRoadModes;
+    Collection<String> finalToBeRemovedModes = new TreeSet<>(toBeRemovedModes);
     finalToBeRemovedModes.removeAll(remainingRoadModes);
     deactivateOsmModes(finalToBeRemovedModes);
   }     

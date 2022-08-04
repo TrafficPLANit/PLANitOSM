@@ -119,7 +119,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected boolean alwaysKeepLargestsubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
       
   /**
-   * conduct general initialisation for any instance of this class
+   * Conduct general initialisation for any instance of this class
    * 
    * @param planitModes to populate based on (default) mapping
    */
@@ -128,7 +128,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
       /* the default mapping from OSM modes to PLANit modes */
       initialiseDefaultMappingFromOsmModes2PlanitModes(planitModes);
     } catch (PlanItException e) {
-      LOGGER.severe("unable to create default supported and/or unsupported OSM link segment types for this network");
+      LOGGER.severe("Unable to create default supported and/or unsupported OSM mode mapping for this network");
     }     
   }
     
@@ -476,7 +476,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }  
   
   /** collect the size above which dangling networks are kept even if they are smaller than the largest connected network
-   * @return danlging network size
+   * @return dangling network size
    */
   public Integer getDiscardDanglingNetworkBelowSize() {
     return discardSubNetworkBelowSize;

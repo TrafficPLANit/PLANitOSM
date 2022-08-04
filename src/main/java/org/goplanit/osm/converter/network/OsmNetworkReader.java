@@ -327,7 +327,7 @@ public class OsmNetworkReader implements NetworkReader {
    * @return created network to zoning reader data to use
    */
   public OsmNetworkToZoningReaderData createNetworkToZoningReaderData() {
-    if(getSettings().getOsmNetworkToPopulate().getTransportLayers().isNoLayers() || getSettings().getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
+    if(getSettings().getOsmNetworkToPopulate().getTransportLayers().size()==0 || getSettings().getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
       LOGGER.warning("Can only perform network->zoning data transfer when network has been populated by OSM network reader, i.e., first invoke the read() method before this call");
       return null;
     }
