@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.intermodal.IntermodalReader;
 import org.goplanit.network.MacroscopicNetwork;
+import org.goplanit.network.ServiceNetwork;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
@@ -13,8 +14,11 @@ import org.goplanit.osm.converter.zoning.OsmZoningReader;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderFactory;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.PlanitZoningUtils;
+import org.goplanit.service.routed.RoutedServices;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.misc.Quadruple;
 import org.goplanit.zoning.Zoning;
 
 /**
@@ -218,6 +222,26 @@ public class OsmIntermodalReader implements IntermodalReader {
   @Override
   public OsmIntermodalReaderSettings getSettings() {
     return settings;
-  }  
-  
+  }
+
+  /**
+   * Currently no support for this yet on the OSM side. To be implemented in the future. For now services are to be sourced
+   * from GTFS and spliced into the OSM network
+   *
+   * @return false
+   */
+  @Override
+  public boolean supportServiceConversion() {
+    return false;
+  }
+
+  /**
+   * Currently no support yet for this feature
+   *
+   * @return created network, zoning, service network and services
+   */
+  @Override
+  public Quadruple<MacroscopicNetwork, Zoning, ServiceNetwork, RoutedServices> readWithServices() {
+    throw new PlanItRunTimeException("Support for service reader as part of Intermodal reader not yet supported in OSMIntermodalReader");
+  }
 }
