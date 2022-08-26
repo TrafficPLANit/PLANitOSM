@@ -46,7 +46,7 @@ public class OsmIntermodalReader implements IntermodalReader {
    * 
    * @return true when valid, false otherwise
    */
-  private boolean isSettingsValid() throws PlanItException {
+  private boolean isSettingsValid() {
     OsmNetworkReaderSettings networkSettings = getSettings().getNetworkSettings();
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     
@@ -242,6 +242,12 @@ public class OsmIntermodalReader implements IntermodalReader {
    */
   @Override
   public Quadruple<MacroscopicNetwork, Zoning, ServiceNetwork, RoutedServices> readWithServices() {
+
+    /* only proceed when configuration is valid */
+    if(!isSettingsValid()) {
+      return null;
+    }
+
     throw new PlanItRunTimeException("Support for service reader as part of Intermodal reader not yet supported in OSMIntermodalReader");
   }
 }
