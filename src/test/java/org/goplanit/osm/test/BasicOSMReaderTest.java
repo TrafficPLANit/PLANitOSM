@@ -112,7 +112,7 @@ public class BasicOSMReaderTest {
       assertNotNull(network);
       assertNotNull(zoning);
       
-      assertFalse(network.getTransportLayers().isNoLayers());
+      assertFalse(network.getTransportLayers().isEmpty());
       assertFalse(network.getTransportLayers().getFirst().isEmpty());
       assertTrue(zoning.getOdZones().isEmpty());
       assertFalse(zoning.getTransferZones().isEmpty());
