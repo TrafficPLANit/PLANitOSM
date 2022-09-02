@@ -279,7 +279,7 @@ public class PlanitTransferZoneUtils {
     LinearLocation projectedLinearLocationOnLink = null;
     EntityType transferZoneGeometryType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
     if(transferZoneGeometryType.equals(EntityType.Node)) {
-      projectedLinearLocationOnLink = geoUtils.getClosestProjectedLinearLocationOnGeometry((Point)transferZone.getGeometry(),accessEdge.getGeometry());
+      projectedLinearLocationOnLink = geoUtils.getClosestProjectedLinearLocationOnGeometry(((Point)transferZone.getGeometry()).getCoordinate(),accessEdge.getGeometry());
     }else if (transferZoneGeometryType.equals(EntityType.Way)){
       projectedLinearLocationOnLink = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(),accessEdge.getGeometry());
     }else {

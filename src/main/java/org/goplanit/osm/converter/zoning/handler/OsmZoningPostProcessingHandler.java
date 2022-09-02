@@ -337,7 +337,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           if( link.getGeometry().intersects(virtualInterSectionGeometryForParallelTracks)) {
             /* intersect so still possible */
             final LinearLocation closestLinkLinearLocation = getGeoUtils().getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(), link.getGeometry());
-            final Point closestLinkLocation = PlanitJtsUtils.createPoint(closestLinkLinearLocation.getCoordinate(link.getGeometry()));            
+            final var closestLinkLocation = closestLinkLinearLocation.getCoordinate(link.getGeometry());
             final double distanceStationToPotentialAccessLink = getGeoUtils().getClosestDistanceInMeters(closestLinkLocation, transferZone.getGeometry());
             if(distanceStationToPotentialAccessLink < getSettings().getStationToWaitingAreaSearchRadiusMeters()) {
               /* within distance set, so valid */

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
@@ -17,6 +18,8 @@ import org.locationtech.jts.geom.Point;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
+import static org.goplanit.utils.geo.PlanitEntityGeoUtils.findPlanitEntityClosest;
+
 /**
  * Utilities in relation to parsing OSM nodes while constructing a PLANit model from it
  * 
@@ -27,85 +30,7 @@ public class OsmNodeUtils {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmNodeUtils.class.getCanonicalName());
-  
-  /** find the closest distance to the node for some planit entity with a supported geometry from the provided collection.
-   * This method computes the actual distance between any location on any line segment of the (outer) boundary
-   * of the planit entities geometry (or its point location if no polygon/linestring is available) and the reference node and it is therefore very precise. 
-   * A cap is placed on how far a zone is allowed to be to still be regarded as closest via maxDistanceMeters.
-   * 
-   * @param osmNode reference node location
-   * @param planitEntities to check against using their geometries
-   * @param maxDistanceMeters maximum allowedDistance to be eligible
-   * @param geoUtils to compute projected distances
-   * @return planitEntity closest and distance in meters, null if none matches criteria
-   */
-  static <T> Pair<T, Double> findPlanitEntityClosest(OsmNode osmNode, Collection<? extends T> planitEntities, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils)  {
-    double minDistanceMeters = Double.POSITIVE_INFINITY;
-    double distanceMeters = minDistanceMeters;    
-    T closestEntity = null;         
-    for(T entity : planitEntities) {
-      /* supported planit entity types */
-      if(entity instanceof Zone) {
-        distanceMeters = getDistanceToZone(osmNode, (Zone)entity, geoUtils);
-      }else if(entity instanceof Edge) {
-        distanceMeters = getDistanceToEdge(osmNode, (Edge)entity, geoUtils);
-      }else {
-        LOGGER.warning(String.format("unsupported PLANit entity to compute closest distance to %s",entity.getClass().getCanonicalName()));
-      }      
-     
-      if(distanceMeters < minDistanceMeters) {
-        minDistanceMeters = distanceMeters;
-        if(minDistanceMeters < maxDistanceMeters) {
-          closestEntity = entity;
-        }
-      }      
-    }
-    
-    if(closestEntity!=null) {
-      return Pair.of(closestEntity, minDistanceMeters);
-    }
-    return null;
-  }
-  
-  
-  /** find the distance from the zone to the node. This method computes the actual distance between any location on any line segment of the outer boundary
-   * of the zones (or its centroid if no polygon/linestring is available) and the reference point and it is therefore very precise. 
-   * 
-   * @param osmNode used
-   * @param zone to check against using its geometry
-   * @param geoUtils to compute projected distances
-   * @return distance to zone, if not possible to compute positive infinity is returned
-   */
-  public static double getDistanceToZone(final OsmNode osmNode, final Zone zone, final PlanitJtsCrsUtils geoUtils) {
-    Point point = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));    
-    if(zone.hasGeometry()) {
-      return geoUtils.getClosestDistanceInMeters(point,zone.getGeometry());
-    }else if(zone.getCentroid().hasPosition()) {
-      return geoUtils.getDistanceInMetres(point.getCoordinate(), zone.getCentroid().getPosition().getCoordinate());
-    }else {
-      LOGGER.warning(String.format("Zone has no geographic information to determine closeness to osm entity %d",osmNode.getId()));
-    }
-    return Double.POSITIVE_INFINITY;
-  }
-  
-  /** find the distance from the edge to the point. This method computes the actual distance between any location on any line segment of the edge 
-   * and the reference node and it is therefore very precise. 
-   * 
-   * @param osmNode used
-   * @param edge to check against using its geometry
-   * @param geoUtils to compute projected distances
-   * @return distance to edge, if not possible to compute positive infinity is returned
-   */
-  static double getDistanceToEdge(final OsmNode osmNode, final Edge edge, final PlanitJtsCrsUtils geoUtils) {
-    Point point = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));
-    if(edge.hasGeometry()) {
-      return geoUtils.getClosestDistanceInMeters(point,edge.getGeometry());
-    }else {
-      LOGGER.warning(String.format("Edge has no geographic information to determine closeness to osm entity %d",osmNode.getId()));
-    }
-    return Double.POSITIVE_INFINITY;    
-  }  
-  
+
   /** Collect the coordinate from the osm node information
    * 
    * @param osmNode to use
@@ -188,7 +113,7 @@ public class OsmNodeUtils {
       double distanceMeters = Double.POSITIVE_INFINITY;
       if(zone.hasGeometry()) {
         Geometry zoneGeometry = zone.getGeometry();
-        distanceMeters = geoUtils.getClosestExistingCoordinateDistanceInMeters(point,zoneGeometry);
+        distanceMeters = geoUtils.getClosestExistingCoordinateDistanceInMeters(point.getCoordinate(),zoneGeometry);
       }else if(zone.getCentroid().hasPosition()) {
         distanceMeters = geoUtils.getDistanceInMetres(point.getCoordinate(), zone.getCentroid().getPosition().getCoordinate());
       }else {
@@ -205,6 +130,7 @@ public class OsmNodeUtils {
     }
     return closestZone;
   }
+
   
   /** find the closest zone to the node location. This method computes the actual distance between any location on any line segment of the outer boundary
    * of the zones (or its centroid if no polygon/linestring is available) and the reference point and it therefore very precise
@@ -230,7 +156,7 @@ public class OsmNodeUtils {
    * @return zone closest, null if none matches criteria
    */
   public static Zone findZoneClosest(final OsmNode osmNode, final Collection<? extends Zone> zones, double maxDistanceMeters, final PlanitJtsCrsUtils geoUtils) {
-    Pair<Zone,Double> result = findPlanitEntityClosest(osmNode, zones, maxDistanceMeters, geoUtils);
+    Pair<Zone,Double> result = findPlanitEntityClosest(OsmNodeUtils.createCoordinate(osmNode), zones, maxDistanceMeters, geoUtils);
     if(result!=null) {
       return result.first();
     }
@@ -246,8 +172,7 @@ public class OsmNodeUtils {
    * @throws PlanItException thrown if error
    */
   public static Coordinate findClosestProjectedCoordinateTo(OsmNode osmNode, LineString geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    Point osmNodeLocation = PlanitJtsUtils.createPoint(getX(osmNode), getY(osmNode));
-    return geoUtils.getClosestProjectedCoordinateOnLineString(osmNodeLocation, geometry);
+    return geoUtils.getClosestProjectedCoordinateOnLineString( OsmNodeUtils.createCoordinate(osmNode), geometry);
   }  
   
   /** Find the closest link to the node location. This method computes the actual distance between any location on any line segment of the geometry of the link
@@ -276,7 +201,7 @@ public class OsmNodeUtils {
    * @throws PlanItException thrown if error
    */  
   public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    Pair<Edge,Double> result = findPlanitEntityClosest(osmNode, edges, maxDistanceMeters, geoUtils);
+    Pair<Edge,Double> result = findPlanitEntityClosest( OsmNodeUtils.createCoordinate(osmNode), edges, maxDistanceMeters, geoUtils);
     if(result!=null) {
       return result.first();
     }

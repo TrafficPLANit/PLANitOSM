@@ -577,7 +577,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
   public Point findConnectoidLocationForstandAloneTransferZoneOnLink(TransferZone transferZone, Link accessLink, Mode accessMode, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayer networkLayer) {
 
     Coordinate closestExistingCoordinate = geoUtils.getClosestExistingLineStringCoordinateToGeometry(transferZone.getGeometry(), accessLink.getGeometry());
-    double distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestExistingCoordinate), transferZone.getGeometry());        
+    double distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(closestExistingCoordinate, transferZone.getGeometry());
     
     /* if close enough break at existing osm node to create stop_position/connectoid, otherwise create artificial non-osm node in closest projected location which
      * in most cases will be closer and within threshold */
@@ -628,7 +628,7 @@ public class ConnectoidHelper extends ZoningHelperBase {
       /* verify projected location is valid */
       Coordinate closestProjectedCoordinate = projectedLinearLocationOnLink.getCoordinate(accessLink.getGeometry());
       if( closestExistingCoordinate.equals2D(closestProjectedCoordinate) || 
-          geoUtils.getClosestDistanceInMeters(PlanitJtsUtils.createPoint(closestProjectedCoordinate), transferZone.getGeometry()) > maxAllowedStopToTransferZoneDistanceMeters) {
+          geoUtils.getClosestDistanceInMeters(closestProjectedCoordinate, transferZone.getGeometry()) > maxAllowedStopToTransferZoneDistanceMeters) {
         /* no need to break link, the projected closest point is too far away or deemed not suitable */
       }else {
         connectoidLocation = PlanitJtsUtils.createPoint(closestProjectedCoordinate);

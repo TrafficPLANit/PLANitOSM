@@ -1,8 +1,14 @@
 package org.goplanit.osm.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.utils.misc.StringUtils;
 
 /**
  * Class with some general convenience methods for dealing with OSM tags 
@@ -106,7 +112,7 @@ public class OsmTagUtils {
     return false;
   }
 
-  /** Collect the value for the first "ref" related key tag that we support. In order of precedence we currently support the following ref key tags
+  /** Collect the values for any "ref" related key tag that we support. We currently support the following ref key tags
    * 
    * <ul>
    * <li>ref</li>
@@ -115,17 +121,23 @@ public class OsmTagUtils {
    * </ul>
    * 
    * @param tags to verify
-   * @return found value, null if none is present
+   * @return found values, empty if present
    */
-  public static String getValueForSupportedRefKeys(Map<String, String> tags) {
-    if(tags.containsKey(OsmTags.REF)) {
-      return tags.get(OsmTags.REF);
-    }else if(tags.containsKey(OsmTags.LOC_REF)) {
-      return tags.get(OsmTags.LOC_REF);
-    }else if(tags.containsKey(OsmTags.LOCAL_REF)) {
-      return tags.get(OsmTags.LOCAL_REF);
-    }
-    return null;
+  public static List<String> getValuesForSupportedRefKeys(Map<String, String> tags) {
+    final List<String> refs = new ArrayList<>(1);
+
+    Consumer<String> addToRefsForTag =
+        (osmRefTag) -> {
+          if(tags.containsKey(osmRefTag)) {
+            refs.addAll(Arrays.asList(StringUtils.splitByAnythingExceptAlphaNumeric(tags.get(osmRefTag))));
+          }
+        };
+
+    addToRefsForTag.accept(OsmTags.REF);
+    addToRefsForTag.accept(OsmTags.LOC_REF);
+    addToRefsForTag.accept(OsmTags.LOCAL_REF);
+
+    return refs;
   } 
     
 }

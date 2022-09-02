@@ -1,12 +1,6 @@
 package org.goplanit.osm.converter.zoning.handler.helper;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -27,7 +21,6 @@ import org.goplanit.osm.util.OsmWayUtils;
 import org.goplanit.osm.util.PlanitLinkUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.osm.util.PlanitTransferZoneUtils;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -199,14 +192,14 @@ public class TransferZoneHelper extends ZoningHelperBase{
       /* name */
       if(tags.containsKey(OsmTags.NAME)) {
         transferZone.setName(tags.get(OsmTags.NAME));
-      }    
-      
-      String refValue = OsmTagUtils.getValueForSupportedRefKeys(tags);
-      /* ref (to allow other entities to refer to this transfer zone locally) */
-      if(refValue != null) {
-        transferZone.addInputProperty(OsmTags.REF, refValue);
       }
-      
+
+      /* ref (to allow other entities to refer to this transfer zone locally) */
+      var refValues = OsmTagUtils.getValuesForSupportedRefKeys(tags);
+      if(refValues!= null) {
+        transferZone.addTransferZonePlatformNames(refValues);
+      }
+
     }else {
       LOGGER.warning(String.format("Transfer zone not created, geometry incomplete (polygon, line string) for osm way %s, possibly nodes outside bounding box, or invalid OSM entity",osmEntity.getId()));
     }
@@ -352,40 +345,45 @@ public class TransferZoneHelper extends ZoningHelperBase{
     
     Map<String, TransferZone> foundTransferZones = null;
     /* ref value, can be a list of multiple values */
-    String refValue = OsmTagUtils.getValueForSupportedRefKeys(tags);
-    if(refValue != null) {
-      String[] transferZoneRefValues = StringUtils.splitByAnythingExceptAlphaNumeric(refValue);
-      for(int index=0; index < transferZoneRefValues.length; ++index) {
-        boolean multipleMatchesForSameRef = false;
-        String localRefValue = transferZoneRefValues[index];
-        for(TransferZone transferZone : availableTransferZones) {
-          Object refProperty = transferZone.getInputProperty(OsmTags.REF);
-          if(refProperty != null && localRefValue.equals(String.class.cast(refProperty))) {
+    List<String> refValues = OsmTagUtils.getValuesForSupportedRefKeys(tags);
+    for(String osmNodeRefValue : refValues) {
+      boolean multipleMatchesForSameRef = false;
+      for(TransferZone transferZone : availableTransferZones) {
+        if(!transferZone.hasPlatformNames()){
+          continue;
+        }
+
+        /* refs are persisted as platform specific names within PLANit */
+        List<String> tzRefValues = transferZone.getTransferZonePlatformNames();
+
+        /* refs can comprise multiple entries */
+        for(var tzRefValue : tzRefValues){
+          if(osmNodeRefValue.equals(tzRefValue)) {
             /* match */
             if(foundTransferZones==null) {
-              foundTransferZones = new HashMap<String,TransferZone>();
-            }      
-                        
+              foundTransferZones = new HashMap<>();
+            }
+
             /* inform user of tagging issues in case platform is not fully correctly mode mapped */
             if(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone)==null) {
-              LOGGER.info(String.format("SALVAGED: Platform/pole (%s) referenced by stop_position (%s), matched although platform has no known mode support", transferZone.getExternalId(), osmNode.getId()));              
+              LOGGER.info(String.format("SALVAGED: Platform/pole (%s) referenced by stop_position (%s), matched although platform has no known mode support", transferZone.getExternalId(), osmNode.getId()));
             }else if(!isTransferZoneModeCompatible(transferZone, referenceOsmModes, true /* allow pseudo matches */)) {
               LOGGER.fine(String.format("Platform/pole (%s) referenced by stop_position (%s), but platform is not (pseudo) mode compatible with stop_position, ignore match", transferZone.getExternalId(), osmNode.getId()));
               continue;
             }
-                        
-            TransferZone prevTransferZone = foundTransferZones.put(localRefValue,transferZone);
+
+            TransferZone prevTransferZone = foundTransferZones.put(osmNodeRefValue,transferZone);
             if(prevTransferZone != null) {
               multipleMatchesForSameRef = true;
               /* choose closest of the two spatially */
               TransferZone closestZone = (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, Set.of(prevTransferZone, transferZone), geoUtils);
-              foundTransferZones.put(localRefValue,closestZone);
+              foundTransferZones.put(osmNodeRefValue,closestZone);
             }
           }
         }
-        if(multipleMatchesForSameRef == true ) {
-          LOGGER.fine(String.format("SALVAGED: non-unique reference (%s) on stop_position %d, selected spatially closest platform/pole %s", localRefValue, osmNode.getId(),foundTransferZones.get(localRefValue).getExternalId()));         
-        }        
+      }
+      if(multipleMatchesForSameRef == true ) {
+        LOGGER.fine(String.format("SALVAGED: non-unique reference (%s) on stop_position %d, selected spatially closest platform/pole %s", osmNodeRefValue, osmNode.getId(),foundTransferZones.get(osmNodeRefValue).getExternalId()));
       }
     }
     return foundTransferZones!=null ? foundTransferZones.values() : null;

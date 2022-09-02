@@ -15,6 +15,7 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.function.PlanitExceptionConsumer;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
@@ -63,7 +64,7 @@ public class OsmWayUtils {
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode != null) {
-        Pair<T,Double> result = OsmNodeUtils.findPlanitEntityClosest(osmNode, planitEntities, maxDistanceMeters, geoUtils);
+        Pair<T,Double> result = PlanitEntityGeoUtils.findPlanitEntityClosest(OsmNodeUtils.createCoordinate(osmNode), planitEntities, maxDistanceMeters, geoUtils);
         if(result!=null && result.second() < minDistanceMeters) {
           closestPlanitEntity = result.first();
           minDistanceMeters = result.second();
