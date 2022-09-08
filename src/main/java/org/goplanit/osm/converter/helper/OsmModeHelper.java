@@ -72,7 +72,7 @@ public class OsmModeHelper {
    * @return matched transfer zones
    */   
   public boolean isLinkModeCompatible(Link link, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Collection<String> osmLinkModes = new HashSet<String>(); 
+    Collection<String> osmLinkModes = new HashSet<>();
     if(link.hasEdgeSegmentAb()) {      
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAllowedModes();
       osmLinkModes.addAll(settings.getMappedOsmModes(planitModes));

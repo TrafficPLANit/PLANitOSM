@@ -615,15 +615,15 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         /* regular approach */                     
         Envelope searchBoundingBox = getGeoUtils().createBoundingBox(transferZone.getEnvelope(), getSettings().getStopToWaitingAreaSearchRadiusMeters());
         
-        /* collect spatially, mode, direction compatible links */
-        Collection<Link> directionModeSpatiallyCompatibleLinks = findModeBBoxCompatibleLinksForOsmGeometry(osmEntityId, transferZone.getGeometry(), osmAccessMode, searchBoundingBox);        
-        if(directionModeSpatiallyCompatibleLinks == null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
+        /* collect spatially, mode, compatible links */
+        Collection<Link> modeSpatiallyCompatibleLinks = findModeBBoxCompatibleLinksForOsmGeometry(osmEntityId, transferZone.getGeometry(), osmAccessMode, searchBoundingBox);
+        if(modeSpatiallyCompatibleLinks == null || modeSpatiallyCompatibleLinks.isEmpty()) {
           logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s, mode %s (tag error or consider activating more road types)", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
           return;
         }
         
         /* based on candidates, now select the most appropriate option based on a multitude of criteria */
-        selectedAccessLink = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, osmAccessMode, directionModeSpatiallyCompatibleLinks);        
+        selectedAccessLink = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, osmAccessMode, modeSpatiallyCompatibleLinks);
       }
        
       /* create connectoids */    

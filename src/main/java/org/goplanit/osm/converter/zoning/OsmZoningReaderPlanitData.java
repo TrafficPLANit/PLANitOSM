@@ -349,7 +349,7 @@ public class OsmZoningReaderPlanitData {
    * @return links found intersecting or within bounding box provided
    */
   public Collection<Link> findLinksSpatially(Envelope searchBoundingBox) {
-    return PlanitGraphGeoUtils.findEdgesSpatially(searchBoundingBox,spatiallyIndexedPlanitLinks);
+    return GeoContainerUtils.queryEdgeQuadtree(searchBoundingBox,spatiallyIndexedPlanitLinks);
   }
   
 
