@@ -21,6 +21,8 @@ import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinks;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Links;
 import org.goplanit.utils.zoning.DirectedConnectoid;
@@ -79,7 +81,7 @@ public class OsmZoningReaderPlanitData {
    * @param osmNetwork to use
    */
   protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
-    Collection<Links> linksCollection = new ArrayList<>();
+    Collection<MacroscopicLinks> linksCollection = new ArrayList<>();
     for(MacroscopicNetworkLayer layer : osmNetwork.getTransportLayers()) {
       linksCollection.add(layer.getLinks());
     }
@@ -327,7 +329,7 @@ public class OsmZoningReaderPlanitData {
    * 
    * @param links to remove
    */
-  public void removeLinksFromSpatialLinkIndex(Collection<Link> links) {
+  public void removeLinksFromSpatialLinkIndex(Collection<MacroscopicLink> links) {
     if(links != null) {
       links.forEach( link -> spatiallyIndexedPlanitLinks.remove(link.createEnvelope(), link));
     }
@@ -337,7 +339,7 @@ public class OsmZoningReaderPlanitData {
    * 
    * @param links to add
    */  
-  public void addLinksToSpatialLinkIndex(Collection<Link> links) {
+  public void addLinksToSpatialLinkIndex(Collection<MacroscopicLink> links) {
     if(links != null) {
       links.forEach( link -> spatiallyIndexedPlanitLinks.insert(link.createEnvelope(), link));
     }
@@ -348,8 +350,8 @@ public class OsmZoningReaderPlanitData {
    * @param searchBoundingBox to use
    * @return links found intersecting or within bounding box provided
    */
-  public Collection<Link> findLinksSpatially(Envelope searchBoundingBox) {
-    return GeoContainerUtils.queryEdgeQuadtree(searchBoundingBox,spatiallyIndexedPlanitLinks);
+  public Collection<MacroscopicLink> findLinksSpatially(Envelope searchBoundingBox) {
+    return GeoContainerUtils.queryEdgeQuadtree(spatiallyIndexedPlanitLinks, searchBoundingBox);
   }
   
 

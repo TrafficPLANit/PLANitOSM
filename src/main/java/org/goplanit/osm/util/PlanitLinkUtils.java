@@ -9,6 +9,7 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.locationtech.jts.geom.Geometry;
@@ -33,9 +34,9 @@ public class PlanitLinkUtils {
    * @param geoUtils to use
    * @return remaining links that are deemed eligible
      */
-  public static Collection<Link> excludeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<Link> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsCrsUtils geoUtils) {
-    Collection<Link> matchedLinks = new HashSet<Link>(links);  
-    for(Link link : links) {            
+  public static Collection<MacroscopicLink> excludeLinksOnWrongSideOf(Geometry waitingAreaGeometry, Collection<MacroscopicLink> links, boolean isLeftHandDrive, Collection<Mode> accessModes, PlanitJtsCrsUtils geoUtils) {
+    Collection<MacroscopicLink> matchedLinks = new HashSet<>(links);
+    for(var link : links) {
       for(Mode accessMode : accessModes){
         
         /* road based modes must stop with the waiting area in the driving direction, i.e., must avoid cross traffic, because otherwise they 
@@ -45,7 +46,7 @@ public class PlanitLinkUtils {
           mustAvoidCrossingTraffic = false;
         }           
         
-        MacroscopicLinkSegment oneWayLinkSegment = PlanitLinkSegmentUtils.getLinkSegmentIfLinkIsOneWayForMode(link, accessMode);        
+        MacroscopicLinkSegment oneWayLinkSegment = link.getLinkSegmentIfLinkIsOneWayForMode(accessMode);
         if(oneWayLinkSegment != null && mustAvoidCrossingTraffic) {
           /* use line geometry closest to connectoid location */
           LineSegment finalLineSegment = PlanitLinkSegmentUtils.extractClosestLineSegmentToGeometryFromLinkSegment(waitingAreaGeometry, oneWayLinkSegment, geoUtils);                    
@@ -71,11 +72,11 @@ public class PlanitLinkUtils {
    * @param geoUtils to use for closeness computations
    * @return found link (null if none)
    */
-  public static Link getClosestLinkWithOsmWayIdToGeometry(
+  public static MacroscopicLink getClosestLinkWithOsmWayIdToGeometry(
       long osmWayId, Geometry geometry, MacroscopicNetworkLayer networkLayer, PlanitJtsCrsUtils geoUtils){
     /* collect all PLANit links that match the OSM way id (very slow, but it is rare and not worth the indexing generally) */
-    Collection<? extends Link> nominatedLinks = networkLayer.getLinks().getByExternalId(String.valueOf(osmWayId));
+    Collection<? extends MacroscopicLink> nominatedLinks = networkLayer.getLinks().getByExternalId(String.valueOf(osmWayId));
     /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */
-    return (Link) PlanitGraphGeoUtils.findEdgeClosest(geometry, nominatedLinks, geoUtils);
+    return (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(geometry, nominatedLinks, geoUtils);
   }  
 }

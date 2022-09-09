@@ -25,10 +25,9 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.physical.Link;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
@@ -67,7 +66,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private final OsmPublicTransportModeHelper publicTransportModeParser;
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
-  private final ConnectoidHelper connectoidParser;  
+  private final OsmConnectoidHelper connectoidParser;
   
   /** utilities for geographic information */
   private final PlanitJtsCrsUtils geoUtils;     
@@ -79,7 +78,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @param accessMode for stop_location (not used for filtering accessibility, only for lyaer identification)
    * @return links that can access the stop location.
    */
-  private Collection<Link> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) {
+  private Collection<MacroscopicLink> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
     MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
@@ -87,11 +86,11 @@ public class TransferZoneHelper extends ZoningHelperBase{
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
     /* links that can reach stop_location */
-    Collection<Link> planitLinksToCheck = null;
+    Collection<MacroscopicLink> planitLinksToCheck = null;
     Node planitNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getPlanitNodeByLocation(location);
     if(planitNode != null) {        
       /* not internal to planit link, so regular match to planit node --> consider all incoming link segments as potentially usable  */
-      planitLinksToCheck = planitNode.<Link>getLinks();              
+      planitLinksToCheck = planitNode.getLinks();
     }else {      
       /* not an extreme node, must be a node internal to a link up until now --> consider only link in question the location resides on */ 
       planitLinksToCheck = getNetworkToZoningData().getNetworkLayerData(networkLayer).findPlanitLinksWithInternalLocation(location);  
@@ -279,11 +278,11 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private boolean isTransferZoneOnWrongSideOfRoadOfStopLocation(Point location, TransferZone transferZone, boolean isLeftHandDrive, Mode accessMode, PlanitJtsCrsUtils geoUtils) {
     
     /* first collect links that can access the connectoid location */
-    Collection<Link> planitLinksToCheck = getLinksWithAccessToLocationForMode(location, accessMode);
+    Collection<MacroscopicLink> planitLinksToCheck = getLinksWithAccessToLocationForMode(location, accessMode);
         
     /* remove all link's that are not reachable without experiencing cross-traffic from the perspective of the transfer zone*/
     if(planitLinksToCheck!=null){
-      Collection<Link> accessibleLinks = PlanitLinkUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
+      Collection<MacroscopicLink> accessibleLinks = PlanitLinkUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
       if(accessibleLinks==null || accessibleLinks.isEmpty()) {
         /* all links experience cross-traffic, so not reachable */
         return true;
@@ -550,7 +549,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     this.publicTransportModeParser = new OsmPublicTransportModeHelper(getNetworkToZoningData().getNetworkSettings());
     
     /* parser for identifying pt PLANit modes from OSM entities */
-    this.connectoidParser = new ConnectoidHelper(zoning, zoningReaderData, transferSettings, profiler);    
+    this.connectoidParser = new OsmConnectoidHelper(zoning, zoningReaderData, transferSettings, profiler);
   }
   
   

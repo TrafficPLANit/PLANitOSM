@@ -77,11 +77,11 @@ public class OsmNetworkReaderData {
    * @param osmNode to expand so that bounding box includes it
    */
   public void updateBoundingBox(OsmNode osmNode) {
-    Coordinate coorinate = OsmNodeUtils.createCoordinate(osmNode);
+    Coordinate coordinate = OsmNodeUtils.createCoordinate(osmNode);
     if(networkBoundingBox==null) {
-      networkBoundingBox = new Envelope(coorinate);
+      networkBoundingBox = new Envelope(coordinate);
     }else {
-      networkBoundingBox.expandToInclude(coorinate);
+      networkBoundingBox.expandToInclude(coordinate);
     }
   }
   

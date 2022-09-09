@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
@@ -60,10 +61,8 @@ public class OsmBoundingAreaUtils {
    * @param boundingBox to use
    * @param geoUtils to use
    */
-  public static void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Envelope boundingBox, PlanitJtsCrsUtils geoUtils) {
-    if(!isNearNetworkBoundingBox(geometry, boundingBox, geoUtils)) {
-      LOGGER.warning(message);
-    }
+  public static void logWarningIfNotNearBoundingBox(String message, final Geometry geometry, final Envelope boundingBox, final PlanitJtsCrsUtils geoUtils) {
+    LoggingUtils.logWarningIf(LOGGER, message,geometry, g -> !isNearNetworkBoundingBox(g, boundingBox, geoUtils));
   }  
   
   /** check if geometry is near network bounding box using buffer based on PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS

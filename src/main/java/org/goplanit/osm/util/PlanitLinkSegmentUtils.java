@@ -5,6 +5,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.locationtech.jts.geom.Geometry;
@@ -21,25 +22,6 @@ import org.locationtech.jts.linearref.LinearLocation;
  */
 public class PlanitLinkSegmentUtils {
 
-  /** Collect the one way link segment for the mode if the link is in fact one way. If it is not (for the mode), null is returned
-   * 
-   * @param link to collect one way edge segment (for mode) from, if available
-   * @param accessMode to check one-way characteristic
-   * @return edge segment that is one way for the mode, i.e., the other edge segment (if any) does not support this mode, null if this is not the case
-   */
-  public static MacroscopicLinkSegment getLinkSegmentIfLinkIsOneWayForMode(Link link, Mode accessMode) {
-    EdgeSegment edgeSegment = null;
-    if(link.hasEdgeSegmentAb() != link.hasEdgeSegmentBa()) {
-      /* link is one way across all modes */
-      edgeSegment = link.hasEdgeSegmentAb() ? link.getLinkSegmentAb() : link.getLinkSegmentBa();
-    }else if(link.<MacroscopicLinkSegment>getLinkSegmentAb().isModeAllowed(accessMode) != link.<MacroscopicLinkSegment>getLinkSegmentBa().isModeAllowed(accessMode)) {
-      /* link is one way for our mode */
-      edgeSegment = link.<MacroscopicLinkSegment>getLinkSegmentAb().isModeAllowed(accessMode) ? link.getLinkSegmentAb() : link.getLinkSegmentBa();
-    }
-
-    return (MacroscopicLinkSegment) edgeSegment;
-  }
-  
   /** Extract a JTS line segment based on the closest two coordinates on the link segment geometry in its intended direction to the reference geometry provided
    * 
    * @param referenceGeometry to find closest line segment to 
@@ -51,14 +33,12 @@ public class PlanitLinkSegmentUtils {
     
     LineString linkSegmentGeometry = linkSegment.getParent().getGeometry();
     if(linkSegmentGeometry == null) {
-      throw new PlanItRunTimeException("Geometry not available on osm way %s, unable to determine if link (segment) is closest to reference geometry, this shouldn't happen", linkSegment.getParent().getExternalId());
+      throw new PlanItRunTimeException("Geometry not available on OSM way %s, unable to determine if link (segment) is closest to reference geometry, this shouldn't happen", linkSegment.getParent().getExternalId());
     }
     
     LinearLocation linearLocation = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(referenceGeometry, linkSegmentGeometry);
-    boolean reverseLinearLocationGeometry = linkSegment.isDirectionAb()!=linkSegment.getParent().isGeometryInAbDirection();
-    
     LineSegment lineSegment = linearLocation.getSegment(linkSegment.getParent().getGeometry());
-    if(reverseLinearLocationGeometry) {
+    if(linkSegment.isDirectionAb()!=linkSegment.getParent().isGeometryInAbDirection()) {
       lineSegment.reverse();
     }
     return lineSegment;        

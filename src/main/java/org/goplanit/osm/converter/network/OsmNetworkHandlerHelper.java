@@ -12,6 +12,7 @@ import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.Point;
@@ -65,21 +66,21 @@ public class OsmNetworkHandlerHelper {
    * @return newly broken PLANit links by their original osmWayId 
    *  
    */
-  public static Map<Long, Set<Link>> breakLinksWithInternalNode(
-      Node theNode, List<Link> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs){
-    Map<Long, Set<Link>> newOsmWaysWithMultiplePlanitLinks = new HashMap<Long, Set<Link>>();
+  public static Map<Long, Set<MacroscopicLink>> breakLinksWithInternalNode(
+      Node theNode, List<MacroscopicLink> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs){
+    Map<Long, Set<MacroscopicLink>> newOsmWaysWithMultiplePlanitLinks = new HashMap<>();
           
     if(linksToBreak != null) {
             
       try {
         /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-        Map<Long, Pair<Link,Link>> localBrokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, theNode, crs);                 
+        Map<Long, Pair<MacroscopicLink,MacroscopicLink>> localBrokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, theNode, crs);
         /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
         if(localBrokenLinks != null) {
           localBrokenLinks.forEach((id, links) -> {
             List.of(links.first(),links.second()).forEach( brokenLink -> {
               final Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
-              newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<Link>());
+              newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<>());
               newOsmWaysWithMultiplePlanitLinks.get(brokenLinkOsmId).add(brokenLink);
             });
           });        
@@ -183,9 +184,9 @@ public class OsmNetworkHandlerHelper {
    * @param addition to add
    * @param destination to add to
    */
-  public static void addAllTo(Map<Long, Set<Link>> addition, Map<Long, Set<Link>> destination) {
+  public static void addAllTo(Map<Long, Set<MacroscopicLink>> addition, Map<Long, Set<MacroscopicLink>> destination) {
     addition.forEach( (osmWayId, links) -> {
-      destination.putIfAbsent(osmWayId, new HashSet<Link>());
+      destination.putIfAbsent(osmWayId, new HashSet<>());
       destination.get(osmWayId).addAll(links);
     });
   }

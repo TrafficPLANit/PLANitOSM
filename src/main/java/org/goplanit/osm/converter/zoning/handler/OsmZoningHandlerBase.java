@@ -8,7 +8,7 @@ import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
-import org.goplanit.osm.converter.zoning.handler.helper.ConnectoidHelper;
+import org.goplanit.osm.converter.zoning.handler.helper.OsmConnectoidHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.OsmPublicTransportModeHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneHelper;
@@ -67,7 +67,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   private final OsmPublicTransportModeHelper publicTransportModeHelper;  
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
-  private final ConnectoidHelper connectoidHelper;
+  private final OsmConnectoidHelper connectoidHelper;
       
   /** Skip OSM pt entity when marked for exclusion in settings
    * 
@@ -355,7 +355,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * 
    * @return connectoidParser parser 
    */
-  protected ConnectoidHelper getConnectoidHelper() {
+  protected OsmConnectoidHelper getConnectoidHelper() {
     return this.connectoidHelper;
   }    
     
@@ -394,7 +394,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     this.publicTransportModeHelper = new OsmPublicTransportModeHelper(transferSettings.getNetworkDataForZoningReader().getNetworkSettings());
     
     /* parser for creating PLANit connectoids */
-    this.connectoidHelper = new ConnectoidHelper(zoningToPopulate, zoningReaderData, transferSettings, profiler);
+    this.connectoidHelper = new OsmConnectoidHelper(zoningToPopulate, zoningReaderData, transferSettings, profiler);
   }
   
   /** Call this BEFORE we parse the OSM network to initialise the handler properly

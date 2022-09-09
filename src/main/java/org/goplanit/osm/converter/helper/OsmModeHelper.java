@@ -7,6 +7,7 @@ import java.util.Set;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
 
@@ -97,9 +98,9 @@ public class OsmModeHelper {
    * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
    * @return matched links that are deemed compatible
    */   
-  public Collection<Link> filterModeCompatibleLinks(Collection<String> referenceOsmModes, Collection<Link> potentialLinks, boolean allowPseudoModeMatches) {
-    Set<Link> modeCompatibleLinks = new HashSet<Link>();
-    for(Link link : potentialLinks) {
+  public Collection<MacroscopicLink> filterModeCompatibleLinks(Collection<String> referenceOsmModes, Collection<MacroscopicLink> potentialLinks, boolean allowPseudoModeMatches) {
+    Set<MacroscopicLink> modeCompatibleLinks = new HashSet<>();
+    for(var link : potentialLinks) {
       if(isLinkModeCompatible(link, referenceOsmModes, allowPseudoModeMatches)) {
         modeCompatibleLinks.add(link);
       }

@@ -16,6 +16,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.goplanit.utils.network.layer.physical.Link;
 
@@ -57,7 +58,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   private void handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
         
-    Map<NetworkLayer, Set<Link>> createdLinksByLayer;
+    Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
     if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
       
@@ -71,7 +72,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       
       if(createdLinksByLayer!=null) {
         /* register that osm way has multiple planit links mapped (needed in case of subsequent break link actions on nodes of the osm way */
-        for( Entry<NetworkLayer, Set<Link>> entry : createdLinksByLayer.entrySet()) {
+        for( Entry<NetworkLayer, Set<MacroscopicLink>> entry : createdLinksByLayer.entrySet()) {
           OsmNetworkReaderLayerData layerData = getNetworkData().getLayerParsers().get(entry.getKey()).getLayerData();
           layerData.updateOsmWaysWithMultiplePlanitLinks(circularOsmWay.getId(), entry.getValue());
         }
@@ -90,8 +91,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @return set of created links per layer for this circular way if any, empty set if none
    * @throws PlanItException thrown if error
    */
-  private Map<NetworkLayer, Set<Link>> handleRawCircularWay(final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) throws PlanItException {
-    Map<NetworkLayer, Set<Link>> createdLinksByLayer = new HashMap<NetworkLayer, Set<Link>>();  
+  private Map<NetworkLayer, Set<MacroscopicLink>> handleRawCircularWay(final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) throws PlanItException {
+    Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer = new HashMap<>();
     int finalNodeIndex = (circularOsmWay.getNumberOfNodes()-1);
         
     /* when circular road is not perfect, i.e., its end node is not the start node, we first split it
@@ -102,10 +103,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
       if(firstCircularIndices.first() > initialNodeIndex ) {
         /* create separate link for the lead up part that is NOT circular, if supporting multiple modes mapped to different layers we get multiple links */         
-        Map<NetworkLayer,Link> newLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, initialNodeIndex, firstCircularIndices.first(), false /* not a circular section */);
+        Map<NetworkLayer,MacroscopicLink> newLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, initialNodeIndex, firstCircularIndices.first(), false /* not a circular section */);
         if(newLinkByLayer != null) {
           newLinkByLayer.forEach( (layer, link) -> { 
-            createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
+            createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
             createdLinksByLayer.get(layer).add(link);} );
         }
         /* update offsets for circular part */
@@ -115,25 +116,25 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       /* continue with the remainder (if any) starting at the end point of the circular component 
        * this is done first because we want all non-circular components to be available as regular links before processing the circular parts*/
       if(firstCircularIndices.second() < finalNodeIndex) {
-        Map<NetworkLayer, Set<Link>> newLinksByLayer = handleRawCircularWay(circularOsmWay, osmWayTags, firstCircularIndices.second());
+        Map<NetworkLayer, Set<MacroscopicLink>> newLinksByLayer = handleRawCircularWay(circularOsmWay, osmWayTags, firstCircularIndices.second());
         if(newLinksByLayer != null) {
-          newLinksByLayer.forEach( (layer, links) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>()); 
+          newLinksByLayer.forEach( (layer, links) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
             createdLinksByLayer.get(layer).addAll(links);} );
         }
       }      
         
       /* extract the identified perfectly circular component */
-      Map<NetworkLayer,Set<Link>> newLinksByLayer = handlePerfectCircularWay(circularOsmWay, osmWayTags, firstCircularIndices.first(), firstCircularIndices.second());
+      Map<NetworkLayer,Set<MacroscopicLink>> newLinksByLayer = handlePerfectCircularWay(circularOsmWay, osmWayTags, firstCircularIndices.first(), firstCircularIndices.second());
       if(newLinksByLayer != null) {
-        newLinksByLayer.forEach( (layer, link) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
+        newLinksByLayer.forEach( (layer, link) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
           createdLinksByLayer.get(layer).addAll(link);} );
       }
       
     }else if(initialNodeIndex < finalNodeIndex) {
       /* last section is not circular, so extract partial link for it */
-      Map<NetworkLayer,Link> newLinksByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, initialNodeIndex, finalNodeIndex, false /* not a circular section */);
+      Map<NetworkLayer,MacroscopicLink> newLinksByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, initialNodeIndex, finalNodeIndex, false /* not a circular section */);
       if(newLinksByLayer != null) {
-        newLinksByLayer.forEach( (layer, link) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
+        newLinksByLayer.forEach( (layer, link) -> { createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
           createdLinksByLayer.get(layer).add(link);} );
       }     
     }  
@@ -150,10 +151,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @return set of created links per layer with supported modes for this circular way if any, empty set if none
    * @throws PlanItException thrown if error
    */
-  private Map<NetworkLayer,Set<Link>> handlePerfectCircularWay(OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) throws PlanItException {
+  private Map<NetworkLayer,Set<MacroscopicLink>> handlePerfectCircularWay(OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) throws PlanItException {
 
     
-    Map<NetworkLayer,Set<Link>> createdLinksByLayer = new HashMap<>();
+    Map<NetworkLayer,Set<MacroscopicLink>> createdLinksByLayer = new HashMap<>();
     int firstPartialLinkStartNodeIndex = -1;
     int partialLinkStartNodeIndex = -1;
     int partialLinkEndNodeIndex = -1;
@@ -172,10 +173,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         }else if(!(index==finalNodeIndex && partialLinkStartNodeIndex==firstPartialLinkStartNodeIndex)) {            
           /* identified valid partial link (statement above makes sure that in case the one duplicate node (first=last) is chosen as partial link, we do not accept is as a partial link as it represents  the entire loop, otherwise
            * create link from start node to the intermediate node that attaches to an already existing planit link on the circular way */          
-          Map<NetworkLayer, Link> createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, index, partialLinksPartOfCircularWay);
+          Map<NetworkLayer, MacroscopicLink> createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, index, partialLinksPartOfCircularWay);
           if(createdLinkByLayer != null) {
             createdLinkByLayer.forEach( (layer, link) -> {
-              createdLinksByLayer.putIfAbsent(layer, new HashSet<Link>());
+              createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
               createdLinksByLayer.get(layer).add(link);} );
             
             /* update first node to last node of this link for next partial link */
@@ -197,7 +198,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       }
     }
     
-    Map<NetworkLayer, Link> createdLinkByLayer = null;
+    Map<NetworkLayer, MacroscopicLink> createdLinkByLayer = null;
     if (partialLinkStartNodeIndex>= 0) {
       if (partialLinkEndNodeIndex < 0){        
         /* first partial link is not created either, only single connection point exists, so:
@@ -344,9 +345,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param isPartOfCircularWay indicates if it is part of a circular way or not
    * @return created link (if any), if no link could be created null is returned
    */  
-  protected Map<NetworkLayer,Link> extractPartialOsmWay(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
+  protected Map<NetworkLayer,MacroscopicLink> extractPartialOsmWay(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
         
-    Map<NetworkLayer,Link> linksByLayer = null;
+    Map<NetworkLayer,MacroscopicLink> linksByLayer = null;
     
     Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay,tags);
     for(Entry<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> entry : linkSegmentTypesByLayer.entrySet()) {
@@ -359,10 +360,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           throw new PlanItRunTimeException("Layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
         }
         /* delegate to layer handler */
-        Link link = layerHandler.extractPartialOsmWay(osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
+        MacroscopicLink link = layerHandler.extractPartialOsmWay(osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
         if(link != null) {
           if(linksByLayer==null) {
-            linksByLayer = new HashMap<NetworkLayer, Link>();
+            linksByLayer = new HashMap<>();
           }
           linksByLayer.put(networkLayer, link);        
         }
