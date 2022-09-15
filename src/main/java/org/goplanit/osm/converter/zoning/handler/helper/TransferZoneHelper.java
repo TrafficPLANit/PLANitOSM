@@ -5,6 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
@@ -18,7 +19,7 @@ import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmPtVersionSchemeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.osm.util.OsmWayUtils;
-import org.goplanit.osm.util.PlanitLinkUtils;
+import org.goplanit.osm.util.PlanitLinkOsmUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.osm.util.PlanitTransferZoneUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
@@ -282,7 +283,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
         
     /* remove all link's that are not reachable without experiencing cross-traffic from the perspective of the transfer zone*/
     if(planitLinksToCheck!=null){
-      Collection<MacroscopicLink> accessibleLinks = PlanitLinkUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
+      Collection<MacroscopicLink> accessibleLinks = ZoningConverterUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
       if(accessibleLinks==null || accessibleLinks.isEmpty()) {
         /* all links experience cross-traffic, so not reachable */
         return true;

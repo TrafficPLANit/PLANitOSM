@@ -17,7 +17,7 @@ import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.util.OsmBoundingAreaUtils;
 import org.goplanit.osm.util.OsmNodeUtils;
-import org.goplanit.osm.util.PlanitLinkUtils;
+import org.goplanit.osm.util.PlanitLinkOsmUtils;
 import org.goplanit.osm.util.PlanitTransferZoneUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
@@ -564,14 +564,14 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     this.geoUtils = new PlanitJtsCrsUtils(transferSettings.getReferenceNetwork().getCoordinateReferenceSystem());
   }
   
-  /** find a suitable connectoid location on the given link based on the constraints that it must be able to reside on a linksegment that is in the correct relative position
-   * to the transfer zone and supports the access mode on at least one of the designated link segment(s) that is eligible (if any). If not possible null is returned 
+  /** find a suitable connectoid location on the given link based on the constraints that it must be able to reside on a link segment that is in the correct relative position
+   * to the transfer zone and supports the access mode on at least one of the designated link segment(s) that is eligible (if any). If not null is returned
    *  
    * @param transferZone to find location for
    * @param accessLink to find location on
    * @param accessMode to be compatible with
    * @param maxAllowedDistanceMeters the maximum allowed distance between stop and waiting area that we allow
-   * @return found location either existing osm node or projected location that is nearest and does not exist as a shape point on the link yet, or null if no valid position could be found
+   * @return found location either existing node or projected location that is nearest and does not exist as a shape point on the link yet, or null if no valid position could be found
    */
   public Point findConnectoidLocationForStandAloneTransferZoneOnLink(TransferZone transferZone, MacroscopicLink accessLink, Mode accessMode, double maxAllowedDistanceMeters) {
 
@@ -658,7 +658,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       /* user overwrite */
       
       long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node);
-      Link nominatedLink = PlanitLinkUtils.getClosestLinkWithOsmWayIdToGeometry( osmWayId, OsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
+      Link nominatedLink = PlanitLinkOsmUtils.getClosestLinkWithOsmWayIdToGeometry( osmWayId, OsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
       if(nominatedLink != null) {
         nominatedLinkSegments = nominatedLink.getEdgeSegments(); 
       }else {
@@ -742,7 +742,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     }    
       
     if(accessLinkSegments==null || accessLinkSegments.isEmpty()) {
-      LOGGER.info(String.format("DICARD platform/pole/station %s its stop_location %s deemed invalid, no access link segment found due to incompatible modes or transfer zone on wrong side of road/rail", 
+      LOGGER.info(String.format("DISCARD platform/pole/station %s its stop_location %s deemed invalid, no access link segment found due to incompatible modes or transfer zone on wrong side of road/rail",
           transferZone.getExternalId(), planitNode.getExternalId()!= null ? planitNode.getExternalId(): ""));
       return false;
     }                           
