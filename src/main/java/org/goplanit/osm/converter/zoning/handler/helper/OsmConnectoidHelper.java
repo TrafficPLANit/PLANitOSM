@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
 import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
@@ -143,7 +144,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       mustAvoidCrossingTraffic = false;
     }else if(osmStopLocationNodeId != null && settings.isOverwriteStopLocationWaitingArea(osmStopLocationNodeId)) {
       /* ... exception 2: user override with mapping to this zone for this node, in which case we allow crossing traffic regardless */
-      mustAvoidCrossingTraffic = Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenStopLocationWaitingArea(osmStopLocationNodeId).second());
+      mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenStopLocationWaitingArea(osmStopLocationNodeId).second());
     } 
     return mustAvoidCrossingTraffic;   
   }   
@@ -174,7 +175,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     boolean mustAvoidCrossingTraffic = isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(accessMode, transferZone, osmStopLocationId, getSettings());
     
     /* now collect the available access link segments (if any) - switch of logging of issues, since we are only interested in determining if this is feasible, we are not creating anything yet */    
-    Collection<EdgeSegment> accessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone, accessLink, node, accessMode, mustAvoidCrossingTraffic, geoUtils);         
+    Collection<EdgeSegment> accessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone, accessLink, node, accessMode, mustAvoidCrossingTraffic, geoUtils);
     
     return !accessLinkSegments.isEmpty();
   }
@@ -216,7 +217,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
         lineSegment.reverse();
       }
       boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(zoningReaderData.getCountryName());
-      return (isLeftHandDrive == PlanitTransferZoneUtils.isTransferZoneLeftOf(transferZone, lineSegment.p0, lineSegment.p1, geoUtils));
+      return (isLeftHandDrive == PlanitTransferZoneUtils.isTransferZoneLeftOf(transferZone.getGeometry(true), lineSegment.p0, lineSegment.p1, geoUtils));
     }
     return true;
   }  
@@ -238,7 +239,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
         
     Long osmWaitingAreaId = Long.valueOf(transferZone.getExternalId());
     Long osmNodeIdOfLinkExtremeNode = node.getExternalId()!= null ? Long.valueOf(node.getExternalId()) : null;
-    EntityType osmWaitingAreaEntityType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
+    EntityType osmWaitingAreaEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
     
     /* potential link segments based on mode compatibility and access link restriction */ 
     Collection<EdgeSegment> accessLinkSegments = new ArrayList<>(4);
@@ -262,7 +263,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       /* stopLocation -> waiting area overwrite */
       if(node.getExternalId()!=null && getSettings().isOverwriteStopLocationWaitingArea(osmNodeIdOfLinkExtremeNode)) {      
         Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmNodeIdOfLinkExtremeNode);      
-        removeInvalidAccessLinkSegmentsIfNoMatchLeft = osmWaitingAreaId == result.second();
+        removeInvalidAccessLinkSegmentsIfNoMatchLeft = !(osmWaitingAreaId == result.second());
       }    
       /* waiting area -> osm way (stop_location) overwrite */
       else if (getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmWaitingAreaId, osmWaitingAreaEntityType)) {        
@@ -282,7 +283,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
         /* filter because "normal" situation or there are still matches left even after filtering despite the explicit user override for this  combination */
         accessLinkSegments.removeAll(toBeRemoveAccessLinkSegments);
       }
-      /* else  keep the access link segments to far */
+      /* else  keep the access link segments so far */
     }
     return accessLinkSegments;
   }
@@ -574,6 +575,10 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
    * @return found location either existing node or projected location that is nearest and does not exist as a shape point on the link yet, or null if no valid position could be found
    */
   public Point findConnectoidLocationForStandAloneTransferZoneOnLink(TransferZone transferZone, MacroscopicLink accessLink, Mode accessMode, double maxAllowedDistanceMeters) {
+
+    // todo --> replace this function with the below once refactoring is complete!
+//    ZoningConverterUtils.findConnectoidLocationForWaitingAreaOnLink(
+//        transferZone.getExternalId(), transferZone.getGeometry(), accessLink, accessMode, maxAllowedDistanceMeters, geoUtils);
 
     Coordinate closestExistingCoordinate = geoUtils.getClosestExistingLineStringCoordinateToGeometry(transferZone.getGeometry(), accessLink.getGeometry());
     double distanceToExistingCoordinateOnLinkInMeters = geoUtils.getClosestDistanceInMeters(closestExistingCoordinate, transferZone.getGeometry());

@@ -145,23 +145,16 @@ public class PlanitTransferZoneUtils {
 
   /** Verify of the transfer zone resides left of the line coordA to coordB
    * 
-   * @param transferZone to check
+   * @param transferZoneGeometry to check
    * @param coordA of line 
    * @param coordB of line
    * @param geoUtils to use
    * @return true when left, false otherwise
    */
-  public static boolean isTransferZoneLeftOf(TransferZone transferZone, Coordinate coordA, Coordinate coordB, PlanitJtsCrsUtils geoUtils) {
-    
-    Geometry transferZoneGeometry = null;
-    if(transferZone.hasCentroid() && transferZone.getCentroid().hasPosition()) {
-      transferZoneGeometry = transferZone.getCentroid().getPosition();
-    }else if(transferZone.hasGeometry()) {
-      transferZoneGeometry = transferZone.getGeometry();
-    }else { 
+  public static boolean isTransferZoneLeftOf(Geometry transferZoneGeometry, Coordinate coordA, Coordinate coordB, PlanitJtsCrsUtils geoUtils) {
+    if(transferZoneGeometry == null) {
       throw new PlanItRunTimeException("Transfer zone representing platform/pole %s has no valid geometry attached, unable to determine on which side of line AB (%s, %s) is resides", transferZone.getExternalId(), coordA.toString(), coordB.toString());
     }
-    
     return geoUtils.isGeometryLeftOf(transferZoneGeometry, coordA, coordB);
   }
 
@@ -184,7 +177,7 @@ public class PlanitTransferZoneUtils {
     for(EdgeSegment linkSegment : accessLinkSegments) {
       LineSegment finalLineSegment = PlanitGraphGeoUtils.extractClosestLineSegmentTo(transferZone.getGeometry(), linkSegment, geoUtils);
       /* determine location relative to infrastructure */
-      boolean isTransferZoneLeftOfInfrastructure = isTransferZoneLeftOf(transferZone, finalLineSegment.p0, finalLineSegment.p1, geoUtils);      
+      boolean isTransferZoneLeftOfInfrastructure = isTransferZoneLeftOf(transferZone.getGeometry(true), finalLineSegment.p0, finalLineSegment.p1, geoUtils);
       if(isTransferZoneLeftOfInfrastructure!=leftHandDrive) {
         /* not viable opposite traffic directions needs to be crossed on the link to get to stop location --> remove */
         invalidAccessLinkSegments.add(linkSegment);
@@ -254,16 +247,16 @@ public class PlanitTransferZoneUtils {
 
   /** Extract the OSM entity type from a PLANit Transfer zone
    * 
-   * @param transferZone to identify entity type for
+   * @param transferZoneGeometry to identify entity type for
    * @return the entity type
    */
-  public static EntityType extractOsmEntityType(TransferZone transferZone) {
-    if( transferZone.getGeometry() instanceof Point) {
+  public static EntityType transferZoneGeometryToOsmEntityType(Geometry transferZoneGeometry, String osmSourceId) {
+    if( transferZoneGeometry instanceof Point) {
       return EntityType.Node;
-    }else if(transferZone.getGeometry() instanceof Polygon || transferZone.getGeometry() instanceof LineString) {
+    }else if(transferZoneGeometry instanceof Polygon || transferZoneGeometry instanceof LineString) {
       return EntityType.Way;
     }else {
-      throw new PlanItRunTimeException("Unknown geometry type encountered for transfer zone (osm id %s)",transferZone.getExternalId());
+      throw new PlanItRunTimeException("Unknown geometry type encountered for transfer zone (OSM id %s)",osmSourceId);
     }
   }
 
@@ -277,7 +270,7 @@ public class PlanitTransferZoneUtils {
    */
   public static LinearLocation extractClosestProjectedLinearLocationOnEdgeForTransferZone(TransferZone transferZone, Edge accessEdge, PlanitJtsCrsUtils geoUtils) {
     LinearLocation projectedLinearLocationOnLink = null;
-    EntityType transferZoneGeometryType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
+    EntityType transferZoneGeometryType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
     if(transferZoneGeometryType.equals(EntityType.Node)) {
       projectedLinearLocationOnLink = geoUtils.getClosestProjectedLinearLocationOnGeometry(((Point)transferZone.getGeometry()).getCoordinate(),accessEdge.getGeometry());
     }else if (transferZoneGeometryType.equals(EntityType.Way)){

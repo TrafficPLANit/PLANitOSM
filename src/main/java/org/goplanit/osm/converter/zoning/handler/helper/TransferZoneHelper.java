@@ -19,7 +19,6 @@ import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmPtVersionSchemeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.osm.util.OsmWayUtils;
-import org.goplanit.osm.util.PlanitLinkOsmUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.osm.util.PlanitTransferZoneUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
@@ -112,7 +111,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @return true when supporting it, false otherwise
    */
   private boolean supportsMultipleStopPositions(TransferZone transferZone) {
-    EntityType osmEntityType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
+    EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
     if(osmEntityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(Long.valueOf(transferZone.getExternalId()))) {
         return false;
     }

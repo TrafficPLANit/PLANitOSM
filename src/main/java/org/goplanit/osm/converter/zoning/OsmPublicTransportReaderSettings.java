@@ -331,7 +331,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmId to exclude
    */
   public void excludeOsmWayById(final Number osmId) {
-    excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<Long>());
+    excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<>());
     excludedPtOsmEntities.get(EntityType.Way).add(osmId.longValue());
   }    
   
@@ -341,7 +341,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @return true when excluded false otherwise
    */
   public boolean isExcludedOsmNode(Number osmId) {
-    excludedPtOsmEntities.putIfAbsent(EntityType.Node, new HashSet<Long>());
+    excludedPtOsmEntities.putIfAbsent(EntityType.Node, new HashSet<>());
     return excludedPtOsmEntities.get(EntityType.Node).contains(osmId);
   }   
   
@@ -351,7 +351,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @return true when excluded false otherwise
    */
   public boolean isExcludedOsmWay(Number osmId) {
-    excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<Long>());
+    excludedPtOsmEntities.putIfAbsent(EntityType.Way, new HashSet<>());
     return excludedPtOsmEntities.get(EntityType.Way).contains(osmId);
   }
 
@@ -411,7 +411,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param OsmWayId osm id of waiting area (platform, pole, etc.) (int or long)
    */
   public void overwriteWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType, final Number OsmWayId) {
-    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
+    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<>());
     overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId.longValue(), OsmWayId.longValue());    
   }  
   
@@ -422,7 +422,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @return true when present, false otherwise
    */
   public boolean hasWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType) {
-    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
+    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<>());
     return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).containsKey(waitingAreaOsmId);    
   } 
   
@@ -433,7 +433,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @return osm way id, null if not available
    */
   public Long getWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, EntityType waitingAreaEntityType) {
-    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<Long,Long>());
+    overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<>());
     return overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).get(waitingAreaOsmId);    
   }   
   

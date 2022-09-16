@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -26,7 +25,6 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
-import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
@@ -147,47 +145,33 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
      /* remove closest roads if incompatible regarding driving direction (relative location of waiting area versus road)
      * if not, we move to salvaging state and those links are removed from the eligible set */
-    boolean salvaging =
+    Pair<MacroscopicLink,Boolean> eligibleClosestPair =
         ZoningConverterUtils.excludeClosestLinksIncrementallyOnWrongSideOf(transferZone.getGeometry(),  eligibleLinks, isLeftHandDrive, accessModeAsCollection, getGeoUtils());
-   
-    if(eligibleLinks.isEmpty()) {
+
+    MacroscopicLink selectedAccessLink = eligibleClosestPair.first();
+    boolean salvaging = eligibleClosestPair.second();
+    if(selectedAccessLink== null) {
       logWarningIfNotNearBoundingBox(
-          String.format("DISCARD: No suitable stop_location on correct side of osm way candidates available for transfer zone %s and mode %s", transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
+          String.format("DISCARD: No suitable stop_location on correct side of OSM way candidates available for transfer zone %s and mode %s", transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
       return null;
     }
     
-    /* reduce options based on proximity to closest viable link, without ruling out other options that might also be valid*/
-    MacroscopicLink selectedAccessLink = null;
-    Pair<? extends Edge, Set<? extends Edge>> candidatesForStopLocation = PlanitGraphGeoUtils.findEdgesClosest(
-        transferZone.getGeometry(), eligibleLinks, OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M, getGeoUtils());        
-    if(candidatesForStopLocation==null) {
-      throw new PlanItRunTimeException("No closest link could be found from selection of eligible closeby links when finding stop locations for transfer zone (osm entity id %s), this should not happen", transferZone.getExternalId());
-    }
-        
-    if(candidatesForStopLocation.second() == null || candidatesForStopLocation.second().isEmpty() ) {
-      /* only one option */
-      selectedAccessLink = (MacroscopicLink) candidatesForStopLocation.first();
-    }else {      
-      
-      /* multiple candidates still, filter candidates based on availability of valid stop location checking (mode support, correct location compared to zone etc.) */
-      @SuppressWarnings("unchecked")
-      Set<MacroscopicLink> candidatesToFilter = (Set<MacroscopicLink>) candidatesForStopLocation.second();
-      candidatesToFilter.add((MacroscopicLink)candidatesForStopLocation.first());
-      
+    /* reduce options based on proximity to closest viable link, while removing options outside of the closest distance buffer */
+    var candidatesToFilterMap = PlanitGraphGeoUtils.findEdgesWithinClosestDistanceDeltaToGeometry(transferZone.getGeometry(), eligibleLinks, OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M, getGeoUtils());
+    var candidatesToFilter = ((Map<MacroscopicLink, Double>)candidatesToFilterMap).keySet().stream().collect(Collectors.toSet());
+    if(candidatesToFilter == null || candidatesToFilter.isEmpty()){
+      throw new PlanItRunTimeException("No closest link could be found from selection of eligible closeby links when finding stop locations for transfer zone (OSM entity id %s), this should not happen", transferZone.getExternalId());
+    }else if(candidatesToFilter.size()>1){
+      /* more than a single candidate, proceed elimination or replace current closest with more appropriate option if found */
+      selectedAccessLink = null; // consider all remaining options again
+
       /* 1) reduce options by removing all compatible links within proximity of the closest link that are on the wrong side of the road infrastructure */
       candidatesToFilter = (Set<MacroscopicLink>) ZoningConverterUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(),  candidatesToFilter, isLeftHandDrive, accessModeAsCollection, getGeoUtils());
 
       /* 2) make sure a valid stop_location on each remaining link can be created (for example if stop_location would be on an extreme node, it is possible no access link segment upstream of that node remains 
        *    which would render an otherwise valid position invalid */
-      Iterator<? extends Edge> iterator = candidatesToFilter.iterator();
-      while(iterator.hasNext()) {      
-        Edge candidateLink = iterator.next();
-        Point connectoidLocation = getConnectoidHelper().findConnectoidLocationForStandAloneTransferZoneOnLink(
-            transferZone, (MacroscopicLink)candidateLink, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters());
-        if(connectoidLocation == null) {
-          iterator.remove();
-        }          
-      }
+      candidatesToFilter.removeIf(
+          l -> null == getConnectoidHelper().findConnectoidLocationForStandAloneTransferZoneOnLink(transferZone, l, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters()));
       
       if(candidatesToFilter == null || candidatesToFilter.isEmpty() ) {
         logWarningIfNotNearBoundingBox(String.format("DISCARD: No suitable stop_location on potential osm way candidates found for transfer zone %s and mode %s", transferZone.getExternalId(), accessMode.getName()), transferZone.getGeometry());
@@ -541,7 +525,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */  
   private void processIncompleteTransferZone(TransferZone transferZone) {
     
-    EntityType osmEntityType = PlanitTransferZoneUtils.extractOsmEntityType(transferZone);
+    EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
     long osmEntityId = Long.valueOf(transferZone.getExternalId());     
         
     /* validate mode support */
