@@ -171,7 +171,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* 2) make sure a valid stop_location on each remaining link can be created (for example if stop_location would be on an extreme node, it is possible no access link segment upstream of that node remains 
        *    which would render an otherwise valid position invalid */
       candidatesToFilter.removeIf(
-          l -> null == getConnectoidHelper().findConnectoidLocationForStandAloneTransferZoneOnLink(transferZone, l, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters()));
+          l -> null == getConnectoidHelper().findConnectoidLocationForStandAloneTransferZoneOnLink(
+                  transferZone, l, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters()));
       
       if(candidatesToFilter == null || candidatesToFilter.isEmpty() ) {
         logWarningIfNotNearBoundingBox(String.format("DISCARD: No suitable stop_location on potential osm way candidates found for transfer zone %s and mode %s", transferZone.getExternalId(), accessMode.getName()), transferZone.getGeometry());
@@ -525,7 +526,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */  
   private void processIncompleteTransferZone(TransferZone transferZone) {
     
-    EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
+    EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry());
     long osmEntityId = Long.valueOf(transferZone.getExternalId());     
         
     /* validate mode support */

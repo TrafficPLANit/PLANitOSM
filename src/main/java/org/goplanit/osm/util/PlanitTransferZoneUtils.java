@@ -1,11 +1,6 @@
 package org.goplanit.osm.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmPtv1Tags;
@@ -14,20 +9,17 @@ import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
-import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
 import org.goplanit.utils.zoning.Zone;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.linearref.LinearLocation;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
@@ -143,50 +135,6 @@ public class PlanitTransferZoneUtils {
     return false;
   }
 
-  /** Verify of the transfer zone resides left of the line coordA to coordB
-   * 
-   * @param transferZoneGeometry to check
-   * @param coordA of line 
-   * @param coordB of line
-   * @param geoUtils to use
-   * @return true when left, false otherwise
-   */
-  public static boolean isTransferZoneLeftOf(Geometry transferZoneGeometry, Coordinate coordA, Coordinate coordB, PlanitJtsCrsUtils geoUtils) {
-    if(transferZoneGeometry == null) {
-      throw new PlanItRunTimeException("Transfer zone representing platform/pole %s has no valid geometry attached, unable to determine on which side of line AB (%s, %s) is resides", transferZone.getExternalId(), coordA.toString(), coordB.toString());
-    }
-    return geoUtils.isGeometryLeftOf(transferZoneGeometry, coordA, coordB);
-  }
-
-  /** Find the access link segments ineligible given the intended location of the to be created connectoid, the transfer zone provided, and the access mode.
-   * When transfer zone location differs from the connectoid location determine on which side of the infrastructure it exists and based on the country's driving direction
-   * and access mode determine the access link segments
-   * 
-   * @param accessLinkSegments to filter
-   * @param transferZone to create connectoid(s) for
-   * @param planitMode that is accessible
-   * @param leftHandDrive is infrastructure left hand drive or not
-   * @param geoUtils to use for determining geographic eligibility
-   * @return ineligible link segments to be access link segments for connectoid at this location
-   */
-  public static Collection<EdgeSegment> identifyInvalidTransferZoneAccessLinkSegmentsBasedOnRelativeLocationToInfrastructure(
-      final Collection<EdgeSegment> accessLinkSegments, final TransferZone transferZone, final Mode planitMode, boolean leftHandDrive, final PlanitJtsCrsUtils geoUtils) {
-    
-    Collection<EdgeSegment> invalidAccessLinkSegments = new ArrayList<EdgeSegment>(accessLinkSegments.size());
-    /* use line geometry closest to connectoid location */
-    for(EdgeSegment linkSegment : accessLinkSegments) {
-      LineSegment finalLineSegment = PlanitGraphGeoUtils.extractClosestLineSegmentTo(transferZone.getGeometry(), linkSegment, geoUtils);
-      /* determine location relative to infrastructure */
-      boolean isTransferZoneLeftOfInfrastructure = isTransferZoneLeftOf(transferZone.getGeometry(true), finalLineSegment.p0, finalLineSegment.p1, geoUtils);
-      if(isTransferZoneLeftOfInfrastructure!=leftHandDrive) {
-        /* not viable opposite traffic directions needs to be crossed on the link to get to stop location --> remove */
-        invalidAccessLinkSegments.add(linkSegment);
-      }
-    }    
-            
-    return invalidAccessLinkSegments;
-  }
-  
   /** process an osm entity that is classified as a (train) station. For this to register on the transfer zone, we try to utilise its name and use it for the zone
    * name if it is empty. We also record it as an input property for future reference, e.g. key=station and value the name of the osm station
    *   
@@ -250,37 +198,16 @@ public class PlanitTransferZoneUtils {
    * @param transferZoneGeometry to identify entity type for
    * @return the entity type
    */
-  public static EntityType transferZoneGeometryToOsmEntityType(Geometry transferZoneGeometry, String osmSourceId) {
+  public static EntityType transferZoneGeometryToOsmEntityType(Geometry transferZoneGeometry) {
     if( transferZoneGeometry instanceof Point) {
       return EntityType.Node;
     }else if(transferZoneGeometry instanceof Polygon || transferZoneGeometry instanceof LineString) {
       return EntityType.Way;
     }else {
-      throw new PlanItRunTimeException("Unknown geometry type encountered for transfer zone (OSM id %s)",osmSourceId);
+      throw new PlanItRunTimeException("Unknown geometry type encountered for transferZoneGeometry %s",transferZoneGeometry);
     }
   }
 
-  /** Find the linear location reflecting the closest projected location between the transfer zone and link geometries. For the transfer zone geometry we use existing coordinates
-   * rather than projected ones
-   * 
-   * @param transferZone to use
-   * @param accessEdge to use
-   * @param geoUtils to use
-   * @return closest projected linear location on link geometry
-   */
-  public static LinearLocation extractClosestProjectedLinearLocationOnEdgeForTransferZone(TransferZone transferZone, Edge accessEdge, PlanitJtsCrsUtils geoUtils) {
-    LinearLocation projectedLinearLocationOnLink = null;
-    EntityType transferZoneGeometryType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
-    if(transferZoneGeometryType.equals(EntityType.Node)) {
-      projectedLinearLocationOnLink = geoUtils.getClosestProjectedLinearLocationOnGeometry(((Point)transferZone.getGeometry()).getCoordinate(),accessEdge.getGeometry());
-    }else if (transferZoneGeometryType.equals(EntityType.Way)){
-      projectedLinearLocationOnLink = geoUtils.getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(),accessEdge.getGeometry());
-    }else {
-      throw new PlanItRunTimeException("Unsupported osm entity type encountered for transfer zone (osm waiting area %s)",transferZone.getExternalId());
-    }
-    return projectedLinearLocationOnLink;    
-  }  
-  
   /** Collect the transfer zone type based on the tags
    * 
    * @param osmNode node 

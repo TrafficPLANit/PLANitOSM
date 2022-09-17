@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.OsmReaderSettings;
@@ -16,6 +17,8 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
+import org.goplanit.utils.network.layer.physical.Node;
+import org.locationtech.jts.geom.Point;
 
 /**
  * Capture all the user configurable settings regarding how to
@@ -75,15 +78,15 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole, station, halt, stop, etc. (by entity type and osm id).
    * This overrides the parser's mapping functionality and immediately maps the stop location to this osm entity. 
    */
-  private final Map<Long,Pair<EntityType,Long>> overwritePtStopLocation2WaitingAreaMapping = new HashMap<Long,Pair<EntityType,Long>>();
-    
+  private final Map<Long,Pair<EntityType,Long>> overwritePtStopLocation2WaitingAreaMapping = new HashMap<>();
+
   /**
    * Provide explicit mapping for waiting areas, e.g. platforms, poles, stations (by osm node id) to the osm way (by osm id) to place stop_locations on (connectoids)
    * This overrides the parser's functionality to automatically attempt to identify the correct stop_location. Note that this should only be used for waiting areas that
    * could not successfully be mapped to a stop_location and therefore have no known stop_location in the network. 
    * Further one cannot override a waiting area here that is also part of a stop_location to waiting area override. 
    */
-  private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<EntityType, Map<Long,Long>>();
+  private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<>();
     
   /** by default the transfer parser is deactivated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;

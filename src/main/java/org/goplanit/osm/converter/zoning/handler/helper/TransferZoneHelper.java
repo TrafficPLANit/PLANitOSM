@@ -111,7 +111,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @return true when supporting it, false otherwise
    */
   private boolean supportsMultipleStopPositions(TransferZone transferZone) {
-    EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(), transferZone.getExternalId());
+    EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry());
     if(osmEntityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(Long.valueOf(transferZone.getExternalId()))) {
         return false;
     }
