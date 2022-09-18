@@ -182,7 +182,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* 3) filter based on link hierarchy using osm way types, the premise being that bus services tend to be located on main roads, rather than smaller roads 
        * there is no hierarchy for rail, so we only do this for road modes. This could allow slightly misplaced waiting areas with multiple options near small and big roads
        * to be salvaged in favour of the larger road */
-      if(OsmRoadModeTags.isRoadModeTag(osmAccessMode)){
+      if(OsmRoadModeTags.isRoadModeTag(osmAccessMode) && candidatesToFilter.size() > 1){
         OsmWayUtils.removeEdgesWithOsmHighwayTypesLessImportantThan(OsmWayUtils.findMostProminentOsmHighWayType(candidatesToFilter), candidatesToFilter);
       }
         
@@ -595,7 +595,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    *
    */
   private void processIncompleteTransferZones(Collection<TransferZone> transferZones) {
-    Set<TransferZone> unprocessedTransferZones = new TreeSet<TransferZone>(transferZones);
+    Set<TransferZone> unprocessedTransferZones = new TreeSet<>(transferZones);
     for(TransferZone transferZone : unprocessedTransferZones) {
       /* only process incomplete zones (without connectoids) */
       if(!getZoningReaderData().getPlanitData().hasConnectoids(transferZone)) {

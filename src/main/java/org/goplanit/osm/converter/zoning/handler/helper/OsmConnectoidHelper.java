@@ -175,57 +175,26 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
    * @return found link segments that are deemed valid given the constraints
    */
   private Collection<EdgeSegment> findAccessLinkSegmentsForStandAloneTransferZone(
-      TransferZone transferZone, Link accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsCrsUtils geoUtils) {
-        
-    Long osmWaitingAreaId = Long.valueOf(transferZone.getExternalId());
-    Long osmNodeIdOfLinkExtremeNode = node.getExternalId()!= null ? Long.valueOf(node.getExternalId()) : null;
-    EntityType osmWaitingAreaEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry());
-    
-    /* potential link segments based on mode compatibility and access link restriction */ 
-    Collection<EdgeSegment> accessLinkSegments = new ArrayList<>(4);
-    for(EdgeSegment linkSegment : node.getEntryEdgeSegments()) {
-      if( ((MacroscopicLinkSegment)linkSegment).isModeAllowed(accessMode) && (linkSegment.getParent().idEquals(accessLink))){      
-        accessLinkSegments.add(linkSegment);
-      }
-    }  
-    
-    if(accessLinkSegments==null || accessLinkSegments.isEmpty()) {
-      return accessLinkSegments;
-    }
-        
-    /* user overwrite checks and special treatment */
-    boolean removeInvalidAccessLinkSegmentsIfNoMatchLeft = true;
-    {
-      /* in both cases: When a match, we must use the user overwrite value. We will still try to remove access link segments
-       * that are invalid, but if due to this check no matches remain, we revert this and instead use all entry link segments on the osm way
-       * since the user has indicated to explicitly use this combination which overrules the automatic filter we would ordinarily apply */
-          
-      /* stopLocation -> waiting area overwrite */
-      if(node.getExternalId()!=null && getSettings().isOverwriteStopLocationWaitingArea(osmNodeIdOfLinkExtremeNode)) {      
-        Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmNodeIdOfLinkExtremeNode);      
-        removeInvalidAccessLinkSegmentsIfNoMatchLeft = !(osmWaitingAreaId == result.second());
-      }    
-      /* waiting area -> osm way (stop_location) overwrite */
-      else if (getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmWaitingAreaId, osmWaitingAreaEntityType)) {        
-        long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmWaitingAreaId, osmWaitingAreaEntityType);
-        removeInvalidAccessLinkSegmentsIfNoMatchLeft = !(Long.valueOf(accessLink.getExternalId()).equals(osmWayId));
-      }
-    }
-  
-    /* accessible link segments for planit node based on relative location of waiting area compared to infrastructure*/    
-    if(mustAvoidCrossingTraffic) { 
-                          
-      boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(zoningReaderData.getCountryName());
-      Collection<EdgeSegment> toBeRemoveAccessLinkSegments = 
-          ZoningConverterUtils.identifyLinkSegmentsOnWrongSideOf(transferZone.getGeometry(), accessLinkSegments, accessMode, isLeftHandDrive, geoUtils);
-      
-      if(removeInvalidAccessLinkSegmentsIfNoMatchLeft || toBeRemoveAccessLinkSegments.size() < accessLinkSegments.size()) {
-        /* filter because "normal" situation or there are still matches left even after filtering despite the explicit user override for this  combination */
-        accessLinkSegments.removeAll(toBeRemoveAccessLinkSegments);
-      }
-      /* else  keep the access link segments so far */
-    }
-    return accessLinkSegments;
+      TransferZone transferZone, MacroscopicLink accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsCrsUtils geoUtils) {
+
+    Function<String, String> getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId = tzOsmId -> {
+      EntityType osmWaitingAreaEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(true));
+      Long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(Long.valueOf(tzOsmId), osmWaitingAreaEntityType);
+      return osmWayId!=null ? String.valueOf(osmWayId) : null;
+    };
+
+    return ZoningConverterUtils.findAccessLinkSegmentsForWaitingArea(
+            transferZone.getExternalId(),
+            transferZone.getGeometry(true),
+            accessLink,
+            accessLink.getExternalId(),
+            node,
+            accessMode,
+            getSettings().getCountryName(),
+            mustAvoidCrossingTraffic,
+            getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId,
+            this.getOverwrittenWaitingAreaSourceIdForNode,
+            geoUtils);
   }
 
   /** update an existing directed connectoid with new access zone and allowed modes. In case the link segment does not have any of the 
@@ -654,7 +623,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     
     /* find access link segments */
     Collection<EdgeSegment> accessLinkSegments = null;
-    for(Link link : planitNode.<Link>getLinks()) {
+    for(MacroscopicLink link : planitNode.<MacroscopicLink>getLinks()) {
       Collection<EdgeSegment> linkAccessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone,link, planitNode, planitMode, mustAvoidCrossingTraffic, geoUtils);
       if(linkAccessLinkSegments != null && !linkAccessLinkSegments.isEmpty()) {
         if(accessLinkSegments == null) {

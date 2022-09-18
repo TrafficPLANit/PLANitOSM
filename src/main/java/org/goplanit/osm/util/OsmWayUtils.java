@@ -591,7 +591,7 @@ public class OsmWayUtils {
   }
 
 
-  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the osm highway tags ordering 
+  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the OSM highway tags ordering
    * @param osmHighwayType to use as a reference
    * @param edgesToFilter the collection being filtered
    */
