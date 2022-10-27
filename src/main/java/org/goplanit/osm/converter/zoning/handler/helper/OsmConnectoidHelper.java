@@ -463,7 +463,6 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       OsmZoningReaderData zoningReaderData, 
       OsmPublicTransportReaderSettings transferSettings,
       OsmZoningHandlerProfiler profiler) {
-    
     super(transferSettings);
 
     this.zoning = zoning;
@@ -505,7 +504,11 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       getOverwrittenWaitingAreaSourceIdForPoint = p -> {
         final var networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
         final var osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(p);
-        return osmNode != null ? String.valueOf(osmNode.getId()) : null;
+        if(osmNode == null){
+          return null;
+        }
+        var result = getSettings().getOverwrittenStopLocationWaitingArea(osmNode.getId());
+        return result!= null ? String.valueOf(result.second()) : null;
       };
 
       getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId = tzOsmId -> {
