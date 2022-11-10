@@ -124,14 +124,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
    * @return created transfer zone
    */
   private TransferZone createEmptyTransferZone(TransferZoneType transferZoneType) {
-    
-    /* create */
-    TransferZone transferZone = zoning.getTransferZones().getFactory().createNew();
-    /* type */
-    transferZone.setType(transferZoneType);
-    /* xml id = internal id */
-    transferZone.setXmlId(String.valueOf(transferZone.getId()));
-    
+    TransferZone transferZone = zoning.getTransferZones().getFactory().createNew(transferZoneType, true);
     profiler.logTransferZoneStatus(zoning.getTransferZones().size());
     return transferZone;
   }
@@ -185,7 +178,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
       
       /* XML id = internal id*/
       transferZone.setXmlId(Long.toString(osmEntity.getId()));
-      /* external id  = osm node id*/
+      /* external id  = OSM node id*/
       transferZone.setExternalId(transferZone.getXmlId());
       
       /* name */
