@@ -35,6 +35,7 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
+import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.DirectedConnectoid;
 import org.goplanit.utils.zoning.TransferZone;
@@ -174,7 +175,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
    * @param geoUtils to use
    * @return found link segments that are deemed valid given the constraints
    */
-  private Collection<EdgeSegment> findAccessLinkSegmentsForStandAloneTransferZone(
+  private Collection<LinkSegment> findAccessLinkSegmentsForStandAloneTransferZone(
       TransferZone transferZone, MacroscopicLink accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsCrsUtils geoUtils) {
 
     Function<String, String> getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId = tzOsmId -> {
@@ -234,7 +235,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink = 
         collectConnectoidAccessNodeLocations(linksToBreak, zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
-    /* register additional actions on breaking link via listener for onnectoid update (see above)
+    /* register additional actions on breaking link via listener for connectoid update (see above)
      * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly than now
      */
     GraphModifierListener listener = new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsAccessNodeLocationBeforeBreakLink);
@@ -253,7 +254,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     /* TRACKING DATA CONSISTENCY - AFTER */
     {
       /* insert created/updated links and their geometries to spatial index instead */
-      newlyBrokenLinks.forEach( (id, links) -> {zoningReaderData.getPlanitData().addLinksToSpatialLinkIndex(links);});
+      newlyBrokenLinks.forEach( (id, links) -> zoningReaderData.getPlanitData().addLinksToSpatialLinkIndex(links));
                     
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct planit links for (internal) osm nodes */
       layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);                            
@@ -312,7 +313,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     return createdConnectoids;
   }
 
-  private boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<EdgeSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) {
+  private boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<LinkSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) {
     
     MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
     
@@ -625,9 +626,9 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     }         
     
     /* find access link segments */
-    Collection<EdgeSegment> accessLinkSegments = null;
+    Collection<LinkSegment> accessLinkSegments = null;
     for(MacroscopicLink link : planitNode.<MacroscopicLink>getLinks()) {
-      Collection<EdgeSegment> linkAccessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone,link, planitNode, planitMode, mustAvoidCrossingTraffic, geoUtils);
+      Collection<LinkSegment> linkAccessLinkSegments = findAccessLinkSegmentsForStandAloneTransferZone(transferZone,link, planitNode, planitMode, mustAvoidCrossingTraffic, geoUtils);
       if(linkAccessLinkSegments != null && !linkAccessLinkSegments.isEmpty()) {
         if(accessLinkSegments == null) {
           accessLinkSegments = linkAccessLinkSegments;

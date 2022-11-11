@@ -110,35 +110,16 @@ public class OsmNetworkHandlerHelper {
     
     /* geometry */
     Point geometry = OsmNodeUtils.createPoint(osmNode);
-    
-    Node node = createAndPopulateNode(geometry, networkLayer);
+
+    /* create node */
+    Node node = networkLayer.getNodes().getFactory().registerNew(geometry, true);
     
     /* external id */
     node.setExternalId(String.valueOf(osmNode.getId()));
     
     return node;
   }
-  
-  /**
-   * Extract a PLANit node from the osmNode information
-   * 
-   * @param geometry to place on PLANit node
-   * @param networkLayer to create node on
-   * @return created node, null when something went wrong
-   */
-  public static Node createAndPopulateNode(Point geometry, MacroscopicNetworkLayer networkLayer)  {
-    /* create and register */
-    Node node = networkLayer.getNodes().getFactory().registerNew();
-    
-    /* XML id */
-    node.setXmlId(Long.toString(node.getId()));
 
-    /* position */
-    node.setPosition(geometry);
-    
-    return node;
-  }  
-  
   /**
    * Extract a PLANit node from the osmNode information and register it on the provided layer
    * 
@@ -170,7 +151,7 @@ public class OsmNetworkHandlerHelper {
    */  
   public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
     /* create */
-    Node node = createAndPopulateNode(osmNodeLocation, networkLayer);            
+    Node node = networkLayer.getNodes().getFactory().registerNew(osmNodeLocation, true);
     if(node!= null) {
       /* register */
       layerData.registerPlanitNodeByLocation(osmNodeLocation, node);       
