@@ -801,14 +801,13 @@ public class OsmNetworkLayerParser {
    */ 
   protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
     
-    Point osmNodeLocation = OsmNodeUtils.createPoint(Long.valueOf(thePlanitNode.getExternalId()), networkData.getOsmNodeData().getRegisteredOsmNodes());
-    if(layerData.isLocationInternalToAnyLink(osmNodeLocation)) {       
+    if(layerData.isLocationInternalToAnyLink(thePlanitNode.getPosition())) {
       /* links to break */
-      List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
+      List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(thePlanitNode.getPosition());
                   
       /* break links */
-      Map<Long, Set<MacroscopicLink>> newOsmWaysWithMultipleLinks =
-          OsmNetworkHandlerHelper.breakLinksWithInternalNode(thePlanitNode, linksToBreak, networkLayer, geoUtils.getCoordinateReferenceSystem());                
+      Map<Long, Set<MacroscopicLink>> newOsmWaysWithMultipleLinks = networkLayer.getLayerModifier().breakAt(
+          linksToBreak, thePlanitNode, geoUtils.getCoordinateReferenceSystem(), l -> Long.parseLong(l.getExternalId()));
       
       /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to be able to find the correct
        * planit links for which osm nodes are internal */

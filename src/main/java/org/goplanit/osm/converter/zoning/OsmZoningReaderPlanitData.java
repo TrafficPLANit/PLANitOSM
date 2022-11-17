@@ -13,18 +13,14 @@ import java.util.TreeMap;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.GeoContainerUtils;
-import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinks;
-import org.goplanit.utils.network.layer.physical.Link;
-import org.goplanit.utils.network.layer.physical.Links;
 import org.goplanit.utils.zoning.DirectedConnectoid;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
@@ -56,7 +52,7 @@ public class OsmZoningReaderPlanitData {
   /* OSM <-> CONNECTOID TRACKING */
   
   /** track created connectoids by their location and layer they reside on, needed to avoid creating duplicates when dealing with multiple modes/layers */
-  private final Map<NetworkLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<NetworkLayer,Map<Point, List<DirectedConnectoid>>>();
+  private final Map<NetworkLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByLocation = new HashMap<>();
   
   
   /* TRANSFER ZONE <-> CONNECTOID TRACKING */
@@ -201,8 +197,8 @@ public class OsmZoningReaderPlanitData {
    * @return registered directed connectoids indexed by location
    */
   public Map<Point, List<DirectedConnectoid>> getDirectedConnectoidsByLocation(MacroscopicNetworkLayer networkLayer) {
-    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Point, List<DirectedConnectoid>>());
-    return Collections.unmodifiableMap(directedConnectoidsByOsmNodeId.get(networkLayer));
+    directedConnectoidsByLocation.putIfAbsent(networkLayer, new HashMap<>());
+    return Collections.unmodifiableMap(directedConnectoidsByLocation.get(networkLayer));
   }
   
   /** Collect the registered connectoids by given locations and network layer (unmodifiable)
@@ -223,9 +219,9 @@ public class OsmZoningReaderPlanitData {
    * @return true when successful, false otherwise
    */
   public boolean addDirectedConnectoidByLocation(MacroscopicNetworkLayer networkLayer, Point connectoidLocation , DirectedConnectoid connectoid) {
-    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap< Point, List<DirectedConnectoid>>());
-    Map<Point, List<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
-    connectoidsForLayer.putIfAbsent(connectoidLocation, new ArrayList<DirectedConnectoid>(1));
+    directedConnectoidsByLocation.putIfAbsent(networkLayer, new HashMap<>());
+    Map<Point, List<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByLocation.get(networkLayer);
+    connectoidsForLayer.putIfAbsent(connectoidLocation, new ArrayList<>(1));
     List<DirectedConnectoid> connectoids = connectoidsForLayer.get(connectoidLocation);
     if(!connectoids.contains(connectoid)) {
       return connectoids.add(connectoid);
@@ -239,7 +235,7 @@ public class OsmZoningReaderPlanitData {
    * @return true when present, false otherwise
    */
   public boolean hasAnyDirectedConnectoidsForLocation(Point location) {
-    for( Entry<NetworkLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
+    for( Entry<NetworkLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByLocation.entrySet()) {
       if(hasDirectedConnectoidForLocation(entry.getKey(), location)) {
         return true;
       }
@@ -254,7 +250,7 @@ public class OsmZoningReaderPlanitData {
    * @return true when present, false otherwise
    */  
   public boolean hasDirectedConnectoidForLocation(NetworkLayer networkLayer, Point point) {
-    Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
+    Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByLocation.get(networkLayer);
     return connectoidsForLayer != null && connectoidsForLayer.get(point) != null && !connectoidsForLayer.get(point).isEmpty();
   }  
   
@@ -264,7 +260,7 @@ public class OsmZoningReaderPlanitData {
    * @param connectoid ...this connectoid
    */
   public void addConnectoidByTransferZone(TransferZone transferZone, DirectedConnectoid connectoid) {    
-    connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<DirectedConnectoid>(1));
+    connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<>(1));
     List<DirectedConnectoid> connectoids = connectoidsByTransferZone.get(transferZone);
     if(!connectoids.contains(connectoid)) {
       connectoids.add(connectoid);
@@ -318,7 +314,7 @@ public class OsmZoningReaderPlanitData {
    */
   public void reset() {
     transferZonesByOsmEntityId.clear();
-    directedConnectoidsByOsmNodeId.clear();     
+    directedConnectoidsByLocation.clear();
     connectoidsByTransferZone.clear();
     spatiallyIndexedPlanitLinks = new Quadtree();
   }

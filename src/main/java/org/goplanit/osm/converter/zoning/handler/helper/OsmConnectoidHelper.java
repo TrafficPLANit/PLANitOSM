@@ -1,6 +1,5 @@
 package org.goplanit.osm.converter.zoning.handler.helper;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +26,6 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
-import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.TrackModeType;
@@ -37,6 +35,7 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
+import org.goplanit.utils.zoning.ConnectoidUtils;
 import org.goplanit.utils.zoning.DirectedConnectoid;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
@@ -78,59 +77,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
   /** utilities for geographic information */
   private final PlanitJtsCrsUtils geoUtils; 
   
-  
-  /** find all already registered directed connectoids that reference a link segment part of the passed in link in the given network layer
-   * 
-   * @param link to find referencing directed connectoids for
-   * @param knownConnectoidsByLocation all connectoids of the network layer indexed by their location
-   * @return all identified directed connectoids
-   */
-  private static Collection<DirectedConnectoid> findDirectedConnectoidsRefencingLink(Link link, Map<Point, List<DirectedConnectoid>> knownConnectoidsByLocation) {
-    Collection<DirectedConnectoid> referencingConnectoids = new HashSet<>();
-    /* find eligible locations for connectoids based on downstream locations of link segments on link */
-    Set<Point> eligibleLocations = new HashSet<Point>();
-    if(link.hasEdgeSegmentAb()) {      
-      eligibleLocations.add(link.getEdgeSegmentAb().getDownstreamVertex().getPosition());
-    }
-    if(link.hasEdgeSegmentBa()) {
-      eligibleLocations.add(link.getEdgeSegmentBa().getDownstreamVertex().getPosition());
-    }
-    
-    /* find all directed connectoids with link segments that have downstream locations matching the eligible locations identified*/
-    for(Point location : eligibleLocations) {
-      Collection<DirectedConnectoid> knownConnectoidsForLink = knownConnectoidsByLocation.get(location);
-      if(knownConnectoidsForLink != null && !knownConnectoidsForLink.isEmpty()) {
-        for(DirectedConnectoid connectoid : knownConnectoidsForLink) {
-          if(connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentAb()) || connectoid.getAccessLinkSegment().idEquals(link.getEdgeSegmentBa()) ) {
-            /* match */
-            referencingConnectoids.add(connectoid);
-          }
-        }
-      }
-    }
-    
-    return referencingConnectoids;
-  } 
-  
-  /**
-   * Collect all connectoids and their access node's positions if their access link segments reside on the provided links. Can be useful to ensure
-   * these positions remain correct after modifying the network.  
-   * 
-   * @param links to collect connectoid information for, i.e., only connectoids referencing link segments with a parent link in this collection
-   * @param connectoidsByLocation all connectoids indexed by their location
-   * @return found connectoids and their accessNode position 
-   */
-  private static Map<Point,DirectedConnectoid> collectConnectoidAccessNodeLocations(Collection<MacroscopicLink> links, Map<Point, List<DirectedConnectoid>> connectoidsByLocation) {
-    Map<Point, DirectedConnectoid> connectoidsDownstreamVerticesBeforeBreakLink = new HashMap<>();
-    for(Link link : links) {
-      Collection<DirectedConnectoid> connectoids = findDirectedConnectoidsRefencingLink(link,connectoidsByLocation);
-      if(connectoids !=null && !connectoids.isEmpty()) {
-        connectoids.forEach( connectoid -> connectoidsDownstreamVerticesBeforeBreakLink.put(connectoid.getAccessNode().getPosition(),connectoid));          
-      }
-    }
-    return connectoidsDownstreamVerticesBeforeBreakLink;
-  } 
-  
+
   /** Verify if the waiting area for a stop_position for the given mode must be on the logical relative location (left hand side for left hand drive) or not
    * 
    * @param accessMode to check
@@ -232,8 +179,8 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links we're about to break link (segments) 
      * if after breaking links this relation is modified, restore it by updating the connectoid to the correct access link segment directly upstream of the original 
      * downstream vertex identified */
-    Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink = 
-        collectConnectoidAccessNodeLocations(linksToBreak, zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
+    Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink =
+        ConnectoidUtils.findDirectedConnectoidsReferencingLinks(linksToBreak, zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
     /* register additional actions on breaking link via listener for connectoid update (see above)
      * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly than now
@@ -247,9 +194,9 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       zoningReaderData.getPlanitData().removeLinksFromSpatialLinkIndex(linksToBreak); 
     }    
           
-    /* break links */
-    Map<Long, Set<MacroscopicLink>> newlyBrokenLinks = OsmNetworkHandlerHelper.breakLinksWithInternalNode(
-        planitNode, linksToBreak, networkLayer, getSettings().getReferenceNetwork().getCoordinateReferenceSystem());   
+    /* break links and group resulting new links by original link's OSM id*/
+    Map<Long, Set<MacroscopicLink>> newlyBrokenLinks = networkLayer.getLayerModifier().breakAt(
+        linksToBreak, planitNode,  getSettings().getReferenceNetwork().getCoordinateReferenceSystem(), l -> Long.parseLong(l.getExternalId()));
   
     /* TRACKING DATA CONSISTENCY - AFTER */
     {

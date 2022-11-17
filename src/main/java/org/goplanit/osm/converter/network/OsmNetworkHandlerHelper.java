@@ -56,45 +56,7 @@ public class OsmNetworkHandlerHelper {
     }
     return null;
   }  
-    
-  /** Check if we should break any links for the passed in node and if so, do it
-   * 
-   * @param theNode to verify
-   * @param linksToBreak contains the links that (at least at some point) had theNode as an internal link
-   * @param networkLayer the node resides on
-   * @param crs of the network layer 
-   * @return newly broken PLANit links by their original osmWayId 
-   *  
-   */
-  public static Map<Long, Set<MacroscopicLink>> breakLinksWithInternalNode(
-      Node theNode, List<MacroscopicLink> linksToBreak, MacroscopicNetworkLayer networkLayer, CoordinateReferenceSystem crs){
-    Map<Long, Set<MacroscopicLink>> newOsmWaysWithMultiplePlanitLinks = new HashMap<>();
-          
-    if(linksToBreak != null) {
-            
-      try {
-        /* performing breaking of links at the node given, returns the broken links by the original link's PLANit edge id */
-        Map<Long, Pair<MacroscopicLink,MacroscopicLink>> localBrokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, theNode, crs);
-        /* add newly broken links to the mapping from original external OSM link id, to the broken link that together form this entire original OSMway*/      
-        if(localBrokenLinks != null) {
-          localBrokenLinks.forEach((id, links) -> {
-            List.of(links.first(),links.second()).forEach( brokenLink -> {
-              final Long brokenLinkOsmId = Long.parseLong(brokenLink.getExternalId());
-              newOsmWaysWithMultiplePlanitLinks.putIfAbsent(brokenLinkOsmId, new HashSet<>());
-              newOsmWaysWithMultiplePlanitLinks.get(brokenLinkOsmId).add(brokenLink);
-            });
-          });        
-        }
-      }catch(PlanItRunTimeException e) {
-        LOGGER.severe(e.getMessage());
-        LOGGER.severe(String.format("Unable to break links %s for node %s, something unexpected went wrong",
-            linksToBreak.stream().map( link -> link.getExternalId()).collect(Collectors.toSet()).toString(), theNode.getExternalId()));
-      }
-    } 
-        
-    return newOsmWaysWithMultiplePlanitLinks;
-  }
-  
+
   /**
    * Extract a PLANit node from the osmNode information
    * 
