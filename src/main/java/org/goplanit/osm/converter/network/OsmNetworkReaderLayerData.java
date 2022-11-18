@@ -61,6 +61,7 @@ public class OsmNetworkReaderLayerData {
        * links rather than the original full link that no longer exists in that form */
       Set<MacroscopicLink> replacementLinks = new HashSet<>();
       Iterator<MacroscopicLink> linksWithLocationInternal = linksWithLocationInternally.iterator();
+      final double coordinateTolerance = 0;
       while(linksWithLocationInternal.hasNext()) {
         Link orginalLinkToBreak = linksWithLocationInternal.next(); 
         
@@ -72,7 +73,7 @@ public class OsmNetworkReaderLayerData {
           MacroscopicLink matchingEarlierBrokenLink = null;
           boolean locationInternal = true;
           for(var link : earlierBrokenLinks) {
-            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(location.getCoordinate(),link.getGeometry());
+            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(location.getCoordinate(),link.getGeometry(), coordinateTolerance);
             if(coordinatePosition.isPresent()) {
               matchingEarlierBrokenLink = link;
               

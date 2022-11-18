@@ -26,12 +26,14 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
+import org.goplanit.utils.math.Precision;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegments;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
@@ -210,29 +212,6 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     networkLayer.getLayerModifier().removeListener(listener);          
   }
 
-  /** create directed connectoid for the link segment provided, all related to the given transfer zone and with access modes provided. When the link segment does not have any of the 
-   * passed in modes listed as allowed, no connectoid is created and null is returned
-   * 
-   * @param accessZone to relate connectoids to
-   * @param linkSegment to create connectoid for
-   * @param allowedModes used for the connectoid
-   * @return created connectoid when at least one of the allowed modes is also allowed on the link segment
-   */
-  private DirectedConnectoid createAndRegisterDirectedConnectoid(final TransferZone accessZone, final MacroscopicLinkSegment linkSegment, final Set<Mode> allowedModes){
-    final Set<Mode> realAllowedModes = linkSegment.getAllowedModesFrom(allowedModes);
-    if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      var connectoid = zoning.getTransferConnectoids().getFactory().registerNew(linkSegment,accessZone);
-      
-      /* xml id = internal id */
-      connectoid.setXmlId(String.valueOf(connectoid.getId()));
-      
-      /* link connectoid to zone and register modes for access*/
-      connectoid.addAllowedModes(accessZone, realAllowedModes);   
-      return connectoid;
-    }
-    return null;
-  }
-
   /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with access modes provided. connectoids are only created
    * when the access link segment has at least one of the allowed modes as an eligible mode
    * 
@@ -243,18 +222,13 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
    * @return created connectoids
    */
   private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Iterable<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes){
-    Set<DirectedConnectoid> createdConnectoids = new HashSet<>();
-    for(EdgeSegment linkSegment : linkSegments) {
-      DirectedConnectoid newConnectoid = createAndRegisterDirectedConnectoid(transferZone, (MacroscopicLinkSegment)linkSegment, allowedModes);
-      if(newConnectoid != null) {
-        createdConnectoids.add(newConnectoid);
-        
-        /* update planit data tracking information */ 
-        /* 1) index by access link segment's downstream node location */
-        zoningReaderData.getPlanitData().addDirectedConnectoidByLocation(networkLayer, newConnectoid.getAccessLinkSegment().getDownstreamVertex().getPosition() ,newConnectoid);
-        /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
-        zoningReaderData.getPlanitData().addConnectoidByTransferZone(transferZone, newConnectoid);
-      }
+    Collection<DirectedConnectoid> createdConnectoids = ZoningConverterUtils.createAndRegisterDirectedConnectoids(zoning, transferZone, (Iterable<MacroscopicLinkSegment>) linkSegments, allowedModes);
+    for(var newConnectoid : createdConnectoids) {
+      /* update planit data tracking information */
+      /* 1) index by access link segment's downstream node location */
+      zoningReaderData.getPlanitData().addDirectedConnectoidByLocation(networkLayer, newConnectoid.getAccessLinkSegment().getDownstreamVertex().getPosition() ,newConnectoid);
+      /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
+      zoningReaderData.getPlanitData().addConnectoidByTransferZone(transferZone, newConnectoid);
     }         
     
     return createdConnectoids;
@@ -387,9 +361,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
   
         /* add projected location to geometry of link */
         LinearLocation projectedLinearLocationOnLink = PlanitEntityGeoUtils.extractClosestProjectedLinearLocationToGeometryFromEdge(transferZone.getGeometry(true), accessLink, geoUtils);
-        Pair<LineString, LineString> splitLineString = PlanitJtsUtils.splitLineString(accessLink.getGeometry(),projectedLinearLocationOnLink);          
-        LineString linkGeometryWithExplicitProjectedCoordinate = PlanitJtsUtils.mergeLineStrings(splitLineString.first(),splitLineString.second());
-        accessLink.setGeometry(linkGeometryWithExplicitProjectedCoordinate);
+        accessLink.updateGeometryInjectCoordinateAtProjectedLocation(projectedLinearLocationOnLink);
                 
         /* new location must be marked as internal to link, otherwise the link will not be broken when extracting connectoids at this location*/
         getNetworkToZoningData().getNetworkLayerData(networkLayer).registerLocationAsInternalToPlanitLink(connectoidLocation, accessLink);
