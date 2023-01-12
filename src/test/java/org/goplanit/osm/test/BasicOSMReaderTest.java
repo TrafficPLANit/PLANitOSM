@@ -33,9 +33,9 @@ public class BasicOSMReaderTest {
   
   private static final String RESOURCE_DIR = "./src/test/resources/";
   
-  private static final String SYDNEYCBD_OSM = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm");
+  private static final String SYDNEYCBD_2023_OSM = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd_2023.osm");
   
-  private static final String SYDNEYCBD_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd.osm.pbf");
+  private static final String SYDNEYCBD_2023_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd_2023.osm.pbf");
   
   private static final String EXAMPLE_REMOTE_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
 
@@ -71,7 +71,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadInfrastructureTest() {
     try {
-      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
       
       /* test out excluding a particular type highway:road from parsing */
       osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
@@ -102,7 +102,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadAndPtTest() {
     try {
-      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_OSM, CountryNames.AUSTRALIA);
+      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
       configureForRoadAndPt(osmReader);
 
       Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
@@ -132,7 +132,7 @@ public class BasicOSMReaderTest {
   @Test
   public void pbfReadertest() {
     try {
-      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_PBF, CountryNames.AUSTRALIA);
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_PBF, CountryNames.AUSTRALIA);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {
@@ -149,7 +149,7 @@ public class BasicOSMReaderTest {
   @Test
   public void osmReaderRoadAndPtAndGtfsTest() {
     try {
-      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_PBF, CountryNames.AUSTRALIA);
+      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_2023_PBF, CountryNames.AUSTRALIA);
       configureForRoadAndPt(osmReader);
 
       /* GTFS configuration */
