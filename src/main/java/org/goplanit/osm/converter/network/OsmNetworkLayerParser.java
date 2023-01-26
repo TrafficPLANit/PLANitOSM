@@ -18,7 +18,6 @@ import org.goplanit.osm.tags.OsmRailFeatureTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmSpeedTags;
 import org.goplanit.osm.tags.OsmTags;
-import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmWayUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.arrays.ArrayUtils;
@@ -37,7 +36,6 @@ import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -133,7 +131,7 @@ public class OsmNetworkLayerParser {
     if(finalLinkSegmentType==null) {
 
       /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
-      finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().createUniqueCopyOf(linkSegmentType);
+      finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().createUniqueDeepCopyOf(linkSegmentType);
       networkLayer.getLinkSegmentTypes().register(finalLinkSegmentType);
       /* XML id */
       finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
