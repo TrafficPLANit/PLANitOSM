@@ -30,7 +30,7 @@ import org.goplanit.zoning.Zoning;
  * @author markr
  *
  */
-public class OsmIntermodalReader implements IntermodalReader {
+public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, RoutedServices> {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReader.class.getCanonicalName());
