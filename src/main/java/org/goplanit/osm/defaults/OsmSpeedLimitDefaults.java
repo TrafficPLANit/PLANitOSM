@@ -7,7 +7,7 @@ package org.goplanit.osm.defaults;
  *
  */
 
-public class OsmSpeedLimitDefaults implements Cloneable {
+public class OsmSpeedLimitDefaults {
   
   /**
    * urban highway speed limit defaults
@@ -89,18 +89,18 @@ public class OsmSpeedLimitDefaults implements Cloneable {
     if(other != null) {
       this.countryName = other.countryName;
       if(other.urbanHighwayDefaults != null) {
-        this.urbanHighwayDefaults = other.urbanHighwayDefaults.clone();
+        this.urbanHighwayDefaults = other.urbanHighwayDefaults.deepClone();
       }else {
         this.urbanHighwayDefaults = null;
       }
       if(other.nonUrbanHighwayDefaults != null) {
-        this.nonUrbanHighwayDefaults = other.nonUrbanHighwayDefaults.clone();
+        this.nonUrbanHighwayDefaults = other.nonUrbanHighwayDefaults.deepClone();
       }
       else {
         this.nonUrbanHighwayDefaults = null;
       }
       if(other.railwayDefaults != null) {
-        this.railwayDefaults = other.railwayDefaults.clone();
+        this.railwayDefaults = other.railwayDefaults.deepClone();
       }else {
         this.railwayDefaults = null;
       }
@@ -117,7 +117,7 @@ public class OsmSpeedLimitDefaults implements Cloneable {
    * 
    * @return shallow copy
    */
-  public OsmSpeedLimitDefaults clone() {
+  public OsmSpeedLimitDefaults shallowClone() {
     return new OsmSpeedLimitDefaults(this);
   }
   

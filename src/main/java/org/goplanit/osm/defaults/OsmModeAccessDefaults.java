@@ -14,7 +14,7 @@ import org.goplanit.utils.locale.CountryNames;
  * @author markr
  *
  */
-public class OsmModeAccessDefaults implements Cloneable {
+public class OsmModeAccessDefaults {
   
   /**
    * The logger for this class
@@ -81,15 +81,23 @@ public class OsmModeAccessDefaults implements Cloneable {
   
 
   /**
-   * {@inheritDoc}
+   * shallow copy
+   *
+   * @return shallow copy
    */
-  @Override
-  public OsmModeAccessDefaults clone() throws CloneNotSupportedException {
+  public OsmModeAccessDefaults shallowClone() {
     return new OsmModeAccessDefaults(this);
-  }  
-     
+  }
 
-  
+  /**
+   * deep copy
+   *
+   * @return deep copy
+   */
+  public OsmModeAccessDefaults deepClone() {
+    return shallowClone(); // same at present
+  }
+
   /** collect the defaults specifically for highways
    * @return highway mode access defaults
    */

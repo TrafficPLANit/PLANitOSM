@@ -295,7 +295,7 @@ public class OsmModeAccessDefaultsByCountry {
         /* register on defaults */
         if(!allowedOsmModes.isEmpty()) {
           /* copy the global defaults and make adjustments */
-          OsmModeAccessDefaults countryDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.clone();
+          OsmModeAccessDefaults countryDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.deepClone();
           countryDefaults.setCountry(fullCountryName);          
 
           if(isOsmHighway) {
@@ -336,7 +336,7 @@ public class OsmModeAccessDefaultsByCountry {
   public static OsmModeAccessDefaults create() {
     OsmModeAccessDefaults theDefaults = null;
     try {
-      theDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.clone();
+      theDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.deepClone();
     }catch (Exception e) {
       LOGGER.severe(e.getMessage());
       LOGGER.severe("unable to initialise global mode access defaults");
@@ -357,10 +357,10 @@ public class OsmModeAccessDefaultsByCountry {
     try {    
       String iso2CountryCode = LocaleUtils.getIso2CountryCodeByName(countryName);
       if(iso2CountryCode != null && MODE_ACCESS_DEFAULTS_BY_COUNTRY.containsKey(iso2CountryCode)) {
-        theDefaults = MODE_ACCESS_DEFAULTS_BY_COUNTRY.get(iso2CountryCode).clone();
+        theDefaults = MODE_ACCESS_DEFAULTS_BY_COUNTRY.get(iso2CountryCode).deepClone();
       }else {
         LOGGER.info("Reverting to global mode access defaults, rather than country specific ones");
-        theDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.clone();
+        theDefaults = GLOBAL_MODE_ACCESS_DEFAULTS.deepClone();
       }
     }catch (Exception e) {
       LOGGER.severe(e.getMessage());

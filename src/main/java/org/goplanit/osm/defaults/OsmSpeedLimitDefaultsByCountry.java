@@ -104,7 +104,7 @@ public class OsmSpeedLimitDefaultsByCountry {
       boolean defaultsNotYetRegistered = false;
       OsmSpeedLimitDefaults countryDefaults = getDefaultsByCountryName(fullCountryName);
       if(countryDefaults==null) {
-        countryDefaults = GLOBAL_SPEED_LIMIT_DEFAULTS.clone();
+        countryDefaults = GLOBAL_SPEED_LIMIT_DEFAULTS.shallowClone();
         countryDefaults.setCountry(fullCountryName);
         defaultsNotYetRegistered = true;
       }            
@@ -161,7 +161,7 @@ public class OsmSpeedLimitDefaultsByCountry {
       boolean defaultsNotYetRegistered = false;
       OsmSpeedLimitDefaults countryDefaults = getDefaultsByCountryName(fullCountryName);
       if(countryDefaults==null) {
-        countryDefaults = GLOBAL_SPEED_LIMIT_DEFAULTS.clone();
+        countryDefaults = GLOBAL_SPEED_LIMIT_DEFAULTS.shallowClone();
         countryDefaults.setCountry(fullCountryName);
         defaultsNotYetRegistered = true;
       }       
@@ -379,7 +379,7 @@ public class OsmSpeedLimitDefaultsByCountry {
     String iso2Australia = LocaleUtils.getIso2CountryCodeByName(countrySpeedLimits.getCountry());    
     PlanItException.throwIfNull(iso2Australia, "country name could not be converted into ISO2 code");
     
-    speedLimitDefaultsByCountryCode.put(iso2Australia, countrySpeedLimits.clone());
+    speedLimitDefaultsByCountryCode.put(iso2Australia, countrySpeedLimits.shallowClone());
   }
   
   
@@ -408,7 +408,7 @@ public class OsmSpeedLimitDefaultsByCountry {
    */
   public static OsmSpeedLimitDefaults create() {
     OsmSpeedLimitDefaults createdDefaults = null;
-    createdDefaults = GLOBAL_SPEED_LIMIT_DEFAULTS.clone();
+    createdDefaults = GLOBAL_SPEED_LIMIT_DEFAULTS.shallowClone();
     return createdDefaults;
   }  
   
@@ -429,7 +429,7 @@ public class OsmSpeedLimitDefaultsByCountry {
       LOGGER.warning(String.format("No OSM speed limit defaults available for %s, reverting to global defaults",countryName));
     }else {
       /* make a copy so true defaults are not changed if user makes changes for project */
-      createdDefaults = createdDefaults.clone(); 
+      createdDefaults = createdDefaults.shallowClone();
     }        
     
     return createdDefaults;

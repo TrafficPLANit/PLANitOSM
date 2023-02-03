@@ -15,7 +15,7 @@ import org.goplanit.osm.tags.OsmRailwayTags;
  * @author markr
  *
  */
-public class OsmLaneDefaults implements Cloneable {
+public class OsmLaneDefaults {
 
   /**
    * The logger for this class
@@ -165,10 +165,11 @@ public class OsmLaneDefaults implements Cloneable {
   }  
   
   /**
-   * {@inheritDoc}
+   * Shallow copy
+   *
+   * @return shallow copy
    */
-  @Override
-  public OsmLaneDefaults clone() throws CloneNotSupportedException {
+  public OsmLaneDefaults shallowClone() {
     return new OsmLaneDefaults(this);
   }
 

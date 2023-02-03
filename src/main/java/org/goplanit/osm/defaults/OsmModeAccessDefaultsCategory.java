@@ -26,7 +26,7 @@ import org.goplanit.utils.locale.CountryNames;
  * @author markr
  *
  */
-public class OsmModeAccessDefaultsCategory implements Cloneable {
+public class OsmModeAccessDefaultsCategory {
   
   /**
    * The logger for this class
@@ -390,10 +390,11 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
   }  
 
   /**
-   * {@inheritDoc}
+   * Shallow copy
+   *
+   * @return shallow copy
    */
-  @Override
-  public OsmModeAccessDefaultsCategory clone() throws CloneNotSupportedException {
+  public OsmModeAccessDefaultsCategory shallowClone() {
     return new OsmModeAccessDefaultsCategory(this);
   }  
     

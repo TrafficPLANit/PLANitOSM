@@ -11,7 +11,7 @@ import java.util.logging.Logger;
  * @author markr
  *
  */
-public class OsmSpeedLimitDefaultsCategory implements Cloneable {
+public class OsmSpeedLimitDefaultsCategory {
   
   /** the Logger for this class */
   @SuppressWarnings("unused")
@@ -35,7 +35,7 @@ public class OsmSpeedLimitDefaultsCategory implements Cloneable {
   public OsmSpeedLimitDefaultsCategory(String countryName) {
     this.countryName = countryName;
     this.backupDefaults = null;
-    this.speedLimitDefaults = new HashMap<String,Double>();    
+    this.speedLimitDefaults = new HashMap<>();
   }   
   
   /**
@@ -47,7 +47,7 @@ public class OsmSpeedLimitDefaultsCategory implements Cloneable {
   public OsmSpeedLimitDefaultsCategory(String countryName, OsmSpeedLimitDefaultsCategory backupDefaults) {
     this.countryName = countryName;
     this.backupDefaults = backupDefaults;
-    this.speedLimitDefaults = new HashMap<String,Double>();    
+    this.speedLimitDefaults = new HashMap<>();
   }   
   
   /**
@@ -59,7 +59,7 @@ public class OsmSpeedLimitDefaultsCategory implements Cloneable {
   public OsmSpeedLimitDefaultsCategory(OsmSpeedLimitDefaultsCategory other) {
     this.backupDefaults = other.backupDefaults;
     this.countryName = other.countryName;
-    this.speedLimitDefaults =  new HashMap<String,Double>(other.speedLimitDefaults);
+    this.speedLimitDefaults = new HashMap<>(other.speedLimitDefaults);
   }
   
   /** Set a speed default for a given type
@@ -103,11 +103,20 @@ public class OsmSpeedLimitDefaultsCategory implements Cloneable {
    
   
   /**
-   * clone this class instance
+   * shallow clone this class instance
+   *
+   * @return shallow copy
    */
-  @Override
-  public OsmSpeedLimitDefaultsCategory clone() {
+  public OsmSpeedLimitDefaultsCategory shallowClone() {
     return new OsmSpeedLimitDefaultsCategory(this);
-  }  
+  }
+
+  /**
+   * deep clone this class instance
+   */
+  public OsmSpeedLimitDefaultsCategory deepClone()
+  {
+    return shallowClone(); // same as shallow clone at present
+  }
 
 }
