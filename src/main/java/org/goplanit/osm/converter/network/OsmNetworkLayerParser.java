@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
-import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
+import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.OsmAccessTags;
