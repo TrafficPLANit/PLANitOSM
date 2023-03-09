@@ -1,11 +1,14 @@
 package org.goplanit.osm.test;
 
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.*;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import org.goplanit.logging.Logging;
+import org.goplanit.mode.TrainMode;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReader;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
@@ -16,7 +19,10 @@ import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.mode.PredefinedMode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.zoning.Zoning;
+import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,15 +37,15 @@ public class BasicOSMReaderTest {
   
   private static Logger LOGGER;
   
-  private static final String RESOURCE_DIR = "./src/test/resources/";
+  private static final String RESOURCE_DIR = Path.of(".","src","test","resources").toString();
   
-  private static final String SYDNEYCBD_2023_OSM = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd_2023.osm");
+  private static final String SYDNEYCBD_2023_OSM = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
   
-  private static final String SYDNEYCBD_2023_PBF = RESOURCE_DIR.concat("osm/sydney-cbd/sydneycbd_2023.osm.pbf");
+  private static final String SYDNEYCBD_2023_PBF = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
   
   private static final String EXAMPLE_REMOTE_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
 
-  /** configure for parsing road and pt infrastructure networks
+  /** configure for parsing road and pt infrastructure networks (activate rail and disable walk and cycle infrastructure)
    *
    * @param osmReader to configure
    */
@@ -84,8 +90,13 @@ public class BasicOSMReaderTest {
             
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
-      
-      //TODO: find a way to test the settings had the intended effect
+
+      // when input source is updated this will fail, mainl meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
+      // are deemed correct
+      assertEquals(network.getTransportLayers().size(), 1);
+      assertEquals(network.getTransportLayers().getFirst().getLinks().size(), 1075);
+      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2119);
+      assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 882);
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
@@ -94,8 +105,6 @@ public class BasicOSMReaderTest {
     }
   }
 
-
-  
   /**
    * test *.osm format parsing on small network collecting both road, rail AND stops, platforms, stations, e.g. inter-modal support
    */
@@ -116,8 +125,24 @@ public class BasicOSMReaderTest {
       assertFalse(network.getTransportLayers().getFirst().isEmpty());
       assertTrue(zoning.getOdZones().isEmpty());
       assertFalse(zoning.getTransferZones().isEmpty());
-      
-      //TODO: find a way to test the settings had the intended effect
+
+      // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
+      // are deemed correct
+      assertEquals(network.getTransportLayers().size(), 1);
+      assertEquals(network.getTransportLayers().getFirst().getLinks().size(),1178);
+      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2325);
+      assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 978);
+
+      assertEquals(zoning.getOdZones().size(), 0);
+      assertEquals(zoning.getTransferZones().size(), 71);
+      assertEquals(zoning.getTransferZoneGroups().size(), 7);
+      assertEquals(zoning.getOdConnectoids().size(), 0);
+      assertEquals(zoning.getTransferConnectoids().size(), 94);
+
+      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
+      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
+      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM),true);
+      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL), true);
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
@@ -143,31 +168,6 @@ public class BasicOSMReaderTest {
   }
 
   /**
-   * test *.pbf format parsing on small network collecting both road, rail AND stops, platforms, stations, e.g. inter-modal support as well
-   * as the GTFS infusion. Predicated on the assumption that {@link #osmReaderRoadAndPtTest()} succeeds
-   */
-  @Test
-  public void osmReaderRoadAndPtAndGtfsTest() {
-    try {
-      OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_2023_PBF, CountryNames.AUSTRALIA);
-      configureForRoadAndPt(osmReader);
-
-      /* GTFS configuration */
-      //TODO
-
-      Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
-      MacroscopicNetwork network = resultPair.first();
-      Zoning zoning = resultPair.second();
-
-
-    }catch(Exception e) {
-      LOGGER.severe(e.getMessage());
-      e.printStackTrace();
-      fail();
-    }
-  }
-  
-  /**
    * test if we can parse from cloud based URL instead of local fule
    */
   @Test
@@ -183,9 +183,7 @@ public class BasicOSMReaderTest {
                         
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
-      
-      //TODO: find a way to test the settings had the intended effect
-      
+
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
       e.printStackTrace();
