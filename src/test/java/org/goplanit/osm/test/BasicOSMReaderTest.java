@@ -142,7 +142,7 @@ public class BasicOSMReaderTest {
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM),true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL), true);
+      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL),  true);
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
