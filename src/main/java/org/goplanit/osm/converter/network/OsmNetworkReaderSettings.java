@@ -159,7 +159,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** default value for parsing OSM way geometry: false */
   public static boolean DEFAULT_PARSE_OSMWAY_GEOMETRY = false;  
   
-  /** Default whether or not we are removing dangling subnetworks after parsing: true */
+  /** Default whether we are removing dangling subnetworks after parsing: true */
   public static boolean DEFAULT_REMOVE_DANGLING_SUBNETWORK = true;
   
   /** Default minimum size of subnetwork for it not to be removed when dangling subnetworks are removed, size indicates number of vertices: 20 */
