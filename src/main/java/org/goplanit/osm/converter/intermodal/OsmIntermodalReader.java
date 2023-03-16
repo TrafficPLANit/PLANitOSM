@@ -129,14 +129,12 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   /**
    * Constructor 
    * 
-   * @param networkSettings to use
-   * @param ptSettings to use
+   * @param settings to use
    * @param osmNetworkToPopulate to populate
    * @param zoningToPopulate to populate
-   * @throws PlanItException throws if network settings are inconsistent with network and country provided
    */
-  protected OsmIntermodalReader(OsmNetworkReaderSettings networkSettings, OsmPublicTransportReaderSettings ptSettings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) throws PlanItException{
-    this(new OsmIntermodalReaderSettings(networkSettings, ptSettings), zoningToPopulate);
+  protected OsmIntermodalReader(OsmIntermodalReaderSettings settings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+    this(settings, zoningToPopulate);
     getSettings().getPublicTransportSettings().setReferenceNetwork(osmNetworkToPopulate);
   }
   
