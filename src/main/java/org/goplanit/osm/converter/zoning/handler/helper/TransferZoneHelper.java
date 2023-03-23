@@ -147,14 +147,19 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
     TransferZone transferZone = null;
         
+    var osmNodeData = zoningReaderData.getOsmData().getOsmNodeData();
+
     /* Verify if there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
      * regular feedback when nodes are missing, because it lacks context regarding being close to bounding box and would confuse the user */
     Level geometryExtractionLogLevel = LOGGER.getLevel();
-    var osmNodeData = zoningReaderData.getOsmData().getOsmNodeData();
-    if(Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Way) && !OsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity,osmNodeData.getRegisteredOsmNodes())){
+    boolean isOsmWay = Osm4JUtils.getEntityType(osmEntity).equals(EntityType.Way);
+    if(isOsmWay && !OsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity,osmNodeData.getRegisteredOsmNodes())){
       Integer availableOsmNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, osmNodeData.getRegisteredOsmNodes());
       if(availableOsmNodeIndex!=null) {
         OsmNode referenceNode = osmNodeData.getRegisteredOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
+        if(referenceNode == null){
+          int bla = 4;
+        }
         if(OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(referenceNode), getNetworkToZoningData().getNetworkBoundingBox(), geoUtils)) {
           LOGGER.info(String.format("OSM waiting area way (%d) geometry incomplete, network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
           geometryExtractionLogLevel = Level.OFF;

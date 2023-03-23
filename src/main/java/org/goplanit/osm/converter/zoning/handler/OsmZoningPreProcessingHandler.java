@@ -4,14 +4,11 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import de.topobyte.osm4j.core.model.iface.OsmWay;
+import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.tags.*;
 
-import de.topobyte.osm4j.core.model.iface.EntityType;
-import de.topobyte.osm4j.core.model.iface.OsmRelation;
-import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
 import org.goplanit.osm.util.OsmPtVersionScheme;
 import org.goplanit.utils.misc.StringUtils;
 
@@ -177,7 +174,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * {@inheritDoc}
    */
   @Override
-  public void handle(OsmWay osmWay) throws IOException {
+  public void handle(OsmWay osmWay) {
 
     if(stage != Stage.IDENTIFY_PT_NODES){
       return;
@@ -188,7 +185,6 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
     /* regular OSM way handling of eligible PT identified OSM ways */
     wrapHandlePtOsmWay(osmWay, this::preRegisterEligiblePtNodesOfWay);
-
   }
 
   /**

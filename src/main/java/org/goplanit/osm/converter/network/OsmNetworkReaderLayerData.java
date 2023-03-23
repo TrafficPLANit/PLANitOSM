@@ -79,7 +79,7 @@ public class OsmNetworkReaderLayerData {
               
               int position = coordinatePosition.get();
               if(position==0 || position == (link.getGeometry().getNumPoints()-1)) {
-                /* match found, but position is not longer internal due to link being broken before on this location */
+                /* match found, but position is no longer internal due to link being broken before on this location */
                 locationInternal = false;
               }
               break;
@@ -106,7 +106,7 @@ public class OsmNetworkReaderLayerData {
    * track the PLANit nodes created on this layer by their location (which reflects eith an osm node, or an auto-generated stop_location, not related to an osm node
    * in the latter case, no osm node is available) so they can be collected when needed, for example when breaking planit links
    */
-  protected final Map<Point, Pair<Node, OsmNode>> planitNodesByLocation = new HashMap<Point,  Pair<Node, OsmNode>>();
+  protected final Map<Point, Pair<Node, OsmNode>> planitNodesByLocation = new HashMap<>();
   
   /** Mapping from locations (representing known OSM nodes or auto-generated PLANit nodes without OSM node, in the latter case, no OSM node is stored in the pair) to the links they are internal to. When initial parsing is done, 
    * we verify if any entry in the map contains more than one link in which case the two link intersect at a point other than the extremes
@@ -205,6 +205,13 @@ public class OsmNetworkReaderLayerData {
   public void registerOsmNodeAsInternalToPlanitLink(OsmNode osmNode, MacroscopicLink planitLink){
     Point location = OsmNodeUtils.createPoint(osmNode);
     originalLinkInternalAvailableLocations.putIfAbsent(location, Pair.of(new ArrayList<>(), osmNode ));
+    var knownLinksForOsmNode = originalLinkInternalAvailableLocations.get(location);
+    if(knownLinksForOsmNode.second() != null && knownLinksForOsmNode.second().getId() != osmNode.getId()){
+      // this is a bug on our end and will cause breaking links to attach too many planit links, for example when two metro lines above each other have two nodes in the same location but at a different layer
+      // they do not touch and when breaking at this location should occur at a particular layer, upon which only one of the nodes' and its links should be broken and not the other, currently
+      // we only consider location and not layer --> WRONG
+      LOGGER.warning(String.format("Found two OSM nodes on top of each other: %s  and %s, likely layer based situation --> requires refactoring of code to support properly!", osmNode.getId(), knownLinksForOsmNode.second().getId()));
+    }
     registerLocationAsInternalToPlanitLink(location, planitLink);
   }  
   
@@ -215,6 +222,12 @@ public class OsmNetworkReaderLayerData {
    */  
   public void registerLocationAsInternalToPlanitLink(Point location, MacroscopicLink planitLink) {
     originalLinkInternalAvailableLocations.putIfAbsent(location, Pair.of(new ArrayList<>(), null /* no node */));
+    var knownLinksForLocation = originalLinkInternalAvailableLocations.get(location);
+    if(!knownLinksForLocation.first().isEmpty() && knownLinksForLocation.first().contains(planitLink)){
+      LOGGER.fine(String.format("Registering same PLANit link (OSM way: %s) twice on having current location (%s) as internal, ignoring, tagging error unless OSM way is self intersecting", planitLink.getExternalId(),location));
+      return;
+    }
+
     originalLinkInternalAvailableLocations.get(location).first().add(planitLink);
   }  
   

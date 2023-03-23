@@ -798,7 +798,7 @@ public class OsmNetworkLayerParser {
    * @throws PlanItException thrown if error
    */ 
   protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
-    
+
     if(layerData.isLocationInternalToAnyLink(thePlanitNode.getPosition())) {
       /* links to break */
       List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(thePlanitNode.getPosition());

@@ -412,9 +412,12 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param osmNode node to parse
    */
   @Override
-  public void handle(OsmNode osmNode) throws IOException {
+  public void handle(OsmNode osmNode) {
     var settings = getSettings();
-    
+
+    if(osmNode.getId()==712795405){
+      int bla = 4;
+    }
     /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are 
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());    

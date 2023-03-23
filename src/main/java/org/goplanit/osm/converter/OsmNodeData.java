@@ -5,6 +5,7 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 /**
@@ -67,7 +68,17 @@ public class OsmNodeData {
     return osmNodes.containsKey(osmNodeId);
   }
 
+  /**
+   * Remove all registered OSM node based on provided predicate
+   *
+   * @param predicate remove if this returns true for an entry
+   */
+  public void removeRegisteredOsmNodesIf(Predicate<Map.Entry<Long, OsmNode>> predicate) {
+    osmNodes.entrySet().removeIf(predicate);
+  }
+
   public void reset(){
     osmNodes.clear();
   }
+
 }

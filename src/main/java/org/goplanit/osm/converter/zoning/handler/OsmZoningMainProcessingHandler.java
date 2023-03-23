@@ -47,6 +47,29 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmZoningMainProcessingHandler.class.getCanonicalName());
+
+  /** flag required due to absence of callback when node parsing is complete and way parsing has not started */
+  private boolean firstOsmWay;
+
+  /** When an OSM node has been identified in pre-processing as used by pt/zoning infrastructure, finalise registration by adding the actual OSM node instance
+   *  otherwise ignore
+   *
+   * @param osmNode to check
+   */
+  private void registerIfPreregistered(OsmNode osmNode) {
+    var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
+    if(osmNodeData.containsPreregisteredOsmNode(osmNode.getId()) && !osmNodeData.containsOsmNode(osmNode.getId())){
+      osmNodeData.registerEligibleOsmNode(osmNode);
+    }
+  }
+
+  /** it is possible some preregistered OSM nodes part of ways are not available, for example when the way crosses the bounding box and
+   * is only partly present. In those cases we want to prune those nodes from the pre-registered nodes to avoid issues later on where
+   * the index exists, but nto the actual value. this method is to becalled after the processing of all OSM nodes but before we do OSM ways
+   */
+  private void pruneUnavailablePreregisteredOsmNodes() {
+    getZoningReaderData().getOsmData().getOsmNodeData().removeRegisteredOsmNodesIf(e -> e.getValue()==null);
+  }
             
   /** Extract the platform member of a Ptv2 stop_area and register it on the transfer zone group
    * 
@@ -1060,7 +1083,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       final OsmZoningReaderData zoningReaderData,  
       final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData, zoningToPopulate, profiler);    
+    super(transferSettings, zoningReaderData, zoningToPopulate, profiler);
+    firstOsmWay = true;
   }
   
   /**
@@ -1081,17 +1105,15 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmNode node to parse
    */
   @Override
-  public void handle(OsmNode osmNode) throws IOException {
+  public void handle(OsmNode osmNode) {
 
     /* parse as stand-alone PT-entity node */
     wrapHandlePtOsmNode(osmNode, this::extractTransferInfrastructure);
 
     /* When earmarked to be needed by PT OSM ways/relations during pre-processing but not yet fully registered, we now register the entire node in memory for OSM way/relations/node
      *  handling during main process */
-    var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
-    if(osmNodeData.containsPreregisteredOsmNode(osmNode.getId()) && !osmNodeData.containsOsmNode(osmNode.getId())){
-      osmNodeData.registerEligibleOsmNode(osmNode);
-    }
+    registerIfPreregistered(osmNode);
+
   }
 
   /**
@@ -1100,7 +1122,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmWay to handle
    */
   @Override
-  public void handle(OsmWay osmWay) throws IOException {
+  public void handle(OsmWay osmWay) {
+    if(firstOsmWay){
+      pruneUnavailablePreregisteredOsmNodes();
+      firstOsmWay = false;
+    }
 
     /* delegate after verifying eligibility */
     super.wrapHandlePtOsmWay(osmWay, this::handlePtOsmWay);
@@ -1111,7 +1137,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * {@inheritDoc}
    */  
   @Override
-  public void handle(OsmRelation osmRelation) throws IOException {
+  public void handle(OsmRelation osmRelation) {
 
     /* delegate after verifying eligibility */
     wrapHandlePtOsmRelation(osmRelation, this::handleOsmPtRelation);
@@ -1132,8 +1158,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   /**
    * reset the contents, mainly to free up unused resources 
    */
-  public void reset() {  
-    // do nothing yet
+  public void reset() {
+    firstOsmWay = true;
   }
 
   
