@@ -81,7 +81,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private Collection<MacroscopicLink> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     

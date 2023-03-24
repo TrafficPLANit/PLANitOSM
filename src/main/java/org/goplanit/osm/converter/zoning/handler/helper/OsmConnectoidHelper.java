@@ -225,7 +225,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
 
   private boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Collection<LinkSegment> eligibleLinkSegments, PlanitJtsCrsUtils geoUtils) {
     
-    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(planitMode);
     
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
      
@@ -411,7 +411,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       /* transform point to waiting area source id if a specific waiting area is to be attached to it, overwrites default behaviour of finding
        * connectoid location in PLANit */
       getOverwrittenWaitingAreaSourceIdForPoint = p -> {
-        final var networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
+        final var networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessMode);
         final var osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(p);
         if(osmNode == null){
           return null;
@@ -510,7 +510,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
       return false;
     }
     
-    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(planitMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);                
     
     /* planit access node */
@@ -588,7 +588,7 @@ public class OsmConnectoidHelper extends ZoningHelperBase {
     for(Mode planitMode : planitModes) {
       
       /* layer */
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(planitMode);
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type deactivated or node dangling)",osmNode.getId(), planitMode.getExternalId()), OsmNodeUtils.createPoint(osmNode));
