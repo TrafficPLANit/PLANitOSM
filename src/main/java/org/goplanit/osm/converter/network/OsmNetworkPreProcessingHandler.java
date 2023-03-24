@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 
 /**
  * Preprocessing Handler that identifies which nodes of osm ways  - that are marked for inclusion even if they fall (partially) outside the bounding polygon -
@@ -57,12 +58,13 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
   /**
    * Constructor
-   * 
+   *
+   * @param networkToPopulate the network to populate
    * @param networkData to populate
    * @param settings for the handler
    */
-  public OsmNetworkPreProcessingHandler(final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) { 
-    super(networkData, settings);           
+  public OsmNetworkPreProcessingHandler(final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+    super(networkToPopulate, networkData, settings);
     this.nodeCounter = new LongAdder();
   }  
   

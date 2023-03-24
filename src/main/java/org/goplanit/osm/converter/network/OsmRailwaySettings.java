@@ -12,10 +12,8 @@ import org.goplanit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
-import org.goplanit.utils.mode.Modes;
 import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
@@ -48,28 +46,19 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * <li>TRAM           to TramMode       </li>
    * </ul>
    * 
-   * 
-   * @param planitModes to populate based on (default) mapping
-   * @throws PlanItException thrown if error
+   *
    */   
-  protected void initialiseDefaultMappingFromOsmRailModes2PlanitModes(Modes planitModes) throws PlanItException {
-    /* initialise rail modes on planit side that we are about to map */
-    {
-      planitModes.getFactory().registerNew(PredefinedModeType.TRAM);
-      planitModes.getFactory().registerNew(PredefinedModeType.LIGHTRAIL);
-      planitModes.getFactory().registerNew(PredefinedModeType.TRAIN);
-      planitModes.getFactory().registerNew(PredefinedModeType.SUBWAY);
-    }
-    
+  protected void initialiseDefaultMappingFromOsmRailModes2PlanitModes(){
+
     /* add default mapping */
     {
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.FUNICULAR, planitModes.get(PredefinedModeType.TRAM));
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.LIGHT_RAIL, planitModes.get(PredefinedModeType.LIGHTRAIL));
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.MONO_RAIL, planitModes.get(PredefinedModeType.TRAM));
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.NARROW_GAUGE, planitModes.get(PredefinedModeType.TRAIN));
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.TRAIN, planitModes.get(PredefinedModeType.TRAIN));
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.SUBWAY, planitModes.get(PredefinedModeType.SUBWAY));
-      addDefaultOsmMode2PlanitModeMapping(OsmRailModeTags.TRAM, planitModes.get(PredefinedModeType.TRAM));
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.FUNICULAR, PredefinedModeType.TRAM);
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.LIGHT_RAIL, PredefinedModeType.LIGHTRAIL);
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.MONO_RAIL, PredefinedModeType.TRAM);
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.NARROW_GAUGE, PredefinedModeType.TRAIN);
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.TRAIN, PredefinedModeType.TRAIN);
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.SUBWAY, PredefinedModeType.SUBWAY);
+      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.TRAM, PredefinedModeType.TRAM);
       
       /* activate all defaults */
       activateOsmMode(OsmRailModeTags.FUNICULAR);
@@ -78,10 +67,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
       activateOsmMode(OsmRailModeTags.NARROW_GAUGE);
       activateOsmMode(OsmRailModeTags.TRAIN);
       activateOsmMode(OsmRailModeTags.SUBWAY);
-      activateOsmMode(OsmRailModeTags.TRAM);  
-      
-      /* ensure external id is set based on OSM name */
-      setModeExternalIdsBasedOnMappedOsmModes();
+      activateOsmMode(OsmRailModeTags.TRAM);
     }           
   }
   
@@ -337,23 +323,23 @@ public class OsmRailwaySettings extends OsmWaySettings {
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
    * 
-   * @param osmMode to collect mapped mode for (if any)
+   * @param osmMode to collect mapped mode type for (if any)
    * @return mapped PLANit mode, if not available null is returned
    */
-  public Mode getMappedPlanitRailMode(final String osmMode) {
+  public PredefinedModeType getMappedPlanitRailMode(final String osmMode) {
     if(OsmRailModeTags.isRailModeTag(osmMode)) {
-      return getPlanitModeIfActivated(osmMode);
+      return getPlanitModeTypeIfActivated(osmMode);
     }
     return null;
   }  
   
   /** convenience method that collects the currently mapped osm rail modes for the given planit mode
    * 
-   * @param planitMode to collect mapped mode for (if any)
+   * @param planitModeType to collect mapped mode for (if any)
    * @return mapped osm modes, if not available empty collection is returned
    */  
-  public final Collection<String> getMappedOsmRailModes(final Mode planitMode) {    
-    return getAcivatedOsmModes(planitMode);
+  public final Collection<String> getMappedOsmRailModes(final PredefinedModeType planitModeType) {
+    return getAcivatedOsmModes(planitModeType);
   }   
     
   /**

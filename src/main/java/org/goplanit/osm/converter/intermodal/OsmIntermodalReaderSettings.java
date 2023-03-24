@@ -33,17 +33,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String countryName) {
-    this(countryName, new PlanitOsmNetwork());
-  }  
-  
-  /**
-   * Constructor
-   * 
-   * @param countryName to use
-   * @param networkToPopulate to use
-   */
-  public OsmIntermodalReaderSettings(final String countryName, final PlanitOsmNetwork networkToPopulate) {
-    this(null, countryName, networkToPopulate);
+    this(null, countryName);
   }
   
   /**
@@ -51,12 +41,11 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * 
    * @param inputSource to use
    * @param countryName to use
-   * @param networkToPopulate to use
    */
-  public OsmIntermodalReaderSettings(final URL inputSource, final String countryName, final PlanitOsmNetwork networkToPopulate) {
+  public OsmIntermodalReaderSettings(final URL inputSource, final String countryName) {
     this(
-        new OsmNetworkReaderSettings(inputSource, countryName, networkToPopulate), 
-        new OsmPublicTransportReaderSettings(inputSource, countryName, networkToPopulate));
+        new OsmNetworkReaderSettings(inputSource, countryName),
+        new OsmPublicTransportReaderSettings(inputSource, countryName));
   }  
          
   

@@ -2,11 +2,17 @@ package org.goplanit.osm.converter.helper;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.Modes;
+import org.goplanit.utils.mode.PredefinedMode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
@@ -18,10 +24,21 @@ import org.goplanit.utils.network.layer.physical.Link;
  *
  */
 public class OsmModeHelper {
+
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmModeHelper.class.getCanonicalName());
   
   /** settings relevant to this parser */
   private final OsmNetworkReaderSettings settings;
-  
+
+  /** used for temporary storage */
+  private final Collection<String> osmLinkModes;
+
+  private final Consumer<Mode> addMappedOsmLinkModesByPlanitMode;
+
+  /** track mapping between predefined mode type and its instance */
+  private Map<PredefinedModeType, Mode> predefinedModeTypeToModeMap;
+
   /** Collect the settings containing the mapping between PLANit and OSM modes
    * 
    * @return settings used
@@ -33,9 +50,75 @@ public class OsmModeHelper {
   /** Constructor 
    * 
    * @param settings to use
+   * @param modes in use across the network we are populating
    */
-  public OsmModeHelper(final OsmNetworkReaderSettings settings) {
-    this.settings = settings;    
+  public OsmModeHelper(final OsmNetworkReaderSettings settings, Iterable<Mode> modes) {
+    this.settings = settings;
+    this.osmLinkModes = new HashSet<>();
+    addMappedOsmLinkModesByPlanitMode = (planitMode) -> {
+      if (planitMode.isPredefinedModeType()) {
+        osmLinkModes.addAll(settings.getMappedOsmModes(planitMode.getPredefinedModeType()));
+      }
+    };
+
+    /** create mapping */
+    for(var mode : modes){
+      if(mode.isPredefinedModeType()){
+        var old = predefinedModeTypeToModeMap.put(mode.getPredefinedModeType(),mode);
+        if(old != null){
+          LOGGER.severe(String.format("found multiple modes with same predifined mode type %s, shouldn't happen", old.getPredefinedModeType()));
+        }
+      }
+    }
+  }
+
+  /** Convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
+   *
+   * @param osmModes to collect mapped mode for (if any)
+   * @return mapped PLANit modes, if not available empty set is returned
+   */
+  public Set<Mode> getActivatedPlanitModes(final Collection<String> osmModes) {
+    HashSet<Mode> mappedPlanitModes = new HashSet<>();
+
+    if(osmModes == null) {
+      return mappedPlanitModes;
+    }
+
+    for(String osmMode : osmModes) {
+      var theModeType = settings.getMappedPlanitModeType(osmMode);
+      if(theModeType == null) {
+        continue;
+      }
+
+      var theMode = predefinedModeTypeToModeMap.get(theModeType);
+      if(theMode == null) {
+        continue;
+      }
+      mappedPlanitModes.add(theMode);
+    }
+    return mappedPlanitModes;
+  }
+
+  /** Convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
+   *
+   * @param osmMode to collect mapped mode for (if any)
+   * @return mapped PLANit mode, if not available null is returned
+   */
+  public Mode getActivatedPlanitMode(final String osmMode) {
+    if(osmMode == null) {
+      return null;
+    }
+
+    var theModeType = settings.getMappedPlanitModeType(osmMode);
+    if(theModeType == null) {
+      return null;
+    }
+
+    var theMode = predefinedModeTypeToModeMap.get(theModeType);
+    if(theMode == null) {
+      return null;
+    }
+    return theMode;
   }
   
   /** find out if link osmModesToCheck are compatible with the passed in reference osm modes. Mode compatible means at least one overlapping
@@ -48,13 +131,13 @@ public class OsmModeHelper {
    * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
    * @return matched transfer zones
    */   
-  public boolean isModeCompatible(Collection<String> osmModesToCheck, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    /* collect compatible modes */
-    Collection<String> overlappingModes = OsmModeUtils.extractCompatibleOsmModes(osmModesToCheck, referenceOsmModes, allowPseudoMatches);    
+  public boolean isModeCompatible(final Collection<String> osmModesToCheck, final Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+    /* collect compatible OSM modes */
+    Collection<String> overlappingOsmModes = OsmModeUtils.extractCompatibleOsmModes(osmModesToCheck, referenceOsmModes, allowPseudoMatches);
     
     /* only proceed when there is a valid mapping based on overlapping between reference modes and zone modes, while in absence
      * of reference osm modes, we trust any nearby zone with mapped mode */
-    if(settings.hasAnyMappedPlanitMode(overlappingModes)) {
+    if(settings.hasAnyMappedPlanitModeType(overlappingOsmModes)) {
       /* no overlapping mapped modes while both have explicit osm modes available, not a match */
       return true;
     }
@@ -73,15 +156,17 @@ public class OsmModeHelper {
    * @return matched transfer zones
    */   
   public boolean isLinkModeCompatible(Link link, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Collection<String> osmLinkModes = new HashSet<>();
-    if(link.hasEdgeSegmentAb()) {      
+
+    osmLinkModes.clear(); // used by addMappedOsmLinkModesByPlanitMode consumer, so reset
+    if(link.hasEdgeSegmentAb()) {
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAllowedModes();
-      osmLinkModes.addAll(settings.getMappedOsmModes(planitModes));
+      planitModes.forEach( planitMode -> addMappedOsmLinkModesByPlanitMode.accept(planitMode));
     }
     if(link.hasEdgeSegmentBa()) {      
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentBa()).getLinkSegmentType().getAllowedModes();
-      osmLinkModes.addAll(settings.getMappedOsmModes(planitModes));
+      planitModes.forEach( planitMode -> addMappedOsmLinkModesByPlanitMode.accept(planitMode));
     }
+
     if(osmLinkModes==null || osmLinkModes.isEmpty()) {
       return false;
     }
@@ -106,7 +191,7 @@ public class OsmModeHelper {
       }
     }    
     return modeCompatibleLinks;
-  }  
-  
+  }
+
   
 }

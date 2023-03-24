@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -45,7 +46,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @return true when one or more layers are found, false otherwise
    */
   private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getSettings().getOsmNetworkToPopulate(), getNetworkData());
+    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getNetwork(), getNetworkData());
   }                                           
        
   
@@ -269,7 +270,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
         
     String osmTypeValueToUse = tags.get(osmTypeKeyToUse);        
-    Map<NetworkLayer,MacroscopicLinkSegmentType> linkSegmentTypes = settings.getOsmNetworkToPopulate().getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);
+    Map<NetworkLayer,MacroscopicLinkSegmentType> linkSegmentTypes = getNetwork().getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);
     if(linkSegmentTypes != null) {
       linkSegmentTypes.forEach( (layer, linkSegmentType)  -> {
         if(linkSegmentType != null) {
@@ -397,12 +398,13 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
   /**
    * Constructor
-   * 
+   *
+   * @param networkToPopulate the network to populate
    * @param networkData the data used for populating the network
    * @param settings for the handler
    */
-  public OsmNetworkMainProcessingHandler(final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
-    super(networkData, settings);       
+  public OsmNetworkMainProcessingHandler(final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+    super(networkToPopulate, networkData, settings);
   }
    
 

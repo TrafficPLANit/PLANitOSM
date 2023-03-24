@@ -40,7 +40,7 @@ public class OsmNetworkReaderData {
   private OsmNodeData osmNodeData = new OsmNodeData();
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
-  private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<MacroscopicNetworkLayer, OsmNetworkLayerParser>();  
+  private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<>();
   
   /** the distance that qualifies as being near to the network bounding box. Used to suppress warnings of incomplete osm ways due to bounding box (which
    * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */

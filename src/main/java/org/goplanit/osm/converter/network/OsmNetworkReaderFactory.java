@@ -32,7 +32,7 @@ public class OsmNetworkReaderFactory {
    * @throws PlanItException thrown if error
    */
   public static OsmNetworkReader create(String countryName) throws PlanItException {
-    return new OsmNetworkReader(countryName, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));    
+    return create(new OsmNetworkReaderSettings(countryName));
   }  
   
   /** Create a PLANitOSMReader which will create its own macroscopic network
@@ -104,7 +104,7 @@ public class OsmNetworkReaderFactory {
    * @throws PlanItException thrown if error
    */
   public static OsmNetworkReader create(OsmNetworkReaderSettings settings) throws PlanItException {
-    return new OsmNetworkReader(settings);    
+    return new OsmNetworkReader(settings, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));
   }   
   
 }

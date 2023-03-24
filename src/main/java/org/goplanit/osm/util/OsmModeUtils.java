@@ -381,8 +381,8 @@ public class OsmModeUtils {
    * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
    * @return compatible modes found
    */
-  public static Collection<String> extractCompatibleOsmModes(Collection<String> osmModesToCheck, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
-    Set<String> overlappingModes = new HashSet<String>();          
+  public static Collection<String> extractCompatibleOsmModes(final Collection<String> osmModesToCheck, final Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+    Set<String> overlappingModes = new HashSet<>();
     if(referenceOsmModes !=null) {
       if(allowPseudoMatches) {
         /* retain all zone modes per overlapping type of modes */

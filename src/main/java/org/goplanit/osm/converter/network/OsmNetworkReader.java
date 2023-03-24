@@ -6,9 +6,11 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.network.NetworkReader;
 import org.goplanit.network.MacroscopicNetwork;
+import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
@@ -35,6 +37,9 @@ public class OsmNetworkReader implements NetworkReader {
       
   /** network reader data tracked during parsing */
   private final OsmNetworkReaderData networkData;
+
+  /** the network to populate */
+  private final PlanitOsmNetwork osmNetworkToPopulate;
   
   /** settings to use */
   private final OsmNetworkReaderSettings settings;
@@ -45,26 +50,37 @@ public class OsmNetworkReader implements NetworkReader {
    * @throws PlanItException thrown if error
    */
   public void initialiseBeforeParsing() throws PlanItException {
-    PlanitOsmNetwork network = settings.getOsmNetworkToPopulate();
-    PlanItException.throwIf(network.getTransportLayers() != null && network.getTransportLayers().size()>0,"Network is expected to be empty at start of parsing OSM network, but it has layers already");
+    PlanItException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null && getOsmNetworkToPopulate().getTransportLayers().size()>0,
+        "Network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* gis initialisation */
     PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
     try {
-      settings.getOsmNetworkToPopulate().transform(settings.getSourceCRS());
+      getOsmNetworkToPopulate().transform(settings.getSourceCRS());
     }catch(PlanItException e) {
       LOGGER.severe(String.format("Unable to update network to CRS %s", settings.getSourceCRS().getName()));
-    }    
-    
+    }
+
+    /* initialise the modes on the network based on the settings chosen */
+    getOsmNetworkToPopulate().createAndRegisterOsmCompatiblePlanitPredefinedModes(getSettings());
+    if(getOsmNetworkToPopulate().getModes().firstMatch( m -> !m.isPredefinedModeType()) != null){
+      // todo if we support custom modes, then all locations where we determine the mapping from OSM mode to PLANit mode needs revisiting to account for such custom mode mappings
+      //  + settings need updating to support this activation somehow !!
+      throw new PlanItRunTimeException("OSM based PLANit networks currently support only predefined mode mappings, but found custom PLANit mode, this is not allowed");
+    }
+    //todo: make the configuration configurable again via the settings, however this requires changing the configurator to work with predefined mode types rather than actual mode
+    //      instances
+    var planitInfrastructureLayerConfiguration = MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
+
     /* (default) link segment types (on the network) */
-    network.initialiseLayers(settings.getPlanitInfrastructureLayerConfiguration());        
-    network.createOsmCompatibleLinkSegmentTypes(settings);
+    getOsmNetworkToPopulate().createAndRegisterLayers(planitInfrastructureLayerConfiguration);
+    getOsmNetworkToPopulate().createAndRegisterOsmCompatibleLinkSegmentTypes(getSettings());
     /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
     settings.excludeOsmWayTypesWithoutActivatedModes();
     settings.logUnsupportedOsmWayTypes();
         
     /* initialise layer specific parsers */
-    networkData.initialiseLayerParsers(network, settings, geoUtils);    
+    networkData.initialiseLayerParsers(getOsmNetworkToPopulate(), settings, geoUtils);
   }  
            
   /** Read based on reader and handler where the reader performs a callback to the handler provided
@@ -120,7 +136,7 @@ public class OsmNetworkReader implements NetworkReader {
       }
       
       /* set handler to deal with call backs from osm4j */
-      OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(networkData, settings);    
+      OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
       read(osmReader, osmHandler);  
 //    }
   }
@@ -135,7 +151,7 @@ public class OsmNetworkReader implements NetworkReader {
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for network, aborting");
     }   
-    OsmNetworkMainProcessingHandler osmHandler = new OsmNetworkMainProcessingHandler(networkData, settings);
+    OsmNetworkMainProcessingHandler osmHandler = new OsmNetworkMainProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
     read(osmReader, osmHandler);     
   }
   
@@ -171,7 +187,7 @@ public class OsmNetworkReader implements NetworkReader {
       boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
       
       /* logging stats  - before */
-      MacroscopicNetworkLayers layers = getSettings().getOsmNetworkToPopulate().getTransportLayers();
+      MacroscopicNetworkLayers layers = getOsmNetworkToPopulate().getTransportLayers();
       {
         LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
         if (discardMaxsize != Integer.MAX_VALUE) {
@@ -201,7 +217,7 @@ public class OsmNetworkReader implements NetworkReader {
       }
       
       /* remove dangling subnetworks */ 
-      getSettings().getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest);
+      getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest);
       
       /* remove listener as it is currently meant for local use only due to expensive initialisation which is also not kept up to date */
       if(zoning != null) {
@@ -218,7 +234,15 @@ public class OsmNetworkReader implements NetworkReader {
       }
             
     }
-  }  
+  }
+
+  /** Collect the osm network to populate
+   *
+   * @return osm network
+   */
+  protected PlanitOsmNetwork getOsmNetworkToPopulate() {
+    return this.osmNetworkToPopulate;
+  }
   
   /**
    * Constructor 
@@ -246,22 +270,24 @@ public class OsmNetworkReader implements NetworkReader {
    * 
    * @param inputSource to use
    * @param countryName to use
-   * @param osmNetwork network to populate 
+   * @param osmNetworkToPopulate network to populate
    * @throws PlanItException thrown if error
    */
-  protected OsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
-    this(new OsmNetworkReaderSettings(inputSource, countryName, osmNetwork));
+  protected OsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException{
+    this(new OsmNetworkReaderSettings(inputSource, countryName), osmNetworkToPopulate);
   }    
     
   /**
    * Constructor 
    *  
    * @param settings for populating the network
+   * @param osmNetworkToPopulate network to populate
    * @throws PlanItException throw if settings are inconsistent with reader configuration (different country name or network used)
    */
-  protected OsmNetworkReader(OsmNetworkReaderSettings settings) throws PlanItException{
+  protected OsmNetworkReader(OsmNetworkReaderSettings settings, final PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException{
     this.settings = settings;   
-    this.networkData = new OsmNetworkReaderData();    
+    this.networkData = new OsmNetworkReaderData();
+    this.osmNetworkToPopulate = osmNetworkToPopulate;
   }  
      
   /**
@@ -275,12 +301,8 @@ public class OsmNetworkReader implements NetworkReader {
   public MacroscopicNetwork read() throws PlanItException {
     PlanItException.throwIfNull(getSettings().getInputSource(),"input source not set for OSM network to parse");
     PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"country name not set for OSM network to parse");
-    PlanItException.throwIfNull(getSettings().getOsmNetworkToPopulate(),"planit network to populate not set for OSM network to parse");
-    
-        
-    /* ensure that the network CRS is consistent with the chosen source CRS */
-    getSettings().getOsmNetworkToPopulate().transform(settings.getSourceCRS());    
-    
+    PlanItException.throwIfNull(getOsmNetworkToPopulate(),"planit network to populate not set for OSM network to parse");
+
     logInfo();
     
     /* initialise */
@@ -301,7 +323,7 @@ public class OsmNetworkReader implements NetworkReader {
     LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */
-    return getSettings().getOsmNetworkToPopulate();
+    return osmNetworkToPopulate;
   }  
     
   /**
@@ -327,7 +349,7 @@ public class OsmNetworkReader implements NetworkReader {
    * @return created network to zoning reader data to use
    */
   public OsmNetworkToZoningReaderData createNetworkToZoningReaderData() {
-    if(getSettings().getOsmNetworkToPopulate().getTransportLayers().size()==0 || getSettings().getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
+    if(getOsmNetworkToPopulate().getTransportLayers().size()==0 || getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
       LOGGER.warning("Can only perform network->zoning data transfer when network has been populated by OSM network reader, i.e., first invoke the read() method before this call");
       return null;
     }

@@ -244,7 +244,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
      * would require passengers to cross the road to get to the stop position */
     osmModes = OsmModeUtils.extractPublicTransportModesFrom(osmModes);
     for(String osmMode : osmModes) {
-      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
+      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmMode);
       if(accessMode==null) {
         continue;
       }
@@ -657,7 +657,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     
     /* connectoid(s) */
     for(Mode mode : modeResult.second()) {
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(mode);             
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(mode);
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        

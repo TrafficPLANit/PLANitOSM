@@ -1,32 +1,25 @@
 package org.goplanit.osm.converter.network;
 
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
 import org.goplanit.osm.converter.OsmReaderSettings;
 import org.goplanit.osm.defaults.OsmLaneDefaults;
 import org.goplanit.osm.defaults.OsmModeAccessDefaults;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsByCountry;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaults;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.CountryNames;
-import org.goplanit.utils.mode.Mode;
-import org.goplanit.utils.mode.Modes;
+import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
@@ -42,10 +35,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * The logger
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderSettings.class.getCanonicalName());
-      
-  /** network being populated */
-  private final PlanitOsmNetwork osmNetwork;
-    
+
   /** all settings specific to osm railway tags */
   protected OsmRailwaySettings osmRailwaySettings;
   
@@ -77,12 +67,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * in the memory model. Here one can be manually overwrite the allowable modes for this particular way.
    */
   protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<Long, Set<String>>();    
-  
-  /** mapping between PLANit modes and the layer their infrastructure will be mapped to. 
-   * Default is based on InfrastructureLayersConfigurator.createAllInOneConfiguration, but the user can overwrite these settings if
-   * desired */
-  protected MacroscopicNetworkLayerConfigurator planitInfrastructureLayerConfiguration;
-  
+
   /* SETTINGS */
   
   /** the crs of the OSM source */
@@ -120,39 +105,22 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
       
   /**
    * Conduct general initialisation for any instance of this class
-   * 
-   * @param planitModes to populate based on (default) mapping
    */
-  protected void initialise(Modes planitModes) {
-    try {  
-      /* the default mapping from OSM modes to PLANit modes */
-      initialiseDefaultMappingFromOsmModes2PlanitModes(planitModes);
-    } catch (PlanItException e) {
-      LOGGER.severe("Unable to create default supported and/or unsupported OSM mode mapping for this network");
-    }     
+  protected void initialise() {
+    /* the default mapping from OSM modes to PLANit modes */
+    initialiseDefaultMappingFromOsmModes2PlanitModes();
   }
     
     
   /**
    * Map both road and rail modes from OSM modes to PLANit modes
    * 
-   * @param planitModes to populate based on (default) mapping
-   * @throws PlanItException thrown if error
    */
-  protected void initialiseDefaultMappingFromOsmModes2PlanitModes(Modes planitModes) throws PlanItException {
-    osmHighwaySettings.initialiseDefaultMappingFromOsmRoadModes2PlanitModes(planitModes);
-    osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes(planitModes);
+  protected void initialiseDefaultMappingFromOsmModes2PlanitModes() {
+    osmHighwaySettings.initialiseDefaultMappingFromOsmRoadModes2PlanitModes();
+    osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes();
   }
-  
-  /** Collect the osm network to populate
-   * 
-   * @return osm network
-   */
-  protected PlanitOsmNetwork getOsmNetworkToPopulate() {
-    return this.osmNetwork;
-  }
-          
-    
+
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
       
@@ -167,49 +135,46 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   
   /** by default we always keep the largest subnetwork */
   public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
-    
-  /**
-   * Constructor with country to base (i) default speed limits and (ii) mode access on, 
-   * for various osm highway types in case maximum speed limit information is missing
-   * 
-   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
-   */
-  public OsmNetworkReaderSettings(String countryName) {
-    this(null, countryName, new PlanitOsmNetwork());
-  }   
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
    * speed limits and mdoe access restrictions (unless manually adjusted by the user)
-   * 
-   * @param osmNetworkToPopulate to populate
-   */  
-  public OsmNetworkReaderSettings(PlanitOsmNetwork osmNetworkToPopulate) {
-    this( CountryNames.GLOBAL, osmNetworkToPopulate);
+   *
+   */
+  public OsmNetworkReaderSettings() {
+    this(CountryNames.GLOBAL);
   }
-  
+
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
    * for various OSM highway types in case maximum speed limit information is missing
    * 
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
-   * @param osmNetworkToPopulate to populate based on (default) mapping
    */
-  public OsmNetworkReaderSettings(String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
-    this(null, countryName, osmNetworkToPopulate);
-  }   
-  
+  public OsmNetworkReaderSettings(String countryName) {
+    this((URL) null, countryName);
+  }
+
+  /**
+   * Constructor with country to base (i) default speed limits and (ii) mode access on,
+   * for various OSM highway types in case maximum speed limit information is missing
+   *
+   * @param inputSource to use, expected local file location
+   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   */
+  public OsmNetworkReaderSettings(String inputSource, String countryName) {
+    this(UrlUtils.createFromPath(Path.of(inputSource)), countryName);
+  }
+
   /**
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
    * for various OSM highway types in case maximum speed limit information is missing
    * 
    * @param inputSource to use
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
-   * @param osmNetworkToPopulate to populate based on (default) mapping
    */
-  public OsmNetworkReaderSettings(URL inputSource, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
+  public OsmNetworkReaderSettings(URL inputSource, String countryName) {
     super(inputSource, countryName);
-    this.osmNetwork = osmNetworkToPopulate;
     
     /* general */
     this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
@@ -224,10 +189,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         this.speedLimitConfiguration.getRailwayDefaults(), 
         this.modeAccessConfiguration.getRailwayModeAccessDefaults());
     
-    initialise(osmNetworkToPopulate.getModes());   
-    
-    /* default will map all modes to a single layer */
-    this.planitInfrastructureLayerConfiguration = MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
+    initialise();
   }   
         
   /**
@@ -354,30 +316,30 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   
   /** Collect the mapped OSM modes based on the provided PLANit mode
    * 
-   * @param planitMode to get mapped PLANit modes for
+   * @param planitModeType to get mapped PLANit modes for
    * @return mapped OSM modes, empty if no matches
    */  
-  public Collection<String> getMappedOsmModes(Mode planitMode) {
-    Collection<String> theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitMode);
-    Collection<String> theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitMode);
+  public Collection<String> getMappedOsmModes(PredefinedModeType planitModeType) {
+    Collection<String> theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitModeType);
+    Collection<String> theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitModeType);
     theRoadModes.addAll(theOsmRailModes);
     return theRoadModes;
   }  
   
-  /** Collect the mapped OSM modes based on the provided PLANit modes (if any)
+  /** Collect the mapped OSM modes based on the provided PLANit mode types (if any)
    * 
-   * @param planitModes to get mapped PLANit modes for
+   * @param planitModeTypes to get mapped OSM modes for
    * @return mapped OSM modes, empty if no matches
    */
-  public Set<String> getMappedOsmModes(Collection<Mode> planitModes) {
-    HashSet<String> mappedOsmModes = new HashSet<String>();
+  public Set<String> getMappedOsmModes(Collection<PredefinedModeType> planitModeTypes) {
+    HashSet<String> mappedOsmModes = new HashSet<>();
     
-    if(planitModes == null) {
+    if(planitModeTypes == null) {
       return mappedOsmModes;
     } 
     
-    for(Mode planitMode : planitModes) {
-      Collection<String> theModes = getMappedOsmModes(planitMode);
+    for(var planitModeType : planitModeTypes) {
+      Collection<String> theModes = getMappedOsmModes(planitModeType);
       if(theModes != null) {
         mappedOsmModes.addAll(theModes);
       }
@@ -390,8 +352,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param osmMode to collect mapped mode for (if any)
    * @return mapped PLANit mode, if not available null is returned
    */
-  public Mode getMappedPlanitMode(final String osmMode) {
-    Mode theMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
+  public PredefinedModeType getMappedPlanitModeType(final String osmMode) {
+    var theMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
     if(theMode == null) {
       theMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
@@ -401,30 +363,39 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
    * 
    * @param osmModes to collect mapped mode for (if any)
-   * @return mapped PLANit mode, if not available empty set is returned
+   * @return mapped PLANit modes, if not available empty set is returned
    */
-  public Set<Mode> getMappedPlanitModes(final Collection<String> osmModes) {
-    HashSet<Mode> mappedPlanitModes = new HashSet<Mode>();
+  public Set<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
+    HashSet<PredefinedModeType> mappedPlanitModes = new HashSet<>();
     
     if(osmModes == null) {
       return mappedPlanitModes;
     } 
     
     for(String osmMode : osmModes) {
-      Mode theMode = getMappedPlanitMode(osmMode);
+      var theMode = getMappedPlanitModeType(osmMode);
       if(theMode != null) {
         mappedPlanitModes.add(theMode);
       }
     }    
     return mappedPlanitModes;  
-  }   
+  }
+
+  /**
+   * convenience method that collects all currently mapped PLANit mode types (road or rail)
+   *
+   * @return mapped PLANit mode types, if not available empty set is returned
+   */
+  public Set<PredefinedModeType> getActivatedPlanitModeTypes() {
+    return Stream.concat(getHighwaySettings().getActivatedPlanitModeTypesStream(),getRailwaySettings().getActivatedPlanitModeTypesStream()).collect(Collectors.toUnmodifiableSet());
+  }
     
-  /** Verify if the passed in osmMode is mapped (either to road or rail mode), i.e., if it is actively included when reading the network
+  /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
    * @param osmMode to verify
    * @return true if mapped, false otherwise
    */
-  public boolean hasMappedPlanitMode(final String osmMode) {
-    Mode mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);;
+  public boolean hasMappedPlanitModeType(final String osmMode) {
+    var mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);;
     if(mappedMode == null) {
       mappedMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
@@ -435,9 +406,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param osmModes to verify
    * @return true if any is mapped, false otherwise
    */  
-  public boolean hasAnyMappedPlanitMode(final String... osmModes) {
+  public boolean hasAnyMappedPlanitModeType(final String... osmModes) {
     for(int index=0;index<osmModes.length;++index) {
-      if(hasMappedPlanitMode(osmModes[index])) {
+      if(hasMappedPlanitModeType(osmModes[index])) {
         return true;
       }
     }
@@ -448,10 +419,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param osmModes to verify
    * @return true if any is mapped, false otherwise
    */  
-  public boolean hasAnyMappedPlanitMode(final Collection<String> osmModes) {
+  public boolean hasAnyMappedPlanitModeType(final Collection<String> osmModes) {
     if(osmModes!=null) {
       for(String osmMode : osmModes) {
-        if(hasMappedPlanitMode(osmMode)) {
+        if(hasMappedPlanitModeType(osmMode)) {
           return true;
         }
       }
@@ -729,24 +700,5 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public boolean isKeepOsmNodeOutsideBoundingPolygon(Number osmNodeId) {
     return includedOutsideBoundingPolygonOsmNodes.contains(osmNodeId.longValue());
   }  
-  
-  /**
-   * Allows access to the current planit infrastructure layer configuration which maps planit modes
-   * to an infrastructure layer on the to be created PLANit network
-   * 
-   * @return infrastructure layer to mode configuration
-   */
-  public MacroscopicNetworkLayerConfigurator getPlanitInfrastructureLayerConfiguration() {
-    return planitInfrastructureLayerConfiguration;
-  }
 
-  /** provide a new configuration other than the one provided by default
-   * 
-   * @param planitInfrastructureLayerConfiguration to use
-   */
-  public void setPlanitInfrastructureLayerConfiguration(
-      MacroscopicNetworkLayerConfigurator planitInfrastructureLayerConfiguration) {
-    this.planitInfrastructureLayerConfiguration = planitInfrastructureLayerConfiguration;
-  }
-  
 }
