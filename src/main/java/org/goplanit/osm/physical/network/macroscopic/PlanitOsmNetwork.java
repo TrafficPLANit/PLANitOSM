@@ -160,7 +160,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<NetworkLayer, MacroscopicLinkSegmentType> typesPerLayer = new HashMap<NetworkLayer, MacroscopicLinkSegmentType>(); 
     for(Mode mode : modes) {
       MacroscopicLinkSegmentType linkSegmentType = null;
-      MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl)getLayerByMode(mode);
+      MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) getLayerByPredefinedModeType(mode);
       
       if(!typesPerLayer.containsKey(networkLayer)){
         /* new type */
@@ -681,7 +681,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) && settings.isRailwayParserActive()) {
       allowedOsmModes =  settings.getRailwaySettings().collectAllowedOsmRailwayModes(osmWayValue);
     }
-    return settings.getMappedPlanitModes(allowedOsmModes);
+    return settings.getActivatedPlanitModeTypes(allowedOsmModes);
   }     
   
   /**
@@ -720,7 +720,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         if(!defaultPlanitOsmLinkSegmentTypes.containsKey(osmWayValueToUse)) {
         
           /* Only when one or more OSM modes are mapped to PLANit modes, the OSM way type will be used, otherwise it is ignored */
-          Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(highwaySettings.collectAllowedOsmHighwayModes(osmWayValueToUse));          
+          Collection<Mode> activatedPlanitModes = settings.getActivatedPlanitModeTypes(highwaySettings.collectAllowedOsmHighwayModes(osmWayValueToUse));
           if(!activatedPlanitModes.isEmpty()) {            
             
             /* create the planit link segment type based on OSM tag */
@@ -782,7 +782,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       OsmRailwaySettings railwaySettings = settings.getRailwaySettings();
       boolean isOverwrite = railwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmRailwayType(osmWayValue);
       
-      Collection<Mode> activatedPlanitModes = settings.getMappedPlanitModes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue));
+      Collection<Mode> activatedPlanitModes = settings.getActivatedPlanitModeTypes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue));
       if(!activatedPlanitModes.isEmpty()) {
         
         /* create the PLANit link segment type based on OSM way tag and possibly overwritten defalt values*/
@@ -851,7 +851,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param settings to use
    * @throws PlanItException thrown when error
    */
-  public void createOsmCompatibleLinkSegmentTypes(OsmNetworkReaderSettings settings) throws PlanItException {
+  public void createAndRegisterOsmCompatibleLinkSegmentTypes(OsmNetworkReaderSettings settings) throws PlanItException {
     
     /* combine rail and highway */
     Map<String,String> highwayKeyValueMap = 
@@ -898,5 +898,19 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     }
     /* ------------------ FOR EACH OSM HIGHWAY TYPE ----------------------------------------- */    
   }
-        
+
+  /**
+   * Based on the settings we create instances of the activated OSM to PLANit mode mappings,
+   * for each created mode, append the OSM modes its represents as a list of semicolon separated entries
+   *
+   * @param settings to extract information from
+   */
+  public void createAndRegisterOsmCompatiblePlanitPredefinedModes(OsmNetworkReaderSettings settings) {
+    /* initialise road and rail modes on PLANit network as mode instances rather than the type placeholders */
+    var mappedPlanitModes = settings.getActivatedPlanitModeTypes();
+    mappedPlanitModes.forEach( modeType ->
+        getModes().getFactory().registerNew(modeType).appendExternalId(
+            settings.getMappedOsmModes(modeType).stream().collect(Collectors.joining(";")), ';'));
+  }
+
 }

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
@@ -23,6 +24,9 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkBaseHandler.class.getCanonicalName());
+
+  /** the network to populate */
+  private final PlanitOsmNetwork networkToPopulate;
   
   /** the network data tracking all relevant data during parsing of the osm network */
   private final OsmNetworkReaderData networkData;  
@@ -36,8 +40,9 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * @param networkData to use
    * @param settings for the handler
    */
-  protected OsmNetworkBaseHandler(final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
-    this.settings = settings;       
+  protected OsmNetworkBaseHandler(final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+    this.networkToPopulate = networkToPopulate;
+    this.settings = settings;
     this.networkData = networkData;
   }
 
@@ -92,7 +97,11 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   
   protected OsmNetworkReaderData getNetworkData() {
     return networkData;
-  }  
+  }
+
+  protected PlanitOsmNetwork getNetwork(){
+    return this.networkToPopulate;
+  }
 
 
   /**

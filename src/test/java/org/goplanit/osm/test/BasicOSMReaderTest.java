@@ -1,14 +1,6 @@
 package org.goplanit.osm.test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.*;
-
-import java.net.URL;
-import java.nio.file.Path;
-import java.util.logging.Logger;
-
 import org.goplanit.logging.Logging;
-import org.goplanit.mode.TrainMode;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReader;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
@@ -19,13 +11,17 @@ import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.mode.PredefinedMode;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.zoning.Zoning;
-import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.*;
 
 /**
  * basic *.osm and *.osm.pbf reader test

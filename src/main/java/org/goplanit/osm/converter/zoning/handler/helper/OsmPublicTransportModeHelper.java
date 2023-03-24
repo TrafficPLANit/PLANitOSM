@@ -39,7 +39,7 @@ public class OsmPublicTransportModeHelper extends OsmModeHelper {
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Collection<Mode> eligiblePlanitModes = getSettings().getMappedPlanitModes(eligibleOsmModes);      
+    Collection<Mode> eligiblePlanitModes = getSettings().getActivatedPlanitModeTypes(eligibleOsmModes);
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
   
@@ -57,7 +57,7 @@ public class OsmPublicTransportModeHelper extends OsmModeHelper {
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Collection<Mode> eligiblePlanitModes = getSettings().getMappedPlanitModes(eligibleOsmModes);      
+    Collection<Mode> eligiblePlanitModes = getSettings().getActivatedPlanitModeTypes(eligibleOsmModes);
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
 }

@@ -111,7 +111,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param zoningToPopulate to populate
    */
   protected OsmIntermodalReader(final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(new OsmIntermodalReaderSettings(countryName, osmNetworkToPopulate), zoningToPopulate);  
+    this(new OsmIntermodalReaderSettings(countryName), osmNetworkToPopulate, zoningToPopulate);
   }   
   
   /**
@@ -123,7 +123,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param zoningToPopulate to populate
    */
   protected OsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(new OsmIntermodalReaderSettings(inputSource, countryName, osmNetworkToPopulate), zoningToPopulate);  
+    this(new OsmIntermodalReaderSettings(inputSource, countryName), osmNetworkToPopulate, zoningToPopulate);
   }     
     
   /**

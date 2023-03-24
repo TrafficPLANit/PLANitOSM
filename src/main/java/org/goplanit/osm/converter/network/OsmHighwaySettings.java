@@ -19,7 +19,6 @@ import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
-import org.goplanit.utils.mode.Modes;
 import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
@@ -90,46 +89,29 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * <li>MINI_BUS     to N/A </li>
    * </ul>
    * 
-   * @param planitModes to populate based on (default) mapping
-   * @throws PlanItException thrown if error
-   */  
-  protected void initialiseDefaultMappingFromOsmRoadModes2PlanitModes(Modes planitModes) throws PlanItException {
-    /* initialise road modes on planit side that we are about to map */
-    {
-      planitModes.getFactory().registerNew(PredefinedModeType.PEDESTRIAN);
-      planitModes.getFactory().registerNew(PredefinedModeType.BICYCLE);
-      planitModes.getFactory().registerNew(PredefinedModeType.MOTOR_BIKE);
-      planitModes.getFactory().registerNew(PredefinedModeType.CAR);
-      planitModes.getFactory().registerNew(PredefinedModeType.GOODS_VEHICLE);
-      planitModes.getFactory().registerNew(PredefinedModeType.HEAVY_GOODS_VEHICLE);
-      planitModes.getFactory().registerNew(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE);
-      planitModes.getFactory().registerNew(PredefinedModeType.BUS);
-    }
-    
+   */
+  protected void initialiseDefaultMappingFromOsmRoadModes2PlanitModes() {
+
     /* add default mapping */
-    {
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.FOOT, planitModes.get(PredefinedModeType.PEDESTRIAN));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.BICYCLE, planitModes.get(PredefinedModeType.BICYCLE));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.MOTOR_CYCLE, planitModes.get(PredefinedModeType.MOTOR_BIKE));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.MOTOR_CAR, planitModes.get(PredefinedModeType.CAR));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.GOODS, planitModes.get(PredefinedModeType.GOODS_VEHICLE));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.HEAVY_GOODS, planitModes.get(PredefinedModeType.HEAVY_GOODS_VEHICLE));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED, planitModes.get(PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE));
-      addDefaultOsmMode2PlanitModeMapping(OsmRoadModeTags.BUS, planitModes.get(PredefinedModeType.BUS));
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.FOOT, PredefinedModeType.PEDESTRIAN);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.BICYCLE, PredefinedModeType.BICYCLE);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.MOTOR_CYCLE, PredefinedModeType.MOTOR_BIKE);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.MOTOR_CAR, PredefinedModeType.CAR);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.GOODS, PredefinedModeType.GOODS_VEHICLE);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.HEAVY_GOODS,PredefinedModeType.HEAVY_GOODS_VEHICLE);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED, PredefinedModeType.LARGE_HEAVY_GOODS_VEHICLE);
+    addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRoadModeTags.BUS, PredefinedModeType.BUS);
       
-      /* activate all defaults */
-      activateOsmMode(OsmRoadModeTags.FOOT);
-      activateOsmMode(OsmRoadModeTags.BICYCLE);
-      activateOsmMode(OsmRoadModeTags.MOTOR_CYCLE);
-      activateOsmMode(OsmRoadModeTags.MOTOR_CAR);
-      activateOsmMode(OsmRoadModeTags.GOODS);
-      activateOsmMode(OsmRoadModeTags.HEAVY_GOODS);
-      activateOsmMode(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED);
-      activateOsmMode(OsmRoadModeTags.BUS);
-      
-      /* ensure external id is set based on OSM name */
-      setModeExternalIdsBasedOnMappedOsmModes();
-    }
+    /* activate all defaults */
+    activateOsmMode(OsmRoadModeTags.FOOT);
+    activateOsmMode(OsmRoadModeTags.BICYCLE);
+    activateOsmMode(OsmRoadModeTags.MOTOR_CYCLE);
+    activateOsmMode(OsmRoadModeTags.MOTOR_CAR);
+    activateOsmMode(OsmRoadModeTags.GOODS);
+    activateOsmMode(OsmRoadModeTags.HEAVY_GOODS);
+    activateOsmMode(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED);
+    activateOsmMode(OsmRoadModeTags.BUS);
+
   }  
   
   /**
@@ -460,20 +442,20 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmMode to collect mapped mode for (if any)
    * @return mapped PLANit mode, if not available null is returned
    */
-  public Mode getMappedPlanitRoadMode(final String osmMode) {
+  public PredefinedModeType getMappedPlanitRoadMode(final String osmMode) {
     if(OsmRoadModeTags.isRoadModeTag(osmMode)) {
-      return getPlanitModeIfActivated(osmMode);
+      return getPlanitModeTypeIfActivated(osmMode);
     }
     return null;
   }
   
   /** convenience method that collects the currently mapped osm road modes for the given planit mode
    * 
-   * @param planitMode to collect mapped mode for (if any)
+   * @param planitModeType to collect mapped mode for (if any)
    * @return mapped osm modes, if not available empty collection is returned
    */  
-  public final Collection<String> getMappedOsmRoadModes(final Mode planitMode) {    
-    return getAcivatedOsmModes(planitMode);
+  public final Collection<String> getMappedOsmRoadModes(final PredefinedModeType planitModeType) {
+    return getAcivatedOsmModes(planitModeType);
   }      
 
   /**

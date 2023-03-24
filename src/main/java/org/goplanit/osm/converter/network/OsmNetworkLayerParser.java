@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
@@ -28,6 +29,7 @@ import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
@@ -307,13 +309,13 @@ public class OsmNetworkLayerParser {
     /* check if modes are overwritten by user settings directly */
     if(settings.isModeAccessOverwrittenByOsmWayId(osmWay.getId())) {
       
-      /* use osm modes given to identify to be added and removed modes */
-      Set<Mode> allowedPlanitModes = settings.getMappedPlanitModes(settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
-      /* reduce included modes to only the modes supported by the layer the link segment type resides on*/
+      /* use OSM modes given to identify to be added and removed modes */
+      var allowedPlanitModes = modeParser.getActivatedPlanitModes(settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
+      /* reduce included modes to only the predefined modes supported by the layer the link segment type resides on, expensive, but overwrites are rare so ok */
       if(!allowedPlanitModes.isEmpty()) {
-        allowedPlanitModes.retainAll(networkLayer.getSupportedModes());
-      }      
-      
+        allowedPlanitModes.retainAll(networkLayer.getSupportedModes().stream().filter(m -> m.isPredefinedModeType()).collect(Collectors.toList()));
+      }
+
       toBeAddedModes = linkSegmentType.getDisallowedModesFrom(allowedPlanitModes);
       toBeRemovedModes = linkSegmentType.getAllowedModesNotIn(allowedPlanitModes);
       

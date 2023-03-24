@@ -81,7 +81,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private Collection<MacroscopicLink> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
+    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -244,7 +244,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
      * would require passengers to cross the road to get to the stop position */
     osmModes = OsmModeUtils.extractPublicTransportModesFrom(osmModes);
     for(String osmMode : osmModes) {
-      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
+      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmMode);
       if(accessMode==null) {
         continue;
       }
@@ -657,7 +657,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     
     /* connectoid(s) */
     for(Mode mode : modeResult.second()) {
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(mode);             
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(mode);
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        

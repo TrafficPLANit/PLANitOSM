@@ -1,17 +1,9 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
@@ -19,6 +11,7 @@ import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
  * Base class with shared settings across different types of Osm ways (highway, railway)
@@ -49,12 +42,16 @@ public abstract class OsmWaySettings {
   
   /* mode mapping */
     
-  /** mapping from each supported OSM mode to a PLANit mode on this instance */
-  private  final Map<String, Mode> activatedOsmMode2PlanitModeMap = new HashMap<>();
+  /** mapping from each supported OSM mode to a PLANit predefined mode type on this instance */
+  private  final Map<String, PredefinedModeType> activatedOsmMode2PlanitModeTypeMap = new HashMap<>();
   
   /** Default mapping (specific to this network) from each supported OSM mode to an available PLANit mode. Can be used
    * to re-activate OSM modes if needed */
-  private  final Map<String, Mode> defaultOsmMode2PlanitModeMap= new HashMap<>();
+  //private  final Map<String, Mode> defaultOsmMode2PlanitModeMap= new HashMap<>();
+
+  /** Default mapping (specific to this network) from each supported OSM mode to an available PLANit (predefined mode type. Can be used
+   * to re-activate OSM modes if needed */
+  private  final Map<String, PredefinedModeType> defaultOsmMode2PlanitPredefinedModeTypeMap= new HashMap<>();
   
   /* overwriting of defaults */
   
@@ -69,45 +66,7 @@ public abstract class OsmWaySettings {
   private Boolean isParserActive = null;
   
   /* protected */
-  
-  /** add osmModeId to planit external id (in case multiple osm modes are mapped to the same planit mode)
-   * @param planitMode to update external id for
-   * @param osModeId to use
-   */
-  private static void addToModeExternalId(Mode planitMode, String osModeId){
-    if(planitMode != null) {
-      if(planitMode.hasExternalId()) {
-        planitMode.setExternalId(planitMode.getExternalId().concat(";").concat(osModeId));
-      }else {
-        planitMode.setExternalId(osModeId);
-      }
-    }
-  }
-  
-  /** Remove osmModeId to PLANit external id (in case multiple osm modes are mapped to the same PLANit mode)
-   * 
-   * @param planitMode to update external id for
-   * @param osModeId to use
-   */  
-  private static void removeFromModeExternalId(Mode planitMode, String osModeId){
-    if(planitMode!= null && planitMode.hasExternalId()) {
-      int startIndex = planitMode.getExternalId().indexOf(osModeId);
-      if(startIndex == -1) {
-        /* not present */
-        return;
-      }
-      if(startIndex==0) {
-        /* first */
-        planitMode.setExternalId(planitMode.getExternalId().substring(startIndex+osModeId.length()));
-      }else {
-        /* not first, so preceded by another" */
-        String before = planitMode.getExternalId().substring(0,startIndex-1);
-        String after = planitMode.getExternalId().substring(startIndex+osModeId.length());
-        planitMode.setExternalId(before.concat(after));
-      }
-    }
-  }  
-  
+
   /**
    * explicitly exclude all osmWay type:value in case none of the passed in osmModes is marked as mapped
    * 
@@ -143,14 +102,7 @@ public abstract class OsmWaySettings {
     this.speedLimitDefaults = speedLimitDefaults;
     this.osmModeAccessDefaults = osmModeAccessDefaults;
   }
-  
-  /** set osmModeId's to planit external id (accounting for the possibility multiple osm modes are mapped to the same planit mode).
-   * We do this based on the existing mapping of osmModes to planitmodes
-   */
-  protected void setModeExternalIdsBasedOnMappedOsmModes(){
-    activatedOsmMode2PlanitModeMap.forEach( (osmMode, planitMode) -> addToModeExternalId(planitMode, osmMode));
-  }   
-  
+
   /**
    * explicitly exclude all osmWay types that are included but have no more activated modes due to deactivation of their default assigned modes.
    * Doing so avoids the reader to log warnings that supported way types cannot be injected in the network because they
@@ -319,12 +271,12 @@ public abstract class OsmWaySettings {
   
   /* modes */
   
-  /** add mapping from osm mode to PLANit mode
+  /** add mapping from osm mode to PLANit mode (only predefined modes supported for now)
    * @param osmMode to map from
-   * @param planitMode mode to map to
+   * @param planitModeType mode to map to
    */
-  protected void addDefaultOsmMode2PlanitModeMapping(String osmMode, Mode planitMode) {
-    defaultOsmMode2PlanitModeMap.put(osmMode, planitMode);
+  protected void addDefaultOsmMode2PlanitPredefinedModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
+    defaultOsmMode2PlanitPredefinedModeTypeMap.put(osmMode, planitModeType);
   } 
   
   /** Activate an OSM mode based on its default mapping to a PLANit mode
@@ -332,25 +284,20 @@ public abstract class OsmWaySettings {
    * @param osmMode to map from
    */
   protected void activateOsmMode(String osmMode) {
-    activatedOsmMode2PlanitModeMap.put(osmMode, defaultOsmMode2PlanitModeMap.get(osmMode));
+    activatedOsmMode2PlanitModeTypeMap.put(osmMode, defaultOsmMode2PlanitPredefinedModeTypeMap.get(osmMode));
   }   
   
-  /** Add/overwrite a mapping from OSM mode to PLANit mode. This means that the osmMode will be added to the PLANit network
+  /** Add/overwrite a mapping from OSM mode to PLANit mode type. This means that the osmMode will be added to the PLANit network once parsing commences
    * 
    * @param osmMode to set
-   * @param planitMode to map it to
+   * @param planitModeType to map it to
    */
-  protected void setOsmMode2PlanitModeMapping(String osmMode, Mode planitMode) {
+  protected void setOsmMode2PlanitModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
     if(osmMode == null) {
       LOGGER.warning("OSM mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode, ignored");
       return;
     }
-    if(planitMode == null) {
-      LOGGER.warning(String.format("PLANit mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode %s, ignored", osmMode));
-      return;
-    }
-    activatedOsmMode2PlanitModeMap.put(osmMode, planitMode);
-    addToModeExternalId(planitMode,osmMode);
+    activatedOsmMode2PlanitModeTypeMap.put(osmMode, planitModeType);
   }   
   
   /** Deactivate an OSM mode. This means that the osmMode will not be added to the PLANit network
@@ -365,8 +312,7 @@ public abstract class OsmWaySettings {
     }
     LOGGER.fine(String.format("OSM mode %s is deactivated", osmMode));
     
-    Mode planitMode = activatedOsmMode2PlanitModeMap.remove(osmMode);
-    removeFromModeExternalId(planitMode,osmMode);
+    var predefinedModeType = activatedOsmMode2PlanitModeTypeMap.remove(osmMode);
   }
   
   /**Remove all provided modes from mapping
@@ -395,28 +341,29 @@ public abstract class OsmWaySettings {
    * otherwise null is returned
    * 
    * @param osmMode to collect mapped mode for (if any)
-   * @return mapped PLANit mode, if not available or parser is not active null is returned
+   * @return mapped PLANit mode type, if not available or parser is not active null is returned
    */
-  protected Mode getPlanitModeIfActivated(final String osmMode) {
+  protected PredefinedModeType getPlanitModeTypeIfActivated(final String osmMode) {
+    // todo move this to reader as mode instances should not be part of the settings
     if(!isParserActive()) {
       return null;
     }
-    return this.activatedOsmMode2PlanitModeMap.get(osmMode);
+    return this.activatedOsmMode2PlanitModeTypeMap.get(osmMode);
   }  
   
   /** convenience method that collects the currently mapped OSM modes for the given PLANit mode
    * 
-   * @param planitMode to collect mapped mode for (if any)
+   * @param planitModeType to collect mapped OSM modes for this type (if any)
    * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
    */  
-  protected Collection<String> getAcivatedOsmModes(final Mode planitMode) {
-    Set<String> mappedOsmModes = new HashSet<String>();
+  protected Collection<String> getAcivatedOsmModes(final PredefinedModeType planitModeType) {
+    Set<String> mappedOsmModes = new HashSet<>();
     if(!isParserActive()) {
       return mappedOsmModes;
     }
     
-    for( Entry<String, Mode> entry : activatedOsmMode2PlanitModeMap.entrySet()) {
-      if(entry.getValue().idEquals(planitMode)) {
+    for( var entry : activatedOsmMode2PlanitModeTypeMap.entrySet()) {
+      if(entry.getValue().equals(planitModeType)) {
         mappedOsmModes.add(entry.getKey());
       }
     }
@@ -488,7 +435,7 @@ public abstract class OsmWaySettings {
    * @return true if mapped and parser is active, false otherwise
    */
   public boolean isOsmModeActivated(final String osmMode) {
-    return isParserActive() && getPlanitModeIfActivated(osmMode) != null;    
+    return isParserActive() && getPlanitModeTypeIfActivated(osmMode) != null;
   }  
   
   /** Verify if any mode other than the passed in OSM mode is active (in case the parser is active)
@@ -496,7 +443,7 @@ public abstract class OsmWaySettings {
    * @return true when other mapped mode is present (and parser is active), false otherwise
    */
   public boolean hasActivatedOsmModeOtherThan(final String osmMode) {
-    return isParserActive() && this.activatedOsmMode2PlanitModeMap.keySet().stream().filter( mode -> (!mode.equals(osmMode))).findFirst().isPresent();
+    return isParserActive() && this.activatedOsmMode2PlanitModeTypeMap.keySet().stream().filter(mode -> (!mode.equals(osmMode))).findFirst().isPresent();
   }   
     
   /** collect all activated types as a set (copy) in case the parser is active
@@ -505,6 +452,14 @@ public abstract class OsmWaySettings {
    */
   public final Set<String> getSetOfActivatedOsmWayTypes(){
     return isParserActive() ? infrastructureTypeConfiguration.setOfActivatedTypes() : null;    
-  }    
-  
+  }
+
+  /**
+   * Create a stream of  currently activated planit mode types
+   *
+   * @return activated PLANitModeTypes, i.e., they are mapped and activated
+   */
+  public Stream<PredefinedModeType> getActivatedPlanitModeTypesStream() {
+    return activatedOsmMode2PlanitModeTypeMap.values().stream().distinct();
+  }
 }

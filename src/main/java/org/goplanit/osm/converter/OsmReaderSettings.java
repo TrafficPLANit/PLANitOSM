@@ -4,6 +4,7 @@ import java.net.URL;
 
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.UrlUtils;
@@ -31,7 +32,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    * Default constructor with default locale (Global)
    */
   public OsmReaderSettings() {
-    this(null, CountryNames.GLOBAL);
+    this((URL)null, CountryNames.GLOBAL);
   }
   
   /**
@@ -40,9 +41,20 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    *  @param countryName to use
    */
   public OsmReaderSettings(final String countryName) {
-    this(null, countryName);
-  }    
-  
+    this((URL) null, countryName);
+  }
+
+  /**
+   * Constructor
+   *
+   *  @param inputSource to use
+   *  @param countryName to use
+   */
+  public OsmReaderSettings(final String inputSource, final String countryName) {
+    setInputSource(inputSource);
+    this.countryName = countryName;
+  }
+
   /**
    * Constructor
    * 
@@ -73,9 +85,8 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
   /** Set the input source  to use, we attempt to extract a URL from the String directly here
    * 
    * @param inputSource to use
-   * @throws PlanItException thrown if error
    */
-  public void setInputSource(final String inputSource) throws PlanItException {
+  public void setInputSource(final String inputSource) {
     try {
       setInputSource(new URL(inputSource));
       return;
@@ -86,7 +97,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
     try {
       setInputSource(UrlUtils.createFromPath(inputSource));
     }catch (Exception e) {
-      throw new PlanItException("Unable to extract URL from input source %s",inputSource);
+      throw new PlanItRunTimeException("Unable to extract URL from input source %s",inputSource);
     }
   }    
   

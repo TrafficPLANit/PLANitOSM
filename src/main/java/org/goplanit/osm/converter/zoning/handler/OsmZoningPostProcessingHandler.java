@@ -28,6 +28,7 @@ import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.zoning.TransferZone;
@@ -140,8 +141,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private MacroscopicLink findMostAppropriateStopLocationLinkForWaitingArea(TransferZone transferZone, String osmAccessMode, Collection<MacroscopicLink> eligibleLinks) {
     boolean isLeftHandDrive = DrivingDirectionDefaultByCountry.isLeftHandDrive(getZoningReaderData().getCountryName());
-    Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
-    var accessModeAsCollection = Collections.singleton(accessMode);
+    var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
+    var accessModeAsCollection = Collections.singleton(accessModeType);
 
      /* remove closest roads if incompatible regarding driving direction (relative location of waiting area versus road)
      * if not, we move to salvaging state and those links are removed from the eligible set */
@@ -172,7 +173,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
        *    which would render an otherwise valid position invalid */
       candidatesToFilter.removeIf(
           l -> null == getConnectoidHelper().findConnectoidLocationForStandAloneTransferZoneOnLink(
-                  transferZone, l, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters()));
+                  transferZone, l, accessModeType, getSettings().getStopToWaitingAreaSearchRadiusMeters()));
       
       if(candidatesToFilter == null || candidatesToFilter.isEmpty() ) {
         logWarningIfNotNearBoundingBox(String.format("DISCARD: No suitable stop_location on potential osm way candidates found for transfer zone %s and mode %s", transferZone.getExternalId(), accessMode.getName()), transferZone.getGeometry());
@@ -474,8 +475,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     Collection<String> eligibleOsmModes = modeResult.first();
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     for(String osmMode: eligibleOsmModes) {
-      Mode planitMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmMode);
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
+      PredefinedModeType accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmMode);
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessModeType);
     
       /* a stop position should be part of an already parsed planit link, if not it is incorrectly tagged */
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isLocationPresentInLayer(osmNodeLocation)) {
@@ -492,7 +493,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       
       /* create connectoid(s) for stop_location/transfer zone/mode combination */
       for(TransferZone transferZone : matchedTransferZones) {
-        getConnectoidHelper().extractDirectedConnectoidsForMode(osmNode, transferZone, planitMode, getGeoUtils());          
+        getConnectoidHelper().extractDirectedConnectoidsForMode(osmNode, transferZone, accessModeType, getGeoUtils());
       }           
     }
          
@@ -532,7 +533,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* validate mode support */
     Collection<String> accessOsmModes = 
         OsmModeUtils.extractPublicTransportModesFrom(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone));
-    if(!getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitMode(accessOsmModes)) {
+    if(!getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitModeType(accessOsmModes)) {
       LOGGER.warning(String.format("DISCARD: waiting area (osm id %d) has no supported public transport planit modes present", osmEntityId));
       return;             
     }
@@ -548,8 +549,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     
     /* per mode - find links, because if the transfer zone supports both a rail and road mode, we require different links for our connectoids */
     for(String osmAccessMode : accessOsmModes) {      
-      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(accessMode);
+      var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessModeType);
 
       MacroscopicLink selectedAccessLink = null;
       if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmEntityId, osmEntityType)) {
@@ -581,7 +582,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* create connectoids */    
       if(selectedAccessLink != null) {
         getConnectoidHelper().extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
-            Long.valueOf(transferZone.getExternalId()),transferZone.getGeometry(),selectedAccessLink, transferZone, accessMode, getSettings().getStopToWaitingAreaSearchRadiusMeters(), networkLayer);
+            Long.valueOf(transferZone.getExternalId()),transferZone.getGeometry(),selectedAccessLink, transferZone, accessModeType, getSettings().getStopToWaitingAreaSearchRadiusMeters(), networkLayer);
       }
     }
     
@@ -629,8 +630,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
     /* modes */
     for(String osmAccessMode : osmAccessModes) {
-      Mode planitMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitMode(osmAccessMode);
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(planitMode);
+      var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
+      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessModeType);
       
       
       /* station mode determines where to create stop_locations and how many. It is special in this regard and different from a regular transfer zone (platform/pole) */
@@ -675,7 +676,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         /* identify locations based on links and spatial restrictions, because no stop_location is known in osm, nearest osm node might be to
          * far away and we must break the link and insert a planit node without an osm node counterpart present, this is what the below method does */
        getConnectoidHelper(). extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
-            osmStation.getId(), stationTransferZone.getGeometry() , accessLink, stationTransferZone, planitMode, getSettings().getStationToWaitingAreaSearchRadiusMeters(), networkLayer);            
+            osmStation.getId(), stationTransferZone.getGeometry() , accessLink, stationTransferZone, accessModeType, getSettings().getStationToWaitingAreaSearchRadiusMeters(), networkLayer);
       }
     }
   }
@@ -833,7 +834,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
     
     TransferZone foundZone = matchedTransferZones.iterator().next();  
-    accessModes = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModes(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(foundZone));
+    accessModes = getNetworkToZoningData().getNetworkSettings().getActivatedPlanitModeTypes(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(foundZone));
     if(accessModes == null) {
       LOGGER.warning(String.format("DISCARD: stop_position %d without proper tagging on OSM network, unable to identify access modes from closest transfer zone in stop_area", osmNode.getId()));
       return;             
