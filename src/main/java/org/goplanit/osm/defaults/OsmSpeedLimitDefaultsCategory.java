@@ -113,6 +113,8 @@ public class OsmSpeedLimitDefaultsCategory {
 
   /**
    * deep clone this class instance
+   *
+   * @return deep copy
    */
   public OsmSpeedLimitDefaultsCategory deepClone()
   {

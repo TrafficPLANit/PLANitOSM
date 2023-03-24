@@ -318,7 +318,6 @@ public class OsmNetworkReader implements NetworkReader {
    */
   @Override
   public void reset() {
-    getSettings().reset();
   }
 
   /** Factory method to create bridging data required for an OSM zoning reader to successfully parse the Pt zones

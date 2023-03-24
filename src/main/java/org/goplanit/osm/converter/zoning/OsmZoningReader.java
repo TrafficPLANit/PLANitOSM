@@ -333,7 +333,6 @@ public class OsmZoningReader implements ZoningReader {
     this.osmPreProcessingHandler.reset();
     this.osmPostProcessingHandler.reset();
     this.zoningReaderData.reset();
-    getSettings().reset();
   }  
 
   /**

@@ -211,7 +211,6 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    */
   @Override
   public void reset() {
-    getSettings().reset();    
   }      
   
   /**
