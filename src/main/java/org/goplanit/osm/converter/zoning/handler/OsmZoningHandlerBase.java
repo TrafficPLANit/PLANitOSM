@@ -9,9 +9,10 @@ import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.helper.OsmConnectoidHelper;
-import org.goplanit.osm.converter.zoning.handler.helper.OsmPublicTransportModeHelper;
+import org.goplanit.osm.converter.zoning.handler.helper.OsmPublicTransportModeConversion;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneHelper;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmPtv2Tags;
 import org.goplanit.osm.tags.OsmRelationTypeTags;
 import org.goplanit.osm.util.*;
@@ -44,6 +45,9 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * the zoning to populate
    */
   private final Zoning zoning;
+
+  /** the reference network to use */
+  private final PlanitOsmNetwork referenceNetwork;
   
   /** the settings to adhere to regarding the parsing of PLAnit transfer infrastructure from OSM */
   private final OsmPublicTransportReaderSettings transferSettings;   
@@ -64,7 +68,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   private final TransferZoneGroupHelper transferZoneGroupHelper;
   
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
-  private final OsmPublicTransportModeHelper publicTransportModeHelper;  
+  private final OsmPublicTransportModeConversion publicTransportModeHelper;
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
   private final OsmConnectoidHelper connectoidHelper;
@@ -81,7 +85,10 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         ||
         (entityType.equals(EntityType.Way) && getSettings().isExcludedOsmWay(osmId)); 
   }    
-           
+
+  protected PlanitOsmNetwork getReferenceNetwork(){
+    return referenceNetwork;
+  }
   
   /** Skip SOM relation member when marked for exclusion in settings
    * 
@@ -146,7 +153,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when one or more layers are found, false otherwise
    */
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getSettings().getReferenceNetwork(), getNetworkToZoningData());
+    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getReferenceNetwork(), getNetworkToZoningData());
   }   
                                                              
   /** Verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
@@ -347,7 +354,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * 
    * @return public transport mode parser 
    */
-  protected OsmPublicTransportModeHelper getPtModeHelper() {
+  protected OsmPublicTransportModeConversion getPtModeHelper() {
     return this.publicTransportModeHelper;
   }  
   
@@ -364,12 +371,14 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
+   * @param referenceNetwork to use
    * @param zoningToPopulate to populate
    * @param profiler to keep track of created/parsed entities across zone handlers
    */
   public OsmZoningHandlerBase(
-      final OsmPublicTransportReaderSettings transferSettings, 
-      OsmZoningReaderData zoningReaderData,  
+      final OsmPublicTransportReaderSettings transferSettings,
+      OsmZoningReaderData zoningReaderData,
+      final PlanitOsmNetwork referenceNetwork,
       final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
 
@@ -377,24 +386,26 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     this.profiler = profiler;       
     
     /* references */
+    this.referenceNetwork = referenceNetwork;
     this.zoning = zoningToPopulate;       
     this.transferSettings = transferSettings;
     this.zoningReaderData = zoningReaderData;
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsCrsUtils(getSettings().getReferenceNetwork().getCoordinateReferenceSystem());    
+    this.geoUtils = new PlanitJtsCrsUtils(getReferenceNetwork().getCoordinateReferenceSystem());
     
     /* parser for creating PLANit transfer zones */
-    this.transferZoneHelper = new TransferZoneHelper(zoningToPopulate, zoningReaderData, transferSettings, profiler);
+    this.transferZoneHelper = new TransferZoneHelper(getReferenceNetwork(), zoningToPopulate, zoningReaderData, transferSettings, profiler);
     
     /* parser for creating PLANit transfer zone groups */
-    this.transferZoneGroupHelper = new TransferZoneGroupHelper(zoningToPopulate, zoningReaderData, transferSettings, profiler);    
+    this.transferZoneGroupHelper = new TransferZoneGroupHelper(getReferenceNetwork(), zoningToPopulate, zoningReaderData, transferSettings, profiler);
     
     /* parser for identifying pt PLANit modes from OSM entities */
-    this.publicTransportModeHelper = new OsmPublicTransportModeHelper(transferSettings.getNetworkDataForZoningReader().getNetworkSettings());
+    this.publicTransportModeHelper =
+        new OsmPublicTransportModeConversion(transferSettings.getNetworkDataForZoningReader().getNetworkSettings(), getReferenceNetwork().getModes());
     
     /* parser for creating PLANit connectoids */
-    this.connectoidHelper = new OsmConnectoidHelper(zoningToPopulate, zoningReaderData, transferSettings, profiler);
+    this.connectoidHelper = new OsmConnectoidHelper(referenceNetwork, zoningToPopulate, zoningReaderData, transferSettings, profiler);
   }
   
   /** Call this BEFORE we parse the OSM network to initialise the handler properly

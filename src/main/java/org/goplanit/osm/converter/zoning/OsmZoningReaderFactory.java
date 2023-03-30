@@ -19,39 +19,42 @@ import org.goplanit.zoning.Zoning;
 public class OsmZoningReaderFactory {   
   
   /** Create a default PLANitOsmZoningReader. User is expected to configure the reader via settings before invoking read() method 
-   * 
+   *
+   * @param referenceNetwork to use
    * @param zoningToPopulate to populate
    * @return created OSM reader
    * @throws PlanItException thrown if error 
    */
-  public static OsmZoningReader create(Zoning zoningToPopulate) throws PlanItException {
+  public static OsmZoningReader create(PlanitOsmNetwork referenceNetwork, Zoning zoningToPopulate) throws PlanItException {
     PlanItException.throwIfNull(zoningToPopulate, "No zoning instance provided to OSM zoning reader factory method");
-    return create(new OsmPublicTransportReaderSettings(), zoningToPopulate);    
+    return create(new OsmPublicTransportReaderSettings(), referenceNetwork, zoningToPopulate);
   }   
     
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param settings to use
+   * @param referenceNetwork to use
    * @return created OSM reader
    * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(OsmPublicTransportReaderSettings settings) throws PlanItException {
+  public static OsmZoningReader create(OsmPublicTransportReaderSettings settings, PlanitOsmNetwork referenceNetwork) throws PlanItException {
     PlanItException.throwIfNull(settings, "No settings instance provided to OSM zoning reader factory method");
-    PlanItException.throwIfNull(settings.getReferenceNetwork(),"Unable to initialise OSM zoning reader, network not available to base zoning instance from");
-    return create(settings, new Zoning(settings.getReferenceNetwork().getIdGroupingToken(),settings.getReferenceNetwork().getNetworkGroupingTokenId()));    
+    PlanItException.throwIfNull(referenceNetwork,"Unable to initialise OSM zoning reader, network not available to base zoning instance from");
+    return create(settings, referenceNetwork, new Zoning(referenceNetwork.getIdGroupingToken(),referenceNetwork.getNetworkGroupingTokenId()));
   }  
   
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param settings to use
+   * @param referenceNetwork to use
    * @param zoningToPopulate to populate
    * @return created OSM reader
    * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(OsmPublicTransportReaderSettings settings, Zoning zoningToPopulate) throws PlanItException {
+  public static OsmZoningReader create(OsmPublicTransportReaderSettings settings, PlanitOsmNetwork referenceNetwork, Zoning zoningToPopulate) throws PlanItException {
     PlanItException.throwIfNull(settings, "no settings instance provided to OSM zoning reader factory method");
     PlanItException.throwIfNull(zoningToPopulate, "no zoning instance provided to OSM zoning reader factory method");
-    return new OsmZoningReader(settings, zoningToPopulate);    
+    return new OsmZoningReader(settings, referenceNetwork, zoningToPopulate);
   }  
     
   

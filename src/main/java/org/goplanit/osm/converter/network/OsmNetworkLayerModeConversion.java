@@ -5,8 +5,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.goplanit.osm.converter.OsmModeConversionBase;
 import org.goplanit.osm.converter.helper.OsmLanesModeTaggingSchemeHelper;
-import org.goplanit.osm.converter.helper.OsmModeHelper;
 import org.goplanit.osm.converter.helper.OsmModeLanesTaggingSchemeHelper;
 import org.goplanit.osm.tags.OsmAccessTags;
 import org.goplanit.osm.tags.OsmBicycleTags;
@@ -34,7 +34,7 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
  * @author markr
  *
  */
-public class OsmNetworkLayerModeParser extends OsmModeHelper {
+public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
   
   /** the network layer to use */
   private final MacroscopicNetworkLayer networkLayer;  
@@ -385,7 +385,7 @@ public class OsmNetworkLayerModeParser extends OsmModeHelper {
    * @param settings to use
    * @param networkLayer this parser is applied to
    */
-  public OsmNetworkLayerModeParser(OsmNetworkReaderSettings settings, MacroscopicNetworkLayer networkLayer) {
+  public OsmNetworkLayerModeConversion(OsmNetworkReaderSettings settings, MacroscopicNetworkLayer networkLayer) {
     super(settings, networkLayer.getSupportedModes());
     
     this.networkLayer = networkLayer;

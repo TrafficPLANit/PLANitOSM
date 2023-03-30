@@ -10,6 +10,7 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmPtv1Tags;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.Osm4JUtils;
@@ -26,6 +27,7 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.physical.Node;
@@ -48,11 +50,11 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  * @author markr
  *
  */
-public class TransferZoneHelper extends ZoningHelperBase{
+public class TransferZoneHelper extends OsmZoningHelperBase {
   
   /** logger to use */ 
   private static final Logger LOGGER = Logger.getLogger(TransferZoneHelper.class.getCanonicalName());
-    
+
   /** the zoning to work on */
   private final Zoning zoning;
   
@@ -63,7 +65,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private final OsmZoningHandlerProfiler profiler;
   
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
-  private final OsmPublicTransportModeHelper publicTransportModeParser;
+  private final OsmPublicTransportModeConversion publicTransportModeParser;
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
   private final OsmConnectoidHelper connectoidParser;
@@ -81,7 +83,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
   private Collection<MacroscopicLink> getLinksWithAccessToLocationForMode(Point location, Mode accessMode) {
     /* If stop_location is situated on a one way road, or only has one way roads as incoming and outgoing roads, we identify if the eligible link segments 
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the stop position */
-    MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByPredefinedModeType(accessMode);
+    MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByMode(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -244,7 +246,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
      * would require passengers to cross the road to get to the stop position */
     osmModes = OsmModeUtils.extractPublicTransportModesFrom(osmModes);
     for(String osmMode : osmModes) {
-      Mode accessMode = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmMode);
+      Mode accessMode = this.publicTransportModeParser.getActivatedPlanitMode(osmMode);
       if(accessMode==null) {
         continue;
       }
@@ -522,32 +524,34 @@ public class TransferZoneHelper extends ZoningHelperBase{
   }
 
   /** Constructor 
-   * 
+   *
+   * @param referenceNetwork to use
    * @param zoning to use
    * @param zoningReaderData to use
    * @param transferSettings to use
    * @param profiler to use
    */
   public TransferZoneHelper(
+      PlanitOsmNetwork referenceNetwork,
       Zoning zoning, 
       OsmZoningReaderData zoningReaderData, 
       OsmPublicTransportReaderSettings transferSettings,  
       OsmZoningHandlerProfiler profiler) {
     
-    super(transferSettings);
-    
+    super(referenceNetwork, transferSettings);
+
     this.zoningReaderData = zoningReaderData;
     this.zoning = zoning;
     this.profiler = profiler;
     
     /* gis initialisation */
-    this.geoUtils = new PlanitJtsCrsUtils(transferSettings.getReferenceNetwork().getCoordinateReferenceSystem());    
+    this.geoUtils = new PlanitJtsCrsUtils(referenceNetwork.getCoordinateReferenceSystem());
     
-    /* parser for identifying, filtering etc. of PT PLANit modes from OSM entities */
-    this.publicTransportModeParser = new OsmPublicTransportModeHelper(getNetworkToZoningData().getNetworkSettings());
+    /* parser for identifying, filtering etc. of PT PLANit modes from OSM entities - for all available PLANit modes on network*/
+    this.publicTransportModeParser = new OsmPublicTransportModeConversion(getNetworkToZoningData().getNetworkSettings(), referenceNetwork.getModes());
     
     /* parser for identifying pt PLANit modes from OSM entities */
-    this.connectoidParser = new OsmConnectoidHelper(zoning, zoningReaderData, transferSettings, profiler);
+    this.connectoidParser = new OsmConnectoidHelper(referenceNetwork, zoning, zoningReaderData, transferSettings, profiler);
   }
   
   
@@ -589,7 +593,7 @@ public class TransferZoneHelper extends ZoningHelperBase{
     TransferZone transferZone = null;
         
     /* tagged osm modes */        
-    Pair<Collection<String>, Collection<Mode>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any osm modes) */
@@ -640,9 +644,9 @@ public class TransferZoneHelper extends ZoningHelperBase{
   public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
       OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils){        
         
-    Pair<Collection<String>, Collection<Mode>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {    
-      throw new PlanItRunTimeException("Should not attempt to parse osm node %d when no planit modes are activated for it", osmNode.getId());
+      throw new PlanItRunTimeException("Should not attempt to parse OSM node %d when no PLANit modes are activated for it", osmNode.getId());
     }
       
     /* transfer zone */
@@ -656,12 +660,12 @@ public class TransferZoneHelper extends ZoningHelperBase{
     }
     
     /* connectoid(s) */
-    for(Mode mode : modeResult.second()) {
-      MacroscopicNetworkLayer networkLayer = getSettings().getReferenceNetwork().getLayerByMode(mode);
+    for(PredefinedModeType modeType : modeResult.second()) {
+      MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByPredefinedModeType(modeType);
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
-      connectoidParser.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, mode, geoUtils);      
+      connectoidParser.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, modeType, geoUtils);
     }    
     
     return transferZone;

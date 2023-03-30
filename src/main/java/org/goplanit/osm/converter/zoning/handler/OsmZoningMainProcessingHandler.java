@@ -9,6 +9,7 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -16,6 +17,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.zoning.TransferZone;
@@ -411,7 +413,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractPtv2Ptv1StopPosition(OsmNode osmNode, Map<String, String> tags, String ptv1DefaultMode) {
     /* PTv1 tagging present, so mode information available, use this to verify against activated mode(s), mark for further processing if available, otherwise ignore */
-    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
+    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
     }  
@@ -440,7 +442,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* ensure nearby mode compatible links exist to match the potentially salvaged Ptv1 entry to spatially */
       Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBox(osmNode, searchRadius, getGeoUtils());
       Collection<MacroscopicLink> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);
-      spatiallyMatchedLinks = getPtModeHelper().filterModeCompatibleLinks(getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(modeResult.second()), spatiallyMatchedLinks, false /*only exact matches allowed */);
+      spatiallyMatchedLinks = getPtModeHelper().filterModeCompatibleLinks(
+          getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(modeResult.second()), spatiallyMatchedLinks, false /*only exact matches allowed */);
       if(spatiallyMatchedLinks == null || spatiallyMatchedLinks.isEmpty()) {
         /* tagging error: discard, most likely stop_position resides on deactivated OSM road type that has not been parsed and if not it could not be mapped anyway*/
         LOGGER.info(String.format("DISCARD: Ptv2 stop_position %d on deactivated/non-existent infrastructure (Ptv1 tag conversion infeasible, no nearby compatible infrastructure)", osmNode.getId()));
@@ -558,7 +561,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 highway platform %s,",defaultOsmMode));
     }    
   
-    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first(), geoUtils);
@@ -576,10 +579,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* create transfer zone when at least one mode is supported */
     String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(tags);
     if(!defaultOsmMode.equals(OsmRoadModeTags.BUS)) {
-      LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 bus_stop %s,",defaultOsmMode));
+      LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 bus_stop %s,",defaultOsmMode));
     }      
     
-    Pair<Collection<String>, Collection<Mode>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.BUS_STOP);      
@@ -1075,15 +1078,17 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
+   * @param referenceNetwork  to use
    * @param zoningToPopulate to populate
    * @param profiler to use
    */
   public OsmZoningMainProcessingHandler(
-      final OsmPublicTransportReaderSettings transferSettings, 
-      final OsmZoningReaderData zoningReaderData,  
+      final OsmPublicTransportReaderSettings transferSettings,
+      final OsmZoningReaderData zoningReaderData,
+      final PlanitOsmNetwork referenceNetwork,
       final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData, zoningToPopulate, profiler);
+    super(transferSettings, zoningReaderData, referenceNetwork, zoningToPopulate, profiler);
     firstOsmWay = true;
   }
   
@@ -1095,7 +1100,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     reset();
     
     PlanItRunTimeException.throwIf(
-        getSettings().getReferenceNetwork().getTransportLayers() == null || getSettings().getReferenceNetwork().getTransportLayers().size()<=0,
+        getReferenceNetwork().getTransportLayers() == null || getReferenceNetwork().getTransportLayers().size()<=0,
           "Network is expected to be populated at start of parsing OSM zoning");
   }    
 

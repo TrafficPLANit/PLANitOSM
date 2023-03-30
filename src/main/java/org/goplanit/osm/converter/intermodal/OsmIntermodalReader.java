@@ -40,6 +40,9 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   
   /** the zoning to populate if any */
   private Zoning zoningToPopulate;
+
+  /** the network to populate */
+  private PlanitOsmNetwork osmNetworkToPopulate;
        
     
   /** Make sure settings are consistent for those properties that are assumed to be
@@ -125,28 +128,18 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   protected OsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
     this(new OsmIntermodalReaderSettings(inputSource, countryName), osmNetworkToPopulate, zoningToPopulate);
   }     
-    
+
   /**
    * Constructor 
    * 
    * @param settings to use
+   * @param zoningToPopulate to populate
    * @param osmNetworkToPopulate to populate
-   * @param zoningToPopulate to populate
    */
-  protected OsmIntermodalReader(OsmIntermodalReaderSettings settings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    this(settings, zoningToPopulate);
-    getSettings().getPublicTransportSettings().setReferenceNetwork(osmNetworkToPopulate);
-  }
-  
-  /**
-   * Constructor 
-   * 
-   * @param settings to use
-   * @param zoningToPopulate to populate
-   */
-  protected OsmIntermodalReader(OsmIntermodalReaderSettings settings, Zoning zoningToPopulate){
+  protected OsmIntermodalReader(OsmIntermodalReaderSettings settings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate){
     this.settings = settings;
     this.zoningToPopulate = zoningToPopulate;
+    this.osmNetworkToPopulate = osmNetworkToPopulate;
     /* by default activate rail to parse in intermodal settings */
     getSettings().getNetworkSettings().activateRailwayParser(true);   
   }  
@@ -178,9 +171,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     
     /* ZONING READER */
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
-    ptSettings.setReferenceNetwork(network);
     ptSettings.setNetworkDataForZoningReader(osmNetworkReader.createNetworkToZoningReaderData());
-    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(ptSettings, zoningToPopulate);
+    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(ptSettings, network, zoningToPopulate);
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();

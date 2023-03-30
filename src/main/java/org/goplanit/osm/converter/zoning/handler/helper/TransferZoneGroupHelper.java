@@ -9,11 +9,12 @@ import java.util.logging.Logger;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.zoning.Zoning;
@@ -30,7 +31,7 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
  * @author markr
  *
  */
-public class TransferZoneGroupHelper extends ZoningHelperBase {
+public class TransferZoneGroupHelper extends OsmZoningHelperBase {
   
   /** logger to use */
   @SuppressWarnings("unused")
@@ -49,7 +50,7 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
   private final TransferZoneHelper transferZoneParser;  
   
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
-  private final OsmPublicTransportModeHelper ptModeParser;
+  private final OsmPublicTransportModeConversion ptModeParser;
   
   /** Register a transfer zone on a group by providing the OSM id of the transfer zone and its type, if no transfer zone is available
    * for this combination, false is returned and it is not registered.
@@ -70,7 +71,8 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
       if(!getSettings().hasBoundingPolygon()) {
         /* tags available, use as is to extract mode compatibility for verification if it is rightly not available */
         if(tags!=null) {
-          Pair<Collection<String>, Collection<Mode>> modeResult = ptModeParser.collectPublicTransportModesFromPtEntity(osmId, tags, OsmModeUtils.identifyPtv1DefaultMode(tags));
+          Pair<Collection<String>, Collection<PredefinedModeType>> modeResult =
+              ptModeParser.collectPublicTransportModesFromPtEntity(osmId, tags, OsmModeUtils.identifyPtv1DefaultMode(tags));
           if( OsmModeUtils.hasEligibleOsmMode(modeResult) && !getSettings().hasBoundingPolygon()) {      
             /* not parsed due to problems (or outside bounding box), discard */
             logDiscardWarning = true;
@@ -110,26 +112,28 @@ public class TransferZoneGroupHelper extends ZoningHelperBase {
   }  
 
   /** Constructor 
-   * 
+   *
+   * @param referenceNetwork to use
    * @param zoning to register transfer zone groups on
    * @param zoningReaderData to use
    * @param transferSettings to use 
    * @param profiler to track stats
    */
   public TransferZoneGroupHelper(
+      PlanitOsmNetwork referenceNetwork,
       Zoning zoning, 
       OsmZoningReaderData zoningReaderData, 
       OsmPublicTransportReaderSettings transferSettings, 
       OsmZoningHandlerProfiler profiler) {
     
-    super(transferSettings);
+    super(referenceNetwork, transferSettings);
     
     this.zoning = zoning;
     this.profiler = profiler;
     this.zoningReaderData = zoningReaderData;
     
-    transferZoneParser = new TransferZoneHelper(zoning, zoningReaderData, transferSettings, profiler);
-    ptModeParser = new OsmPublicTransportModeHelper(transferSettings.getNetworkDataForZoningReader().getNetworkSettings());
+    transferZoneParser = new TransferZoneHelper(referenceNetwork, zoning, zoningReaderData, transferSettings, profiler);
+    ptModeParser = new OsmPublicTransportModeConversion(transferSettings.getNetworkDataForZoningReader().getNetworkSettings(), referenceNetwork.getModes());
   }
 
   /** Create a transfer zone group based on the passed in OSM entity, tags for feature extraction and access

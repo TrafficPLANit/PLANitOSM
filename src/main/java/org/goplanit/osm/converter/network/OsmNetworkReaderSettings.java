@@ -52,21 +52,21 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected final OsmLaneDefaults laneConfiguration = new OsmLaneDefaults();  
       
   /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
-  protected final Set<Long>  excludedOsmWays = new HashSet<Long>();
+  protected final Set<Long>  excludedOsmWays = new HashSet<>();
   
   /** Allow users to provide OSM way ids for ways that we are to keep even if they fall (partially) outside a bounding polygon, 
    * for example when we know the OSM way meanders in and outside the polygon and we want to have a connected network and proper lengths for this way */
-  protected final Set<Long>  includedOutsideBoundingPolygonOsmWays = new HashSet<Long>();
+  protected final Set<Long>  includedOutsideBoundingPolygonOsmWays = new HashSet<>();
   
   /** Allow users to provide OSM node ids for nodes that we are not to keep even if they fall outside a bounding polygon */
-  protected final Set<Long>  includedOutsideBoundingPolygonOsmNodes = new HashSet<Long>();  
+  protected final Set<Long>  includedOutsideBoundingPolygonOsmNodes = new HashSet<>();
  
     
   /**
    * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file is incorrectly tagged which causes problems
    * in the memory model. Here one can be manually overwrite the allowable modes for this particular way.
    */
-  protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<Long, Set<String>>();    
+  protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<>();
 
   /* SETTINGS */
   
@@ -387,7 +387,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return mapped PLANit mode types, if not available empty set is returned
    */
   public Set<PredefinedModeType> getActivatedPlanitModeTypes() {
-    return Stream.concat(getHighwaySettings().getActivatedPlanitModeTypesStream(),getRailwaySettings().getActivatedPlanitModeTypesStream()).collect(Collectors.toUnmodifiableSet());
+    return Stream.concat(
+        getHighwaySettings().getActivatedPlanitModeTypesStream(),
+        getRailwaySettings().getActivatedPlanitModeTypesStream()).collect(Collectors.toUnmodifiableSet());
   }
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
@@ -607,17 +609,17 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
 
   /** provide railway specific settings
-   * @return railway settings , null when not activated
+   * @return railway settings
    */
   public OsmRailwaySettings getRailwaySettings() {
-    return isRailwayParserActive() ? osmRailwaySettings : null ;
+    return osmRailwaySettings;
   }
   
   /** provide highway specific settings
-   * @return highway settings , null when not activated
+   * @return highway settings
    */
   public OsmHighwaySettings getHighwaySettings() {
-    return isHighwayParserActive() ? osmHighwaySettings : null ;
+    return osmHighwaySettings;
   } 
   
   /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such OSM ways

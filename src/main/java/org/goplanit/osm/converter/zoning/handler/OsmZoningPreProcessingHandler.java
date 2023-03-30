@@ -7,10 +7,12 @@ import java.util.logging.Logger;
 import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 
 import org.goplanit.osm.util.OsmPtVersionScheme;
 import org.goplanit.utils.misc.StringUtils;
+import org.goplanit.zoning.Zoning;
 
 /**
  * Handler that is applied before we conduct the actual handling of the zones by exploring the OSM relations
@@ -22,7 +24,7 @@ import org.goplanit.utils.misc.StringUtils;
  * to properly parse the OSM relations (that are always parsed last).
  * </p>
  * <p>
- *     Run pre-preocessing twice, first stage with IDENTIFY_PLATFORM_AS_RELATIONS, then when these platforms have been identified
+ *     Run pre-processing twice, first stage with IDENTIFY_PLATFORM_AS_RELATIONS, then when these platforms have been identified
  *     run again with IDENTIFY_PT_NODES which will pre-register all nodes for the ways that were identified as platform AND
  *     will pre-register all remaining unregistered OSM nodes part of relations that are not part of the physical network, such as
  *     station nodes
@@ -151,14 +153,22 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
   /**
    * Constructor
-   * 
+   *
+   * @param referenceNetwork to use
+   * @param zoningToPopulate to populate
    * @param transferSettings for the handler
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
    * @param stage indicating what stage this pre-processing is in.Depending on the stage different pre-processing actinos are undertaken
    * @param profiler to use
    */
-  public OsmZoningPreProcessingHandler(final OsmPublicTransportReaderSettings transferSettings, OsmZoningReaderData zoningReaderData, Stage stage, OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData, null, profiler);
+  public OsmZoningPreProcessingHandler(
+      final PlanitOsmNetwork referenceNetwork,
+      final Zoning zoningToPopulate,
+      final OsmPublicTransportReaderSettings transferSettings,
+      OsmZoningReaderData zoningReaderData,
+      Stage stage,
+      OsmZoningHandlerProfiler profiler) {
+    super(transferSettings, zoningReaderData, referenceNetwork,zoningToPopulate, profiler);
     this.stage = stage;
   }
   

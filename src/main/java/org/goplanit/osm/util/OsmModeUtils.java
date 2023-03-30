@@ -17,6 +17,7 @@ import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
  * Utilities in relation to parsing OSM modes when constructing a PLANit model from it. All utility methods are static in that they do not require
@@ -426,7 +427,7 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasEligibleOsmMode(Pair<Collection<String>, Collection<Mode>> modeResult) {
+  public static boolean hasEligibleOsmMode(Pair<Collection<String>, Collection<PredefinedModeType>> modeResult) {
     if(modeResult!= null && modeResult.first()!=null && !modeResult.first().isEmpty()) {
       /* eligible modes available */
       return true;
@@ -440,7 +441,7 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasMappedPlanitMode(Pair<Collection<String>, Collection<Mode>> modeResult) {
+  public static boolean hasMappedPlanitMode(Pair<Collection<String>, Collection<PredefinedModeType>> modeResult) {
     if(modeResult!= null && modeResult.second()!=null && !modeResult.second().isEmpty()) {
       /* eligible modes mapped to planit mode*/
       return true;

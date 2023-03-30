@@ -99,16 +99,11 @@ public class OsmIntermodalReaderFactory {
    * 
    * @param settings to use
    * @return create OSM intermodal reader
-   * @throws PlanItException throw if error
    */
-  public static OsmIntermodalReader create(OsmIntermodalReaderSettings settings) throws PlanItException {
-    if(settings.getPublicTransportSettings().getReferenceNetwork() == null){
-      var referenceNetwork = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
-      settings.getPublicTransportSettings().setReferenceNetwork(referenceNetwork);
-    }
-    var networkToPopulate = settings.getPublicTransportSettings().getReferenceNetwork();
+  public static OsmIntermodalReader create(OsmIntermodalReaderSettings settings) {
+    var networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
     var zoningToPopulate = new Zoning(networkToPopulate.getIdGroupingToken(),  networkToPopulate.getNetworkGroupingTokenId());
-    return create(settings, settings.getPublicTransportSettings().getReferenceNetwork(), zoningToPopulate);
+    return create(settings, networkToPopulate, zoningToPopulate);
   }    
 
   /** Create a PLANitOsmIntermodalReader while providing an OSM network, and zoning to populate

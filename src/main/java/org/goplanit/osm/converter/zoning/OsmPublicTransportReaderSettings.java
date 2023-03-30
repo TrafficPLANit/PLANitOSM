@@ -1,6 +1,7 @@
 package org.goplanit.osm.converter.zoning;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
+import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.Point;
 
@@ -35,10 +37,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   private static final Logger LOGGER = Logger.getLogger(OsmPublicTransportReaderSettings.class.getCanonicalName());
   
   // transferred data/settings from network reader
-  
-  /** the reference network to use during parsing of the pt zones */
-  private PlanitOsmNetwork referenceNetwork = null;
-  
+
   /**
    * the network data required to perform successful parsing of zones, to be obtained from the osm network reader
    * after parsing the reference network
@@ -132,6 +131,16 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public OsmPublicTransportReaderSettings(String countryName) {
     super(countryName);
   }
+
+  /**
+   /** Constructor with user defined source locale
+   *
+   * @param inputSource to use, expected local file location
+   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   */
+  public OsmPublicTransportReaderSettings(String inputSource, String countryName) {
+    this(UrlUtils.createFromPath(Path.of(inputSource)), countryName);
+  }
   
   /** Constructor with user defined source locale 
    * 
@@ -142,34 +151,15 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     super(inputSource, countryName);
   }  
   
-  /** Constructor with user defined source locale 
-   * @param countryName to base source locale on
-   * @param referenceNetwork to use
-   */
-  public OsmPublicTransportReaderSettings(String countryName, PlanitOsmNetwork referenceNetwork) {
-    this(null, countryName, referenceNetwork);
-  }  
-  
+
   /** Constructor with user defined source locale
    * 
    * @param inputSource to use
    * @param countryName to base source locale on
-   * @param referenceNetwork to use
-   */
-  public OsmPublicTransportReaderSettings(URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork) {
-    this(inputSource, countryName, referenceNetwork, null);
-  }
-  
-  /** Constructor with user defined source locale
-   * 
-   * @param inputSource to use
-   * @param countryName to base source locale on
-   * @param referenceNetwork to use
    * @param network2ZoningData to use
    */
-  public OsmPublicTransportReaderSettings(URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) {
+  public OsmPublicTransportReaderSettings(URL inputSource, String countryName, OsmNetworkToZoningReaderData network2ZoningData) {
     super(inputSource, countryName);
-    setReferenceNetwork(referenceNetwork);
     setNetworkDataForZoningReader(network2ZoningData);
   }  
   
@@ -181,22 +171,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     //TODO
   }
   
-  // TRANSFERRED FROM NETWOPRK READER
-  
-  /** set the reference network to use
-   * @param referenceNetwork to use
-   */
-  public void setReferenceNetwork(PlanitOsmNetwork referenceNetwork) {
-    this.referenceNetwork = referenceNetwork;
-  }  
-  
-  /** Get the reference network to use
-   * 
-   * @return referenceNetwork
-   */
-  public PlanitOsmNetwork getReferenceNetwork() {
-    return this.referenceNetwork;
-  }
+  // TRANSFERRED FROM NETWORK READER
+
 
   /** allow one to set the network data required for parsing osm zoning data on the zoning reader
    * 

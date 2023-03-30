@@ -33,9 +33,21 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String countryName) {
-    this(null, countryName);
+    this((URL) null, countryName);
   }
-  
+
+  /**
+   * Constructor
+   *
+   * @param inputSource to use
+   * @param countryName to use
+   */
+  public OsmIntermodalReaderSettings(final String inputSource, final String countryName) {
+    this(
+        new OsmNetworkReaderSettings(inputSource, countryName),
+        new OsmPublicTransportReaderSettings(inputSource, countryName));
+  }
+
   /**
    * Constructor
    * 

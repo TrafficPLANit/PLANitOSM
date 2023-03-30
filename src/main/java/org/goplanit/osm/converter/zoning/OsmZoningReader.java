@@ -52,6 +52,9 @@ public class OsmZoningReader implements ZoningReader {
   
   /** the (temporary) data gathered during parsing of OSM (transfer) zones */
   private OsmZoningReaderData zoningReaderData;
+
+  /** reference network to use */
+  private PlanitOsmNetwork referenceNetwork;
     
   // references
       
@@ -96,13 +99,13 @@ public class OsmZoningReader implements ZoningReader {
     
     /* if not set, create zoning to populate here based on network id tokens */
     if(zoning==null) {
-      this.zoning = new Zoning(getSettings().getReferenceNetwork().getIdGroupingToken(),getSettings().getReferenceNetwork().getNetworkGroupingTokenId());
+      this.zoning = new Zoning(getReferenceNetwork().getIdGroupingToken(),getReferenceNetwork().getNetworkGroupingTokenId());
     }
     
     /* make country name available in zoning reader data during parsing */
     this.zoningReaderData = new OsmZoningReaderData(getSettings().getCountryName());    
     /* spatially index all links to register on data trackers for use in handlers */
-    zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(getSettings().getReferenceNetwork());
+    zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(getReferenceNetwork());
     
     /* make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box
      * since it makes little sense to try and parse pt infrastructure outside of the network's geographically parsed area */
@@ -121,7 +124,13 @@ public class OsmZoningReader implements ZoningReader {
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for pre-processing platforms modelled as polygons, aborting");
     }else {    
-      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData, Stage.IDENTIFY_PLATFORM_AS_RELATIONS, profiler);
+      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(
+          this.getReferenceNetwork(),
+          this.zoning,
+          this.transferSettings,
+          this.zoningReaderData,
+          Stage.IDENTIFY_PLATFORM_AS_RELATIONS,
+          profiler);
       read(osmReader, osmPreProcessingHandler);     
     }
   }
@@ -136,7 +145,13 @@ public class OsmZoningReader implements ZoningReader {
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for pre-processing public transport node pre-registration, aborting");
     }else {
-      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(this.transferSettings, this.zoningReaderData, Stage.IDENTIFY_PT_NODES, profiler);
+      osmPreProcessingHandler = new OsmZoningPreProcessingHandler(
+          this.getReferenceNetwork(),
+          this.zoning,
+          this.transferSettings,
+          this.zoningReaderData,
+          Stage.IDENTIFY_PT_NODES,
+          profiler);
       read(osmReader, osmPreProcessingHandler);
     }
   }  
@@ -166,9 +181,8 @@ public class OsmZoningReader implements ZoningReader {
    * conduct main processing step of zoning reader given the information available from pre-processing
    *  
    * @param profiler  to use
-   * @throws PlanItException thrown if error
    */
-  private void doMainProcessing(OsmZoningHandlerProfiler profiler) throws PlanItException {
+  private void doMainProcessing(OsmZoningHandlerProfiler profiler) {
     /* reader to parse the actual file */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(getSettings().getInputSource());
     if(osmReader == null) {
@@ -178,7 +192,8 @@ public class OsmZoningReader implements ZoningReader {
       /* handler to deal with callbacks from osm4j */
       osmHandler = new OsmZoningMainProcessingHandler(
           this.transferSettings, 
-          this.zoningReaderData,  
+          this.zoningReaderData,
+          getReferenceNetwork(),
           this.zoning, 
           profiler);
       read(osmReader, osmHandler);
@@ -189,9 +204,8 @@ public class OsmZoningReader implements ZoningReader {
    * conduct post-processing processing step of zoning reader given the information available from pre-processing
    *  
    * @param profiler  to use
-   * @throws PlanItException thrown if error
    */
-  private void doPostProcessing(OsmZoningHandlerProfiler profiler) throws PlanItException {
+  private void doPostProcessing(OsmZoningHandlerProfiler profiler) {
     /* reader to parse the actual file */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(getSettings().getInputSource());
     if(osmReader == null) {
@@ -201,12 +215,17 @@ public class OsmZoningReader implements ZoningReader {
       /* handler to deal with callbacks from osm4j */
       osmPostProcessingHandler = new OsmZoningPostProcessingHandler(
           this.transferSettings, 
-          this.zoningReaderData,  
+          this.zoningReaderData,
+          getReferenceNetwork(),
           this.zoning,
           profiler);
       read(osmReader, osmPostProcessingHandler);        
     } 
-  }       
+  }
+
+  protected PlanitOsmNetwork getReferenceNetwork(){
+    return referenceNetwork;
+  }
 
   /** conduct reading of data with given reader and handler
    * 
@@ -230,10 +249,12 @@ public class OsmZoningReader implements ZoningReader {
    * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 
    * 
    * @param settings to use
+   * @param referenceNetwork to use
    * @param zoningToPopulate zoning to populate 
    */
-  protected OsmZoningReader(OsmPublicTransportReaderSettings settings, Zoning zoningToPopulate){
-    this.transferSettings = settings;  
+  protected OsmZoningReader(OsmPublicTransportReaderSettings settings, PlanitOsmNetwork referenceNetwork, Zoning zoningToPopulate){
+    this.transferSettings = settings;
+    this.referenceNetwork = referenceNetwork;
     this.zoning = zoningToPopulate;
   }    
   
@@ -271,7 +292,8 @@ public class OsmZoningReader implements ZoningReader {
    */
   protected OsmZoningReader(
       URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
-    this.transferSettings = new OsmPublicTransportReaderSettings(inputSource, countryName, referenceNetwork, network2ZoningData);    
+    this.transferSettings = new OsmPublicTransportReaderSettings(inputSource, countryName, network2ZoningData);
+    this.referenceNetwork = referenceNetwork;
     this.zoning = zoningToPopulate; 
   }   
      
@@ -279,14 +301,13 @@ public class OsmZoningReader implements ZoningReader {
    * Parse a local *.osm or *.osm.pbf file and convert it into a PLANit Zoning instance given the configuration options that have been set
    * 
    * @return macroscopic zoning that has been parsed
-   * @throws PlanItException thrown if error
-   */  
+   */
   @Override
-  public Zoning read() throws PlanItException {
-    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()), "Country not set for OSM zoning reader, unable to proceed");
-    PlanItException.throwIfNull(getSettings().getInputSource(), "Input source not set for OSM zoning reader, unable to proceed");
-    PlanItException.throwIfNull(getSettings().getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
-    PlanItException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (newtork to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
+  public Zoning read() {
+    PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()), "Country not set for OSM zoning reader, unable to proceed");
+    PlanItRunTimeException.throwIfNull(getSettings().getInputSource(), "Input source not set for OSM zoning reader, unable to proceed");
+    PlanItRunTimeException.throwIfNull(getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
+    PlanItRunTimeException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (newtork to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
 
     /* prepare for parsing */
     initialiseBeforeParsing();

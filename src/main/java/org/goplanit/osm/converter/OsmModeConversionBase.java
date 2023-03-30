@@ -1,32 +1,29 @@
-package org.goplanit.osm.converter.helper;
+package org.goplanit.osm.converter;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.utils.mode.Mode;
-import org.goplanit.utils.mode.Modes;
-import org.goplanit.utils.mode.PredefinedMode;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
 
 /**
- * Class to support parsing and other functionality that depends on the configuration of the readers regarding OSM modes and their mappng to PLANit modes
+ * Class to support parsing and other functionality that depends on the configuration of the readers regarding OSM modes and
+ * their mapping to PLANit modes as well as the subset of modes provided so limit itself to, can be all modes but also just modes
+ * for a given layer
  * 
  * @author markr
  *
  */
-public class OsmModeHelper {
+public class OsmModeConversionBase {
 
   /** logger to use */
-  private static final Logger LOGGER = Logger.getLogger(OsmModeHelper.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(OsmModeConversionBase.class.getCanonicalName());
   
   /** settings relevant to this parser */
   private final OsmNetworkReaderSettings settings;
@@ -50,10 +47,13 @@ public class OsmModeHelper {
   /** Constructor 
    * 
    * @param settings to use
-   * @param modes in use across the network we are populating
+   * @param layerModes in use across the network we are populating
    */
-  public OsmModeHelper(final OsmNetworkReaderSettings settings, Iterable<Mode> modes) {
+  public OsmModeConversionBase(final OsmNetworkReaderSettings settings, Iterable<Mode> layerModes) {
     this.settings = settings;
+    this.predefinedModeTypeToModeMap = new HashMap<>();
+
+    // prep lambda to be used in conjunction with container
     this.osmLinkModes = new HashSet<>();
     addMappedOsmLinkModesByPlanitMode = (planitMode) -> {
       if (planitMode.isPredefinedModeType()) {
@@ -61,8 +61,8 @@ public class OsmModeHelper {
       }
     };
 
-    /** create mapping */
-    for(var mode : modes){
+    /** create mode mapping */
+    for(var mode : layerModes){
       if(mode.isPredefinedModeType()){
         var old = predefinedModeTypeToModeMap.put(mode.getPredefinedModeType(),mode);
         if(old != null){

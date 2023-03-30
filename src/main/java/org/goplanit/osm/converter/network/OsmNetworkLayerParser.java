@@ -29,7 +29,6 @@ import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
-import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
@@ -74,7 +73,7 @@ public class OsmNetworkLayerParser {
   private final MacroscopicNetworkLayer networkLayer;
   
   /** dedicated functionality to parse supported OSM modes */
-  private final OsmNetworkLayerModeParser modeParser;
+  private final OsmNetworkLayerModeConversion modeParser;
   
   /** geo utility instance based on network wide crs this layer is part of */
   private final PlanitJtsCrsUtils geoUtils;
@@ -736,7 +735,7 @@ public class OsmNetworkLayerParser {
     this.settings = settings;
     
     this.layerData = new OsmNetworkReaderLayerData();    
-    this.modeParser = new OsmNetworkLayerModeParser(settings, networkLayer);
+    this.modeParser = new OsmNetworkLayerModeConversion(settings, networkLayer);
     
     initialiseEventListeners();        
   }
