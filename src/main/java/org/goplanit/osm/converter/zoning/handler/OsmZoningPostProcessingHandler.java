@@ -22,6 +22,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
+import org.goplanit.utils.math.Precision;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.mode.TrackModeType;
@@ -204,21 +205,27 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
     /* 4) Remaining options are all valid and close ... choose based on importance, the premise being that road based PT services tend to be located on main roads, rather than smaller roads
      * so, we choose the first link segment with the highest capacity found (if they differ) and then return its parent link as the candidate */
-    MacroscopicLink selectedAccessLink = null;
     if(!(accessMode.getPhysicalFeatures().getTrackType() == TrackModeType.RAIL) &&
         filteredCandidates.size()>1 &&
-        filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).map(MacroscopicLinkSegment::getCapacityOrDefaultPcuHLane).distinct().count()>1){
-      // take the parent link of the edge segment with the maximum capacity
-      selectedAccessLink = (MacroscopicLink)
-          accessLinkSegments.stream().max( Comparator.comparingDouble(ls -> ((MacroscopicLinkSegment)ls).getCapacityOrDefaultPcuHLane())).get().getParent();
-    }else{
-      /* otherwise find the closest */
-      selectedAccessLink = (MacroscopicLink)PlanitGraphGeoUtils.findEdgeClosest(transferZone.getGeometry(), filteredCandidates, getGeoUtils());
-    }
-    final MacroscopicLink finalSelectedAccessLink = selectedAccessLink;
-    accessLinkSegments.removeIf(ls -> !ls.getParent().equals(finalSelectedAccessLink)); // sync
+        filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(ls -> accessLinkSegments.contains(ls)).map(
+            ls -> ls.getCapacityOrDefaultPcuHLane()).distinct().count()>1){
 
-    return Pair.of(selectedAccessLink, accessLinkSegments);
+      // retain only edge segments with the maximum capacity
+      var maxCapacity = accessLinkSegments.stream().map(ls -> ((MacroscopicLinkSegment)ls).getCapacityOrDefaultPcuHLane()).max(Comparator.naturalOrder());
+      var lowerCapacitySegments = filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(ls -> Precision.smaller( ls.getCapacityOrDefaultPcuHLane(), maxCapacity.get(), Precision.EPSILON_6)).collect(Collectors.toUnmodifiableSet());
+      accessLinkSegments.removeAll(lowerCapacitySegments);
+      filteredCandidates.removeAll(lowerCapacitySegments.stream().map(ls -> ls .getParentLink()).collect(Collectors.toUnmodifiableSet()));
+    }
+
+    /* now find the closest remaining*/
+    MacroscopicLink finalSelectedAccessLink = filteredCandidates.iterator().next();
+    if(filteredCandidates.size()>1) {
+      finalSelectedAccessLink = (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(transferZone.getGeometry(), filteredCandidates, getGeoUtils());
+    }
+    final var dummy = finalSelectedAccessLink;
+    accessLinkSegments.removeIf(ls -> !ls.getParent().equals(dummy)); // sync
+
+    return Pair.of(finalSelectedAccessLink, accessLinkSegments);
   }
 
   /** Find all links that are within the given search bounding box and are mode compatible with the given mode. 
