@@ -129,11 +129,11 @@ public class BasicOSMReaderTest {
       assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2325);
       assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 978);
 
-      assertEquals(zoning.getOdZones().size(), 0);
-      assertEquals(zoning.getTransferZones().size(), 71);
-      assertEquals(zoning.getTransferZoneGroups().size(), 7);
-      assertEquals(zoning.getOdConnectoids().size(), 0);
-      assertEquals(zoning.getTransferConnectoids().size(), 94);
+      assertEquals(0, zoning.getOdZones().size() );
+      assertEquals(71, zoning.getTransferZones().size() );
+      assertEquals(7, zoning.getTransferZoneGroups().size());
+      assertEquals(0, zoning.getOdConnectoids().size());
+      assertEquals(93, zoning.getTransferConnectoids().size());
 
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);

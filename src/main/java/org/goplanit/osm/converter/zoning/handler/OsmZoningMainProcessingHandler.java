@@ -1112,6 +1112,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmNode osmNode) {
 
+//    if(osmNode.getId() == 2819919872L){
+//      int bla = 4;
+//    }
+
     /* parse as stand-alone PT-entity node */
     wrapHandlePtOsmNode(osmNode, this::extractTransferInfrastructure);
 

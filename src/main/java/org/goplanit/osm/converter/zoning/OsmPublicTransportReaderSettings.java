@@ -113,10 +113,9 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   
   /**
    * The default buffer distance when looking for edges within a distance of the closest edge to create connectoids (stop_locations) on for transfer zones. 
-   * In case candidates are so close just selecting the closest can lead to problems. By identifying multiple candidates via this buffer, we can then use more sophisticated ways than proximity
-   * to determine the best candidate 
+   * In case multiple candidates are close just selecting the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
    */
-  public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 5;
+  public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
             
   
   /** Constructor using default (Global) locale
