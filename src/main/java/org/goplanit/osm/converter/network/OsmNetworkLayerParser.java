@@ -55,7 +55,7 @@ public class OsmNetworkLayerParser {
   
   // local members only
          
-  /** track all data that maps osm entities to PLANit entities here */
+  /** track all data that maps OSM entities to PLANit entities here */
   private final OsmNetworkReaderLayerData layerData; 
     
   /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of the PLANit link segment types while parsing */
@@ -208,23 +208,26 @@ public class OsmNetworkLayerParser {
     
     PlanItRunTimeException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
     PlanItRunTimeException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
-         
+
     /* collect memory model nodes */
     Pair<Node,Integer> nodeFirstResult = extractFirstNode(osmWay, startNodeIndex, allowTruncationIfGeometryIncomplete);
-    if(nodeFirstResult== null || nodeFirstResult.first() == null) {
+
+    Pair<Node,Integer> nodeLastResult = null;
+    int foundStartNodeIndex = startNodeIndex;
+    if(nodeFirstResult!= null && nodeFirstResult.first() != null) {
+      foundStartNodeIndex = nodeFirstResult.second();
+      nodeLastResult = extractLastNode(osmWay, foundStartNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
+    }
+
+    /* If truncated to a single node or not available (because fully/partially outside bounding box), it is not valid and mark as such */
+    if(nodeLastResult == null || nodeFirstResult == null || nodeLastResult.first().idEquals(nodeFirstResult.first())) {
+      LOGGER.fine(String.format("DISCARD: OSM way %d truncated to single node, unable to create PLANit link for it", osmWay.getId()));
+      networkData.registerProcessedOsmWayAsUnavailable(osmWay.getId());
       return null;
     }
-    Pair<Node,Integer> nodeLastResult = extractLastNode(osmWay, nodeFirstResult.second(), endNodeIndex, allowTruncationIfGeometryIncomplete);
-    if(nodeLastResult== null || nodeLastResult.first() == null) {
-      return null;
-    }    
     Node nodeFirst = nodeFirstResult.first();
     Node nodeLast = nodeLastResult.first();
-    if(nodeLast.idEquals(nodeFirst)) {
-      LOGGER.fine(String.format("DISCARD: Osm way %d truncated to single node, unable to create planit link for it", osmWay.getId()));
-      return null;
-    }
-          
+
     /* parse geometry */
     LineString lineString = null;          
     try {
@@ -613,7 +616,7 @@ public class OsmNetworkLayerParser {
         nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
         if(nodeFirst!= null && !isNearNetworkBoundingBox(nodeFirst.getPosition(), geoUtils)) {       
           /* quite far from bounding box, so log for user verification to be sure */
-          LOGGER.warning(String.format("SALVAGED: Osm way %s geometry incomplete, likely cut-off by network bounding box, truncated at osm node %s",osmWay.getId(), nodeFirst.getExternalId()));
+          LOGGER.warning(String.format("SALVAGED: OSM way %s geometry incomplete, likely cut-off by network bounding box, truncated at OSM node %s",osmWay.getId(), nodeFirst.getExternalId()));
         }
       }else {
         /* ignore, osm way likely completely outside user specified bounding box within input  and therefore this is most likely intended behaviour */

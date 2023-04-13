@@ -90,4 +90,14 @@ public class OsmNetworkToZoningReaderData {
     return networkData.getOsmNodeData().getRegisteredOsmNodes();
   }
 
+  /**
+   * Verify if an OSM way is processed but identified as unavailable. Any subsequent dependencies on this OSM way
+   * can be safely ignored without issuing further warnings
+   *
+   * @param osmWayId to verify
+   */
+  public boolean isOsmWayProcessedAndUnavailable(long osmWayId){
+    return networkData.isOsmWayProcessedAndUnavailable(osmWayId);
+  }
+
 }

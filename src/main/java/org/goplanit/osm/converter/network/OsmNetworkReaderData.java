@@ -1,8 +1,6 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
@@ -35,9 +33,16 @@ public class OsmNetworkReaderData {
   private Envelope networkBoundingBox;
 
   /**
-   * Track OSM nodes to retain in memory during network parsing
+   * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used to construct links
+   * or other entities
    */
   private OsmNodeData osmNodeData = new OsmNodeData();
+
+  /** Track OSM ways that have been processed and identified as being unavailable/not used. This has been communicated if needed
+   *  to users, so any subsequent dependencies on this OSM way can be safely ignored without issuing further warnings
+   */
+  private Set<Long> discardedOsmWays = new HashSet<>();
+
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
   private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<>();
@@ -121,6 +126,26 @@ public class OsmNetworkReaderData {
    */
   public void clearOsmCircularWays() {
     osmCircularWays.clear();
+  }
+
+  /**
+   * Register an OSM way as processed and identified as being unavailable. Any subsequent dependencies on this OSM way
+   * can be safely ignored without issuing further warnings
+   *
+   * @param osmWayId to register
+   */
+  public void registerProcessedOsmWayAsUnavailable(long osmWayId){
+    discardedOsmWays.add(osmWayId);
+  }
+
+  /**
+   * Verify if an OSM way is processed but identified as unavailable. Any subsequent dependencies on this OSM way
+   * can be safely ignored without issuing further warnings
+   *
+   * @param osmWayId to verify
+   */
+  public boolean isOsmWayProcessedAndUnavailable(long osmWayId){
+    return discardedOsmWays.contains(osmWayId);
   }
   
   /** provide reference to a layer parser

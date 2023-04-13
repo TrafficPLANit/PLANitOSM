@@ -5,6 +5,7 @@ import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.*;
+import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
@@ -129,6 +130,19 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     }else {
       return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmNode, getSettings().getBoundingPolygon());
     }
+  }
+
+  /** Verify if node resides near the zoning bounding polygon based on #OsmNetworkReaderData. If no bounding area is defined
+   * this always returns true
+   *
+   * @param osmNode to verify
+   * @return true when no bounding area, or covered by bounding area, false otherwise
+   */
+  protected boolean isNearNetworkBoundingBox(OsmNode osmNode) {
+    if(!getSettings().hasBoundingPolygon()){
+      return false;
+    }
+    return OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(osmNode), getSettings().getBoundingPolygon().getEnvelopeInternal(), getGeoUtils());
   }
   
   /** Verify if OSM way has at least one node that resides within the zoning bounding polygon. If no bounding area is defined

@@ -613,10 +613,30 @@ public class OsmWayUtils {
    * @return index of first available osm node, null if not found
    */
   public static Integer findFirstAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
-    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
-        return nodeIndex;
+    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
+      var node = osmNodes.get(osmWay.getNodeId(nodeIndex));
+      if(node == null) {
+        continue;
       }
+      return nodeIndex;
+    }
+    return null;
+  }
+
+  /** Finds the last consecutive available OSM node index after the offset, i.e. the index before the first unavailable node
+   *
+   * @param offsetIndex to start search from
+   * @param osmWay to collect from
+   * @param osmNodes to check existence of osm way nodes
+   * @return last index of node that is available, null otherwise
+   */
+  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
+    for(int nodeIndex =  osmWay.getNumberOfNodes()-1; nodeIndex>offsetIndex; --nodeIndex) {
+      var node = osmNodes.get(osmWay.getNodeId(nodeIndex));
+      if(node == null) {
+        continue;
+      }
+      return nodeIndex;
     }
     return null;
   }
@@ -655,23 +675,6 @@ public class OsmWayUtils {
     }
     return null;
   }  
-
-  /** Finds the last consecutive available OSM node index after the offset, i.e. the index before the first unavailable node
-   * 
-   * @param offsetIndex to start search from
-   * @param osmWay to collect from
-   * @param osmNodes to check existence of osm way nodes
-   * @return last index of node that is available, null otherwise
-   */  
-  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
-    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
-        return nodeIndex-1;
-      }
-    }
-    return null;
-  }   
-
 
 
 }

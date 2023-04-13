@@ -2,9 +2,7 @@ package org.goplanit.osm.converter;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 

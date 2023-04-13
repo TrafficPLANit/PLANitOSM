@@ -417,7 +417,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmNode osmNode) {
     var settings = getSettings();
 
-    if(osmNode.getId()==712795405){
+    if(osmNode.getId()==2205915123L){
       int bla = 4;
     }
     /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are 
@@ -444,7 +444,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-                
+
     wrapHandleOsmWay(osmWay, this::handleOsmWay);    
             
   }
