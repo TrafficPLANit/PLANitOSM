@@ -1,9 +1,13 @@
 package org.goplanit.osm.test;
 
+import org.goplanit.converter.intermodal.IntermodalConverterFactory;
+import org.goplanit.io.converter.intermodal.PlanitIntermodalReaderFactory;
+import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.logging.Logging;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReader;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
+import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -34,7 +38,7 @@ public class BasicOSMReaderTest {
   private static Logger LOGGER;
   
   private static final String RESOURCE_DIR = Path.of(".","src","test","resources").toString();
-  
+
   private static final String SYDNEYCBD_2023_OSM = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
   
   private static final String SYDNEYCBD_2023_PBF = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
@@ -186,5 +190,5 @@ public class BasicOSMReaderTest {
       fail();      
     }    
   }
-
+  
 }

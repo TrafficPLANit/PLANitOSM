@@ -147,17 +147,18 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* 1) reduce candidates to access links related to access link segments that are deemed valid in terms of mode and location (closest already complies as per above) */
     Set<LinkSegment> accessLinkSegments = new HashSet<>(2);
     for(var currAccessLink : eligibleLinks) {
-        var currAccessLinkSegments = ZoningConverterUtils.findAccessLinkSegmentsForWaitingArea(
-            transferZone.getExternalId(),
-            transferZone.getGeometry(),
-            currAccessLink,
-            linkToSourceId.apply(currAccessLink),
-            accessMode,
-            getZoningReaderData().getCountryName(),
-            true, null, null, getGeoUtils());
-        if (currAccessLinkSegments != null && !currAccessLinkSegments.isEmpty()) {
-          accessLinkSegments.addAll(currAccessLinkSegments);
-        }
+      boolean mustAvoidCrossingTraffic = !accessMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL);
+      var currAccessLinkSegments = ZoningConverterUtils.findAccessLinkSegmentsForWaitingArea(
+          transferZone.getExternalId(),
+          transferZone.getGeometry(),
+          currAccessLink,
+          linkToSourceId.apply(currAccessLink),
+          accessMode,
+          getZoningReaderData().getCountryName(),
+          mustAvoidCrossingTraffic, null, null, getGeoUtils());
+      if (currAccessLinkSegments != null && !currAccessLinkSegments.isEmpty()) {
+        accessLinkSegments.addAll(currAccessLinkSegments);
+      }
     }
     // extract parent links from options
     var candidatesToFilter =
@@ -609,7 +610,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         }
         
         /* based on candidates, now select the most appropriate option based on a multitude of criteria */
-        //selectedAccessLink = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, osmAccessMode, modeSpatiallyCompatibleLinks);
         var accessResult = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, osmAccessMode, modeSpatiallyCompatibleLinks);
         selectedAccessLink = accessResult==null ? null : accessResult.first();
       }

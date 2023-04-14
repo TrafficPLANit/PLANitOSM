@@ -159,9 +159,6 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       Integer availableOsmNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, osmNodeData.getRegisteredOsmNodes());
       if(availableOsmNodeIndex!=null) {
         OsmNode referenceNode = osmNodeData.getRegisteredOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
-        if(referenceNode == null){
-          int bla = 4;
-        }
         if(OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(referenceNode), getNetworkToZoningData().getNetworkBoundingBox(), geoUtils)) {
           LOGGER.info(String.format("OSM waiting area way (%d) geometry incomplete, network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
           geometryExtractionLogLevel = Level.OFF;
@@ -184,9 +181,9 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       }
       
       /* XML id = internal id*/
-      transferZone.setXmlId(Long.toString(osmEntity.getId()));
+      transferZone.setXmlId(String.valueOf(transferZone.getId()));
       /* external id  = OSM node id*/
-      transferZone.setExternalId(transferZone.getXmlId());
+      transferZone.setExternalId(Long.toString(osmEntity.getId()));
       
       /* name */
       if(tags.containsKey(OsmTags.NAME)) {
