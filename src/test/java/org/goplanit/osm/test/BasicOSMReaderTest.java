@@ -133,7 +133,7 @@ public class BasicOSMReaderTest {
       assertEquals(71, zoning.getTransferZones().size() );
       assertEquals(7, zoning.getTransferZoneGroups().size());
       assertEquals(0, zoning.getOdConnectoids().size());
-      assertEquals(93, zoning.getTransferConnectoids().size());
+      assertEquals(94, zoning.getTransferConnectoids().size());
 
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
