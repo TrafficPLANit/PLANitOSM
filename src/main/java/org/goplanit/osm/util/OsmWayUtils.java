@@ -55,10 +55,9 @@ public class OsmWayUtils {
    * @param osmNodes the way might refer to
    * @param geoUtils to compute projected distances
    * @return closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
   protected static <T> T findPlanitEntityClosest(
-      final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils){
     T closestPlanitEntity = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
@@ -80,18 +79,18 @@ public class OsmWayUtils {
    * 
    * @param osmWay the way to verify 
    * @param tags of this OSM way
-   * @param mustEndAtstart, when true only circular roads where the end node is the start node are identified, when false, any node that appears twice results in
+   * @param mustEndAtStart, when true only circular roads where the end node is the start node are identified, when false, any node that appears twice results in
    * a positive result (true is returned)
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularOsmWay(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtstart) {
+  public static boolean isCircularOsmWay(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtStart) {
     /* a circular road, has:
      * -  more than two nodes...
      * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
      *    is only part of the geometry 
      */
     if(tags.containsKey(OsmHighwayTags.HIGHWAY) || tags.containsKey(OsmRailwayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
-      if(mustEndAtstart) {
+      if(mustEndAtStart) {
         return OsmWayUtils.isOsmWayPerfectLoop(osmWay);
       }else {
         return findIndicesOfFirstLoop(osmWay, 0 /*consider entire way */)!=null;        
@@ -487,9 +486,8 @@ public class OsmWayUtils {
    * @param osmNodes to consider
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils){
     return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
   }  
 
@@ -503,9 +501,8 @@ public class OsmWayUtils {
    * @param osmNodes the way might refer to
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils){
     return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, geoUtils);   
   }   
   
@@ -548,9 +545,9 @@ public class OsmWayUtils {
    * @param osmNodes to use for extracting geo information regarding the osm way
    * @param geoUtils to compute distances
    * @return line segment with minimum distance connecting the way and the geometry
-   * @throws PlanItException thrown if error
    */
-  public static LineSegment findMinimumLineSegmentBetween(OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static LineSegment findMinimumLineSegmentBetween(
+      OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils){
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     Coordinate osmWayMinDistanceCoordinate = null;
     Coordinate geometryMinDistanceCoordinate = null;

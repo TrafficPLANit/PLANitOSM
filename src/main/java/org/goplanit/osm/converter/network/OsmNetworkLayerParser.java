@@ -1,9 +1,6 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -799,9 +796,8 @@ public class OsmNetworkLayerParser {
    * 
    * @param thePlanitNode to break links for where it is internal to them (based on its OSM node id reference)
    * @return true when links were broken, false otherwise
-   * @throws PlanItException thrown if error
-   */ 
-  protected boolean breakLinksWithInternalNode(final Node thePlanitNode) throws PlanItException {
+   */
+  protected boolean breakLinksWithInternalNode(final Node thePlanitNode){
 
     if(layerData.isLocationInternalToAnyLink(thePlanitNode.getPosition())) {
       /* links to break */
@@ -833,44 +829,37 @@ public class OsmNetworkLayerParser {
    * 
    */ 
   protected void breakLinksWithInternalConnections() {
-    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");      
-    try {
-          
-      long nodeIndex = -1;
-      long originalNumberOfNodes = networkLayer.getNumberOfNodes();
-            
-      HashSet<Long> processedOsmNodeIds = new HashSet<Long>();
-      while(++nodeIndex<originalNumberOfNodes) {
-        Node node = networkLayer.getNodes().get(nodeIndex);    
-                
-        // 1. break links when a link's internal node is another existing link's extreme node
-        boolean linksBroken = breakLinksWithInternalNode(node);
-        if(linksBroken) {          
-          processedOsmNodeIds.add(Long.valueOf(node.getExternalId()));
-        }
+    LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");
+
+    long nodeIndex = -1;
+    long originalNumberOfNodes = networkLayer.getNumberOfNodes();
+
+    HashSet<Long> processedOsmNodeIds = new HashSet<>();
+    while(++nodeIndex<originalNumberOfNodes) {
+      Node node = networkLayer.getNodes().get(nodeIndex);
+
+      // 1. break links when a link's internal node is another existing link's extreme node
+      boolean linksBroken = breakLinksWithInternalNode(node);
+      if(linksBroken) {
+        processedOsmNodeIds.add(Long.valueOf(node.getExternalId()));
       }
-      
-      //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link
-      Set<OsmNode> osmNodesInternalToPlanitLinks = this.layerData.getRegisteredOsmNodesInternalToAnyPlanitLink(2 /* minimum 2 links node is internal to */);
-      for(OsmNode osmNode : osmNodesInternalToPlanitLinks) {
-        if(!processedOsmNodeIds.contains(osmNode.getId())) {
-          /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
-          Node planitIntersectionNode = extractNode(osmNode.getId());
-          if(planitIntersectionNode == null) {
-            LOGGER.severe(String.format("OSM node %d internal to one or more OSM ways could not be extracted as PLANit node when breaking links at its location, this should not happen", osmNode.getId()));
-          }
-          breakLinksWithInternalNode(planitIntersectionNode);                                    
+    }
+
+    //2. break links where an internal node of multiple links is shared, but it is never an extreme node of a link. do it sorted for reproducibility of ids
+    Set<OsmNode> osmNodesInternalToPlanitLinks = this.layerData.getRegisteredOsmNodesInternalToAnyPlanitLink(2 /* minimum 2 links node is internal to */);
+    osmNodesInternalToPlanitLinks.stream().sorted(Comparator.comparing(OsmNode::getId)).forEach(osmNode -> {
+      if(!processedOsmNodeIds.contains(osmNode.getId())) {
+        /* node does not yet exist in PLANit network because it was internal node so far, so create it first */
+        Node planitIntersectionNode = extractNode(osmNode.getId());
+        if(planitIntersectionNode == null) {
+          LOGGER.severe(String.format("OSM node %d internal to one or more OSM ways could not be extracted as PLANit node when breaking links at its location, this should not happen", osmNode.getId()));
         }
+        breakLinksWithInternalNode(planitIntersectionNode);
       }
-      
-      LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE", getLayerData().getNumberOfOsmWaysWithMultiplePlanitLinks()));      
-    
-    } catch (PlanItException e) {
-      LOGGER.severe(e.getMessage());
-      LOGGER.severe("unable to break OSM links with internal intersections");
-    }          
-    
-  }   
+    });
+
+    LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE", getLayerData().getNumberOfOsmWaysWithMultiplePlanitLinks()));
+  }
   
   /**
    * log profile information gathered during parsing (so far)

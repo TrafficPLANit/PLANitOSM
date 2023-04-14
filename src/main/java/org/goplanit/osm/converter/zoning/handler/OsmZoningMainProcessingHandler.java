@@ -1,8 +1,7 @@
 package org.goplanit.osm.converter.zoning.handler;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
@@ -413,7 +412,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractPtv2Ptv1StopPosition(OsmNode osmNode, Map<String, String> tags, String ptv1DefaultMode) {
     /* PTv1 tagging present, so mode information available, use this to verify against activated mode(s), mark for further processing if available, otherwise ignore */
-    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
+    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
     }  
@@ -564,7 +563,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 highway platform %s,",defaultOsmMode));
     }    
   
-    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first(), geoUtils);
@@ -585,7 +584,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 bus_stop %s,",defaultOsmMode));
     }      
     
-    Pair<Collection<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.BUS_STOP);      

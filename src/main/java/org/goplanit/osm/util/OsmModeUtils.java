@@ -1,10 +1,6 @@
 package org.goplanit.osm.util;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -285,12 +281,13 @@ public class OsmModeUtils {
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm public transport modes, can be empty if no modes are found and default is null
    */  
-  public static Collection<String> collectEligibleOsmPublicTransportModesOnPtOsmEntity(long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {
-    Collection<String> eligibleOsmPtModes = extractPublicTransportModesFrom(collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags));
+  public static TreeSet<String> collectEligibleOsmPublicTransportModesOnPtOsmEntity(long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {
+    TreeSet<String> eligibleOsmPtModes = extractPublicTransportModesFrom(collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags));
     
     if((eligibleOsmPtModes==null || eligibleOsmPtModes.isEmpty()) && defaultOsmMode != null) {
       /* use default mode when no modes are found across all pt modes*/
-      eligibleOsmPtModes = Collections.singleton(defaultOsmMode);
+      eligibleOsmPtModes = eligibleOsmPtModes==null ? new TreeSet<>() : eligibleOsmPtModes;
+      eligibleOsmPtModes.add(defaultOsmMode);
     }
           
     return eligibleOsmPtModes; 
@@ -410,13 +407,13 @@ public class OsmModeUtils {
    * @param eligibleOsmModes to extract from
    * @return found public transport based modes, can be null
    */
-  public static Collection<String> extractPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+  public static TreeSet<String> extractPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
     if(eligibleOsmModes == null) {
       return null;
     }
-    Collection<String> railPtModes = OsmRailModeTags.getPublicTransportModesFrom(eligibleOsmModes);
-    Collection<String> roadPtModes = OsmRoadModeTags.getPublicTransportModesFrom(eligibleOsmModes);
-    Collection<String> waterPtModes = OsmWaterModeTags.getPublicTransportModesFrom(eligibleOsmModes);
+    TreeSet<String> railPtModes = OsmRailModeTags.getPublicTransportModesFrom(eligibleOsmModes);
+    TreeSet<String> roadPtModes = OsmRoadModeTags.getPublicTransportModesFrom(eligibleOsmModes);
+    TreeSet<String> waterPtModes = OsmWaterModeTags.getPublicTransportModesFrom(eligibleOsmModes);
     railPtModes.addAll(roadPtModes);
     railPtModes.addAll(waterPtModes);
     return railPtModes;
@@ -427,7 +424,7 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasEligibleOsmMode(Pair<Collection<String>, Collection<PredefinedModeType>> modeResult) {
+  public static boolean hasEligibleOsmMode(Pair<? extends Collection<String>, Collection<PredefinedModeType>> modeResult) {
     if(modeResult!= null && modeResult.first()!=null && !modeResult.first().isEmpty()) {
       /* eligible modes available */
       return true;
@@ -441,7 +438,7 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasMappedPlanitMode(Pair<Collection<String>, Collection<PredefinedModeType>> modeResult) {
+  public static boolean hasMappedPlanitMode(Pair<? extends Collection<String>, Collection<PredefinedModeType>> modeResult) {
     if(modeResult!= null && modeResult.second()!=null && !modeResult.second().isEmpty()) {
       /* eligible modes mapped to planit mode*/
       return true;

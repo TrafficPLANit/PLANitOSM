@@ -1,11 +1,8 @@
 package org.goplanit.osm.converter.network;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
@@ -72,11 +69,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       createdLinksByLayer = handleRawCircularWay(circularOsmWay, tags, 0 /* start at initial index */);
       
       if(createdLinksByLayer!=null) {
-        /* register that osm way has multiple planit links mapped (needed in case of subsequent break link actions on nodes of the osm way */
-        for( Entry<NetworkLayer, Set<MacroscopicLink>> entry : createdLinksByLayer.entrySet()) {
+        /* register that OSM way has multiple planit links mapped (needed in case of subsequent break link actions on nodes of the osm way */
+        createdLinksByLayer.entrySet().stream().forEach( entry -> {
           OsmNetworkReaderLayerData layerData = getNetworkData().getLayerParsers().get(entry.getKey()).getLayerData();
           layerData.updateOsmWaysWithMultiplePlanitLinks(circularOsmWay.getId(), entry.getValue());
-        }
+        });
       }
 
     }
@@ -92,8 +89,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @return set of created links per layer for this circular way if any, empty set if none
    * @throws PlanItException thrown if error
    */
-  private Map<NetworkLayer, Set<MacroscopicLink>> handleRawCircularWay(final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) throws PlanItException {
-    Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer = new HashMap<>();
+  private Map<NetworkLayer, Set<MacroscopicLink>> handleRawCircularWay(
+      final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) throws PlanItException {
+
+    Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer = new TreeMap<>();
     int finalNodeIndex = (circularOsmWay.getNumberOfNodes()-1);
         
     /* when circular road is not perfect, i.e., its end node is not the start node, we first split it
@@ -306,17 +305,18 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     
     LOGGER.info("Converting OSM circular ways into multiple link topologies...");
     
-    /* process circular ways*/    
-    for(Entry<Long,OsmWay> entry : getNetworkData().getOsmCircularWays().entrySet()) {
+    /* process circular ways in order of original OSM way ids, so it is a deterministic process and results are reproducible in
+    * terms of generated PLANit link/segment ids */
+    getNetworkData().getOsmCircularWays().entrySet().stream().sorted(Comparator.comparing(Entry::getKey)).forEach( entry -> {
       try {        
         
         handleRawCircularWay(entry.getValue());
                 
       }catch (PlanItException e) {
         LOGGER.severe(e.getMessage());
-        LOGGER.severe(String.format("unable to process circular way OSM id: %d",entry.getKey()));
+        LOGGER.severe(String.format("Unable to process circular way OSM id: %d",entry.getKey()));
       }        
-    }
+    });
     
     LOGGER.info(String.format("Processed %d circular ways...DONE",getNetworkData().getOsmCircularWays().size()));
     getNetworkData().clearOsmCircularWays();
@@ -417,9 +417,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmNode osmNode) {
     var settings = getSettings();
 
-    if(osmNode.getId()==2205915123L){
-      int bla = 4;
-    }
     /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are 
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());    
@@ -464,14 +461,14 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     if(linkSegmentTypesByLayer != null) {      
       
       /* per layer identify the directional link segment types based on additional access changes from osm tags */      
-      for(Entry<NetworkLayer, MacroscopicLinkSegmentType> entry : linkSegmentTypesByLayer.entrySet()) {
+      for(var entry : linkSegmentTypesByLayer.entrySet()) {
         MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) entry.getKey();
-        MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
+        var linkSegmentType = entry.getValue();
         
         /* collect possibly modified type (per direction) */
-        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerdirectionPair = getNetworkData().getLayerParser(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);                
-        if(typesPerdirectionPair != null) {
-          linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerdirectionPair);
+        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerDirectionPair = getNetworkData().getLayerParser(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);
+        if(typesPerDirectionPair != null) {
+          linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerDirectionPair);
         }
       }
     }
@@ -487,16 +484,16 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     /* process circular ways */
     processCircularWays();    
             
-    /* delegate to each layer handler present */
-    for(Entry<MacroscopicNetworkLayer, OsmNetworkLayerParser> entry : getNetworkData().getLayerParsers().entrySet()) {
+    /* delegate to each layer handler present, do this in deterministic order to ensure any created PLANit links/segments
+    * will obtain the same ids when running the same parser multiple times*/
+    getNetworkData().getLayerParsers().entrySet().stream().sorted().forEach( entry -> {
       OsmNetworkLayerParser networkLayerHandler = entry.getValue();
       
       /* break links on layer with internal connections to multiple osm ways */
       networkLayerHandler.complete();      
-    }                 
+    });
         
     LOGGER.info(" OSM basic network parsing...DONE");
-
   }
   
   /**

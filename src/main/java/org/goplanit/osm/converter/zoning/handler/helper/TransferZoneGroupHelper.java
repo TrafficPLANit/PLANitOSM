@@ -1,9 +1,6 @@
 package org.goplanit.osm.converter.zoning.handler.helper;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
@@ -71,7 +68,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
       if(!getSettings().hasBoundingPolygon()) {
         /* tags available, use as is to extract mode compatibility for verification if it is rightly not available */
         if(tags!=null) {
-          Pair<Collection<String>, Collection<PredefinedModeType>> modeResult =
+          Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
               ptModeParser.collectPublicTransportModesFromPtEntity(osmId, tags, OsmModeUtils.identifyPtv1DefaultMode(tags));
           if( OsmModeUtils.hasEligibleOsmMode(modeResult) && !getSettings().hasBoundingPolygon()) {      
             /* not parsed due to problems (or outside bounding box), discard */

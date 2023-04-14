@@ -172,9 +172,8 @@ public class OsmNodeUtils {
    * @param geometry geometry to find closest location to node on
    * @param geoUtils used for computing the distances
    * @return projected coordinate
-   * @throws PlanItException thrown if error
    */
-  public static Coordinate findClosestProjectedCoordinateTo(OsmNode osmNode, LineString geometry, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Coordinate findClosestProjectedCoordinateTo(OsmNode osmNode, LineString geometry, PlanitJtsCrsUtils geoUtils){
     return geoUtils.getClosestProjectedCoordinateOnLineString( OsmNodeUtils.createCoordinate(osmNode), geometry);
   }  
   
@@ -186,9 +185,8 @@ public class OsmNodeUtils {
    * @param edges to check against using their geometries
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, PlanitJtsCrsUtils geoUtils){
     return findEdgeClosest(osmNode, edges, Double.POSITIVE_INFINITY, geoUtils);    
   }    
   
@@ -201,9 +199,8 @@ public class OsmNodeUtils {
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
-   * @throws PlanItException thrown if error
-   */  
-  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+   */
+  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils){
     Pair<Edge,Double> result = findPlanitEntityClosest( OsmNodeUtils.createCoordinate(osmNode), edges, maxDistanceMeters, geoUtils);
     if(result!=null) {
       return result.first();

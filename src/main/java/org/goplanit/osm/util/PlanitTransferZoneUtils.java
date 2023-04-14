@@ -55,9 +55,9 @@ public class PlanitTransferZoneUtils {
    * @param osmNodes to extract geo information from if needed
    * @param geoUtils used to compute distances
    * @return closest zone found
-   * @throws PlanItException thrown if error
    */
-  private static Zone findZoneClosest(OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  private static Zone findZoneClosest(
+      OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils){
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
@@ -96,15 +96,14 @@ public class PlanitTransferZoneUtils {
    * @param osmNodes to extract geo information from if needed
    * @param geoUtils used to compute distances
    * @return closest zone found
-   * @throws PlanItException thrown if error
    */
   public static TransferZone findTransferZoneClosestByTransferGroup(
       OsmEntity osmEntity, 
       Collection<? extends TransferZoneGroup> transferZoneGroups, 
       Map<Long,OsmNode> osmNodes, 
-      PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      PlanitJtsCrsUtils geoUtils){
     
-    Set<TransferZone> closestPerGroup = new HashSet<TransferZone>();
+    Set<TransferZone> closestPerGroup = new HashSet<>();
     for(TransferZoneGroup group : transferZoneGroups) {
       TransferZone closestOfGroup = (TransferZone) findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, geoUtils);
       closestPerGroup.add(closestOfGroup);
@@ -162,7 +161,7 @@ public class PlanitTransferZoneUtils {
    * @param transferZone to use
    * @param eligibleOsmModes to add
    */
-  public static void registerOsmModesOnTransferZone(final TransferZone transferZone, Collection<String> eligibleOsmModes) {
+  public static void registerOsmModesOnTransferZone(final TransferZone transferZone, SortedSet<String> eligibleOsmModes) {
     if(transferZone != null && eligibleOsmModes!= null) {
       /* register identified eligible access modes */
       transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
@@ -175,11 +174,11 @@ public class PlanitTransferZoneUtils {
    * @return eligible OSM modes, null if none
    */
   @SuppressWarnings("unchecked")
-  public static Collection<String> getRegisteredOsmModesForTransferZone(final TransferZone transferZone){
-    Collection<String> eligibleOsmModes = (Collection<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
+  public static SortedSet<String> getRegisteredOsmModesForTransferZone(final TransferZone transferZone){
+    SortedSet<String> eligibleOsmModes = (SortedSet<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
     if(eligibleOsmModes != null)
     {
-      return Collections.unmodifiableCollection(eligibleOsmModes);
+      return Collections.unmodifiableSortedSet(eligibleOsmModes);
     }
     return null;
   }
