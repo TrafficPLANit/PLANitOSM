@@ -143,6 +143,7 @@ public class OsmNetworkReaderData {
    * can be safely ignored without issuing further warnings
    *
    * @param osmWayId to verify
+   * @return true when processed and unavailable, false otherwise
    */
   public boolean isOsmWayProcessedAndUnavailable(long osmWayId){
     return discardedOsmWays.contains(osmWayId);

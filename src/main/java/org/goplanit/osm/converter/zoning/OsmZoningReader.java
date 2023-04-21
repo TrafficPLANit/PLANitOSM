@@ -307,7 +307,8 @@ public class OsmZoningReader implements ZoningReader {
     PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()), "Country not set for OSM zoning reader, unable to proceed");
     PlanItRunTimeException.throwIfNull(getSettings().getInputSource(), "Input source not set for OSM zoning reader, unable to proceed");
     PlanItRunTimeException.throwIfNull(getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
-    PlanItRunTimeException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (newtork to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
+    PlanItRunTimeException.throwIfNull(getReferenceNetwork().isEmpty(),"Reference network empty, unable to attach OSM zoning results");
+    PlanItRunTimeException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (network to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
 
     /* prepare for parsing */
     initialiseBeforeParsing();

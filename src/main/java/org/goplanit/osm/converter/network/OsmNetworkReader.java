@@ -319,7 +319,9 @@ public class OsmNetworkReader implements NetworkReader {
       removeDanglingSubNetworks();
     }
 
-    LOGGER.info(String.format("Bounding box of final network: %s",getNetworkReaderData().getBoundingBox().toString()));
+    if(!osmNetworkToPopulate.isEmpty()) {
+      LOGGER.info(String.format("Bounding box of final network: %s", getNetworkReaderData().getBoundingBox().toString()));
+    }
     LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */

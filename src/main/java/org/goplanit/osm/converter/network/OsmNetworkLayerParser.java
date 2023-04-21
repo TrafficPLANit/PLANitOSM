@@ -216,12 +216,18 @@ public class OsmNetworkLayerParser {
       nodeLastResult = extractLastNode(osmWay, foundStartNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
     }
 
+    /* entirely unavailable, ignore */
+    if(nodeLastResult == null && nodeFirstResult == null) {
+      networkData.registerProcessedOsmWayAsUnavailable(osmWay.getId());
+      return null;
+    }
     /* If truncated to a single node or not available (because fully/partially outside bounding box), it is not valid and mark as such */
     if(nodeLastResult == null || nodeFirstResult == null || nodeLastResult.first().idEquals(nodeFirstResult.first())) {
       LOGGER.fine(String.format("DISCARD: OSM way %d truncated to single node, unable to create PLANit link for it", osmWay.getId()));
       networkData.registerProcessedOsmWayAsUnavailable(osmWay.getId());
       return null;
     }
+
     Node nodeFirst = nodeFirstResult.first();
     Node nodeLast = nodeLastResult.first();
 

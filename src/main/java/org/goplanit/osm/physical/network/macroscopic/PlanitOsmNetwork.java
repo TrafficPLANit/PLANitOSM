@@ -794,6 +794,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   /** given predefined mode types, obtain the mode instances on the network that correspond to them
    *
    * @param predefinedModeTypes to collect modes for
+   * @return predefined mode types found
    * */
   protected Set<PredefinedMode> getAvailableModesFromModeTypes(Collection<PredefinedModeType> predefinedModeTypes){
     return predefinedModeTypes.stream().map( mt -> getModes().get(mt)).filter( m -> m != null).collect(Collectors.toUnmodifiableSet());

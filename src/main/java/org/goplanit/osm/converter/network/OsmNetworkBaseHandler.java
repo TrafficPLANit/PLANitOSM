@@ -37,6 +37,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   /**
    * Constructor
    *
+   * @param networkToPopulate to populate
    * @param networkData to use
    * @param settings for the handler
    */
