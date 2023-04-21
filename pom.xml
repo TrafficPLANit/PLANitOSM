@@ -57,17 +57,16 @@
 		    <artifactId>osm4j-xml</artifactId>
 		</dependency>		
 		
-    <dependency>
-        <groupId>de.topobyte</groupId>
-        <artifactId>osm4j-pbf</artifactId>         
-    </dependency> 		
-		
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<!-- only used locally for testing so not an actual dependency for using the API -->
+			<groupId>de.topobyte</groupId>
+			<artifactId>osm4j-pbf</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<optional>true</optional>
-		</dependency>		
+		</dependency>
 	</dependencies>
 	
 	<build>

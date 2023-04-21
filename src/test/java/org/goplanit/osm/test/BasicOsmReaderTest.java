@@ -1,13 +1,9 @@
 package org.goplanit.osm.test;
 
-import org.goplanit.converter.intermodal.IntermodalConverterFactory;
-import org.goplanit.io.converter.intermodal.PlanitIntermodalReaderFactory;
-import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.logging.Logging;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReader;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
-import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -17,15 +13,15 @@ import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.zoning.Zoning;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.logging.Logger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * basic *.osm and *.osm.pbf reader test
@@ -33,7 +29,7 @@ import static org.junit.Assert.*;
  * @author markr
  *
  */
-public class BasicOSMReaderTest {
+public class BasicOsmReaderTest {
   
   private static Logger LOGGER;
   
@@ -59,14 +55,14 @@ public class BasicOSMReaderTest {
     osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
   }
   
-  @BeforeClass
+  @BeforeAll
   public static void setUp() throws Exception {
     if (LOGGER == null) {
-      LOGGER = Logging.createLogger(BasicOSMReaderTest.class);
+      LOGGER = Logging.createLogger(BasicOsmReaderTest.class);
     } 
   }
 
-  @AfterClass
+  @AfterAll
   public static void tearDown() {
     Logging.closeLogger(LOGGER); 
   }  
@@ -101,7 +97,7 @@ public class BasicOSMReaderTest {
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
       e.printStackTrace();
-      fail();      
+      fail("osmReaderRoadInfrastructureTest");
     }
   }
 
