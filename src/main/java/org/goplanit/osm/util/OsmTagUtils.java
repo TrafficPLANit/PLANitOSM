@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.utils.misc.StringUtils;
@@ -17,9 +18,12 @@ import org.goplanit.utils.misc.StringUtils;
  *
  */
 public class OsmTagUtils {
+
+  /** logegr to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmTagUtils.class.getCanonicalName());
   
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
-  public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";  
+  public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
 
   
   /** Verify if the passed in value tag is present in the list of value tags provided
@@ -138,6 +142,21 @@ public class OsmTagUtils {
     addToRefsForTag.accept(OsmTags.LOCAL_REF);
 
     return refs;
-  } 
-    
+  }
+
+  /**
+   * Parse value for key as Integer, return null and log warning if not possible to perform conversion
+   *
+   * @param tags to extract from
+   * @param tagKey key to get value for
+   * @return parsed integer
+   */
+  public static Integer getValueAsInt(Map<String, String> tags, String tagKey) {
+    try {
+      return Integer.parseInt(tags.get(tagKey));
+    }catch(NumberFormatException nfe){
+      LOGGER.warning(String.format("Value for tag %s is not integer, tagging error", tagKey));
+    }
+    return null;
+  }
 }

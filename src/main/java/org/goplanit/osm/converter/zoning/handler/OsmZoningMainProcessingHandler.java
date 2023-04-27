@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
@@ -560,7 +561,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* create transfer zone when at least one mode is supported */
     String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(tags);
     if(!defaultOsmMode.equals(OsmRoadModeTags.BUS)) {
-      LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 highway platform %s,",defaultOsmMode));
+      LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 highway platform %s,",defaultOsmMode));
     }    
   
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
@@ -759,7 +760,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* platform */
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
               
-        /* create transfer zone but no connectoids, these will be constructed during or after we have parsed relations, i.e. stop_areas */
+        /* create transfer zone but no connectoids, these will be constructed during, or after, we have parsed relations, i.e., stop_areas */
         getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);        
         getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmWay, tags, TransferZoneType.PLATFORM, OsmModeUtils.identifyPtv1DefaultMode(tags), getGeoUtils());        
       }      
@@ -1041,7 +1042,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* multi-polygon used as pt platform */
       
       if(isCoveredByZoningBoundingPolygon(osmWay)) {
-        /* even though osm way itself appears not to be public transport related, it is marked for keeping
+        /* even though OSM way itself appears not to be public transport related, it is marked for keeping
          * so we keep it. This occurs when way is part of relation (multipolygon) where its shape represents for
          * example the outline of a platform, but all pt tags reside on the relation and not on the way itself. 
          * Processing of the way is postponed until we parse relations */
@@ -1080,6 +1081,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param transferSettings for the handler
    * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param referenceNetwork  to use
    * @param zoningToPopulate to populate
    * @param profiler to use
@@ -1087,10 +1089,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   public OsmZoningMainProcessingHandler(
       final OsmPublicTransportReaderSettings transferSettings,
       final OsmZoningReaderData zoningReaderData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
       final PlanitOsmNetwork referenceNetwork,
       final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData, referenceNetwork, zoningToPopulate, profiler);
+    super(transferSettings, zoningReaderData, network2ZoningData, referenceNetwork, zoningToPopulate, profiler);
     firstOsmWay = true;
   }
   

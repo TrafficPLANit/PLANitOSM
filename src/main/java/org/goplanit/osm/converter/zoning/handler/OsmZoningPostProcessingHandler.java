@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderOsmData;
@@ -229,14 +230,17 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     return Pair.of(finalSelectedAccessLink, accessLinkSegments);
   }
 
-  /** Find all links that are within the given search bounding box and are mode compatible with the given mode. 
-   * 
+  /** Find all links that are within the given search bounding box, are mode compatible, and have a matching vertical layer index, i.e., reside
+   * on the same vertical plane.
+   *
+   * @param transferZone the transferZone created based on the underlying OSM entity
    * @param osmEntityId the osm id of the waiting area
    * @param eligibleOsmMode mode supported by the waiting area
    * @param searchBoundingBox to use
    * @return all links that are deemed accessible for this waiting area
    */
-  private Collection<MacroscopicLink> findModeBBoxCompatibleLinksForOsmGeometry(Long osmEntityId, String eligibleOsmMode, Envelope searchBoundingBox) {
+  private Collection<MacroscopicLink> findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
+      TransferZone transferZone, Long osmEntityId, String eligibleOsmMode, Envelope searchBoundingBox) {
         
     Collection<String> eligibleOsmModes = Collections.singleton(eligibleOsmMode);
     /* match links spatially */
@@ -250,8 +254,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(modeAndSpatiallyCompatibleLinks == null || modeAndSpatiallyCompatibleLinks.isEmpty()) {
       return null;
     }
+
+    /* filter based on vertical layer index compatibility */
+    Collection<MacroscopicLink> modeSpatiallyAndVerticalPlaneCompatibleLinks = getTransferZoneHelper().filterVerticalLayerCompatibleLinks(transferZone, modeAndSpatiallyCompatibleLinks);
+    if(modeSpatiallyAndVerticalPlaneCompatibleLinks == null || modeSpatiallyAndVerticalPlaneCompatibleLinks.isEmpty()) {
+      return null;
+    }
     
-    return modeAndSpatiallyCompatibleLinks;
+    return modeSpatiallyAndVerticalPlaneCompatibleLinks;
   }
 
   /** find links that are within the given search bounding box and are mode compatible with the given reference modes. If more links are found
@@ -268,8 +278,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private TreeSet<MacroscopicLink> findStopLocationLinksForStation(
       OsmEntity stationEntity, TransferZone transferZone, String referenceOsmMode, Envelope searchBoundingBox, Integer maxMatches){
         
-    Collection<MacroscopicLink> directionModeSpatiallyCompatibleLinks = findModeBBoxCompatibleLinksForOsmGeometry(
-        stationEntity.getId(), referenceOsmMode, searchBoundingBox);
+    Collection<MacroscopicLink> directionModeSpatiallyCompatibleLinks = findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
+        transferZone, stationEntity.getId(), referenceOsmMode, searchBoundingBox);
     if(directionModeSpatiallyCompatibleLinks==null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
       return null;
     }
@@ -444,7 +454,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);  
             break;
           default:
-            LOGGER.severe(String.format("unknown Pt version found %s when processing station %s not part of a stop_area",osmStation.getId(),ptVersion.toString()));
+            LOGGER.severe(String.format("Unknown Pt version found %s when processing station %s not part of a stop_area",osmStation.getId(),ptVersion.toString()));
             break;
           }
           
@@ -514,10 +524,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* locate transfer zone(s) for stop_location/mode combination */
       var singletonSet = new TreeSet();
       singletonSet.add(osmMode);
-      Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(
-          osmNode, tags, singletonSet);
+      Collection<TransferZone> matchedTransferZones =
+          getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, singletonSet);
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-        logWarningIfNotNearBoundingBox(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor closeby infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode),osmNodeLocation);
+        logWarningIfNotNearBoundingBox(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor close-by infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode),osmNodeLocation);
         return;
       }
       
@@ -535,7 +545,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    *  
    */
   private void processStopPositionsNotPartOfStopArea() {
-    Set<Long> unprocessedStopPositions = new TreeSet<Long>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
+    Set<Long> unprocessedStopPositions = new TreeSet<>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
     if(!unprocessedStopPositions.isEmpty()) {
       var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
       for(Long osmNodeId : unprocessedStopPositions) {
@@ -603,7 +613,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         Envelope searchBoundingBox = getGeoUtils().createBoundingBox(transferZone.getEnvelope(), getSettings().getStopToWaitingAreaSearchRadiusMeters());
         
         /* collect spatially, mode, compatible links */
-        Collection<MacroscopicLink> modeSpatiallyCompatibleLinks = findModeBBoxCompatibleLinksForOsmGeometry(osmEntityId, osmAccessMode, searchBoundingBox);
+        Collection<MacroscopicLink> modeSpatiallyCompatibleLinks = findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
+            transferZone, osmEntityId, osmAccessMode, searchBoundingBox);
         if(modeSpatiallyCompatibleLinks == null || modeSpatiallyCompatibleLinks.isEmpty()) {
           logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s, mode %s (tag error or consider activating more road types)", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
           return;
@@ -689,7 +700,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           accessLinks = new TreeSet<>();
           accessLinks.add(nominatedLink);
         }else {
-          LOGGER.severe(String.format("User nominated osm way not available for station %d",osmWayId));
+          LOGGER.severe(String.format("User nominated OSM way not available for station %d",osmWayId));
         }                    
         
       }else {      
@@ -926,7 +937,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         boolean isPtv2NodeOnly = !OsmPtVersionSchemeUtils.isPtv2StopPositionPtv1Stop(stopPositionNode, tags);
         boolean alreadyProcessed = getZoningReaderData().getPlanitData().hasAnyDirectedConnectoidsForLocation(OsmNodeUtils.createPoint(stopPositionNode)); 
         if(isPtv2NodeOnly && alreadyProcessed) {
-          /* stop_position resides in multiple stop_areas, this is strongly discouraged by OSM, but does occur still so we identify and skip (no need to process twice anyway)*/
+          /* stop_position resides in multiple stop_areas, this is strongly discouraged by OSM, but does occur still, so we identify and skip (no need to process twice anyway)*/
           LOGGER.fine(String.format("Stop_position %d present in multiple stop_areas, discouraged tagging behaviour, consider retagging",member.getId()));
         }
         if(alreadyProcessed) {
@@ -996,6 +1007,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param transferSettings for the handler
    * @param handlerData the handler data gathered by preceding handlers for zoning parsing
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param referenceNetwork to use
    * @param zoningToPopulate to populate
    * @param profiler to use 
@@ -1003,10 +1015,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   public OsmZoningPostProcessingHandler(
       final OsmPublicTransportReaderSettings transferSettings,
       final OsmZoningReaderData handlerData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
       final PlanitOsmNetwork referenceNetwork,
       final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, handlerData, referenceNetwork, zoningToPopulate, profiler);
+    super(transferSettings, handlerData, network2ZoningData, referenceNetwork, zoningToPopulate, profiler);
   }
   
   /**

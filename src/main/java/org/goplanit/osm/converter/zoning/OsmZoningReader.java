@@ -53,8 +53,14 @@ public class OsmZoningReader implements ZoningReader {
   /** the (temporary) data gathered during parsing of OSM (transfer) zones */
   private OsmZoningReaderData zoningReaderData;
 
+  /**
+   * the network data required to perform successful parsing of zones, passed in exogenously from an OSM network reader
+   * after parsing the reference network
+   */
+  private final OsmNetworkToZoningReaderData network2ZoningData;
+
   /** reference network to use */
-  private PlanitOsmNetwork referenceNetwork;
+  private final PlanitOsmNetwork referenceNetwork;
     
   // references
       
@@ -75,20 +81,19 @@ public class OsmZoningReader implements ZoningReader {
    * since it makes little sense to try and parse pt infrastructure outside of the network's geographically parsed area
    */
   private void validateZoningBoundingPolygon() {
-    OsmNetworkToZoningReaderData network2ZoningReaderData = getSettings().getNetworkDataForZoningReader();
-    
+
     boolean zoningBoundingPolygonWithinNetworkBoundingPolygon = true;
-    if(getSettings().hasBoundingPolygon() && network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon() &&
-       !getSettings().getBoundingPolygon().equalsTopo(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon())){
+    if(getSettings().hasBoundingPolygon() && network2ZoningData.getNetworkSettings().hasBoundingPolygon() &&
+       !getSettings().getBoundingPolygon().equalsTopo(network2ZoningData.getNetworkSettings().getBoundingPolygon())){
       /* check if it falls within the network bounding polygon */
       zoningBoundingPolygonWithinNetworkBoundingPolygon = 
-          getSettings().getBoundingPolygon().within(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon());
-    }else if(!getSettings().hasBoundingPolygon() && network2ZoningReaderData.getNetworkSettings().hasBoundingPolygon()) {
+          getSettings().getBoundingPolygon().within(network2ZoningData.getNetworkSettings().getBoundingPolygon());
+    }else if(!getSettings().hasBoundingPolygon() && network2ZoningData.getNetworkSettings().hasBoundingPolygon()) {
         zoningBoundingPolygonWithinNetworkBoundingPolygon = false;
     }
     if(!zoningBoundingPolygonWithinNetworkBoundingPolygon) {
       LOGGER.warning("SALVAGE: Bounding polygon for network is more restrictive than public transport, truncating to network bounding polygon");
-      getSettings().setBoundingPolygon(network2ZoningReaderData.getNetworkSettings().getBoundingPolygon());
+      getSettings().setBoundingPolygon(network2ZoningData.getNetworkSettings().getBoundingPolygon());
     }
   }
 
@@ -129,6 +134,7 @@ public class OsmZoningReader implements ZoningReader {
           this.zoning,
           this.transferSettings,
           this.zoningReaderData,
+          this.network2ZoningData,
           Stage.IDENTIFY_PLATFORM_AS_RELATIONS,
           profiler);
       read(osmReader, osmPreProcessingHandler);     
@@ -150,6 +156,7 @@ public class OsmZoningReader implements ZoningReader {
           this.zoning,
           this.transferSettings,
           this.zoningReaderData,
+          this.network2ZoningData,
           Stage.IDENTIFY_PT_NODES,
           profiler);
       read(osmReader, osmPreProcessingHandler);
@@ -193,6 +200,7 @@ public class OsmZoningReader implements ZoningReader {
       osmHandler = new OsmZoningMainProcessingHandler(
           this.transferSettings, 
           this.zoningReaderData,
+          this.network2ZoningData,
           getReferenceNetwork(),
           this.zoning, 
           profiler);
@@ -216,6 +224,7 @@ public class OsmZoningReader implements ZoningReader {
       osmPostProcessingHandler = new OsmZoningPostProcessingHandler(
           this.transferSettings, 
           this.zoningReaderData,
+          this.network2ZoningData,
           getReferenceNetwork(),
           this.zoning,
           profiler);
@@ -244,43 +253,7 @@ public class OsmZoningReader implements ZoningReader {
       throw new PlanItRunTimeException("Error during parsing of OSMfile",e);
     }       
   }
-  
-  /**
-   * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 
-   * 
-   * @param settings to use
-   * @param referenceNetwork to use
-   * @param zoningToPopulate zoning to populate 
-   */
-  protected OsmZoningReader(OsmPublicTransportReaderSettings settings, PlanitOsmNetwork referenceNetwork, Zoning zoningToPopulate){
-    this.transferSettings = settings;
-    this.referenceNetwork = referenceNetwork;
-    this.zoning = zoningToPopulate;
-  }    
-  
-  /**
-   * Constructor. Requires user to set reference network and networkToZoning data manually afterwards 
-   * 
-   * @param inputSource to parse from
-   * @param countryName this zoning is used for
-   * @param zoningToPopulate zoning to populate 
-   */
-  protected OsmZoningReader(URL inputSource, String countryName, Zoning zoningToPopulate){
-    this(inputSource, countryName, zoningToPopulate, null);
-  }
-  
-  /**
-   * Constructor. Requires user to set networkToZoning data manually afterwards 
-   * 
-   * @param inputSource to parse from
-   * @param countryName this zoning is used for
-   * @param zoningToPopulate zoning to populate
-   * @param referenceNetwork to use 
-   */
-  protected OsmZoningReader(URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork){
-    this(inputSource, countryName, zoningToPopulate, referenceNetwork, null); 
-  }
-  
+
   /**
    * Constructor 
    * 
@@ -292,11 +265,25 @@ public class OsmZoningReader implements ZoningReader {
    */
   protected OsmZoningReader(
       URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
-    this.transferSettings = new OsmPublicTransportReaderSettings(inputSource, countryName, network2ZoningData);
+    this(new OsmPublicTransportReaderSettings(inputSource, countryName), zoningToPopulate, referenceNetwork, network2ZoningData);
+  }
+
+  /**
+   * Constructor. Requires user to set reference network and networkToZoning data manually afterwards
+   *
+   * @param settings to use
+   * @param referenceNetwork to use
+   * @param zoningToPopulate zoning to populate
+   * @param network2ZoningData to use
+   */
+  protected OsmZoningReader(
+      OsmPublicTransportReaderSettings settings,  Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
+    this.transferSettings = settings;
     this.referenceNetwork = referenceNetwork;
-    this.zoning = zoningToPopulate; 
-  }   
-     
+    this.zoning = zoningToPopulate;
+    this.network2ZoningData = network2ZoningData;
+  }
+
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a PLANit Zoning instance given the configuration options that have been set
    * 
@@ -308,7 +295,7 @@ public class OsmZoningReader implements ZoningReader {
     PlanItRunTimeException.throwIfNull(getSettings().getInputSource(), "Input source not set for OSM zoning reader, unable to proceed");
     PlanItRunTimeException.throwIfNull(getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
     PlanItRunTimeException.throwIfNull(getReferenceNetwork().isEmpty(),"Reference network empty, unable to attach OSM zoning results");
-    PlanItRunTimeException.throwIfNull(getSettings().getNetworkDataForZoningReader(),"Reference network data (network to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
+    PlanItRunTimeException.throwIfNull(network2ZoningData,"Reference network data (network to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
 
     /* prepare for parsing */
     initialiseBeforeParsing();

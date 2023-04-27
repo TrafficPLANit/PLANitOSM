@@ -6,22 +6,16 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.goplanit.converter.zoning.ZoningConverterUtils;
+import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
 import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmPtv1Tags;
 import org.goplanit.osm.tags.OsmTags;
-import org.goplanit.osm.util.Osm4JUtils;
-import org.goplanit.osm.util.OsmBoundingAreaUtils;
-import org.goplanit.osm.util.OsmModeUtils;
-import org.goplanit.osm.util.OsmNodeUtils;
-import org.goplanit.osm.util.OsmPtVersionSchemeUtils;
-import org.goplanit.osm.util.OsmTagUtils;
-import org.goplanit.osm.util.OsmWayUtils;
-import org.goplanit.osm.util.PlanitOsmUtils;
-import org.goplanit.osm.util.PlanitTransferZoneUtils;
+import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
@@ -29,7 +23,9 @@ import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
@@ -213,14 +209,19 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @return transfer zone created, null if something happened making it impossible to create the zone
    */
   private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
-    /* create and register */
-    TransferZone transferZone = createAndPopulateTransferZone(osmEntity,tags, transferZoneType, geoUtils);
+
+    TransferZone transferZone = createAndPopulateTransferZone(osmEntity, tags, transferZoneType, geoUtils);
     if(transferZone != null) {
+      /* register on PLANit zoning */
       zoning.getTransferZones().register(transferZone);
-      EntityType entityType = Osm4JUtils.getEntityType(osmEntity);
-    
-      /* register locally */
-      zoningReaderData.getPlanitData().addTransferZoneByOsmId(entityType, osmEntity.getId(), transferZone);
+
+      /** OSM waiting areas may have an explicit layer which can be used to identify which rail/road infrastructure is at the same level
+       *  Therefore, we register it here, for when mapping to connectoids later on */
+      this.zoningReaderData.getPlanitData().registerTransferZoneVerticalLayerIndex(transferZone, osmEntity, tags);
+
+      /* ...and register locally */
+      zoningReaderData.getPlanitData().addTransferZoneByOsmId(Osm4JUtils.getEntityType(osmEntity), osmEntity.getId(), transferZone);
+
     }
     return transferZone;
   }
@@ -432,7 +433,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param osmNode node representing the stop_position
    * @param tags of the node
    * @param stopAreaTransferZones the transfer zones of the stop_area this stop_position belongs to
-   * @param referenceOsmModes the osm modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
+   * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
    * @param geoUtils to use
    */
   private Collection<TransferZone> findAccessibleTransferZonesByReferenceOrName(
@@ -472,16 +473,16 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return matchedTransferZones;
   }
 
-  /** find the closest and/or most likely transfer zone for the given osm node and its tags (with or without a reference
+  /** Find the closest and/or most likely transfer zone for the given osm node and its tags (with or without a reference
    * for additional information for mapping). Use the search radius from the settings to identify eligible transfer zones and then
    * use information on modes, references and spatial proximity to choose the most likely option. 
    * 
    * @param osmNode representing a stop position
    * @param tags of the node
-   * @param referenceOsmModes the osm modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible 
+   * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
    * @return most likely transfer zone(s). Multiple matches only in case the node has multiple references to eligible transfer zones tagged
    */
-  private Collection<TransferZone> findMostLikelyTransferZonesForStopPositionSpatially(OsmNode osmNode, Map<String, String> tags, Collection<String> referenceOsmModes) {
+  private Collection<TransferZone> findTransferZonesForStopPositionCompatibleSpatiallyModeVerticalLayer(OsmNode osmNode, Map<String, String> tags, Collection<String> referenceOsmModes) {
     TransferZone foundZone = null;
         
     /* collect potential transfer zones based on spatial search*/
@@ -508,8 +509,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     /* find matches based on reference, name from given potential options... */
     Collection<TransferZone> matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, potentialTransferZones, referenceOsmModes, geoUtils);         
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-      /* no explicit reference or name match is found, we collect the closest mode compatible match */
-      matchedTransferZones = filterModeCompatibleTransferZones(referenceOsmModes, potentialTransferZones, true);      
+      /* no explicit reference or name match is found, we collect the closest mode and vertical layer index compatible match */
+      matchedTransferZones = filterModeCompatibleTransferZones(referenceOsmModes, potentialTransferZones, true);
+      matchedTransferZones = filterVerticalLayerIndexCompatibleTransferZones(osmNode, tags, matchedTransferZones);
+
       foundZone =  (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, matchedTransferZones, geoUtils);
       if(foundZone != null) {
         matchedTransferZones = Collections.singleton(foundZone);
@@ -525,17 +528,19 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param referenceNetwork to use
    * @param zoning to use
    * @param zoningReaderData to use
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param transferSettings to use
    * @param profiler to use
    */
   public TransferZoneHelper(
       PlanitOsmNetwork referenceNetwork,
       Zoning zoning, 
-      OsmZoningReaderData zoningReaderData, 
+      OsmZoningReaderData zoningReaderData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
       OsmPublicTransportReaderSettings transferSettings,  
       OsmZoningHandlerProfiler profiler) {
     
-    super(referenceNetwork, transferSettings);
+    super(referenceNetwork, network2ZoningData, transferSettings);
 
     this.zoningReaderData = zoningReaderData;
     this.zoning = zoning;
@@ -545,13 +550,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     this.geoUtils = new PlanitJtsCrsUtils(referenceNetwork.getCoordinateReferenceSystem());
     
     /* parser for identifying, filtering etc. of PT PLANit modes from OSM entities - for all available PLANit modes on network*/
-    this.publicTransportModeParser = new OsmPublicTransportModeConversion(getNetworkToZoningData().getNetworkSettings(), referenceNetwork.getModes());
+    this.publicTransportModeParser = new OsmPublicTransportModeConversion(
+        getNetworkToZoningData().getNetworkSettings(), referenceNetwork.getModes());
     
     /* parser for identifying pt PLANit modes from OSM entities */
-    this.connectoidParser = new OsmConnectoidHelper(referenceNetwork, zoning, zoningReaderData, transferSettings, profiler);
+    this.connectoidParser = new OsmConnectoidHelper(
+        referenceNetwork, zoning, zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
   }
-  
-  
 
   /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in reference osm modes
    * In case no eligible modes are provided (null), we allow any transfer zone with at least one valid mapped mode
@@ -561,14 +566,54 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
    * @return matched transfer zones
    */  
-  public Set<TransferZone> filterModeCompatibleTransferZones(Collection<String> eligibleOsmModes, Collection<TransferZone> potentialTransferZones, boolean allowPseudoModeMatches) {
-    Set<TransferZone> modeCompatibleTransferZones = new HashSet<TransferZone>();
-    for(TransferZone transferZone : potentialTransferZones) {
-      if(isTransferZoneModeCompatible(transferZone, eligibleOsmModes, allowPseudoModeMatches)) {
-        modeCompatibleTransferZones.add(transferZone);
+  public Set<TransferZone> filterModeCompatibleTransferZones(
+      Collection<String> eligibleOsmModes, Collection<TransferZone> potentialTransferZones, boolean allowPseudoModeMatches) {
+    return potentialTransferZones.stream().filter(tz -> isTransferZoneModeCompatible(tz, eligibleOsmModes, allowPseudoModeMatches)).collect(Collectors.toSet());
+  }
+
+  /**
+   * Find all transfer zones with an identical vertical layer index as the provided tags contains. If the tags do no contain an explicit layer, then
+   * the default layer index of 0 is assumed.
+   *
+   * @param stopPositionOsmNode                 This osmNode is expected to represent a stop position
+   * @param osmNodeTags                    to verify against
+   * @param potentialTransferZones  to extract vertical layer index compatible transfer zones from
+   * @return matched transfer zones
+   */
+  private Collection<TransferZone> filterVerticalLayerIndexCompatibleTransferZones(
+      OsmNode stopPositionOsmNode, Map<String, String> osmNodeTags, Collection<TransferZone> potentialTransferZones) {
+
+    /* obtain the vertical layer index from stop position node itself or from the PLANit links it resides within or on the fringes */
+    Integer osmVerticalLayerIndex = null;
+    boolean foundMultipleVerticalLayerIndices = false;
+    if(!osmNodeTags.containsKey(OsmTags.LAYER)){
+      /* collect from PLANit link(s) the stop position is connected to */
+      var eligibleNetworkLayers =
+          PlanitNetworkLayerUtils.getNetworkLayersWithActiveOsmNode(stopPositionOsmNode.getId(), getReferenceNetwork(), getNetworkToZoningData());
+
+      var stopPositionLocation = OsmNodeUtils.createPoint(stopPositionOsmNode);
+      for(var layer : eligibleNetworkLayers){
+
+        Integer planitLayerOsmVerticalLayerIndex = findOsmVerticalLayerIndexByStopPositionPlanitLinks(stopPositionLocation, layer);
+        if(planitLayerOsmVerticalLayerIndex != null){
+          if(osmVerticalLayerIndex != null && osmVerticalLayerIndex != planitLayerOsmVerticalLayerIndex){
+            LOGGER.warning(String.format(
+                "Links connected to OSM stop position %d are not all on the expected vertical layer plane (layer=%d), verify correctness", stopPositionOsmNode.getId(), osmVerticalLayerIndex));
+          }
+          osmVerticalLayerIndex = planitLayerOsmVerticalLayerIndex;
+        }
       }
-    }    
-    return modeCompatibleTransferZones;
+    }else{
+      osmVerticalLayerIndex = OsmTagUtils.getValueAsInt(osmNodeTags, OsmTags.LAYER);
+    }
+
+    if(osmVerticalLayerIndex == null){
+      /* we will only filter if we have certainty about the vertical layer index, otherwise we might filter too restrictively */
+      return potentialTransferZones;
+    }
+    final var finalVerticalLayerIndex = osmVerticalLayerIndex;
+    return potentialTransferZones.stream().filter(
+        tz ->  this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(tz) == finalVerticalLayerIndex).collect(Collectors.toSet());
   }
 
   /** Attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
@@ -593,11 +638,11 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
-       * log issue, yet still create transfer zone (without any osm modes) */
-      LOGGER.fine(String.format("SALVAGED: Transfer zone of type %s found for osm entity %d without osm mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
+       * log issue, yet still create transfer zone (without any OSM modes) */
+      LOGGER.fine(String.format("SALVAGED: Transfer zone of type %s found for OSM entity %d without OSM mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
     }else if(OsmModeUtils.hasMappedPlanitMode(modeResult)){  
-      /* mapped planit modes are available and we should create the transfer zone*/
+      /* mapped planit modes are available, we should create the transfer zone*/
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
       PlanitTransferZoneUtils.registerOsmModesOnTransferZone(transferZone, modeResult.first());
     }else{
@@ -690,26 +735,26 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       if(foundZone==null) {
         LOGGER.severe(String.format("User overwritten waiting area (platform, pole %d) for osm node %d, not available",result.second(), osmNode.getId()));
       }else {
-        matchedTransferZones = Collections.singleton(foundZone);
         LOGGER.fine(String.format("Mapped stop_position %d to overwritten waiting area %d", osmNode.getId(),  result.second()));
+        return Collections.singleton(foundZone);
       }
-      
     }
+
     /* REGULAR SITUATION */
-    else if(eligibleOsmModes != null && !eligibleOsmModes.isEmpty()){
-      
+    if(eligibleOsmModes != null && !eligibleOsmModes.isEmpty()){
+
       
       /* REFERENCE/NAME */
       if(transferZoneGroup != null) {
         /* when transfer zone group available, first search among those zones as they are more likely to be matching */
-        matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, geoUtils);        
+        matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, geoUtils);
       }
     
       /* SPATIAL */
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
         /* no matches found yet, so either no transfer zone group present, or not known within based on reference/name match.
          * Either way we must still try to find the most likely match. We do so geographically and again based on mode, reference, name compatibility */
-        matchedTransferZones = findMostLikelyTransferZonesForStopPositionSpatially(osmNode, tags, eligibleOsmModes);
+        matchedTransferZones = findTransferZonesForStopPositionCompatibleSpatiallyModeVerticalLayer(osmNode, tags, eligibleOsmModes);
       }   
       
       /* PTV1 ON ROAD/RAIL */
@@ -735,9 +780,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       
     }
     /* NO MODES KNOWN */
-    else {
-      /* eligible modes unknown, we can therefore we try to salvage by selecting the closest transfer zone and adopt those modes */   
-      TransferZone foundZone =  (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, transferZoneGroup.getTransferZones(), getSettings().getStopToWaitingAreaSearchRadiusMeters(), geoUtils);
+    else if(transferZoneGroup.hasTransferZones()){
+      /* eligible modes unknown, we can therefore we try to salvage by selecting the closest (vertical layer compatible) compatible transfer zone present in the transfer zone group (if any) and adopt those modes */
+      var verticalLayerCompatibleTransferZones = filterVerticalLayerIndexCompatibleTransferZones(osmNode, tags, transferZoneGroup.getTransferZones());
+      TransferZone foundZone =  (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, verticalLayerCompatibleTransferZones, getSettings().getStopToWaitingAreaSearchRadiusMeters(), geoUtils);
       if(foundZone!=null) {    
         matchedTransferZones = Collections.singleton(foundZone);
       }
@@ -755,6 +801,18 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    */
   public Collection<TransferZone> findTransferZonesForStopPosition(OsmNode osmNode, Map<String, String> tags, SortedSet<String> eligibleOsmModes) {
     return findTransferZonesForStopPosition(osmNode, tags, eligibleOsmModes, null);
-  }   
-  
+  }
+
+  /**
+   * Filter (retain) only the links that are vertical layer index compatible, i.e., have the same vertical layer index (or both adopt the default)
+   *
+   * @param transferZone to match against
+   * @param linksToFilter the links to filter
+   * @return remaining links, which is the same collection as passed in, only without the ineligible links removed
+   */
+  public Collection<MacroscopicLink> filterVerticalLayerCompatibleLinks(TransferZone transferZone, Collection<MacroscopicLink> linksToFilter) {
+    int transferZoneLayerIndex = this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
+    linksToFilter.removeIf( link -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(link) != transferZoneLayerIndex);
+    return  linksToFilter;
+  }
 }

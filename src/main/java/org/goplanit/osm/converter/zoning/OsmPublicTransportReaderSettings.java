@@ -35,17 +35,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /** logger to use */
   @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(OsmPublicTransportReaderSettings.class.getCanonicalName());
-  
-  // transferred data/settings from network reader
 
-  /**
-   * the network data required to perform successful parsing of zones, to be obtained from the osm network reader
-   * after parsing the reference network
-   */
-  private OsmNetworkToZoningReaderData network2ZoningData;  
-  
-  // configuration settings
-  
   /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
   
@@ -149,19 +139,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public OsmPublicTransportReaderSettings(URL inputSource, String countryName) {
     super(inputSource, countryName);
   }  
-  
 
-  /** Constructor with user defined source locale
-   * 
-   * @param inputSource to use
-   * @param countryName to base source locale on
-   * @param network2ZoningData to use
-   */
-  public OsmPublicTransportReaderSettings(URL inputSource, String countryName, OsmNetworkToZoningReaderData network2ZoningData) {
-    super(inputSource, countryName);
-    setNetworkDataForZoningReader(network2ZoningData);
-  }  
-  
   /**
    * {@inheritDoc}
    */
@@ -169,26 +147,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void reset() {
     //TODO
   }
-  
-  // TRANSFERRED FROM NETWORK READER
 
-
-  /** allow one to set the network data required for parsing osm zoning data on the zoning reader
-   * 
-   * @param network2ZoningData to use based on network reader that parsed the used reference network
-   */
-  public void setNetworkDataForZoningReader(OsmNetworkToZoningReaderData network2ZoningData) {
-    this.network2ZoningData = network2ZoningData;
-  }   
-  
-  /** collect the network data required for parsing osm zoning data on the zoning reader
-   * 
-   * @return network2ZoningData based on network reader that parsed the used reference network
-   */
-  public OsmNetworkToZoningReaderData  getNetworkDataForZoningReader() {
-    return this.network2ZoningData;
-  }  
-  
   // USER CONFIGURATION
 
   /** set the flag whether or not the public transport infrastructure should be parsed or not

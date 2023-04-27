@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.zoning.handler.helper;
 import java.util.*;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
@@ -113,24 +114,27 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    * @param referenceNetwork to use
    * @param zoning to register transfer zone groups on
    * @param zoningReaderData to use
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param transferSettings to use 
    * @param profiler to track stats
    */
   public TransferZoneGroupHelper(
       PlanitOsmNetwork referenceNetwork,
       Zoning zoning, 
-      OsmZoningReaderData zoningReaderData, 
+      OsmZoningReaderData zoningReaderData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
       OsmPublicTransportReaderSettings transferSettings, 
       OsmZoningHandlerProfiler profiler) {
     
-    super(referenceNetwork, transferSettings);
+    super(referenceNetwork, network2ZoningData, transferSettings);
     
     this.zoning = zoning;
     this.profiler = profiler;
     this.zoningReaderData = zoningReaderData;
     
-    transferZoneParser = new TransferZoneHelper(referenceNetwork, zoning, zoningReaderData, transferSettings, profiler);
-    ptModeParser = new OsmPublicTransportModeConversion(transferSettings.getNetworkDataForZoningReader().getNetworkSettings(), referenceNetwork.getModes());
+    transferZoneParser = new TransferZoneHelper(
+        referenceNetwork, zoning, zoningReaderData, network2ZoningData, transferSettings, profiler);
+    ptModeParser = new OsmPublicTransportModeConversion(getNetworkToZoningData().getNetworkSettings(), referenceNetwork.getModes());
   }
 
   /** Create a transfer zone group based on the passed in OSM entity, tags for feature extraction and access

@@ -171,8 +171,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     
     /* ZONING READER */
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
-    ptSettings.setNetworkDataForZoningReader(osmNetworkReader.createNetworkToZoningReaderData());
-    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(ptSettings, network, zoningToPopulate);
+    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(ptSettings, zoningToPopulate, network, osmNetworkReader.createNetworkToZoningReaderData());
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();

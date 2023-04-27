@@ -12,7 +12,12 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 
+import de.topobyte.osm4j.core.model.iface.OsmEntity;
+import de.topobyte.osm4j.core.model.iface.OsmTag;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.osm.util.Osm4JUtils;
+import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.GeoContainerUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
@@ -45,6 +50,9 @@ public class OsmZoningReaderPlanitData {
   
   /** track created transfer zones by their osm id that were extracted from an OsmNode or way (osm id is key) */
   private final Map<EntityType, Map<Long, TransferZone>> transferZonesByOsmEntityId = new TreeMap<EntityType,Map<Long,TransferZone>>();
+
+  /** track transfer zone OSM layer index, if absent it is expected to reflect default layer of 0 */
+  private final Map<TransferZone, Integer> transferZonesLayerIndex = new TreeMap<>();
   
   /** in addition to tracking transfer zones by their Osm entity id, we also track them spatially, to be able to map them to close by stop positions if needed */  
   private final Map<EntityType, Quadtree> transferZonesBySpatialIndex = new TreeMap<>();
@@ -349,6 +357,42 @@ public class OsmZoningReaderPlanitData {
   public Collection<MacroscopicLink> findLinksSpatially(Envelope searchBoundingBox) {
     return GeoContainerUtils.queryEdgeQuadtree(spatiallyIndexedPlanitLinks, searchBoundingBox);
   }
-  
 
+  /**
+   * Given a transfer zone and the OSM entity it is based on (including tags), we register its vertical layer index if
+   * explicitly tagged. Used to filter eligible road/rail infrastructure when mapping waiting areas (transfer zones) to
+   * the network via connectoids
+   *
+   * @param transferZone to extract layer information for
+   * @param osmEntity the OSM entity the transfer zone is based on
+   * @param tags to extract the layer information from
+   */
+  public void registerTransferZoneVerticalLayerIndex(TransferZone transferZone, OsmEntity osmEntity, Map<String, String> tags) {
+
+    if(transferZonesLayerIndex.containsKey(transferZone)){
+      LOGGER.warning(String.format("Layer index already registered for transfer zone %s, this shouldn't happen", transferZone.getIdsAsString()));
+    }
+
+    if(!OsmTagUtils.containsAnyKey(tags, OsmTags.LAYER)){
+      /* no layer tag, so default applies, which we do not explicitly store */
+      return;
+    }
+
+    var layerValue = OsmTagUtils.getValueAsInt(tags, OsmTags.LAYER);
+    if(layerValue != null) {
+      transferZonesLayerIndex.put(transferZone, layerValue);
+    }
+  }
+
+  /**
+   * Collect vertical layer index for this transfer zone
+   *
+   * @param transferZone to collect layer index for
+   * @return found layer index, when nothing is registered, null is returned, this may indicate the default level or absence
+   * of information that should be obtained otherwise and does not reflect the default layer
+   */
+  public Integer getTransferZoneVerticalLayerIndex(TransferZone transferZone) {
+    var layerIndex = transferZonesLayerIndex.get(transferZone);
+    return layerIndex;
+  }
 }

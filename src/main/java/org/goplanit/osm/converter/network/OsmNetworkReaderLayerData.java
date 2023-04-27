@@ -361,7 +361,7 @@ public class OsmNetworkReaderLayerData {
     /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposed as part of the original link it represented) */
     Pair<List<MacroscopicLink>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);
     if(result==null || result.first() == null) {
-      LOGGER.fine(String.format("DISCARD: Osm pt stop_position %s not available on network layer within planit link or as extreme node", location.toString()));
+      LOGGER.fine(String.format("DISCARD: OSM pt stop_position %s not available on network layer within planit link or as extreme node", location.toString()));
       return null;
     }  
     

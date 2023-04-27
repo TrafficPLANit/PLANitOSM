@@ -8,7 +8,9 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.OsmNodeUtils;
+import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
@@ -35,9 +37,14 @@ public class OsmNetworkHandlerHelper {
   /** to be able to retain the information on the osm way type to be able to identify the importance of an osm way compared to others we use the osm way type
    * and store it as an input property on the link using this key 
    */
-  protected static final String LINK_OSMWAY_TYPE_PROPERTY_KEY = "osmwaytype";
+  protected static final String LINK_OSMWAY_TYPE_PROPERTY_KEY = "osm_way_type";
+
+  /** to be able to retain the information on the vertical layer index so we can map it to infrastructure at the same index level we
+   *  store it as an input property on the link using this key
+   */
+  protected static final String LINK_OSM_LAYER_PROPERTY_KEY = "osm_vertical_layer_index";
   
-  /** set the osm way type
+  /** set the OSM way type
    * @param link to set for
    * @param osmWayType to use
    */
@@ -45,7 +52,7 @@ public class OsmNetworkHandlerHelper {
     link.addInputProperty(LINK_OSMWAY_TYPE_PROPERTY_KEY, osmWayType);
   }
   
-  /** Collect the osm way type of the link
+  /** Collect the OSM way type of the link
    * @param link to collect from
    * @return osm way type, null if not present
    */
@@ -55,7 +62,29 @@ public class OsmNetworkHandlerHelper {
       return (String)value;
     }
     return null;
-  }  
+  }
+
+  /** Collect the OSM vertical layer index for the link
+   * @param link to collect from
+   * @return vertical layer index, defaults to 0 if not explicitly registered
+   */
+  public static int getLinkVerticalLayerIndex(Link link) {
+    Object value = link.getInputProperty(LINK_OSM_LAYER_PROPERTY_KEY);
+    return value == null ? 0 : (Integer) value;
+  }
+
+  /** Set the OSM vertical layer index for the link based on its OSM tags
+   * @param link to set index for
+   * @param  tags to extract index from, if absent, OSM default of 0 is implicitly assumed
+   */
+  public static void setLinkVerticalLayerIndex(MacroscopicLink link, Map<String, String> tags) {
+    if(!OsmTagUtils.containsAnyKey(tags, OsmTags.LAYER)){
+      /* no layer tag, so default applies, which we do not explicitly store */
+      return;
+    }
+    var layerValue = OsmTagUtils.getValueAsInt(tags, OsmTags.LAYER);
+    link.addInputProperty(LINK_OSM_LAYER_PROPERTY_KEY, layerValue);
+  }
 
   /**
    * Extract a PLANit node from the osmNode information
@@ -134,8 +163,4 @@ public class OsmNetworkHandlerHelper {
     });
   }
 
-
-
-
-  
 }

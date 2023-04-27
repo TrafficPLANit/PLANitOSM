@@ -5,6 +5,7 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
 import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
@@ -18,6 +19,7 @@ import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
+import org.goplanit.utils.misc.IterableUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -42,6 +44,7 @@ import org.locationtech.jts.linearref.LinearLocation;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Class to provide functionality for parsing PLANit connectoids from OSM entities
@@ -107,8 +110,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     OsmBoundingAreaUtils.logWarningIfNotNearBoundingBox(message, geometry, getNetworkToZoningData().getNetworkBoundingBox(), geoUtils);
   }    
 
-  /** Find the link segments that are accessible for the given acces link, node, mode combination taking into account the relative location of the transfer zone if needed and
-   * mode compatibility.
+  /** Find the link segments that are accessible for the given access link, node, mode combination taking into account the relative location of the transfer zone if needed,
+   * mode compatibility, and vertical plane compatibility
    * 
    * @param transferZone these link segments pertain to
    * @param accessLink that is nominated
@@ -116,10 +119,17 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param accessMode eligible access mode
    * @param mustAvoidCrossingTraffic indicates of transfer zone must be on the logical side of the road or if it does not matter
    * @param geoUtils to use
-   * @return found link segments that are deemed valid given the constraints
+   * @return found link segments that are deemed valid given the constraints, may be null if no match is found
    */
   private Collection<LinkSegment> findAccessLinkSegmentsForStandAloneTransferZone(
       TransferZone transferZone, MacroscopicLink accessLink, Node node, Mode accessMode, boolean mustAvoidCrossingTraffic, PlanitJtsCrsUtils geoUtils) {
+
+    /* transfer zone and link ought to be on same vertical plane if the transfer zone has explicit layer registered, if not it is not a match */
+    var planitData = this.zoningReaderData.getPlanitData();
+    var osmVerticalLayerIndex = planitData.getTransferZoneVerticalLayerIndex(transferZone);
+    if(osmVerticalLayerIndex != null && osmVerticalLayerIndex != OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(accessLink)){
+      return null;
+    }
 
     Function<String, String> getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId = tzOsmId -> {
       EntityType osmWaitingAreaEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(true));
@@ -217,6 +227,15 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    */
   private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(
       final TransferZone transferZone, final MacroscopicNetworkLayer networkLayer, final Iterable<? extends EdgeSegment> linkSegments, final Set<Mode> allowedModes){
+
+    var osmVerticalLayerIndex = this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
+    if(osmVerticalLayerIndex != null &&
+        !IterableUtils.asStream(linkSegments).allMatch(
+            ls -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex((Link)ls.getParent()) == this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone))){
+      LOGGER.warning(String.format("OSM vertical layer index of PLANit transfer zone not compatible with selected access link segments [%s] for its connectoids, this shouldn't happen, verify correctness",
+          transferZone.getIdsAsString(), IterableUtils.asStream(linkSegments).map(ls -> ls.getIdsAsString()).collect(Collectors.joining(","))));
+    }
+
     Collection<DirectedConnectoid> createdConnectoids = ZoningConverterUtils.createAndRegisterDirectedConnectoids(zoning, transferZone, (Iterable<MacroscopicLinkSegment>) linkSegments, allowedModes);
     for(var newConnectoid : createdConnectoids) {
       /* update planit data tracking information */
@@ -272,10 +291,16 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    *
    * @param osmNodeLocation to collect/create PLANit node for 
    * @param networkLayer to extract node on
+   * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on
    * @return PLANit node collected/created
    */  
-  private Node extractConnectoidAccessNodeByLocation(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer){
+  private Node extractConnectoidAccessNodeByLocation(
+      Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, Integer osmVerticalLayerIndex){
     final OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
+    if(osmVerticalLayerIndex == null){
+      LOGGER.severe(String.format("Unknown OSM layer index for chosen connectoid location (%s), expected explicitly provided OSM layer, abort connectoid access node creation", osmNodeLocation.getCoordinate().toString()));
+      return null;
+    }
     
     /* check if already exists */
     Node planitNode = layerData.getPlanitNodeByLocation(osmNodeLocation);
@@ -285,8 +310,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* find the links with the location registered as internal */
       List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
       if(linksToBreak != null) {
-      
-        /* location is internal to an existing link, create it based on osm node if possible, otherwise base it solely on location provided*/
+
+        /* we would expect all links on this connectoids location to reside on the same vertical plane, which we check since breaking links that are not
+        * could be problematic and point to a tagging error */
+        if(!linksToBreak.stream().allMatch( l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == osmVerticalLayerIndex)){
+          LOGGER.warning(String.format("Not all PLANit links connected to chosen connectoid location (Planit node %s) reside on expected vertical OSM layer index (layer=%d), likely tagging error", planitNode.getIdsAsString(), osmVerticalLayerIndex));
+        }
+
+        /* location is internal to an existing link, create it based on OSM node if possible, otherwise base it solely on location provided*/
         OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
         if(osmNode != null) {
           /* all regular cases */
@@ -309,11 +340,12 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * 
    * @param osmNode to collect PLANit node version for
    * @param networkLayer to extract node on
+   * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on
    * @return PLANit node collected/created
    */
-  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicNetworkLayer networkLayer){        
+  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, MacroscopicNetworkLayer networkLayer, int osmVerticalLayerIndex){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);    
-    return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer);
+    return extractConnectoidAccessNodeByLocation(osmNodeLocation, networkLayer, osmVerticalLayerIndex);
   }
 
   /** extract a connectoid location within the link based on an existing coordinate (osm node) or by inserting an additional coordinate in the location closest to the provided
@@ -357,16 +389,18 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param referenceNetwork  to use
    * @param zoning to parse on
    * @param zoningReaderData to use
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param transferSettings to use
    * @param profiler to use
    */
   public OsmConnectoidHelper(
       PlanitOsmNetwork referenceNetwork,
       Zoning zoning, 
-      OsmZoningReaderData zoningReaderData, 
+      final OsmZoningReaderData zoningReaderData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
       OsmPublicTransportReaderSettings transferSettings,
       OsmZoningHandlerProfiler profiler) {
-    super(referenceNetwork, transferSettings);
+    super(referenceNetwork, network2ZoningData, transferSettings);
 
     this.referenceNetwork = referenceNetwork;
     this.zoning = zoning;
@@ -451,6 +485,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    */
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
       TransferZone transferZone, MacroscopicNetworkLayer networkLayer, PredefinedModeType planitModeType, PlanitJtsCrsUtils geoUtils){
+
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getNetworkOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
     
@@ -470,7 +505,11 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* regular approach */
       
       /* create/collect PLANit node with access link segment */
-      Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer);
+      var waitingAreaOsmVerticalLayerIndex = zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
+      if(waitingAreaOsmVerticalLayerIndex == null){
+        waitingAreaOsmVerticalLayerIndex = findOsmVerticalLayerIndexByStopPositionPlanitLinks(OsmNodeUtils.createPoint(osmNode), networkLayer);
+      }
+      Node planitNode = extractConnectoidAccessNodeByOsmNode(osmNode, networkLayer, waitingAreaOsmVerticalLayerIndex);
       if(planitNode == null) {
         LOGGER.warning(String.format("DISCARD: osm node (%d) could not be converted to access node for transfer zone osm entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
         return null;
@@ -495,7 +534,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * zone is placed on the left of the infrastructure, the closest by incoming link segment to the given location is used. Since the geometry of a link applies to both link segments
    * we define closest based on the driving position of the country, so a left-hand drive country will use the incoming link segment where the transfer zone is placed on the left, etc. 
    * 
-   * @param location to create the access point for as planit node (one or more upstream planit link segments will act as access link segment for the created connectoid(s))
+   * @param location to create the access point for as PLANit node (one or more upstream planit link segments will act as access link segment for the created connectoid(s))
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
    * @param geoUtils used when location of transfer zone relative to infrastructure is to be determined
@@ -508,10 +547,16 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
     var planitMode = referenceNetwork.getModes().get(planitModeType);
     MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByMode(planitMode);
-    OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);                
-    
+    OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
+
+    /* identify vertical plane the location resides on */
+    var waitingAreaOsmVerticalLayerIndex = zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
+    if(waitingAreaOsmVerticalLayerIndex == null){
+      waitingAreaOsmVerticalLayerIndex = findOsmVerticalLayerIndexByStopPositionPlanitLinks(OsmNodeUtils.createPoint(osmNode), networkLayer);
+    }
+
     /* planit access node */
-    Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer);    
+    Node planitNode = extractConnectoidAccessNodeByLocation(location, networkLayer, waitingAreaOsmVerticalLayerIndex);
     if(planitNode==null) {
       if(osmNode != null) {
         LOGGER.warning(String.format("DISCARD: OSM node %d could not be converted to access node for transfer zone representation of OSM entity %s",osmNode.getId(), transferZone.getExternalId()));

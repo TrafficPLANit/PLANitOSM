@@ -241,7 +241,7 @@ public class OsmNetworkLayerParser {
     }
 
     MacroscopicLink link = null;
-    /* osm way can be direction directional, PLANit link is never, check existence */
+    /* OSM way can be directional, PLANit link is not, check existence */
     if(nodeFirst != null) {
       var potentialEdges = nodeFirst.getEdges(nodeLast);
       for(Edge potentialEdge : potentialEdges) {
@@ -274,13 +274,7 @@ public class OsmNetworkLayerParser {
       if(tags.containsKey(OsmTags.NAME)) {
         link.setName(tags.get(OsmTags.NAME));
       }
-      
-      /* store osm way type for future reference (used in zoning reader for example) */
-      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmHighwayTags.HIGHWAY));
-      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmRailwayTags.RAILWAY));
-      }
+
     }
     return link;      
   }  
@@ -694,15 +688,25 @@ public class OsmNetworkLayerParser {
     /* create the link */
     MacroscopicLink link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
     if(link != null) {
+
+      /* store OSM way type for future reference (used in zoning reader for example) */
+      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmHighwayTags.HIGHWAY));
+      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
+        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmRailwayTags.RAILWAY));
+      }
+
+      /* register the links vertical layer index (used in the zoning reader for example) */
+      OsmNetworkHandlerHelper.setLinkVerticalLayerIndex(link, tags);
       
       /* if geometry might be truncated, update the actual used start and end indices used if needed to correctly register remaining internal nodes */
       if(allowTruncationIfGeometryIncomplete) {
         startNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);
         endNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeB().getPosition(), networkData);
       }
-      
       /* register internal nodes for breaking links later on during parsing */
-      registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);                  
+      registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);
+
       layerData.getProfiler().logLinkStatus(networkLayer.getNumberOfLinks());
     }
     return link;

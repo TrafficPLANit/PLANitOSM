@@ -42,8 +42,10 @@ public class OsmTags {
     
     public static final String LOCAL_REF = "local_ref";
 
+    public static final String LAYER = "layer";
 
-    /** Check if tags indicate the entity is in fact an area
+
+  /** Check if tags indicate the entity is in fact an area
      * 
      * @param tags to verify
      * @return true when area, false otherwise

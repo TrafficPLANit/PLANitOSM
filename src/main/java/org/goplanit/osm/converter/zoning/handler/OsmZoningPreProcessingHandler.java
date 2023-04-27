@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.*;
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -158,6 +159,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * @param zoningToPopulate to populate
    * @param transferSettings for the handler
    * @param zoningReaderData to use for storage of temporary information, or data that is to be made available to later handlers
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param stage indicating what stage this pre-processing is in.Depending on the stage different pre-processing actinos are undertaken
    * @param profiler to use
    */
@@ -166,9 +168,10 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
       final Zoning zoningToPopulate,
       final OsmPublicTransportReaderSettings transferSettings,
       OsmZoningReaderData zoningReaderData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
       Stage stage,
       OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData, referenceNetwork,zoningToPopulate, profiler);
+    super(transferSettings, zoningReaderData, network2ZoningData, referenceNetwork,zoningToPopulate, profiler);
     this.stage = stage;
   }
   
