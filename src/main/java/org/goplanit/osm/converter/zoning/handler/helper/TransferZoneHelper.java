@@ -593,22 +593,22 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       var stopPositionLocation = OsmNodeUtils.createPoint(stopPositionOsmNode);
       for(var layer : eligibleNetworkLayers){
 
-        Integer planitLayerOsmVerticalLayerIndex = findOsmVerticalLayerIndexByStopPositionPlanitLinks(stopPositionLocation, layer);
-        if(planitLayerOsmVerticalLayerIndex != null){
-          if(osmVerticalLayerIndex != null && osmVerticalLayerIndex != planitLayerOsmVerticalLayerIndex){
+        var planitLayerOsmVerticalLayerIndexPair = findOsmVerticalLayerIndexByStopPositionPlanitLinks(stopPositionLocation, layer);
+        if(planitLayerOsmVerticalLayerIndexPair != null && planitLayerOsmVerticalLayerIndexPair.second()){
+          if(osmVerticalLayerIndex != null && osmVerticalLayerIndex != planitLayerOsmVerticalLayerIndexPair.first()){
             LOGGER.warning(String.format(
                 "Links connected to OSM stop position %d are not all on the expected vertical layer plane (layer=%d), verify correctness", stopPositionOsmNode.getId(), osmVerticalLayerIndex));
+            continue;
           }
-          osmVerticalLayerIndex = planitLayerOsmVerticalLayerIndex;
+          osmVerticalLayerIndex = planitLayerOsmVerticalLayerIndexPair.first();
         }
       }
     }else{
       osmVerticalLayerIndex = OsmTagUtils.getValueAsInt(osmNodeTags, OsmTags.LAYER);
     }
 
+    /* in absence on absolute certainty on an explicit and consistent vertical layer index we retain all transfer zones as is */
     if(osmVerticalLayerIndex == null){
-      /* we will only filter if we have certainty about the vertical layer index, although it should be present, so log warning otherwise */
-      LOGGER.warning(String.format("Links are missing OSM vertical layer information, this shouldn't happen"));
       return potentialTransferZones;
     }
 
@@ -825,7 +825,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     Integer transferZoneLayerIndex = this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
     linksToFilter.removeIf( link ->
         (transferZoneLayerIndex!=null && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(link) != transferZoneLayerIndex) ||
-            (transferZoneLayerIndex == null && assumeDefaultLayerForZoneIfAbsent && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(link) != 0));
+                (transferZoneLayerIndex == null && assumeDefaultLayerForZoneIfAbsent && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(link) != 0));
     return  linksToFilter;
   }
 }

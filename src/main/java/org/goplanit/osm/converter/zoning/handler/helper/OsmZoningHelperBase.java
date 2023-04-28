@@ -5,6 +5,7 @@ import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.PlanitNetworkLayerUtils;
+import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.locationtech.jts.geom.Point;
@@ -66,9 +67,10 @@ class OsmZoningHelperBase {
    *
    * @param stopPositionLocation  to find layer index for
    * @param layer to check
-   * @return OSM vertical layer index found, null if no match on the layer exists
+   * @return OSM vertical layer index found, and boolean indicating if the found layer index was the same across
+   *  all eligible links (true), false otherwise
    */
-  protected Integer findOsmVerticalLayerIndexByStopPositionPlanitLinks(Point stopPositionLocation, NetworkLayer layer) {
+  protected Pair<Integer,Boolean> findOsmVerticalLayerIndexByStopPositionPlanitLinks(Point stopPositionLocation, NetworkLayer layer) {
     var layerData = getNetworkToZoningData().getNetworkLayerData(layer);
 
     Collection<MacroscopicLink> planitLinks = layerData.findPlanitLinksWithInternalLocation(stopPositionLocation);
@@ -80,14 +82,15 @@ class OsmZoningHelperBase {
     }
 
     if(planitLinks!=null && !planitLinks.isEmpty()) {
-      final Integer verticalLayerIndex = OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(planitLinks.iterator().next());
-      if (!planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex)) {
-        LOGGER.warning(String.format(
-            "PLANit Link(s) [%s] connected to OSM stop position in location %s are not all on the expected vertical layer plane (layer=%d), verify correctness",
-            planitLinks.stream().map(l -> l.getIdsAsString() + "layer: "+ OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l)).collect(Collectors.joining(",")),
-            stopPositionLocation, verticalLayerIndex));
-      }
-      return verticalLayerIndex;
+      final Integer verticalLayerIndex = OsmNetworkHandlerHelper.getMostFrequentVerticalLayerIndex(planitLinks);
+      final boolean consistent = planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex);
+
+//      if (!planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex)) {
+//        LOGGER.warning(String.format(
+//            "OSM stop position in location %s restricted to most likely vertical layer plane (layer=%d) despite potential PLANit Link(s) [%s] not all present on this layer, verify layer matching links are suitable",
+//            stopPositionLocation, verticalLayerIndex, planitLinks.stream().map(l -> l.getIdsAsString() + "layer: "+ OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l)).collect(Collectors.joining(","))));
+//      }
+      return Pair.of(verticalLayerIndex, consistent);
     }
 
     return  null;
