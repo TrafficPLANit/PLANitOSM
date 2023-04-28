@@ -189,6 +189,10 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmWay osmWay) {
 
+    if(osmWay.getId() == 45479159L){
+      int bla = 4;
+    }
+
     if(stage != Stage.IDENTIFY_PT_NODES){
       return;
     }

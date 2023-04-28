@@ -153,7 +153,7 @@ public class OsmPtv1Tags {
     return PT_HIGHWAY_VALUE_TAGS;
   }
 
-  /** Verify if any of the tags is a macth for the currently supported Ptv1 scheme tags
+  /** Verify if any of the tags is a match for the currently supported Ptv1 scheme tags
    * @param tags to check against
    * @return true when present, false otherwise
    */

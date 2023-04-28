@@ -1,10 +1,6 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -69,6 +65,22 @@ public class OsmNetworkHandlerHelper {
    * @return vertical layer index, defaults to 0 if not explicitly registered
    */
   public static int getLinkVerticalLayerIndex(Link link) {
+    Object value = link.getInputProperty(LINK_OSM_LAYER_PROPERTY_KEY);
+    return value == null ? 0 : (Integer) value;
+  }
+
+  /** Collect the OSM vertical layer index across the given links that occurs most frequenctly
+   *
+   * @param links to base
+   * @return vertical layer index chosen, defaults to 0 if not explicitly registered
+   */
+  public static int getMostLikelyLinkVerticalLayerIndex(Collection<Link> links) {
+    Map<Integer,Long> valueCountPerLayerIndex =
+        links.stream().collect(Collectors.groupingBy(l -> getLinkVerticalLayerIndex(l), Collectors.counting()));
+
+    valueCountPerLayerIndex.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+
+    valueCountPerLayerIndex.entrySet().
     Object value = link.getInputProperty(LINK_OSM_LAYER_PROPERTY_KEY);
     return value == null ? 0 : (Integer) value;
   }

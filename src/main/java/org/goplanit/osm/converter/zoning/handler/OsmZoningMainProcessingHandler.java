@@ -400,7 +400,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       processPtv2StopAreaMemberWayWithoutRole(transferZoneGroup, osmRelation, member);     
       
     }else {      
-      LOGGER.info(String.format("DISCARD: top_area (%d) member without a role found (%d) that is not a node or way",osmRelation.getId(),member.getId()));
+      LOGGER.info(String.format("DISCARD: stop_area (%d) member without a role found (%d) that is not a node or way",osmRelation.getId(),member.getId()));
     }
   }   
   
@@ -1117,9 +1117,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmNode osmNode) {
 
-//    if(osmNode.getId() == 2819919872L){
-//      int bla = 4;
-//    }
+    if(osmNode.getId() == 579383922L){
+      int bla = 4;
+    }
 
     /* parse as stand-alone PT-entity node */
     wrapHandlePtOsmNode(osmNode, this::extractTransferInfrastructure);

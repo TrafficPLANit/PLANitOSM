@@ -291,7 +291,7 @@ public class OsmZoningReaderOsmData {
    * @param osmId osm entity to mark as invalid stop_position
    */
   public void addIgnoreStopAreaStopPosition(EntityType type, long osmId) {
-    ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
+    ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<>());
     ignoreStopAreaStopPositions.get(type).add(osmId);
   }
   
@@ -303,7 +303,7 @@ public class OsmZoningReaderOsmData {
    */
   public boolean isIgnoreStopAreaStopPosition(EntityType type, long osmId) {
     if(type != null) {
-      ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
+      ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<>());
       return ignoreStopAreaStopPositions.get(type).contains(osmId);
     }
     return false;

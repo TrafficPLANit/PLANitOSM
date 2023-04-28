@@ -103,7 +103,7 @@ public class OsmNetworkReaderLayerData {
   }  
   
   /**
-   * track the PLANit nodes created on this layer by their location (which reflects eith an osm node, or an auto-generated stop_location, not related to an osm node
+   * track the PLANit nodes created on this layer by their location (which reflects either an OSM node, or an auto-generated stop_location, not related to an osm node
    * in the latter case, no osm node is available) so they can be collected when needed, for example when breaking planit links
    */
   protected final Map<Point, Pair<Node, OsmNode>> planitNodesByLocation = new HashMap<>();

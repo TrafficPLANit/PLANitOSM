@@ -11,6 +11,7 @@ import org.locationtech.jts.geom.Point;
 
 import java.util.Collection;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Base class for all parser classes targeting support for parsing a specific PLANit zoning related entity (connectoid, transfer zone etc.)
@@ -82,7 +83,9 @@ class OsmZoningHelperBase {
       final Integer verticalLayerIndex = OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(planitLinks.iterator().next());
       if (!planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex)) {
         LOGGER.warning(String.format(
-            "Links connected to OSM stop postion are not all on the expected vertical layer plane (layer=%d), verify correctness", verticalLayerIndex));
+            "PLANit Link(s) [%s] connected to OSM stop position in location %s are not all on the expected vertical layer plane (layer=%d), verify correctness",
+            planitLinks.stream().map(l -> l.getIdsAsString() + "layer: "+ OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l)).collect(Collectors.joining(",")),
+            stopPositionLocation, verticalLayerIndex));
       }
       return verticalLayerIndex;
     }

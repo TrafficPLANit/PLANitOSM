@@ -14,6 +14,7 @@ import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderOsmData;
+import org.goplanit.osm.converter.zoning.handler.helper.OsmPublicTransportModeConversion;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
@@ -231,7 +232,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /** Find all links that are within the given search bounding box, are mode compatible, and have a matching vertical layer index, i.e., reside
-   * on the same vertical plane.
+   * on the same vertical plane (if the zone has a known layer)
    *
    * @param transferZone the transferZone created based on the underlying OSM entity
    * @param osmEntityId the osm id of the waiting area
@@ -256,7 +257,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
 
     /* filter based on vertical layer index compatibility */
-    Collection<MacroscopicLink> modeSpatiallyAndVerticalPlaneCompatibleLinks = getTransferZoneHelper().filterVerticalLayerCompatibleLinks(transferZone, modeAndSpatiallyCompatibleLinks);
+    Collection<MacroscopicLink> modeSpatiallyAndVerticalPlaneCompatibleLinks = getTransferZoneHelper().filterVerticalLayerCompatibleLinks(
+        transferZone, modeAndSpatiallyCompatibleLinks, true);
     if(modeSpatiallyAndVerticalPlaneCompatibleLinks == null || modeSpatiallyAndVerticalPlaneCompatibleLinks.isEmpty()) {
       return null;
     }
@@ -527,13 +529,15 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       Collection<TransferZone> matchedTransferZones =
           getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, singletonSet);
       if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-        logWarningIfNotNearBoundingBox(String.format("DISCARD: stop_position %d has no valid pole, platform, station reference, nor close-by infrastructure that qualifies as such for mode %s",osmNode.getId(), osmMode),osmNodeLocation);
+        logWarningIfNotNearBoundingBox(String.format(
+            "DISCARD: stop_position %d has no valid pole, platform, station reference, nor close-by infrastructure that qualifies as such for mode %s (tags %s)",osmNode.getId(), osmMode, tags),osmNodeLocation);
         return;
       }
       
       /* create connectoid(s) for stop_location/transfer zone/mode combination */
+      boolean locationIsKnownOsmStopPosition = true;
       for(TransferZone transferZone : matchedTransferZones) {
-        getConnectoidHelper().extractDirectedConnectoidsForMode(osmNode, transferZone, accessModeType, getGeoUtils());
+        getConnectoidHelper().extractDirectedConnectoidsForMode(osmNode, locationIsKnownOsmStopPosition, transferZone, accessModeType, getGeoUtils());
       }           
     }
          
@@ -547,9 +551,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void processStopPositionsNotPartOfStopArea() {
     Set<Long> unprocessedStopPositions = new TreeSet<>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
     if(!unprocessedStopPositions.isEmpty()) {
-      var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
+      var osmNodeData = this.getNetworkToZoningData().getNetworkOsmNodes();
       for(Long osmNodeId : unprocessedStopPositions) {
-        OsmNode osmNode = osmNodeData.getRegisteredOsmNode(osmNodeId);
+        OsmNode osmNode = osmNodeData.get(osmNodeId);
         if(osmNode == null){
           LOGGER.severe(String.format("OSM node %d representing stop position not available in memory, unable to extract stop position", osmNodeId));
           return;
@@ -713,7 +717,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       }
       
       if(accessLinks == null) {
-        logWarningIfNotNearBoundingBox(String.format("DISCARD: station %d has no eligible accessible links to qualify for pt vehicles as stop locations",osmStation.getId()),stationTransferZone.getGeometry() );
+        logWarningIfNotNearBoundingBox(
+            String.format("DISCARD: Station %d without eligible access links for pt vehicles as stop locations (tags %s)",osmStation.getId(),  tags),stationTransferZone.getGeometry());
         return;
       }                   
       
@@ -829,15 +834,18 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param osmNode node that is the stop_position in stop_area relation
    * @param transferZoneGroup the group this stop position is allowed to relate to
-   * @throws PlanItException thrown if error
    */
-  private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {    
+  private void extractKnownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup){
           
     /* supported modes */
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
+    }
+
+    if(osmNode.getId() == 3926293344L){
+      int bla = 4;
     }
           
     /* find the transfer zones this stop position is eligible for */
@@ -846,49 +854,62 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       /* still no match, issue warning */
       logWarningIfNotNearBoundingBox(
-          String.format("DISCARD: Stop position %d in stop_area %s has no valid pole, platform, station reference, nor closeby infrastructure that qualifies", osmNode.getId(), transferZoneGroup.getExternalId()), OsmNodeUtils.createPoint(osmNode));
+          String.format("DISCARD: Stop position %d in stop_area %s has no valid pole, platform, station reference, nor close-by infrastructure that qualifies (tags: %s)",
+              osmNode.getId(), transferZoneGroup.getExternalId(), tags.toString()), OsmNodeUtils.createPoint(osmNode));
       return;
     }             
     
     /* connectoids */
-    getConnectoidHelper().extractDirectedConnectoids(osmNode, matchedTransferZones, modeResult.second(), transferZoneGroup);
+    boolean locationIsKnownOsmStopPosition = true;
+    getConnectoidHelper().extractDirectedConnectoids(
+        osmNode, locationIsKnownOsmStopPosition, matchedTransferZones, modeResult.second(), transferZoneGroup);
   }  
   
-  /** extract a Ptv2 stop position part of a stop_area relation but not yet identified in the regular phase of parsing as a stop_position. Hence it is not properly
-   * tagged. In this method we try to salvage it by inferring its properties (eligible modes). We do so, by mapping it to the nearest transfer zone available on the stop_area (if any)
-   *  as a last resort attempt
+  /** extract a Ptv2 stop position part of a stop_area relation but not yet identified in the regular phase of parsing as a stop_position. Hence, it is not properly
+   * tagged. In this method we try to salvage it by inferring its properties (eligible modes, vertical plane). We do so, by mapping it to the nearest compatible transfer zone
+   * available on the stop_area (if any) as a last resort attempt
    * 
    * @param osmNode node of unknown stop position
    * @param tags of the node
    * @param transferZoneGroup the group this stop position is part of
-   * @throws PlanItException thrown if error
    */
-  private void extractUnknownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) throws PlanItException {
-    
-    /* not a proper stop_position, so we must infer its properties (eligible modes, transfer zone) */
-    Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, null, transferZoneGroup);
+  private void extractUnknownPtv2StopAreaStopPosition(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup){
+
+    if(osmNode.getId() == 1281064369L){
+      int bla = 4;
+    }
+
+    /* not a proper stop_position, so we must infer its properties (eligible modes, transfer zone), eligible OSM modes may be null, but may be present */
+    var eligibleModes = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
+    var eligibleOsmModes = eligibleModes!= null ? eligibleModes.first() : null;
+    Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, eligibleOsmModes, transferZoneGroup);
             
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       
       /* log warning unless it relates to stop_position without any activate modes and/or near bounding box */
       if(OsmModeUtils.hasMappedPlanitMode(getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(tags)))) {      
         logWarningIfNotNearBoundingBox(
-            String.format("DISCARD: stop_position %d without proper tagging on OSM network could not be mapped to closeby transfer zone in stop_area", osmNode.getId()), OsmNodeUtils.createPoint(osmNode));
+            String.format("DISCARD: Stop_position %d without proper tagging on OSM network could not be mapped to close-by transfer zone in stop_area (tags: %s)", osmNode.getId(), tags.toString()), OsmNodeUtils.createPoint(osmNode));
       }      
       return;
     }else if(matchedTransferZones.size()>1){
-      throw new PlanItException("Identified more than one spatially closest transfer zone for stop_position %d that was not tagged as such in stop_area %s, this should nto happen",osmNode.getId(), transferZoneGroup.getExternalId());
+      throw new PlanItRunTimeException("Identified more than one spatially closest transfer zone for stop_position %d that was not tagged as such in stop_area %s, this should not happen",osmNode.getId(), transferZoneGroup.getExternalId());
     }
     
     TransferZone foundZone = matchedTransferZones.iterator().next();  
     var accessModeTypes = getNetworkToZoningData().getNetworkSettings().getActivatedPlanitModeTypes(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(foundZone));
     if(accessModeTypes == null) {
-      LOGGER.warning(String.format("DISCARD: stop_position %d without proper tagging on OSM network, unable to identify access modes from closest transfer zone in stop_area", osmNode.getId()));
+      LOGGER.warning(String.format("DISCARD: Stop_position %d without proper tagging on OSM network, unable to identify access modes from closest transfer zone in stop_area (tags: %s)", osmNode.getId(), tags.toString()));
       return;             
     }
              
     /* connectoids */
-    getConnectoidHelper().extractDirectedConnectoids(osmNode, Collections.singleton(foundZone), accessModeTypes, transferZoneGroup);
+    boolean locationIsKnownOsmStopPosition = false;
+    boolean success = getConnectoidHelper().extractDirectedConnectoids(osmNode, locationIsKnownOsmStopPosition, Collections.singleton(foundZone), accessModeTypes, transferZoneGroup);
+    if(success){
+      LOGGER.info(String.format("SALVAGED: Stop_position %d in stop_area not marked as such on OSM node, mapped to most likely transfer zone (%s) in stop_area instead, verify correctness (tags %s)",osmNode.getId(), foundZone.getIdsAsString(), tags.toString()));
+    }
+
   }  
   
   /** extract a Ptv2 stop position part of a stop_area relation. Based on description in https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position
