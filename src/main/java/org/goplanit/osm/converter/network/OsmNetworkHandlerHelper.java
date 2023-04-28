@@ -7,14 +7,11 @@ import java.util.stream.Collectors;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
-import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.Point;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
@@ -74,15 +71,11 @@ public class OsmNetworkHandlerHelper {
    * @param links to base
    * @return vertical layer index chosen, defaults to 0 if not explicitly registered
    */
-  public static int getMostLikelyLinkVerticalLayerIndex(Collection<Link> links) {
+  public static int getMostFrequentVerticalLayerIndex(Collection<? extends Link> links) {
     Map<Integer,Long> valueCountPerLayerIndex =
         links.stream().collect(Collectors.groupingBy(l -> getLinkVerticalLayerIndex(l), Collectors.counting()));
-
-    valueCountPerLayerIndex.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
-
-    valueCountPerLayerIndex.entrySet().
-    Object value = link.getInputProperty(LINK_OSM_LAYER_PROPERTY_KEY);
-    return value == null ? 0 : (Integer) value;
+    var layerIdWithHighestCount = valueCountPerLayerIndex.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get().getKey();
+    return layerIdWithHighestCount;
   }
 
   /** Set the OSM vertical layer index for the link based on its OSM tags
