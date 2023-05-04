@@ -12,14 +12,11 @@ import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
-import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
@@ -78,8 +75,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZoneGroup to register on
    * @param osmRelation the platform belongs to
    * @param member the platform member
+   * @param suppressLogging when true suppress logging
    */
-  private void registerPtv2StopAreaPlatformOnGroup(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
+  private void registerPtv2StopAreaPlatformOnGroup(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member, boolean suppressLogging) {
     EntityType type = member.getType();
     long osmId = member.getId();
     if(member.getType().equals(EntityType.Relation)) {
@@ -92,14 +90,14 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
           OsmWay osmWay = getZoningReaderData().getOsmData().getOuterRoleOsmWay(internalMember.getId());
           type = EntityType.Way;
           osmId = osmWay.getId();
-        }else {
+        }else if(!suppressLogging){
           LOGGER.severe("Identified platform as multi-polygon/relation, however its `outer role` member is not available or converted into a transfer zone");
         }        
       }
     }      
     
     /* register on group */
-    getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmId, type, transferZoneGroup);
+    getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmId, type, transferZoneGroup, suppressLogging);
   }
 
   /** Verify if the stop role member is indeed a stop_position, if so return false, it is correctly tagged, if not return true indicating 
@@ -135,21 +133,26 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation the OSM stop_area relation
    * @param member the member that is wrongly tagged
    */
-  private void salvageWronglyTaggedStopRolePtv2StopAreaRelation(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
-    
+  private void salvageWronglyTaggedStopRolePtv2StopAreaRelation(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
+    boolean suppressLogging = getSettings().isSuppressStopAreaLogging(osmRelation.getId());
     /* station? -> then we it should exist as unprocessed station */
     Pair<OsmPtVersionScheme, OsmEntity> unprocessedStationPair = getZoningReaderData().getOsmData().getUnprocessedStation(member.getType(), member.getId());
     if(unprocessedStationPair != null) {
       /* station -> process it as such */
-      LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as station", transferZoneGroup.getExternalId(), member.getId()));
+      if(!suppressLogging) {
+        LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as station", transferZoneGroup.getExternalId(), member.getId()));
+      }
       TransferZoneGroupHelper.updateTransferZoneGroupStationName(transferZoneGroup, unprocessedStationPair.second(), OsmModelUtil.getTagsAsMap(unprocessedStationPair.second()));          
     }      
     /* platform? --> then we should already have a transfer zone for it*/      
     else if(getZoningReaderData().getPlanitData().getTransferZoneByOsmId(member.getType(), member.getId())!=null) {
-      LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as platform", transferZoneGroup.getExternalId(), member.getId()));
+      if(!suppressLogging) {
+        LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as platform", transferZoneGroup.getExternalId(), member.getId()));
+      }
       /* platform -> process as such */
-      registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member);
-    }else {
+      registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member, suppressLogging);
+    }else if(!suppressLogging){
       LOGGER.warning(String.format("DISCARD: stop_area %s member %d incorrectly given stop role...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
     }       
   }  
@@ -162,10 +165,14 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
    * @param tags of the node
+   * @param suppressLogging when true suppress logging
    */
-  private void processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
+  private void processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags, boolean suppressLogging) {
+
     String ptv1ValueTag = tags.get(OsmHighwayTags.HIGHWAY);
     if(ptv1ValueTag==null) {
+      if(suppressLogging)
       LOGGER.severe(String.format("Highway tag not present for alleged Ptv1 highway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
       return;
     }
@@ -174,7 +181,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(OsmPtv1Tags.BUS_STOP.equals(ptv1ValueTag)){
 
       /* register on group */
-      getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmNode, tags, transferZoneGroup);      
+      getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmNode, tags, transferZoneGroup, suppressLogging);
       
     }else if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)){
       
@@ -195,11 +202,15 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
    * @param tags of the node
+   * @param suppressLogging when true suppress logging
    */  
-  private void processPtv2StopAreaMemberNodePtv1RailwayWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
+  private void processPtv2StopAreaMemberNodePtv1RailwayWithoutRole(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags, boolean suppressLogging) {
     String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);
     if(ptv1ValueTag==null) {
-      LOGGER.severe(String.format("railway tag not present for alleged Ptv1 railway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
+      if(suppressLogging) {
+        LOGGER.severe(String.format("railway tag not present for alleged Ptv1 railway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
+      }
       return;
     }
     
@@ -219,7 +230,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       else if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag) ) {
       
         /* register on group */
-        getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmNode, tags, transferZoneGroup);        
+        getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmNode, tags, transferZoneGroup, suppressLogging);
       }
               
     }
@@ -228,7 +239,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag)) {
     
       /* register on group */
-      getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmNode, tags, transferZoneGroup);
+      getTransferZoneGroupHelper().registerTransferZoneOnGroup(osmNode, tags, transferZoneGroup, suppressLogging);
     
     }
     
@@ -248,16 +259,18 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
    * @param tags of the node
+   * @param suppressLogging when true suppress logging
    */
-  private void processPtv2StopAreaMemberNodePtv1WithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
+  private void processPtv2StopAreaMemberNodePtv1WithoutRole(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags, boolean suppressLogging) {
     
     if(OsmRailwayTags.hasRailwayKeyTag(tags)) {     
       
-      processPtv2StopAreaMemberNodePtv1RailwayWithoutRole(transferZoneGroup, osmRelation, osmNode, tags);
+      processPtv2StopAreaMemberNodePtv1RailwayWithoutRole(transferZoneGroup, osmRelation, osmNode, tags, suppressLogging);
       
     }else if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
       
-      processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(transferZoneGroup, osmRelation, osmNode, tags);
+      processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(transferZoneGroup, osmRelation, osmNode, tags, suppressLogging);
       
     }               
     
@@ -270,8 +283,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
    * @param tags of the node
+   * @param suppressLogging when true suppress logging
    */  
-  private void processPtv2StopAreaMemberNodePtv2WithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags) {
+  private void processPtv2StopAreaMemberNodePtv2WithoutRole(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags , boolean suppressLogging) {
     
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STATION)) {
       
@@ -288,8 +303,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
    * @param osmNode of the relation to process
+   * @param suppressLogging when true suppress logging
    */
-  private void processPtv2StopAreaMemberNodeWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode) {
+  private void processPtv2StopAreaMemberNodeWithoutRole(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, boolean suppressLogging) {
     
     /* determine pt version */
     Map<String, String> osmNodeTags = OsmModelUtil.getTagsAsMap(osmNode);
@@ -297,10 +314,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* process by version */
     switch (ptVersion) {
       case VERSION_2:
-        processPtv2StopAreaMemberNodePtv2WithoutRole(transferZoneGroup, osmRelation, osmNode, osmNodeTags);
+        processPtv2StopAreaMemberNodePtv2WithoutRole(transferZoneGroup, osmRelation, osmNode, osmNodeTags, suppressLogging);
         break;
       case VERSION_1:
-        processPtv2StopAreaMemberNodePtv1WithoutRole(transferZoneGroup, osmRelation, osmNode, osmNodeTags);
+        processPtv2StopAreaMemberNodePtv1WithoutRole(transferZoneGroup, osmRelation, osmNode, osmNodeTags, suppressLogging);
       default:          
         break;
     } 
@@ -337,11 +354,13 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
    * @param osmWayMember of the relation to process
+   * @param suppressLogging when true suppress logging
    */  
-  private void processPtv2StopAreaMemberWayWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember osmWayMember) {
+  private void processPtv2StopAreaMemberWayWithoutRole(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember osmWayMember, boolean suppressLogging) {
     
     boolean unidentified = false; 
-    /* we do not store all ways in memory, so we cannot simply collect and check  tags, instead we must rely
+    /* we do not store all OSM ways in memory, so we cannot simply collect and check  tags, instead we must rely
      * on unprocessed or already processed entities. For ways these are restricted to:
      * 
      *  - (unprocessed) stations -> process and extract name for group
@@ -359,13 +378,13 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(EntityType.Way, osmWayMember.getId());
       if(transferZone != null) { 
         /* process as platform */
-        registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, osmWayMember);                    
+        registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, osmWayMember, suppressLogging);
         unidentified = false;
       }
     }
   
-    if(unidentified) {
-      LOGGER.warning(String.format("DISCARD: unable to collect osm way %d referenced in stop_area %d", osmWayMember.getId(), osmRelation.getId()));
+    if(unidentified && !suppressLogging) {
+      LOGGER.warning(String.format("DISCARD: unable to collect OSM way %d referenced in stop_area %d", osmWayMember.getId(), osmRelation.getId()));
     }  
   }   
 
@@ -378,28 +397,28 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param member of the relation to process
    */
   private void processPtv2StopAreaMemberWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
-    
+    boolean suppressLogging = getSettings().isSuppressStopAreaLogging(osmRelation.getId());
     if(member.getType() == EntityType.Node) {
             
       /* collect osm node */
       OsmNode osmNode = getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNode(member.getId());
       if(osmNode == null) {
-        if(!getSettings().hasBoundingPolygon()) {
-          LOGGER.warning(String.format("DISCARD: Unable to collect OSM node %d (without role tag) referenced in stop_area %d, verify it lies outside the parsed area", member.getId(), osmRelation.getId()));
+        if(!getSettings().hasBoundingPolygon() && !suppressLogging) {
+          LOGGER.warning(String.format("DISCARD: OSM node %d (without role tag) referenced in stop_area %d not available, expected to reside outside bounding box, if not verify correctness", member.getId(), osmRelation.getId()));
         }
         return;
       }
       
       /* process as node, still it either adds an already parsed entity to the group, or marks unprocessed entities as processed so they are no longer
        * required to be processed as stand-alone Pt entities (not part of a stop_area) */
-      processPtv2StopAreaMemberNodeWithoutRole(transferZoneGroup, osmRelation, osmNode);       
+      processPtv2StopAreaMemberNodeWithoutRole(transferZoneGroup, osmRelation, osmNode, suppressLogging);
       
     }else if(member.getType() == EntityType.Way){
             
       /* we do not store all osm ways in memory, so we pass along the member information instead and attempt to still process the way best we can */
-      processPtv2StopAreaMemberWayWithoutRole(transferZoneGroup, osmRelation, member);     
+      processPtv2StopAreaMemberWayWithoutRole(transferZoneGroup, osmRelation, member, suppressLogging);
       
-    }else {      
+    }else if(suppressLogging){
       LOGGER.info(String.format("DISCARD: stop_area (%d) member without a role found (%d) that is not a node or way",osmRelation.getId(),member.getId()));
     }
   }   
@@ -889,8 +908,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * 
    * @param osmRelation to extract stop_area for
    * @param tags of the stop_area relation
+   * @param suppressLogging when true suppress logging
    */
-  private void extractPtv2StopAreaRelation(OsmRelation osmRelation, Map<String, String> tags){
+  private void extractPtv2StopAreaRelation(OsmRelation osmRelation, Map<String, String> tags, boolean suppressLogging){
 
     /* transfer zone group */
     TransferZoneGroup transferZoneGroup = getTransferZoneGroupHelper().createPopulateAndRegisterTransferZoneGroup(osmRelation, tags);    
@@ -906,7 +926,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* platform */
       if(member.getRole().equals(OsmPtv2Tags.PLATFORM_ROLE)) {              
         
-        registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member);
+        registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member, suppressLogging);
         
       }
       /* stop_position */
@@ -1068,7 +1088,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(relationType.equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
       /* stop_area: process all but stop_positions (parsed in post-processing)*/
         getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_AREA);
-        extractPtv2StopAreaRelation(osmRelation, tags);
+        extractPtv2StopAreaRelation(osmRelation, tags, getSettings().isSuppressStopAreaLogging(osmRelation.getId()));
     }else if(relationType.equals(OsmRelationTypeTags.MULTIPOLYGON) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
       /* multi_polygons representing public transport platform */
       getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM_ROLE);
@@ -1117,7 +1137,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmNode osmNode) {
 
-    if(osmNode.getId() == 579383922L){
+    if(osmNode.getId() == 1763901273L){
       int bla = 4;
     }
 

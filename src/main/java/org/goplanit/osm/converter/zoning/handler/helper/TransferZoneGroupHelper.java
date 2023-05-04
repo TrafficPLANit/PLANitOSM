@@ -57,9 +57,11 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    * @param osmId OSM id of the transfer zone
    * @param tags (maybe null if not available)
    * @param transferZoneGroup to register on
+   * @param suppressLogging when true suppress logging
    * @return true when registered on the group, false otherwise
    */
-  private boolean registerTransferZoneOnGroup(long osmId, EntityType type, Map<String, String> tags, TransferZoneGroup transferZoneGroup) {
+  private boolean registerTransferZoneOnGroup(
+      long osmId, EntityType type, Map<String, String> tags, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
     /* Should be parsed (with or without connectoids), connect to group and let stop_positions create connectoids */
     TransferZone transferZone = zoningReaderData.getPlanitData().getTransferZoneByOsmId(type, osmId);
     if( transferZone==null) {
@@ -81,7 +83,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
           logDiscardWarning = true;
         }
         
-        if(logDiscardWarning) {
+        if(logDiscardWarning && !suppressLogging) {
           LOGGER.warning(String.format("DISCARD: Waiting area OSM entity %d (type %s) not available, referenced by stop_area %s, problem unless ineligible or geometry outside parsed area",osmId, type.toString(), transferZoneGroup.getExternalId()));
         }
       }
@@ -209,10 +211,11 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    * @param type of the OSM entity
    * @param osmId OSM id of the transfer zone
    * @param transferZoneGroup to register on
+   * @param suppressLogging when true suppress logging
    * @return true when registered on the group, false otherwise
    */
-  public boolean registerTransferZoneOnGroup(long osmId, EntityType type, TransferZoneGroup transferZoneGroup) {
-    return registerTransferZoneOnGroup(osmId, type, null, transferZoneGroup);
+  public boolean registerTransferZoneOnGroup(long osmId, EntityType type, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
+    return registerTransferZoneOnGroup(osmId, type, null, transferZoneGroup, suppressLogging);
   }
 
   /** Register a transfer zone on a group by providing the OSM entity, if no transfer zone is available for this combination, 
@@ -220,10 +223,12 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    *  
    * @param osmEntity to collect transfer zone for and register
    * @param transferZoneGroup to register on
+   * @param suppressLogging when true suppress logging
    * @return true when registered on the group, false otherwise
    */  
-  public boolean registerTransferZoneOnGroup(OsmEntity osmEntity, TransferZoneGroup transferZoneGroup) {
-    return registerTransferZoneOnGroup(osmEntity.getId(), Osm4JUtils.getEntityType(osmEntity), OsmModelUtil.getTagsAsMap(osmEntity),transferZoneGroup);
+  public boolean registerTransferZoneOnGroup(OsmEntity osmEntity, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
+    return registerTransferZoneOnGroup(
+        osmEntity.getId(), Osm4JUtils.getEntityType(osmEntity), OsmModelUtil.getTagsAsMap(osmEntity),transferZoneGroup, suppressLogging);
   }  
   
   /** Register a transfer zone on a group by providing the OSM node, if no transfer zone is available for this combination, 
@@ -232,9 +237,10 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    * @param osmNode to collect transfer zone for and register
    * @param tags to use
    * @param transferZoneGroup to register on
+   * @param suppressLogging when true suppress logging
    * @return true when registered on the group, false otherwise
    */  
-  public boolean registerTransferZoneOnGroup(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup) {
-    return registerTransferZoneOnGroup(osmNode.getId(),EntityType.Node, tags,transferZoneGroup);
+  public boolean registerTransferZoneOnGroup(OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
+    return registerTransferZoneOnGroup(osmNode.getId(),EntityType.Node, tags,transferZoneGroup, suppressLogging);
   }  
 }
