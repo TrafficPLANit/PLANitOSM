@@ -13,7 +13,6 @@ import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
@@ -236,7 +235,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @return speedLimit in km/h
    */
   public double getDefaultSpeedLimitByOsmRailwayType(String osmWayValue){
-    return getDefaultSpeedLimitByOsmWayType(osmWayValue);    
+    return getDefaultSpeedLimitByOsmTypeValue(osmWayValue);
   }  
   
   /** Collect the default speed limit for a given railway tag value, where we extract the key and value from the passed in tags, if available

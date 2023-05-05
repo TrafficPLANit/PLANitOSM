@@ -77,11 +77,13 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param member the platform member
    * @param suppressLogging when true suppress logging
    */
-  private void registerPtv2StopAreaPlatformOnGroup(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member, boolean suppressLogging) {
+  private void registerPtv2StopAreaPlatformOnGroup(
+      TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member, boolean suppressLogging) {
+
     EntityType type = member.getType();
     long osmId = member.getId();
     if(member.getType().equals(EntityType.Relation)) {
-      /* special case - if platform is not a regular osm way, but modelled as a multi-polygon, then it is a relation in itself, in which case we
+      /* special case - if platform is not a regular OSM way, but modelled as a multi-polygon, then it is a relation in itself, in which case we
        * stored its outer boundary (outer role). Use that instead of the relation to collect the transfer zone that was created */      
       OsmRelationMember internalMember = 
           OsmRelationUtils.findFirstOsmRelationMemberWithRole(osmRelation ,OsmMultiPolygonTags.OUTER_ROLE);
@@ -117,6 +119,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       }
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
       if(!(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_POSITION))) {
+
         wronglyTaggedRole = true;
       }
     }else {
@@ -132,29 +135,43 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZoneGroup the stop_area reflects in PLANit
    * @param osmRelation the OSM stop_area relation
    * @param member the member that is wrongly tagged
+   * @return true when salvaged in a way that no longer requires processing the entity as part of the stop area, false, otherwise
    */
-  private void salvageWronglyTaggedStopRolePtv2StopAreaRelation(
+  private boolean salvageWronglyTaggedStopRolePtv2StopAreaRelation(
       TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
-    boolean suppressLogging = getSettings().isSuppressStopAreaLogging(osmRelation.getId());
-    /* station? -> then we it should exist as unprocessed station */
+
+    boolean suppressLogging = getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId());
+
+    if(member.getType()==EntityType.Node && getZoningReaderData().getOsmData().getUnprocessedPtv1FerryTerminal(member.getId())!=null){
+      /* while somehow wrongly tagged as a PTV2 entity, the indication it is a ferry terminal, might indicate it indeed is a stop (position)
+       * hence, still consider as a stop role and do not flag to be removed */
+      return false;
+    }
+
+    /* station? -> then tag the groups name while retaining it for post-processing */
     Pair<OsmPtVersionScheme, OsmEntity> unprocessedStationPair = getZoningReaderData().getOsmData().getUnprocessedStation(member.getType(), member.getId());
     if(unprocessedStationPair != null) {
-      /* station -> process it as such */
-      if(!suppressLogging) {
-        LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as station", transferZoneGroup.getExternalId(), member.getId()));
-      }
-      TransferZoneGroupHelper.updateTransferZoneGroupStationName(transferZoneGroup, unprocessedStationPair.second(), OsmModelUtil.getTagsAsMap(unprocessedStationPair.second()));          
-    }      
-    /* platform? --> then we should already have a transfer zone for it*/      
-    else if(getZoningReaderData().getPlanitData().getTransferZoneByOsmId(member.getType(), member.getId())!=null) {
+      /* station -> update name and indicate salvaged as it will be processed as a separate station and then potentially be re-attached*/
+      if(!suppressLogging) LOGGER.info(String.format("SALVAGED: Stop_area %s member %d with stop role identified as station", transferZoneGroup.getExternalId(), member.getId()));
+      TransferZoneGroupHelper.updateTransferZoneGroupName(transferZoneGroup, unprocessedStationPair.second(), OsmModelUtil.getTagsAsMap(unprocessedStationPair.second()));
+      return true;
+    }
+
+    /* platform? --> then we should already have a transfer zone for it*/
+    if(getZoningReaderData().getPlanitData().getTransferZoneByOsmId(member.getType(), member.getId())!=null) {
       if(!suppressLogging) {
         LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as platform", transferZoneGroup.getExternalId(), member.getId()));
       }
       /* platform -> process as such */
       registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, member, suppressLogging);
-    }else if(!suppressLogging){
+      return true;
+    }
+
+    if(!suppressLogging){
       LOGGER.warning(String.format("DISCARD: stop_area %s member %d incorrectly given stop role...remains unidentified", transferZoneGroup.getExternalId(), member.getId()));
-    }       
+    }
+
+    return true;
   }  
   
   /** process a stop_area member that has no role tag identifying its purpose but it is a Ptv1 supporting entity for highways. Based on already parsed entities we attempt
@@ -209,7 +226,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);
     if(ptv1ValueTag==null) {
       if(suppressLogging) {
-        LOGGER.severe(String.format("railway tag not present for alleged Ptv1 railway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
+        LOGGER.severe(String.format("Railway tag not present for alleged Ptv1 railway %d on stop_area %d, this should not happen ignored", osmNode.getId(), osmRelation.getId()));
       }
       return;
     }
@@ -222,7 +239,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       if(OsmTagUtils.matchesAnyValueTag(ptv1ValueTag, OsmPtv1Tags.STATION, OsmPtv1Tags.HALT)) {
         
         /* use name only */
-        TransferZoneGroupHelper.updateTransferZoneGroupStationName(transferZoneGroup, osmNode, tags);
+        TransferZoneGroupHelper.updateTransferZoneGroupName(transferZoneGroup, osmNode, tags);
         getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
         
       }
@@ -272,7 +289,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       
       processPtv2StopAreaMemberNodePtv1HighwayWithoutRole(transferZoneGroup, osmRelation, osmNode, tags, suppressLogging);
       
-    }               
+    }else if(OsmPtv1Tags.isFerryTerminal(tags) && getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive()) {
+      // without a role present we can't assume it is a transfer zone (beyond stop position), nor that it is the only ferry terminal
+      // part of the group, so don't do anything yet until we understand its use better
+    }
     
   }    
 
@@ -287,10 +307,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */  
   private void processPtv2StopAreaMemberNodePtv2WithoutRole(
       TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmNode osmNode, Map<String, String> tags , boolean suppressLogging) {
-    
+
     if(OsmPtv2Tags.hasPublicTransportKeyTag(tags) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STATION)) {
       
-      TransferZoneGroupHelper.updateTransferZoneGroupStationName(transferZoneGroup, osmNode, tags);
+      TransferZoneGroupHelper.updateTransferZoneGroupName(transferZoneGroup, osmNode, tags);
       getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);
       
     }
@@ -333,7 +353,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* process as station */
     Map<String,String> tags = OsmModelUtil.getTagsAsMap(osmStation);
     /* on group */
-    TransferZoneGroupHelper.updateTransferZoneGroupStationName(transferZoneGroup, osmStation, tags);
+    TransferZoneGroupHelper.updateTransferZoneGroupName(transferZoneGroup, osmStation, tags);
     /* on each transfer zone on the group (we must use relation because not all transfer zones might be registered on the group yet */
     for(int index=0;index<osmRelation.getNumberOfMembers();++index) {
       OsmRelationMember transferZoneMember = osmRelation.getMember(index);
@@ -397,7 +417,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param member of the relation to process
    */
   private void processPtv2StopAreaMemberWithoutRole(TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember member) {
-    boolean suppressLogging = getSettings().isSuppressStopAreaLogging(osmRelation.getId());
+    boolean suppressLogging = getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId());
     if(member.getType() == EntityType.Node) {
             
       /* collect osm node */
@@ -432,7 +452,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractPtv2Ptv1StopPosition(OsmNode osmNode, Map<String, String> tags, String ptv1DefaultMode) {
     /* PTv1 tagging present, so mode information available, use this to verify against activated mode(s), mark for further processing if available, otherwise ignore */
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
+    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
     }  
@@ -446,10 +467,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* Ptv1 tags as well, use this context to determine if a tagging mistake has occurred and/or how to process in case special treatment is needed due
      * to user error or contextual interpretation that indicates we should use the Ptv1 tag instead of the Ptv2 tag to process this entity */
     if(OsmPtv1Tags.isTramStop(tags)){
-      if(!isNearNetworkBoundingBox(osmNode)) {
-        /* tagging error because Ptv1 tram stop must also be on a tram track  */
-        LOGGER.warning(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) resides on discarded(out of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
-      }
+      /* tagging error because Ptv1 tram stop must also be on a tram track  */
+      if(!isNearNetworkBoundingBox(osmNode)) LOGGER.warning(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) resides on discarded(out of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
+      return;
+    }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
+      if(!isNearNetworkBoundingBox(osmNode)) LOGGER.warning(String.format("DISCARD: Ptv2 public_transport=stop_position also tagged as ferry_terminal (%d) but resides on discarded (out of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
       return;
     }
 
@@ -494,7 +516,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmNode the stop_position
    * @param tags of the OSM node
    */
-  private void extractPtv2StopPosition(OsmNode osmNode, Map<String, String> tags){
+  private void processPtv2StopPosition(OsmNode osmNode, Map<String, String> tags){
     
     /* ensure the position is required given the activated modes */
     String ptv1DefaultMode = OsmModeUtils.identifyPtv1DefaultMode(tags);
@@ -519,18 +541,19 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmNode the platform is represented by
    * @param tags tags of the OSM node
    */
-  private void extractPtv2Platform(OsmNode osmNode, Map<String, String> tags){
+  private void processPtv2Platform(OsmNode osmNode, Map<String, String> tags){
     getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM);
     
     String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(tags);
     if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
-      /* platform is situated on the road infrastructure. This is discouraged and arguably a tagging error, but occurs sometimes and can be salvaged by
+      /* platform is situated on road/rail/water . This is discouraged and arguably a tagging error, but occurs sometimes and can be salvaged by
        * extracting the platform and stop position together */
       getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
     }else {
       /* regular platform separated from vehicle stop position; create transfer zone but no connectoids, 
        * these will be constructed during or after we have parsed relations, i.e. stop_areas */
-      getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
+      getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
+          osmNode, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
     }   
   }   
   
@@ -710,10 +733,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractTransferInfrastructurePtv1Railway(OsmNode osmNode, Map<String, String> tags, String ptv1ValueTag, PlanitJtsCrsUtils geoUtils) {
     OsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getNetworkSettings();
-    if(!networkSettings.isRailwayParserActive()) {
-      return;
-    }
-    
+
     /* tram stop */
     if(OsmPtv1Tags.TRAM_STOP.equals(ptv1ValueTag) && networkSettings.getRailwaySettings().isOsmModeActivated(OsmRailwayTags.TRAM)) {
       
@@ -765,7 +785,41 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
        * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
       getZoningReaderData().getOsmData().addUnprocessedPtv1Station(osmNode);
     }    
-  }   
+  }
+
+  /** Original treatment of water modes (ferry), while not treated via PTv1 scheme, as it is the original approach we lump it in with the PTv1 scheme).
+   *  Currently, this verifies if a ferry terminal is eligible and when so we verify it resides on a ferry route (way). If so, it is postponed for treatment
+   *  similar to train stations residing on a train track. If not on the ferry route, it is likely a tagging error which we will log as such
+   *
+   * @param osmNode the node to extract
+   * @param tags all tags of the OSM Node
+   * @param geoUtils to use
+   */
+  private void extractTransferInfrastructurePtv1Water(OsmNode osmNode, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) {
+    OsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getNetworkSettings();
+
+    /* ferry terminal */
+    if(OsmPtv1Tags.isFerryTerminal(tags) && networkSettings.getWaterwaySettings().isOsmModeActivated(OsmWaterModeTags.FERRY)) {
+
+      /* ferry terminals are often part of Ptv2 stop_areas and sometimes even more than one ferry terminal exists within the single stop_area.
+       * It might be that the ferry terminal acts as a stop position (on the OSM way) rather than a transfer zone/platform. However,  we can only
+       * hope to distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, the ferry terminal remains, i.e.,
+       * are not part of a stop_area nor do we know what role it plays, then we parse it as a stop position and transfer zone combined.
+       * For now, we track this instance and postpone parsing until then */
+      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
+
+        /* tagging error */
+        LOGGER.warning(String.format("DISCARD: amenity=ferry_terminal (%d) does not reside on OSM way supporting a ferry route", osmNode.getId()));
+
+      }else {
+
+        /* mark for post_processing to create transfer zone and connectoids for it, since it might have a separate waiting platform */
+        getProfiler().incrementOsmPtv1TagCounter(OsmTags.FERRY_TERMINAL);
+        getZoningReaderData().getOsmData().addUnprocessedPtv1FerryTerminal(osmNode);
+      }
+    }
+  }
+
 
   /** Classic PT infrastructure based on Ptv2 OSM public transport scheme for an Osm way
    * 
@@ -790,19 +844,19 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         LOGGER.info(String.format("Encountered stop_position on osm way %d, this is not properly tagged, ignored",osmWay.getId()));
       }
       
-      /* stop position */
+      /* station */
       if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
         /* stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
-         * ignore them altogether. Therefore postpone parsing them until after we have parsed the relations */
+         * ignore them altogether. Therefore, postpone parsing them until after we have parsed the relations */
         getZoningReaderData().getOsmData().addUnprocessedPtv2Station(osmWay);
       }     
       
       /* stop area */
       if(OsmPtv2Tags.STOP_AREA.equals(ptv2ValueTag)) {
         /* should not be on a way, log and ignore */
-        LOGGER.info(String.format("Encountered stop_area on osm way %d, this is not properly tagged, ignored",osmWay.getId()));
-      }       
-      
+        LOGGER.info(String.format("Encountered stop_area on OSM way %d, this is not properly tagged, ignored",osmWay.getId()));
+      }
+
     }else {
       throw new PlanItRunTimeException(String.format("Parsing transfer infrastructure (Ptv2) for osm way %s, but no public_transport key tag found",osmWay.getId()));
     }
@@ -832,6 +886,12 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         extractTransferInfrastructurePtv1Railway(osmWay, tags, ptv1ValueTag);
       }
       
+    }
+    /* amenity=ferry_terminal*/
+    else if(OsmPtv1Tags.isFerryTerminal(tags)) {
+      if(getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive()) {
+        LOGGER.warning(String.format("DISCARD: amenity=ferry_terminal only allowed on OSM nodes, not on OSM way (tags: %s)", tags));
+      }
     }else {
       throw new PlanItRunTimeException(String.format("Parsing transfer infrastructure (Ptv1) for OSM way %s, but no compatible key tags found",osmWay.getId()));
     }
@@ -851,17 +911,29 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* platform */
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
                 
-        extractPtv2Platform(osmNode, tags);
+        processPtv2Platform(osmNode, tags);
       }            
       /* stop position */
       else if(OsmPtv2Tags.STOP_POSITION.equals(ptv2ValueTag)) {
         
-        extractPtv2StopPosition(osmNode, tags);
+        processPtv2StopPosition(osmNode, tags);
 
       }     
       /* station */
       else if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
-        /* stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
+
+        /* special case - when a ferry terminal is marked as a station, we process it as a ferry terminal rather than
+         * a station... */
+        if(OsmPtv1Tags.isFerryTerminal(tags)){
+          if(getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive() &&
+              getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().isOsmModeActivated(OsmWaterModeTags.FERRY)){
+            LOGGER.info(("SALVAGED: Ptv2 public_transport=station is also tagged as a ferry terminal, parse as Ptv1 ferry terminal instead"));
+            extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
+          }
+          return;
+        }
+
+        /* ...otherwise stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
          * ignore them altogether. Therefore, postpone parsing them until after we have parsed the relations */
         getZoningReaderData().getOsmData().addUnprocessedPtv2Station(osmNode);
         getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);
@@ -869,7 +941,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* stop area */
       else if(OsmPtv2Tags.STOP_AREA.equals(ptv2ValueTag)) {
         /* should not be on a node, log and ignore */
-        LOGGER.info(String.format("Encountered stop_area on OSM node %d, this is not properly tagged, ignored",osmNode.getId()));
+        LOGGER.info(String.format("DISCARD: Encountered stop_area on OSM node %d, this is not properly tagged, ignored",osmNode.getId()));
       }          
                   
     }else {
@@ -877,7 +949,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
   }
   
-  /** Classic PT infrastructure based on original OSM public transport scheme (not Ptv2 tags) for osm node
+  /** Classic PT infrastructure based on original OSM public transport scheme (not Ptv2 tags) for OSM node
    * 
    * @param osmNode to parse
    * @param tags of the node
@@ -885,22 +957,26 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractTransferInfrastructurePtv1(OsmNode osmNode, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) {
         
-    if(OsmHighwayTags.hasHighwayKeyTag(tags) && getNetworkToZoningData().getNetworkSettings().isHighwayParserActive()) {
+    if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
       
       String ptv1ValueTag = tags.get(OsmHighwayTags.HIGHWAY);
       extractTransferInfrastructurePtv1Highway(osmNode, tags, ptv1ValueTag, geoUtils);
       
-    }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
+    }else if(getNetworkToZoningData().getNetworkSettings().isRailwayParserActive() && OsmRailwayTags.hasRailwayKeyTag(tags)) {
       
       String ptv1ValueTag = tags.get(OsmRailwayTags.RAILWAY);      
       extractTransferInfrastructurePtv1Railway(osmNode, tags, ptv1ValueTag, geoUtils);     
       
+    }else if(getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive() && OsmPtv1Tags.isFerryTerminal(tags)) {
+
+      extractTransferInfrastructurePtv1Water(osmNode, tags, geoUtils);
+
     }else {
       throw new PlanItRunTimeException("parsing transfer infrastructure (Ptv1) for osm node %s, but no compatible key tags found",osmNode.getId());
     }  
         
-  }  
-  
+  }
+
   /** Extract stop area relation of Ptv2 scheme. We create transfer zone groups for each valid stop_area, connect it to the transfer zones but do not yet created connectoids for the stop positions.
    * This is left to post-processing. We also mark processed stations, platforms, etc., such that after all
    * stop_areas have been processed, we can extract planit instances for the remaining unprocessed osm entities, knowing they do not belong to any stop_area and
@@ -932,15 +1008,19 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* stop_position */
       else if(member.getRole().equals(OsmPtv2Tags.STOP_ROLE)) {
         
-        /* stop_position processing is postponed to post_processing, do nothing for valid stop_positions */ 
+        /* stop_position processing is postponed to post_processing, do nothing for (potentially) valid stop_positions */
         
-        /* Identify wrongly tagged members that state to be of role: stop, but are in fact platforms, or stations and need to be registered as such */
+        /* Identify wrongly tagged members that state to be of role: stop, but are in fact platforms, or stations and need to be registered as such
+        * a ferry terminal is considered an exception as it is considered more likely a mistake was made in the PTv2 tag and a ferry terminal can be a stop position, so not proven to be wrong */
         if(isPtv2StopAreaWronglyTaggedStopRole(member)) {
           
           /* we support wrongly tagged: stations, platforms that have already been identified in standalone fashion */
-          salvageWronglyTaggedStopRolePtv2StopAreaRelation(transferZoneGroup, osmRelation, member);
-          /* flag to not process as stop_position in post-processing since it is not a stop_position and invalidly tagged as such */
-          getZoningReaderData().getOsmData().addIgnoreStopAreaStopPosition(member.getType(), member.getId());          
+          boolean ignoreAfterSalvage = salvageWronglyTaggedStopRolePtv2StopAreaRelation(transferZoneGroup, osmRelation, member);
+
+          if(ignoreAfterSalvage) {
+            /* flag to not process as stop_position in post-processing since it is not a stop_position and invalidly tagged as such */
+            getZoningReaderData().getOsmData().addIgnoreStopAreaStopPosition(member.getType(), member.getId());
+          }
         }
       }
       /* other than stop_position */
@@ -1088,7 +1168,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(relationType.equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.STOP_AREA)) {
       /* stop_area: process all but stop_positions (parsed in post-processing)*/
         getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.STOP_AREA);
-        extractPtv2StopAreaRelation(osmRelation, tags, getSettings().isSuppressStopAreaLogging(osmRelation.getId()));
+        extractPtv2StopAreaRelation(osmRelation, tags, getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId()));
     }else if(relationType.equals(OsmRelationTypeTags.MULTIPOLYGON) && tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
       /* multi_polygons representing public transport platform */
       getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM_ROLE);

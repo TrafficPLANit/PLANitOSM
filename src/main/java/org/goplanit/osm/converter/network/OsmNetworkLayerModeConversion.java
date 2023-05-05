@@ -8,19 +8,7 @@ import java.util.Set;
 import org.goplanit.osm.converter.OsmModeConversionBase;
 import org.goplanit.osm.converter.helper.OsmLanesModeTaggingSchemeHelper;
 import org.goplanit.osm.converter.helper.OsmModeLanesTaggingSchemeHelper;
-import org.goplanit.osm.tags.OsmAccessTags;
-import org.goplanit.osm.tags.OsmBicycleTags;
-import org.goplanit.osm.tags.OsmBusWayTags;
-import org.goplanit.osm.tags.OsmDirectionTags;
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmJunctionTags;
-import org.goplanit.osm.tags.OsmLaneTags;
-import org.goplanit.osm.tags.OsmOneWayTags;
-import org.goplanit.osm.tags.OsmPedestrianTags;
-import org.goplanit.osm.tags.OsmRailModeTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmRoadModeCategoryTags;
-import org.goplanit.osm.tags.OsmRoadModeTags;
+import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.osm.util.OsmWayUtils;
@@ -525,6 +513,8 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
         osmAllowedModesForWayType = getSettings().getHighwaySettings().collectAllowedOsmHighwayModes(tags.get(OsmHighwayTags.HIGHWAY)); 
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
         osmAllowedModesForWayType = getSettings().getRailwaySettings().collectAllowedOsmRailwayModes(tags.get(OsmRailwayTags.RAILWAY));
+      }else if(OsmWaterwayTags.hasWaterwayKeyTag(tags)) {
+        osmAllowedModesForWayType = getSettings().getWaterwaySettings().collectAllowedOsmWaterwayModes(tags.get(OsmRailwayTags.RAILWAY));
       }else {
         /* no other major types yet supported */
       }

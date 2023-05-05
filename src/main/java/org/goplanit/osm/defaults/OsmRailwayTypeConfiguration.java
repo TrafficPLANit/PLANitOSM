@@ -31,14 +31,14 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration 
   /**
    * the OSM railway types that are marked as activated OSM types, i.e., will be processed when parsing
    */
-  protected static final Set<String> DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES = new HashSet<String>();
+  protected static final Set<String> DEFAULT_ACTIVATED_OSM_RAILWAY_TYPES = new HashSet<>();
   
   /**
    * the OSM railway types that are marked as deactivated OSM types, i.e., will be ignored when parsing
    */
-  protected static final Set<String> DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES = new HashSet<String>(); 
-    
-    
+  protected static final Set<String> DEFAULT_DEACTIVATED_OSM_RAILWAY_TYPES = new HashSet<>();
+
+
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
    * the common OSM railway types to macroscopic link segment types that we explicitly do include, i.e., support.

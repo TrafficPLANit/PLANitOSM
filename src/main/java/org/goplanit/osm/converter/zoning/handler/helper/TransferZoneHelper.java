@@ -193,7 +193,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       }
 
     }else {
-      LOGGER.warning(String.format("Transfer zone not created, geometry incomplete (polygon, line string) for osm way %s, possibly nodes outside bounding box, or invalid OSM entity",osmEntity.getId()));
+      LOGGER.warning(String.format(
+          "Transfer zone not created, geometry incomplete (polygon, line string) for OSM way %s, possibly nodes outside bounding box, or invalid OSM entity",osmEntity.getId()));
     }
         
     return transferZone;
@@ -642,7 +643,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     TransferZone transferZone = null;
         
     /* tagged osm modes */        
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+        publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any OSM modes) */

@@ -8,14 +8,7 @@ import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
-import org.goplanit.osm.tags.OsmAccessTags;
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmLaneTags;
-import org.goplanit.osm.tags.OsmOneWayTags;
-import org.goplanit.osm.tags.OsmRailFeatureTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmSpeedTags;
-import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.OsmWayUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.arrays.ArrayUtils;
@@ -202,9 +195,12 @@ public class OsmNetworkLayerParser {
    * @return created or fetched link
    */
   private MacroscopicLink createAndPopulateLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
-    
-    PlanItRunTimeException.throwIf(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));
-    PlanItRunTimeException.throwIf(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes(), String.format("invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId()));   
+    if(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes()){
+      throw new PlanItRunTimeException("Invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
+    }
+    if(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes()){
+      throw new PlanItRunTimeException("Invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
+    }
 
     /* collect memory model nodes */
     Pair<Node,Integer> nodeFirstResult = extractFirstNode(osmWay, startNodeIndex, allowTruncationIfGeometryIncomplete);
@@ -300,7 +296,8 @@ public class OsmNetworkLayerParser {
    * @param linkSegmentType use thus far for this way
    * @return the link segment types for the main direction and contra-flow direction
    */  
-  private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmWay(OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection){  
+  private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmWay(
+      OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection){
 
     Set<Mode> toBeAddedModes = null;
     Set<Mode> toBeRemovedModes = null;
@@ -571,7 +568,7 @@ public class OsmNetworkLayerParser {
     /* match A->B of PLANit link to geometric forward/backward direction of OSM paradigm */
     boolean directionAbIsForward = link.isGeometryInAbDirection() ? true : false;
     if(!directionAbIsForward) {
-      LOGGER.warning("directionAB is not forward in geometry SHOULD NOT HAPPEN!");
+      LOGGER.warning("DirectionAB is not forward in geometry SHOULD NOT HAPPEN!");
     }
     
     /* speed limits in forward and backward direction based on tags and defaults if missing*/
@@ -691,9 +688,11 @@ public class OsmNetworkLayerParser {
 
       /* store OSM way type for future reference (used in zoning reader for example) */
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmHighwayTags.HIGHWAY));
+        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmHighwayTags.getHighwayKeyTag()));
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmRailwayTags.RAILWAY));
+        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmRailwayTags.getRailwayKeyTag()));
+      }else if(OsmWaterwayTags.isWaterway(tags)){
+        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmWaterwayTags.getWaterwayKeyTag()));
       }
 
       /* register the links vertical layer index (used in the zoning reader for example) */
@@ -704,6 +703,7 @@ public class OsmNetworkLayerParser {
         startNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);
         endNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeB().getPosition(), networkData);
       }
+
       /* register internal nodes for breaking links later on during parsing */
       registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);
 
@@ -725,8 +725,8 @@ public class OsmNetworkLayerParser {
     
     /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry, and backward, i.e., the opposite of the geometry)*/
     boolean forwardDirection = true;
-    MacroscopicLinkSegmentType  forwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, forwardDirection);
-    MacroscopicLinkSegmentType  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
+    var  forwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, forwardDirection);
+    var  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
 
     return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
   }    

@@ -250,6 +250,14 @@ public class OsmModeAccessDefaultsByCountry {
     }                
     
   }
+
+  /**
+   * populate the global defaults for railway types
+   */
+  protected static void populateGlobalDefaultWaterwayModeAccess() {
+    //Note that waterways currently are only identifiable based on a mode, e.g., route=some_water_mode, hence once we know it is
+    // a waterway we therefore know the mode, hence, no global  defaults can exist for water ways.
+  }
       
   /**
    * For all countries for which a dedicated CSV is available under the resources dir, we parse their mode access defaults

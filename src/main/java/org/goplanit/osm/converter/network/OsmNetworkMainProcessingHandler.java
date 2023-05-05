@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.network;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
@@ -12,11 +13,9 @@ import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
-import org.goplanit.utils.network.layer.physical.Link;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -58,7 +57,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         
     Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
-    if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {
+    if(isActivatedRoadRailOrWaterwayBasedInfrastructure(tags)) {
       
       /* only process circular ways that are complete, e.g. not near bounding box causing some nodes to be missing
        * in which case we do not parse the entire circular way to avoid issues */
@@ -254,13 +253,21 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     
     var settings = getSettings();
         
-    /* highway (road) or railway (rail) */
-    boolean isHighway = true;
+    /* highway (road), railway (rail), or water way */
+    Function<String, Boolean> isWayActivatedLambda = osmTypeValueToUse -> false;
+    Function<String, Boolean> isTypeConfigurationMissingLambda = osmTypeValueToUse -> false;
     if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
-      osmTypeKeyToUse = OsmHighwayTags.HIGHWAY;      
+      osmTypeKeyToUse = OsmHighwayTags.getHighwayKeyTag();
+      isWayActivatedLambda = osmTypeValueToUse -> settings.getHighwaySettings().isOsmHighWayTypeDeactivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse);
     }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
-      osmTypeKeyToUse = OsmRailwayTags.RAILWAY;
-      isHighway = false;
+      osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
+      isWayActivatedLambda = osmTypeValueToUse -> settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);
+    }else if(OsmWaterwayTags.isWaterway(tags) && settings.isWaterwayParserActive()) {
+      osmTypeKeyToUse = OsmWaterwayTags.getWaterwayKeyTag();
+      isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayRouteTypeActivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // water ways have no way types, but are mapped to modes, directly, so when activated, it should always have (the one) type
     }
     
     /* without mapping no type */
@@ -277,20 +284,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         } });
     }
     /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/
-    else {
-      boolean isWayTypeDeactived = isHighway ?
-          settings.getHighwaySettings().isOsmHighWayTypeDeactivated(osmTypeValueToUse) : 
-          (!settings.isRailwayParserActive() || settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse));
-      if(!isWayTypeDeactived) {
-        boolean typeConfigurationMissing = isHighway ? OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse) : OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);         
-        
-        /*... not available event though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
-        if(typeConfigurationMissing) {            
-          LOGGER.warning(String.format(
-              "no link segment type available for OSM way: %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
-        }
-      }
-      
+    /*... not available even though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
+    else if(isWayActivatedLambda.apply(osmTypeValueToUse) && isTypeConfigurationMissingLambda.apply(osmTypeValueToUse)){
+      LOGGER.warning(String.format(
+          "no link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
     }
         
     return linkSegmentTypes;
@@ -361,7 +358,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           throw new PlanItRunTimeException("Layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
         }
         /* delegate to layer handler */
-        MacroscopicLink link = layerHandler.extractPartialOsmWay(osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
+        MacroscopicLink link = layerHandler.extractPartialOsmWay(
+            osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypes);
         if(link != null) {
           if(linksByLayer==null) {
             linksByLayer = new HashMap<>();
@@ -446,7 +444,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
 
-    if(osmWay.getId() == 27507056L){
+    if(osmWay.getId() == 647058144L){
       int bla = 4;
     }
 
@@ -468,13 +466,14 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     Map<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer = getDefaultLinkSegmentTypeByOsmWayType(osmWay, tags);
     if(linkSegmentTypesByLayer != null) {      
       
-      /* per layer identify the directional link segment types based on additional access changes from osm tags */      
+      /* per layer identify the directional link segment types based on additional access changes from OSM tags */
       for(var entry : linkSegmentTypesByLayer.entrySet()) {
         MacroscopicNetworkLayerImpl networkLayer = (MacroscopicNetworkLayerImpl) entry.getKey();
         var linkSegmentType = entry.getValue();
         
         /* collect possibly modified type (per direction) */
-        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerDirectionPair = getNetworkData().getLayerParser(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);
+        Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerDirectionPair =
+            getNetworkData().getLayerParser(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);
         if(typesPerDirectionPair != null) {
           linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerDirectionPair);
         }

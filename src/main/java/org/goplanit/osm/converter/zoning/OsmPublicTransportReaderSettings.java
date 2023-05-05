@@ -409,7 +409,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    *
    * @param osmStopAreaRelationIds
    */
-  public void suppressStopAreaLogging(long... osmStopAreaRelationIds) {
+  public void suppressOsmRelationStopAreaLogging(long... osmStopAreaRelationIds) {
     for(var osmStopAreaRelationId : osmStopAreaRelationIds) {
       suppressStopAreaLogging.add(osmStopAreaRelationId);
     }
@@ -421,7 +421,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmStopAreaRelationId to check
    * @return  true when suppressed, false otherwise
    */
-  public boolean isSuppressStopAreaLogging(long osmStopAreaRelationId) {
+  public boolean isSuppressOsmRelationStopAreaLogging(long osmStopAreaRelationId) {
     return suppressStopAreaLogging.contains(osmStopAreaRelationId);
   }
 }

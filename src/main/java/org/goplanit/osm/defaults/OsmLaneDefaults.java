@@ -6,11 +6,12 @@ import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
 
 /**
- * configure and retrieve the default configuration for the number of lanes for various osm way types (these are the total lanes on a link covering both directions.
+ * Configure and retrieve the default configuration for the number of lanes for various osm way types (these are the total lanes on a link covering both directions.
  * The "default" defaults for highway tags originate from https://wiki.openstreetmap.org/wiki/Key:lanes, while the "default" defaults for railways, i.e., the number of tracks
- * is based on https://wiki.openstreetmap.org/wiki/Key:railway#Tracks.
+ * is based on https://wiki.openstreetmap.org/wiki/Key:railway#Tracks. Waterways are given a single lane equivalent.
  * 
  * @author markr
  *
@@ -23,7 +24,7 @@ public class OsmLaneDefaults {
   private static final Logger LOGGER = Logger.getLogger(OsmLaneDefaults.class.getCanonicalName());  
   
   /** store the road based defaults */
-  protected static Map<String, Integer> defaultRoadLanesPerDirection = new HashMap<String, Integer>();  
+  protected static Map<String, Integer> defaultRoadLanesPerDirection = new HashMap<>();
     
   /** store the defaults  for class instance */
   protected Map<String, Integer> lanesPerDirection;
@@ -32,7 +33,10 @@ public class OsmLaneDefaults {
   protected int lanesPerDirectionIfUnspecified  = DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
   
   /** railway tracks per direction if not configured */
-  protected int tracksPerDirectionIfUnspecified  = DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED;  
+  protected int tracksPerDirectionIfUnspecified  = DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED;
+
+  /** water way lanes per direction if not configured */
+  protected int waterwayLanesPerDirectionIfUnspecified  = DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED;
       
   /* initialise */
   static {    
@@ -93,7 +97,7 @@ public class OsmLaneDefaults {
    * @param osmLaneDefaults to copy
    */
   public OsmLaneDefaults(OsmLaneDefaults osmLaneDefaults) {
-    this.lanesPerDirection = new HashMap<String, Integer>(osmLaneDefaults.lanesPerDirection);
+    this.lanesPerDirection = new HashMap<>(osmLaneDefaults.lanesPerDirection);
     this.lanesPerDirectionIfUnspecified = osmLaneDefaults.lanesPerDirectionIfUnspecified;
     this.tracksPerDirectionIfUnspecified = osmLaneDefaults.tracksPerDirectionIfUnspecified;
   }
@@ -130,27 +134,36 @@ public class OsmLaneDefaults {
     this.tracksPerDirectionIfUnspecified = defaultNumberOfTracksPerDirection;
   }    
   
-  /** collect the default number of tracks for railways (in one direction) 
+  /** Collect the default number of tracks for railways (in one direction)
    * @return defaultNumberOfTracksPerDirection in case not explicitly specified
    */
   public Integer getDefaultDirectionalRailwayTracks() {
     return this.tracksPerDirectionIfUnspecified;
-  }   
+  }
+
+  /** Collect the default number of water way lanes for water ways (in one direction)
+   * @return waterwayLanesPerDirectionIfUnspecified in case not explicitly specified
+   */
+  public Integer getDefaultDirectionalWaterwayLanes() {
+    return this.tracksPerDirectionIfUnspecified;
+  }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).
    * In case no number of lanes is specified for the type, we revert to the missing default
    * 
-   * @param osmWayKey OSM highway key
-   * @param osmWayValue OSM highway value
+   * @param osmKey OSM key to identify the way type (highway, rail way, or water way)
+   * @param osmValue OSM key's value
    * @return number of lanes for this type (if any), otherwise null is returned
    */
-  public Integer getDefaultDirectionalLanesByWayType(String osmWayKey, String osmWayValue) {
-    if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
-      return getDefaultDirectionalLanesByHighwayType(osmWayValue);
-    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)) {
+  public Integer getDefaultDirectionalLanesByWayType(String osmKey, String osmValue) {
+    if(OsmHighwayTags.isHighwayKeyTag(osmKey)) {
+      return getDefaultDirectionalLanesByHighwayType(osmValue);
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmKey)) {
       return getDefaultDirectionalRailwayTracks();
+    }else if(OsmWaterwayTags.isWaterBasedWay(osmKey, osmValue)) {
+      return getDefaultDirectionalWaterwayLanes();
     }else {
-      LOGGER.warning(String.format("unrecognised OSM way key %s, cannot collect default directional lanes",osmWayKey));
+      LOGGER.warning(String.format("unrecognised OSM way key %s, cannot collect default directional lanes",osmKey));
     }
     return null;
   }  

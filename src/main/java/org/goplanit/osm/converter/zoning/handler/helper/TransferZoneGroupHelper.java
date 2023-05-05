@@ -101,7 +101,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    * @param osmEntityStation of the relation to process
    * @param tags of the osm entity representation a station
    */
-  public static void updateTransferZoneGroupStationName(TransferZoneGroup transferZoneGroup, OsmEntity osmEntityStation, Map<String, String> tags) {
+  public static void updateTransferZoneGroupName(TransferZoneGroup transferZoneGroup, OsmEntity osmEntityStation, Map<String, String> tags) {
     
     if(!transferZoneGroup.hasName()) {
       String stationName = tags.get(OsmTags.NAME);

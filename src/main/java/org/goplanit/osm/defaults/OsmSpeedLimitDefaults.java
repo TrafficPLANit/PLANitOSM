@@ -28,6 +28,11 @@ public class OsmSpeedLimitDefaults {
    * railway speed limit defaults
    */  
   protected final OsmSpeedLimitDefaultsCategory railwayDefaults;
+
+  /**
+   * waterway speed limit defaults
+   */
+  protected final OsmSpeedLimitDefaultsCategory waterwayDefaults;
   
   
   /** in absence of OSM default, we create a global highway speed limit (km/h) available */
@@ -52,6 +57,7 @@ public class OsmSpeedLimitDefaults {
     this.urbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
     this.nonUrbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
     this.railwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
+    this.waterwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName);
   }  
   
   /** constructor 
@@ -63,6 +69,7 @@ public class OsmSpeedLimitDefaults {
     this.urbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getUrbanHighwayDefaults());
     this.nonUrbanHighwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getNonUrbanHighwayDefaults());
     this.railwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getRailwayDefaults());
+    this.waterwayDefaults = new OsmSpeedLimitDefaultsCategory(countryName, backup.getWaterwayDefaults());
   }  
 
   
@@ -72,13 +79,19 @@ public class OsmSpeedLimitDefaults {
    * @param urbanHighwayDefaults defaults
    * @param nonUrbanHighwayDefaults defaults
    * @param railwayDefaults defaults
+   * @param waterwayDefaults defaults
    */
   public OsmSpeedLimitDefaults(
-      String countryName, OsmSpeedLimitDefaultsCategory urbanHighwayDefaults, OsmSpeedLimitDefaultsCategory nonUrbanHighwayDefaults, OsmSpeedLimitDefaultsCategory railwayDefaults) {
+      String countryName,
+      OsmSpeedLimitDefaultsCategory urbanHighwayDefaults,
+      OsmSpeedLimitDefaultsCategory nonUrbanHighwayDefaults,
+      OsmSpeedLimitDefaultsCategory railwayDefaults,
+      OsmSpeedLimitDefaultsCategory waterwayDefaults) {
     this.countryName = countryName;
     this.urbanHighwayDefaults =urbanHighwayDefaults;
     this.nonUrbanHighwayDefaults =nonUrbanHighwayDefaults;
     this.railwayDefaults = railwayDefaults;
+    this.waterwayDefaults = waterwayDefaults;
   }
   
   /** Copy constructor 
@@ -104,9 +117,15 @@ public class OsmSpeedLimitDefaults {
       }else {
         this.railwayDefaults = null;
       }
+      if(other.waterwayDefaults != null) {
+        this.waterwayDefaults = other.waterwayDefaults.deepClone();
+      }else {
+        this.waterwayDefaults = null;
+      }
     }else {
       this.urbanHighwayDefaults = null;
       this.railwayDefaults = null;
+      this.waterwayDefaults = null;
       this.nonUrbanHighwayDefaults = null;
       this.countryName = null;
     }
@@ -133,6 +152,10 @@ public class OsmSpeedLimitDefaults {
 
   public OsmSpeedLimitDefaultsCategory getRailwayDefaults() {
     return railwayDefaults;
+  }
+
+  public OsmSpeedLimitDefaultsCategory getWaterwayDefaults() {
+    return waterwayDefaults;
   }
   
   /** collect the country name

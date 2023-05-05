@@ -11,7 +11,7 @@ import java.util.*;
 public class OsmWaterModeTags {
   
   /** all currently available mode tags */
-  private static final Set<String> MODE_TAGS = new HashSet<String>();
+  private static final Set<String> MODE_TAGS = new HashSet<>();
   
   /**
    * populate the available mode tags

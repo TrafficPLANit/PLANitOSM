@@ -48,10 +48,9 @@ public class OsmModeAccessDefaultsCategory {
   
   
   /**
-   * same as {@code addAlloweyModes} only we do not log the changes as these are default settings.
+   * same as {@code addAllowedModes} only we do not log the changes as these are default settings.
    * 
    * @paramtypee to use
-   * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to add
    */
   void addDefaultAllowedModes(String type, String... osmModes) {
@@ -343,9 +342,9 @@ public class OsmModeAccessDefaultsCategory {
    */
   public OsmModeAccessDefaultsCategory() { 
     this.countryName = CountryNames.GLOBAL;
-    this.allowedModeCategoriesByType = new TreeMap<String, Set<String>>();
-    this.allowedModesByType = new TreeMap<String, Set<String>>();
-    this.disallowedModesByType = new TreeMap<String, Set<String>>();    
+    this.allowedModeCategoriesByType = new TreeMap<>();
+    this.allowedModesByType = new TreeMap<>();
+    this.disallowedModesByType = new TreeMap<>();
   }
   
   /**
@@ -355,9 +354,9 @@ public class OsmModeAccessDefaultsCategory {
    */
   public OsmModeAccessDefaultsCategory(String countryName) {
     this.countryName = countryName;
-    this.allowedModeCategoriesByType = new TreeMap<String, Set<String>>();
-    this.allowedModesByType = new TreeMap<String, Set<String>>();
-    this.disallowedModesByType = new TreeMap<String, Set<String>>();
+    this.allowedModeCategoriesByType = new TreeMap<>();
+    this.allowedModesByType = new TreeMap<>();
+    this.disallowedModesByType = new TreeMap<>();
   }  
   
   /**
