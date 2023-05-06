@@ -222,8 +222,10 @@ public class PlanitTransferZoneUtils {
       return TransferZoneType.SMALL_STATION;
     }else if(OsmPtv1Tags.isStation(tags)) {
       return TransferZoneType.STATION;
+    }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
+      return TransferZoneType.PLATFORM;
     }else {
-      LOGGER.severe(String.format("unable to map node %d to Ptv1 transferzone type", osmNode.getId()));
+      LOGGER.severe(String.format("Unable to map node %d to Ptv1 transfer zone type", osmNode.getId()));
       return TransferZoneType.UNKNOWN;
     }
   }  

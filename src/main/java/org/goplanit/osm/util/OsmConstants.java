@@ -83,6 +83,8 @@ public class OsmConstants {
   public static final double CYCLEWAY_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 
   /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
-  public static final double BRIDLEWAY_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;  
-    
+  public static final double BRIDLEWAY_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
+
+  /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
+  public static final double WATERWAY_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 }

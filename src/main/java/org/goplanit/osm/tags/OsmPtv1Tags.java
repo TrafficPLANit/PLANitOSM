@@ -196,5 +196,13 @@ public class OsmPtv1Tags {
    */      
   public static boolean isStation(Map<String, String> tags) {
     return OsmRailwayTags.hasRailwayKeyTag(tags) && tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.STATION);
-  }  
+  }
+
+  /** check if this is a ferry terminal given the provided tags
+   * @param tags to check
+   * @return true if ferry terminal amenity, false otherwise
+   */
+  public static boolean isFerryTerminal(Map<String, String> tags) {
+    return tags.containsKey(OsmTags.isAmenity(tags)) && tags.get(OsmTags.AMENITY).equals(OsmTags.FERRY_TERMINAL);
+  }
 }

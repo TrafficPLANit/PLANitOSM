@@ -31,14 +31,14 @@ public class OsmInfrastructureConfiguration {
   protected final Set<String> deactivatedOsmTypes;
    
   /** way key this configuration applies to */
-  protected final String osmWayKey;
+  protected final String osmKey;
   
   /**
    * Log all de-activated OSM way types
    */  
   public void logDeactivatedTypes() {
     deactivatedOsmTypes.forEach( 
-        osmTag -> LOGGER.info(String.format("[DEACTIVATED] %s=%s", osmWayKey, osmTag)));
+        osmTag -> LOGGER.info(String.format("[DEACTIVATED] %s=%s", osmKey, osmTag)));
   }  
     
   /**
@@ -47,58 +47,59 @@ public class OsmInfrastructureConfiguration {
    * @param osmWayKey to apply
    */
   protected OsmInfrastructureConfiguration(String osmWayKey) {
-    this.osmWayKey = osmWayKey;
-    this.activatedOsmTypes = new HashSet<String>();
-    this.deactivatedOsmTypes = new HashSet<String>();
+    this.osmKey = osmWayKey;
+    this.activatedOsmTypes = new HashSet<>();
+    this.deactivatedOsmTypes = new HashSet<>();
   }
   
   /** Construct with defaults being populated 
    * 
-   * @param osmWayKey to apply
+   * @param osmKey to apply
    * @param activatedOsmTypes to use
    * @param deactivatedOsmTypes to use
    */
-  public OsmInfrastructureConfiguration(String osmWayKey, Set<String> activatedOsmTypes, Set<String> deactivatedOsmTypes) {
-    this.osmWayKey = osmWayKey;
-    this.activatedOsmTypes = new HashSet<String>(activatedOsmTypes);
-    this.deactivatedOsmTypes = new HashSet<String>(deactivatedOsmTypes);
+  public OsmInfrastructureConfiguration(String osmKey, Set<String> activatedOsmTypes, Set<String> deactivatedOsmTypes) {
+    this.osmKey = osmKey;
+    this.activatedOsmTypes = new HashSet<>(activatedOsmTypes);
+    this.deactivatedOsmTypes = new HashSet<>(deactivatedOsmTypes);
   }
+
 
   /**
    * Verify if the passed in OSM way type is explicitly unsupported. Unsupported types will be ignored
    * when processing ways.
    * 
-   * @param osmWayValue, e.g. primary, road
+   * @param osmValue, e.g. primary, road
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
-  public boolean isDeactivated(String osmWayValue) {
-    return deactivatedOsmTypes.contains(osmWayValue);
+  public boolean isDeactivated(String osmValue) {
+    return deactivatedOsmTypes.contains(osmValue);
   }
   
   /**
    * Verify if the passed in OSM way type is explicitly supported. Supported types will be processed 
    * and converted into link(segments).
    * 
-   * @param osmWayValue, e.g. primary
+   * @param osmValue, e.g. primary
    * @return true when supported, false if not (which means it is unsupported, or not registered)
    */
-  public boolean isActivated(String osmWayValue) {
-    return activatedOsmTypes.contains(osmWayValue);
+  public boolean isActivated(String osmValue) {
+    return activatedOsmTypes.contains(osmValue);
   }  
   
   /**
    * Choose to not parse the given combination of way subtype, e.g. highway=road
    * 
-   * @param osmWayValue to use
+   * @param osmValue to use
    */
-  public void deactivate(String osmWayValue) {
-    boolean removedFromActive = activatedOsmTypes.remove(osmWayValue);
+  public void deactivate(String osmValue) {
+    boolean removedFromActive = activatedOsmTypes.remove(osmValue);
     if(!removedFromActive) {
-      LOGGER.warning(String.format("unable to deactivate OSM type %s=%s, because it is not currently activated", osmWayKey, osmWayValue));
+      LOGGER.warning(String.format("unable to deactivate OSM type %s=%s, because it is not currently activated", osmKey, osmValue));
       return;
     }
-    deactivatedOsmTypes.add(osmWayValue);
-    LOGGER.fine(String.format("deactivating OSM type %s=%s", osmWayKey, osmWayValue));
+    deactivatedOsmTypes.add(osmValue);
+    LOGGER.fine(String.format("deactivating OSM type %s=%s", osmKey, osmValue));
   }
   
   /**
@@ -120,9 +121,9 @@ public class OsmInfrastructureConfiguration {
       deactivatedOsmTypes.remove(osmWayValue);
       boolean added = activatedOsmTypes.add(osmWayValue);
       if(!added) {
-        LOGGER.warning(String.format("OSM type %s=%s is already active, no need to activate again, ignored",osmWayKey, osmWayValue));
+        LOGGER.warning(String.format("OSM type %s=%s is already active, no need to activate again, ignored", osmKey, osmWayValue));
       }
-      LOGGER.fine(String.format("activating OSM type %s=%s",osmWayKey, osmWayValue));
+      LOGGER.fine(String.format("activating OSM type %s=%s", osmKey, osmWayValue));
     }
   }  
   

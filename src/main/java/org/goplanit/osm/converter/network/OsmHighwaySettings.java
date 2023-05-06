@@ -18,7 +18,6 @@ import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
@@ -338,7 +337,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    */
   public double getDefaultSpeedLimitByOsmHighwayType(final String osmWayValue){
     if(isSpeedLimitDefaultsBasedOnUrbanArea()) {
-      return getDefaultSpeedLimitByOsmWayType(osmWayValue);
+      return getDefaultSpeedLimitByOsmTypeValue(osmWayValue);
     }else {
       return nonUrbanSpeedLimitDefaults.getSpeedLimit(osmWayValue);
     }     

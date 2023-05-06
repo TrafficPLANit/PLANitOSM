@@ -216,7 +216,16 @@ public class OsmHighwayTags {
      * @return true if highway=* exists, false otherwise
      */
     public static boolean hasHighwayKeyTag(Map<String, String> tags) {
-      return tags.containsKey(OsmHighwayTags.HIGHWAY);
+      return tags.containsKey(getHighwayKeyTag());
+    }
+
+    /**
+     * Collect the highway key tag
+     *
+     * @return highway key tag
+     */
+    public static String getHighwayKeyTag() {
+      return OsmHighwayTags.HIGHWAY;
     }
 
     /** Compare highway types where we return a negative, zero, or positive value when highwayType is less, equal, or more important than the other

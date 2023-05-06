@@ -10,7 +10,6 @@ import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 
 /**
@@ -110,7 +109,7 @@ public abstract class OsmWaySettings {
    * 
    */
   public void excludeOsmWayTypesWithoutActivatedModes() {
-    Set<String> originallySupportedTypes = getSetOfActivatedOsmWayTypes();
+    Set<String> originallySupportedTypes = getSetOfActivatedOsmWayLikeTypes();
     if(originallySupportedTypes != null) {
       for(String supportedWayType : originallySupportedTypes) {
         Collection<String> allowedOsmModes = collectAllowedOsmWayModes(supportedWayType);
@@ -251,7 +250,7 @@ public abstract class OsmWaySettings {
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
    */
-  protected double getDefaultSpeedLimitByOsmWayType(String osmWayValue){
+  protected double getDefaultSpeedLimitByOsmTypeValue(String osmWayValue){
     return speedLimitDefaults.getSpeedLimit(osmWayValue);    
   }  
   
@@ -263,7 +262,7 @@ public abstract class OsmWaySettings {
    */  
   protected Double getDefaultSpeedLimitByOsmWayType(String osmWayKey, Map<String, String> tags){
     if(tags.containsKey(osmWayKey)){
-      return getDefaultSpeedLimitByOsmWayType(tags.get(osmWayKey));      
+      return getDefaultSpeedLimitByOsmTypeValue(tags.get(osmWayKey));
     }else {
       throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit by OsmRailwayType", osmWayKey);
     }    
@@ -450,7 +449,7 @@ public abstract class OsmWaySettings {
    * 
    * @return set of currently activated osm way types (when parser is active), modifications to this set have no effect on configuration, null if not applicable
    */
-  public final Set<String> getSetOfActivatedOsmWayTypes(){
+  public final Set<String> getSetOfActivatedOsmWayLikeTypes(){
     return isParserActive() ? infrastructureTypeConfiguration.setOfActivatedTypes() : null;    
   }
 

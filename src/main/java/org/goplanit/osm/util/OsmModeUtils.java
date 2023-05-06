@@ -3,14 +3,7 @@ package org.goplanit.osm.util;
 import java.util.*;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmPtv1Tags;
-import org.goplanit.osm.tags.OsmRailModeTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmRoadModeCategoryTags;
-import org.goplanit.osm.tags.OsmRoadModeTags;
-import org.goplanit.osm.tags.OsmTags;
-import org.goplanit.osm.tags.OsmWaterModeTags;
+import org.goplanit.osm.tags.*;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -326,6 +319,8 @@ public class OsmModeUtils {
    * <li>railway=halt gives train</li>
    * <li>railway=stop gives train</li>
    * <li>railway=tram_stop gives tram</li>
+   * <li>railway=tram_stop gives tram</li>
+   * <li>amenity=ferry_terminal gives ferry</li>
    * </ul> 
    * 
    * @param tags to extract information from
@@ -344,7 +339,7 @@ public class OsmModeUtils {
           foundMode = OsmRoadModeTags.BUS;
         }else {
           LOGGER.warning(String.format(
-              "unsupported Ptv1 value tag highway=%s used when identifying default mode, ignored",tags.get(OsmHighwayTags.HIGHWAY)));
+              "Unsupported Ptv1 value tag highway=%s used when identifying default mode, ignored",tags.get(OsmHighwayTags.HIGHWAY)));
         }
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
         /* tram_stop -> tram */
@@ -357,8 +352,13 @@ public class OsmModeUtils {
           LOGGER.warning(String.format(
               "Unsupported Ptv1 value tag railway=%s used when identifying default mode, ignored",tags.get(OsmRailwayTags.RAILWAY)));
         }
+      }else if(OsmTags.isAmenity(tags)) {
+        /* amenity=ferry_terminal -> ferry */
+        if(OsmPtv1Tags.isFerryTerminal(tags)) {
+          foundMode = OsmWaterModeTags.FERRY;
+        }
       }else {
-        LOGGER.warning("unknown Ptv1 key tag used when identifying default mode, ignored");
+        LOGGER.warning("Unknown Ptv1 key tag used when identifying default mode, ignored");
       }
       
     }

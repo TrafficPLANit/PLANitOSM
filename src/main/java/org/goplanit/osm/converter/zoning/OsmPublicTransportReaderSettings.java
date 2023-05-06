@@ -9,18 +9,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.OsmReaderSettings;
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import org.goplanit.utils.misc.UrlUtils;
-import org.goplanit.utils.network.layer.physical.Node;
-import org.locationtech.jts.geom.Point;
 
 /**
  * Capture all the user configurable settings regarding how to
@@ -76,6 +71,9 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * Further one cannot override a waiting area here that is also part of a stop_location to waiting area override. 
    */
   private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<>();
+
+  /** all registered osmRelation ids will not trigger any logging */
+  private final Set<Long> suppressStopAreaLogging = new HashSet<>();
     
   /** by default the transfer parser is deactivated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
@@ -404,6 +402,26 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public boolean isRemoveDanglingTransferZoneGroups() {
     return this.removeDanglingTransferZoneGroups;
   }
- 
-  
+
+
+  /**
+   * Suppress any logging for given stop area relation ids
+   *
+   * @param osmStopAreaRelationIds
+   */
+  public void suppressOsmRelationStopAreaLogging(long... osmStopAreaRelationIds) {
+    for(var osmStopAreaRelationId : osmStopAreaRelationIds) {
+      suppressStopAreaLogging.add(osmStopAreaRelationId);
+    }
+  }
+
+  /**
+   * Check if stop area relation id logging is suppressed
+   *
+   * @param osmStopAreaRelationId to check
+   * @return  true when suppressed, false otherwise
+   */
+  public boolean isSuppressOsmRelationStopAreaLogging(long osmStopAreaRelationId) {
+    return suppressStopAreaLogging.contains(osmStopAreaRelationId);
+  }
 }

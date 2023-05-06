@@ -25,6 +25,8 @@ public class OsmModeAccessDefaults {
   private final OsmModeAccessDefaultsCategory highwayModeAccessDefaults;
   
   private final OsmModeAccessDefaultsCategory railwayModeAccessDefaults;
+
+  private final OsmModeAccessDefaultsCategory waterwayModeAccessDefaults;
   
   /** country for which these defaults hold */
   private String countryName;  
@@ -37,7 +39,8 @@ public class OsmModeAccessDefaults {
   public OsmModeAccessDefaults() {
     this.countryName = CountryNames.GLOBAL;
     this.highwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();
-    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();    
+    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();
+    this.waterwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();
   }
   
   /**
@@ -48,7 +51,8 @@ public class OsmModeAccessDefaults {
   public OsmModeAccessDefaults(String countryName) {
     this.countryName = countryName;
     this.highwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);
-    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);        
+    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);
+    this.waterwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);
   }  
   
   /**
@@ -59,7 +63,8 @@ public class OsmModeAccessDefaults {
   public OsmModeAccessDefaults(OsmModeAccessDefaults other) {
     this.countryName = other.countryName;
     this.highwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.highwayModeAccessDefaults);
-    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.railwayModeAccessDefaults);    
+    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.railwayModeAccessDefaults);
+    this.waterwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.waterwayModeAccessDefaults);
   }  
   
   /** The country for which these defaults hold. In absence of a country, it should return CountryNames.GLOBAL
@@ -77,6 +82,7 @@ public class OsmModeAccessDefaults {
     this.countryName = countryName;
     this.highwayModeAccessDefaults.setCountry(countryName);
     this.railwayModeAccessDefaults.setCountry(countryName);
+    this.waterwayModeAccessDefaults.setCountry(countryName);
   }    
   
 
@@ -110,6 +116,13 @@ public class OsmModeAccessDefaults {
    */
   public OsmModeAccessDefaultsCategory getRailwayModeAccessDefaults() {
     return railwayModeAccessDefaults;
+  }
+
+  /** collect the defaults specifically for water ways
+   * @return waterway mode access defaults
+   */
+  public OsmModeAccessDefaultsCategory getWaterwayModeAccessDefaults() {
+    return waterwayModeAccessDefaults;
   }
 
 

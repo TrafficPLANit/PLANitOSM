@@ -40,8 +40,11 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected OsmRailwaySettings osmRailwaySettings;
   
   /** all settings specific to osm highway tags*/
-  protected OsmHighwaySettings osmHighwaySettings; 
-             
+  protected OsmHighwaySettings osmHighwaySettings;
+
+  /** all settings specific to OSM waterway (ferry) tags*/
+  protected OsmWaterwaySettings osmWaterwaySettings;
+
   /** the default speed limits used in case no explicit information is available on the osmway's tags */
   protected final OsmSpeedLimitDefaults speedLimitConfiguration;
   
@@ -188,6 +191,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     this.osmRailwaySettings = new OsmRailwaySettings(
         this.speedLimitConfiguration.getRailwayDefaults(), 
         this.modeAccessConfiguration.getRailwayModeAccessDefaults());
+    this.osmWaterwaySettings = new OsmWaterwaySettings(
+        this.speedLimitConfiguration.getWaterwayDefaults(),
+        this.modeAccessConfiguration.getWaterwayModeAccessDefaults());
     
     initialise();
   }   
@@ -207,6 +213,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public OsmRailwaySettings activateRailwayParser(boolean activate) {
     osmRailwaySettings.activateParser(activate);
     return getRailwaySettings();      
+  }
+
+  /** activate the parsing of water ways
+   * @param activate when true activate waterway parsing, when false deactivate
+   * @return water way settings that are activated, null when deactivated
+   */
+  public OsmWaterwaySettings activateWaterwayParser(boolean activate) {
+    osmWaterwaySettings.activateParser(activate);
+    return getWaterwaySettings();
   }
   
   /** activate the parsing of highways
@@ -232,7 +247,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public boolean isHighwayParserActive() {
     return osmHighwaySettings.isParserActive();
-  }   
+  }
+
+  /** Verify if waterway parser is active
+   *
+   * @return true when active false otherwise
+   */
+  public boolean isWaterwayParserActive() {
+    return osmWaterwaySettings.isParserActive();
+  }
 
   /** Chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
    * 
@@ -620,8 +643,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public OsmHighwaySettings getHighwaySettings() {
     return osmHighwaySettings;
-  } 
-  
+  }
+
+  /** provide waterway specific settings
+   * @return waterway settings
+   */
+  public OsmWaterwaySettings getWaterwaySettings() {
+    return osmWaterwaySettings;
+  }
+
   /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such OSM ways
    * the complete geometry is available, but this is not known to the parser since it only considers nodes within the bounding box (from which
    * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it is truncated for the portions

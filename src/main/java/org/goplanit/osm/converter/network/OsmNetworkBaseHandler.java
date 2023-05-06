@@ -54,13 +54,15 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * @param tags to verify
    * @return true when activated and highway or railway (not an area), false otherwise
    */
-  protected boolean isActivatedRoadOrRailwayBasedInfrastructure(Map<String, String> tags) {
+  protected boolean isActivatedRoadRailOrWaterwayBasedInfrastructure(Map<String, String> tags) {
     
     if(!OsmTags.isArea(tags)) {
       if(settings.isHighwayParserActive() && OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        return settings.getHighwaySettings().isOsmHighwayTypeActivated(tags.get(OsmHighwayTags.HIGHWAY));
+        return settings.getHighwaySettings().isOsmHighwayTypeActivated(tags.get(OsmHighwayTags.getHighwayKeyTag()));
       }else if(settings.isRailwayParserActive() && OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        return settings.getRailwaySettings().isOsmRailwayTypeActivated(tags.get(OsmRailwayTags.RAILWAY));
+        return settings.getRailwaySettings().isOsmRailwayTypeActivated(tags.get(OsmRailwayTags.getRailwayKeyTag()));
+      }else if(settings.isWaterwayParserActive() && OsmWaterwayTags.isWaterway(tags)) {
+        return settings.getWaterwaySettings().isOsmWaterwayRouteTypeActivated(tags.get(OsmWaterwayTags.getWaterwayKeyTag()));
       }
     }
     return false;
@@ -79,8 +81,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
       Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);          
       try {                      
         
-        /* only parse ways that are potentially road infrastructure */
-        if(isActivatedRoadOrRailwayBasedInfrastructure(tags)) {          
+        /* only parse ways that are potentially road/rail/ferry infrastructure */
+        if(isActivatedRoadRailOrWaterwayBasedInfrastructure(tags)) {
           osmWayConsumer.accept(osmWay, tags);
         }
         
