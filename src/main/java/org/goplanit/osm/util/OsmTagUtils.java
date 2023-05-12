@@ -159,4 +159,26 @@ public class OsmTagUtils {
     }
     return null;
   }
+
+  /**
+   * Combine two string and add '=' in between
+   *
+   * @param key to use
+   * @param value to use
+   * @return key=value
+   */
+  public static String toConcatEqualsString(String key, String value){
+    return toConcatWithSep(key, value, "=");
+  }
+
+  /**
+   * Combine two string and add separator, e.g, '=' in between
+   *
+   * @param key to use
+   * @param value to use
+   * @return result e.g., a=b for ('a','b','=')
+   */
+  public static String toConcatWithSep(String key, String value,String sep){
+    return String.format("%s%s%s",key, sep, value);
+  }
 }

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
+import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.misc.Pair;
@@ -69,17 +70,21 @@ public class OsmRailwaySettings extends OsmWaySettings {
       activateOsmMode(OsmRailModeTags.TRAM);
     }           
   }
-  
+
   /**
-   * {@inheritDoc}
+   * Collect all OSM modes from the passed in OSM way value for railways
+   *
+   * @param osmWayValueType to use
+   * @return allowed OsmModes found
    */
-  @Override
-  protected Collection<String> collectAllowedOsmWayModes(String osmValueType) {
+  protected Collection<String> collectAllowedOsmWayModes(String osmWayValueType) {
     Set<String> allowedModes = null; 
-    if(OsmRailwayTags.isRailBasedRailway(osmValueType)) {
-      allowedModes = collectAllowedOsmWayModes(osmValueType, OsmRailModeTags.getSupportedRailModeTags());
+    if(OsmRailwayTags.isRailBasedRailway(osmWayValueType)) {
+      allowedModes = collectAllowedOsmWayModes(
+          OsmRailwayTags.getRailwayKeyTag(), osmWayValueType, OsmRailModeTags.getSupportedRailModeTags());
     }else {
-      LOGGER.warning(String.format("unrecognised osm railway railway=%s, no allowed modes can be identified", osmValueType));
+      LOGGER.warning(String.format("Unrecognised OSM railway %s=%s, no allowed modes can be identified",
+          OsmRailwayTags.getRailwayKeyTag(), osmWayValueType));
     }
     return allowedModes;
   }  
@@ -235,7 +240,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @return speedLimit in km/h
    */
   public double getDefaultSpeedLimitByOsmRailwayType(String osmWayValue){
-    return getDefaultSpeedLimitByOsmTypeValue(osmWayValue);
+    return getDefaultSpeedLimitByOsmTypeValue(OsmRailwayTags.getRailwayKeyTag(), osmWayValue);
   }  
   
   /** Collect the default speed limit for a given railway tag value, where we extract the key and value from the passed in tags, if available
@@ -244,7 +249,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @return speedLimit in km/h 
    */  
   public Double getDefaultSpeedLimitByOsmRailwayType(Map<String, String> tags){
-    return getDefaultSpeedLimitByOsmWayType(OsmRailwayTags.RAILWAY, tags);
+    return getDefaultSpeedLimitByOsmWayType(OsmRailwayTags.getRailwayKeyTag(), tags);
   }   
   
   /* mode */

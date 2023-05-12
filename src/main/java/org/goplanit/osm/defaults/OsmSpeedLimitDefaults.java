@@ -38,8 +38,11 @@ public class OsmSpeedLimitDefaults {
   /** in absence of OSM default, we create a global highway speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH = 50;  
     
-  /** in absence of OSM defined defaults, we make a global rail way speed limit (km/h) available */
+  /** in absence of OSM defined defaults, we make a global railway speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
+
+  /* in absence of OSM defined defaults, we provide a global waterway speed limit (km/h) available */
+  public static final double GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH = 20;
   
   /** update country
    * 

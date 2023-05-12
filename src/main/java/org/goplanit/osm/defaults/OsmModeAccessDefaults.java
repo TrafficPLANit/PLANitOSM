@@ -6,7 +6,7 @@ import org.goplanit.utils.locale.CountryNames;
 
 /**
  * Class representing the default mode access restrictions/allowance for modes for a given
- * highway type.
+ * highway/railway/waterway-like type.
  * 
  * Disallowed modes take precedence over any other setting, allowed modes take precedence over mode category settings
  * and mode category settings define groups of allowed modes (when not present, it is assumed the category is not allowed as a whole)
@@ -118,7 +118,7 @@ public class OsmModeAccessDefaults {
     return railwayModeAccessDefaults;
   }
 
-  /** collect the defaults specifically for water ways
+  /** collect the defaults specifically for waterways
    * @return waterway mode access defaults
    */
   public OsmModeAccessDefaultsCategory getWaterwayModeAccessDefaults() {

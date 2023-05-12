@@ -15,16 +15,16 @@ import java.util.Set;
 public class OsmHighwayTags {
   
     /** all currently available osm highway tags that can represent a road link, the number is used for ordering, so we can compare importance */
-    private static final Map<String,Integer> ROADBASED_HIGHWAY_VALUE_TAGS = new HashMap<String, Integer>();
+    static final Map<String,Integer> ROADBASED_HIGHWAY_VALUE_TAGS = new HashMap<>();
     
     /** all currently supported highway tags that represent geographic areas, e.g. rest areas on top or alongside a road , this is a subset of
      * the {@code NON_ROADBASED_HIGHWAY_VALUE_TAGS} */
-    private static final Set<String> AREABASED_OSM_HIGHWAY_VALUE_TAGS = new HashSet<String>();    
+    static final Set<String> AREABASED_OSM_HIGHWAY_VALUE_TAGS = new HashSet<>();
     
     /**
      * the OSM highway values that are marked as non-road types, i.e., they can never be activated to be converted into links
      */
-    protected static final Set<String> NON_ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+    static final Set<String> NON_ROADBASED_HIGHWAY_VALUE_TAGS = new HashSet<>();
     
     
     /**

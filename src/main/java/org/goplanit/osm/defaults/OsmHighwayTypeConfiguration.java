@@ -13,7 +13,7 @@ import org.goplanit.utils.exceptions.PlanItException;
  * @author markr
  *
  */
-public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration {
+public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationImpl {
   
   /**
    * The logger
@@ -23,12 +23,12 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
   /**
    * the OSM highway types that are marked as activated OSM types, i.e., will be processed when parsing
    */
-  protected static final Set<String> DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
+  public static final Set<String> DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
   
   /**
    * the OSM highway  types that are marked as deactivated OSM types, i.e., will be ignored when parsing
    */
-  protected static final Set<String> DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
+  public static final Set<String> DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
      
     
   /**
@@ -54,10 +54,9 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>TRACK</li>
    * <li>ROAD</li>
    * </ul>
-   * 
-   * @throws PlanItException thrown when error
+   *
    */
-  protected static void initialiseDefaultActivatedOsmHighwayTypes() throws PlanItException {
+  protected static void initialiseDefaultActivatedOsmHighwayTypes(){
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.MOTORWAY);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.MOTORWAY_LINK);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TRUNK);
@@ -95,9 +94,8 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * <li>RACE_WAY</li>
    * </ul>
    * 
-   * @throws PlanItException thrown when error
    */
-  protected static void initialiseDefaultDeactivatedOsmHighwayTypes() throws PlanItException {
+  protected static void initialiseDefaultDeactivatedOsmHighwayTypes(){
     DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.FOOTWAY);
     DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.BRIDLEWAY);
     DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.STEPS);
@@ -118,14 +116,10 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfiguration 
    * @param planitModes to populate based on (default) mapping
    */
   static {
-    try {
-      /* the highway types that will be parsed by default, i.e., supported. */
-      initialiseDefaultActivatedOsmHighwayTypes();
-      /* the highway types that will not be parsed by default, i.e., unsupported. */
-      initialiseDefaultDeactivatedOsmHighwayTypes();
-    } catch (PlanItException e) {
-      LOGGER.severe("unable to create default activated and/or deactivated OSM highway types for this network");
-    }     
+    /* the highway types that will be parsed by default, i.e., supported. */
+    initialiseDefaultActivatedOsmHighwayTypes();
+    /* the highway types that will not be parsed by default, i.e., unsupported. */
+    initialiseDefaultDeactivatedOsmHighwayTypes();
   }
   
   /**

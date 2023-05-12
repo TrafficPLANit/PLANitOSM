@@ -15,6 +15,7 @@ import org.goplanit.osm.defaults.OsmSpeedLimitDefaults;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.CountryNames;
@@ -122,6 +123,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected void initialiseDefaultMappingFromOsmModes2PlanitModes() {
     osmHighwaySettings.initialiseDefaultMappingFromOsmRoadModes2PlanitModes();
     osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes();
+    osmWaterwaySettings.initialiseDefaultMappingFromOsmWaterModes2PlanitModes();
   }
 
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
@@ -284,6 +286,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public void excludeOsmWayTypesWithoutActivatedModes() {
     osmHighwaySettings.excludeOsmWayTypesWithoutActivatedModes();
     osmRailwaySettings.excludeOsmWayTypesWithoutActivatedModes();
+    osmWaterwaySettings.excludeOsmWayTypesWithoutActivatedModes();
   }
      
   /**
@@ -311,18 +314,20 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return this.laneConfiguration;
   }  
   
-  /** Collect the default speed limit for a given highway or railway tag value, where we extract the key and value from the passed in tags, if available
+  /** Collect the default speed limit for a given highway/railway/waterway tag value, where we extract the key and value from the passed in tags, if available
    * 
    * @param tags to extract way key value pair from (highway,railway keys currently supported)
    * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
    */    
   public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags){
-    if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
-      return osmHighwaySettings.getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.HIGHWAY));   
-    }else if(tags.containsKey(OsmRailwayTags.RAILWAY)){
-      return osmRailwaySettings.getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.RAILWAY));
+    if(tags.containsKey(OsmHighwayTags.getHighwayKeyTag())) {
+      return getHighwaySettings().getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.getHighwayKeyTag()));
+    }else if(tags.containsKey(OsmRailwayTags.getRailwayKeyTag())){
+      return getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.getRailwayKeyTag()));
+    }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
+      return getWaterwaySettings().getDefaultSpeedLimit(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
     }else {
-      throw new PlanItRunTimeException("no default speed limit available, tags do not contain activated highway or railway key");
+      throw new PlanItRunTimeException("No default speed limit available, tags do not contain activated highway, railway, or waterway key (tags: %s", tags);
     }
   }   
 
@@ -377,10 +382,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public PredefinedModeType getMappedPlanitModeType(final String osmMode) {
     var theMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
-    if(theMode == null) {
-      theMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
+    if(theMode != null) {
+      return theMode;
     }
-    return theMode;
+    theMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
+    if(theMode != null) {
+      return theMode;
+    }
+
+    return osmWaterwaySettings.getMappedPlanitWaterMode(osmMode);
   } 
   
   /** convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
@@ -405,14 +415,21 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
 
   /**
-   * convenience method that collects all currently mapped PLANit mode types (road or rail)
+   * Convenience method that collects all currently mapped PLANit mode types (road, rail, water)
    *
    * @return mapped PLANit mode types, if not available empty set is returned
    */
   public Set<PredefinedModeType> getActivatedPlanitModeTypes() {
-    return Stream.concat(
-        getHighwaySettings().getActivatedPlanitModeTypesStream(),
-        getRailwaySettings().getActivatedPlanitModeTypesStream()).collect(Collectors.toUnmodifiableSet());
+    Stream<PredefinedModeType> highWayModes =
+        isHighwayParserActive() ? getHighwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
+
+    Stream<PredefinedModeType> railwayModes =
+        isRailwayParserActive() ? getRailwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
+
+    Stream<PredefinedModeType> waterwayModes =
+        isWaterwayParserActive() ? getWaterwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
+
+    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toUnmodifiableSet());
   }
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
@@ -625,9 +642,14 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * Log all de-activated OSM way types
    */  
   public void logUnsupportedOsmWayTypes() {
-    osmHighwaySettings.logUnsupportedOsmHighwayTypes();
+    if(isHighwayParserActive()) {
+      osmHighwaySettings.logUnsupportedOsmHighwayTypes();
+    }
     if(isRailwayParserActive()) {
       osmRailwaySettings.logUnsupportedOsmRailwayTypes();
+    }
+    if(isWaterwayParserActive()) {
+      osmWaterwaySettings.logUnsupportedOsmWayTypes();
     }
   }
 

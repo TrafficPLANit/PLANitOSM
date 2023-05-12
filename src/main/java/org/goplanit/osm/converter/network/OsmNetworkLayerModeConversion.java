@@ -510,11 +510,12 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
       /* collect all modes the type of road supports and are allowed upon...*/
       Collection<String> osmAllowedModesForWayType = null;
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        osmAllowedModesForWayType = getSettings().getHighwaySettings().collectAllowedOsmHighwayModes(tags.get(OsmHighwayTags.HIGHWAY)); 
+        osmAllowedModesForWayType = getSettings().getHighwaySettings().collectAllowedOsmHighwayModes(tags.get(OsmHighwayTags.getHighwayKeyTag()));
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        osmAllowedModesForWayType = getSettings().getRailwaySettings().collectAllowedOsmRailwayModes(tags.get(OsmRailwayTags.RAILWAY));
-      }else if(OsmWaterwayTags.hasWaterwayKeyTag(tags)) {
-        osmAllowedModesForWayType = getSettings().getWaterwaySettings().collectAllowedOsmWaterwayModes(tags.get(OsmRailwayTags.RAILWAY));
+        osmAllowedModesForWayType = getSettings().getRailwaySettings().collectAllowedOsmRailwayModes(tags.get(OsmRailwayTags.getRailwayKeyTag()));
+      }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
+        String waterKey = OsmWaterwayTags.getUsedKeyTag(tags);
+        osmAllowedModesForWayType = getSettings().getWaterwaySettings().collectAllowedOsmWaterwayModes(tags.get(waterKey));
       }else {
         /* no other major types yet supported */
       }

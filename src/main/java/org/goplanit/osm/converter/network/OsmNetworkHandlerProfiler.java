@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 
@@ -65,29 +66,42 @@ public class OsmNetworkHandlerProfiler {
 
   /**
    * log counters
+   *
+   * @param networkLayer for which information  was tracked
+   */
+  public void logOsmProfileInformation(MacroscopicNetworkLayer networkLayer) {
+    long totalCount = 0;
+    for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
+      long count = entry.getValue().longValue();
+      totalCount += count;
+      if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {
+        LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d",
+            NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+      }else if(OsmRailwayTags.isRailBasedRailway(entry.getKey())) {
+        LOGGER.info(String.format("%s [STATS] processed railway:%s count:%d",
+            NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
+      }else if(OsmWaterwayTags.isAnyWaterwayKeyTag(entry.getKey())) {
+        LOGGER.info(String.format("%s [STATS] processed water way %s=%s count:%d",
+            NetworkLayer.createLayerLogPrefix(networkLayer), OsmWaterwayTags.getKeyForValueType(entry.getKey()), entry.getKey(), count));
+      }
+    }
+
+    double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/totalCount);
+    double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/totalCount);
+    LOGGER.info(String.format("%s [STATS] Applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
+    LOGGER.info(String.format("%s [STATS] Applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultLanes, 100-percentageDefaultLanes));
+  }
+
+  /**
+   * log counters
    * 
    * @param networkLayer for which information  was tracked
    */
-  public void logProfileInformation(MacroscopicNetworkLayer networkLayer) {
-    for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
-      long count = entry.getValue().longValue();
-      if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d", NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
-      }else if(OsmRailwayTags.isRailBasedRailway(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed railway:%s count:%d", NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
-      }
-    }
-    
+  public void logPlanitStats(MacroscopicNetworkLayer networkLayer) {
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format("%s [STATS] created PLANit %d nodes",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
-    LOGGER.info(String.format("%s [STATS] created PLANit %d links",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
-    LOGGER.info(String.format("%s [STATS] created PLANit %d links segments ",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));    
-    
-    double numberOfParsedLinks = (double)networkLayer.getNumberOfLinks();
-    double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/numberOfParsedLinks);
-    double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/numberOfParsedLinks);
-    LOGGER.info(String.format("%s [STATS] applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
-    LOGGER.info(String.format("%s [STATS] applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultLanes, 100-percentageDefaultLanes));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit nodes",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit links",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit links segments ",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));
   }
 
   /**

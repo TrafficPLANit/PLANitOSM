@@ -148,9 +148,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param initialNodeIndex where the circular section starts
    * @param finalNodeIndex where the circular section ends (at the start)
    * @return set of created links per layer with supported modes for this circular way if any, empty set if none
-   * @throws PlanItException thrown if error
    */
-  private Map<NetworkLayer,Set<MacroscopicLink>> handlePerfectCircularWay(OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) throws PlanItException {
+  private Map<NetworkLayer,Set<MacroscopicLink>> handlePerfectCircularWay(
+      OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) {
 
     
     Map<NetworkLayer,Set<MacroscopicLink>> createdLinksByLayer = new HashMap<>();
@@ -264,10 +264,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
       isWayActivatedLambda = osmTypeValueToUse -> settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
       isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);
-    }else if(OsmWaterwayTags.isWaterway(tags) && settings.isWaterwayParserActive()) {
-      osmTypeKeyToUse = OsmWaterwayTags.getWaterwayKeyTag();
-      isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayRouteTypeActivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // water ways have no way types, but are mapped to modes, directly, so when activated, it should always have (the one) type
+    }else if(OsmWaterwayTags.isWaterBasedWay(tags) && settings.isWaterwayParserActive()) {
+      osmTypeKeyToUse = OsmWaterwayTags.getUsedKeyTag(tags);
+      isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayActivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // not yet aware of situations for waterways where this happens
     }
     
     /* without mapping no type */
@@ -276,7 +276,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
         
     String osmTypeValueToUse = tags.get(osmTypeKeyToUse);        
-    Map<NetworkLayer,MacroscopicLinkSegmentType> linkSegmentTypes = getNetwork().getDefaultLinkSegmentTypeByOsmTag(osmTypeValueToUse);
+    Map<NetworkLayer,MacroscopicLinkSegmentType> linkSegmentTypes =
+        getNetwork().getDefaultLinkSegmentTypeByOsmTag( osmTypeKeyToUse, osmTypeValueToUse);
     if(linkSegmentTypes != null) {
       linkSegmentTypes.forEach( (layer, linkSegmentType)  -> {
         if(linkSegmentType != null) {
@@ -287,7 +288,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     /*... not available even though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
     else if(isWayActivatedLambda.apply(osmTypeValueToUse) && isTypeConfigurationMissingLambda.apply(osmTypeValueToUse)){
       LOGGER.warning(String.format(
-          "no link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
+          "No link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
     }
         
     return linkSegmentTypes;
@@ -444,7 +445,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
 
-    if(osmWay.getId() == 647058144L){
+    if(osmWay.getId() == 4868934L){
       int bla = 4;
     }
 

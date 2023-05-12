@@ -18,14 +18,32 @@ public class OsmSpeedLimitDefaultsCategory {
   private static final Logger LOGGER = Logger.getLogger(OsmSpeedLimitDefaultsCategory.class.getCanonicalName());
   
   /**
-   * store osmway defaults in this map
+   * store OSM way defaults in this map by key,value of the tagging used
    */
-  protected final Map<String,Double> speedLimitDefaults;
+  protected final Map<String, Map<String,Double>> speedLimitDefaults;
       
   protected final OsmSpeedLimitDefaultsCategory backupDefaults;
   
   /** country these defaults apply for */
-  protected final String countryName; 
+  protected final String countryName;
+
+  /**
+   * Copy constructor
+   *
+   * @param other to use
+   *
+   */
+  protected OsmSpeedLimitDefaultsCategory(OsmSpeedLimitDefaultsCategory other, boolean deepClone) {
+    this.backupDefaults = (deepClone && other.backupDefaults!=null) ?
+        other.backupDefaults.deepClone() : other.backupDefaults;
+    this.countryName = other.countryName;
+
+    this.speedLimitDefaults = new HashMap<>();
+    other.speedLimitDefaults.entrySet().stream().forEach( e -> {
+      speedLimitDefaults.put(e.getKey(), new HashMap<>(e.getValue()));
+    });
+
+  }
     
   /**
    * Constructor. 
@@ -49,47 +67,44 @@ public class OsmSpeedLimitDefaultsCategory {
     this.backupDefaults = backupDefaults;
     this.speedLimitDefaults = new HashMap<>();
   }   
-  
-  /**
-   * Copy constructor
-   *  
-   * @param other to use
-   * 
-   */
-  public OsmSpeedLimitDefaultsCategory(OsmSpeedLimitDefaultsCategory other) {
-    this.backupDefaults = other.backupDefaults;
-    this.countryName = other.countryName;
-    this.speedLimitDefaults = new HashMap<>(other.speedLimitDefaults);
-  }
-  
+
   /** Set a speed default for a given type
-   * 
+   *
+   * @param key key for type
    * @param type of the way to set speed default for
    * @param speedLimitKmH the physical speed limit (km/h)
    */
-  public void setSpeedLimitDefault(final String type, double speedLimitKmH){
-    speedLimitDefaults.put(type, speedLimitKmH);
+  public void setSpeedLimitDefault(String key, String type, double speedLimitKmH){
+    speedLimitDefaults.putIfAbsent(key, new HashMap<>());
+    speedLimitDefaults.get(key).put(type, speedLimitKmH);
   }
   
   /** Get a speed limit default for a given way type
-   * 
+   *
+   * @param key key for type
    * @param type of way to get speed default for
    * @return the physical speed limit (km/h)
    */
-  public Double getSpeedLimit(String type) {
-    Double speedLimit = speedLimitDefaults.get(type);
+  public Double getSpeedLimit(String key, String type) {
+    var speedLimitsForKey = speedLimitDefaults.get(key);
+    if (speedLimitsForKey == null){
+      return backupDefaults.getSpeedLimit(key, type);
+    }
+
+    Double speedLimit = speedLimitsForKey.get(type);
     if(speedLimit == null) {
-      speedLimit = backupDefaults.getSpeedLimit(type);
+      speedLimit = backupDefaults.getSpeedLimit(key, type);
     }        
     return speedLimit;
   }
       
   /** verify if a default speed limit is available for the given type
+   *
    * @param type to verify
    * @return true when available false otherwise
    */
   public boolean containsSpeedLimit(String type) {
-    return speedLimitDefaults.containsKey(type);
+    return speedLimitDefaults.values().stream().anyMatch(e -> e.containsKey(type));
   }
   
   /** collect the country name
@@ -108,7 +123,7 @@ public class OsmSpeedLimitDefaultsCategory {
    * @return shallow copy
    */
   public OsmSpeedLimitDefaultsCategory shallowClone() {
-    return new OsmSpeedLimitDefaultsCategory(this);
+    return new OsmSpeedLimitDefaultsCategory(this, false);
   }
 
   /**
@@ -118,7 +133,7 @@ public class OsmSpeedLimitDefaultsCategory {
    */
   public OsmSpeedLimitDefaultsCategory deepClone()
   {
-    return shallowClone(); // same as shallow clone at present
+    return new OsmSpeedLimitDefaultsCategory(this, true);
   }
 
 }

@@ -160,7 +160,6 @@ public class PlanitOsmUtils {
     }
     LOGGER.setLevel(originalLogLevel);
     return theGeometry;
-  }  
-    
+  }
 
 }

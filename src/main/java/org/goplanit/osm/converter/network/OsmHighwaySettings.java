@@ -111,23 +111,26 @@ public class OsmHighwaySettings extends OsmWaySettings {
     activateOsmMode(OsmRoadModeTags.HEAVY_GOODS_ARTICULATED);
     activateOsmMode(OsmRoadModeTags.BUS);
 
-  }  
-  
+  }
+
   /**
-   * {@inheritDoc}
+   * Collect all OSM modes from the passed in OSM way value for highways
+   *
+   * @param osmWayValueType to use
+   * @return allowed OsmModes found
    */
-  @Override
   protected Collection<String> collectAllowedOsmWayModes(String osmWayValueType) {
     Set<String> allowedModes = null; 
     if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayValueType)){      
       /* collect all rail and road modes that are allowed, try all because the mode categories make it difficult to collect individual modes otherwise */
-      Set<String> allowedRoadModesOnRoad =  collectAllowedOsmWayModes(osmWayValueType, OsmRoadModeTags.getSupportedRoadModeTags());
-      Set<String> allowedRailModesOnRoad =  collectAllowedOsmWayModes(osmWayValueType, OsmRailModeTags.getSupportedRailModeTags());      
-      allowedModes = new HashSet<String>();
+      Set<String> allowedRoadModesOnRoad =  collectAllowedOsmWayModes(OsmHighwayTags.getHighwayKeyTag(), osmWayValueType, OsmRoadModeTags.getSupportedRoadModeTags());
+      Set<String> allowedRailModesOnRoad =  collectAllowedOsmWayModes(OsmHighwayTags.getHighwayKeyTag(), osmWayValueType, OsmRailModeTags.getSupportedRailModeTags());
+      allowedModes = new HashSet<>();
       allowedModes.addAll(allowedRoadModesOnRoad);
       allowedModes.addAll(allowedRailModesOnRoad);
     }else {
-      LOGGER.warning(String.format("unrecognised osm highway key value type highway=%s, no allowed modes can be identified", osmWayValueType));
+      LOGGER.warning(String.format("Unrecognised osm highway key value type %s=%s, no allowed modes can be identified",
+          OsmHighwayTags.getHighwayKeyTag(), osmWayValueType));
     }
     return allowedModes;
   }  
@@ -337,9 +340,9 @@ public class OsmHighwaySettings extends OsmWaySettings {
    */
   public double getDefaultSpeedLimitByOsmHighwayType(final String osmWayValue){
     if(isSpeedLimitDefaultsBasedOnUrbanArea()) {
-      return getDefaultSpeedLimitByOsmTypeValue(osmWayValue);
+      return getDefaultSpeedLimitByOsmTypeValue(OsmHighwayTags.getHighwayKeyTag(), osmWayValue);
     }else {
-      return nonUrbanSpeedLimitDefaults.getSpeedLimit(osmWayValue);
+      return nonUrbanSpeedLimitDefaults.getSpeedLimit(OsmHighwayTags.getHighwayKeyTag(), osmWayValue);
     }     
   }
   
@@ -482,7 +485,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmModes to allow
    */
   public void addAllowedHighwayModes(final String osmHighwayType, final List<String> osmModes) {
-    addAllowedOsmWayModes(osmHighwayType, osmModes);
+    addAllowedOsmWayModes(OsmHighwayTags.getHighwayKeyTag(), osmHighwayType, osmModes);
   }  
     
   /**
