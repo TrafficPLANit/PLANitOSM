@@ -76,6 +76,11 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
         return false;
       }
     }
+
+    if(!(networkSettings.isHighwayParserActive() || networkSettings.isRailwayParserActive() || networkSettings.isWaterwayParserActive())){
+      LOGGER.warning("Not a single type of network is activated nor road, rail, or water");
+      return false;
+    }
     
     return true;
        
@@ -140,8 +145,6 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     this.settings = settings;
     this.zoningToPopulate = zoningToPopulate;
     this.osmNetworkToPopulate = osmNetworkToPopulate;
-    /* by default activate rail to parse in intermodal settings */
-    getSettings().getNetworkSettings().activateRailwayParser(true);   
   }  
   
    

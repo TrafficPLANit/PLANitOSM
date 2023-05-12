@@ -203,6 +203,6 @@ public class OsmPtv1Tags {
    * @return true if ferry terminal amenity, false otherwise
    */
   public static boolean isFerryTerminal(Map<String, String> tags) {
-    return tags.containsKey(OsmTags.isAmenity(tags)) && tags.get(OsmTags.AMENITY).equals(OsmTags.FERRY_TERMINAL);
+    return OsmTags.isAmenity(tags) && tags.get(OsmTags.AMENITY).equals(OsmTags.FERRY_TERMINAL);
   }
 }

@@ -298,16 +298,29 @@ public class OsmModeUtils {
    * <li>railway=halt gives train</li>
    * <li>railway=stop gives train</li>
    * <li>railway=tram_stop gives tram</li>
+   * <li>amenity=ferry_terminal gives ferry</li>
    * </ul> 
    * 
    * @param tags to extract information from
    * @return default mode found, null if nothing is found
    */
-  public static String identifyPtv1DefaultMode(Map<String, String> tags) {
-   return identifyPtv1DefaultMode(tags, null);
-  }  
+  public static String identifyPtv1DefaultMode(long osmId, Map<String, String> tags, boolean suppressWarning) {
+   return identifyPtv1DefaultMode(osmId, tags, null, suppressWarning);
+  }
 
-  /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported,
+  /**
+   * Identical to {@link #identifyPtv1DefaultMode(Map, boolean)} without suppressing warnings
+   * @param tags to extract information from
+   * @return default mode found, null if nothing is found
+   */
+  public static String identifyPtv1DefaultMode(long osmId, Map<String, String> tags) {
+    return identifyPtv1DefaultMode(osmId, tags, null, false);
+  }
+
+  /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported.
+   *  We are slightly more tolerant to ferries due to their high likelihood of erroneous or incomplete tagging. In those
+   *  cases we verify a few more tags than one would normally do
+   *
    * <ul>
    * <li>highway=bus_stop gives bus</li>
    * <li>highway=station gives bus</li>
@@ -321,13 +334,15 @@ public class OsmModeUtils {
    * <li>railway=tram_stop gives tram</li>
    * <li>railway=tram_stop gives tram</li>
    * <li>amenity=ferry_terminal gives ferry</li>
+   * <li>ferry=yes gives ferry</li>
    * </ul> 
    * 
    * @param tags to extract information from
    * @param backupDefaultMode if none can be found, this mode is used, may be null
+   * @param suppressWarning when true do not log warning if no match could be found,
    * @return default mode, null if no match could be made
    */
-  public static String identifyPtv1DefaultMode(Map<String, String> tags, String backupDefaultMode) {
+  public static String identifyPtv1DefaultMode(long osmId, Map<String, String> tags, String backupDefaultMode, boolean suppressWarning) {
     String foundMode = null;
     if(OsmPtv1Tags.hasPtv1ValueTag(tags)) {
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
@@ -337,9 +352,10 @@ public class OsmModeUtils {
         }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, 
             OsmPtv1Tags.STATION, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE)) {
           foundMode = OsmRoadModeTags.BUS;
-        }else {
+        }else if(!suppressWarning){
           LOGGER.warning(String.format(
-              "Unsupported Ptv1 value tag highway=%s used when identifying default mode, ignored",tags.get(OsmHighwayTags.HIGHWAY)));
+              "Unsupported Ptv1 value tag highway=%s used when identifying default mode on OSM entity %d, ignored",
+              tags.get(OsmHighwayTags.HIGHWAY), osmId));
         }
       }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
         /* tram_stop -> tram */
@@ -348,25 +364,40 @@ public class OsmModeUtils {
         }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmRailwayTags.RAILWAY, 
             OsmPtv1Tags.STATION, OsmPtv1Tags.HALT, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE, OsmPtv1Tags.STOP)) {
           foundMode = OsmRailModeTags.TRAIN;
-        }else {
+        }else if(!suppressWarning){
           LOGGER.warning(String.format(
-              "Unsupported Ptv1 value tag railway=%s used when identifying default mode, ignored",tags.get(OsmRailwayTags.RAILWAY)));
+              "Unsupported Ptv1 value tag railway=%s used when identifying default mode on OSM entity %s, ignored",
+              tags.get(OsmRailwayTags.RAILWAY), osmId));
         }
-      }else if(OsmTags.isAmenity(tags)) {
-        /* amenity=ferry_terminal -> ferry */
-        if(OsmPtv1Tags.isFerryTerminal(tags)) {
-          foundMode = OsmWaterModeTags.FERRY;
-        }
-      }else {
-        LOGGER.warning("Unknown Ptv1 key tag used when identifying default mode, ignored");
       }
-      
+    }else if(OsmTags.isAmenity(tags) || tags.containsKey(OsmWaterModeTags.FERRY)) {
+
+      if(OsmPtv1Tags.isFerryTerminal(tags)) {
+        /* amenity=ferry_terminal -> ferry */
+        foundMode = OsmWaterModeTags.FERRY;
+      }else if(tags.containsKey(OsmWaterModeTags.FERRY) && OsmTagUtils.keyMatchesAnyValueTag(tags, OsmWaterModeTags.FERRY, OsmTags.YES)){
+        foundMode = OsmWaterModeTags.FERRY;
+      }
+    }else if(!suppressWarning){
+      LOGGER.warning(String.format("Unable to extract expected OSM mode from OSM entity %d (Ptv1), potential incomplete tagging, tags(%s)",
+          osmId, tags));
     }
-    
+
     if(foundMode == null) {
       foundMode = backupDefaultMode;
     }
     return foundMode;
+  }
+
+  /** Identical to {@link #identifyPtv1DefaultMode(long, Map, String, boolean)} without suppressing warnings
+   *
+   * @param osmId to use
+   * @param tags to extract information from
+   * @param backupDefaultMode if none can be found, this mode is used, may be null
+      * @return default mode, null if no match could be made
+   */
+  public static String identifyPtv1DefaultMode(long osmId, Map<String, String> tags, String backupDefaultMode) {
+    return identifyPtv1DefaultMode(osmId, tags, backupDefaultMode, false);
   }
 
   /** Find out if modes to check are compatible with the reference OSM modes. Mode compatible means at least one overlapping

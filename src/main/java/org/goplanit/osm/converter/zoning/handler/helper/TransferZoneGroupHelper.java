@@ -72,7 +72,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
         /* tags available, use as is to extract mode compatibility for verification if it is rightly not available */
         if(tags!=null) {
           Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
-              ptModeParser.collectPublicTransportModesFromPtEntity(osmId, tags, OsmModeUtils.identifyPtv1DefaultMode(tags));
+              ptModeParser.collectPublicTransportModesFromPtEntity(osmId, tags, OsmModeUtils.identifyPtv1DefaultMode(osmId, tags));
           if( OsmModeUtils.hasEligibleOsmMode(modeResult) && !getSettings().hasBoundingPolygon()) {      
             /* not parsed due to problems (or outside bounding box), discard */
             logDiscardWarning = true;

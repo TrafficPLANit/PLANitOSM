@@ -189,7 +189,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmWay osmWay) {
 
-    if(osmWay.getId() == 4868934L){
+    if(osmWay.getId() == 20959049L){
       int bla = 4;
     }
 
