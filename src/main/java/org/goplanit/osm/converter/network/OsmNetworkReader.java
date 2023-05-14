@@ -299,9 +299,9 @@ public class OsmNetworkReader implements NetworkReader {
    */  
   @Override
   public MacroscopicNetwork read() throws PlanItException {
-    PlanItException.throwIfNull(getSettings().getInputSource(),"input source not set for OSM network to parse");
-    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"country name not set for OSM network to parse");
-    PlanItException.throwIfNull(getOsmNetworkToPopulate(),"planit network to populate not set for OSM network to parse");
+    PlanItException.throwIfNull(getSettings().getInputSource(),"Input source not set for OSM network to parse");
+    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"Country name not set for OSM network to parse");
+    PlanItException.throwIfNull(getOsmNetworkToPopulate(),"PLANit network to populate not set for OSM network to parse");
 
     logInfo();
     

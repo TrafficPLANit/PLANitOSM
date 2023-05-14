@@ -362,7 +362,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                 
     /* eligible modes for station, must at least support one or more mapped modes */
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(tags));
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(
+            osmStation.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags));
     Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
     Set<TransferZone> matchedTransferZones = new HashSet<>();
     Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getTransferZonesSpatially(eligibleSearchBoundingBox);
@@ -561,7 +562,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     getZoningReaderData().getOsmData().removeUnprocessedStopPosition(osmNode.getId());
         
     /* modes for stop_position */
-    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(tags);
+    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags);
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       /* no eligible modes mapped to planit mode, ignore stop_position */
@@ -801,7 +802,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void extractStandAloneStation(OsmEntity osmStation, Map<String, String> tags, PlanitJtsCrsUtils geoUtils) {
         
     /* modes */
-    String defaultMode = OsmModeUtils.identifyPtv1DefaultMode(tags, OsmRailModeTags.TRAIN);
+    String defaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags, OsmRailModeTags.TRAIN);
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
@@ -953,7 +954,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       
       /* log warning unless it relates to stop_position without any activate modes and/or near bounding box */
-      if(!suppressLogging && OsmModeUtils.hasMappedPlanitMode(getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(tags)))) {
+      if(!suppressLogging && OsmModeUtils.hasMappedPlanitMode(
+          getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags)))) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: Stop_position %d without proper tagging on OSM network could not be mapped to close-by transfer zone in stop_area (tags: %s)", osmNode.getId(), tags.toString()), OsmNodeUtils.createPoint(osmNode));
       }      
@@ -1073,7 +1075,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* transfer zone group */
     TransferZoneGroup transferZoneGroup = getZoningReaderData().getPlanitData().getTransferZoneGroupByOsmId(osmRelation.getId());
     if(transferZoneGroup == null) {
-      LOGGER.severe(String.format("Found stop_area %d in post-processing for which not PLANit transfer zone group has been created, this should not happen",osmRelation.getId()));
+      LOGGER.severe(String.format("Found stop_area %d in post-processing for which no PLANit transfer zone group has been created, this should not happen",osmRelation.getId()));
     }
         
     /* process only stop_positions */
@@ -1087,7 +1089,13 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* stop_position */
       if(member.getRole().equals(OsmPtv2Tags.STOP_ROLE)) {        
 
-        extractPtv2StopAreaStopPosition(member, transferZoneGroup, getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId()));
+        /* suppress any warnings when we identified the member or area should be ignored for generating user warnings */
+        boolean suppressLogging =
+            getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId()) ||
+            getZoningReaderData().getOsmData().isWaitingAreaWithoutMappedPlanitMode(member.getType(), member.getId()) ||
+            getZoningReaderData().getOsmData().isIgnoreStopAreaStopPosition(member.getType(), member.getId());
+
+        extractPtv2StopAreaStopPosition(member, transferZoneGroup, suppressLogging);
         
       }
 

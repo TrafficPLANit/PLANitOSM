@@ -61,8 +61,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
         return settings.getHighwaySettings().isOsmHighwayTypeActivated(tags.get(OsmHighwayTags.getHighwayKeyTag()));
       }else if(settings.isRailwayParserActive() && OsmRailwayTags.hasRailwayKeyTag(tags)) {
         return settings.getRailwaySettings().isOsmRailwayTypeActivated(tags.get(OsmRailwayTags.getRailwayKeyTag()));
-      }else if(settings.isWaterwayParserActive() && OsmWaterwayTags.isWaterway(tags)) {
-        return settings.getWaterwaySettings().isOsmWaterwayRouteTypeActivated(tags.get(OsmWaterwayTags.getWaterwayKeyTag()));
+      }else if(settings.isWaterwayParserActive() && OsmWaterwayTags.isWaterBasedWay(tags)) {
+        return settings.getWaterwaySettings().isOsmWaterwayActivated(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
       }
     }
     return false;

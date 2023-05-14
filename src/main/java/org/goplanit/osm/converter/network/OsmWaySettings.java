@@ -109,11 +109,15 @@ public abstract class OsmWaySettings {
    * 
    */
   public void excludeOsmWayTypesWithoutActivatedModes() {
-    Set<String> originallySupportedTypes = getSetOfActivatedOsmWayLikeTypes();
+    var originallySupportedTypes = getSetOfActivatedOsmWayLikeTypes();
+    var activatedOsmModes = getAcivatedOsmModes();
     if(originallySupportedTypes != null) {
-      for(String supportedWayType : originallySupportedTypes) {
-        Collection<String> allowedOsmModes = collectAllowedOsmWayModes(supportedWayType);
-        excludeOsmWayTypesWithoutModes(supportedWayType, allowedOsmModes);      
+      for(var entry : originallySupportedTypes.entrySet()) {
+        for(var supportedKeyValueType : entry.getValue()) {
+          Collection<String> allowedOsmModes = collectAllowedOsmWayModes(
+              entry.getKey(), supportedKeyValueType, activatedOsmModes);
+          excludeOsmWayTypesWithoutModes(supportedKeyValueType, allowedOsmModes);
+        }
       }
     }
   }    
@@ -182,7 +186,8 @@ public abstract class OsmWaySettings {
    * Activate all known OSM railway types 
    */
   protected void activateAllOsmWayTypes() {
-    infrastructureTypeConfiguration.setOfDeactivatedTypes().forEach( unsupportedType -> activateOsmWayType(unsupportedType));
+    infrastructureTypeConfiguration.getDeactivatedTypes().values().stream().flatMap(e -> e.stream()).forEach(
+        unsupportedType -> activateOsmWayType(unsupportedType));
     activateParser(true);
   }   
   
@@ -245,13 +250,14 @@ public abstract class OsmWaySettings {
   
   /* speed limits */
     
-  /** Collect the speed limit for a given railway tag value, e.g. railway=typeValue, based on the defaults provided (typically set by country)
-   * 
+  /** Collect the speed limit for a given way tag value, e.g. railway=typeValue, based on the defaults provided (typically set by country)
+   *
+   * @param osmWayKey key to use
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
    */
-  protected double getDefaultSpeedLimitByOsmTypeValue(String osmWayValue){
-    return speedLimitDefaults.getSpeedLimit(osmWayValue);    
+  protected double getDefaultSpeedLimitByOsmTypeValue(String osmWayKey, String osmWayValue){
+    return speedLimitDefaults.getSpeedLimit(osmWayKey, osmWayValue);
   }  
   
   /** Collect the default speed limit for a given way tag value, where we extract the key and value from the passed in tags, if available
@@ -262,9 +268,9 @@ public abstract class OsmWaySettings {
    */  
   protected Double getDefaultSpeedLimitByOsmWayType(String osmWayKey, Map<String, String> tags){
     if(tags.containsKey(osmWayKey)){
-      return getDefaultSpeedLimitByOsmTypeValue(tags.get(osmWayKey));
+      return getDefaultSpeedLimitByOsmTypeValue(osmWayKey, tags.get(osmWayKey));
     }else {
-      throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit by OsmRailwayType", osmWayKey);
+      throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit", osmWayKey);
     }    
   }   
   
@@ -368,43 +374,40 @@ public abstract class OsmWaySettings {
     }
     return mappedOsmModes;
   }
-    
+
   /** verify if a particular osm mode is allowed on the provided osm way type
-   *  e.g. is train allowed on rail?
-   *  
+   *  e.g., is train allowed on rail?
+   *
+   * @param osmWayKey to use
    * @param osmWayTypeValue to use
    * @param osmMode to check
-   * @return true when allowed, falseo otherwise
+   * @return true when allowed, false, otherwise
    */
-  protected boolean isModeAllowedOnOsmWay(String osmWayTypeValue, String osmMode) {
-    return osmModeAccessDefaults.isAllowed(osmWayTypeValue, osmMode);
+  protected boolean isModeAllowedOnOsmWay(String osmWayKey, String osmWayTypeValue, String osmMode) {
+    return osmModeAccessDefaults.isAllowed(osmWayKey, osmWayTypeValue, osmMode);
   }
-  
-  /** collect all allowed modes on the given OSM way
-   * 
-   * @param osmWayValueType to collect osm modes for
-   * @return allowed OSM modes
-   */
-  protected abstract Collection<String> collectAllowedOsmWayModes(String osmWayValueType);
-  
+
   /**
    * Collect all Osm modes from the passed in options that are allowed for the given osmWay type
-   * 
+   *
+   * @param osmWayKey to use
    * @param osmWayValueType to use
    * @param osmModesToCheck modes to select from
    * @return allowed OsmModes found
    */
-  protected Set<String> collectAllowedOsmWayModes(String osmWayValueType, Collection<String> osmModesToCheck) {
-    return osmModesToCheck.stream().filter( osmMode -> isModeAllowedOnOsmWay(osmWayValueType, osmMode)).collect(Collectors.toSet());
+  protected Set<String> collectAllowedOsmWayModes(String osmWayKey, String osmWayValueType, Collection<String> osmModesToCheck) {
+    return osmModesToCheck.stream().filter( osmMode ->
+        isModeAllowedOnOsmWay(osmWayKey, osmWayValueType, osmMode)).collect(Collectors.toSet());
   }  
   
-  /** add allowed osm modes to osm way type
-   * 
+  /** Add allowed osm modes to OSM way type
+   *
+   * @param osmWayKey to use
    * @param osmWayTypeValue to use
    * @param osmModes to allow
    */
-  protected void addAllowedOsmWayModes(final String osmWayTypeValue, final List<String> osmModes) {
-    osmModeAccessDefaults.addAllowedModes(osmWayTypeValue, osmModes);
+  protected void addAllowedOsmWayModes(String osmWayKey, String osmWayTypeValue, final List<String> osmModes) {
+    osmModeAccessDefaults.addAllowedModes(osmWayKey, osmWayTypeValue, osmModes);
   }       
   
   /* public */
@@ -435,7 +438,23 @@ public abstract class OsmWaySettings {
    */
   public boolean isOsmModeActivated(final String osmMode) {
     return isParserActive() && getPlanitModeTypeIfActivated(osmMode) != null;
-  }  
+  }
+
+  /** convenience method that collects all currently activated OSM modes
+   *
+   * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
+   */
+  public Collection<String> getAcivatedOsmModes() {
+    Set<String> mappedOsmModes = new HashSet<>();
+    if(!isParserActive()) {
+      return mappedOsmModes;
+    }
+
+    for( var entry : activatedOsmMode2PlanitModeTypeMap.entrySet()) {
+      mappedOsmModes.add(entry.getKey());
+    }
+    return mappedOsmModes;
+  }
   
   /** Verify if any mode other than the passed in OSM mode is active (in case the parser is active)
    * @param osmMode to check
@@ -445,12 +464,12 @@ public abstract class OsmWaySettings {
     return isParserActive() && this.activatedOsmMode2PlanitModeTypeMap.keySet().stream().filter(mode -> (!mode.equals(osmMode))).findFirst().isPresent();
   }   
     
-  /** collect all activated types as a set (copy) in case the parser is active
+  /** Collect all activated types (by key) as a set (copy) in case the parser is active
    * 
-   * @return set of currently activated osm way types (when parser is active), modifications to this set have no effect on configuration, null if not applicable
+   * @return set of currently activated OSM way types (when parser is active), modifications to this set have no effect on configuration, null if not applicable
    */
-  public final Set<String> getSetOfActivatedOsmWayLikeTypes(){
-    return isParserActive() ? infrastructureTypeConfiguration.setOfActivatedTypes() : null;    
+  public final Map<String, Set<String>> getSetOfActivatedOsmWayLikeTypes(){
+    return isParserActive() ? infrastructureTypeConfiguration.getActivatedTypes() : null;
   }
 
   /**

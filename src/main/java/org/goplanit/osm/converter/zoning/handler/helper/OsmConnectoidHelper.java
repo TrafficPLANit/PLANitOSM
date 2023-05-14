@@ -373,10 +373,10 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not enforce filtering based on criteria that might not have been properly tagged, when false, we
    *                                     proceed applying as many filter criteria as possible to get the best possible match based on available tagging, e.g., vertical layer information
    * @param networkLayer to extract node on
-   * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on
+   * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on (may be null)
    * @return PLANit node collected/created
    */
-  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, boolean locationIsKnownOsmStopPosition, MacroscopicNetworkLayer networkLayer, int osmVerticalLayerIndex){
+  private Node extractConnectoidAccessNodeByOsmNode(OsmNode osmNode, boolean locationIsKnownOsmStopPosition, MacroscopicNetworkLayer networkLayer, Integer osmVerticalLayerIndex){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     return extractConnectoidAccessNodeByLocation(osmNodeLocation, locationIsKnownOsmStopPosition, networkLayer, osmVerticalLayerIndex);
   }
@@ -586,10 +586,6 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       return false;
     }
 
-    if(transferZone.getExternalId().equals("3516754930")){
-      int bla = 4;
-    }
-
     var planitMode = referenceNetwork.getModes().get(planitModeType);
     MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByMode(planitMode);
     OsmNode osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(location);
@@ -602,8 +598,6 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       if(linkBasedResult != null && linkBasedResult.second()){
         /* unanimous result, so replace finding */
         waitingAreaOsmVerticalLayerIndex = linkBasedResult.first();
-      }else{
-        int bla = 4;
       }
     }
 
@@ -700,7 +694,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         /* connectoid(s) */
         success = extractDirectedConnectoidsForMode(osmNode, locationIsKnownOsmStopPosition, transferZone, modeType, geoUtils) || success;
         if(success && transferZoneGroup != null && !transferZone.isInTransferZoneGroup(transferZoneGroup)) {
-          /* in some rare cases only the stop locations are part of the stop_area, but not the platforms next to the road/rail, only then this situation is triggered and we salve the situation */
+          /* in some rare cases only the stop locations are part of the stop_area, but not the platforms next to the road/rail, only then this situation is triggered and we salvage the situation */
           LOGGER.info(String.format("Platform/pole %s identified for stop_position %d, platform/pole not in stop_area %s of stop_position, added it",transferZone.getExternalId(), osmNode.getId(), transferZoneGroup.getExternalId()));
           transferZoneGroup.addTransferZone(transferZone);
         }

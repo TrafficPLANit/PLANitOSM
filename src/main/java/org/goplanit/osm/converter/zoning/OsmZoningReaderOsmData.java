@@ -338,8 +338,10 @@ public class OsmZoningReaderOsmData {
     return osmOuterRoleOsmWaysToKeep.size();
   }  
     
-  /** add identified OSM entity to be ignored as stop_area stop_position. When converting stop_positions to connectoids
-   * it will be skipped without further issue or warning
+  /** add identified OSM entity to be ignored if it pops up as a stop_area stop_position. For example, it was deemed
+   *  incorrectly tagged already, or it pertains to a mode that is not being supported. The latter might not be verifiable
+   *  when encountered as part of a relation, hence mark it here as such. It will then be skipped without further
+   *  issue or warning
    * 
    * @param type entity type
    * @param osmId osm entity to mark as invalid stop_position

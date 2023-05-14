@@ -648,7 +648,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
       /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
        * log issue, yet still create transfer zone (without any OSM modes) */
-      LOGGER.fine(String.format("SALVAGED: Transfer zone of type %s found for OSM entity %d without OSM mode support, likely tagging mistake",transferZoneType.name(), osmEntity.getId()));
+      LOGGER.fine(String.format("SALVAGED: Transfer zone %s for OSM entity %d has no known OSM mode support, likely tagging error",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
     }else if(OsmModeUtils.hasMappedPlanitMode(modeResult)){  
       /* mapped planit modes are available, we should create the transfer zone*/

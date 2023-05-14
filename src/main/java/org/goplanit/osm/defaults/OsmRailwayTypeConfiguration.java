@@ -13,15 +13,7 @@ import org.goplanit.utils.exceptions.PlanItException;
  * @author markr
  *
  */
-/**
- * @author markr
- *
- */
-/**
- * @author markr
- *
- */
-public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfiguration {
+public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfigurationImpl {
   
   /**
    * The logger

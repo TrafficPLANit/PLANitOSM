@@ -28,7 +28,7 @@ public class OsmPtVersionSchemeUtils {
    */
   public static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
     if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags)) {
+      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags) || OsmWaterwayTags.isWaterBasedWay(tags)) {
         return OsmPtv1Tags.hasPtv1ValueTag(tags);
       }
       /* we also consider ferry terminals as "ptv1" although technically they are an amenity */
