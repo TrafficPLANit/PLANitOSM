@@ -105,14 +105,9 @@ public class OsmNetworkReader implements NetworkReader {
    * Log some information about this reader's configuration
    */
   private void logInfo() {
-    
-    LOGGER.info(String.format("OSM network input source: %s",settings.getInputSource()));
-    LOGGER.info(String.format("Country to base defaults on: %s",settings.getCountryName()));
-    LOGGER.info(String.format("Setting Coordinate Reference System: %s",settings.getSourceCRS().getName()));
-    if(getSettings().hasBoundingPolygon()) {
-      LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
-    }
-    
+
+    getSettings().logSettings();
+
   }    
   
   /** Perform preprocessing if needed, only needed when we have set a bounding box and we need to restrict the OSM entities

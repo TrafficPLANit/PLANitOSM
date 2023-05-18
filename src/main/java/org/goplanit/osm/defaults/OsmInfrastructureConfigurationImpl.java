@@ -132,7 +132,9 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
    */
   @Override
   public Map<String,Set<String>> getActivatedTypes() {
-    return Map.of(osmKey, Collections.unmodifiableSet(activatedOsmTypes));
+    var map = new TreeMap<String,Set<String>>();
+    map.put(osmKey, new TreeSet<>(activatedOsmTypes));
+    return map;
   }
 
   /**
@@ -140,7 +142,9 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
    */
   @Override
   public Map<String,Set<String>> getDeactivatedTypes() {
-    return Map.of(osmKey, Collections.unmodifiableSet(deactivatedOsmTypes));
+    var map = new TreeMap<String,Set<String>>();
+    map.put(osmKey, new TreeSet<>(deactivatedOsmTypes));
+    return map;
   }
 
   /**

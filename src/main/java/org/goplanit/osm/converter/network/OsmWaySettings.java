@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
@@ -411,7 +412,12 @@ public abstract class OsmWaySettings {
   }       
   
   /* public */
-  
+
+  /**
+   * log way specific settings for derived classes
+   */
+  public abstract void logSettings();
+
   /** Determine whether or not the ways represented by these settings should be parsed or not. It has no impact
    * on the settings themselves, except that all queries related to whether or not modes or types are activated
    * will respond negatively when the parser is deactived, despite the underlying settings remaining in memory and

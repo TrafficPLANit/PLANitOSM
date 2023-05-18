@@ -71,10 +71,7 @@ public class OsmZoningReader implements ZoningReader {
    * Log some information about this reader's configuration 
    */
   private void logInfo() {
-    LOGGER.info(String.format("OSM (transfer) zoning input file: %s",getSettings().getInputSource()));
-    if(getSettings().hasBoundingPolygon()) {
-      LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
-    }
+    getSettings().logSettings();
   }       
   
   /** Make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box

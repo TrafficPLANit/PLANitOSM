@@ -91,6 +91,17 @@ public class OsmNetworkToZoningReaderData {
   }
 
   /**
+   * Register additional OSM nodes as being part of the network after the network has been parsed.
+   * This may happen when we artificially expand the network while identifying OSM nodes that should in
+   * fact be part of the network, such as dangling ferry stops that we want to connect.
+   *
+   * @return retained OSM  nodes
+   */
+  public void registerNetworkOsmNode(OsmNode osmNode){
+    networkData.getOsmNodeData().registerEligibleOsmNode(osmNode);
+  }
+
+  /**
    * Verify if an OSM way is processed but identified as unavailable. Any subsequent dependencies on this OSM way
    * can be safely ignored without issuing further warnings
    *

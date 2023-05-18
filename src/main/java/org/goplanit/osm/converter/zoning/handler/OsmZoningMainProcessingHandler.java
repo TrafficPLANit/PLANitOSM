@@ -14,6 +14,7 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -844,17 +845,16 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
        * hope to distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, the ferry terminal remains, i.e.,
        * are not part of a stop_area nor do we know what role it plays, then we parse it as a stop position and transfer zone combined.
        * For now, we track this instance and postpone parsing until then */
-      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
-
-        /* tagging error */
+      if(!hasNetworkLayersWithActiveOsmNode(osmNode.getId()) && !getSettings().isConnectDanglingFerryStopToNearbyFerryRoute()){
+        /* tagging error without remedy */
         LOGGER.warning(String.format("DISCARD: amenity=ferry_terminal (%d) does not reside on OSM way supporting a ferry route", osmNode.getId()));
-
-      }else {
-
-        /* mark for post_processing to create transfer zone and connectoids for it, since it might have a separate waiting platform */
-        getProfiler().incrementOsmPtv1TagCounter(OsmTags.FERRY_TERMINAL);
-        getZoningReaderData().getOsmData().addUnprocessedPtv1FerryTerminal(osmNode);
+        return;
       }
+      /* either valid, or will attempt to create connection to nearby ferry route and supplement network with additional link/nodes, this is done in post-processing */
+
+      /* mark for post_processing to create transfer zone and connectoids for it, since it might have a separate waiting platform */
+      getProfiler().incrementOsmPtv1TagCounter(OsmTags.FERRY_TERMINAL);
+      getZoningReaderData().getOsmData().addUnprocessedPtv1FerryTerminal(osmNode);
     }
   }
 
@@ -872,9 +872,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
               
         /* create transfer zone but no connectoids, these will be constructed during, or after, we have parsed relations, i.e., stop_areas */
-        getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);        
+        getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);
+        var defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmWay.getId(), tags, false);
         getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-            osmWay, tags, TransferZoneType.PLATFORM, OsmModeUtils.identifyPtv1DefaultMode(osmWay.getId(), tags), getGeoUtils());
+            osmWay, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
       }      
       
       /* stop position */

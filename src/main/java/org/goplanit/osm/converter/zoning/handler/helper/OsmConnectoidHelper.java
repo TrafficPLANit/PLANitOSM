@@ -10,11 +10,7 @@ import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.osm.util.OsmBoundingAreaUtils;
-import org.goplanit.osm.util.OsmNodeUtils;
-import org.goplanit.osm.util.PlanitLinkOsmUtils;
-import org.goplanit.osm.util.PlanitTransferZoneUtils;
-import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.osm.util.*;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.EdgeSegment;
@@ -352,10 +348,10 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
         if(osmNode != null) {
           /* all regular cases */
-          planitNode = OsmNetworkHandlerHelper.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
+          planitNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
         }else {
           /* special cases whenever parser decided that location required planit node even though there exists no OSM node at this location */ 
-          planitNode = OsmNetworkHandlerHelper.createPopulateAndRegisterNode(osmNodeLocation, networkLayer, layerData);
+          planitNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNodeLocation, networkLayer, layerData);
         }
         profiler.logConnectoidStatus(zoning.getTransferConnectoids().size());
                              

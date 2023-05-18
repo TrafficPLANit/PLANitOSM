@@ -1,16 +1,15 @@
 package org.goplanit.osm.converter.intermodal;
 
-import java.net.URL;
-
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
+
+import java.net.URL;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -80,8 +79,17 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   public void reset() {
     networkSettings.reset();
     zoningPtSettings.reset();
-  }  
-  
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    networkSettings.logSettings();
+    zoningPtSettings.logSettings();
+  }
+
   // GETTERS/SETTERS
   
   /** Provide access to the network reader settings

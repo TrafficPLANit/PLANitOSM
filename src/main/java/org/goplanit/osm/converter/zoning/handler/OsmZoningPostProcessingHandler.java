@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter.zoning.handler;
 
+import java.awt.List;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
@@ -21,6 +22,7 @@ import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
@@ -32,6 +34,7 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
+import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
@@ -522,6 +525,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
     SortedSet<String> osmAccessModes = modeResult.first();
 
+    if(!terminalOnNetworkNode && getSettings().isConnectDanglingFerryStopToNearbyFerryRoute()) {
+      /* salvage by creating a new link to attach to ferry network and place terminal on a network node */
+      connectDanglingFerryStopToNearbyFerryRoute(osmFerryTerminal, defaultMode);
+      terminalOnNetworkNode = hasNetworkLayersWithActiveOsmNode(osmFerryTerminal.getId());
+    }
+
     if(terminalOnNetworkNode) {
 
       /* transfer zone + connectoids */
@@ -529,9 +538,59 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       getTransferZoneHelper().createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmFerryTerminal, tags, defaultMode, ptv1TransferZoneType, getGeoUtils());
 
     }else{
-      /* transfer zone not on water way route, not yet supported as it seems unlikely to happen (and if it does, it is likely that it is an unused terminal */
-      LOGGER.severe(String.format("DISCARD: Ferry terminal OSM node (%d) expected to be also a stop location, yet OSM node not present on underlying network", osmFerryTerminal.getId()));
+      /* transfer zone not on water way route, and not flagged to be connected to nearest available route */
+      LOGGER.severe(String.format("DISCARD: Ferry terminal OSM node (%d) is stop location, but not connected to ferry network, if to be kept consider activating connecting dangling ferry stops option", osmFerryTerminal.getId()));
     }
+  }
+
+  /**
+   * Given a ferry stop location and the mode (ferry) to use, construct a new link and link segments attaching the ferry terminal location
+   * to the nearest ferry route (within acceptable search radius). We utilise the cloest existing ferry link's closest existing node as the
+   * attachment point.
+   *
+   * @param osmFerryStop to attach after found dangling
+   * @param osmMode mode to apply
+   */
+  private void connectDanglingFerryStopToNearbyFerryRoute(OsmNode osmFerryStop, String osmMode) {
+
+    /* find closest ferry link to ferry ferry terminal */
+    var ferryStopLocation = OsmNodeUtils.createPoint(osmFerryStop);
+    var planitWaterMode = getReferenceNetwork().getModes().get(getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getMappedPlanitWaterMode(osmMode));
+    var networkLayer = this.getReferenceNetwork().getLayerByMode(planitWaterMode);
+    var boundingBox = getGeoUtils().createBoundingBox(ferryStopLocation.getEnvelopeInternal(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters());
+    Collection<MacroscopicLink> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(boundingBox);
+    spatiallyMatchedLinks.removeIf( l -> !l.isModeAllowedOnAnySegment(planitWaterMode));
+    var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+        OsmNodeUtils.createCoordinate(osmFerryStop), spatiallyMatchedLinks, getSettings().getFerryStopToFerryRouteSearchRadiusMeters(), getGeoUtils());
+
+    /* create network node at ferry terminal location + find closest node on chosen ferry link */
+    var ferryStopNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(
+        osmFerryStop, networkLayer, getNetworkToZoningData().getNetworkLayerData(networkLayer));
+    var closestNodeWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+        ferryStopLocation.getCoordinate(), Set.<Node>of(closestLinkWithDistance.first().getNodeA(), closestLinkWithDistance.first().getNodeB()), Double.MAX_VALUE, getGeoUtils());
+
+    /* create new ferry link to attach to ferry network */
+    var lineString = PlanitJtsUtils.createLineString(ferryStopLocation.getCoordinate(), closestNodeWithDistance.first().getPosition().getCoordinate());
+    var ferryLink = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
+        ferryStopNode, closestNodeWithDistance.first(), lineString, networkLayer, null, "dummy-ferry-link", getGeoUtils());
+
+    /* create new ferry link segments */
+    String waterWayKey = OsmWaterwayTags.ROUTE;
+    String waterWayValue = OsmWaterwayTags.FERRY;
+    var linkSegmentType = getReferenceNetwork().getDefaultLinkSegmentTypeByOsmTag(waterWayKey, waterWayValue).get(networkLayer);
+    var speedLimit = getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getDefaultSpeedLimit(waterWayValue);
+    var lanes = getNetworkToZoningData().getNetworkSettings().getDefaultDirectionalLanesByWayType(waterWayKey, waterWayValue);
+    /* a->b */
+    PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+        ferryLink, true /* A->B */, linkSegmentType, speedLimit, lanes, networkLayer);
+    /* b->a */
+    PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+        ferryLink, false /* B->A */, linkSegmentType, speedLimit, lanes, networkLayer);
+
+    /* register the ferry terminal as a network node so we can look it up by its id when needed (this is needed when verifying
+     * if the OSM node is now part of the physical network such that we can process the ferry terminal as a regular terminal from
+     * now on */
+    getNetworkToZoningData().registerNetworkOsmNode(osmFerryStop);
   }
 
   /**
