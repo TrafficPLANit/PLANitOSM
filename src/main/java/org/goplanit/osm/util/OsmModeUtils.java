@@ -476,8 +476,6 @@ public class OsmModeUtils {
     }else {
       return false;
     }
-  }  
-
-
+  }
 
 }

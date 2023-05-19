@@ -87,8 +87,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   private double  searchRadiusFerryStopToFerryRouteMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERY_ROUTE_M;
     
-  /** by default the transfer parser is deactivated */
-  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
+  /** by default the transfer parser is activated */
+  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
   
   /** by default we are removing dangling zones */
   public static boolean DEFAULT_REMOVE_DANGLING_ZONES = true;

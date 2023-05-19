@@ -450,6 +450,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     if(mappedMode == null) {
       mappedMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
+    if(mappedMode == null) {
+      mappedMode = osmWaterwaySettings.getMappedPlanitWaterMode(osmMode);
+    }
     return mappedMode != null;
   }
   

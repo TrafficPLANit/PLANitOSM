@@ -299,15 +299,17 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * to filter out definite non-matches.
    *  
    * @param transferZone to verify
-   * @param referenceOsmModes to macth against
+   * @param referenceOsmModes to match against
    * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
+   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also considered.
    * @return matched transfer zones
    */   
-  private boolean isTransferZoneModeCompatible(TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+  private boolean isTransferZoneModeCompatible(
+      TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches, boolean allowModelessTransferZoneMatches) {
     Collection<String> transferZoneSupportedModes = PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone);
     if(transferZoneSupportedModes==null) {       
-      /* zone has no known modes, not a trustworthy match */ 
-      return false;
+      /* zone has no known modes, not a trustworthy match unless this is deemed acceptable as a last ditch effort */
+      return allowModelessTransferZoneMatches;
     } 
     
     /* check mode compatibility on extracted transfer zone supported modes*/
@@ -365,8 +367,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
             /* inform user of tagging issues in case platform is not fully correctly mode mapped */
             if(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone)==null) {
               LOGGER.info(String.format("SALVAGED: Platform/pole (%s) referenced by stop_position (%s), matched although platform has no known mode support", transferZone.getExternalId(), osmNode.getId()));
-            }else if(!isTransferZoneModeCompatible(transferZone, referenceOsmModes, true /* allow pseudo matches */)) {
-              LOGGER.fine(String.format("Platform/pole (%s) referenced by stop_position (%s), but platform is not (pseudo) mode compatible with stop_position, ignore match", transferZone.getExternalId(), osmNode.getId()));
+            }else if(!isTransferZoneModeCompatible(transferZone, referenceOsmModes, true /* allow pseudo matches */, false)) {
+              LOGGER.warning(String.format("Platform/pole (%s) referenced by stop_position (%s), but platform is not (pseudo) mode compatible with stop_position, or has no OSM modes at all, verify", transferZone.getExternalId(), osmNode.getId()));
               continue;
             }
 
@@ -414,15 +416,20 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     
     if(foundTransferZones!=null) {
     
-      Collection<TransferZone> nameAndModecompatibleZones = filterModeCompatibleTransferZones(referenceOsmModes, foundTransferZones, allowPseudoModeCompatibility);
+      Collection<TransferZone> nameAndModecompatibleZones = filterModeCompatibleTransferZones(referenceOsmModes, foundTransferZones, allowPseudoModeCompatibility, false);
       if(nameAndModecompatibleZones==null || nameAndModecompatibleZones.isEmpty()) {        
-        //nameAndModecompatibleZones = foundTransferZones;
         LOGGER.fine(String.format("Platform/pole(s) (%s) matched by name to stop_position (%s), but none are even pseudo mode compatible with stop", foundTransferZones.stream().map( z -> z.getExternalId()).collect(Collectors.toList()).toString(), osmId));
+
+        /* perhaps transfer zones without any known modes (due to lack of tagging) are now worthwhile considering, notify user if such matches exist to check correctness */
+        foundTransferZones = filterModeCompatibleTransferZones(referenceOsmModes, foundTransferZones, false, true /* allow for mode less match on name */);
+        if(foundTransferZones!=null && foundTransferZones.size()>1){
+          LOGGER.info(String.format("SALVAGED: Platform/pole(s) (%s) matched by name to stop_position (%s), although platform has no known mode support, verify correctness", foundTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(",")), osmId));
+        }
       }
     }
     
     if(foundTransferZones!=null && foundTransferZones.size()>1) {
-      LOGGER.fine(String.format("multiple platform/pole matches found for name %s and access point osm id %d",nameToMatch, osmId));
+      LOGGER.fine(String.format("Multiple platform/pole matches found for name %s and access point OSM id %d",nameToMatch, osmId));
     }     
   
     return foundTransferZones;
@@ -511,12 +518,25 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     Collection<TransferZone> matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(osmNode, tags, potentialTransferZones, referenceOsmModes, geoUtils);         
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       /* no explicit reference or name match is found, we collect the closest mode and vertical layer index compatible match */
-      matchedTransferZones = filterModeCompatibleTransferZones(referenceOsmModes, potentialTransferZones, true);
+      boolean allowModelessTransferZoneMatches = false;
+      matchedTransferZones = filterModeCompatibleTransferZones(
+          referenceOsmModes, potentialTransferZones, true, allowModelessTransferZoneMatches);
+      if(matchedTransferZones== null || matchedTransferZones.isEmpty()){
+        /* still no match, now consider transfer zones without any mode information due to lack of tagging, these are now considered as last resort, if present
+         * notify user to verify correctness */
+        allowModelessTransferZoneMatches = true;
+        matchedTransferZones = filterModeCompatibleTransferZones(
+            referenceOsmModes, potentialTransferZones, true, allowModelessTransferZoneMatches);
+      }
       matchedTransferZones = filterVerticalLayerIndexCompatibleTransferZones(osmNode, tags, matchedTransferZones);
 
       foundZone =  (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, matchedTransferZones, geoUtils);
       if(foundZone != null) {
         matchedTransferZones = Collections.singleton(foundZone);
+
+        if(allowModelessTransferZoneMatches){
+          LOGGER.info(String.format("SALVAGED: Platform/pole (%s) matched to stop_position (%s) spatially, although platform has no known mode support, verify correctness", matchedTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(",")), osmNode.getId()));
+        }
       }
     }
      
@@ -565,11 +585,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param eligibleOsmModes to map against (may be null)
    * @param potentialTransferZones to extract mode compatible transfer zones
    * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
+   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also considered. If such a match is found, user is requested to verify correctness
    * @return matched transfer zones
    */  
   public Set<TransferZone> filterModeCompatibleTransferZones(
-      Collection<String> eligibleOsmModes, Collection<TransferZone> potentialTransferZones, boolean allowPseudoModeMatches) {
-    return potentialTransferZones.stream().filter(tz -> isTransferZoneModeCompatible(tz, eligibleOsmModes, allowPseudoModeMatches)).collect(Collectors.toSet());
+      Collection<String> eligibleOsmModes, Collection<TransferZone> potentialTransferZones, boolean allowPseudoModeMatches, boolean allowModelessTransferZoneMatches) {
+    return potentialTransferZones.stream().filter(tz -> isTransferZoneModeCompatible(
+        tz, eligibleOsmModes, allowPseudoModeMatches, allowModelessTransferZoneMatches)).collect(Collectors.toSet());
   }
 
   /**
@@ -646,9 +668,9 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
         publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
-      /* no information on modes --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information 
-       * log issue, yet still create transfer zone (without any OSM modes) */
-      LOGGER.warning(String.format("SALVAGED: Creating Transfer zone %s for OSM entity %d without tagged OSM modes, verify it is not discarded due to missing tags",transferZoneType.name(), osmEntity.getId()));
+      /* no information on modes at all --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information
+       * Create transfer zone (without any OSM modes) and hope post-processing can figure it out from context */
+      LOGGER.fine(String.format("SALVAGED: Creating tentative transfer zone %s for OSM entity %d without tagged OSM modes",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
     }else if(OsmModeUtils.hasMappedPlanitMode(modeResult)){  
       /* mapped planit modes are available, we should create the transfer zone*/

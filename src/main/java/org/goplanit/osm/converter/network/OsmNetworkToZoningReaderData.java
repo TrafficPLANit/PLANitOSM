@@ -98,6 +98,7 @@ public class OsmNetworkToZoningReaderData {
    * @return retained OSM  nodes
    */
   public void registerNetworkOsmNode(OsmNode osmNode){
+    networkData.getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());
     networkData.getOsmNodeData().registerEligibleOsmNode(osmNode);
   }
 

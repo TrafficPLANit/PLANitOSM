@@ -458,7 +458,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
     if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
       /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it */
-      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
+      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
       return !DISCARD; // not discarded
     }    
     
@@ -469,8 +469,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       if(!isNearNetworkBoundingBox(osmNode)) LOGGER.warning(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) resides on discarded(out of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
       return DISCARD;
     }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
-      if(!isNearNetworkBoundingBox(osmNode)) LOGGER.warning(String.format("DISCARD: Ptv2 public_transport=stop_position also tagged as ferry_terminal (%d) but resides on discarded (out of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
-      return DISCARD;
+      /* When stop position is a ferry terminal it may not (yet) be connected, how to deal with this is determined in post-processing, so keep it for now*/
+      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
+      return !DISCARD;
     }
 
     /* potentially transform to alternative Ptv1 type if tag indicates it and which does not require it to be on a road.
@@ -538,7 +539,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
       /* stop positions relates to connectoids that provide access to transfer zones. The transfer zones are based on platforms, but these are processed separately. 
        * So, postpone parsing of all Ptv2 stop positions, and simply track them for delayed processing after all platforms/transfer zones have been identified */
-      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
+      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
     }
 
     if(discarded){
@@ -553,19 +554,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param tags of the OSM node
    */
   private void processPtv2Station(OsmNode osmNode, Map<String, String> tags){
-
-    var networkSettings = getNetworkToZoningData().getNetworkSettings();
-
-    /* special case - when a ferry terminal is marked as a station, we process it as a ferry terminal rather than
-     * a station... */
-    if(OsmPtv1Tags.isFerryTerminal(tags)){
-
-      if(networkSettings.isWaterwayParserActive() && networkSettings.getWaterwaySettings().isOsmModeActivated(OsmWaterModeTags.FERRY)){
-        LOGGER.fine(String.format("SALVAGED: OSM node (%d) that is Ptv2 public_transport=station is also tagged as a ferry terminal, parse as Ptv1 ferry terminal instead", osmNode.getId()));
-        extractTransferInfrastructurePtv1(osmNode, tags, getGeoUtils());
-      }
-      return;
-    }
 
     /* ...otherwise stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
      * ignore them altogether. Therefore, postpone parsing them until after we have parsed the relations */
@@ -584,10 +572,17 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM);
     
     String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags);
-    if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
-      /* platform is situated on road/rail/water . This is discouraged and arguably a tagging error, but occurs sometimes and can be salvaged by
-       * extracting the platform and stop position together */
-      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
+    boolean platformOnNetwork = hasNetworkLayersWithActiveOsmNode(osmNode.getId());
+    boolean notYetButToBeAttachedToNetwork = OsmPtv1Tags.isFerryTerminal(tags) && getSettings().isConnectDanglingFerryStopToNearbyFerryRoute();
+    if(platformOnNetwork || notYetButToBeAttachedToNetwork) {
+
+      /* platform is situated on (or could be attached in future) road/rail/water network . This may happen when it is not only a platform but also a (potential) stop_position,
+       * is dealt with by extracting it as a stop position rather than a separate platform */
+      processPtv2StopPosition(osmNode, tags);
+      if(notYetButToBeAttachedToNetwork){
+        getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());
+      }
+
     }else {
       /* regular platform separated from vehicle stop position; create transfer zone but no connectoids, 
        * these will be constructed during or after we have parsed relations, i.e. stop_areas */
@@ -674,7 +669,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         
         /* bus_stop on the road and NO Ptv2 tags (or Ptv2 tags assessed and decided they should be ignored), treat it as
          * a stop_location (connectoid) rather than a waiting area (transfer zone), mark for post_processing as such */
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmEntity.getId());
+        getZoningReaderData().getOsmData().addUnprocessedStopPosition((OsmNode) osmEntity);
         
       }else {
         
@@ -786,7 +781,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it,
          * since it might have a separate waiting platform */
         getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.TRAM_STOP);
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
+        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
       }
       
     }
@@ -811,7 +806,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it
          * since it might have a separate waiting platform */
         getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.HALT);
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode.getId());
+        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
       }      
       
     }
@@ -873,7 +868,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
               
         /* create transfer zone but no connectoids, these will be constructed during, or after, we have parsed relations, i.e., stop_areas */
         getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);
-        var defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmWay.getId(), tags, false);
+        var defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmWay.getId(), tags, true);
         getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
             osmWay, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
       }      
@@ -952,6 +947,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       if(OsmPtv2Tags.PLATFORM.equals(ptv2ValueTag)) {
                 
         processPtv2Platform(osmNode, tags);
+
       }            
       /* stop position */
       else if(OsmPtv2Tags.STOP_POSITION.equals(ptv2ValueTag)) {

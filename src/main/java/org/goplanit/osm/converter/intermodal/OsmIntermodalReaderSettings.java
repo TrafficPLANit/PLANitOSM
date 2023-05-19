@@ -13,7 +13,7 @@ import java.net.URL;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
- * and zoning reader. Hence these settings provide access to OSM network and zoning reader settings
+ * and zoning reader. Hence, these settings provide access to OSM network and zoning reader settings
  * 
  * @author markr
  *

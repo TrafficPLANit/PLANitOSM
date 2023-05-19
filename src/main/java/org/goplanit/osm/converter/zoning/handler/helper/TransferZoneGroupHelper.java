@@ -183,7 +183,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
   /** Find all transfer zone groups with at least one transfer zone that is mode compatible (and planit mode mapped)  with the passed in osm modes
    * In case no eligible modes are provided (null).
    *  
-   * @param referenceOsmModes to map agains (may be null)
+   * @param referenceOsmModes to map against (may be null)
    * @param potentialTransferZones to extract transfer zone groups from
    * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
    * @return matched transfer zone groups
@@ -192,7 +192,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
     /* find potential matched transfer zones based on mode compatibility while tracking group memberships */
     Set<TransferZoneGroup> potentialTransferZoneGroups = new HashSet<TransferZoneGroup>();
     
-    Collection<TransferZone> filteredTransferZones = transferZoneParser.filterModeCompatibleTransferZones(referenceOsmModes, potentialTransferZones, allowPseudoModeMatches);
+    Collection<TransferZone> filteredTransferZones = transferZoneParser.filterModeCompatibleTransferZones(
+        referenceOsmModes, potentialTransferZones, allowPseudoModeMatches, false);
     if(filteredTransferZones!=null && !filteredTransferZones.isEmpty()) {
       for(TransferZone transferZone : filteredTransferZones) {                     
         /* matched to group and/or zones*/        
