@@ -355,5 +355,12 @@ public class OsmRailwaySettings extends OsmWaySettings {
   public Collection<String> collectAllowedOsmRailwayModes(String osmRailwayValueType) {
     return collectAllowedOsmWayModes(osmRailwayValueType);    
   }
-    
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    LOGGER.info(String.format("Railway parser activated: %s", isParserActive()));
+  }
 }

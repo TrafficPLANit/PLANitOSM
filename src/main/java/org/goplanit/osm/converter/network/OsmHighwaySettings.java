@@ -494,6 +494,13 @@ public class OsmHighwaySettings extends OsmWaySettings {
   public void logUnsupportedOsmHighwayTypes() {
     logUnsupportedOsmWayTypes();
   }
- 
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    LOGGER.info(String.format("Highway (road) parser activated: %s", isParserActive()));
+  }
 
 }

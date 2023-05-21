@@ -45,7 +45,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
     }
   }
 
-  /** by default the railway parser is deactivated */
+  /** by default the ferry parser is deactivated */
   public static boolean DEFAULT_WATERWAYS_PARSER_ACTIVE = false;
 
   /**
@@ -237,5 +237,12 @@ public class OsmWaterwaySettings extends OsmWaySettings {
     return collectAllowedOsmWayModes(
         OsmWaterwayTags.getKeyForValueType(osmWaterwayType), osmWaterwayType, OsmWaterModeTags.getSupportedWaterModeTags());
   }
-    
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    LOGGER.info(String.format("Waterway parser activated: %s", String.valueOf(isParserActive())));
+  }
 }

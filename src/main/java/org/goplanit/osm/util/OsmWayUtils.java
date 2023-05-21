@@ -13,6 +13,7 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.function.PlanitExceptionConsumer;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
@@ -671,7 +672,26 @@ public class OsmWayUtils {
       }
     }
     return null;
-  }  
+  }
 
 
+  /**
+   * Verify existence of any of the supported way keys (highway=, railway=, or a waterway one (route=ferry, ferry=_highway_type) and
+   * return the value
+   *
+   * @param tags to check
+   * @return value found or log warning
+   */
+  public static String findWayTypeValueForEligibleKey(Map<String, String> tags) {
+    if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+      return tags.get(OsmHighwayTags.getHighwayKeyTag());
+    }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
+      return tags.get(OsmRailwayTags.getRailwayKeyTag());
+    }else if(OsmWaterwayTags.isWaterBasedWay(tags)){
+      return tags.get(OsmWaterwayTags.getUsedKeyTag(tags));
+    }else{
+      LOGGER.warning(String.format("No acceptable OSM way key found in provided tags (%s)", tags));
+    }
+    return null;
+  }
 }

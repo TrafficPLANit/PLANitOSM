@@ -10,6 +10,7 @@ import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.OsmWayUtils;
+import org.goplanit.osm.util.PlanitNetworkLayerUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.arrays.ArrayUtils;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -178,7 +179,7 @@ public class OsmNetworkLayerParser {
       if(osmnode != null) {
         layerData.registerOsmNodeAsInternalToPlanitLink(osmnode,link);
       }else {
-        LOGGER.fine(String.format("OSM node %d not available although internal to parseable osm way %d, possibly outside bounding box",osmWay.getNodeId(internalLocationIndex), osmWay.getId()));
+        LOGGER.fine(String.format("OSM node %d not available although internal to parseable OSM way %d, possibly outside bounding box",osmWay.getNodeId(internalLocationIndex), osmWay.getId()));
       }
     }   
   }   
@@ -194,7 +195,8 @@ public class OsmNetworkLayerParser {
    * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return created or fetched link
    */
-  private MacroscopicLink createAndPopulateLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
+  private MacroscopicLink createAndPopulateLink(
+      OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
     if(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes()){
       throw new PlanItRunTimeException("Invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
     }
@@ -253,24 +255,13 @@ public class OsmNetworkLayerParser {
     /* when not present and valid geometry, create new link */
     if(link == null) {
 
-      /* length and geometry */
-      double linkLength = 0;      
-      /* update the length based on the geometry */
-      linkLength = geoUtils.getDistanceInKilometres(lineString);
-      
-      /* create link */
-      link = networkLayer.getLinks().getFactory().registerNew(nodeFirst, nodeLast, linkLength, true);
-      /* geometry */
-      link.setGeometry(lineString);      
-      /* XML id */
-      link.setXmlId(Long.toString(link.getId()));
-      /* external id */
-      link.setExternalId(String.valueOf(osmWay.getId()));
-      
-      if(tags.containsKey(OsmTags.NAME)) {
-        link.setName(tags.get(OsmTags.NAME));
-      }
+      link = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
+          nodeFirst, nodeLast, lineString, networkLayer,String.valueOf(osmWay.getId()), tags.get(OsmTags.NAME), geoUtils);
 
+      /* store OSM way type for future reference (used in zoning reader for example) */
+      OsmNetworkHandlerHelper.setLinkOsmWayType(link,  OsmWayUtils.findWayTypeValueForEligibleKey(tags));
+      /* register the links vertical layer index (used in the zoning reader for example) */
+      OsmNetworkHandlerHelper.setLinkVerticalLayerIndex(link, tags);
     }
     return link;      
   }  
@@ -579,25 +570,23 @@ public class OsmNetworkLayerParser {
    * @param tags tags that belong to the way
    * @param link the link corresponding to this way
    * @param linkSegmentType the link segment type corresponding to this way
-   * @param directionAb the direction to create the segment for  
+   * @param directionAb the direction to create the segment for
+   * @param speedLimit to apply
+   * @param numLanes to apply
    * @return created link segment, or null if already exists
    */  
-  private MacroscopicLinkSegment extractMacroscopicLinkSegment(OsmWay osmWay, Map<String, String> tags, MacroscopicLink link, MacroscopicLinkSegmentType linkSegmentType, boolean directionAb){
-    MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
-    if(linkSegment == null) {
-      linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
-      /* Xml id */
-      linkSegment.setXmlId(Long.toString(linkSegment.getId()));
-      /* external id, identical to link since OSM has no directional ids */
-      linkSegment.setExternalId(link.getExternalId());
-    }else{
-      LOGGER.warning(String.format(
-          "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), osmWay.getId()));
-    }
-    
-    /* link segment type */
-    linkSegment.setLinkSegmentType(linkSegmentType);
-        
+  private MacroscopicLinkSegment extractMacroscopicLinkSegment(
+      OsmWay osmWay,
+      Map<String, String> tags,
+      MacroscopicLink link,
+      MacroscopicLinkSegmentType linkSegmentType,
+      boolean directionAb,
+      Double speedLimit,
+      Integer numLanes){
+
+    var linkSegment =
+        PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+            link, directionAb, linkSegmentType, speedLimit, numLanes, networkLayer);
     layerData.getProfiler().logLinkSegmentStatus(networkLayer.getNumberOfLinkSegments());      
     return linkSegment;
   }  
@@ -625,17 +614,16 @@ public class OsmNetworkLayerParser {
     /* create link segment A->B when eligible */
     MacroscopicLinkSegmentType linkSegmentTypeAb = directionAbIsForward ? linkSegmentTypes.first() : linkSegmentTypes.second();
     if(linkSegmentTypeAb!=null) {
-      extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeAb, true /* A->B */);
       Double speedLimit = directionAbIsForward ? speedLimits.first() : speedLimits.second();
-      link.getLinkSegmentAb().setPhysicalSpeedLimitKmH(speedLimit);
-      link.getLinkSegmentAb().setNumberOfLanes(directionAbIsForward ? lanes.first() : lanes.second());
+      var numLanes = directionAbIsForward ? lanes.first() : lanes.second();
+      extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeAb, true /* A->B */, speedLimit, numLanes);
     }
     /* create link segment B->A when eligible */
     MacroscopicLinkSegmentType linkSegmentTypeBa = directionAbIsForward ? linkSegmentTypes.second() : linkSegmentTypes.first();
     if(linkSegmentTypeBa!=null) {
-      extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeBa, false /* B->A */);
-      link.getLinkSegmentBa().setPhysicalSpeedLimitKmH(directionAbIsForward ? speedLimits.second() : speedLimits.first());
-      link.getLinkSegmentBa().setNumberOfLanes(directionAbIsForward ? lanes.second() : lanes.first());
+      Double speedLimit = directionAbIsForward ? speedLimits.second() : speedLimits.first();
+      var numLanes = directionAbIsForward ? lanes.second() : lanes.first();
+      extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeBa, false /* B->A */, speedLimit, numLanes);
     }                 
     
   }   
@@ -711,7 +699,7 @@ public class OsmNetworkLayerParser {
     Node node = this.layerData.getPlanitNodeByOsmNode(osmNode);
     if(node == null) {      
       /* create and register */
-      node = OsmNetworkHandlerHelper.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
+      node = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
     }
     
     return node;
@@ -727,23 +715,11 @@ public class OsmNetworkLayerParser {
    * @return the link corresponding to this way
    */
   private MacroscopicLink extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
-    
+
     /* create the link */
     MacroscopicLink link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
     if(link != null) {
 
-      /* store OSM way type for future reference (used in zoning reader for example) */
-      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmHighwayTags.getHighwayKeyTag()));
-      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmRailwayTags.getRailwayKeyTag()));
-      }else if(OsmWaterwayTags.isWaterBasedWay(tags)){
-        OsmNetworkHandlerHelper.setLinkOsmWayType(link, tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
-      }
-
-      /* register the links vertical layer index (used in the zoning reader for example) */
-      OsmNetworkHandlerHelper.setLinkVerticalLayerIndex(link, tags);
-      
       /* if geometry might be truncated, update the actual used start and end indices used if needed to correctly register remaining internal nodes */
       if(allowTruncationIfGeometryIncomplete) {
         startNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);

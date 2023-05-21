@@ -93,7 +93,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param zoning to use
    * @throws PlanItException thrown if error
    */
-  private void removeDanglingSubNetworks(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) throws PlanItException {
+  private void removeDanglingEntities(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) throws PlanItException {
     
     /* subnetworks */
     if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
@@ -193,7 +193,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
     osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
     osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
-    removeDanglingSubNetworks(osmNetworkReader, osmZoningReader, zoning);
+    removeDanglingEntities(osmNetworkReader, osmZoningReader, zoning);
     
     /* return result */
     return Pair.of(network, zoning);

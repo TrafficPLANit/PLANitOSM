@@ -74,9 +74,21 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
 
   /** all registered osmRelation ids will not trigger any logging */
   private final Set<Long> suppressStopAreaLogging = new HashSet<>();
+
+  /** Option to keep ferry stops (terminals) that are identified as dangling, i.e., do not reside on
+   * any exiting road or waterway.
+   * <p> </p>
+   */
+  private boolean connectDanglingFerryStopToNearbyFerryRoute = DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE;
+
+  /**
+   * Search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
+   * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
+   */
+  private double  searchRadiusFerryStopToFerryRouteMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERY_ROUTE_M;
     
-  /** by default the transfer parser is deactivated */
-  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = false;
+  /** by default the transfer parser is activated */
+  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
   
   /** by default we are removing dangling zones */
   public static boolean DEFAULT_REMOVE_DANGLING_ZONES = true;
@@ -104,6 +116,15 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * In case multiple candidates are close just selecting the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
    */
   public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
+
+  /** by default we connect dangling ferry stops to the nearest ferry route */
+  public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
+
+  /**
+   * default search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
+   * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
+   */
+  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERY_ROUTE_M = 100;
             
   
   /** Constructor using default (Global) locale
@@ -146,9 +167,32 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     //TODO
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    LOGGER.info(String.format("Public transport infrastructure parser activated: %s", isParserActive()));
+
+    if(isParserActive()) {
+      LOGGER.info(String.format("OSM (transfer) zoning input file: %s", getInputSource()));
+      if(hasBoundingPolygon()) {
+        LOGGER.info(String.format("Bounding polygon set to: %s",getBoundingPolygon().toString()));
+      }
+
+      LOGGER.info(String.format("Stop location to waiting area search radius: %.2fm", getStopToWaitingAreaSearchRadiusMeters()));
+      LOGGER.info(String.format("Station location to waiting area search radius: %.2fm", getStationToWaitingAreaSearchRadiusMeters()));
+      LOGGER.info(String.format("Station location to parallel tracks search radius: %.2fm", getStationToParallelTracksSearchRadiusMeters()));
+      LOGGER.info(String.format("Remove dangling transfer zones: %s", isRemoveDanglingZones()));
+      LOGGER.info(String.format("Remove dangling transfer zone groups: %s", isRemoveDanglingTransferZoneGroups()));
+      LOGGER.info(String.format("Connect dangling ferry stops to nearby ferry routes (if present): %s", connectDanglingFerryStopToNearbyFerryRoute));
+      LOGGER.info(String.format("Ferry stop to ferry route search radius: %.2fm", getFerryStopToFerryRouteSearchRadiusMeters()));
+    }
+  }
+
   // USER CONFIGURATION
 
-  /** set the flag whether or not the public transport infrastructure should be parsed or not
+  /** set the flag whether the public transport infrastructure should be parsed or not
    * @param activate when true activate, when false do not
    */
   public void activateParser(boolean activate) {
@@ -423,5 +467,31 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   public boolean isSuppressOsmRelationStopAreaLogging(long osmStopAreaRelationId) {
     return suppressStopAreaLogging.contains(osmStopAreaRelationId);
+  }
+
+
+  /**
+   * Is flag for connecting dangling ferry stops to nearby ferry route set or not
+   * @return true when active, false otherwise
+   */
+  public boolean isConnectDanglingFerryStopToNearbyFerryRoute() {
+    return connectDanglingFerryStopToNearbyFerryRoute;
+  }
+
+  /** Decide whether to keep ferry stops (terminals) that are identified as dangling, i.e., do not reside on
+   * any exiting road or waterway and connect them to the nearest ferry route (within reason).
+   *
+   * @param connectDanglingFerryStopToNearbyFerryRoute when true do this, when false do not
+   */
+  public void setConnectDanglingFerryStopToNearbyFerryRoute(boolean connectDanglingFerryStopToNearbyFerryRoute) {
+    this.connectDanglingFerryStopToNearbyFerryRoute = connectDanglingFerryStopToNearbyFerryRoute;
+  }
+
+  public double getFerryStopToFerryRouteSearchRadiusMeters() {
+    return searchRadiusFerryStopToFerryRouteMeters;
+  }
+
+  public void setFerryStopToFerryRouteSearchRadiusMeters(double searchRadiusFerryStopToFerryRouteMeters) {
+    this.searchRadiusFerryStopToFerryRouteMeters = searchRadiusFerryStopToFerryRouteMeters;
   }
 }

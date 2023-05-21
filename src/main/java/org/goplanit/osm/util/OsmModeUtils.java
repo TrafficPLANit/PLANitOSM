@@ -309,7 +309,7 @@ public class OsmModeUtils {
   }
 
   /**
-   * Identical to {@link #identifyPtv1DefaultMode(Map, boolean)} without suppressing warnings
+   * Identical to {@link #identifyPtv1DefaultMode(long, Map, boolean)} without suppressing warnings
    * @param tags to extract information from
    * @return default mode found, null if nothing is found
    */
@@ -476,8 +476,6 @@ public class OsmModeUtils {
     }else {
       return false;
     }
-  }  
-
-
+  }
 
 }

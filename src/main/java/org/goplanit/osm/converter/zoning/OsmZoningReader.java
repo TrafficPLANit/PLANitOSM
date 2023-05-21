@@ -71,10 +71,7 @@ public class OsmZoningReader implements ZoningReader {
    * Log some information about this reader's configuration 
    */
   private void logInfo() {
-    LOGGER.info(String.format("OSM (transfer) zoning input file: %s",getSettings().getInputSource()));
-    if(getSettings().hasBoundingPolygon()) {
-      LOGGER.info(String.format("Bounding polygon set to: %s",getSettings().getBoundingPolygon().toString()));
-    }
+    getSettings().logSettings();
   }       
   
   /** Make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box
@@ -142,8 +139,11 @@ public class OsmZoningReader implements ZoningReader {
   }
 
   /**
-   * Conduct pre-processing pass to identify the nodes required to perform platform parsing of platforms identified earlier as being coded as relations, see {@link #preProcessPlatformRelations(OsmZoningHandlerProfiler)}
+   * Conduct pre-processing pass to identify the nodes required to perform platform parsing of platforms
+   * identified earlier as being coded as relations, see {@link #preProcessPlatformRelations(OsmZoningHandlerProfiler)}
+   *
    * @param profiler to use
+   *
    */
   private void preProcessPtNodePreregistration(final OsmZoningHandlerProfiler profiler) {
     /* reader to parse the actual file for preprocessing  */

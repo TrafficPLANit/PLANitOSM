@@ -76,13 +76,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   
   /** the crs of the OSM source */
   protected CoordinateReferenceSystem sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;  
-                  
-  /**
-   * option to track the geometry of an OSM way, i.e., extract the line string for link segments from the nodes
-   * (default is false). When set to true parsing will be somewhat slower 
-   */
-  protected boolean parseOsmWayGeometry = DEFAULT_PARSE_OSMWAY_GEOMETRY;
-    
+
   /** flag indicating if dangling subnetworks should be removed after parsing the network
    * OSM network often have small roads that appear to be connected to larger roads, but in fact are not. 
    * All subnetworks that are not part of the largest subnetwork that is parsed will be removed by default. 
@@ -128,10 +122,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
-      
-  /** default value for parsing OSM way geometry: false */
-  public static boolean DEFAULT_PARSE_OSMWAY_GEOMETRY = false;  
-  
+
   /** Default whether we are removing dangling subnetworks after parsing: true */
   public static boolean DEFAULT_REMOVE_DANGLING_SUBNETWORK = true;
   
@@ -207,7 +198,25 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public void reset() {
     // TODO    
   }
-  
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    LOGGER.info(String.format("OSM network input source: %s",getInputSource()));
+    LOGGER.info(String.format("Country to base defaults on: %s",getCountryName()));
+    LOGGER.info(String.format("Setting Coordinate Reference System: %s",getSourceCRS().getName()));
+    if(hasBoundingPolygon()) {
+      LOGGER.info(String.format("Bounding polygon set to: %s", getBoundingPolygon().toString()));
+    }
+
+    getHighwaySettings().logSettings();
+    getRailwaySettings().logSettings();
+    getWaterwaySettings().logSettings();
+
+  }
+
   /** activate the parsing of railways
    * @param activate when true activate railway parsing, when false deactivate
    * @return railway settings that are activated, null when deactivated
@@ -440,6 +449,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     var mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);;
     if(mappedMode == null) {
       mappedMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
+    }
+    if(mappedMode == null) {
+      mappedMode = osmWaterwaySettings.getMappedPlanitWaterMode(osmMode);
     }
     return mappedMode != null;
   }

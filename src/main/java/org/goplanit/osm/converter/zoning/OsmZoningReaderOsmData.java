@@ -37,7 +37,7 @@ public class OsmZoningReaderOsmData {
   private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<>();
       
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
-  private final Set<Long> unprocessedStopPositions= new TreeSet<Long>();
+  private final Map<Long, OsmNode> unprocessedStopPositions= new TreeMap<>();
   
   /** the registered osm ways to keep based on their outer_role identification in a multi_polygon */
   private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<Long,OsmWay>();
@@ -177,8 +177,8 @@ public class OsmZoningReaderOsmData {
    * 
    * @return unprocessed stop positions (unmodifiable)
    */
-  public Set<Long> getUnprocessedStopPositions() {
-    return Collections.unmodifiableSet(unprocessedStopPositions);
+  public Map<Long, OsmNode> getUnprocessedStopPositions() {
+    return Collections.unmodifiableMap(unprocessedStopPositions);
   }
   
   /** remove unprocessed stop position
@@ -196,10 +196,10 @@ public class OsmZoningReaderOsmData {
   }
   
   /** add unprocessed stop position
-   * @param osmId to add
+   * @param osmNode to add
    */
-  public void addUnprocessedStopPosition(long osmId) {
-    unprocessedStopPositions.add(osmId);
+  public void addUnprocessedStopPosition(OsmNode osmNode) {
+    unprocessedStopPositions.put(osmNode.getId(), osmNode);
   } 
   
   /** Verify if unprocessed stop_position is registered
@@ -207,7 +207,7 @@ public class OsmZoningReaderOsmData {
    * @return true when registered, false otherwise
    */
   public boolean hasUnprocessedStopPosition(long osmId) {
-    return unprocessedStopPositions.contains(osmId);
+    return unprocessedStopPositions.containsKey(osmId);
   }  
   
 

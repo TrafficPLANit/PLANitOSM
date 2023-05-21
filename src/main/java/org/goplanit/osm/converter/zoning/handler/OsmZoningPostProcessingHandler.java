@@ -21,6 +21,7 @@ import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
@@ -32,6 +33,7 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
+import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
@@ -351,27 +353,24 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * to be discarded since appropriate infrastructure is already available.
    * 
    * @param osmStation to identify non stop_area station for
+   * @param eligibleOsmModes to consider
    * @param eligibleSearchBoundingBox the search area to see if more detailed and related existing infrastructure can be found that is expected to be conected to the station
    */
-  private void processStationNotPartOfStopArea(OsmEntity osmStation, Envelope eligibleSearchBoundingBox){
+  private void processLandBasedStationNotPartOfStopArea(OsmEntity osmStation, Collection<String> eligibleOsmModes, Envelope eligibleSearchBoundingBox){
 
     /* mark as processed */
     Map<String,String> tags = OsmModelUtil.getTagsAsMap(osmStation);    
     OsmPtVersionScheme ptVersion = isActivatedPublicTransportInfrastructure(tags);
-    getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);
-                
+
     /* eligible modes for station, must at least support one or more mapped modes */
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(
-            osmStation.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags));
-    Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
     Set<TransferZone> matchedTransferZones = new HashSet<>();
     Collection<TransferZone> potentialTransferZones = getZoningReaderData().getPlanitData().getTransferZonesSpatially(eligibleSearchBoundingBox);
     if(potentialTransferZones != null && !potentialTransferZones.isEmpty()) {          
             
       /* find potential matched transfer zones based on mode compatibility while tracking group memberships, for groups with multiple members
        * we enforce exact mode compatibility and do not allow for pseudo compatibility (yet) */
-      Set<TransferZoneGroup> potentialTransferZoneGroups = getTransferZoneGroupHelper().findModeCompatibleTransferZoneGroups(eligibleOsmModes, potentialTransferZones, false /* exact mode compatibility */);
+      Set<TransferZoneGroup> potentialTransferZoneGroups =
+          getTransferZoneGroupHelper().findModeCompatibleTransferZoneGroups(eligibleOsmModes, potentialTransferZones, false /* exact mode compatibility */);
       if(potentialTransferZoneGroups!=null && !potentialTransferZoneGroups.isEmpty()) {
         
         /* find transfer group and zone match(es) based on proximity -> then process accordingly */
@@ -396,7 +395,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       }else {
         
         /* try finding stand-alone transfer zones that are pseudo mode compatible instead, i.e., we are less strict at this point */
-        Set<TransferZone> modeCompatibleTransferZones = getTransferZoneHelper().filterModeCompatibleTransferZones(eligibleOsmModes, potentialTransferZones, true /* allow pseudo mode compatibility*/);
+        // todo consider modeless tranferzone matches if we do not find a match but there exist a modeless transferzone we should find (not yet supported)
+        Set<TransferZone> modeCompatibleTransferZones = getTransferZoneHelper().filterModeCompatibleTransferZones(
+            eligibleOsmModes, potentialTransferZones, true /* allow pseudo mode compatibility*/, false);
         if(modeCompatibleTransferZones != null && !modeCompatibleTransferZones.isEmpty()){
           for(TransferZone zone : modeCompatibleTransferZones) {
             PlanitTransferZoneUtils.updateTransferZoneStationName(zone, tags);
@@ -410,10 +411,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* create a new station with transfer zones and connectoids based on the stations eligible modes (if any) 
        * it is however possible that we found no matches because the station represents only unmapped modes, e.g. ferry 
        * in which case we can safely skip*/
-      if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {
+      if(!eligibleOsmModes.isEmpty()) {
                 
         /* * 
-         * station with mapped modes 
+         * station with eligible (OSM)  modes
          * --> extract a new station including dummy transfer zones and connectoids 
          * */
         extractStandAloneStation(osmStation, tags, getGeoUtils());
@@ -434,27 +435,56 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void processStationsNotPartOfStopArea(Set<OsmEntity> unprocessedStations, EntityType type, OsmPtVersionScheme ptVersion) {
     if(unprocessedStations != null) {
       unprocessedStations.stream().sorted(Comparator.comparing(OsmEntity::getId)).forEach( osmStation ->{
-        
-        Envelope boundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmWay(
-                osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
-        if(boundingBox!= null) {
-          
-          /* process based on bounding box */
-          processStationNotPartOfStopArea(osmStation, boundingBox);
-          
-          /* profile */
-          switch (ptVersion) {
+
+        var networkSettings = getNetworkToZoningData().getNetworkSettings();
+        var tags = OsmModelUtil.getTagsAsMap(osmStation);
+
+        /* mode compatibility check */
+        Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+            getPtModeHelper().collectPublicTransportModesFromPtEntity(
+                osmStation.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags));
+        if(!OsmModeUtils.hasMappedPlanitMode(modeResult)){
+          return;
+        }
+        Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
+
+        /* special case - when a ferry terminal is marked as a station, we process it as a stand-alone ferry terminal
+         * rather than a station... */
+        if(networkSettings.isWaterwayParserActive() && OsmPtv1Tags.isFerryTerminal(tags) && OsmWaterModeTags.containsAnyMode(eligibleOsmModes)){
+
+          if(type != EntityType.Node) {
+            /* we can only treat stations that are ferry terminals as a stop_position/node based entity at the moment */
+            LOGGER.warning("DISCARD: found Ptv2 stand alone station that is tagged as ferry terminal, but that is not an OSM node, this is not yet supported");
+          }else{
+            processStandAloneFerryStop((OsmNode) osmStation, TransferZoneType.PLATFORM);
+          }
+
+        }
+        /* regular station processing */
+        else {
+
+          Envelope boundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmWay(
+              osmStation, getSettings().getStationToWaitingAreaSearchRadiusMeters(), getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
+          if (boundingBox != null) {
+
+            /* process based on bounding box */
+            processLandBasedStationNotPartOfStopArea(osmStation, eligibleOsmModes, boundingBox);
+
+          }
+        }
+        getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);
+
+        /* profile */
+        switch (ptVersion) {
           case VERSION_1:
-            getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.STATION);  
+            getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.STATION);
             break;
           case VERSION_2:
-            getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);  
+            getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);
             break;
           default:
-            LOGGER.severe(String.format("Unknown Pt version found %s when processing station %s not part of a stop_area",osmStation.getId(),ptVersion.toString()));
+            LOGGER.severe(String.format("Unknown Pt version found %s when processing station %s not part of a stop_area", osmStation.getId(), ptVersion.toString()));
             break;
-          }
-          
         }
       });
     }
@@ -494,21 +524,22 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * process unprocessed ferry terminal that is not part of any stop_area.
    * This generally means the ferry terminal reflects both the transfer zone explicit stop_position on its node
    *
-   * @param osmFerryTerminal to process
+   * @param osmFerryStop to process
+   * @param transferZoneType this stop represents
+   * @return created new transfer zone or attached to existing one successfully, false otherwise
    */
-  private void processPtv1FerryTerminalNotPartOfStopArea(OsmNode osmFerryTerminal) {
-    var tags = OsmModelUtil.getTagsAsMap(osmFerryTerminal);
+  private boolean processStandAloneFerryStop(OsmNode osmFerryStop, TransferZoneType transferZoneType) {
+    var tags = OsmModelUtil.getTagsAsMap(osmFerryStop);
 
-    TransferZone ferryTerminalTransferZone = null;
-    boolean terminalOnNetworkNode = hasNetworkLayersWithActiveOsmNode(osmFerryTerminal.getId());
-    if(terminalOnNetworkNode && getSettings().isOverwriteStopLocationWaitingArea(osmFerryTerminal.getId())) {
+    boolean terminalOnNetworkNode = hasNetworkLayersWithActiveOsmNode(osmFerryStop.getId());
+    if(terminalOnNetworkNode && getSettings().isOverwriteStopLocationWaitingArea(osmFerryStop.getId())) {
 
       /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
-      Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmFerryTerminal.getId());
-      ferryTerminalTransferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
-      LOGGER.fine(String.format("Mapped ferry terminal %d to overwritten waiting area %d", osmFerryTerminal.getId(), result.second()));
+      Pair<EntityType, Long> result = getSettings().getOverwrittenStopLocationWaitingArea(osmFerryStop.getId());
+      var ferryTerminalTransferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
+      LOGGER.fine(String.format("Mapped ferry stop %d to overwritten waiting area %d", osmFerryStop.getId(), result.second()));
       PlanitTransferZoneUtils.updateTransferZoneStationName(ferryTerminalTransferZone, tags);
-      return;
+      return true;
     }
 
     /* not overwritten, or not properly overwritten, proceed */
@@ -516,22 +547,85 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* unlike stations we create both the transfer zone and connectoids by default (unless we find this is not how ferries are used most of the time */
     var defaultMode = OsmWaterModeTags.FERRY;
     Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmFerryTerminal.getId(), tags, OsmWaterModeTags.FERRY);
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmFerryStop.getId(), tags, OsmWaterModeTags.FERRY);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
-      return;
+      return false;
     }
-    SortedSet<String> osmAccessModes = modeResult.first();
+
+    if(!terminalOnNetworkNode && getSettings().isConnectDanglingFerryStopToNearbyFerryRoute()) {
+      /* salvage by creating a new link to attach to ferry network and place terminal on a network node */
+      connectDanglingFerryStopToNearbyFerryRoute(osmFerryStop, defaultMode);
+      terminalOnNetworkNode = hasNetworkLayersWithActiveOsmNode(osmFerryStop.getId());
+    }
 
     if(terminalOnNetworkNode) {
 
       /* transfer zone + connectoids */
-      TransferZoneType ptv1TransferZoneType = PlanitTransferZoneUtils.extractTransferZoneTypeFromPtv1Tags(osmFerryTerminal, tags);
-      getTransferZoneHelper().createAndRegisterTransferZoneWithConnectoidsAtOsmNode(osmFerryTerminal, tags, defaultMode, ptv1TransferZoneType, getGeoUtils());
+      var createdTransferZone = getTransferZoneHelper().createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
+          osmFerryStop, tags, defaultMode, transferZoneType, getGeoUtils());
+      return createdTransferZone!=null;
 
     }else{
-      /* transfer zone not on water way route, not yet supported as it seems unlikely to happen (and if it does, it is likely that it is an unused terminal */
-      LOGGER.severe(String.format("DISCARD: Ferry terminal OSM node (%d) expected to be also a stop location, yet OSM node not present on underlying network", osmFerryTerminal.getId()));
+
+      /* transfer zone not on waterway route, and not flagged to be connected to nearest available route */
+      LOGGER.severe(String.format("DISCARD: Ferry stop OSM node (%d) is stop location, but not connected to ferry network, if to be kept consider activating connecting dangling ferry stops option", osmFerryStop.getId()));
+      return false;
+
     }
+  }
+
+  /**
+   * Given a ferry stop location and the mode (ferry) to use, construct a new link and link segments attaching the ferry terminal location
+   * to the nearest ferry route (within acceptable search radius). We utilise the cloest existing ferry link's closest existing node as the
+   * attachment point.
+   *
+   * @param osmFerryStop to attach after found dangling
+   * @param osmMode mode to apply
+   */
+  private void connectDanglingFerryStopToNearbyFerryRoute(OsmNode osmFerryStop, String osmMode) {
+
+    /* find closest ferry link to ferry ferry terminal */
+    var ferryStopLocation = OsmNodeUtils.createPoint(osmFerryStop);
+    var planitWaterMode = getReferenceNetwork().getModes().get(getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getMappedPlanitWaterMode(osmMode));
+    var networkLayer = this.getReferenceNetwork().getLayerByMode(planitWaterMode);
+    var boundingBox = getGeoUtils().createBoundingBox(ferryStopLocation.getEnvelopeInternal(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters());
+    Collection<MacroscopicLink> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(boundingBox);
+    spatiallyMatchedLinks.removeIf( l -> !l.isModeAllowedOnAnySegment(planitWaterMode));
+    if(spatiallyMatchedLinks.isEmpty()){
+      LOGGER.warning(String.format("Unable to attach dangling ferry stop %d to ferry network, no mode compatible links within %.2fm found", osmFerryStop.getId(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters()));
+      return;
+    }
+    var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+        OsmNodeUtils.createCoordinate(osmFerryStop), spatiallyMatchedLinks, getSettings().getFerryStopToFerryRouteSearchRadiusMeters(), getGeoUtils());
+
+    /* create network node at ferry terminal location + find closest node on chosen ferry link */
+    var ferryStopNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(
+        osmFerryStop, networkLayer, getNetworkToZoningData().getNetworkLayerData(networkLayer));
+    var closestNodeWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+        ferryStopLocation.getCoordinate(), Set.<Node>of(closestLinkWithDistance.first().getNodeA(), closestLinkWithDistance.first().getNodeB()), Double.MAX_VALUE, getGeoUtils());
+
+    /* create new ferry link to attach to ferry network */
+    var lineString = PlanitJtsUtils.createLineString(ferryStopLocation.getCoordinate(), closestNodeWithDistance.first().getPosition().getCoordinate());
+    var ferryLink = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
+        ferryStopNode, closestNodeWithDistance.first(), lineString, networkLayer, null, "dummy-ferry-link", getGeoUtils());
+
+    /* create new ferry link segments */
+    String waterWayKey = OsmWaterwayTags.ROUTE;
+    String waterWayValue = OsmWaterwayTags.FERRY;
+    var linkSegmentType = getReferenceNetwork().getDefaultLinkSegmentTypeByOsmTag(waterWayKey, waterWayValue).get(networkLayer);
+    var speedLimit = getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getDefaultSpeedLimit(waterWayValue);
+    var lanes = getNetworkToZoningData().getNetworkSettings().getDefaultDirectionalLanesByWayType(waterWayKey, waterWayValue);
+    /* a->b */
+    PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+        ferryLink, true /* A->B */, linkSegmentType, speedLimit, lanes, networkLayer);
+    /* b->a */
+    PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+        ferryLink, false /* B->A */, linkSegmentType, speedLimit, lanes, networkLayer);
+
+    /* register the ferry terminal as a network node so we can look it up by its id when needed (this is needed when verifying
+     * if the OSM node is now part of the physical network such that we can process the ferry terminal as a regular terminal from
+     * now on */
+    getNetworkToZoningData().registerNetworkOsmNode(osmFerryStop);
   }
 
   /**
@@ -545,7 +639,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
 
     for(var unprocessedFerryTerminal : osmData.getUnprocessedPtv1FerryTerminals().values()){
-      processPtv1FerryTerminalNotPartOfStopArea(unprocessedFerryTerminal);
+      TransferZoneType ptv1TransferZoneType =
+          PlanitTransferZoneUtils.extractTransferZoneTypeFromPtv1Tags(
+              unprocessedFerryTerminal, OsmModelUtil.getTagsAsMap(unprocessedFerryTerminal));
+      processStandAloneFerryStop(unprocessedFerryTerminal, ptv1TransferZoneType);
       getProfiler().incrementOsmPtv1TagCounter(OsmTags.FERRY_TERMINAL);
     }
 
@@ -574,8 +671,18 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     for(String osmMode: eligibleOsmModes) {
       PredefinedModeType accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmMode);
       MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByPredefinedModeType(accessModeType);
+
+      /* special cases */
+      {
+        /*PTv2 ferry stop tagged as public_transport= stop_position with ferry=yes (that may or may not be tagged as amenity=ferry_terminal) AND
+         *  therefore, is not just the stop position, but also the platform/station/transfer zone, so we should extract */
+        if (this.getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive() && OsmWaterModeTags.isWaterModeTag(osmMode)) {
+          processStandAloneFerryStop(osmNode, TransferZoneType.PLATFORM); // treat as platform
+          continue;
+        }
+      }
     
-      /* a stop position should be part of an already parsed planit link, if not it is incorrectly tagged */
+      /* a regular stop position should be part of an already parsed PLANit link, if not it is incorrectly tagged */
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isLocationPresentInLayer(osmNodeLocation)) {
         LOGGER.fine(String.format("DISCARD: stop_location %d is not part of any parsed link in the network, likely incorrectly tagged", osmNode.getId()));
         continue;
@@ -607,13 +714,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    *  
    */
   private void processStopPositionsNotPartOfStopArea() {
-    Set<Long> unprocessedStopPositions = new TreeSet<>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
+    var unprocessedStopPositions = new TreeMap<>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
     if(!unprocessedStopPositions.isEmpty()) {
-      var osmNodeData = this.getNetworkToZoningData().getNetworkOsmNodes();
-      for(Long osmNodeId : unprocessedStopPositions) {
-        OsmNode osmNode = osmNodeData.get(osmNodeId);
+      for(var osmNode : unprocessedStopPositions.values()) {
         if(osmNode == null){
-          LOGGER.severe(String.format("OSM node %d representing stop position not available in memory, unable to extract stop position", osmNodeId));
+          LOGGER.severe(String.format("OSM node %d representing stop position not available in memory, unable to extract stop position", osmNode.getId()));
           return;
         }
         processStopPositionNotPartOfStopArea(osmNode, OsmModelUtil.getTagsAsMap(osmNode));  
@@ -640,7 +745,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     Collection<String> accessOsmModes = 
         OsmModeUtils.extractPublicTransportModesFrom(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone));
     if(!getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitModeType(accessOsmModes)) {
-      LOGGER.warning(String.format("DISCARD: waiting area (OSM id %d) has no supported public transport planit modes present", osmEntityId));
+      LOGGER.warning(String.format("DISCARD: Waiting area (OSM id %d) has no supported public transport planit modes present", osmEntityId));
       return;             
     }
         
@@ -669,6 +774,13 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           return;
         }
         
+      }else if(OsmWaterModeTags.isWaterModeTag(osmAccessMode)){
+
+        /* water based mode, i.e. ferry is special case since dangling platforms without stop positions that are not on any infrastructure are likely
+        unused. Also, we do not yet support parsing it as a stop and create connection to nearest ferry route since the OSM node(s) of the platform are not available anymore
+         this would require some thinking on how to treat this (can't be done during main processing because it might have a stop location found later etc.)*/
+        LOGGER.warning(String.format("DISCARD: Ptv2 platform (%d) for water mode %s without stop_position/ferry_terminal and disconnected from waterway network, ignore", osmEntityId, osmAccessMode));
+        continue;
       }else {
         
         /* regular approach */                     
@@ -679,7 +791,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             transferZone, osmEntityId, osmAccessMode, searchBoundingBox);
         if(modeSpatiallyCompatibleLinks == null || modeSpatiallyCompatibleLinks.isEmpty()) {
           logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s, mode %s (tag error or consider activating more road types)", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
-          return;
+          continue;
         }
         
         /* based on candidates, now select the most appropriate option based on a multitude of criteria */
@@ -873,7 +985,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private void extractRemainingOsmEntitiesNotPartOfStopArea() throws PlanItException {
     
-    /* unproccessed stations -> create transfer zone and connectoids (implicit stop_positions). 
+    /* unprocessed stations -> create transfer zone and connectoids (implicit stop_positions).
      * - Only create connectoids when station is on track/road, 
      * - otherwise create incomplete transfer zone to be dealt with in processing incomplete transfer zones */
     processStationsNotPartOfStopArea();
