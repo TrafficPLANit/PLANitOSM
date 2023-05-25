@@ -145,7 +145,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* 1) reduce candidates to access links related to access link segments that are deemed valid in terms of mode and location (closest already complies as per above) */
     Set<LinkSegment> accessLinkSegments = new HashSet<>(2);
     for(var currAccessLink : eligibleLinks) {
-      boolean mustAvoidCrossingTraffic = !accessMode.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL);
+      boolean mustAvoidCrossingTraffic =  ZoningConverterUtils.isAvoidCrossTrafficForAccessMode(accessMode);
       var currAccessLinkSegments = ZoningConverterUtils.findAccessLinkSegmentsForWaitingArea(
           transferZone.getExternalId(),
           transferZone.getGeometry(),

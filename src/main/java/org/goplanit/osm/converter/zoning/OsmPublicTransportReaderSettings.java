@@ -85,7 +85,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * Search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
    * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
    */
-  private double  searchRadiusFerryStopToFerryRouteMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERY_ROUTE_M;
+  private double  searchRadiusFerryStopToFerryRouteMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M;
     
   /** by default the transfer parser is activated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
@@ -124,7 +124,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * default search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
    * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
    */
-  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERY_ROUTE_M = 100;
+  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
             
   
   /** Constructor using default (Global) locale
