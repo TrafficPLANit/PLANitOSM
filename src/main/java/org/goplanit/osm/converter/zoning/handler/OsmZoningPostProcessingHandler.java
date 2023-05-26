@@ -440,7 +440,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         var tags = OsmModelUtil.getTagsAsMap(osmStation);
 
         /* mode compatibility check */
-        Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+        Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
             getPtModeHelper().collectPublicTransportModesFromPtEntity(
                 osmStation.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags));
         if(!OsmModeUtils.hasMappedPlanitMode(modeResult)){
@@ -546,7 +546,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
     /* unlike stations we create both the transfer zone and connectoids by default (unless we find this is not how ferries are used most of the time */
     var defaultMode = OsmWaterModeTags.FERRY;
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+    var modeResult =
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmFerryStop.getId(), tags, OsmWaterModeTags.FERRY);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return false;
@@ -638,13 +638,15 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       return;
     }
 
-    for(var unprocessedFerryTerminal : osmData.getUnprocessedPtv1FerryTerminals().values()){
+    osmData.getUnprocessedPtv1FerryTerminals().entrySet().stream().map(e -> e.getValue()).forEach( unprocessedFerryTerminal ->{
       TransferZoneType ptv1TransferZoneType =
           PlanitTransferZoneUtils.extractTransferZoneTypeFromPtv1Tags(
               unprocessedFerryTerminal, OsmModelUtil.getTagsAsMap(unprocessedFerryTerminal));
       processStandAloneFerryStop(unprocessedFerryTerminal, ptv1TransferZoneType);
       getProfiler().incrementOsmPtv1TagCounter(OsmTags.FERRY_TERMINAL);
-    }
+
+    });
+
 
     osmData.removeAllUnprocessedPtv1FerryTerminals();
 
@@ -660,7 +662,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
     /* modes for stop_position */
     String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags);
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       /* no eligible modes mapped to planit mode, ignore stop_position */
       return;
@@ -715,15 +717,20 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private void processStopPositionsNotPartOfStopArea() {
     var unprocessedStopPositions = new TreeMap<>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
-    if(!unprocessedStopPositions.isEmpty()) {
-      for(var osmNode : unprocessedStopPositions.values()) {
-        if(osmNode == null){
-          LOGGER.severe(String.format("OSM node %d representing stop position not available in memory, unable to extract stop position", osmNode.getId()));
-          return;
-        }
-        processStopPositionNotPartOfStopArea(osmNode, OsmModelUtil.getTagsAsMap(osmNode));  
-      }       
+    if(unprocessedStopPositions.isEmpty()) {
+      return;
     }
+
+
+    unprocessedStopPositions.entrySet().stream().map(e -> e.getValue()).forEach( osmNode -> {
+
+      if(osmNode == null){
+        LOGGER.severe(String.format("OSM node %d representing stop position not available in memory, unable to extract stop position", osmNode.getId()));
+        return;
+      }
+      processStopPositionNotPartOfStopArea(osmNode, OsmModelUtil.getTagsAsMap(osmNode));
+
+    });
   }
 
   /**
@@ -815,7 +822,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * @param transferZones remaining unprocessed transfer zones (without connectoids)
    *
    */
-  private void processIncompleteTransferZones(Collection<TransferZone> transferZones) {
+  private void processIncompleteTransferZones(SortedSet<TransferZone> transferZones) {
     Set<TransferZone> unprocessedTransferZones = new TreeSet<>(transferZones);
     for(TransferZone transferZone : unprocessedTransferZones) {
       /* only process incomplete zones (without connectoids) */
@@ -915,7 +922,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
     /* modes */
     String defaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags, OsmRailModeTags.TRAIN);
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
@@ -1017,7 +1024,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       OsmNode osmNode, Map<String, String> tags, TransferZoneGroup transferZoneGroup, boolean suppressLogging){
           
     /* supported modes */
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;

@@ -407,8 +407,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param osmModes to collect mapped mode for (if any)
    * @return mapped PLANit modes, if not available empty set is returned
    */
-  public Set<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
-    HashSet<PredefinedModeType> mappedPlanitModes = new HashSet<>();
+  public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
+    TreeSet<PredefinedModeType> mappedPlanitModes = new TreeSet<>();
     
     if(osmModes == null) {
       return mappedPlanitModes;
@@ -428,7 +428,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    *
    * @return mapped PLANit mode types, if not available empty set is returned
    */
-  public Set<PredefinedModeType> getActivatedPlanitModeTypes() {
+  public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes() {
     Stream<PredefinedModeType> highWayModes =
         isHighwayParserActive() ? getHighwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
 
@@ -438,7 +438,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     Stream<PredefinedModeType> waterwayModes =
         isWaterwayParserActive() ? getWaterwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
 
-    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toUnmodifiableSet());
+    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toCollection(() -> new TreeSet<>()));
   }
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network

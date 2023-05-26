@@ -42,9 +42,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String inputSource, final String countryName) {
-    this(
-        new OsmNetworkReaderSettings(inputSource, countryName),
-        new OsmPublicTransportReaderSettings(inputSource, countryName));
+    this(UrlUtils.createFromPath(inputSource), countryName);
   }
 
   /**
@@ -57,6 +55,10 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
     this(
         new OsmNetworkReaderSettings(inputSource, countryName),
         new OsmPublicTransportReaderSettings(inputSource, countryName));
+
+    /* default activate rail and ferry when performing intermodal parsing */
+    getNetworkSettings().getRailwaySettings().activateParser(true);
+    getNetworkSettings().getWaterwaySettings().activateParser(true);
   }  
          
   

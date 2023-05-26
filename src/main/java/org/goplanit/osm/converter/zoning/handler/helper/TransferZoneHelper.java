@@ -665,7 +665,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     TransferZone transferZone = null;
         
     /* tagged osm modes */        
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
       /* no information on modes at all --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information
@@ -717,7 +717,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
       OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils){        
         
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult = publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {    
       throw new PlanItRunTimeException("Should not attempt to parse OSM node %d when no PLANit modes are activated for it", osmNode.getId());
     }
