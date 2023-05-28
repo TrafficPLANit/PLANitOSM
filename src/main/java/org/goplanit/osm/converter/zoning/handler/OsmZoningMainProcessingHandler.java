@@ -524,7 +524,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     String ptv1DefaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags, true /* allowed to not have this info as PTv2 entity */);
 
     /* PTv1 tagging present, so mode information available, use this to verify against activated mode(s), mark for further processing if available, otherwise ignore */
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult =
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
 
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)){
@@ -640,7 +640,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 highway platform %s,",defaultOsmMode));
     }    
   
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first(), geoUtils);
@@ -661,7 +661,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 bus_stop %s,",defaultOsmMode));
     }      
     
-    Pair<SortedSet<String>, Collection<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.BUS_STOP);      

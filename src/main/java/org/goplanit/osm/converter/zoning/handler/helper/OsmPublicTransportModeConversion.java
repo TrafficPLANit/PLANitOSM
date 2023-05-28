@@ -35,12 +35,12 @@ public class OsmPublicTransportModeConversion extends OsmModeConversionBase {
    * @param defaultMode to use
    * @return pair containing ordered eligible OSM modes identified and their mapped PLANit counterparts
    */
-  public Pair<SortedSet<String>, Collection<PredefinedModeType>> collectPublicTransportModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {
+  public Pair<SortedSet<String>, SortedSet<PredefinedModeType>> collectPublicTransportModesFromPtEntity(long osmPtEntityId, Map<String, String> tags, String defaultMode) {
     SortedSet<String> eligibleOsmModes = OsmModeUtils.collectEligibleOsmPublicTransportModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {
       return null;
     }    
-    Set<PredefinedModeType> eligiblePlanitModes = getSettings().getActivatedPlanitModeTypes(eligibleOsmModes);
+    SortedSet<PredefinedModeType> eligiblePlanitModes = getSettings().getActivatedPlanitModeTypes(eligibleOsmModes);
     return Pair.of(eligibleOsmModes, eligiblePlanitModes);
   }  
   

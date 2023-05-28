@@ -27,17 +27,17 @@ public class OsmZoningReaderOsmData {
   /* UNPROCESSED OSM */
 
   /** track unprocessed but identified ferry terminals */
-  private final Map<Long, OsmNode> unprocessedFerryTerminals = new TreeMap<>();
+  private final SortedMap<Long, OsmNode> unprocessedFerryTerminals = new TreeMap<>();
 
 
   /** track unprocessed but identified Ptv1 station nodes */
-  private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv1Stations = new TreeMap<>();
+  private final SortedMap<EntityType, SortedMap<Long, OsmEntity>> unprocessedPtv1Stations = new TreeMap<>();
   
   /** track unprocessed but identified Ptv2 station nodes/ways */
-  private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<>();
+  private final SortedMap<EntityType, SortedMap<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<>();
       
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
-  private final Map<Long, OsmNode> unprocessedStopPositions= new TreeMap<>();
+  private final SortedMap<Long, OsmNode> unprocessedStopPositions= new TreeMap<>();
   
   /** the registered osm ways to keep based on their outer_role identification in a multi_polygon */
   private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<Long,OsmWay>();
@@ -107,17 +107,17 @@ public class OsmZoningReaderOsmData {
    * @param entityType to collect them for
    * @return unprocessed ptv1 stations
    */
-  public Map<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
+  public SortedMap<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
     unprocessedPtv1Stations.putIfAbsent(entityType, new TreeMap<>());
-    return Collections.unmodifiableMap(unprocessedPtv1Stations.get(entityType));
+    return Collections.unmodifiableSortedMap(unprocessedPtv1Stations.get(entityType));
   }
 
   /** collect the ferry terminal that have been identified but not processed yet (unmodifiable)
    *
    * @return unprocessed ferry terminal
    */
-  public Map<Long, OsmNode> getUnprocessedPtv1FerryTerminals() {
-    return Collections.unmodifiableMap(unprocessedFerryTerminals);
+  public SortedMap<Long, OsmNode> getUnprocessedPtv1FerryTerminals() {
+    return Collections.unmodifiableSortedMap(unprocessedFerryTerminals);
   }
   
   /** add unprocessed ptv1 station
@@ -168,17 +168,17 @@ public class OsmZoningReaderOsmData {
    * @param entityType to collect for (node, way)
    * @return unprocessed stations
    */
-  public Map<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
-    unprocessedPtv2Stations.putIfAbsent(entityType, new TreeMap<Long, OsmEntity>());
-    return Collections.unmodifiableMap(unprocessedPtv2Stations.get(entityType));
+  public SortedMap<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
+    unprocessedPtv2Stations.putIfAbsent(entityType, new TreeMap<>());
+    return Collections.unmodifiableSortedMap(unprocessedPtv2Stations.get(entityType));
   }
 
   /** collect unprocessed stop positions
    * 
    * @return unprocessed stop positions (unmodifiable)
    */
-  public Map<Long, OsmNode> getUnprocessedStopPositions() {
-    return Collections.unmodifiableMap(unprocessedStopPositions);
+  public SortedMap<Long, OsmNode> getUnprocessedStopPositions() {
+    return Collections.unmodifiableSortedMap(unprocessedStopPositions);
   }
   
   /** remove unprocessed stop position

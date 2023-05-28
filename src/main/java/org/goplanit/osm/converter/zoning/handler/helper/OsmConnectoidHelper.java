@@ -84,13 +84,10 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    */
   private static boolean isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(
       final Mode accessMode, final TransferZone transferZone, final Long osmStopLocationNodeId, final OsmPublicTransportReaderSettings settings) {
-    
-    boolean mustAvoidCrossingTraffic = true;
-    var trackType = accessMode.getPhysicalFeatures().getTrackType();
-    if(trackType.equals(TrackModeType.RAIL)  || trackType.equals(TrackModeType.WATER)) {
-      /* ... exception 1: train/tram/ferry platforms because trains/trams/ferries have entrances on both sides */
-      mustAvoidCrossingTraffic = false;
-    }else if(osmStopLocationNodeId != null && settings.isOverwriteStopLocationWaitingArea(osmStopLocationNodeId)) {
+
+    /* ... exception 1: train/tram/ferry platforms because trains/trams/ferries have entrances on both sides */
+    boolean mustAvoidCrossingTraffic = ZoningConverterUtils.isAvoidCrossTrafficForAccessMode(accessMode);
+    if(osmStopLocationNodeId != null && settings.isOverwriteStopLocationWaitingArea(osmStopLocationNodeId)) {
       /* ... exception 2: user override with mapping to this zone for this node, in which case we allow crossing traffic regardless */
       mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenStopLocationWaitingArea(osmStopLocationNodeId).second());
     } 
@@ -98,8 +95,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }   
   
   /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
-   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
-   * more confusing than helpful in those situation and is therefore ignored
+   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore, the resulting warning message is likely
+   * more confusing than helpful in those situations and is therefore ignored
    * 
    * @param message to log if not too close to bounding box
    * @param geometry to determine distance to bounding box to

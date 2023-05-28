@@ -455,7 +455,7 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasEligibleOsmMode(Pair<? extends Collection<String>, Collection<PredefinedModeType>> modeResult) {
+  public static boolean hasEligibleOsmMode(Pair<? extends SortedSet<String>, SortedSet<PredefinedModeType>> modeResult) {
     if(modeResult!= null && modeResult.first()!=null && !modeResult.first().isEmpty()) {
       /* eligible modes available */
       return true;
@@ -469,7 +469,7 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasMappedPlanitMode(Pair<? extends Collection<String>, Collection<PredefinedModeType>> modeResult) {
+  public static boolean hasMappedPlanitMode(Pair<? extends SortedSet<String>, SortedSet<PredefinedModeType>> modeResult) {
     if(modeResult!= null && modeResult.second()!=null && !modeResult.second().isEmpty()) {
       /* eligible modes mapped to planit mode*/
       return true;

@@ -1,16 +1,9 @@
 package org.goplanit.osm.converter.zoning;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmTag;
@@ -141,16 +134,16 @@ public class OsmZoningReaderPlanitData {
    * @param entityType to collect for
    * @return available transfer zones by osm id
    */
-  public Collection<TransferZone> getTransferZonesByOsmId(EntityType entityType) {
+  public SortedSet<TransferZone> getTransferZonesByOsmId(EntityType entityType) {
+    transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<>());
     switch (entityType) {
       case Node:
-          transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
-          return Collections.unmodifiableCollection(transferZonesByOsmEntityId.get(entityType).values());
       case Way:
-        transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
-        return Collections.unmodifiableCollection(transferZonesByOsmEntityId.get(entityType).values());
+          return transferZonesByOsmEntityId.get(entityType).values().stream().collect(
+              Collectors.toCollection(() -> new TreeSet<>()));
       default:
-        throw new PlanItRunTimeException("Unspported entity type encountered for transfer zone tracked in zoning reader, this shoudn't happen");
+        throw new PlanItRunTimeException(
+            "Unsupported entity type encountered for transfer zone tracked in zoning reader, this shouldn't happen");
     }
   }  
   

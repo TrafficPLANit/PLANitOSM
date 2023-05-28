@@ -93,7 +93,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * When dangling subnetworks are marked for removal, this threshold determines the maximum subnetwork size for it NOT to be removed.
    * In other words, all subnetworks above this number will be removed, including the largest one if it does not match the value
    */  
-  protected int discardSubNetworkAbovesize = Integer.MAX_VALUE;
+  protected int discardSubNetworkAboveSize = Integer.MAX_VALUE;
   
   /**
    * indicate whether or not to keep the largest subnetwork when {@code removeDanglingSubNetworks} is set to true even when it does
@@ -226,9 +226,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return getRailwaySettings();      
   }
 
-  /** activate the parsing of water ways
+  /** activate the parsing of waterways
    * @param activate when true activate waterway parsing, when false deactivate
-   * @return water way settings that are activated, null when deactivated
+   * @return waterway settings that are activated, null when deactivated
    */
   public OsmWaterwaySettings activateWaterwayParser(boolean activate) {
     osmWaterwaySettings.activateParser(activate);
@@ -407,8 +407,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param osmModes to collect mapped mode for (if any)
    * @return mapped PLANit modes, if not available empty set is returned
    */
-  public Set<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
-    HashSet<PredefinedModeType> mappedPlanitModes = new HashSet<>();
+  public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
+    TreeSet<PredefinedModeType> mappedPlanitModes = new TreeSet<>();
     
     if(osmModes == null) {
       return mappedPlanitModes;
@@ -428,7 +428,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    *
    * @return mapped PLANit mode types, if not available empty set is returned
    */
-  public Set<PredefinedModeType> getActivatedPlanitModeTypes() {
+  public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes() {
     Stream<PredefinedModeType> highWayModes =
         isHighwayParserActive() ? getHighwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
 
@@ -438,7 +438,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     Stream<PredefinedModeType> waterwayModes =
         isWaterwayParserActive() ? getWaterwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
 
-    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toUnmodifiableSet());
+    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toCollection(() -> new TreeSet<>()));
   }
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
@@ -497,7 +497,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param discardAbove this number of vertices
    */
   public void setDiscardDanglingNetworksAbove(int discardAbove) {
-    this.discardSubNetworkAbovesize = discardAbove;
+    this.discardSubNetworkAboveSize = discardAbove;
   }  
   
   /** collect the size above which dangling networks are kept even if they are smaller than the largest connected network
@@ -511,7 +511,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return dangling network size
    */
   public Integer getDiscardDanglingNetworkAboveSize() {
-    return discardSubNetworkAbovesize;
+    return discardSubNetworkAboveSize;
   }    
   
   /** Verify if the largest subnetwork is always kept when we are removing dangling subnetworks
