@@ -124,21 +124,22 @@ public class BasicOsmReaderTest {
 
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
-      assertEquals(network.getTransportLayers().size(), 1);
-      assertEquals(network.getTransportLayers().getFirst().getLinks().size(),1178);
-      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2325);
-      assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 978);
+      assertEquals(1, network.getTransportLayers().size());
+      assertEquals(1235, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2439, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(1031, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
-      assertEquals(71, zoning.getTransferZones().size() );
-      assertEquals(7, zoning.getTransferZoneGroups().size());
+      assertEquals(104, zoning.getTransferZones().size() );
+      assertEquals(8, zoning.getTransferZoneGroups().size());
       assertEquals(0, zoning.getOdConnectoids().size());
-      assertEquals(94, zoning.getTransferConnectoids().size());
+      assertEquals(133, zoning.getTransferConnectoids().size());
 
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM),true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL),  true);
+      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.FERRY),  true);
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
