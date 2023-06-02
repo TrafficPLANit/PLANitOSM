@@ -42,7 +42,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String inputSource, final String countryName) {
-    this(UrlUtils.createFromPath(inputSource), countryName);
+    this(UrlUtils.createFromLocalPath(inputSource), countryName);
   }
 
   /**
@@ -125,7 +125,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) throws PlanItException {
     try{
-      setInputSource(UrlUtils.createFromPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalPath(inputFile));
     }catch(Exception e) {
       throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
     }

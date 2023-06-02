@@ -147,7 +147,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
    */
   public OsmPublicTransportReaderSettings(String inputSource, String countryName) {
-    this(UrlUtils.createFromPath(Path.of(inputSource)), countryName);
+    this(UrlUtils.createFromLocalPath(Path.of(inputSource)), countryName);
   }
   
   /** Constructor with user defined source locale 
