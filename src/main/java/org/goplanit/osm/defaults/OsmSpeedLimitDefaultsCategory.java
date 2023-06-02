@@ -31,6 +31,7 @@ public class OsmSpeedLimitDefaultsCategory {
    * Copy constructor
    *
    * @param other to use
+   * @param deepClone when true deep clone, otherwise shallow close
    *
    */
   protected OsmSpeedLimitDefaultsCategory(OsmSpeedLimitDefaultsCategory other, boolean deepClone) {

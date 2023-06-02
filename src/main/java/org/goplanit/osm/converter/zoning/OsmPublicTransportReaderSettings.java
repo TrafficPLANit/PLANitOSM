@@ -451,7 +451,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /**
    * Suppress any logging for given stop area relation ids
    *
-   * @param osmStopAreaRelationIds
+   * @param osmStopAreaRelationIds relation ids to suppress logging for
    */
   public void suppressOsmRelationStopAreaLogging(long... osmStopAreaRelationIds) {
     for(var osmStopAreaRelationId : osmStopAreaRelationIds) {

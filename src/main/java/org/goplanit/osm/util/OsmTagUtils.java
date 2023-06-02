@@ -176,6 +176,7 @@ public class OsmTagUtils {
    *
    * @param key to use
    * @param value to use
+   * @param sep separator to use
    * @return result e.g., a=b for ('a','b','=')
    */
   public static String toConcatWithSep(String key, String value,String sep){
