@@ -95,7 +95,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
     
     /* try again, now as local file rather than web based */
     try {
-      setInputSource(UrlUtils.createFromPath(inputSource));
+      setInputSource(UrlUtils.createFromLocalPath(inputSource));
     }catch (Exception e) {
       throw new PlanItRunTimeException("Unable to extract URL from input source %s",inputSource);
     }
@@ -108,7 +108,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) throws PlanItException {
     try{
-      setInputSource(UrlUtils.createFromPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalPath(inputFile));
     }catch(Exception e) {
       throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
     }

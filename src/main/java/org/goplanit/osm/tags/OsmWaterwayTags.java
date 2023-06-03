@@ -70,7 +70,8 @@ public class OsmWaterwayTags {
   public static final String FERRY = OsmWaterModeTags.FERRY;
 
   /** Verify if passed in tag is indeed a waterway mode value tag
-   * 
+   *
+   * @param waterwayKey key to use
    * @param waterWayTagValue to verify
    * @return true when valid tag, otherwise false
    */

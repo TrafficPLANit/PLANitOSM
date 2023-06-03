@@ -95,7 +95,7 @@ public class OsmNetworkToZoningReaderData {
    * This may happen when we artificially expand the network while identifying OSM nodes that should in
    * fact be part of the network, such as dangling ferry stops that we want to connect.
    *
-   * @return retained OSM  nodes
+   * @param osmNode  node to register
    */
   public void registerNetworkOsmNode(OsmNode osmNode){
     networkData.getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());

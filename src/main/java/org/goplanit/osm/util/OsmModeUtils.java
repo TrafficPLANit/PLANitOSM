@@ -300,8 +300,10 @@ public class OsmModeUtils {
    * <li>railway=tram_stop gives tram</li>
    * <li>amenity=ferry_terminal gives ferry</li>
    * </ul> 
-   * 
+   *
+   * @param osmId this relates to
    * @param tags to extract information from
+   * @param suppressWarning when true suppress any warnings, do not otherwise
    * @return default mode found, null if nothing is found
    */
   public static String identifyPtv1DefaultMode(long osmId, Map<String, String> tags, boolean suppressWarning) {
@@ -310,6 +312,8 @@ public class OsmModeUtils {
 
   /**
    * Identical to {@link #identifyPtv1DefaultMode(long, Map, boolean)} without suppressing warnings
+   *
+   * @param osmId this relates to
    * @param tags to extract information from
    * @return default mode found, null if nothing is found
    */
@@ -336,7 +340,8 @@ public class OsmModeUtils {
    * <li>amenity=ferry_terminal gives ferry</li>
    * <li>ferry=yes gives ferry</li>
    * </ul> 
-   * 
+   *
+   * @param osmId this relates to
    * @param tags to extract information from
    * @param backupDefaultMode if none can be found, this mode is used, may be null
    * @param suppressWarning when true do not log warning if no match could be found,

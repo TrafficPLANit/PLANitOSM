@@ -159,7 +159,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
    */
   public OsmNetworkReaderSettings(String inputSource, String countryName) {
-    this(UrlUtils.createFromPath(Path.of(inputSource)), countryName);
+    this(UrlUtils.createFromLocalPath(Path.of(inputSource)), countryName);
   }
 
   /**
