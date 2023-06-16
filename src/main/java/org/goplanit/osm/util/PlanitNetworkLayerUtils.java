@@ -177,7 +177,7 @@ public class PlanitNetworkLayerUtils {
    */
   public static Node createAndPopulateNode(OsmNode osmNode, MacroscopicNetworkLayer networkLayer)  {
     if(osmNode == null || networkLayer == null) {
-      OsmNetworkHandlerHelper.LOGGER.severe("no OSM node or network layer provided when creating new PLANit node, ignore");
+      LOGGER.severe("No OSM node or network layer provided when creating new PLANit node, ignore");
       return null;
     }
 

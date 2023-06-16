@@ -141,11 +141,12 @@ public class OsmNodeUtils {
    * 
    * @param osmNode reference node
    * @param zones to check against using their geometries
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
    */
-  public static Zone findZoneClosest(OsmNode osmNode, Collection<? extends Zone> zones, PlanitJtsCrsUtils geoUtils) {
-    return findZoneClosest(osmNode, zones, Double.POSITIVE_INFINITY, geoUtils);    
+  public static Zone findZoneClosest(OsmNode osmNode, Collection<? extends Zone> zones, boolean suppressLogging, PlanitJtsCrsUtils geoUtils) {
+    return findZoneClosest(osmNode, zones, Double.POSITIVE_INFINITY, suppressLogging, geoUtils);
   }  
 
   /** find the closest zone to the node location. This method computes the actual distance between any location on any line segment of the outer boundary
@@ -155,11 +156,14 @@ public class OsmNodeUtils {
    * @param osmNode reference node
    * @param zones to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
    */
-  public static Zone findZoneClosest(final OsmNode osmNode, final Collection<? extends Zone> zones, double maxDistanceMeters, final PlanitJtsCrsUtils geoUtils) {
-    Pair<Zone,Double> result = findPlanitEntityClosest(OsmNodeUtils.createCoordinate(osmNode), zones, maxDistanceMeters, geoUtils);
+  public static Zone findZoneClosest(
+      final OsmNode osmNode, final Collection<? extends Zone> zones, double maxDistanceMeters, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils) {
+    Pair<Zone,Double> result = findPlanitEntityClosest(
+        OsmNodeUtils.createCoordinate(osmNode), zones, maxDistanceMeters, suppressLogging, geoUtils);
     if(result!=null) {
       return result.first();
     }
@@ -183,11 +187,12 @@ public class OsmNodeUtils {
    * 
    * @param osmNode reference node
    * @param edges to check against using their geometries
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
    */
-  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, PlanitJtsCrsUtils geoUtils){
-    return findEdgeClosest(osmNode, edges, Double.POSITIVE_INFINITY, geoUtils);    
+  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
+    return findEdgeClosest(osmNode, edges, Double.POSITIVE_INFINITY, suppressLogging, geoUtils);
   }    
   
   /** Find the closest edge to the node location. This method computes the actual distance between any location on any line segment of geometry
@@ -197,11 +202,14 @@ public class OsmNodeUtils {
    * @param osmNode reference node
    * @param edges to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
    */
-  public static Edge findEdgeClosest(OsmNode osmNode, Collection<? extends Edge> edges, double maxDistanceMeters, PlanitJtsCrsUtils geoUtils){
-    Pair<Edge,Double> result = findPlanitEntityClosest( OsmNodeUtils.createCoordinate(osmNode), edges, maxDistanceMeters, geoUtils);
+  public static Edge findEdgeClosest(
+      OsmNode osmNode, Collection<? extends Edge> edges, double maxDistanceMeters, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
+    Pair<Edge,Double> result = findPlanitEntityClosest(
+        OsmNodeUtils.createCoordinate(osmNode), edges, maxDistanceMeters, suppressLogging, geoUtils);
     if(result!=null) {
       return result.first();
     }

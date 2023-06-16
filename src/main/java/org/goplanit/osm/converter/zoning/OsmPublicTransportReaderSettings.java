@@ -15,6 +15,7 @@ import org.goplanit.osm.converter.OsmReaderSettings;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
+import org.goplanit.utils.misc.Triple;
 import org.goplanit.utils.misc.UrlUtils;
 
 /**
@@ -343,16 +344,21 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType entity type of waiting area to map to
    * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
    */
-  public void overwriteStopLocationWaitingArea(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
+  public void overwriteWaitingAreaOfStopLocation(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
     overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));    
-  } 
-    
-  /** Verify if stop location's osm id is marked for overwritten platform mapping
+  }
+
+  /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)} */
+  public void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
+    Arrays.stream(overwriteTriples).forEach(t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
+  }
+
+  /** Verify if stop location's OSM id is marked for overwritten platform mapping
    * 
    * @param stopLocationOsmNodeId to verify (int or long)
    * @return true when present, false otherwise
    */
-  public boolean isOverwriteStopLocationWaitingArea(final Number stopLocationOsmNodeId) {
+  public boolean isOverwriteWaitingAreaOfStopPosition(final Number stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.containsKey(stopLocationOsmNodeId);    
   } 
   
@@ -361,7 +367,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param stopLocationOsmNodeId to verify (int or long)
    * @return pair reflecting the entity type and waiting area osm id, null if not present
    */
-  public Pair<EntityType,Long> getOverwrittenStopLocationWaitingArea(final Number stopLocationOsmNodeId) {
+  public Pair<EntityType,Long> getOverwrittenWaitingAreaOfStopPosition(final Number stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.get(stopLocationOsmNodeId);    
   }  
   
@@ -371,7 +377,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmWaitingAreaId to use (int or long)
    * @return true when waiting area is defined for a stop location as designated waiting area, false otherwise
    */
-  public boolean isWaitingAreaStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
+  public boolean isWaitingAreaOfStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
     for( Entry<Long, Pair<EntityType, Long>> entry : overwritePtStopLocation2WaitingAreaMapping.entrySet()) {
       if(entry.getValue().first().equals(waitingAreaType) && entry.getValue().second().equals(osmWaitingAreaId)) {
         return true;
@@ -381,9 +387,10 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }  
   
   /**
-   * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by osm id).
-   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated osm way. Only use in case the platform has no stop_location
-   * and no stop_location maps to this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
+   * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by OSM id).
+   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated OSM way.
+   * Only use in case the platform has no stop_location and no stop_location maps to this waiting area.
+   * One cannot use this method and also use this waiting area in overriding stop_location mappings.
    * 
    * @param waitingAreaOsmId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to

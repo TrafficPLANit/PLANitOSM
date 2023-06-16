@@ -107,18 +107,19 @@ public class PlanitOsmUtils {
    * @param edges to check against
    * @param osmNodes to extract geometry of osm entity from
    * @param geoUtils used to compute distances
+   * @param suppressLogging when true suppress logging, false otherwise
    * @return closest edge found
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Edge findEdgeClosest(
+      OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
-      return OsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, geoUtils);
+      return OsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, suppressLogging, geoUtils);
     case Way:
-      return OsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, geoUtils);      
+      return OsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, suppressLogging, geoUtils);
     default:
-      LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
+      if(!suppressLogging) LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
       break;
     }
     return null;

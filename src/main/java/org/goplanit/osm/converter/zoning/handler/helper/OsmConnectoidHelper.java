@@ -19,7 +19,6 @@ import org.goplanit.utils.misc.IterableUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
-import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
@@ -87,9 +86,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
     /* ... exception 1: train/tram/ferry platforms because trains/trams/ferries have entrances on both sides */
     boolean mustAvoidCrossingTraffic = ZoningConverterUtils.isAvoidCrossTrafficForAccessMode(accessMode);
-    if(osmStopLocationNodeId != null && settings.isOverwriteStopLocationWaitingArea(osmStopLocationNodeId)) {
+    if(osmStopLocationNodeId != null && settings.isOverwriteWaitingAreaOfStopPosition(osmStopLocationNodeId)) {
       /* ... exception 2: user override with mapping to this zone for this node, in which case we allow crossing traffic regardless */
-      mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenStopLocationWaitingArea(osmStopLocationNodeId).second());
+      mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenWaitingAreaOfStopPosition(osmStopLocationNodeId).second());
     } 
     return mustAvoidCrossingTraffic;   
   }   
@@ -143,7 +142,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       return osmWayId!=null ? String.valueOf(osmWayId) : null;
     };
 
-    return ZoningConverterUtils.findAccessLinkSegmentsForWaitingArea(
+    return ZoningConverterUtils.findAccessEntryLinkSegmentsForWaitingArea(
             transferZone.getExternalId(),
             transferZone.getGeometry(true),
             accessLink,
@@ -230,7 +229,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param accessNode of the connectoids
    * @param linkSegments to create connectoids for (one per segment)
    * @param allowedModes used for each connectoid
-   * @param ignoreOsmVerticalLayerCompatibility when true we do not report back if the link segments match the transfer zone's OSM layer index, when false we do
+   * @param verifyOsmVerticalLayerCompatibility when true we do not report back if the link segments match the transfer zone's OSM layer index, when false we do
    * @return created connectoids
    */
   private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(
@@ -239,9 +238,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       final Node accessNode,
       final Iterable<? extends EdgeSegment> linkSegments,
       final Set<Mode> allowedModes,
-      boolean ignoreOsmVerticalLayerCompatibility){
+      boolean verifyOsmVerticalLayerCompatibility){
 
-    if(!ignoreOsmVerticalLayerCompatibility) {
+    if(!verifyOsmVerticalLayerCompatibility) {
       var osmVerticalLayerIndex = this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
       if (osmVerticalLayerIndex != null &&
           !IterableUtils.asStream(linkSegments).allMatch(
@@ -264,7 +263,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     return createdConnectoids;
   }
 
-  private boolean extractDirectedConnectoidsForMode(TransferZone transferZone, Mode planitMode, Node accessNode, Collection<LinkSegment> eligibleLinkSegments, boolean ignoreOsmVerticalLayerCompatibility,PlanitJtsCrsUtils geoUtils) {
+  private boolean extractDirectedConnectoidsForModeLinkSegments(
+      TransferZone transferZone,
+      Mode planitMode,
+      Node accessNode,
+      Collection<LinkSegment> eligibleLinkSegments,
+      boolean ignoreOsmVerticalLayerCompatibilityCheck,
+      boolean suppressLogging,
+      PlanitJtsCrsUtils geoUtils) {
 
     MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByMode(planitMode);
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
@@ -275,7 +281,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       
       if(zoningReaderData.getPlanitData().hasDirectedConnectoidForLocation(networkLayer, proposedConnectoidLocation)) {      
         /* existing connectoid: update model eligibility */
-        Collection<DirectedConnectoid> connectoidsForNode = zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(proposedConnectoidLocation, networkLayer);        
+        Collection<DirectedConnectoid> connectoidsForNode =
+            zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(proposedConnectoidLocation, networkLayer);
         for(DirectedConnectoid connectoid : connectoidsForNode) {
           if(edgeSegment.idEquals(connectoid.getAccessLinkSegment())) {
             /* update mode eligibility */
@@ -291,9 +298,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
                 
         /* create and register */
         Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(
-            transferZone, networkLayer, accessNode, Collections.singleton(edgeSegment), Collections.singleton(planitMode), ignoreOsmVerticalLayerCompatibility);
+            transferZone,
+            networkLayer,
+            accessNode,
+            Collections.singleton(edgeSegment),
+            Collections.singleton(planitMode),
+            ignoreOsmVerticalLayerCompatibilityCheck || suppressLogging);
         
-        if(newConnectoids==null || newConnectoids.isEmpty()) {
+        if(!suppressLogging && (newConnectoids==null || newConnectoids.isEmpty())) {
           LOGGER.warning(String.format("Found eligible mode %s for stop_location of transfer zone %s, but no access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
           return false;
         }
@@ -312,6 +324,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param networkLayer to extract node on
    * @param osmWaitingAreaVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on, may be null indicating it is not explicitly tagged
    * @param osmWaitingAreaId reference id of OSM waiting area to be used in case user feedback is to be provided
+   * @param suppressLogging when true suppress logging, false otherwise
    * @return PLANit node collected/created
    */  
   private Node extractConnectoidAccessNodeByLocation(
@@ -319,7 +332,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean locationIsKnownOsmStopPosition,
       MacroscopicNetworkLayer networkLayer,
       Integer osmWaitingAreaVerticalLayerIndex,
-      String osmWaitingAreaId){
+      String osmWaitingAreaId,
+      boolean suppressLogging){
     final OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
 
     /* check if already exists */
@@ -330,25 +344,28 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* find the links with the location registered as internal */
       List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(osmNodeLocation);
       if(linksToBreak != null) {
+        OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
 
         /* we would expect all links on this connectoids location to reside on the same vertical plane as their transfer zone's that is passed in, which we check since breaking links that are not
         * could be problematic and point to a tagging error, when known stop position, it is likely still correct, but we report it nevertheless */
-        if(!linksToBreak.stream().allMatch( l ->
+        if(!suppressLogging && !linksToBreak.stream().allMatch( l ->
             (osmWaitingAreaVerticalLayerIndex!=null && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == osmWaitingAreaVerticalLayerIndex) ||
             (osmWaitingAreaVerticalLayerIndex==null && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == 0))){
           var osmLayerIndices = linksToBreak.stream().map(l -> l.getIdsAsString() + " layer=" + OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l)).collect(Collectors.joining(","));
           Level logLevel = locationIsKnownOsmStopPosition ? Level.INFO : Level.WARNING;
           String stopPositionContext = locationIsKnownOsmStopPosition ? "Explicit" : "Deduced";
           String followUpAdvice = locationIsKnownOsmStopPosition ? "possible tagging error" : "verify correctness";
+          String osmNodeRef = osmNode!=null ? String.valueOf(osmNode.getId()) : "-";
           if(osmWaitingAreaVerticalLayerIndex == null){
-            LOGGER.log(logLevel, String.format("%s stop_position on location (%s) part of links [%s] differs from waiting area that has no OSM vertical layer defined, %s", stopPositionContext, osmNodeLocation, osmLayerIndices, followUpAdvice));
+            LOGGER.log(logLevel, String.format("%s stop_position (%s) on location (%s) part of links [%s] differs from waiting area (%s) that has no OSM vertical layer defined, %s",
+                stopPositionContext, osmNodeRef, osmNodeLocation, osmLayerIndices, osmWaitingAreaId, followUpAdvice));
           }else{
-              LOGGER.log(logLevel, String.format("%s stop_position on location (%s) part of links [%s] differs from OSM waiting area's (%s) explicit OSM layer (layer=%d), %s", stopPositionContext, osmNodeLocation, osmLayerIndices, osmWaitingAreaId, osmWaitingAreaVerticalLayerIndex, followUpAdvice));
+              LOGGER.log(logLevel, String.format("%s stop_position (%s) on location (%s) part of links [%s] differs from OSM waiting area's (%s) explicit OSM layer (layer=%d), %s",
+                  stopPositionContext, osmNodeRef, osmNodeLocation, osmLayerIndices, osmWaitingAreaId, osmWaitingAreaVerticalLayerIndex, followUpAdvice));
           }
         }
 
         /* location is internal to an existing link, create it based on OSM node if possible, otherwise base it solely on location provided*/
-        OsmNode osmNode = layerData.getOsmNodeByLocation(osmNodeLocation);
         if(osmNode != null) {
           /* all regular cases */
           planitNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
@@ -374,13 +391,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param networkLayer to extract node on
    * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on (may be null)
    * @param osmWaitingAreaId reference id of OSM waiting area to be used in case user feedback is to be provided
+   * @param suppressLogging when true suppress logging, false otherwise
    * @return PLANit node collected/created
    */
   private Node extractConnectoidAccessNodeByOsmNode(
-      OsmNode osmNode, boolean locationIsKnownOsmStopPosition, MacroscopicNetworkLayer networkLayer, Integer osmVerticalLayerIndex, String osmWaitingAreaId){
+      OsmNode osmNode, boolean locationIsKnownOsmStopPosition, MacroscopicNetworkLayer networkLayer, Integer osmVerticalLayerIndex, String osmWaitingAreaId, boolean suppressLogging){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     return extractConnectoidAccessNodeByLocation(
-        osmNodeLocation, locationIsKnownOsmStopPosition, networkLayer, osmVerticalLayerIndex, osmWaitingAreaId);
+        osmNodeLocation, locationIsKnownOsmStopPosition, networkLayer, osmVerticalLayerIndex, osmWaitingAreaId, suppressLogging);
   }
 
   /** extract a connectoid location within the link based on an existing coordinate (osm node) or by inserting an additional coordinate in the location closest to the provided
@@ -447,7 +465,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* function that takes a node and collects any overwritten waiting area that is pre-specified for it. Used to
        *  override default mapping between waiting area and stop location when needed */
       this.getOverwrittenWaitingAreaSourceIdForNode = n -> {
-        var result = transferSettings.getOverwrittenStopLocationWaitingArea(n.getExternalId() != null ? Long.valueOf(n.getExternalId()) : null);
+        var result = transferSettings.getOverwrittenWaitingAreaOfStopPosition(n.getExternalId() != null ? Long.valueOf(n.getExternalId()) : null);
         return result!= null ? String.valueOf(result.second()) : null;
       };
     }
@@ -481,7 +499,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         if(osmNode == null){
           return null;
         }
-        var result = getSettings().getOverwrittenStopLocationWaitingArea(osmNode.getId());
+        var result = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmNode.getId());
         return result!= null ? String.valueOf(result.second()) : null;
       };
 
@@ -524,36 +542,38 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     /* collect the osmNode for this transfer zone */
     OsmNode osmNode = getNetworkToZoningData().getNetworkOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
 
+    boolean suppressLogging = false;
     Node accessNode = null;
     Iterable<? extends EdgeSegment> nominatedLinkSegments = null;
+
+    /* user overwrite */
     if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node)) {
-      /* user overwrite */
-      
+
       long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node);
       Link nominatedLink = PlanitLinkOsmUtils.getClosestLinkWithOsmWayIdToGeometry( osmWayId, OsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
+      if(nominatedLink == null) {
+        LOGGER.severe(String.format("IGNORE: User nominated OSM way not available for waiting area on road infrastructure %d", osmWayId));
+        return null;
+      }
+
+      nominatedLinkSegments = nominatedLink.getEdgeSegments();
+      suppressLogging = true;
 
       /* chose closest access node */
       double nodeADistance = geoUtils.getDistanceInMetres(nominatedLink.getVertexA().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(osmNode));
       double nodeBDistance = geoUtils.getDistanceInMetres(nominatedLink.getVertexB().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(osmNode));
       accessNode = nodeADistance < nodeBDistance ? nominatedLink.getNodeA() : nominatedLink.getNodeB();
-
-      if(nominatedLink != null) {
-        nominatedLinkSegments = nominatedLink.getEdgeSegments(); 
-      }else {
-        LOGGER.severe(String.format("User nominated OSM way not available for waiting area on road infrastructure %d",osmWayId));
-      }                      
       
-    }else {
-      /* regular approach */
+    }else { /* regular approach */
       
       /* create/collect PLANit node with access link segment (no need to check layer on links here since we know transfer zone coincides with network) */
       var waitingAreaOsmVerticalLayerIndex = zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
 
       boolean locationIsKnownOsmStopPosition = true;
       accessNode = extractConnectoidAccessNodeByOsmNode(
-          osmNode, locationIsKnownOsmStopPosition, networkLayer, waitingAreaOsmVerticalLayerIndex, transferZone.getExternalId());
+          osmNode, locationIsKnownOsmStopPosition, networkLayer, waitingAreaOsmVerticalLayerIndex, transferZone.getExternalId(), suppressLogging);
       if(accessNode == null) {
-        LOGGER.warning(String.format("DISCARD: OSM node (%d) could not be converted to access node for transfer zone osm entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
+        LOGGER.warning(String.format("DISCARD: OSM node (%d) could not be converted to access node for transfer zone OSM entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
         return null;
       }
       
@@ -564,9 +584,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         
     /* create connectoids on top of transfer zone */
     /* since located on OSM way we cannot deduce direction of the stop, so create connectoid for both incoming directions (if present), so we can service any line using the way */
-    boolean ignoreOsmVerticalLayerCompatibility = true;
+    boolean ignoreOsmVerticalLayerCompatibility = suppressLogging;
     return createAndRegisterDirectedConnectoids(
-        transferZone, networkLayer, accessNode, nominatedLinkSegments, Collections.singleton(referenceNetwork.getModes().get(planitModeType)), ignoreOsmVerticalLayerCompatibility);
+        transferZone,
+        networkLayer,
+        accessNode,
+        nominatedLinkSegments,
+        Collections.singleton(referenceNetwork.getModes().get(planitModeType)),
+        ignoreOsmVerticalLayerCompatibility);
   }
 
 
@@ -580,11 +605,17 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    *                                     proceed applying as many filter criteria as possible to get best possible match based on available tagging, e.g., vertical layer information
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
+   * @param suppressLogging when true do not log anything, false otherwise
    * @param geoUtils used when location of transfer zone relative to infrastructure is to be determined
    * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
    */
   public boolean extractDirectedConnectoidsForMode(
-      Point location, boolean locationIsKnownOsmStopPosition, TransferZone transferZone, PredefinedModeType planitModeType, PlanitJtsCrsUtils geoUtils) {
+      Point location,
+      boolean locationIsKnownOsmStopPosition,
+      TransferZone transferZone,
+      PredefinedModeType planitModeType,
+      boolean suppressLogging,
+      PlanitJtsCrsUtils geoUtils) {
     if(location == null || transferZone == null || planitModeType == null || geoUtils == null) {
       return false;
     }
@@ -606,12 +637,12 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
     /* planit access node */
     Node planitAccessNode = extractConnectoidAccessNodeByLocation(
-        location, locationIsKnownOsmStopPosition, networkLayer, waitingAreaOsmVerticalLayerIndex, transferZone.getExternalId());
+        location, locationIsKnownOsmStopPosition, networkLayer, waitingAreaOsmVerticalLayerIndex, transferZone.getExternalId(), suppressLogging);
     if(planitAccessNode==null) {
       if(osmNode != null) {
-        LOGGER.warning(String.format("DISCARD: OSM node %d could not be converted to access node for transfer zone representation of OSM entity %s",osmNode.getId(), transferZone.getExternalId()));
+        if(!suppressLogging) LOGGER.warning(String.format("DISCARD: OSM node %d could not be converted to access node for transfer zone representation of OSM entity %s",osmNode.getId(), transferZone.getExternalId()));
       }else {
-        LOGGER.warning(String.format("DISCARD: Location (%s) could not be converted to access node for transfer zone representation of OSM entity %s",location, transferZone.getExternalId()));
+        if(!suppressLogging) LOGGER.warning(String.format("DISCARD: Location (%s) could not be converted to access node for transfer zone representation of OSM entity %s",location, transferZone.getExternalId()));
       }
       return false;
     }
@@ -622,9 +653,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
      */
     boolean mustAvoidCrossingTraffic = !planitAccessNode.getPosition().equalsTopo(transferZone.getGeometry());
     if(mustAvoidCrossingTraffic) {
-      mustAvoidCrossingTraffic = isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());  
-    }         
-    
+      mustAvoidCrossingTraffic = isWaitingAreaForPtModeRestrictedToDrivingDirectionLocation(planitMode, transferZone, osmNode!= null ? osmNode.getId() : null, getSettings());
+    }
+
     /* find access link segments */
     Collection<LinkSegment> accessLinkSegments = null;
     boolean ignoreOsmVerticalLayerCompatibility = locationIsKnownOsmStopPosition;
@@ -641,30 +672,22 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }    
       
     if(accessLinkSegments==null || accessLinkSegments.isEmpty()) {
-      LOGGER.warning(String.format("DISCARD platform/pole/station %s its stop_location %s deemed invalid, no access link segment found due to mode inaccessibility/exclusion, or on wrong side of road/rail, verify correctness",
-          transferZone.getExternalId(), location));
+      if(!suppressLogging) LOGGER.warning(String.format(
+          "DISCARD platform/pole/station %s its stop_location %s deemed invalid, no access link segment found due to mode inaccessibility/exclusion, or on wrong side of road/rail, verify correctness", transferZone.getExternalId(), location));
       return false;
     }                           
     
     /* connectoids for link segments */
-    return extractDirectedConnectoidsForMode(transferZone, planitMode, planitAccessNode, accessLinkSegments, ignoreOsmVerticalLayerCompatibility, geoUtils);
+    return extractDirectedConnectoidsForModeLinkSegments(
+        transferZone, planitMode, planitAccessNode, accessLinkSegments, ignoreOsmVerticalLayerCompatibility, suppressLogging, geoUtils);
   }
 
 
-  /** create and/or update directed connectoids for the given mode and layer based on the passed in osm node (location) where the connectoids access link segments are extracted for.
-   * Each of the connectoids is related to the passed in transfer zone.  
-   * 
-   * @param osmNode to relate to planit network's incoming link segments as access points
-   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not enforce filtering based on criteria that might not have been properly tagged, when false, we
-   *                                     proceed applying as many filter criteria as possible to get the best possible match based on available tagging, e.g., vertical layer information
-   * @param transferZone this connectoid is assumed to provide access to
-   * @param planitModeType mode type this connectoid is allowed access for
-   * @param geoUtils used to determine location of transfer zone relative to infrastructure to identify which link segment(s) are eligible for connectoids placement
-   * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
-   */
-  public boolean extractDirectedConnectoidsForMode(OsmNode osmNode, boolean locationIsKnownOsmStopPosition, TransferZone transferZone, PredefinedModeType planitModeType, PlanitJtsCrsUtils geoUtils){
+  /** see {@link #extractDirectedConnectoidsForMode(Point, boolean, TransferZone, PredefinedModeType, boolean, PlanitJtsCrsUtils)} converting node to point */
+  public boolean extractDirectedConnectoidsForMode(
+      OsmNode osmNode, boolean locationIsKnownOsmStopPosition, TransferZone transferZone, PredefinedModeType planitModeType, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
-    return extractDirectedConnectoidsForMode(osmNodeLocation, locationIsKnownOsmStopPosition, transferZone, planitModeType, geoUtils);
+    return extractDirectedConnectoidsForMode(osmNodeLocation, locationIsKnownOsmStopPosition, transferZone, planitModeType, suppressLogging, geoUtils);
   }
   
   /** create and/or update directed connectoids for the transfer zones and mode combinations when eligible, based on the passed in OSM node 
@@ -676,16 +699,23 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param transferZones connectoids are assumed to provide access to
    * @param planitModeTypes this connectoid is allowed access for
    * @param transferZoneGroup it belongs to, when zone is not yet in the group the zone is added to the group (group is allowed to be null)
+   * @param suppressLogging when true, suppress logging, otherwise do not
    * @return true when at least connectoids where created for one of the transfer zones identified
    */
-  public boolean extractDirectedConnectoids(OsmNode osmNode, boolean locationIsKnownOsmStopPosition, Collection<TransferZone> transferZones, Collection<PredefinedModeType> planitModeTypes, TransferZoneGroup transferZoneGroup){
+  public boolean extractDirectedConnectoids(
+      OsmNode osmNode,
+      boolean locationIsKnownOsmStopPosition,
+      Collection<TransferZone> transferZones,
+      Collection<PredefinedModeType> planitModeTypes,
+      TransferZoneGroup transferZoneGroup,
+      boolean suppressLogging){
     boolean success = false; 
     /* for the given layer/mode combination, extract connectoids by linking them to the provided transfer zones */
     for(var modeType : planitModeTypes) {
       
       /* layer */
       MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByPredefinedModeType(modeType);
-      if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)) {
+      if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode) && !suppressLogging) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type deactivated or node dangling)",osmNode.getId(), modeType), OsmNodeUtils.createPoint(osmNode));
         continue;
@@ -695,10 +725,13 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       for(TransferZone transferZone : transferZones) {
         
         /* connectoid(s) */
-        success = extractDirectedConnectoidsForMode(osmNode, locationIsKnownOsmStopPosition, transferZone, modeType, geoUtils) || success;
+        success = extractDirectedConnectoidsForMode(
+            osmNode, locationIsKnownOsmStopPosition, transferZone, modeType, suppressLogging, geoUtils) || success;
         if(success && transferZoneGroup != null && !transferZone.isInTransferZoneGroup(transferZoneGroup)) {
           /* in some rare cases only the stop locations are part of the stop_area, but not the platforms next to the road/rail, only then this situation is triggered and we salvage the situation */
-          LOGGER.info(String.format("Platform/pole %s identified for stop_position %d, platform/pole not in stop_area %s of stop_position, added it",transferZone.getExternalId(), osmNode.getId(), transferZoneGroup.getExternalId()));
+          if(!suppressLogging && !transferZone.getExternalId().equals(String.valueOf(osmNode.getId()))){
+            LOGGER.info(String.format("Platform/pole %s identified for stop_position %d, platform/pole not in stop_area %s of stop_position, added it",transferZone.getExternalId(), osmNode.getId(), transferZoneGroup.getExternalId()));
+          }
           transferZoneGroup.addTransferZone(transferZone);
         }
       }      
@@ -718,40 +751,50 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param planitAccessModeType eligible mode type for the station
    * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
    * @param networkLayer the modes relate to
+   * @param suppressLogging when true suppress logging, false otherwise
    */
   public void extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
-      long osmWaitingAreaId, Geometry waitingAreaGeometry , MacroscopicLink accessLink, TransferZone transferZone, PredefinedModeType planitAccessModeType, double maxAllowedStopToTransferZoneDistanceMeters, MacroscopicNetworkLayer networkLayer) {
+      long osmWaitingAreaId,
+      Geometry waitingAreaGeometry ,
+      MacroscopicLink accessLink,
+      TransferZone transferZone,
+      PredefinedModeType planitAccessModeType,
+      double maxAllowedStopToTransferZoneDistanceMeters,
+      MacroscopicNetworkLayer networkLayer,
+      boolean suppressLogging) {
 
-    if(osmWaitingAreaId == 7012484909L){
+    if(osmWaitingAreaId == 292444942L){
       int bla = 4;
     }
 
     /* geo location on planit link, possibly inserted for this purpose by this method if no viable osm node/existing coordinate is present */
     Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(
         transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
-    if(connectoidLocation == null) {
+    if(!suppressLogging && connectoidLocation == null) {
       logWarningIfNotNearBoundingBox(
           String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()), transferZone.getGeometry());
     }
     
     /* special case - user overwrite verification */
     OsmNode osmStopLocationNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(connectoidLocation);
-    if(osmStopLocationNode != null && getSettings().isOverwriteStopLocationWaitingArea(osmStopLocationNode.getId())) {
+    if(osmStopLocationNode != null && getSettings().isOverwriteWaitingAreaOfStopPosition(osmStopLocationNode.getId())) {
       /* user has chosen to overwrite waiting area for this connectoid (stop_location), so the transfer zone provided should correspond to the chosen waiting area id, otherwise
        * we simply ignore and return (when processing incomplete transfer zones, it might try to use a stop_location for a transfer zone that is incomplete but indicated by the user to
        * not be used for this connectoid, so there can be a valid reason why this method is invoked, as well as a valid reason to not create connectoids when checking for this situation */
-      Pair<EntityType, Long>  overwriteResult = getSettings().getOverwrittenStopLocationWaitingArea(osmStopLocationNode.getId());
+      Pair<EntityType, Long>  overwriteResult = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmStopLocationNode.getId());
       /* when type match (point=node, otherwise=way)  and id match we can continue, otherwise not */
       if( !(waitingAreaGeometry instanceof Point && Long.valueOf(transferZone.getExternalId()) == overwriteResult.second())) {
         return;
       }else if( Long.valueOf(transferZone.getExternalId()) != overwriteResult.second()) {
         return;
       }
+      suppressLogging = true;
     }            
           
     /* create connectoids at identified location for mode and restricted to the accessLink identified (or update existing connectoid with mode access if valid) */
     boolean locationIsKnownOsmStopPosition = false;
-    extractDirectedConnectoidsForMode(connectoidLocation, locationIsKnownOsmStopPosition, transferZone, planitAccessModeType, geoUtils);
+    extractDirectedConnectoidsForMode(
+        connectoidLocation, locationIsKnownOsmStopPosition, transferZone, planitAccessModeType, suppressLogging, geoUtils);
   }  
 
 }

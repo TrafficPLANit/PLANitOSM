@@ -54,17 +54,24 @@ public class OsmWayUtils {
    * @param planitEntities to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return closest, null if none matches criteria
    */
   protected static <T> T findPlanitEntityClosest(
-      final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils){
+      final OsmWay osmWay,
+      final Collection<? extends T> planitEntities,
+      double maxDistanceMeters,
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      final PlanitJtsCrsUtils geoUtils){
     T closestPlanitEntity = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode != null) {
-        Pair<T,Double> result = PlanitEntityGeoUtils.findPlanitEntityClosest(OsmNodeUtils.createCoordinate(osmNode), planitEntities, maxDistanceMeters, geoUtils);
+        Pair<T,Double> result = PlanitEntityGeoUtils.findPlanitEntityClosest(
+            OsmNodeUtils.createCoordinate(osmNode), planitEntities, maxDistanceMeters, suppressLogging, geoUtils);
         if(result!=null && result.second() < minDistanceMeters) {
           closestPlanitEntity = result.first();
           minDistanceMeters = result.second();
@@ -485,11 +492,13 @@ public class OsmWayUtils {
    * @param osmWay reference way
    * @param zones to check against using their geometries
    * @param osmNodes to consider
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils){
-    return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
+  public static Zone findZoneClosest(
+      final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, suppressLogging, geoUtils);
   }  
 
   /** Find the closest zone to the way . This method computes the actual distance between any location on any line segment of the outer boundary
@@ -500,11 +509,13 @@ public class OsmWayUtils {
    * @param zones to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils){
-    return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, geoUtils);   
+  public static Zone findZoneClosest(
+      final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, suppressLogging, geoUtils);
   }   
   
   /** find the closest edge to the way from the available edges. This method computes the actual distance between any location on any line segment of the 
@@ -514,12 +525,13 @@ public class OsmWayUtils {
    * @param osmWay reference way
    * @param edges to check against using their geometries
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
+  public static Edge findEdgeClosest(
+      final OsmWay osmWay, final Collection<? extends Edge> edges, final Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, suppressLogging, geoUtils);
   }   
   
   /** find the closest edge to the way from the available edges. This method computes the actual distance between any location on any line segment of the 
@@ -530,12 +542,13 @@ public class OsmWayUtils {
    * @param edges to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, geoUtils);        
+  public static Edge findEdgeClosest(
+      final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, final Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, suppressLogging, geoUtils);
   }
 
 
