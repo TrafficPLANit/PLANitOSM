@@ -348,7 +348,9 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));    
   }
 
-  /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)} */
+  /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)}
+   * @param overwriteTriples triples to provide
+   */
   public void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
     Arrays.stream(overwriteTriples).forEach(t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
   }

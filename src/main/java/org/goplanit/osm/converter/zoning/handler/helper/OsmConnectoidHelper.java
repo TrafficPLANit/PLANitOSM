@@ -683,7 +683,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }
 
 
-  /** see {@link #extractDirectedConnectoidsForMode(Point, boolean, TransferZone, PredefinedModeType, boolean, PlanitJtsCrsUtils)} converting node to point */
+  // see {@link #extractDirectedConnectoidsForMode(Point, boolean, TransferZone, PredefinedModeType, boolean, PlanitJtsCrsUtils)} converting node to point
   public boolean extractDirectedConnectoidsForMode(
       OsmNode osmNode, boolean locationIsKnownOsmStopPosition, TransferZone transferZone, PredefinedModeType planitModeType, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
