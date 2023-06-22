@@ -7,16 +7,12 @@ import org.goplanit.osm.tags.OsmPtv1Tags;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
-import org.goplanit.utils.graph.directed.EdgeSegment;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
 import org.goplanit.utils.zoning.Zone;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
@@ -223,7 +219,7 @@ public class PlanitTransferZoneUtils {
       return TransferZoneType.PLATFORM;
     }else if(OsmPtv1Tags.isHalt(tags)) {
       return TransferZoneType.SMALL_STATION;
-    }else if(OsmPtv1Tags.isStation(tags)) {
+    }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
       return TransferZoneType.STATION;
     }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
       return TransferZoneType.PLATFORM;

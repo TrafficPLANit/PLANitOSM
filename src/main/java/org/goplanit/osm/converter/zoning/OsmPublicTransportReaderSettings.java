@@ -2,13 +2,8 @@ package org.goplanit.osm.converter.zoning;
 
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.OsmReaderSettings;
@@ -72,6 +67,16 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * Further one cannot override a waiting area here that is also part of a stop_location to waiting area override. 
    */
   private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<>();
+
+  /**
+   * track overwritten mode access values for specific OSM waiting areas. Can be used in case the OSM file is incorrectly tagged which causes problems
+   * in the memory model. Here one can be manually overwrite the allowable modes for this particular waiting area.
+   */
+  protected final Map<EntityType, Map<Long, SortedSet<String>>> overwriteWaitingAreaModeAccess = new HashMap<>(
+      Map.ofEntries(
+          Map.entry(EntityType.Node, new HashMap<>()),
+          Map.entry(EntityType.Way, new HashMap<>())
+  ));
 
   /** all registered osmRelation ids will not trigger any logging */
   private final Set<Long> suppressStopAreaLogging = new HashSet<>();
@@ -165,7 +170,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   @Override
   public void reset() {
-    //TODO
+    //todo
   }
 
   /**
@@ -349,7 +354,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }
 
   /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)}
-   * @param overwriteTriples triples to provide
+   * @param overwriteTriples triples to provide (stopLocationOsmId, waitingAreaEntityType, waitingAreasOsmId)
    */
   public void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
     Arrays.stream(overwriteTriples).forEach(t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
@@ -503,4 +508,50 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void setFerryStopToFerryRouteSearchRadiusMeters(double searchRadiusFerryStopToFerryRouteMeters) {
     this.searchRadiusFerryStopToFerryRouteMeters = searchRadiusFerryStopToFerryRouteMeters;
   }
+
+  /**
+   * Overwrite the mode access for a given waiting area
+   *
+   * @param osmId to overwrite for
+   * @param osmEntityType to use
+   * @param osmModes to set as eligible
+   */
+  public void overwriteWaitingAreaModeAccess(long osmId, EntityType osmEntityType, String... osmModes){
+    var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
+    if(overwritesByType == null){
+      LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes access for waiting areas", osmEntityType.toString()));
+    }
+    overwritesByType.put(osmId, new TreeSet(Arrays.asList(osmModes)));
+  }
+
+  /**
+   * Verify if the mode access for a given waiting area is overwritten
+   *
+   * @param osmId to verify
+   * @param osmEntityType to use
+   * @return true when present false otherwise
+   */
+  public boolean isOverwriteWaitingAreaModeAccess(long osmId, EntityType osmEntityType){
+    var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
+    if(overwritesByType == null){
+      return false;
+    }
+    return overwritesByType.containsKey(osmId);
+  }
+
+  /**
+   * Get the overwritten OSM modes for a given waiting area (if defined)
+   *
+   * @param osmId to collect for
+   * @param osmEntityType of the OSM id
+   * @return overwritten OSM modes to apply, null if not present
+   */
+  public SortedSet<String> getOverwrittemWaitingAreaModeAccess(long osmId, EntityType osmEntityType){
+    var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
+    if(overwritesByType == null){
+      return null;
+    }
+    return overwritesByType.get(osmId);
+  }
+
 }

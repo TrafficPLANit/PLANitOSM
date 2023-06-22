@@ -65,4 +65,17 @@ public class OsmTags {
     public static boolean isAmenity(Map<String, String> tags) {
       return tags.containsKey(AMENITY) && !tags.get(AMENITY).equals(NO);
     }
+
+  /** verify if the key value combination is under construction, e.g., normally key=value, but when under construction it
+   * is tagged key=construction and construction=value.
+   *
+   * @param tags to use
+   * @param key to check against
+   * @param value to check against
+   * @return true when under construction, false otherwise
+   */
+    public static boolean isUnderConstruction(Map<String, String> tags, String key, String value){
+      return tags.containsKey(key) && tags.get(key).equals(OsmRailwayTags.CONSTRUCTION) &&
+      tags.containsKey(OsmRailwayTags.CONSTRUCTION) && tags.get(OsmRailwayTags.CONSTRUCTION).equals(value);
+    }
 }

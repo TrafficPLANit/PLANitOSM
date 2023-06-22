@@ -447,7 +447,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         /* mode compatibility check */
         Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
             getPtModeHelper().collectPublicTransportModesFromPtEntity(
-                osmStation.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags));
+                osmStation, tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags, true));
         if(!OsmModeUtils.hasMappedPlanitMode(modeResult)){
           return;
         }
@@ -459,7 +459,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
           if(type != EntityType.Node) {
             /* we can only treat stations that are ferry terminals as a stop_position/node based entity at the moment */
-            LOGGER.warning("DISCARD: found Ptv2 stand alone station that is tagged as ferry terminal, but that is not an OSM node, this is not yet supported");
+            LOGGER.warning(String.format(
+                "DISCARD: Found Ptv2 stand alone station (%d) that is tagged as ferry terminal, but that is not an OSM node, verify correctness (tags: %s)",
+                osmStation.getId(), tags));
           }else{
             processStandAloneFerryStop((OsmNode) osmStation, TransferZoneType.PLATFORM);
           }
@@ -552,7 +554,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* unlike stations we create both the transfer zone and connectoids by default (unless we find this is not how ferries are used most of the time */
     var defaultMode = OsmWaterModeTags.FERRY;
     var modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmFerryStop.getId(), tags, OsmWaterModeTags.FERRY);
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmFerryStop, tags, OsmWaterModeTags.FERRY);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return false;
     }
@@ -598,7 +600,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     Collection<MacroscopicLink> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(boundingBox);
     spatiallyMatchedLinks.removeIf( l -> !l.isModeAllowedOnAnySegment(planitWaterMode));
     if(spatiallyMatchedLinks.isEmpty()){
-      LOGGER.warning(String.format("DISCARD: Dangling ferry stop %d, no mode compatible OSM ways within %.2fm found", osmFerryStop.getId(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters()));
+      LOGGER.warning(String.format("DISCARD: Dangling ferry stop %d, no mode compatible OSM ways within %.2fm found (tags: %s)",
+          osmFerryStop.getId(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters(), OsmModelUtil.getTagsAsMap(osmFerryStop)));
       return;
     }
     var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
@@ -675,9 +678,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     getZoningReaderData().getOsmData().removeUnprocessedStopPosition(osmNode.getId());
         
     /* modes for stop_position */
-    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags);
+    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags, true);
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, defaultOsmMode);
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode, tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       /* no eligible modes mapped to planit mode, ignore stop_position */
       return;
@@ -814,7 +817,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         Collection<MacroscopicLink> modeSpatiallyCompatibleLinks = findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
             transferZone, osmEntityId, osmAccessMode, searchBoundingBox);
         if(modeSpatiallyCompatibleLinks == null || modeSpatiallyCompatibleLinks.isEmpty()) {
-          logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s, mode %s (tag error or consider activating more road types)", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
+          logWarningIfNotNearBoundingBox(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s (mode: %s), tagging error or consider activating more road types)", getSettings().getStopToWaitingAreaSearchRadiusMeters(), transferZone.getExternalId(), osmAccessMode), transferZone.getGeometry());
           continue;
         }
         
@@ -954,7 +957,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* modes */
     String defaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags, OsmRailModeTags.TRAIN);
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmStation.getId(), tags, defaultMode);
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmStation, tags, defaultMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
     }
@@ -1056,7 +1059,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           
     /* supported modes */
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode, tags, null);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       return;
     }
@@ -1098,7 +1101,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
 
     /* not a proper stop_position, so we must infer its properties (eligible modes, transfer zone), eligible OSM modes may be null, but may be present */
-    var eligibleModes = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, null);
+    var eligibleModes = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode, tags, null);
     var eligibleOsmModes = eligibleModes!= null ? eligibleModes.first() : null;
     Collection<TransferZone> matchedTransferZones =
         getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, eligibleOsmModes, transferZoneGroup, suppressLogging);
@@ -1109,7 +1112,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* log warning unless it relates to stop_position without any activate modes and/or near bounding box */
       if(!suppressLogging && OsmModeUtils.hasMappedPlanitMode(
           getPtModeHelper().collectPublicTransportModesFromPtEntity(
-              osmNode.getId(), tags, OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags, true)))) {
+              osmNode, tags, OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags, true)))) {
         logWarningIfNotNearBoundingBox(
             String.format("DISCARD: Stop_position %d without proper tagging on OSM network could not be mapped to close-by transfer zone in stop_area (tags: %s)", osmNode.getId(), tags.toString()), OsmNodeUtils.createPoint(osmNode));
       }      
