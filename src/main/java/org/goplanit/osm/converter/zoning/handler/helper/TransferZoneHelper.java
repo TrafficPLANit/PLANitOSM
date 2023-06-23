@@ -19,7 +19,9 @@ import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
+import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
@@ -337,13 +339,18 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param tags to search for reference keys in
    * @param availableTransferZones to choose from
    * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode to be deemed accessible, if not user is informed
+   * @param onlySelectClosestMatch when true only select closest match (per tag reference), when false, collect all matches of al references
    * @param suppressLogging when true suppress logging, false otherwise
    * @return found transfer zones that have been parsed before, null if no match is found
    */
   private Collection<TransferZone> findClosestTransferZonesByTagReference(
-      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> availableTransferZones, Collection<String> referenceOsmModes, boolean suppressLogging) {
+      OsmNode osmNode, Map<String, String> tags,
+      Collection<TransferZone> availableTransferZones,
+      Collection<String> referenceOsmModes,
+      boolean onlySelectClosestMatch,
+      boolean suppressLogging) {
     
-    Map<String, TransferZone> foundTransferZones = null;
+    Map<String, Set<TransferZone>> foundTransferZones = null;
     /* ref value, can be a list of multiple values */
     List<String> refValues = OsmTagUtils.getValuesForSupportedRefKeys(tags);
     for(String osmNodeRefValue : refValues) {
@@ -371,22 +378,33 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
               continue;
             }
 
-            TransferZone prevTransferZone = foundTransferZones.put(osmNodeRefValue,transferZone);
-            if(prevTransferZone != null) {
+            var foundTransferZonesForRef = foundTransferZones.get(osmNodeRefValue);
+            if(foundTransferZonesForRef == null){
+              foundTransferZonesForRef = new TreeSet<>();
+              foundTransferZones.put(osmNodeRefValue,foundTransferZonesForRef);
+            }
+            foundTransferZonesForRef.add(transferZone);
+            if(foundTransferZonesForRef.size()>1) {
               multipleMatchesForSameRef = true;
-              /* choose closest of the two spatially */
-              TransferZone closestZone = (TransferZone) OsmNodeUtils.findZoneClosest(
-                  osmNode, Set.of(prevTransferZone, transferZone), suppressLogging, geoUtils);
-              foundTransferZones.put(osmNodeRefValue,closestZone);
+
+              if(onlySelectClosestMatch) {
+                /* choose closest of the two spatially */
+                TransferZone closestZone = (TransferZone) OsmNodeUtils.findZoneClosest(
+                    osmNode, foundTransferZonesForRef, suppressLogging, geoUtils);
+                foundTransferZonesForRef.removeIf( z -> !z.equals(closestZone));
+              }
+
             }
           }
         }
       }
-      if(!suppressLogging && multipleMatchesForSameRef == true ) {
-        LOGGER.fine(String.format("SALVAGED: non-unique reference (%s) on stop_position %d, selected spatially closest platform/pole %s", osmNodeRefValue, osmNode.getId(),foundTransferZones.get(osmNodeRefValue).getExternalId()));
+      if(!suppressLogging && multipleMatchesForSameRef && onlySelectClosestMatch) {
+        LOGGER.fine(String.format("Non-unique reference (%s) on stop_position %d, selected spatially closest platform/pole %s",
+            osmNodeRefValue, osmNode.getId(),foundTransferZones.get(osmNodeRefValue).stream().findFirst().get().getExternalId()));
       }
     }
-    return foundTransferZones!=null ? foundTransferZones.values() : null;
+    return foundTransferZones!=null ?
+        foundTransferZones.entrySet().stream().flatMap(e -> e.getValue().stream()).collect(Collectors.toCollection(TreeSet::new)) : null;
   }
 
   /**Attempt to find the transfer zones by the use of the passed in name where the transfer zone (representing an osm platform) must have the exact same name to match as well
@@ -445,15 +463,21 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param tags of the node
    * @param stopAreaTransferZones the transfer zones of the stop_area this stop_position belongs to
    * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
+   * @param onlySelectClosestMatch when true only select closest match, when false, collect all matches
    * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to use
    */
   private Collection<TransferZone> findAccessibleTransferZonesByReferenceOrName(
-      OsmNode osmNode, Map<String, String> tags, Collection<TransferZone> stopAreaTransferZones, Collection<String> referenceOsmModes, boolean suppressLogging, PlanitJtsCrsUtils geoUtils) {
+      OsmNode osmNode, Map<String, String> tags,
+      Collection<TransferZone> stopAreaTransferZones,
+      Collection<String> referenceOsmModes,
+      boolean onlySelectClosestMatch,
+      boolean suppressLogging,
+      PlanitJtsCrsUtils geoUtils) {
     
     /* first try explicit reference matching to platform, i.e. transfer zone */
     Collection<TransferZone> matchedTransferZones =
-        findClosestTransferZonesByTagReference(osmNode, tags, stopAreaTransferZones, referenceOsmModes, suppressLogging);
+        findClosestTransferZonesByTagReference(osmNode, tags, stopAreaTransferZones, referenceOsmModes, onlySelectClosestMatch, suppressLogging);
     if(matchedTransferZones != null && !matchedTransferZones.isEmpty()) {
       /* explicit references found, these we trust most, so use them immediately as is */
       return matchedTransferZones;
@@ -479,7 +503,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     
     /* if multiple name matched transfer zones remain, select closest as most likely one */
     if(matchedTransferZones!= null) {
-      if(matchedTransferZones.size()>1) {
+      if(matchedTransferZones.size()>1 && onlySelectClosestMatch) {
         TransferZone foundTransferZone = (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, matchedTransferZones, suppressLogging, geoUtils);
         matchedTransferZones = Collections.singleton(foundTransferZone);
       }
@@ -495,11 +519,12 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param osmNode representing a stop position
    * @param tags of the node
    * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
-   * @param suppressLogging when true suppress logging, false otherwise
+   * @param onlySelectClosestMatch when true only select closest match, when false, collect all matches
+   * @param suppressLogging when true suppress logging, false otherwise*
    * @return most likely transfer zone(s). Multiple matches only in case the node has multiple references to eligible transfer zones tagged
    */
   private Collection<TransferZone> findTransferZonesForStopPositionCompatibleSpatiallyModeVerticalLayer(
-      OsmNode osmNode, Map<String, String> tags, Collection<String> referenceOsmModes, boolean suppressLogging) {
+      OsmNode osmNode, Map<String, String> tags, Collection<String> referenceOsmModes, boolean onlySelectClosestMatch, boolean suppressLogging) {
     TransferZone foundZone = null;
         
     /* collect potential transfer zones based on spatial search*/
@@ -513,42 +538,48 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     }
     
     /* filter transfer zones that cannot be valid for additional stop_positions (if they have any already) */
-    Iterator<TransferZone> iterator = potentialTransferZones.iterator();
-    while(iterator.hasNext()) {
-      TransferZone transferZone = iterator.next();
-      if( zoningReaderData.getPlanitData().hasConnectoids(transferZone) && !supportsMultipleStopPositions(transferZone)) {
-        iterator.remove();
-      }
-    }
-    
-    /* find matches based on reference, name from given potential options... */
-    Collection<TransferZone> matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(
-        osmNode, tags, potentialTransferZones, referenceOsmModes, suppressLogging, geoUtils);
-    if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-      /* no explicit reference or name match is found, we collect the closest mode and vertical layer index compatible match */
-      boolean allowModelessTransferZoneMatches = false;
+    potentialTransferZones.removeIf(tz -> zoningReaderData.getPlanitData().hasConnectoids(tz) && !supportsMultipleStopPositions(tz));
+
+    /* no explicit reference or name match is found, we collect the closest mode and vertical layer index compatible match */
+    boolean allowModelessTransferZoneMatches = false;
+    Collection<TransferZone> matchedTransferZones = filterModeCompatibleTransferZones(
+        referenceOsmModes, potentialTransferZones, true, allowModelessTransferZoneMatches);
+    if(matchedTransferZones== null || matchedTransferZones.isEmpty()){
+      /* still no match, now consider transfer zones without any mode information due to lack of tagging, these are now considered as last resort, if present
+       * notify user to verify correctness */
+      allowModelessTransferZoneMatches = true;
       matchedTransferZones = filterModeCompatibleTransferZones(
           referenceOsmModes, potentialTransferZones, true, allowModelessTransferZoneMatches);
-      if(matchedTransferZones== null || matchedTransferZones.isEmpty()){
-        /* still no match, now consider transfer zones without any mode information due to lack of tagging, these are now considered as last resort, if present
-         * notify user to verify correctness */
-        allowModelessTransferZoneMatches = true;
-        matchedTransferZones = filterModeCompatibleTransferZones(
-            referenceOsmModes, potentialTransferZones, true, allowModelessTransferZoneMatches);
-      }
-      matchedTransferZones = filterVerticalLayerIndexCompatibleTransferZones(osmNode, tags, matchedTransferZones, suppressLogging);
+    }
 
+    boolean layerMismatch = false;
+    var layerMatchedTransferZones = filterVerticalLayerIndexCompatibleTransferZones(
+        osmNode, tags, matchedTransferZones, suppressLogging);
+    if(CollectionUtils.nullOrEmpty(layerMatchedTransferZones) && !CollectionUtils.nullOrEmpty(matchedTransferZones)){
+      /* when layer filtering causes all matches to disappear, it is likely a tagging error and we should not consider it */
+      layerMismatch = true;
+    }else{
+      matchedTransferZones = layerMatchedTransferZones;
+    }
+
+    if(onlySelectClosestMatch){
       foundZone =  (TransferZone) OsmNodeUtils.findZoneClosest(osmNode, matchedTransferZones, suppressLogging, geoUtils);
       if(foundZone != null) {
         matchedTransferZones = Collections.singleton(foundZone);
-
-        if(allowModelessTransferZoneMatches && !suppressLogging){
-          LOGGER.info(String.format("SALVAGED: Platform/pole (%s) matched to stop_position (%s) spatially, although platform has no known mode support, verify correctness", matchedTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(",")), osmNode.getId()));
-        }
       }
     }
-     
-        
+
+    if(matchedTransferZones!=null && !matchedTransferZones.isEmpty() && !suppressLogging){
+      if(allowModelessTransferZoneMatches) {
+        LOGGER.info(String.format("SALVAGED: Platform(s)/pole(s) (%s) spatially matched to stop_position (%s) despite platform's absence of explicit mode support, verify correctness",
+            matchedTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(",")), osmNode.getId()));
+      }
+      if(layerMismatch){
+        LOGGER.warning(String.format("SALVAGED: Layer mismatch between stop position %d (or its OSM way), and all potential waiting areas (%s), possible tagging error, ignoring layer information",
+            osmNode.getId(), matchedTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(","))));
+      }
+    }
+
     return matchedTransferZones;
   }
 
@@ -785,27 +816,43 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     /* REGULAR SITUATION */
     if(eligibleOsmModes != null && !eligibleOsmModes.isEmpty()){
 
-      
       /* REFERENCE/NAME */
+      boolean onlySelectClosestMatch = false;
       if(transferZoneGroup != null) {
         /* when transfer zone group available, first search among those zones as they are more likely to be matching */
         matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(
-            osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, suppressLogging, geoUtils);
+            osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, onlySelectClosestMatch, suppressLogging, geoUtils);
       }
-    
-      /* SPATIAL */
-      if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
-        /* no matches found yet, so either no transfer zone group present, or not known within based on reference/name match.
-         * Either way we must still try to find the most likely match. We do so geographically and again based on mode, reference, name compatibility */
-        matchedTransferZones =
-            findTransferZonesForStopPositionCompatibleSpatiallyModeVerticalLayer(osmNode, tags, eligibleOsmModes, suppressLogging);
-      }   
-      
-      /* PTV1 ON ROAD/RAIL */
-      if( (matchedTransferZones == null || matchedTransferZones.isEmpty()) && 
-          OsmPtVersionSchemeUtils.isPtv2StopPositionPtv1Stop(osmNode, tags) &&
-          hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
-  
+
+      /* separately identify context related matches based on mode, vertical layer, and spatial proximity */
+      var potentialTransferZonesIrrespectiveOfGroup =
+          findTransferZonesForStopPositionCompatibleSpatiallyModeVerticalLayer(osmNode, tags, eligibleOsmModes, onlySelectClosestMatch, suppressLogging);
+
+      /* in case we find MULTIPLE matches by name, we filter those based on spatial/mode/vertical compatibility, otherwise not , meaning
+       * name/ref takes precedence regardless of this context when only a single match is found*/
+      if(!CollectionUtils.nullOrEmpty(potentialTransferZonesIrrespectiveOfGroup) && !CollectionUtils.nullOrEmpty(matchedTransferZones) && matchedTransferZones.size()>1){
+        matchedTransferZones.removeIf( e -> !potentialTransferZonesIrrespectiveOfGroup.contains(e));
+
+        /* might result in no results when disjunct, salvage in this case by force select closest name based referenced waiting area and log warning */
+        if(matchedTransferZones.isEmpty()){
+          onlySelectClosestMatch = true;
+          matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(
+              osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, onlySelectClosestMatch, suppressLogging, geoUtils);
+          LOGGER.warning(String.format(
+              "Mismatch between spatially/mode/layer eligible waiting area(s) identified (%s) and name/ref compatible waiting area(s) for stop location %d, choosing closest name/ref based waiting area: %s, verify correctness",
+              potentialTransferZonesIrrespectiveOfGroup.stream().map( tz -> tz.getExternalId()).collect(Collectors.joining(",")),
+              osmNode.getId(),
+              matchedTransferZones.stream().findFirst().get().getExternalId()));
+        }else{
+          matchedTransferZones = potentialTransferZonesIrrespectiveOfGroup;
+        }
+      }else{
+        matchedTransferZones = potentialTransferZonesIrrespectiveOfGroup;
+      }
+
+      /* none found && PTV1 ON ROAD/RAIL */
+      if( (matchedTransferZones == null || matchedTransferZones.isEmpty()) &&
+          OsmPtVersionSchemeUtils.isPtv2StopPositionPtv1Stop(osmNode, tags) && hasNetworkLayersWithActiveOsmNode(osmNode.getId())) {
         /* no potential transfer zones AND Ptv1 tagged (bus_stop, station, halt, trams_stop), meaning that while we tried to match to
          * separate waiting area, none is present. Instead, we accept the stop_location is in fact also the waiting area and we create a
          * transfer zone in this location as well */
@@ -820,17 +867,19 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
           }
           matchedTransferZones = Collections.singleton(transferZone);
         }
-      }      
-      
+      }
     }
     /* NO MODES KNOWN */
     else if(transferZoneGroup.hasTransferZones()){
       /* eligible modes unknown, we can therefore we try to salvage by selecting the closest (vertical layer compatible) compatible transfer zone present in the transfer zone group (if any) and adopt those modes */
-      var verticalLayerCompatibleTransferZones =
+      matchedTransferZones =
           filterVerticalLayerIndexCompatibleTransferZones(osmNode, tags, transferZoneGroup.getTransferZones(), suppressLogging);
-      TransferZone foundZone =  (TransferZone) OsmNodeUtils.findZoneClosest(
-          osmNode, verticalLayerCompatibleTransferZones, getSettings().getStopToWaitingAreaSearchRadiusMeters(), suppressLogging, geoUtils);
-      if(foundZone!=null) {    
+    }
+
+    if(!CollectionUtils.nullOrEmpty(matchedTransferZones) && matchedTransferZones.size()>1) {
+      TransferZone foundZone = (TransferZone) OsmNodeUtils.findZoneClosest(
+          osmNode, matchedTransferZones, getSettings().getStopToWaitingAreaSearchRadiusMeters(), suppressLogging, geoUtils);
+      if (foundZone != null) {
         matchedTransferZones = Collections.singleton(foundZone);
       }
     }

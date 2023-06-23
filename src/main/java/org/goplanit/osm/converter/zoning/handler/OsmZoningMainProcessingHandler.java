@@ -1276,7 +1276,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       firstOsmWay = false;
     }
 
-    if(osmWay.getId() == 208506996L)
+    if(osmWay.getId() == 459973944L)
     {
       int bla = 4;
     }

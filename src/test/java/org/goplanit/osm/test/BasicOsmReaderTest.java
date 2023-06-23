@@ -83,7 +83,9 @@ public class BasicOsmReaderTest {
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
       osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
-            
+
+      OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
+
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
 
@@ -110,6 +112,9 @@ public class BasicOsmReaderTest {
       OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
       configureForRoadAndPt(osmReader);
 
+      OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getNetworkSettings());
+      OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getPublicTransportSettings());
+
       Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = resultPair.first();
       Zoning zoning = resultPair.second();
@@ -125,15 +130,15 @@ public class BasicOsmReaderTest {
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
-      assertEquals(1235, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2439, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(1031, network.getTransportLayers().getFirst().getNodes().size());
+      assertEquals(1234, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2437, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(1030, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
       assertEquals(104, zoning.getTransferZones().size() );
       assertEquals(8, zoning.getTransferZoneGroups().size());
       assertEquals(0, zoning.getOdConnectoids().size());
-      assertEquals(133, zoning.getTransferConnectoids().size());
+      assertEquals(131, zoning.getTransferConnectoids().size());
 
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
       assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
@@ -155,6 +160,7 @@ public class BasicOsmReaderTest {
   public void pbfReadertest() {
     try {
       OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_PBF, CountryNames.AUSTRALIA);
+      OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {

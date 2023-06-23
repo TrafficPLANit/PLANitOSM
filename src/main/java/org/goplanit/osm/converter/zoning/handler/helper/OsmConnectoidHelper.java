@@ -763,7 +763,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       MacroscopicNetworkLayer networkLayer,
       boolean suppressLogging) {
 
-    if(osmWaitingAreaId == 292444942L){
+    if(osmWaitingAreaId == 459973944L){
       int bla = 4;
     }
 
