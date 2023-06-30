@@ -153,7 +153,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           linkToSourceId.apply(currAccessLink),
           accessMode,
           getZoningReaderData().getCountryName(),
-          mustAvoidCrossingTraffic, null, null, getGeoUtils());
+          mustAvoidCrossingTraffic,
+          null,
+          null,
+          getGeoUtils());
       if (currAccessLinkSegments != null && !currAccessLinkSegments.isEmpty()) {
         accessLinkSegments.addAll(currAccessLinkSegments);
       }
