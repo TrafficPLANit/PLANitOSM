@@ -428,7 +428,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     
     /* parser for identifying pt PLANit modes from OSM entities */
     this.publicTransportModeHelper =
-        new OsmPublicTransportModeConversion(getNetworkToZoningData().getNetworkSettings(), getReferenceNetwork().getModes());
+        new OsmPublicTransportModeConversion(
+            getNetworkToZoningData().getNetworkSettings(), getSettings(), getReferenceNetwork().getModes());
     
     /* parser for creating PLANit connectoids */
     this.connectoidHelper = new OsmConnectoidHelper(

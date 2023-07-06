@@ -8,13 +8,11 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
-import org.goplanit.osm.converter.zoning.handler.helper.OsmPublicTransportModeConversion;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -32,6 +30,8 @@ import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+
+import static org.goplanit.osm.util.OsmModeUtils.identifyPtv1DefaultMode;
 
 /**
  * Handler that handles, i.e., converts, nodes, ways, and relations to the relevant transfer zones. This handler conducts the main processing pass
@@ -479,7 +479,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
      * which requires mapping it to a nearby road/rail later on, we first ensure such a road is nearby. If not, then it is highly likely the stop_position is not to
      * be parsed due to a coarser network and roads being excluded (in which case we simply discard the entry). */
     double searchRadius = getSettings().getStopToWaitingAreaSearchRadiusMeters();
-    if(OsmPtv1Tags.isHalt(tags) || OsmPtv1Tags.isStation(tags)) {
+    if(OsmPtv1Tags.isHalt(tags) || OsmPtv1Tags.isRailwayStation(tags, true)) {
       searchRadius = getSettings().getStationToParallelTracksSearchRadiusMeters();
     }
 
@@ -499,7 +499,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 bus_stop (%d), yet does not reside on parsed road infrastructure, attempt to parse as pole instead", osmNode.getId()));
     }else if(OsmPtv1Tags.isHalt(tags)) {
       LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 halt (%d), yet it does not reside on parsed road infrastructure, attempt to parse as small station instead", osmNode.getId()));
-    }else if(OsmPtv1Tags.isStation(tags)) {
+    }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
       LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));
     }else {
       LOGGER.warning(String.format("DISCARD: Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, while not residing on parsed road infrastructure, possible tagging error and/or dangling node", osmNode.getId()));
@@ -521,11 +521,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     boolean discarded = false;
 
     /* ensure the position is required given the activated modes */
-    String ptv1DefaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags, true /* allowed to not have this info as PTv2 entity */);
+    String ptv1DefaultMode = identifyPtv1DefaultMode(osmNode.getId(), tags, true /* allowed to not have this info as PTv2 entity */);
 
     /* PTv1 tagging present, so mode information available, use this to verify against activated mode(s), mark for further processing if available, otherwise ignore */
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
-        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode.getId(), tags, ptv1DefaultMode);
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmNode, tags, ptv1DefaultMode);
 
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)){
       discarded = true;
@@ -561,7 +561,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     getProfiler().incrementOsmPtv2TagCounter(OsmPtv1Tags.STATION);
   }
   
-  /** Extract a ptv2 platform for a given osm node. When this node is on the road infrastructure we create a transfer zone and connectoids (discouraged tagging behaviour), but in most
+  /** Extract a ptv2 platform for a given OSM node. When this node is on the road infrastructure we create a transfer zone and connectoids (discouraged tagging behaviour), but in most
    * cases, a platform is separated from the road infrastructure, in which case we create a transfer zone without connectoids and stop_locations (connectoids) will be attached during the
    * parsing of stop_locations, stop_areas, or spatially in post-processing
    * 
@@ -571,7 +571,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   private void processPtv2Platform(OsmNode osmNode, Map<String, String> tags){
     getProfiler().incrementOsmPtv2TagCounter(OsmPtv2Tags.PLATFORM);
     
-    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags);
     boolean platformOnNetwork = hasNetworkLayersWithActiveOsmNode(osmNode.getId());
     boolean notYetButToBeAttachedToNetwork = OsmPtv1Tags.isFerryTerminal(tags) && getSettings().isConnectDanglingFerryStopToNearbyFerryRoute();
     if(platformOnNetwork || notYetButToBeAttachedToNetwork) {
@@ -587,7 +586,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* regular platform separated from vehicle stop position; create transfer zone but no connectoids, 
        * these will be constructed during or after we have parsed relations, i.e. stop_areas */
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-          osmNode, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
+          osmNode,
+          tags,
+          TransferZoneType.PLATFORM,
+          identifyPtv1DefaultMode(osmNode.getId(), tags, true),
+          getGeoUtils());
     }   
   }   
   
@@ -602,7 +605,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     
     /* node is not part of infrastructure, we must identify closest railway infrastructure (in reasonable range) to create connectoids, or
      * Ptv2 stop position reference is used, so postpone creating connectoids for now, and deal with it later when stop_positions have all been parsed */
-    String defaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmEntity.getId(), tags);
+    String defaultMode = identifyPtv1DefaultMode(osmEntity.getId(), tags);
     if(!defaultMode.equals(OsmRailModeTags.TRAIN)) {
       LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 railway platform %s,",defaultMode));
     }
@@ -619,7 +622,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.HALT);
         
     String expectedDefaultMode = OsmRailModeTags.TRAIN;    
-    String defaultMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags);
+    String defaultMode = identifyPtv1DefaultMode(osmNode.getId(), tags);
     if(!defaultMode.equals(expectedDefaultMode)) {
       LOGGER.warning(String.format("Unexpected osm mode identified for Ptv1 halt %s",defaultMode));
     }
@@ -635,12 +638,13 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   private void extractTransferInfrastructurePtv1HighwayPlatform(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils){
     
     /* create transfer zone when at least one mode is supported */
-    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmEntity.getId(), tags);
+    String defaultOsmMode = identifyPtv1DefaultMode(osmEntity.getId(), tags);
     if(!defaultOsmMode.equals(OsmRoadModeTags.BUS)) {
       LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 highway platform %s,",defaultOsmMode));
     }    
   
-    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity, tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first(), geoUtils);
@@ -656,12 +660,13 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   private void extractTransferInfrastructurePtv1HighwayBusStop(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils){
     
     /* create transfer zone when at least one mode is supported */
-    String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmEntity.getId(), tags);
+    String defaultOsmMode = identifyPtv1DefaultMode(osmEntity.getId(), tags);
     if(!defaultOsmMode.equals(OsmRoadModeTags.BUS)) {
       LOGGER.warning(String.format("Unexpected OSM mode identified for Ptv1 bus_stop %s,",defaultOsmMode));
     }      
     
-    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity.getId(), tags, defaultOsmMode);
+    Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
+        getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity, tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {
       
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.BUS_STOP);      
@@ -868,7 +873,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
               
         /* create transfer zone but no connectoids, these will be constructed during, or after, we have parsed relations, i.e., stop_areas */
         getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);
-        var defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmWay.getId(), tags, true);
+        var defaultOsmMode = identifyPtv1DefaultMode(osmWay.getId(), tags, true);
         getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
             osmWay, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
       }      
@@ -1096,7 +1101,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
             
       /* create transfer zone, use tags of relation that contain the PT information */
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-          unprocessedWay, tags, TransferZoneType.PLATFORM, OsmModeUtils.identifyPtv1DefaultMode(unprocessedWay.getId(), tags), getGeoUtils());
+          unprocessedWay, tags, TransferZoneType.PLATFORM, identifyPtv1DefaultMode(unprocessedWay.getId(), tags), getGeoUtils());
     }
   }
 
@@ -1271,7 +1276,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       firstOsmWay = false;
     }
 
-    if(osmWay.getId() == 4868934L)
+    if(osmWay.getId() == 459973944L)
     {
       int bla = 4;
     }

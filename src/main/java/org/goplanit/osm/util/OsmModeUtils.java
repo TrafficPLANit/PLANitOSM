@@ -366,7 +366,9 @@ public class OsmModeUtils {
         /* tram_stop -> tram */
         if(OsmPtv1Tags.isTramStop(tags)) {
           foundMode = OsmRailModeTags.TRAM;
-        }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmRailwayTags.RAILWAY, 
+        }else if(OsmPtv1Tags.isSubwayStation(tags, true)) {
+          foundMode = OsmRailModeTags.SUBWAY;
+        }else if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmRailwayTags.RAILWAY,
             OsmPtv1Tags.STATION, OsmPtv1Tags.HALT, OsmPtv1Tags.PLATFORM, OsmPtv1Tags.PLATFORM_EDGE, OsmPtv1Tags.STOP)) {
           foundMode = OsmRailModeTags.TRAIN;
         }else if(!suppressWarning){

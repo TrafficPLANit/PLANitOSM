@@ -7,16 +7,12 @@ import org.goplanit.osm.tags.OsmPtv1Tags;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
-import org.goplanit.utils.graph.directed.EdgeSegment;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
 import org.goplanit.utils.zoning.Zone;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.LineSegment;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
@@ -53,19 +49,20 @@ public class PlanitTransferZoneUtils {
    * @param osmEntity to find closest zone for
    * @param zones to check against
    * @param osmNodes to extract geo information from if needed
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils used to compute distances
    * @return closest zone found
    */
   private static Zone findZoneClosest(
-      OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils){
+      OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
-      return OsmNodeUtils.findZoneClosest((OsmNode)osmEntity, zones, geoUtils);
+      return OsmNodeUtils.findZoneClosest((OsmNode)osmEntity, zones, suppressLogging, geoUtils);
     case Way:
-      return OsmWayUtils.findZoneClosest((OsmWay)osmEntity, zones, osmNodes, geoUtils);      
+      return OsmWayUtils.findZoneClosest((OsmWay)osmEntity, zones, osmNodes, suppressLogging, geoUtils);
     default:
-      LOGGER.warning(String.format("unsupported osm entity type when finding closest zone to %d",osmEntity.getId()));
+      if (!suppressLogging) LOGGER.warning(String.format("unsupported osm entity type when finding closest zone to %d",osmEntity.getId()));
       break;
     }
     return null;
@@ -94,22 +91,24 @@ public class PlanitTransferZoneUtils {
    * @param osmEntity to find closest zone for
    * @param transferZoneGroups to check against
    * @param osmNodes to extract geo information from if needed
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils used to compute distances
    * @return closest zone found
    */
   public static TransferZone findTransferZoneClosestByTransferGroup(
       OsmEntity osmEntity, 
       Collection<? extends TransferZoneGroup> transferZoneGroups, 
-      Map<Long,OsmNode> osmNodes, 
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
       PlanitJtsCrsUtils geoUtils){
     
     Set<TransferZone> closestPerGroup = new HashSet<>();
     for(TransferZoneGroup group : transferZoneGroups) {
-      TransferZone closestOfGroup = (TransferZone) findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, geoUtils);
+      TransferZone closestOfGroup = (TransferZone) findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, suppressLogging, geoUtils);
       closestPerGroup.add(closestOfGroup);
     }
     /* now find closest across all groups */
-    return (TransferZone) findZoneClosest(osmEntity, closestPerGroup, osmNodes, geoUtils);
+    return (TransferZone) findZoneClosest(osmEntity, closestPerGroup, osmNodes, suppressLogging, geoUtils);
   }   
 
   /** Verify if the geometry of the transfer zone equates to the provided location
@@ -220,7 +219,7 @@ public class PlanitTransferZoneUtils {
       return TransferZoneType.PLATFORM;
     }else if(OsmPtv1Tags.isHalt(tags)) {
       return TransferZoneType.SMALL_STATION;
-    }else if(OsmPtv1Tags.isStation(tags)) {
+    }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
       return TransferZoneType.STATION;
     }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
       return TransferZoneType.PLATFORM;

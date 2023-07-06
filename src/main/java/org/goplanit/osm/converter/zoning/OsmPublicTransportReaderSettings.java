@@ -2,19 +2,15 @@ package org.goplanit.osm.converter.zoning;
 
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.OsmReaderSettings;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
+import org.goplanit.utils.misc.Triple;
 import org.goplanit.utils.misc.UrlUtils;
 
 /**
@@ -71,6 +67,16 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * Further one cannot override a waiting area here that is also part of a stop_location to waiting area override. 
    */
   private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<>();
+
+  /**
+   * track overwritten mode access values for specific OSM waiting areas. Can be used in case the OSM file is incorrectly tagged which causes problems
+   * in the memory model. Here one can be manually overwrite the allowable modes for this particular waiting area.
+   */
+  protected final Map<EntityType, Map<Long, SortedSet<String>>> overwriteWaitingAreaModeAccess = new HashMap<>(
+      Map.ofEntries(
+          Map.entry(EntityType.Node, new HashMap<>()),
+          Map.entry(EntityType.Way, new HashMap<>())
+  ));
 
   /** all registered osmRelation ids will not trigger any logging */
   private final Set<Long> suppressStopAreaLogging = new HashSet<>();
@@ -164,7 +170,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   @Override
   public void reset() {
-    //TODO
+    //todo
   }
 
   /**
@@ -343,16 +349,23 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType entity type of waiting area to map to
    * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
    */
-  public void overwriteStopLocationWaitingArea(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
+  public void overwriteWaitingAreaOfStopLocation(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
     overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));    
-  } 
-    
-  /** Verify if stop location's osm id is marked for overwritten platform mapping
+  }
+
+  /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)}
+   * @param overwriteTriples triples to provide (stopLocationOsmId, waitingAreaEntityType, waitingAreasOsmId)
+   */
+  public void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
+    Arrays.stream(overwriteTriples).forEach(t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
+  }
+
+  /** Verify if stop location's OSM id is marked for overwritten platform mapping
    * 
    * @param stopLocationOsmNodeId to verify (int or long)
    * @return true when present, false otherwise
    */
-  public boolean isOverwriteStopLocationWaitingArea(final Number stopLocationOsmNodeId) {
+  public boolean isOverwriteWaitingAreaOfStopPosition(final Number stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.containsKey(stopLocationOsmNodeId);    
   } 
   
@@ -361,7 +374,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param stopLocationOsmNodeId to verify (int or long)
    * @return pair reflecting the entity type and waiting area osm id, null if not present
    */
-  public Pair<EntityType,Long> getOverwrittenStopLocationWaitingArea(final Number stopLocationOsmNodeId) {
+  public Pair<EntityType,Long> getOverwrittenWaitingAreaOfStopPosition(final Number stopLocationOsmNodeId) {
     return overwritePtStopLocation2WaitingAreaMapping.get(stopLocationOsmNodeId);    
   }  
   
@@ -371,7 +384,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmWaitingAreaId to use (int or long)
    * @return true when waiting area is defined for a stop location as designated waiting area, false otherwise
    */
-  public boolean isWaitingAreaStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
+  public boolean isWaitingAreaOfStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
     for( Entry<Long, Pair<EntityType, Long>> entry : overwritePtStopLocation2WaitingAreaMapping.entrySet()) {
       if(entry.getValue().first().equals(waitingAreaType) && entry.getValue().second().equals(osmWaitingAreaId)) {
         return true;
@@ -381,9 +394,10 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }  
   
   /**
-   * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by osm id).
-   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated osm way. Only use in case the platform has no stop_location
-   * and no stop_location maps to this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
+   * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by OSM id).
+   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated OSM way.
+   * Only use in case the platform has no stop_location and no stop_location maps to this waiting area.
+   * One cannot use this method and also use this waiting area in overriding stop_location mappings.
    * 
    * @param waitingAreaOsmId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
@@ -494,4 +508,50 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void setFerryStopToFerryRouteSearchRadiusMeters(double searchRadiusFerryStopToFerryRouteMeters) {
     this.searchRadiusFerryStopToFerryRouteMeters = searchRadiusFerryStopToFerryRouteMeters;
   }
+
+  /**
+   * Overwrite the mode access for a given waiting area
+   *
+   * @param osmId to overwrite for
+   * @param osmEntityType to use
+   * @param osmModes to set as eligible
+   */
+  public void overwriteWaitingAreaModeAccess(long osmId, EntityType osmEntityType, String... osmModes){
+    var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
+    if(overwritesByType == null){
+      LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes access for waiting areas", osmEntityType.toString()));
+    }
+    overwritesByType.put(osmId, new TreeSet(Arrays.asList(osmModes)));
+  }
+
+  /**
+   * Verify if the mode access for a given waiting area is overwritten
+   *
+   * @param osmId to verify
+   * @param osmEntityType to use
+   * @return true when present false otherwise
+   */
+  public boolean isOverwriteWaitingAreaModeAccess(long osmId, EntityType osmEntityType){
+    var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
+    if(overwritesByType == null){
+      return false;
+    }
+    return overwritesByType.containsKey(osmId);
+  }
+
+  /**
+   * Get the overwritten OSM modes for a given waiting area (if defined)
+   *
+   * @param osmId to collect for
+   * @param osmEntityType of the OSM id
+   * @return overwritten OSM modes to apply, null if not present
+   */
+  public SortedSet<String> getOverwrittemWaitingAreaModeAccess(long osmId, EntityType osmEntityType){
+    var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
+    if(overwritesByType == null){
+      return null;
+    }
+    return overwritesByType.get(osmId);
+  }
+
 }

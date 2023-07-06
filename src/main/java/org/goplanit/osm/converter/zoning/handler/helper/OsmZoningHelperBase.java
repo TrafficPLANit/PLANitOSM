@@ -84,12 +84,6 @@ class OsmZoningHelperBase {
     if(planitLinks!=null && !planitLinks.isEmpty()) {
       final Integer verticalLayerIndex = OsmNetworkHandlerHelper.getMostFrequentVerticalLayerIndex(planitLinks);
       final boolean consistent = planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex);
-
-//      if (!planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex)) {
-//        LOGGER.warning(String.format(
-//            "OSM stop position in location %s restricted to most likely vertical layer plane (layer=%d) despite potential PLANit Link(s) [%s] not all present on this layer, verify layer matching links are suitable",
-//            stopPositionLocation, verticalLayerIndex, planitLinks.stream().map(l -> l.getIdsAsString() + "layer: "+ OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l)).collect(Collectors.joining(","))));
-//      }
       return Pair.of(verticalLayerIndex, consistent);
     }
 

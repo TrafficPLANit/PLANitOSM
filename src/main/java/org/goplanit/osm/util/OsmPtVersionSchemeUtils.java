@@ -79,7 +79,7 @@ public class OsmPtVersionSchemeUtils {
     }else if(OsmPtv1Tags.isHalt(tags)) {
       LOGGER.fine(String.format("Identified Ptv1 halt (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
-    }else if(OsmPtv1Tags.isStation(tags)) {
+    }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
       LOGGER.fine(String.format("Identified Ptv1 station (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isFerryTerminal(tags)){

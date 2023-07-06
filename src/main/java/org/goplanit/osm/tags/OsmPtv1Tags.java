@@ -1,5 +1,7 @@
 package org.goplanit.osm.tags;
 
+import org.goplanit.osm.util.OsmTagUtils;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -28,12 +30,12 @@ public class OsmPtv1Tags {
   /**
    * all highway key related value tags that pertain to public transport and may reflect an area
    */  
-  private static final Set<String> AREA_BASED_PT_RAILWAY_VALUE_TAGS = new HashSet<String>();
+  private static final Set<String> AREA_BASED_PT_RAILWAY_VALUE_TAGS = new HashSet<>();
   
   /**
    * all railway key related value tags that pertain to public transport
    */
-  private static final Set<String> PT_RAILWAY_VALUE_TAGS = new HashSet<String>();  
+  private static final Set<String> PT_RAILWAY_VALUE_TAGS = new HashSet<>();
   
   /**
    * populate the pt highway value tags
@@ -44,14 +46,23 @@ public class OsmPtv1Tags {
   }  
   
   /**
-   * populate the pt railway value tags
+   * populate the pt railway value tags (for non rail track based) infrastructure
+   *
+   * <ul>
+   * <li>halt</li>
+   * <li>stop</li>
+   * <li>platform_edge</li>
+   * <li>construction</li>
+   * </ul>
+   * and all {@link #AREA_BASED_PT_RAILWAY_VALUE_TAGS}
    */
   private static void populateOsmRailwayPublicTransportValueTags() {
     PT_RAILWAY_VALUE_TAGS.add(HALT);
     PT_RAILWAY_VALUE_TAGS.add(STOP);
     PT_RAILWAY_VALUE_TAGS.add(PLATFORM_EDGE);
-    PT_RAILWAY_VALUE_TAGS.add(SUBWAY_ENTRANCE);  
+    PT_RAILWAY_VALUE_TAGS.add(SUBWAY_ENTRANCE);
     PT_RAILWAY_VALUE_TAGS.addAll(AREA_BASED_PT_RAILWAY_VALUE_TAGS);
+    PT_RAILWAY_VALUE_TAGS.add(OsmRailwayTags.CONSTRUCTION); /* can be any of the above after construction, so should be included */
   }    
 
   
@@ -190,12 +201,16 @@ public class OsmPtv1Tags {
     return OsmRailwayTags.hasRailwayKeyTag(tags) && tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.HALT);
   }
 
-  /** check if this is a station given the provided tags
+  /** Check if this is a railway station, i.e., railway=station given the provided tags
+   *
    * @param tags to check
+   * @param allowUnderConstruction, when true a station under construction is also allowed
    * @return true if station, false otherwise
    */      
-  public static boolean isStation(Map<String, String> tags) {
-    return OsmRailwayTags.hasRailwayKeyTag(tags) && tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.STATION);
+  public static boolean isRailwayStation(Map<String, String> tags, boolean allowUnderConstruction) {
+    return OsmRailwayTags.hasRailwayKeyTag(tags) && (
+        tags.get(OsmRailwayTags.RAILWAY).equals(OsmPtv1Tags.STATION) ||
+        (allowUnderConstruction && OsmTags.isUnderConstruction(tags, OsmRailwayTags.RAILWAY,OsmPtv1Tags.STATION)));
   }
 
   /** check if this is a ferry terminal given the provided tags
@@ -204,5 +219,18 @@ public class OsmPtv1Tags {
    */
   public static boolean isFerryTerminal(Map<String, String> tags) {
     return OsmTags.isAmenity(tags) && tags.get(OsmTags.AMENITY).equals(OsmTags.FERRY_TERMINAL);
+  }
+
+  /** Check if this is a subway station given the provided tags (railway=station || (railway=construction && construction=station))
+   *
+   * @param tags to check
+   * @param allowUnderConstruction, when true a station under construction is also allowed
+   * @return true if subway station, false otherwise
+   */
+  public static boolean isSubwayStation(Map<String, String> tags, boolean allowUnderConstruction) {
+    if(!isRailwayStation(tags, allowUnderConstruction)){
+      return false;
+    }
+    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmPtv1Tags.STATION, OsmRailwayTags.SUBWAY);
   }
 }
