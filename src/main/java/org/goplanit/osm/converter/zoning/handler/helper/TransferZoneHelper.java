@@ -871,17 +871,16 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     }
     /* NO MODES KNOWN */
     else if(transferZoneGroup.hasTransferZones()){
-      /* eligible modes unknown, we can therefore we try to salvage by selecting the closest (vertical layer compatible) compatible transfer zone present in the transfer zone group (if any) and adopt those modes */
+      /* eligible modes unknown, we can therefore try to salvage by selecting the closest (vertical layer compatible) compatible transfer zone present in the transfer zone group (if any) and adopt those modes */
       matchedTransferZones =
           filterVerticalLayerIndexCompatibleTransferZones(osmNode, tags, transferZoneGroup.getTransferZones(), suppressLogging);
     }
 
+    /* filter based on max distance and then select closest if any remain */
     if(!CollectionUtils.nullOrEmpty(matchedTransferZones) && matchedTransferZones.size()>1) {
       TransferZone foundZone = (TransferZone) OsmNodeUtils.findZoneClosest(
           osmNode, matchedTransferZones, getSettings().getStopToWaitingAreaSearchRadiusMeters(), suppressLogging, geoUtils);
-      if (foundZone != null) {
-        matchedTransferZones = Collections.singleton(foundZone);
-      }
+      matchedTransferZones = foundZone != null ? Collections.singleton(foundZone) : null;
     }
     
     return matchedTransferZones;

@@ -107,6 +107,9 @@ public class OsmPtSettingsTestCaseUtils {
     /* Railway stations under construction */
     settings.excludeOsmWaysById(485842787L);
 
+    /* tram platform that has internal node used as pole for stop location, to avoid unused duplicate remove those without ref to stop location */
+    settings.excludeOsmWaysById(658631129L, 777609495L);
+
     /* ferry terminal that is not a location of boarding/alighting - tagging error - suppress warning by excluding */
     settings.excludeOsmWaysById(592081363L, 991682083L);
 
