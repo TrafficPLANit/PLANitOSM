@@ -1121,7 +1121,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       }      
       return;
     }else if(!suppressLogging && matchedTransferZones.size()>1){
-      LOGGER.severe(String.format("Identified more than one spatially closest transfer zone for stop_position %d that was not tagged as such in stop_area %s, this should not happen",osmNode.getId(), transferZoneGroup.getExternalId()));
+      LOGGER.severe(String.format("" +
+          "Identified multiple Spatially closest transfer zones (%s) for stop_position %d that was not tagged as such in stop_area %s, this should not happen",
+          matchedTransferZones.stream().map(tz -> tz.getIdsAsString()).collect(Collectors.joining(",")), osmNode.getId(), transferZoneGroup.getExternalId()));
     }
     
     TransferZone foundZone = matchedTransferZones.iterator().next();  
