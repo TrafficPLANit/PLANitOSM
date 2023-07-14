@@ -42,6 +42,7 @@ public class OsmPublicTransportModeConversion extends OsmModeConversionBase {
    * provided explicitly by the user which will then be added to the OSM mode
    * 
    * @param osmPtEntityId to use
+   * @param osmEntityType of the id at hand
    * @param tags of the OSM entity
    * @param defaultMode to use
    * @return pair containing ordered eligible OSM modes identified and their mapped PLANit counterparts

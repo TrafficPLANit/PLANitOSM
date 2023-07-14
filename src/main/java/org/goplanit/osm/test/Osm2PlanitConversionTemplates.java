@@ -122,6 +122,7 @@ public class Osm2PlanitConversionTemplates {
    * Template for parsing intermodal OSM network/infrastructure without any services based on provided settings
    *
    * @param settings to use
+   * @param writerSettings to use
    * @throws PlanItException thrown if error
    */
   public static void osm2PlanitIntermodalNoServices(

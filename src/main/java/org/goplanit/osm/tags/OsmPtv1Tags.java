@@ -221,7 +221,7 @@ public class OsmPtv1Tags {
     return OsmTags.isAmenity(tags) && tags.get(OsmTags.AMENITY).equals(OsmTags.FERRY_TERMINAL);
   }
 
-  /** Check if this is a subway station given the provided tags (railway=station || (railway=construction && construction=station))
+  /** Check if this is a subway station given the provided tags (railway=station or (railway=construction and construction=station))
    *
    * @param tags to check
    * @param allowUnderConstruction, when true a station under construction is also allowed
