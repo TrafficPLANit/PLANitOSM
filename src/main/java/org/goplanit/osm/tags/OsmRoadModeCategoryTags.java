@@ -169,9 +169,11 @@ public class OsmRoadModeCategoryTags {
    */
   public static Set<String> getRoadModeCategoriesByMode(String osmMode) {    
     if(!OsmRoadModeTags.isRoadModeTag(osmMode)) {
-      /* when rail mode, there are no categories, but if not, then the mode is invalid altogether */
-      if(!OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmMode))) {
-        LOGGER.warning(String.format("mode %s is not a recognised OSM mode when obtaining its parent category, ignored", osmMode));
+
+      /* when rail/water mode, there are no categories, but if not, then the mode is invalid altogether */
+      if(!(OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmMode)) ||
+          (OsmWaterModeTags.isWaterModeTag(osmMode)))) {
+        LOGGER.warning(String.format("Mode %s is not a recognised OSM mode when obtaining its parent category, ignored", osmMode));
       }
       return null;
     } 

@@ -1,9 +1,6 @@
 package org.goplanit.osm.tags;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Most OSM road based mode tags. Not included: water modes or very specialised modes. Based on list found on
@@ -186,8 +183,8 @@ public class OsmRoadModeTags {
    * @param eligibleOsmModes to use
    * @return intersection with modes in this class
    */
-  public static Collection<String> getModesFrom(final Collection<String> eligibleOsmModes) {
-    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+  public static TreeSet<String> getModesFrom(final Collection<String> eligibleOsmModes) {
+    TreeSet<String> intersectionModes = new TreeSet<>(eligibleOsmModes);
     intersectionModes.retainAll(MODE_TAGS);
     return intersectionModes;
   }
@@ -197,8 +194,8 @@ public class OsmRoadModeTags {
    * @param eligibleOsmModes to extract from
    * @return found public transport based modes
    */
-  public static Collection<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
-    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+  public static TreeSet<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+    TreeSet<String> intersectionModes = new TreeSet<>(eligibleOsmModes);
     intersectionModes.retainAll(PT_MODE_TAGS);
     return intersectionModes;
   }  

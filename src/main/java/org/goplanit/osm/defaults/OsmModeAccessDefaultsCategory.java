@@ -1,20 +1,12 @@
 package org.goplanit.osm.defaults;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmRailModeTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmRoadModeCategoryTags;
-import org.goplanit.osm.tags.OsmRoadModeTags;
+import org.goplanit.osm.tags.*;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.misc.Pair;
 
 /**
  * Class representing the default mode access restrictions/allowance for modes for a given
@@ -26,315 +18,336 @@ import org.goplanit.utils.locale.CountryNames;
  * @author markr
  *
  */
-public class OsmModeAccessDefaultsCategory implements Cloneable {
+public class OsmModeAccessDefaultsCategory {
   
   /**
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmModeAccessDefaultsCategory.class.getCanonicalName());
   
-  /** store the disallowed modes by highway type (most important)*/
-  private final Map<String, Set<String>> disallowedModesByType;
+  /** store the disallowed modes by category (highway, railway), then by type (most important)*/
+  private final Map<String, Map<String, Set<String>>> disallowedModesByKeyAndType;
   
-  /** store the allowed modes by highway type  (after disallowed modes)*/
-  private final Map<String, Set<String>> allowedModesByType;  
+  /** store the allowed modes by category (highway, railway), then by type  (after disallowed modes)*/
+  private final Map<String, Map<String, Set<String>>> allowedModesByKeyAndType;
   
-  /** store the allowed mode categories by highway type (least important, after disallowed and allowed modes) */
-  private final Map<String, Set<String>> allowedModeCategoriesByType;
+  /** store the allowed mode categories by category (highway, railway), then by type (least important, after disallowed and allowed modes) */
+  private final Map<String, Map<String, Set<String>>> allowedModeCategoriesByKeyAndType;
     
 
   /** country for which these defaults hold */
-  private String countryName;  
-  
-  
-  /**
-   * same as {@code addAlloweyModes} only we do not log the changes as these are default settings.
-   * 
-   * @paramtypee to use
-   * @param logChanges when true changes are logged, otherwise not
-   * @param osmModes to add
-   */
-  void addDefaultAllowedModes(String type, String... osmModes) {
-   addAllowedModes(type, false /* do not log */, Arrays.asList(osmModes));
+  private String countryName;
+
+  private boolean isValidOsmModes(List<String> osmModes) {
+    for(String osmModeValueTag : osmModes) {
+      if(!(OsmRoadModeTags.isRoadModeTag(osmModeValueTag) ||
+          OsmRailModeTags.isRailModeTag(osmModeValueTag) ||
+          OsmWaterModeTags.isWaterModeTag(osmModeValueTag))){
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean isValidOsmKeyValueCombination(Pair<String,String> keyValue) {
+    return isValidOsmKeyValueCombination(keyValue.first(), keyValue.second());
+  }
+
+  private boolean isValidOsmKeyValueCombination(String key, String type) {
+    if(OsmHighwayTags.isHighwayKeyTag(key) && OsmHighwayTags.isRoadBasedHighwayValueTag(type)) {
+      return true;
+    }else if(OsmRailwayTags.isRailwayKeyTag(key) && OsmRailwayTags.isRailBasedRailway(type)){
+      return  true;
+    }else if(OsmWaterwayTags.isWaterBasedWay(key, type)){
+      return  true;
+    }
+    return false;
   }
   
   /**
-   * add the passed in modes as modes that are explicitly allowed access regardless of the mode category, i.e., this takes precedence over the categories.
-   * 
+   * same as {@code addAllowedModes} only we do not log the changes as these are default settings.
+   *
+   * @param osmKeyValueType key value combination to use
+   * @param osmModes to add
+   */
+  void addDefaultAllowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+   addAllowedModes(osmKeyValueType.first(), osmKeyValueType.second(), false /* do not log */, Arrays.asList(osmModes));
+  }
+  
+  /**
+   * Add the passed in modes as modes that are explicitly allowed access regardless of the mode category,
+   * i.e., this takes precedence over the categories.
+   * <p>
+   *   We must use key and type, because type alone does not uniquely define a situation, e.g., ferry=primary and
+   *   highway=primary both exist, but ref;ect different road/waterway types
+   * </p>
+   *
+   * @param key to use
    * @param type to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to add
    */
-  protected void addAllowedModes(String type, boolean logChanges, List<String> osmModes) {
-    if(OsmHighwayTags.isRoadBasedHighwayValueTag(type)) {
-      for(String osmModeValueTag : osmModes) {
-        if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){
-         allowedModesByType.putIfAbsent(type, new HashSet<String>());
-         allowedModesByType.get(type).add(osmModeValueTag);
-          if(logChanges) {
-            LOGGER.info(String.format("added additional road mode %s to highway:%s", osmModeValueTag,type));
-          }
-        }else if(OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
-          /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can add an allowed rail mode to a highway type */
-         allowedModesByType.get(type).add(osmModeValueTag);
-          if(logChanges) {
-            LOGGER.info(String.format("added additional railway mode %s to highway:%s", osmModeValueTag,type));
-          }
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to allowed modes access defaults", osmModeValueTag));
-        }
-      } 
-    }else if(OsmRailwayTags.isRailBasedRailway(type)) {
-      for(String osmModeValueTag : osmModes) {
-        if( OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmModeValueTag))){
-          allowedModesByType.putIfAbsent(type, new HashSet<>());
-          allowedModesByType.get(type).add(osmModeValueTag);
-          if(logChanges) {
-            LOGGER.info(String.format("added additional allowed rail mode %s to railway:%s", osmModeValueTag, type));
-          }
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to allowed modes access defaults", osmModeValueTag));
-        }
-      } 
-    }else {
-      LOGGER.warning(String.format("unknown way tag key %s, ignored when adding modes to allowed modes access defaults", type));
+  protected void addAllowedModes(String key, String type, boolean logChanges, List<String> osmModes) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, type);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported way %s=%s when adding modes %s to allowed modes access defaults", key, type, osmModes));
+    }
+
+    boolean isValidModes = isValidOsmModes(osmModes);
+    if(!isValidModes) {
+      LOGGER.warning(String.format("IGNORE: Unsupported mode(s) provided in %s when adding default modes for %s=%s", osmModes, key, type));
+      return;
+    }
+
+    allowedModesByKeyAndType.putIfAbsent(key, new HashMap<>());
+    var allowedModesByType = allowedModesByKeyAndType.get(key);
+    for(String osmModeValueTag : osmModes) {
+        allowedModesByType.putIfAbsent(type, new HashSet<>());
+      allowedModesByType.get(type).add(osmModeValueTag);
+        if (logChanges) LOGGER.info(String.format("Added additional mode %s to %s=%s", osmModeValueTag, key, type));
     }
   }
-  
+
   /**
-   * set the passed in modes as the only modes that are explicitly allowed access regardless of the mode category, 
+   * Set the passed in modes as the only modes that are explicitly allowed access regardless of the mode category,
+   *
+   * @param key to use
    * @param type to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to add
    */
-  protected void setAllowedModes(String type, boolean logChanges, List<String> osmModes) {
-    if(OsmHighwayTags.isRoadBasedHighwayValueTag(type)) {
-      
-      /* reset before replacing */
-      allowedModeCategoriesByType.remove(type);
-      allowedModesByType.putIfAbsent(type, new HashSet<String>());
-      allowedModesByType.get(type).clear();
-      
-      for(String osmModeValueTag : osmModes) {
-        if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){                  
-          allowedModesByType.get(type).add(osmModeValueTag);
-          if(logChanges) {
-            LOGGER.info(String.format("set allowed road mode %s to highway:%s", osmModeValueTag,type));
-          }
-        }else if(OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
-          /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can add an allowed rail mode to a highway type */
-         allowedModesByType.get(type).add(osmModeValueTag);
-          if(logChanges) {
-            LOGGER.info(String.format("set additional railway mode %s to highway:%s", osmModeValueTag,type));
-          }
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when setting allowed modes for %s", osmModeValueTag, type));
-        }
-      } 
-    }else if(OsmRailwayTags.isRailBasedRailway(type)) {
-      
-      /* reset before replacing */
-      allowedModeCategoriesByType.remove(type);
-      allowedModesByType.putIfAbsent(type, new HashSet<String>());
-      allowedModesByType.get(type).clear();    
-      
-      for(String osmModeValueTag : osmModes) {
-        if( OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmModeValueTag))){
-          allowedModesByType.get(type).add(osmModeValueTag);
-          if(logChanges) {
-            LOGGER.info(String.format("set allowed rail mode %s to railway:%s", osmModeValueTag, type));
-          }
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when setting modes to allowed modes access for %s", osmModeValueTag, type));
-        }
-      } 
-    }else {
-      LOGGER.warning(String.format("unknown way tag key %s, ignored when adding modes to allowed modes access defaults", type));
+  protected void setAllowedModes(String key, String type, boolean logChanges, List<String> osmModes) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, type);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported way %s=%s when setting default allowed modes", key, type, osmModes));
+      return;
     }
-  }  
+
+    boolean isValidModes = isValidOsmModes(osmModes);
+    if(!isValidModes) {
+      LOGGER.warning(String.format("IGNORE: Unsupported mode(s) provided in [%s] when setting default modes for %s=%s", osmModes, key, type));
+      return;
+    }
+
+    allowedModeCategoriesByKeyAndType.getOrDefault(key, new HashMap<>()).remove(type);
+    allowedModesByKeyAndType.putIfAbsent(key, new HashMap<>());
+    allowedModesByKeyAndType.get(key).putIfAbsent(type, new HashSet<>());
+    allowedModesByKeyAndType.getOrDefault(key,new HashMap<>()).get(type).clear();
+
+    var allowedModesByType = allowedModesByKeyAndType.get(key);
+    for(String osmModeValueTag : osmModes) {
+      allowedModesByType.get(type).add(osmModeValueTag);
+    }
+    if(logChanges) LOGGER.info(String.format("Setting allowed modes to [%s] for %s=%s", osmModes, key, type));
+  }
   
   /**
    * add the default passed in mode categories as allowed for all its child modes, no logging
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModeCategories to add
    */
-  void addDefaultAllowedModeCategories(String wayType, String... osmModeCategories) {
-    addAllowedModeCategories(wayType, false, osmModeCategories);
+  void addDefaultAllowedModeCategories(Pair<String,String> osmKeyValueType, String... osmModeCategories) {
+    addAllowedModeCategories(osmKeyValueType.first(), osmKeyValueType.second(), false, osmModeCategories);
   }  
   
   /**
-   * add the passed in mode categories as allowed for all its child modes
-   * 
+   * Add the passed in mode categories as allowed for all its child modes (currently only road modes have categories)
+   *
+   * @param key to use
    * @param type to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModeCategories to add
    */
-  protected void addAllowedModeCategories(String type, boolean logChanges, String... osmModeCategories) {
+  protected void addAllowedModeCategories(String key, String type, boolean logChanges, String... osmModeCategories) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, type);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported way %s=%s when setting allowed mode categories", key, type, osmModeCategories));
+      return;
+    }
+
     if(OsmHighwayTags.isRoadBasedHighwayValueTag(type)) {
+      allowedModeCategoriesByKeyAndType.putIfAbsent(key, new HashMap<>());
+      var allowedModeCategoriesByType = allowedModeCategoriesByKeyAndType.get(key);
       for(int index = 0; index < osmModeCategories.length ; ++index) {
        allowedModeCategoriesByType.putIfAbsent(type, new HashSet<String>());
         String osmModeCategoryValueTag = osmModeCategories[index];
         if(OsmRoadModeCategoryTags.isRoadModeCategoryTag(osmModeCategoryValueTag)){
          allowedModeCategoriesByType.get(type).add(osmModeCategoryValueTag);
           if(logChanges) {
-            LOGGER.info(String.format("added additional allowed mode category %s to highway:%s", osmModeCategoryValueTag, type));            
+            LOGGER.info(String.format("Added additional allowed mode category %s to %s=%s", osmModeCategoryValueTag, key, type));
           }          
         }else {
-          LOGGER.warning(String.format("unknown mode category tag %s, ignored when adding mode categories to modes access defaults", osmModeCategories[index]));
+          LOGGER.warning(String.format("Unknown mode category tag %s, ignored when adding mode categories to modes access defaults", osmModeCategories[index]));
         }
       } 
     }else {
-      LOGGER.warning(String.format("mode categories only suited for highway tags at this point and %s is unknown, ignored when adding mode categories to modes access defaults", type));
+      LOGGER.warning(String.format("IGNORE: Mode categories only suited for road mode tags at this point and %s is unknown", type));
     }
   }    
   
   /**
    * remove the passed in mode categories as allowed for all its child modes
-   * 
+   *
+   * @param key to use
    * @param type to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModeCategories to remove
    */
-  protected void removeAllowedModeCategories(String type, boolean logChanges, String... osmModeCategories) {
+  protected void removeAllowedModeCategories(String key, String type, boolean logChanges, String... osmModeCategories) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, type);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported %s=%s when removing allowed mode categories", key, type, osmModeCategories));
+      return;
+    }
+
     if(OsmHighwayTags.isRoadBasedHighwayValueTag(type)) {
+      var allowedModeCategoriesByType = allowedModeCategoriesByKeyAndType.getOrDefault(key, new HashMap<>());
       for(int index = 0; index < osmModeCategories.length ; ++index) {
         if(allowedModeCategoriesByType.containsKey(type) && OsmRoadModeCategoryTags.isRoadModeCategoryTag(osmModeCategories[index])){
-         allowedModeCategoriesByType.get(type).remove(osmModeCategories[index]);
-          if(logChanges) {
-            LOGGER.info(String.format("removed allowed road mode category %s from highway:%s", osmModeCategories[index], type));
+          var removed = allowedModeCategoriesByType.get(type).remove(osmModeCategories[index]);
+          if(logChanges && removed) {
+            LOGGER.info(String.format("Removed allowed road mode category %s from %s=%s", osmModeCategories[index], key, type));
           }
         }else {
-          LOGGER.warning(String.format("unknown mode category tag %s, ignored when removing mode categories from allowed modes access defaults", osmModeCategories[index]));
+          LOGGER.warning(String.format("Unknown mode category tag %s, ignored when removing mode categories from allowed modes access defaults", osmModeCategories[index]));
         }
       } 
     }else {
-      LOGGER.warning(String.format("unknown highway tag %s, ignored when removing mode categories from allowed modes access defaults", type));
+      LOGGER.warning(String.format("IGNORE: Unknown road based tag %s=%s, ignored when removing mode categories from allowed modes access defaults", key, type));
     }
   }   
   
   /**
    * remove the default modes from access for the given way type
-   * 
+   *
+   * @param key to use
    * @param wayType to use
    * @param osmModes to remove
    */
-  void removeDefaultAllowedModes(String wayType, boolean logChanges, String... osmModes) {
-    removeAllowedModes(wayType, false, osmModes);
+  void removeDefaultAllowedModes(String key, String wayType, boolean logChanges, String... osmModes) {
+    removeAllowedModes(key, wayType, false, osmModes);
   }
   
   /**
    * remove the passed in modes as modes that are no longer allowed access for the given way type
-   * 
+   *
+   * @param key to use
    * @param wayType to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to remove
    */
-  protected void removeAllowedModes(String wayType, boolean logChanges, String... osmModes) {
-    if(OsmHighwayTags.isRoadBasedHighwayValueTag(wayType)) {
-      for(int index = 0; index < osmModes.length ; ++index) {
-        String osmModeValueTag = osmModes[index];
-        if(allowedModesByType.containsKey(wayType)) {
-          if(OsmRoadModeTags.isRoadModeTag(osmModeValueTag)){
-           allowedModesByType.get(wayType).remove(osmModeValueTag);
-            if(logChanges) {
-              LOGGER.info(String.format("removed allowed road mode %s from highway:%s", osmModeValueTag, wayType));
-            }
-          }else if(OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){
-            /* in some cases a rail mode can be embedded in a street, e.g. tram tracks, in which case we can remove an allowed rail mode to a highway type */
-           allowedModeCategoriesByType.get(wayType).remove(osmModeValueTag);
-            if(logChanges) {
-              LOGGER.info(String.format("removed allowed rail mode %s from railway:%s", osmModeValueTag, wayType));
-            }
-          }else {
-            LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from allowed modes access defaults", osmModes[index]));
-          }
+  protected void removeAllowedModes(String key, String wayType, boolean logChanges, String... osmModes) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, wayType);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported way %s=%s when removing allowed modes", key, wayType, osmModes));
+      return;
+    }
+
+    boolean isValidModes = isValidOsmModes(Arrays.asList(osmModes));
+    if(!isValidModes) {
+      LOGGER.warning(String.format("IGNORE: Unsupported mode(s) provided in [%s] when setting default modes for %s=%s", osmModes, key, wayType));
+      return;
+    }
+
+    var allowedModesByType = allowedModesByKeyAndType.getOrDefault(key, new HashMap<>());
+    for(int index = 0; index < osmModes.length ; ++index) {
+      String osmModeValueTag = osmModes[index];
+      if(allowedModesByType.containsKey(wayType)) {
+        var removed = allowedModesByType.get(wayType).remove(osmModeValueTag);
+        if(logChanges && removed) {
+          LOGGER.info(String.format("Removed allowed mode %s for %s=%s", osmModeValueTag, key, wayType));
         }
-      } 
-    }else if(OsmRailwayTags.isRailBasedRailway(wayType)) {
-      for(int index = 0; index < osmModes.length ; ++index) {
-        String osmModeValueTag = osmModes[index];
-        if(allowedModesByType.containsKey(wayType) && OsmRailwayTags.isRailBasedRailway(osmModeValueTag)){          
-          allowedModesByType.get(wayType).remove(osmModeValueTag); 
-          if(logChanges) {
-            LOGGER.info(String.format("removing allowed rail mode %s from railway:%s", osmModeValueTag, wayType));
-          }          
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from allowed modes access defaults", osmModes[index]));
-        }
-      } 
-    }else {
-      LOGGER.warning(String.format("unknown way tag %s, ignored when removing modes from allowed modes access defaults", wayType));
+      }
     }
   }
   
   /**
    * add the passed in default modes as modes that are explicitly NOT allowed access regardless of the mode category or allowed modes, i.e., this takes precedence over all other settings.
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModes to disallow
    */
-  void addDefaultDisallowedModes(String wayType, String... osmModes) {
-    addDisallowedModes(wayType, false, osmModes);
+  void addDefaultDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+    addDisallowedModes(osmKeyValueType.first(), osmKeyValueType.second(), false, osmModes);
   }   
   
   /**
-   * add the passed in modes as modes that are explicitly NOT allowed access regardless of the mode category or allowed modes, i.e., this takes precedence over all other settings.
+   * Add the passed in modes as modes that are explicitly NOT allowed access regardless of the mode category or allowed modes, i.e., this takes precedence over all other settings.
    * Note that rail modes are by definition disallowed unless explicitly allowed, so they need never be added as disallowed modes.
-   * 
+   *
+   * @param key to use
    * @param wayType to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to disallow
    */
-  protected void addDisallowedModes(String wayType, boolean logChanges, String... osmModes) {
-    if(OsmHighwayTags.isRoadBasedHighwayValueTag(wayType)) {
-      for(int index = 0; index < osmModes.length ; ++index) {
-        if(OsmRoadModeTags.isRoadModeTag(osmModes[index])){
-         disallowedModesByType.putIfAbsent(wayType, new HashSet<String>());
-         disallowedModesByType.get(wayType).add(osmModes[index]);
-          if(logChanges) {
-            LOGGER.info(String.format("disallowed road mode %s from highway:%s", osmModes[index], wayType));
-          }
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when adding modes to disallowed modes access defaults", osmModes[index]));
-        }
-      } 
-    }else {
-      LOGGER.warning(String.format("unknown highway tag %s, ignored when adding modes to disallowed modes access defaults", wayType));
+  protected void addDisallowedModes(String key, String wayType, boolean logChanges, String... osmModes) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, wayType);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported %s=%s when disallowing modes", key, wayType, osmModes));
+      return;
     }
-  }  
+
+    boolean isValidModes = isValidOsmModes(Arrays.asList(osmModes));
+    if(!isValidModes) {
+      LOGGER.warning(String.format("IGNORE: Unsupported OSM mode(s) provided in [%s] when disallowing modes for %s=%s",
+          osmModes, key, wayType));
+      return;
+    }
+
+    disallowedModesByKeyAndType.putIfAbsent(key, new HashMap<>());
+    var disallowedModesByType = disallowedModesByKeyAndType.get(key);
+    for(int index = 0; index < osmModes.length ; ++index) {
+      disallowedModesByType.putIfAbsent(wayType, new HashSet<>());
+      var added = disallowedModesByType.get(wayType).add(osmModes[index]);
+      if (logChanges && added) {
+        LOGGER.info(String.format("Disallowed OSM mode %s for %s=%s", osmModes[index], key, wayType));
+      }
+    }
+  }
   
   /**
    * remove the passed in default modes as modes that are NOT allowed access for the given way type (no logging)
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModes to remove from disallowing
    */
-  void removeDefaultDisallowedModes(String wayType, String... osmModes) {
-    removeDisallowedModes(wayType, false, osmModes);
+  void removeDefaultDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+    removeDisallowedModes(osmKeyValueType.first(), osmKeyValueType.second(), false, osmModes);
   }    
   
   /**
    * remove the passed in modes as modes that are NOT allowed access for the given highway type
-   * 
+   *
+   * @param key to use
    * @param wayType to use
    * @param logChanges when true changes are logged, otherwise not
    * @param osmModes to remove from disallowing
    */
-  protected void removeDisallowedModes(String wayType, boolean logChanges, String... osmModes) {
-    if(OsmHighwayTags.isRoadBasedHighwayValueTag(wayType)) {
-      for(int index = 0; index < osmModes.length ; ++index) {
-        if(disallowedModesByType.containsKey(wayType) && OsmRoadModeTags.isRoadModeTag(osmModes[index])){
-         disallowedModesByType.get(wayType).remove(osmModes[index]);
-          if(logChanges) {
-            LOGGER.info(String.format("removed disallowed road mode %s from highway:%s", osmModes[index], wayType));
-          }
-        }else {
-          LOGGER.warning(String.format("unknown mode tag %s, ignored when removing modes from disallowed modes access defaults", osmModes[index]));
+  protected void removeDisallowedModes(String key, String wayType, boolean logChanges, String... osmModes) {
+    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, wayType);
+    if(!validKeyValueCombination){
+      LOGGER.warning(String.format("IGNORE: Unsupported %s=%s when removing disallowing modes", key, wayType, osmModes));
+      return;
+    }
+
+    boolean isValidModes = isValidOsmModes(Arrays.asList(osmModes));
+    if(!isValidModes) {
+      LOGGER.warning(String.format("IGNORE: Unsupported OSM mode(s) provided in [%s] when removing disallowed modes for %s=%s",
+          osmModes, key, wayType));
+      return;
+    }
+
+    var disallowedModesByType = disallowedModesByKeyAndType.getOrDefault(key, new HashMap<>());
+    for(int index = 0; index < osmModes.length ; ++index) {
+      if(disallowedModesByType.containsKey(wayType)){
+       var success =disallowedModesByType.get(wayType).remove(osmModes[index]);
+        if(logChanges && success) {
+          LOGGER.info(String.format("Removed disallowed mode %s from %s=%s", osmModes[index], key, wayType));
         }
-      } 
-    }else {
-      LOGGER.warning(String.format("unknown highway tag %s, ignored when removing modes from disallowed modes access defaults", wayType));
+      }else {
+        LOGGER.warning(String.format("IGNORE: Unknown mode tag %s when removing modes from disallowed modes access defaults", osmModes[index]));
+      }
     }
   }   
   
@@ -343,9 +356,9 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    */
   public OsmModeAccessDefaultsCategory() { 
     this.countryName = CountryNames.GLOBAL;
-    this.allowedModeCategoriesByType = new TreeMap<String, Set<String>>();
-    this.allowedModesByType = new TreeMap<String, Set<String>>();
-    this.disallowedModesByType = new TreeMap<String, Set<String>>();    
+    this.allowedModeCategoriesByKeyAndType = new TreeMap<>();
+    this.allowedModesByKeyAndType = new TreeMap<>();
+    this.disallowedModesByKeyAndType = new TreeMap<>();
   }
   
   /**
@@ -355,9 +368,9 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
    */
   public OsmModeAccessDefaultsCategory(String countryName) {
     this.countryName = countryName;
-    this.allowedModeCategoriesByType = new TreeMap<String, Set<String>>();
-    this.allowedModesByType = new TreeMap<String, Set<String>>();
-    this.disallowedModesByType = new TreeMap<String, Set<String>>();
+    this.allowedModeCategoriesByKeyAndType = new TreeMap<>();
+    this.allowedModesByKeyAndType = new TreeMap<>();
+    this.disallowedModesByKeyAndType = new TreeMap<>();
   }  
   
   /**
@@ -368,9 +381,27 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
   public OsmModeAccessDefaultsCategory(OsmModeAccessDefaultsCategory other) {
     this();
     this.countryName = other.getCountry();
-    other.allowedModeCategoriesByType.forEach( (k,v) -> {this.allowedModeCategoriesByType.put(k, new HashSet<String>(v));});
-    other.allowedModesByType.forEach(          (k,v) -> {this.allowedModesByType.put(         k, new HashSet<String>(v));});
-    other.disallowedModesByType.forEach(       (k,v) -> {this.disallowedModesByType.put(      k, new HashSet<String>(v));});    
+
+    other.allowedModeCategoriesByKeyAndType.forEach( (k,v) -> {
+          this.allowedModeCategoriesByKeyAndType.put(k, new HashMap<>());
+          var toFill = this.allowedModeCategoriesByKeyAndType.get(k);
+          v.forEach((k2, v2) ->
+              toFill.put(k2, new HashSet<>(v2)));
+        });
+
+    other.allowedModesByKeyAndType.forEach( (k,v) -> {
+      this.allowedModesByKeyAndType.put(k, new HashMap<>());
+      var toFill = this.allowedModesByKeyAndType.get(k);
+      v.forEach((k2, v2) ->
+          toFill.put(k2, new HashSet<>(v2)));
+    });
+
+    other.disallowedModesByKeyAndType.forEach( (k,v) -> {
+      this.disallowedModesByKeyAndType.put(k, new HashMap<>());
+      var toFill = this.disallowedModesByKeyAndType.get(k);
+      v.forEach((k2, v2) ->
+          toFill.put(k2, new HashSet<>(v2)));
+    });
   }  
   
   /** The country for which these defaults hold. In absence of a country, it should return CountryNames.GLOBAL
@@ -390,118 +421,124 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
   }  
 
   /**
-   * {@inheritDoc}
+   * Shallow copy
+   *
+   * @return shallow copy
    */
-  @Override
-  public OsmModeAccessDefaultsCategory clone() throws CloneNotSupportedException {
+  public OsmModeAccessDefaultsCategory shallowClone() {
     return new OsmModeAccessDefaultsCategory(this);
   }  
     
   /**
    * add the passed in mode categories as allowed for all its child modes
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModeCategories to add
    */
-  public void addAllowedModeCategories(String wayType, String... osmModeCategories) {
-    addAllowedModeCategories(wayType, true /* log changes */, osmModeCategories);
+  public void addAllowedModeCategories(Pair<String,String> osmKeyValueType, String... osmModeCategories) {
+    addAllowedModeCategories(osmKeyValueType.first(), osmKeyValueType.second(), true /* log changes */, osmModeCategories);
   }  
   
   /**
    * remove the passed in mode categories as allowed for all its child modes
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModeCategories to remove
    */
-  public void removeAllowedModeCategories(String wayType, String... osmModeCategories) {
-    removeAllowedModeCategories(wayType, true /* log changes*/ , osmModeCategories);
+  public void removeAllowedModeCategories(Pair<String,String> osmKeyValueType, String... osmModeCategories) {
+    removeAllowedModeCategories(osmKeyValueType.first(), osmKeyValueType.second(), true /* log changes*/ , osmModeCategories);
   }   
   
   /**
    * add the passed in modes as modes that are explicitly allowed access regardless of the mode category, i.e., this takes precedence over the categories.
    * Note that rail modes can be explicitly allowed onto roads, e.g. tram, lightrail, indicating a track embedded in the road.
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModes to add
    */
-  public void addAllowedModes(String wayType, String... osmModes) {
-   addAllowedModes(wayType, Arrays.asList(osmModes));    
+  public void addAllowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+   addAllowedModes(osmKeyValueType.first(), osmKeyValueType.second(), Arrays.asList(osmModes));
   }
   
   /**
    * add the passed in modes as modes that are explicitly allowed access regardless of the mode category, i.e., this takes precedence over the categories.
    * Note that rail modes can be explicitly allowed onto roads, e.g. tram, lightrail, indicating a track embedded in the road.
-   * 
+   *
+   * @param key to use
    * @param wayType to use
    * @param osmModes to add
    */
-  public void addAllowedModes(String wayType, List<String> osmModes) {
-   addAllowedModes(wayType, true /* log changes*/, osmModes);    
+  public void addAllowedModes(String key, String wayType, List<String> osmModes) {
+   addAllowedModes(key, wayType, true /* log changes*/, osmModes);
   }  
   
   /**
    * set the passed in modes as the only modes that are explicitly allowed access and remove all categories
-   * 
+   *
+   * @param key to use
    * @param wayType to use
    * @param osmModes to add
    */
-  public void setAllowedModes(String wayType, List<String> osmModes) {
-   setAllowedModes(wayType, true /* log changes*/, osmModes);    
+  public void setAllowedModes(String key, String wayType, List<String> osmModes) {
+   setAllowedModes(key, wayType, true /* log changes*/, osmModes);
   }    
   
   /**
    * remove the passed in modes as modes that are no longer allowed access for the given highway type
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModes to remove
    */
-  public void removeAllowedModes(String wayType, String... osmModes) {
-    removeAllowedModes(wayType, true /* log changes*/, osmModes);
+  public void removeAllowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+    removeAllowedModes(osmKeyValueType.first(), osmKeyValueType.second(), true /* log changes*/, osmModes);
   }    
   
   /**
    * add the passed in modes as modes that are explicitly NOT allowed access regardless of the mode category or allowed modes, i.e., this takes precedence over all other settings.
    * Note that rail modes are by definition disallowed unless explicitly allowed, so they need never be added as disallowed modes.
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModes to disallow
    */
-  public void addDisallowedModes(String wayType, String... osmModes) {
-    addDisallowedModes(wayType, true /* log changes */, osmModes);
+  public void addDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+    addDisallowedModes(osmKeyValueType.first(), osmKeyValueType.second(), true /* log changes */, osmModes);
   }
   
   /**
    * Remove the passed in modes as modes that are NOT allowed access for the given highway type
-   * 
-   * @param wayType to use
+   *
+   * @param osmKeyValueType key value combination to use
    * @param osmModes to remove from disallowing
    */
-  public void removeDisallowedModes(String wayType, String... osmModes) {
-    removeDisallowedModes(wayType, true /* log changes */, osmModes);
+  public void removeDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+    removeDisallowedModes(osmKeyValueType.first(), osmKeyValueType.second(), true /* log changes */, osmModes);
   }  
   
 
   /**
    * Verify if mode is allowed for given way type. If none of the allowed/disallowed configuration options includes the passed in mode
    * it is assumed the mode is not allowed
-   * 
+   *
+   * @param key to use
    * @param osmWayValue to check for
    * @param osmMode to verify
    * @return true when allowed, false when disallowed, false if unknown
    */
-  public boolean isAllowed(final String osmWayValue, final String osmMode) {
+  public boolean isAllowed(String key, String osmWayValue, String osmMode) {
     Boolean isAllowed = Boolean.FALSE;    
-               
+
+    var allowedModesByType = allowedModesByKeyAndType.getOrDefault(key, new HashMap<>());
     if(allowedModesByType.containsKey(osmWayValue)){
       /* verify if it is explicitly allowed */
-      isAllowed =allowedModesByType.get(osmWayValue).contains(osmMode);            
+      isAllowed = allowedModesByType.get(osmWayValue).contains(osmMode);
     }
       
     /* when not yet explicitly allowed, verify if it is allowed via an umbrella mode category (for now these only exist for road modes)*/   
     if(!isAllowed) {
       Set<String> roadModeCategoriesOfMode = OsmRoadModeCategoryTags.getRoadModeCategoriesByMode(osmMode);
-      Set<String> allowedRoadModeCategoriesOfHighwayType =allowedModeCategoriesByType.get(osmWayValue);
-      if(roadModeCategoriesOfMode != null && allowedRoadModeCategoriesOfHighwayType != null) {
+      var allowedModeCategoriesByType = allowedModeCategoriesByKeyAndType.getOrDefault(key, new HashMap<>());
+      Set<String> allowedModeCategoriesOfKeyValueType = allowedModeCategoriesByType.get(osmWayValue);
+      if(roadModeCategoriesOfMode != null && allowedModeCategoriesOfKeyValueType != null) {
         /* verify if any of the categories the mode belongs to is explicitly allowed*/
         isAllowed = !Collections.disjoint(OsmRoadModeCategoryTags.getRoadModeCategoriesByMode(osmMode),allowedModeCategoriesByType.get(osmWayValue));
       }        
@@ -509,7 +546,8 @@ public class OsmModeAccessDefaultsCategory implements Cloneable {
       
     /* when allowed (via category), it can be that it is explicitly disallowed within its category overruling the category setting */
     if(isAllowed) {
-        isAllowed = !(disallowedModesByType.containsKey(osmWayValue) && disallowedModesByType.get(osmWayValue).contains(osmMode));
+      var disallowedModesByType = disallowedModesByKeyAndType.getOrDefault(key, new HashMap<>());
+      isAllowed = !(disallowedModesByType.containsKey(osmWayValue) && disallowedModesByType.get(osmWayValue).contains(osmMode));
     }        
             
     return isAllowed;

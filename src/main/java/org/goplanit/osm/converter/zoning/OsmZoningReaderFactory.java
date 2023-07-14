@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.zoning.Zoning;
 
 /**
@@ -17,60 +18,7 @@ import org.goplanit.zoning.Zoning;
  *
  */
 public class OsmZoningReaderFactory {   
-  
-  /** Create a default PLANitOsmZoningReader. User is expected to configure the reader via settings before invoking read() method 
-   * 
-   * @param zoningToPopulate to populate
-   * @return created OSM reader
-   * @throws PlanItException thrown if error 
-   */
-  public static OsmZoningReader create(Zoning zoningToPopulate) throws PlanItException {
-    PlanItException.throwIfNull(zoningToPopulate, "no zoning instance provided to OSM zoning reader factory method");
-    return create(new OsmPublicTransportReaderSettings(), zoningToPopulate);    
-  }   
-    
-  /** Create a PLANitOSMReader while providing an OSM network to populate
-   * 
-   * @param settings to use
-   * @return created OSM reader
-   * @throws PlanItException thrown if error
-   */
-  public static OsmZoningReader create(OsmPublicTransportReaderSettings settings) throws PlanItException {
-    PlanItException.throwIfNull(settings, "no settings instance provided to OSM zoning reader factory method");
-    PlanItException.throwIfNull(settings.getReferenceNetwork(),"Unable to initialise OSM zoning reader, network not available to base zoning instance from");
-    return create(settings, new Zoning(settings.getReferenceNetwork().getIdGroupingToken(),settings.getReferenceNetwork().getNetworkGroupingTokenId()));    
-  }  
-  
-  /** Create a PLANitOSMReader while providing an OSM network to populate
-   * 
-   * @param settings to use
-   * @param zoningToPopulate to populate
-   * @return created OSM reader
-   * @throws PlanItException thrown if error
-   */
-  public static OsmZoningReader create(OsmPublicTransportReaderSettings settings, Zoning zoningToPopulate) throws PlanItException {
-    PlanItException.throwIfNull(settings, "no settings instance provided to OSM zoning reader factory method");
-    PlanItException.throwIfNull(zoningToPopulate, "no zoning instance provided to OSM zoning reader factory method");
-    return new OsmZoningReader(settings, zoningToPopulate);    
-  }  
-    
-  
-  /** Create a PLANitOSMReader while providing an OSM network to populate
-   * 
-   * @param inputFile to use
-   * @param countryName name of the country
-   * @param referenceNetwork to use the same setup regarding id creation for zoning
-   * @return created OSM reader
-   * @throws PlanItException thrown if error
-   */
-  public static OsmZoningReader create(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork) throws PlanItException {
-    try {
-      return create(Paths.get(inputFile).toUri().toURL(), countryName, referenceNetwork);
-    }catch(Exception e) {
-      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
-    }
-  }   
-  
+
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param inputFile to use
@@ -78,13 +26,13 @@ public class OsmZoningReaderFactory {
    * @param referenceNetwork to use the same setup regarding id creation for zoning
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @return created OSM reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(String inputFile, String countryName, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) throws PlanItException {
+  public static OsmZoningReader create(
+      String inputFile, String countryName, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) {
     try {
       return create(Paths.get(inputFile).toUri().toURL(), countryName, referenceNetwork, network2ZoningData);
     }catch(Exception e) {
-      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
+      throw new PlanItRunTimeException("Unable to convert input file %s to Url", e, inputFile);
     }
   } 
   
@@ -96,30 +44,29 @@ public class OsmZoningReaderFactory {
    * @param referenceNetwork to use the same setup regarding id creation for zoning
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @return created OSM reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(String inputFile, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) throws PlanItException {
+  public static OsmZoningReader create(
+      String inputFile, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) {
     try {
       return create(Paths.get(inputFile).toUri().toURL(), countryName, zoningToPopulate, referenceNetwork, network2ZoningData);
     }catch(Exception e) {
-      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
+      throw new PlanItRunTimeException("Unable to convert input file %s to Url", e, inputFile);
     }
-  }  
-  
+  }
+
   /** Create a PLANitOSMReader while providing an OSM network to populate
-   * 
-   * @param inputSource to use
-   * @param countryName name of the country
+   *
+   * @param settings to use
+   * @param zoningToPopulate the zoning to populate
    * @param referenceNetwork to use the same setup regarding id creation for zoning
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @return created OSM reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork) throws PlanItException {
-    PlanItException.throwIfNull(referenceNetwork, "no reference network provided to OSM zoning reader factory method");    
-    return new OsmZoningReader(
-        inputSource, countryName, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()),referenceNetwork);
-  }    
-  
+  public static OsmZoningReader create(
+      OsmPublicTransportReaderSettings settings, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
+    return new OsmZoningReader(settings, zoningToPopulate, referenceNetwork, network2ZoningData);
+  }
+
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param inputSource to use
@@ -127,10 +74,10 @@ public class OsmZoningReaderFactory {
    * @param referenceNetwork to use the same setup regarding id creation for zoning
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @return created OSM reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) throws PlanItException {
-    PlanItException.throwIfNull(referenceNetwork, "no reference network provided to OSM zoning reader factory method");
+  public static OsmZoningReader create(
+      URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
+    PlanItRunTimeException.throwIfNull(referenceNetwork, "No reference network provided to OSM zoning reader factory method");
     return create(
         inputSource, countryName, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()),referenceNetwork, network2ZoningData);
   }   
@@ -143,11 +90,11 @@ public class OsmZoningReaderFactory {
    * @param referenceNetwork to use the same setup regarding id creation for zoning
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @return created OSM reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmZoningReader create(URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData) throws PlanItException {
-    PlanItException.throwIfNull(zoningToPopulate, "no zoning instance provided to OSM zoning reader factory method");
-    PlanItException.throwIfNull(referenceNetwork, "no reference network provided to OSM zoning reader factory method");
+  public static OsmZoningReader create(
+      URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
+    PlanItRunTimeException.throwIfNull(zoningToPopulate, "No zoning instance provided to OSM zoning reader factory method");
+    PlanItRunTimeException.throwIfNull(referenceNetwork, "No reference network provided to OSM zoning reader factory method");
     return new OsmZoningReader(inputSource, countryName, zoningToPopulate ,referenceNetwork, network2ZoningData);
   }   
   

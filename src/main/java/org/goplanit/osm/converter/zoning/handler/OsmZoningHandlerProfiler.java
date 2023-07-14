@@ -134,10 +134,7 @@ public class OsmZoningHandlerProfiler {
       if(platformRelationCount.longValue()>0) {
         LOGGER.info(String.format("[STATS] identified %d platforms tagged as relations ",platformRelationCount.longValue()));
       }
-      
-      if(!planitOsmZoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
-        LOGGER.info(String.format("[STATS] marked %d osm ways that are outer roles of osm relations and eligible to be converted to platforms",planitOsmZoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
-      }  
+
     }   
     
     /* main processing */
@@ -155,9 +152,9 @@ public class OsmZoningHandlerProfiler {
 
     /* post-processing */
     {
-      LOGGER.info(String.format("[STATS] created PLANit %d transfer zone groups",zoning.transferZoneGroups.size()));
-      LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.transferZones.size()));    
-      LOGGER.info(String.format("[STATS] created PLANit %d transfer connectoids",zoning.transferConnectoids.size())); 
+      LOGGER.info(String.format("[STATS] created PLANit %d transfer zone groups",zoning.getTransferZoneGroups().size()));
+      LOGGER.info(String.format("[STATS] created PLANit %d transfer zones", zoning.getTransferZones().size()));
+      LOGGER.info(String.format("[STATS] created PLANit %d transfer connectoids",zoning.getTransferConnectoids().size())); 
     }
   }
   

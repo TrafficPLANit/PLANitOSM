@@ -1,20 +1,19 @@
 package org.goplanit.osm.converter.intermodal;
 
-import java.net.URL;
-
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 
+import java.net.URL;
+
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
- * and zoning reader. Hence these settings provide access to OSM network and zoning reader settings
+ * and zoning reader. Hence, these settings provide access to OSM network and zoning reader settings
  * 
  * @author markr
  *
@@ -33,30 +32,33 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String countryName) {
-    this(countryName, new PlanitOsmNetwork());
-  }  
-  
+    this((URL) null, countryName);
+  }
+
   /**
    * Constructor
-   * 
+   *
+   * @param inputSource to use
    * @param countryName to use
-   * @param networkToPopulate to use
    */
-  public OsmIntermodalReaderSettings(final String countryName, final PlanitOsmNetwork networkToPopulate) {
-    this(null, countryName, networkToPopulate);
+  public OsmIntermodalReaderSettings(final String inputSource, final String countryName) {
+    this(UrlUtils.createFromLocalPath(inputSource), countryName);
   }
-  
+
   /**
    * Constructor
    * 
    * @param inputSource to use
    * @param countryName to use
-   * @param networkToPopulate to use
    */
-  public OsmIntermodalReaderSettings(final URL inputSource, final String countryName, final PlanitOsmNetwork networkToPopulate) {
+  public OsmIntermodalReaderSettings(final URL inputSource, final String countryName) {
     this(
-        new OsmNetworkReaderSettings(inputSource, countryName, networkToPopulate), 
-        new OsmPublicTransportReaderSettings(inputSource, countryName, networkToPopulate));
+        new OsmNetworkReaderSettings(inputSource, countryName),
+        new OsmPublicTransportReaderSettings(inputSource, countryName));
+
+    /* default activate rail and ferry when performing intermodal parsing */
+    getNetworkSettings().getRailwaySettings().activateParser(true);
+    getNetworkSettings().getWaterwaySettings().activateParser(true);
   }  
          
   
@@ -79,8 +81,17 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   public void reset() {
     networkSettings.reset();
     zoningPtSettings.reset();
-  }  
-  
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    networkSettings.logSettings();
+    zoningPtSettings.logSettings();
+  }
+
   // GETTERS/SETTERS
   
   /** Provide access to the network reader settings
@@ -114,7 +125,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) throws PlanItException {
     try{
-      setInputSource(UrlUtils.createFromPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalPath(inputFile));
     }catch(Exception e) {
       throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
     }

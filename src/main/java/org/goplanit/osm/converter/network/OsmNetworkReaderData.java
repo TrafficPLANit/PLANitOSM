@@ -1,10 +1,10 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.logging.Logger;
 
-import org.goplanit.network.layer.MacroscopicNetworkLayerImpl;
+import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
+import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -22,18 +22,30 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class OsmNetworkReaderData {
-    
-  /** temporary storage of osmNodes before converting the useful ones to actual nodes */
-  protected final Map<Long, OsmNode> osmNodes;        
+  
+  /** the logger  */
+  private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderData.class.getCanonicalName());
 
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
-  protected final Map<Long, OsmWay> osmCircularWays;  
+  private final Map<Long, OsmWay> osmCircularWays =new HashMap<>();
     
   /** on the fly tracking of bounding box of all parsed nodes in the network */
   private Envelope networkBoundingBox;
+
+  /**
+   * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used to construct links
+   * or other entities
+   */
+  private OsmNodeData osmNodeData = new OsmNodeData();
+
+  /** Track OSM ways that have been processed and identified as being unavailable/not used. This has been communicated if needed
+   *  to users, so any subsequent dependencies on this OSM way can be safely ignored without issuing further warnings
+   */
+  private Set<Long> discardedOsmWays = new HashSet<>();
+
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
-  private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<MacroscopicNetworkLayer, OsmNetworkLayerParser>();  
+  private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<>();
   
   /** the distance that qualifies as being near to the network bounding box. Used to suppress warnings of incomplete osm ways due to bounding box (which
    * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */
@@ -53,21 +65,13 @@ public class OsmNetworkReaderData {
       osmLayerParsers.put(macroNetworkLayer, layerHandler);
     }
   }    
-      
-  /** Default Constructor 
-   * 
-   */
-  public OsmNetworkReaderData() {    
-    this.osmNodes = new HashMap<Long, OsmNode>();
-    this.osmCircularWays = new HashMap<Long, OsmWay>();
-  }
-  
+
   /**
    * reset
    */
   public void reset() {
     clearOsmCircularWays();    
-    osmNodes.clear();
+    osmNodeData.reset();
     
     /* reset layer handlers as well */
     osmLayerParsers.forEach( (layer, handler) -> {handler.reset();});
@@ -78,11 +82,11 @@ public class OsmNetworkReaderData {
    * @param osmNode to expand so that bounding box includes it
    */
   public void updateBoundingBox(OsmNode osmNode) {
-    Coordinate coorinate = OsmNodeUtils.createCoordinate(osmNode);
+    Coordinate coordinate = OsmNodeUtils.createCoordinate(osmNode);
     if(networkBoundingBox==null) {
-      networkBoundingBox = new Envelope(coorinate);
+      networkBoundingBox = new Envelope(coordinate);
     }else {
-      networkBoundingBox.expandToInclude(coorinate);
+      networkBoundingBox.expandToInclude(coordinate);
     }
   }
   
@@ -93,36 +97,13 @@ public class OsmNetworkReaderData {
   public Envelope getBoundingBox() {
     return networkBoundingBox;
   }
-  
-  /** collect the osm nodes (unmoidifable)
-   * 
-   * @return osm nodes
+
+  /**
+   * Access to OSM node data
+   * @return OSM node data
    */
-  public Map<Long, OsmNode> getOsmNodes() {
-    return Collections.unmodifiableMap(osmNodes);
-  }
-  
-  /** add an osm node
-   * @param osmNode to add
-   */
-  public void addOsmNode(OsmNode osmNode) {
-    osmNodes.put(osmNode.getId(), osmNode);
-  } 
-  
-  /** collect an osm node
-   * @param osmNodeId to collect
-   * @return osm node, null if not present
-   */
-  public OsmNode getOsmNode(long osmNodeId) {
-    return osmNodes.get(osmNodeId);
-  }  
-  
-  /** Verify if osm node is available
-   * @param osmNodeId to verify
-   * @return true when available, false otherwise
-   */
-  public boolean hasOsmNode(long osmNodeId) {
-    return getOsmNode(osmNodeId)!=null;
+  public OsmNodeData getOsmNodeData(){
+  return osmNodeData;
   }
 
   /** collect the identified circular ways (unmodifiable)
@@ -145,6 +126,27 @@ public class OsmNetworkReaderData {
    */
   public void clearOsmCircularWays() {
     osmCircularWays.clear();
+  }
+
+  /**
+   * Register an OSM way as processed and identified as being unavailable. Any subsequent dependencies on this OSM way
+   * can be safely ignored without issuing further warnings
+   *
+   * @param osmWayId to register
+   */
+  public void registerProcessedOsmWayAsUnavailable(long osmWayId){
+    discardedOsmWays.add(osmWayId);
+  }
+
+  /**
+   * Verify if an OSM way is processed but identified as unavailable. Any subsequent dependencies on this OSM way
+   * can be safely ignored without issuing further warnings
+   *
+   * @param osmWayId to verify
+   * @return true when processed and unavailable, false otherwise
+   */
+  public boolean isOsmWayProcessedAndUnavailable(long osmWayId){
+    return discardedOsmWays.contains(osmWayId);
   }
   
   /** provide reference to a layer parser

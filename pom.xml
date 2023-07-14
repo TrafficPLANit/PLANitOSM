@@ -31,9 +31,14 @@
 	<dependencies>
 	
 	   <dependency>
-        <groupId>org.goplanit</groupId>
-        <artifactId>planit-core</artifactId>
-    </dependency> 
+			<groupId>org.goplanit</groupId>
+			<artifactId>planit-core</artifactId>
+	   </dependency>
+
+		<dependency>
+			<groupId>org.goplanit.gtfs</groupId>
+			<artifactId>planit-gtfs</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.geotools</groupId>
@@ -52,17 +57,16 @@
 		    <artifactId>osm4j-xml</artifactId>
 		</dependency>		
 		
-    <dependency>
-        <groupId>de.topobyte</groupId>
-        <artifactId>osm4j-pbf</artifactId>         
-    </dependency> 		
-		
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<!-- only used locally for testing so not an actual dependency for using the API -->
+			<groupId>de.topobyte</groupId>
+			<artifactId>osm4j-pbf</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<optional>true</optional>
-		</dependency>		
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -94,8 +98,36 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 			</plugin>
+
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.2.0</version>
+				<executions>
+					<execution>
+						<id>javadoc-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<!--  place generated javadocs in /docs directory of root-->
+							<destDir>docs</destDir>
+							<includeDependencySources>false</includeDependencySources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins> 		    	
 	    
-	</build>	
+	</build>
+
+	<repositories>
+		<!-- PLANit repository to obtain parentpom from-->
+		<repository>
+			<id>planit-repository.goplanit.org</id>
+			<name>PLANit Repository</name>
+			<url>https://repository.goplanit.org</url>
+		</repository>
+	</repositories>
 
 </project>

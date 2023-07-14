@@ -13,8 +13,10 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.function.PlanitExceptionConsumer;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
@@ -52,18 +54,24 @@ public class OsmWayUtils {
    * @param planitEntities to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
   protected static <T> T findPlanitEntityClosest(
-      final OsmWay osmWay, final Collection<? extends T> planitEntities, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
+      final OsmWay osmWay,
+      final Collection<? extends T> planitEntities,
+      double maxDistanceMeters,
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      final PlanitJtsCrsUtils geoUtils){
     T closestPlanitEntity = null; 
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     for(int index=0; index<osmWay.getNumberOfNodes(); index++) {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode != null) {
-        Pair<T,Double> result = OsmNodeUtils.findPlanitEntityClosest(osmNode, planitEntities, maxDistanceMeters, geoUtils);
+        Pair<T,Double> result = PlanitEntityGeoUtils.findPlanitEntityClosest(
+            OsmNodeUtils.createCoordinate(osmNode), planitEntities, maxDistanceMeters, suppressLogging, geoUtils);
         if(result!=null && result.second() < minDistanceMeters) {
           closestPlanitEntity = result.first();
           minDistanceMeters = result.second();
@@ -79,18 +87,18 @@ public class OsmWayUtils {
    * 
    * @param osmWay the way to verify 
    * @param tags of this OSM way
-   * @param mustEndAtstart, when true only circular roads where the end node is the start node are identified, when false, any node that appears twice results in
+   * @param mustEndAtStart, when true only circular roads where the end node is the start node are identified, when false, any node that appears twice results in
    * a positive result (true is returned)
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularOsmWay(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtstart) {
+  public static boolean isCircularOsmWay(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtStart) {
     /* a circular road, has:
      * -  more than two nodes...
      * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
      *    is only part of the geometry 
      */
     if(tags.containsKey(OsmHighwayTags.HIGHWAY) || tags.containsKey(OsmRailwayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
-      if(mustEndAtstart) {
+      if(mustEndAtStart) {
         return OsmWayUtils.isOsmWayPerfectLoop(osmWay);
       }else {
         return findIndicesOfFirstLoop(osmWay, 0 /*consider entire way */)!=null;        
@@ -274,7 +282,7 @@ public class OsmWayUtils {
     /* log -> no throw */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
       if(missingNodes!=null) {
-        LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+        LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes));
       }
     };
     
@@ -318,15 +326,14 @@ public class OsmWayUtils {
     return extractGeometry(osmWay, osmNodes, LOGGER.getLevel());
   }   
   
-  /** extract geometry from the osm way which can either be a line string or polygon
+  /** extract geometry from the OSM way which can either be a line string or polygon
    * 
    * @param osmWay to extract geometry for
    * @param osmNodes to extract geo features from
    * @param logLevel logLevel
    * @return created geometry
-   * @throws PlanItException thrown if error
    */
-  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
+  public static Geometry extractGeometry(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Level logLevel){
 
     Level originalLevel = LOGGER.getLevel();
     LOGGER.setLevel(logLevel);
@@ -380,7 +387,7 @@ public class OsmWayUtils {
   }
   
   /**
-   * Identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+   * Identical to {@link OsmWayUtils#extractLineString}, except it does not throw exceptions, but simply logs any issues found
    * 
    * @param osmWay way to extract geometry from
    * @param startNodeIndex to use
@@ -394,7 +401,7 @@ public class OsmWayUtils {
     return  PlanitJtsUtils.createLineString(coordArray);
   }  
 
-  /** Identical to {@link extractLineString}, except it does not throw exceptions, but simply logs any issues found
+  /** Identical to {@link OsmWayUtils#extractLineString}, except it does not throw exceptions, but simply logs any issues found
    * @param osmWay to extract geometry for
    * @param osmNodes to collect from
    * @return parsed geometry, can be null if not valid for some reason
@@ -417,15 +424,14 @@ public class OsmWayUtils {
     return lineString;
   }
   
-  /** creates a point geoetry using the first available node from the nodes on the osm way. Only to be used when no line string or polygon could be extract
+  /** creates a point geometry using the first available node from the nodes on the OSM way. Only to be used when no line string or polygon could be extract
    * due to missing nodes for example
    * 
    * @param osmWay to extract point geometry for
    * @param osmNodes to collect from
    * @return parsed geometry, can be null if not valid for some reason
-   * @throws PlanItException thrown if error
    */
-  public static Point extractPoint(OsmWay osmWay, Map<Long, OsmNode> osmNodes) throws PlanItException {
+  public static Point extractPoint(OsmWay osmWay, Map<Long, OsmNode> osmNodes){
     Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
     /* create point when enough coordinates are available */
     if(coordArray!= null && coordArray.length>=1) {
@@ -448,7 +454,7 @@ public class OsmWayUtils {
     return PlanitJtsUtils.createPolygon(coordArray);
   }   
   
-  /** identical to {@link extractPolygon}, except it does not throw exceptions, but simply logs any issues found
+  /** identical to {@link OsmWayUtils#extractPolygon(OsmWay, Map)}, except it does not throw exceptions, but simply logs any issues found
    * and tries to salvage the polygon by creating it out of the coordinates that are available as lnog as we can still create
    * a closed 2D shape.
    * 
@@ -486,12 +492,13 @@ public class OsmWayUtils {
    * @param osmWay reference way
    * @param zones to check against using their geometries
    * @param osmNodes to consider
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
+  public static Zone findZoneClosest(
+      final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, suppressLogging, geoUtils);
   }  
 
   /** Find the closest zone to the way . This method computes the actual distance between any location on any line segment of the outer boundary
@@ -502,12 +509,13 @@ public class OsmWayUtils {
    * @param zones to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return zone closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Zone findZoneClosest(final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, geoUtils);   
+  public static Zone findZoneClosest(
+      final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, suppressLogging, geoUtils);
   }   
   
   /** find the closest edge to the way from the available edges. This method computes the actual distance between any location on any line segment of the 
@@ -517,12 +525,13 @@ public class OsmWayUtils {
    * @param osmWay reference way
    * @param edges to check against using their geometries
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, geoUtils);    
+  public static Edge findEdgeClosest(
+      final OsmWay osmWay, final Collection<? extends Edge> edges, final Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, suppressLogging, geoUtils);
   }   
   
   /** find the closest edge to the way from the available edges. This method computes the actual distance between any location on any line segment of the 
@@ -533,12 +542,13 @@ public class OsmWayUtils {
    * @param edges to check against using their geometries
    * @param maxDistanceMeters maximum allowedDistance to be eligible
    * @param osmNodes the way might refer to
+   * @param suppressLogging when true suppress logging, false otherwise
    * @param geoUtils to compute projected distances
    * @return edge closest, null if none matches criteria
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, geoUtils);        
+  public static Edge findEdgeClosest(
+      final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, final Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+    return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, suppressLogging, geoUtils);
   }
 
 
@@ -549,9 +559,9 @@ public class OsmWayUtils {
    * @param osmNodes to use for extracting geo information regarding the osm way
    * @param geoUtils to compute distances
    * @return line segment with minimum distance connecting the way and the geometry
-   * @throws PlanItException thrown if error
    */
-  public static LineSegment findMinimumLineSegmentBetween(OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static LineSegment findMinimumLineSegmentBetween(
+      OsmWay osmWay, LineString geometry, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils){
     double minDistanceMeters = Double.POSITIVE_INFINITY;
     Coordinate osmWayMinDistanceCoordinate = null;
     Coordinate geometryMinDistanceCoordinate = null;
@@ -592,7 +602,7 @@ public class OsmWayUtils {
   }
 
 
-  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the osm highway tags ordering 
+  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the OSM highway tags ordering
    * @param osmHighwayType to use as a reference
    * @param edgesToFilter the collection being filtered
    */
@@ -614,10 +624,30 @@ public class OsmWayUtils {
    * @return index of first available osm node, null if not found
    */
   public static Integer findFirstAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
-    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
-        return nodeIndex;
+    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
+      var node = osmNodes.get(osmWay.getNodeId(nodeIndex));
+      if(node == null) {
+        continue;
       }
+      return nodeIndex;
+    }
+    return null;
+  }
+
+  /** Finds the last consecutive available OSM node index after the offset, i.e. the index before the first unavailable node
+   *
+   * @param offsetIndex to start search from
+   * @param osmWay to collect from
+   * @param osmNodes to check existence of osm way nodes
+   * @return last index of node that is available, null otherwise
+   */
+  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
+    for(int nodeIndex =  osmWay.getNumberOfNodes()-1; nodeIndex>offsetIndex; --nodeIndex) {
+      var node = osmNodes.get(osmWay.getNodeId(nodeIndex));
+      if(node == null) {
+        continue;
+      }
+      return nodeIndex;
     }
     return null;
   }
@@ -630,7 +660,7 @@ public class OsmWayUtils {
    */  
   public static boolean isAllOsmWayNodesAvailable(OsmWay osmWay, Map<Long, OsmNode> osmNodes) {
     for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
+      if(osmNodes.get(osmWay.getNodeId(nodeIndex))  == null ) {
         return false;
       }
     }
@@ -649,31 +679,32 @@ public class OsmWayUtils {
   public static Integer getOsmWayNodeIndexByLocation(OsmWay osmWay, Point nodePosition, OsmNetworkReaderData networkData){
     for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
       long osmNodeId = osmWay.getNodeId(nodeIndex);
-      OsmNode osmNode = networkData.getOsmNode(osmNodeId);      
+      OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);
       if(osmNode != null && OsmNodeUtils.nodeLocationEquals2D(osmNode, nodePosition.getCoordinate())) {
         return nodeIndex;
       }
     }
     return null;
-  }  
+  }
 
-  /** Finds the last consecutive available OSM node index after the offset, i.e. the index before the first unavailable node
-   * 
-   * @param offsetIndex to start search from
-   * @param osmWay to collect from
-   * @param osmNodes to check existence of osm way nodes
-   * @return last index of node that is available, null otherwise
-   * @throws PlanItException thrown if error
-   */  
-  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes) throws PlanItException {
-    for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {      
-      if(!osmNodes.containsKey(osmWay.getNodeId(nodeIndex))) {
-        return nodeIndex-1;
-      }
+
+  /**
+   * Verify existence of any of the supported way keys (highway=, railway=, or a waterway one (route=ferry, ferry=_highway_type) and
+   * return the value
+   *
+   * @param tags to check
+   * @return value found or log warning
+   */
+  public static String findWayTypeValueForEligibleKey(Map<String, String> tags) {
+    if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+      return tags.get(OsmHighwayTags.getHighwayKeyTag());
+    }else if(OsmRailwayTags.hasRailwayKeyTag(tags)){
+      return tags.get(OsmRailwayTags.getRailwayKeyTag());
+    }else if(OsmWaterwayTags.isWaterBasedWay(tags)){
+      return tags.get(OsmWaterwayTags.getUsedKeyTag(tags));
+    }else{
+      LOGGER.warning(String.format("No acceptable OSM way key found in provided tags (%s)", tags));
     }
     return null;
-  }   
-
-
-
+  }
 }

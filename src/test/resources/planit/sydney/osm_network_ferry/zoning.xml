@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<macroscopiczoning xmlns:gml="http://www.opengis.net/gml" xmlns:ns3="http://www.w3.org/1999/xlink" xmlns:ns4="http://www.w3.org/2001/SMIL20/" xmlns:ns5="http://www.w3.org/2001/SMIL20/Language" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" srsname="EPSG:3112" xsi:noNamespaceSchemaLocation="https://trafficplanit.github.io/PLANitManual/xsd/macroscopiczoninginput.xsd">
+    <id>0</id>
+    <intermodal>
+        <transferzones>
+            <zone id="0" externalid="270803847" type="platform">
+                <name>Circular Quay, No. 6 Wharf</name>
+                <gml:LineString>
+                    <gml:coordinates decimal="." cs="," ts=" ">1579181.65362903,-3922014.26285467 1579189.88462069,-3922016.63342999 1579199.11730569,-3922019.28684354 1579178.61664371,-3922092.39871783 1579176.74861665,-3922091.92967315 1579169.71427587,-3922090.18065125 1579162.36681124,-3922088.34393265 1579160.07591472,-3922087.50476043 1579181.65362903,-3922014.26285467</gml:coordinates>
+                </gml:LineString>
+            </zone>
+            <zone id="1" externalid="270803848" type="platform">
+                <name>Circular Quay, No. 5 Wharf</name>
+                <gml:LineString>
+                    <gml:coordinates decimal="." cs="," ts=" ">1579227.54899116,-3922025.76667716 1579235.49578836,-3922028.10925986 1579243.31032388,-3922030.40020797 1579223.57143129,-3922102.90421421 1579221.18524032,-3922102.41944175 1579214.80006989,-3922100.94919534 1579207.01960866,-3922099.15301478 1579204.81428009,-3922098.70430823 1579227.54899116,-3922025.76667716</gml:coordinates>
+                </gml:LineString>
+            </zone>
+            <zone id="10" externalid="5601109475" type="platform">
+                <name>Darling Harbour Wharf 1</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578252.5115147172 -3922529.9943736205</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="11" externalid="5837202912" type="platform">
+                <name>Barangaroo, Wharf 1, Sida A</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578255.9348621059 -3922313.959653586</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="12" externalid="6804603708" type="platform">
+                <name>Darling Harbour, King St Wharf 7</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578267.542580936 -3922775.4808780677</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="13" externalid="8151065419" type="platform">
+                <name>Darling Harbour, King St Wharf 6</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578270.2821200292 -3922724.089686768</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="14" externalid="8151065420" type="platform">
+                <name>Darling Harbour, King St Wharf 4</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578263.4193153817 -3922655.059120081</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="15" externalid="8151065421" type="platform">
+                <name>Darling Harbour, King St Wharf 2</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578267.223691079 -3922571.381552451</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="16" externalid="8151065422" type="platform">
+                <name>Darling Harbour, King St Wharf 8</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578265.162358232 -3922792.761920448</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="17" externalid="9518193591" type="platform">
+                <name>Barangaroo, Wharf 1, Side B</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578249.6205911322 -3922335.7217996903</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="18" externalid="9518262819" type="platform">
+                <name>Barangaroo, Wharf 2, Side A</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578255.9001874835 -3922379.377761583</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="19" externalid="9518262820" type="platform">
+                <name>Barangaroo, Wharf 2, Side B</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578249.4499962796 -3922401.7894783006</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="2" externalid="270803849" type="platform">
+                <name>Circular Quay, No. 4 Wharf</name>
+                <gml:LineString>
+                    <gml:coordinates decimal="." cs="," ts=" ">1579271.59472974,-3922037.00464988 1579279.38189964,-3922039.29185267 1579286.98209703,-3922041.51988008 1579268.2065527,-3922114.24572267 1579266.27620793,-3922113.75693653 1579259.4714355,-3922112.09518345 1579252.06626807,-3922110.27272754 1579249.74842734,-3922109.76395523 1579250.43535912,-3922107.34149318 1579271.59472974,-3922037.00464988</gml:coordinates>
+                </gml:LineString>
+            </zone>
+            <zone id="20" externalid="252058553" type="platform">
+                <name>Jefferys Street</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1579707.9534058035 -3920931.1496354803</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="21" externalid="8530018" type="platform">
+                <name>Milsons Point Wharf</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1579395.9737941534 -3920819.2656808263</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="22" externalid="82009167" type="platform">
+                <name>Cremorne Point</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1581286.7322708748 -3920931.3707651612</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="23" externalid="1838532348" type="platform">
+                <name>McMahons Point Wharf</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1579056.3631067006 -3920729.1665310515</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="24" externalid="1840889196" type="platform">
+                <name>Rose Bay Wharf</name>
+                <platforms>20291</platforms>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1583786.0439465991 -3923789.387681984</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="25" externalid="1937009879" type="platform">
+                <name>Garden Island</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1581040.6722839552 -3922020.443687204</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="26" externalid="3304182832" type="platform">
+                <name>Kirribilli (High Street)</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1580308.7038121596 -3920949.464028293</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="27" externalid="3605016899" type="platform">
+                <name>Fort Denison</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1580666.266938408 -3921602.359688102</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="28" externalid="5413375060" type="platform">
+                <name>Taronga Zoo</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1582088.4079117074 -3920858.6962542273</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="29" externalid="5425695841" type="platform">
+                <name>Darling Harbour, Pier 26</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578323.3744941622 -3923017.8121488523</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="3" externalid="270803850" type="platform">
+                <name>Circular Quay, No. 3 Wharf</name>
+                <gml:LineString>
+                    <gml:coordinates decimal="." cs="," ts=" ">1579296.00374458,-3922121.48479184 1579315.35708818,-3922047.66913464 1579325.74611821,-3922050.35950715 1579335.02252475,-3922052.76289429 1579315.57620248,-3922126.44320959 1579311.0709604,-3922125.22086044 1579306.47009399,-3922124.08557413 1579297.35954383,-3922121.82757396 1579296.00374458,-3922121.48479184</gml:coordinates>
+                </gml:LineString>
+            </zone>
+            <zone id="30" externalid="5425711246" type="platform">
+                <name>Shark Island Wharf</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1583548.7485431002 -3922535.7832325594</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="31" externalid="5601091629" type="platform">
+                <name>Pyrmont Bay Wharf</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578050.3296394746 -3922722.8661238947</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="32" externalid="5601101452" type="platform">
+                <name>Darling Harbour Wharf 9</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578261.6531881758 -3922849.5381307653</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="4" externalid="270803851" type="platform">
+                <name>Circular Quay, No. 2 Wharf</name>
+                <gml:LineString>
+                    <gml:coordinates decimal="." cs="," ts=" ">1579371.92799423,-3922062.74989473 1579379.9847995,-3922064.36151638 1579373.51447367,-3922100.99283605 1579366.91024942,-3922140.01148766 1579357.78742636,-3922137.64036765 1579347.23886876,-3922134.8945526 1579363.99734024,-3922061.16680329 1579371.92799423,-3922062.74989473</gml:coordinates>
+                </gml:LineString>
+            </zone>
+            <zone id="7" externalid="458705369" type="platform">
+                <name>Darling Harbour Wharf 3</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578239.8114303863 -3922612.691666332</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="8" externalid="4438512191" type="platform">
+                <name>Darling Harbour, King St Wharf 5</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1578252.7320213614 -3922694.6075849873</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+            <zone id="9" externalid="5601069117" type="platform">
+                <name>Balmain</name>
+                <centroid>
+                    <gml:Point>
+                        <gml:pos>1577112.9771988944 -3921082.8073847643</gml:pos>
+                    </gml:Point>
+                </centroid>
+            </zone>
+        </transferzones>
+        <transferzoneaccess>
+            <connectoid tzrefs="4" lsref="5" id="0" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="3" lsref="3" id="1" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="11" lsref="41" id="10" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="12" lsref="70" id="11" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="12" lsref="72" id="12" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="13" lsref="101" id="13" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="14" lsref="103" id="14" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="15" lsref="105" id="15" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="16" lsref="107" id="16" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="17" lsref="43" id="17" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="18" lsref="50" id="18" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="19" lsref="52" id="19" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="2" lsref="11" id="2" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="20" lsref="29" id="20" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="20" lsref="69" id="21" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="21" lsref="94" id="22" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="22" lsref="32" id="23" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="23" lsref="56" id="24" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="24" lsref="65" id="25" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="25" lsref="27" id="26" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="26" lsref="6" id="27" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="26" lsref="68" id="28" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="27" lsref="9" id="29" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="1" lsref="13" id="3" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="28" lsref="34" id="30" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="29" lsref="15" id="31" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="30" lsref="17" id="32" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="31" lsref="24" id="33" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="32" lsref="109" id="34" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="0" lsref="30" id="4" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="7" lsref="97" id="5" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="8" lsref="99" id="6" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="9" lsref="66" id="7" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="10" lsref="46" id="8" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="10" lsref="48" id="9" modes="ferry">
+                <length>0.0</length>
+            </connectoid>
+        </transferzoneaccess>
+        <transferzonegroups>
+            <transfergroup id="0" externalid="4513987" tzrefs="0,1,2,3,4">
+                <name>Circular Quay</name>
+            </transfergroup>
+        </transferzonegroups>
+    </intermodal>
+</macroscopiczoning>

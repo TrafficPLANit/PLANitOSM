@@ -1,12 +1,9 @@
 package org.goplanit.osm.converter.zoning;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmPtVersionScheme;
 import org.goplanit.utils.misc.Pair;
@@ -29,28 +26,43 @@ public class OsmZoningReaderOsmData {
   
   /* UNPROCESSED OSM */
 
+  /** track unprocessed but identified ferry terminals */
+  private final SortedMap<Long, OsmNode> unprocessedFerryTerminals = new TreeMap<>();
+
+
   /** track unprocessed but identified Ptv1 station nodes */
-  private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv1Stations = new TreeMap<EntityType, Map<Long, OsmEntity>>();
+  private final SortedMap<EntityType, SortedMap<Long, OsmEntity>> unprocessedPtv1Stations = new TreeMap<>();
   
   /** track unprocessed but identified Ptv2 station nodes/ways */
-  private final Map<EntityType, Map<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<EntityType, Map<Long, OsmEntity>>();
+  private final SortedMap<EntityType, SortedMap<Long, OsmEntity>> unprocessedPtv2Stations = new TreeMap<>();
       
   /** track unprocessed but identified Ptv2 stop positions by their osm node id */
-  private final Set<Long> unprocessedStopPositions= new TreeSet<Long>();
+  private final SortedMap<Long, OsmNode> unprocessedStopPositions= new TreeMap<>();
   
   /** the registered osm ways to keep based on their outer_role identification in a multi_polygon */
   private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<Long,OsmWay>();
   
   /* INVALID OSM */
   
-  /** Stop positions found to be invalid and to be excluded from post-processing when converting stop positions to connectoids */
-  private final Map<EntityType, Set<Long>> invalidStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
+  /** Stop positions found to be invalid or not needed due to inactive modes and are therefore to be ignored */
+  private final Map<EntityType, Set<Long>> ignoreStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
   
   /** osm waiting areas (platform, poles) found to be valid but not mapped to a planit mode, used to avoid logging user warnings when referenced by other 
    * osm entities such as stop_areas */  
   private final Map<EntityType, Set<Long>> waitingAreaWithoutMappedPlanitMode = new TreeMap<EntityType, Set<Long>>();
-      
-    
+
+  /** temporary storage of osmNodes before converting the useful ones to actual nodes */
+  private final OsmNodeData osmNodeData = new OsmNodeData();
+
+
+  /**
+   * Access to OSM node data
+   * @return OSM node data
+   */
+  public OsmNodeData getOsmNodeData(){
+    return osmNodeData;
+  }
+
   /* UNPROCESSED RELATED METHODS */  
 
   /** Collect an unprocessed station if it exists
@@ -71,15 +83,41 @@ public class OsmZoningReaderOsmData {
     
     return osmEntity==null ? null : Pair.of(version, osmEntity); 
   }
+
+  /** Collect an unprocessed ferry terminal if it exists
+   *
+   * @param osmId id to collect for
+   * @return unprocessed ferry terminal found, null otherwise
+   */
+  public OsmNode getUnprocessedPtv1FerryTerminal(long osmId) {
+    return getUnprocessedPtv1FerryTerminals().get(osmId);
+  }
+
+  /** Verify existence of an unprocessed ferry terminal
+   *
+   * @param osmId id to collect for
+   * @return true when unprocessed ferry terminal exists, false otherwise
+   */
+  public boolean hasUnprocessedPtv1FerryTerminal(long osmId) {
+    return getUnprocessedPtv1FerryTerminal(osmId) != null;
+  }
  
   /** collect the Ptv1 stations that have been identified but not processed yet (unmodifiable)
    * 
    * @param entityType to collect them for
-   * @return unprocess ptv1 stations
+   * @return unprocessed ptv1 stations
    */
-  public Map<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
-    unprocessedPtv1Stations.putIfAbsent(entityType, new TreeMap<Long, OsmEntity>());
-    return Collections.unmodifiableMap(unprocessedPtv1Stations.get(entityType));
+  public SortedMap<Long, OsmEntity> getUnprocessedPtv1Stations(EntityType entityType) {
+    unprocessedPtv1Stations.putIfAbsent(entityType, new TreeMap<>());
+    return Collections.unmodifiableSortedMap(unprocessedPtv1Stations.get(entityType));
+  }
+
+  /** collect the ferry terminal that have been identified but not processed yet (unmodifiable)
+   *
+   * @return unprocessed ferry terminal
+   */
+  public SortedMap<Long, OsmNode> getUnprocessedPtv1FerryTerminals() {
+    return Collections.unmodifiableSortedMap(unprocessedFerryTerminals);
   }
   
   /** add unprocessed ptv1 station
@@ -92,12 +130,22 @@ public class OsmZoningReaderOsmData {
     }else if(osmEntity instanceof OsmWay) {
       type = EntityType.Way;
     }else {
-      LOGGER.severe(String.format("unknown entity type when adding unprocessed Ptv1 station wit osm id %d, ignored"));
+      LOGGER.severe(String.format("Unknown entity type when adding unprocessed Ptv1 station wit OSM id %d, ignored"));
     }
        
-    unprocessedPtv1Stations.putIfAbsent(type, new TreeMap<Long,OsmEntity>());
+    unprocessedPtv1Stations.putIfAbsent(type, new TreeMap<>());
     unprocessedPtv1Stations.get(type).put(osmEntity.getId(), osmEntity);
-  }  
+  }
+
+  /** add unprocessed ferry terminal
+   * @param osmEntity to add
+   */
+  public void addUnprocessedPtv1FerryTerminal(OsmEntity osmEntity) {
+    if(!(osmEntity instanceof OsmNode)) {
+      LOGGER.severe(String.format("Ferry terminal should be node, found otherwise (%d), tagging error, ignored", osmEntity.getId()));
+    }
+    unprocessedFerryTerminals.put(osmEntity.getId(), (OsmNode) osmEntity);
+  }
   
   /** add unprocessed ptv2 station
    * @param osmEntity to add
@@ -109,7 +157,7 @@ public class OsmZoningReaderOsmData {
     }else if(osmEntity instanceof OsmWay) {
       type = EntityType.Way;
     }else {
-      LOGGER.severe(String.format("unknown entity type when adding unprocessed Ptv2 station wit osm id %d, ignored"));
+      LOGGER.severe(String.format("Unknown entity type when adding unprocessed Ptv2 station wit OSM id %d, ignored"));
     }
        
     unprocessedPtv2Stations.putIfAbsent(type, new TreeMap<Long,OsmEntity>());
@@ -120,17 +168,17 @@ public class OsmZoningReaderOsmData {
    * @param entityType to collect for (node, way)
    * @return unprocessed stations
    */
-  public Map<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
-    unprocessedPtv2Stations.putIfAbsent(entityType, new TreeMap<Long, OsmEntity>());
-    return Collections.unmodifiableMap(unprocessedPtv2Stations.get(entityType));
+  public SortedMap<Long, OsmEntity> getUnprocessedPtv2Stations(EntityType entityType) {
+    unprocessedPtv2Stations.putIfAbsent(entityType, new TreeMap<>());
+    return Collections.unmodifiableSortedMap(unprocessedPtv2Stations.get(entityType));
   }
 
   /** collect unprocessed stop positions
    * 
    * @return unprocessed stop positions (unmodifiable)
    */
-  public Set<Long> getUnprocessedStopPositions() {
-    return Collections.unmodifiableSet(unprocessedStopPositions);
+  public SortedMap<Long, OsmNode> getUnprocessedStopPositions() {
+    return Collections.unmodifiableSortedMap(unprocessedStopPositions);
   }
   
   /** remove unprocessed stop position
@@ -139,12 +187,19 @@ public class OsmZoningReaderOsmData {
   public void removeUnprocessedStopPosition(long osmId) {
     unprocessedStopPositions.remove(osmId);
   }
+
+  /** remove unprocessed ferry terminal
+   * @param osmId to remove
+   */
+  public void removeUnprocessedPtv1FerryTerminal(long osmId) {
+    unprocessedFerryTerminals.remove(osmId);
+  }
   
   /** add unprocessed stop position
-   * @param osmId to add
+   * @param osmNode to add
    */
-  public void addUnprocessedStopPosition(long osmId) {
-    unprocessedStopPositions.add(osmId);
+  public void addUnprocessedStopPosition(OsmNode osmNode) {
+    unprocessedStopPositions.put(osmNode.getId(), osmNode);
   } 
   
   /** Verify if unprocessed stop_position is registered
@@ -152,7 +207,7 @@ public class OsmZoningReaderOsmData {
    * @return true when registered, false otherwise
    */
   public boolean hasUnprocessedStopPosition(long osmId) {
-    return unprocessedStopPositions.contains(osmId);
+    return unprocessedStopPositions.containsKey(osmId);
   }  
   
 
@@ -189,7 +244,14 @@ public class OsmZoningReaderOsmData {
       default:
         LOGGER.warning(String.format("could not remove stations, invalid pt version provided"));        
     }
-  }  
+  }
+
+  /** Remove all unprocessed ferry terminals
+   *
+   */
+  public void removeAllUnprocessedPtv1FerryTerminals() {
+    unprocessedFerryTerminals.clear();
+  }
   
   /** Remove all unprocessed station of a particular pt version and type that are currently still registered
    * 
@@ -276,27 +338,29 @@ public class OsmZoningReaderOsmData {
     return osmOuterRoleOsmWaysToKeep.size();
   }  
     
-  /** add identified osm entity as invalid stop_position. When converting stop_positions to connectoids
-   * it will be skipped without further issue or warning
+  /** add identified OSM entity to be ignored if it pops up as a stop_area stop_position. For example, it was deemed
+   *  incorrectly tagged already, or it pertains to a mode that is not being supported. The latter might not be verifiable
+   *  when encountered as part of a relation, hence mark it here as such. It will then be skipped without further
+   *  issue or warning
    * 
    * @param type entity type
    * @param osmId osm entity to mark as invalid stop_position
    */
-  public void addInvalidStopAreaStopPosition(EntityType type, long osmId) {
-    invalidStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
-    invalidStopAreaStopPositions.get(type).add(osmId);
+  public void addIgnoreStopAreaStopPosition(EntityType type, long osmId) {
+    ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<>());
+    ignoreStopAreaStopPositions.get(type).add(osmId);
   }
   
-  /** Verify if marked as invalid
+  /** Verify if marked as to be ignored
    * 
    * @param type entity type
-   * @param osmId osm entity id to verify for invalidity
+   * @param osmId OSM entity id to verify for invalidity
    * @return  true when marked invalid, false otherwise
    */
-  public boolean isInvalidStopAreaStopPosition(EntityType type, long osmId) {
+  public boolean isIgnoreStopAreaStopPosition(EntityType type, long osmId) {
     if(type != null) {
-      invalidStopAreaStopPositions.putIfAbsent(type, new TreeSet<Long>());
-      return invalidStopAreaStopPositions.get(type).contains(osmId);
+      ignoreStopAreaStopPositions.putIfAbsent(type, new TreeSet<>());
+      return ignoreStopAreaStopPositions.get(type).contains(osmId);
     }
     return false;
   }  
@@ -309,19 +373,19 @@ public class OsmZoningReaderOsmData {
    * @param osmId OSM entity to mark as waiting area without mapped PLANit mode
    */  
   public void addWaitingAreaWithoutMappedPlanitMode(EntityType type, long osmId) {
-    waitingAreaWithoutMappedPlanitMode.putIfAbsent(type, new TreeSet<Long>());
+    waitingAreaWithoutMappedPlanitMode.putIfAbsent(type, new TreeSet<>());
     waitingAreaWithoutMappedPlanitMode.get(type).add(osmId);
   }
   
   /** Verify if marked as waiting area without a mapped planit mode
    * 
    * @param type entity type
-   * @param osmId osm entity id to verify for if the wainting area is marked as a valid one but simply not mapped to a planit mode
+   * @param osmId OSM entity id to verify for if the wainting area is marked as a valid one but simply not mapped to a planit mode
    * @return  true when marked invalid, false otherwise
    */  
   public boolean isWaitingAreaWithoutMappedPlanitMode(EntityType type, long osmId) {
     if(type != null) {
-      waitingAreaWithoutMappedPlanitMode.putIfAbsent(type, new TreeSet<Long>());
+      waitingAreaWithoutMappedPlanitMode.putIfAbsent(type, new TreeSet<>());
       return waitingAreaWithoutMappedPlanitMode.get(type).contains(osmId);
     }
     return false;
@@ -333,10 +397,12 @@ public class OsmZoningReaderOsmData {
   public void reset() {
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_1);
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
+    removeAllUnprocessedPtv1FerryTerminals();
     unprocessedStopPositions.clear();
     osmOuterRoleOsmWaysToKeep.clear();
-    waitingAreaWithoutMappedPlanitMode.clear();
+    waitingAreaWithoutMappedPlanitMode.clear();    
+    ignoreStopAreaStopPositions.clear();
+    osmNodeData.reset();
   }
-
 
 }

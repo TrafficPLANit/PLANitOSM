@@ -1,9 +1,6 @@
 package org.goplanit.osm.tags;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Most OSM rail based mode tags. This is specifically addressing when rail modes are used as key for access indication, e.g., train=yes rather than
@@ -108,8 +105,8 @@ public class OsmRailModeTags {
    * @param eligibleOsmModes to use
    * @return intersection with modes in this class
    */
-  public static Collection<String> getModesFrom(final Collection<String> eligibleOsmModes) {
-    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+  public static TreeSet<String> getModesFrom(final Collection<String> eligibleOsmModes) {
+    TreeSet<String> intersectionModes = new TreeSet<>(eligibleOsmModes);
     intersectionModes.retainAll(MODE_TAGS);
     return intersectionModes;
   }
@@ -119,7 +116,7 @@ public class OsmRailModeTags {
    * @param eligibleOsmModes to extract from
    * @return found public transport based modes
    */
-  public static Collection<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+  public static TreeSet<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
     return getModesFrom(eligibleOsmModes);
   }
   

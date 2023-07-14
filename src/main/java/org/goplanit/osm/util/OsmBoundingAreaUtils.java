@@ -6,6 +6,7 @@ import java.util.logging.Logger;
 import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
@@ -59,12 +60,9 @@ public class OsmBoundingAreaUtils {
    * @param geometry to determine distance to bounding box to
    * @param boundingBox to use
    * @param geoUtils to use
-   * @throws PlanItException thrown if error
    */
-  public static void logWarningIfNotNearBoundingBox(String message, Geometry geometry, Envelope boundingBox, PlanitJtsCrsUtils geoUtils) throws PlanItException {
-    if(!isNearNetworkBoundingBox(geometry, boundingBox, geoUtils)) {
-      LOGGER.warning(message);
-    }
+  public static void logWarningIfNotNearBoundingBox(String message, final Geometry geometry, final Envelope boundingBox, final PlanitJtsCrsUtils geoUtils) {
+    LoggingUtils.logWarningIf(LOGGER, message,geometry, g -> !isNearNetworkBoundingBox(g, boundingBox, geoUtils));
   }  
   
   /** check if geometry is near network bounding box using buffer based on PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS
@@ -73,9 +71,8 @@ public class OsmBoundingAreaUtils {
    * @param networkBoundingBox to consider
    * @param geoUtils to use
    * @return true when near, false otherwise
-   * @throws PlanItException thrown if error
    */
-  public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils) throws PlanItException {    
+  public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils){    
     return geoUtils.isGeometryNearBoundingBox(geometry, networkBoundingBox, OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
   }
   
@@ -115,12 +112,10 @@ public class OsmBoundingAreaUtils {
     boolean coveredByBoundingPolygon = false;
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
       long osmNodeId = osmWay.getNodeId(index);
-      if(osmNodes.containsKey(osmNodeId)) {
-        OsmNode osmNode = osmNodes.get(osmNodeId);
-        if(isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
-          coveredByBoundingPolygon = true;
-          break;
-        }
+      OsmNode osmNode = osmNodes.get(osmNodeId);
+      if(osmNode!=null && isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
+        coveredByBoundingPolygon = true;
+        break;
       }
     }
     
@@ -160,8 +155,8 @@ public class OsmBoundingAreaUtils {
    * @return bounding box
    */
   public static Envelope createBoundingBox(OsmNode osmNode, double offsetInMeters, PlanitJtsCrsUtils geoUtils) {
-    double xCoord = OsmNodeUtils.getX(((OsmNode)osmNode));
-    double yCoord = OsmNodeUtils.getY(((OsmNode)osmNode));
+    double xCoord = OsmNodeUtils.getX(osmNode);
+    double yCoord = OsmNodeUtils.getY(osmNode);
     return geoUtils.createBoundingBox(xCoord, yCoord, offsetInMeters);
   }  
  

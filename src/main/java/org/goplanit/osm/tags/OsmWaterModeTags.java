@@ -1,9 +1,6 @@
 package org.goplanit.osm.tags;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Most OSM water based mode tags. This is specifically addressing when water modes are used as key for access indication, e.g., ferry=yes
@@ -14,7 +11,7 @@ import java.util.Set;
 public class OsmWaterModeTags {
   
   /** all currently available mode tags */
-  private static final Set<String> MODE_TAGS = new HashSet<String>();
+  private static final Set<String> MODE_TAGS = new HashSet<>();
   
   /**
    * populate the available mode tags
@@ -69,8 +66,8 @@ public class OsmWaterModeTags {
    * @param eligibleOsmModes to use
    * @return intersection with modes in this class
    */
-  public static Collection<String> getModesFrom(final Collection<String> eligibleOsmModes) {
-    HashSet<String> intersectionModes = new HashSet<String>(eligibleOsmModes);
+  public static TreeSet<String> getModesFrom(final Collection<String> eligibleOsmModes) {
+    TreeSet<String> intersectionModes = new TreeSet<>(eligibleOsmModes);
     intersectionModes.retainAll(MODE_TAGS);
     return intersectionModes;
   } 
@@ -80,7 +77,7 @@ public class OsmWaterModeTags {
    * @param eligibleOsmModes to extract from
    * @return found public transport based modes
    */
-  public static Collection<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
+  public static TreeSet<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
     return getModesFrom(eligibleOsmModes);
   }   
   

@@ -49,8 +49,8 @@ public class ModifiedLinkSegmentTypes {
     ModifiedLinkSegmentTypesModes(MacroscopicLinkSegmentType original){
       this.original=original;
       /* populate empty entries with no added or removed modes */
-      linkSegmentTypesWithAddedModes.put(null, new HashSet<MacroscopicLinkSegmentType>());
-      linkSegmentTypesWithRemovedModes.put(null, new HashSet<MacroscopicLinkSegmentType>());
+      linkSegmentTypesWithAddedModes.put(null, new HashSet<>());
+      linkSegmentTypesWithRemovedModes.put(null, new HashSet<>());
     }
     
     
@@ -69,8 +69,8 @@ public class ModifiedLinkSegmentTypes {
      * @return the link segment type when found, null otherwise
      */
     public MacroscopicLinkSegmentType getModifiedLinkSegmentType(final Set<Mode> addedModes, final Set<Mode> removedModes){
-      Set<Mode> theAddedModes = (addedModes == null) ? new HashSet<Mode>() : addedModes;
-      Set<Mode> theRemovedModes = (removedModes == null) ? new HashSet<Mode>() : removedModes;
+      Set<Mode> theAddedModes = (addedModes == null) ? new HashSet<>() : addedModes;
+      Set<Mode> theRemovedModes = (removedModes == null) ? new HashSet<>() : removedModes;
       
       if(linkSegmentTypesWithAddedModes.containsKey(theAddedModes)) {
         Set<MacroscopicLinkSegmentType> candidateLinkSegmentTypes = linkSegmentTypesWithAddedModes.get(theAddedModes);

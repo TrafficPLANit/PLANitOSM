@@ -21,10 +21,10 @@ public class OsmZoningReaderData {
   
   /* UNPROCESSED OSM */
   
-  /* planit entity related tracking during parsing */
+  /* PLANit entity related tracking during parsing */
   OsmZoningReaderPlanitData planitData = new OsmZoningReaderPlanitData();
   
-  /* osm entity related tracking during parsing */
+  /* OSM entity related tracking during parsing */
   OsmZoningReaderOsmData osmData = new OsmZoningReaderOsmData();   
   
   /**
@@ -41,7 +41,8 @@ public class OsmZoningReaderData {
     this.countryName = countryName;
   }
   
-  /** collect the country name
+  /** Collect the country name
+   * 
    * @return country name
    */
   public String getCountryName() {
@@ -64,7 +65,7 @@ public class OsmZoningReaderData {
     return planitData;
   }
   
-  /** collect the osm related tracking data 
+  /** collect the OSM related tracking data 
    * 
    * @return osm data
    */

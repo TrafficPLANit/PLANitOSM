@@ -6,7 +6,7 @@ import org.goplanit.utils.locale.CountryNames;
 
 /**
  * Class representing the default mode access restrictions/allowance for modes for a given
- * highway type.
+ * highway/railway/waterway-like type.
  * 
  * Disallowed modes take precedence over any other setting, allowed modes take precedence over mode category settings
  * and mode category settings define groups of allowed modes (when not present, it is assumed the category is not allowed as a whole)
@@ -14,7 +14,7 @@ import org.goplanit.utils.locale.CountryNames;
  * @author markr
  *
  */
-public class OsmModeAccessDefaults implements Cloneable {
+public class OsmModeAccessDefaults {
   
   /**
    * The logger for this class
@@ -25,6 +25,8 @@ public class OsmModeAccessDefaults implements Cloneable {
   private final OsmModeAccessDefaultsCategory highwayModeAccessDefaults;
   
   private final OsmModeAccessDefaultsCategory railwayModeAccessDefaults;
+
+  private final OsmModeAccessDefaultsCategory waterwayModeAccessDefaults;
   
   /** country for which these defaults hold */
   private String countryName;  
@@ -37,7 +39,8 @@ public class OsmModeAccessDefaults implements Cloneable {
   public OsmModeAccessDefaults() {
     this.countryName = CountryNames.GLOBAL;
     this.highwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();
-    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();    
+    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();
+    this.waterwayModeAccessDefaults = new OsmModeAccessDefaultsCategory();
   }
   
   /**
@@ -48,7 +51,8 @@ public class OsmModeAccessDefaults implements Cloneable {
   public OsmModeAccessDefaults(String countryName) {
     this.countryName = countryName;
     this.highwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);
-    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);        
+    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);
+    this.waterwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(countryName);
   }  
   
   /**
@@ -59,7 +63,8 @@ public class OsmModeAccessDefaults implements Cloneable {
   public OsmModeAccessDefaults(OsmModeAccessDefaults other) {
     this.countryName = other.countryName;
     this.highwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.highwayModeAccessDefaults);
-    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.railwayModeAccessDefaults);    
+    this.railwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.railwayModeAccessDefaults);
+    this.waterwayModeAccessDefaults = new OsmModeAccessDefaultsCategory(other.waterwayModeAccessDefaults);
   }  
   
   /** The country for which these defaults hold. In absence of a country, it should return CountryNames.GLOBAL
@@ -77,19 +82,28 @@ public class OsmModeAccessDefaults implements Cloneable {
     this.countryName = countryName;
     this.highwayModeAccessDefaults.setCountry(countryName);
     this.railwayModeAccessDefaults.setCountry(countryName);
+    this.waterwayModeAccessDefaults.setCountry(countryName);
   }    
   
 
   /**
-   * {@inheritDoc}
+   * shallow copy
+   *
+   * @return shallow copy
    */
-  @Override
-  public OsmModeAccessDefaults clone() throws CloneNotSupportedException {
+  public OsmModeAccessDefaults shallowClone() {
     return new OsmModeAccessDefaults(this);
-  }  
-     
+  }
 
-  
+  /**
+   * deep copy
+   *
+   * @return deep copy
+   */
+  public OsmModeAccessDefaults deepClone() {
+    return shallowClone(); // same at present
+  }
+
   /** collect the defaults specifically for highways
    * @return highway mode access defaults
    */
@@ -102,6 +116,13 @@ public class OsmModeAccessDefaults implements Cloneable {
    */
   public OsmModeAccessDefaultsCategory getRailwayModeAccessDefaults() {
     return railwayModeAccessDefaults;
+  }
+
+  /** collect the defaults specifically for waterways
+   * @return waterway mode access defaults
+   */
+  public OsmModeAccessDefaultsCategory getWaterwayModeAccessDefaults() {
+    return waterwayModeAccessDefaults;
   }
 
 

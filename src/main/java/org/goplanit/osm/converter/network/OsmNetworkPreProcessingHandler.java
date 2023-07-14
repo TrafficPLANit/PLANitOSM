@@ -1,10 +1,13 @@
 package org.goplanit.osm.converter.network;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
-import de.topobyte.osm4j.core.access.DefaultOsmHandler;
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 
 /**
  * Preprocessing Handler that identifies which nodes of osm ways  - that are marked for inclusion even if they fall (partially) outside the bounding polygon -
@@ -15,68 +18,94 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  * 
  *
  */
-public class OsmNetworkPreProcessingHandler extends DefaultOsmHandler {
+public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
   /**
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkPreProcessingHandler.class.getCanonicalName());
   
-  /** the settings to adhere to */
-  private final OsmNetworkReaderSettings settings;         
+  private final LongAdder nodeCounter;
+    
+ 
+  /** Mark all nodes of eligible OSM ways (e.g., road, rail, etc.) to be parsed during the main processing phase
+   * 
+   * @param osmWay to handle
+   * @param tags of the OSM way
+   */
+  protected void handleEligibleOsmWay(OsmWay osmWay, Map<String,String> tags) {
+    var settings = getSettings();
+     
+    if(settings.hasBoundingPolygon() && settings.isKeepOsmWayOutsideBoundingPolygon(osmWay.getId())) {
+      
+      if(settings.isOsmWayExcluded(osmWay.getId())) {
+        LOGGER.warning("OSM way %d is marked for exclusion as well as keeping it, this is conflicting, OSM way exclusion takes precedence");
+        return;
+      }
+
+      /* mark all nodes for keeping, since we determine availability based on the tracked OSM nodes */
+      for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+        settings.setKeepOsmNodeOutsideBoundingPolygon(osmWay.getNodeId(index));
+      }
+    }
+    
+    /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail) */
+    for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+      getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+    }
+  }
     
 
   /**
-   * constructor
-   * 
+   * Constructor
+   *
+   * @param networkToPopulate the network to populate
+   * @param networkData to populate
    * @param settings for the handler
    */
-  public OsmNetworkPreProcessingHandler(final OsmNetworkReaderSettings settings) { 
-    this.settings = settings;       
-  }
+  public OsmNetworkPreProcessingHandler(final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+    super(networkToPopulate, networkData, settings);
+    this.nodeCounter = new LongAdder();
+  }  
   
+  /**
+   * Count total number of nodes in OSM file
+   */
+  @Override
+  public void handle(OsmNode node) {
+    nodeCounter.increment();
+  }
+
+
   /**
    * for all OSM ways that are explicitly marked for inclusion despite falling outside the bounding polygon we extract their nodes and mark
    * them for inclusion as exceptions to the bounding polygon filter that is applied during the main parsing pass in the regular
    * PlanitOsmNetworkHandler
    */
   @Override
-  public void handle(OsmWay osmWay) throws IOException {
+  public void handle(OsmWay osmWay) {
     
-    if(settings.hasBoundingPolygon() &&
-        settings.isKeepOsmWayOutsideBoundingPolygon(osmWay.getId())) {
-      
-      if(settings.isOsmWayExcluded(osmWay.getId())) {
-        LOGGER.warning("OSM way %d is marked for exclusion as well as keeping it, this is conficting, OSM way exclusion takes precedence");
-        return;
-      }
-      
-      /* mark all nodes for keeping, since we determine availability based on the tracked OSM nodes */
-      for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-        settings.setKeepOsmNodeOutsideBoundingPolygon(osmWay.getNodeId(index));
-      }
-    }
-                
+    wrapHandleOsmWay(osmWay, this::handleEligibleOsmWay);
+                        
   }
-
-  /**
-   * {@inheritDoc}
+  
+  /** Log total number of parsed nodes and percentage retained
    */
   @Override
   public void complete() throws IOException {
-                
-    if(settings.hasBoundingPolygon() && (settings.hasKeepOsmWaysOutsideBoundingPolygon() || settings.hasKeepOsmNodesOutsideBoundingPolygon())) {
-      LOGGER.info(String.format("Identified %d OSM ways and %d nodes to keep even if (partially) outside bounding polygon", 
-          settings.getNumberOfKeepOsmWaysOutsideBoundingPolygon(), settings.getNumberOfKeepOsmNodesOutsideBoundingPolygon()));
-      LOGGER.info("OSM preprocessing network ...DONE");
-    }
-
+    super.complete();
+    int totalOsmNodes = (int) nodeCounter.sum();
+    int preRegisteredOsmNodes = getNetworkData().getOsmNodeData().getRegisteredOsmNodes().size();
+    LOGGER.info(String.format("Total OSM nodes in source: %d",totalOsmNodes));
+    LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double)totalOsmNodes));
   }
-  
+
+
   /**
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {
+    super.reset();
     /* data and settings are to be kept for main parsing loop */
   }  
   

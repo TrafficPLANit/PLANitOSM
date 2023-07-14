@@ -8,7 +8,6 @@ import java.util.Map;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmRoadModeCategoryTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 
 import java.util.Set;
@@ -51,11 +50,11 @@ public class OsmLaneTaggingSchemeHelper{
    * @return yes, when these modes are activated, false otherwise
    */
   protected static boolean requireTaggingSchemeHelper(OsmNetworkReaderSettings settings, MacroscopicNetworkLayer networkLayer) {    
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS)) {
+    if(settings.hasAnyMappedPlanitModeType(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS)) {
       List<String> modesRequiringTaggingScheme = Arrays.asList(OsmRoadModeTags.BUS, OsmRoadModeTags.BICYCLE, OsmRoadModeTags.HEAVY_GOODS);
       for(String osmMode : modesRequiringTaggingScheme) {
-        Mode planitMode = settings.getMappedPlanitMode(osmMode);
-        if(planitMode != null && networkLayer.supports(planitMode)) {
+        var planitModeType = settings.getMappedPlanitModeType(osmMode);
+        if(planitModeType != null && networkLayer.supports(planitModeType)) {
           return true;
         }
       }            
@@ -74,12 +73,12 @@ public class OsmLaneTaggingSchemeHelper{
    * @return list os OSM modes that would identify such modes */
   protected static Set<String> getEligibleTaggingSchemeHelperModes(OsmNetworkReaderSettings settings, MacroscopicNetworkLayer networkLayer) {
     Set<String> eligibleModes = new HashSet<>();
-    if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BUS) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.BUS))){
+    if(settings.hasAnyMappedPlanitModeType(OsmRoadModeTags.BUS) && networkLayer.supports(settings.getMappedPlanitModeType(OsmRoadModeTags.BUS))){
       eligibleModes.add(OsmRoadModeTags.BUS);
       eligibleModes.add(OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
-    }else if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.BICYCLE) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.BICYCLE))) {
+    }else if(settings.hasAnyMappedPlanitModeType(OsmRoadModeTags.BICYCLE) && networkLayer.supports(settings.getMappedPlanitModeType(OsmRoadModeTags.BICYCLE))) {
       eligibleModes.add(OsmRoadModeTags.BICYCLE);
-    }else if(settings.hasAnyMappedPlanitMode(OsmRoadModeTags.HEAVY_GOODS) && networkLayer.supports(settings.getMappedPlanitMode(OsmRoadModeTags.HEAVY_GOODS))) {
+    }else if(settings.hasAnyMappedPlanitModeType(OsmRoadModeTags.HEAVY_GOODS) && networkLayer.supports(settings.getMappedPlanitModeType(OsmRoadModeTags.HEAVY_GOODS))) {
       eligibleModes.add(OsmRoadModeTags.HEAVY_GOODS);
     }
     return eligibleModes;

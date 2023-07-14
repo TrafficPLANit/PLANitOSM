@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.TransportLayer;
+import org.goplanit.utils.network.layer.NetworkLayer;
 import org.locationtech.jts.geom.Envelope;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
@@ -30,7 +30,7 @@ public class OsmNetworkToZoningReaderData {
   private final OsmNetworkReaderData networkData;  
   
   /** layer specific data that is to be made available to the zoning reader */
-  private final Map<TransportLayer, OsmNetworkReaderLayerData> networkLayerData = new HashMap<TransportLayer, OsmNetworkReaderLayerData>();
+  private final Map<NetworkLayer, OsmNetworkReaderLayerData> networkLayerData = new HashMap<NetworkLayer, OsmNetworkReaderLayerData>();
   
   /** register layer specific data
    * @param networkLayer to register for
@@ -47,10 +47,10 @@ public class OsmNetworkToZoningReaderData {
    */
   protected OsmNetworkToZoningReaderData(final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings networkReaderSettings) {
     if(networkData==null) {
-      LOGGER.severe("network data provided to PlanitOsmNetworkToZoningReaderData constructor null");
+      LOGGER.severe("Network data provided to PlanitOsmNetworkToZoningReaderData constructor null");
     }
     if(networkReaderSettings==null) {
-      LOGGER.severe("network reader settings provided to PlanitOsmNetworkToZoningReaderData constructor null");
+      LOGGER.severe("Network reader settings provided to PlanitOsmNetworkToZoningReaderData constructor null");
     }
     this.networkData = networkData;
     this.networkReaderSettings = networkReaderSettings;
@@ -61,19 +61,11 @@ public class OsmNetworkToZoningReaderData {
    * @param networkLayer to collect for
    * @return layer data
    */
-  public OsmNetworkReaderLayerData  getNetworkLayerData(TransportLayer networkLayer) {
+  public OsmNetworkReaderLayerData  getNetworkLayerData(NetworkLayer networkLayer) {
     OsmNetworkReaderLayerData data =  networkLayerData.get(networkLayer);
     return data;
-  }  
-  
-  /** Collect OSM nodes
-   * 
-   * @return osm nodes
-   */
-  public Map<Long, OsmNode> getOsmNodes() {
-    return networkData.getOsmNodes();
   }
-  
+
   /** collect the bounding box of the network that is parsed
    * 
    * @return network bounding box
@@ -88,5 +80,37 @@ public class OsmNetworkToZoningReaderData {
   public OsmNetworkReaderSettings getNetworkSettings() {
     return networkReaderSettings;
   }
-    
+
+  /**
+   * Collect the retained OSM nodes used to extract PLANit network infrastructure
+   *
+   * @return retained OSM  nodes
+   */
+  public Map<Long, OsmNode> getNetworkOsmNodes(){
+    return networkData.getOsmNodeData().getRegisteredOsmNodes();
+  }
+
+  /**
+   * Register additional OSM nodes as being part of the network after the network has been parsed.
+   * This may happen when we artificially expand the network while identifying OSM nodes that should in
+   * fact be part of the network, such as dangling ferry stops that we want to connect.
+   *
+   * @param osmNode  node to register
+   */
+  public void registerNetworkOsmNode(OsmNode osmNode){
+    networkData.getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());
+    networkData.getOsmNodeData().registerEligibleOsmNode(osmNode);
+  }
+
+  /**
+   * Verify if an OSM way is processed but identified as unavailable. Any subsequent dependencies on this OSM way
+   * can be safely ignored without issuing further warnings
+   *
+   * @param osmWayId to verify
+   * @return true when processed and unavailable, false otherwise
+   */
+  public boolean isOsmWayProcessedAndUnavailable(long osmWayId){
+    return networkData.isOsmWayProcessedAndUnavailable(osmWayId);
+  }
+
 }

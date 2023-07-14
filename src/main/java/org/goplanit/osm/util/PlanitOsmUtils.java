@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 
 import org.goplanit.osm.tags.OsmSpeedTags;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
@@ -106,18 +107,19 @@ public class PlanitOsmUtils {
    * @param edges to check against
    * @param osmNodes to extract geometry of osm entity from
    * @param geoUtils used to compute distances
+   * @param suppressLogging when true suppress logging, false otherwise
    * @return closest edge found
-   * @throws PlanItException thrown if error
    */
-  public static Edge findEdgeClosest(OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) throws PlanItException {
+  public static Edge findEdgeClosest(
+      OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
-      return OsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, geoUtils);
+      return OsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, suppressLogging, geoUtils);
     case Way:
-      return OsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, geoUtils);      
+      return OsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, suppressLogging, geoUtils);
     default:
-      LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
+      if(!suppressLogging) LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
       break;
     }
     return null;
@@ -134,15 +136,14 @@ public class PlanitOsmUtils {
     return extractGeometry(osmEntity, osmNodes, LOGGER.getLevel());
   } 
   
-  /** extract geometry from the osm entity, either a point, line string or polygon
+  /** extract geometry from the OSM entity, either a point, line string or polygon
    * 
    * @param osmEntity to extract from
    * @param osmNodes to extract geo information from referenced nodes from in entity
-   * @param logLevel change to this logLevel during the method call (reinstate original loglevel after)
+   * @param logLevel change to this logLevel during the method call (reinstate original log level after)
    * @return geometry created
-   * @throws PlanItException thrown if error
    */
-  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes, Level logLevel) throws PlanItException {
+  public static Geometry extractGeometry(OsmEntity osmEntity, Map<Long, OsmNode> osmNodes, Level logLevel){
     Level originalLogLevel = LOGGER.getLevel();
     LOGGER.setLevel(logLevel);  
     Geometry theGeometry = null;
@@ -150,8 +151,8 @@ public class PlanitOsmUtils {
       OsmNode osmNode = OsmNode.class.cast(osmEntity);
       try {
         theGeometry = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));
-      } catch (PlanItException e) {
-        LOGGER.severe(String.format("unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
+      } catch (PlanItRunTimeException e) {
+        LOGGER.severe(String.format("Unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
       }
     }else if(osmEntity instanceof OsmWay) {
       /* either area or linestring */
@@ -160,7 +161,6 @@ public class PlanitOsmUtils {
     }
     LOGGER.setLevel(originalLogLevel);
     return theGeometry;
-  }  
-    
+  }
 
 }

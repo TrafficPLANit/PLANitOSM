@@ -1,8 +1,15 @@
 package org.goplanit.osm.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.utils.misc.StringUtils;
 
 /**
  * Class with some general convenience methods for dealing with OSM tags 
@@ -11,9 +18,12 @@ import org.goplanit.osm.tags.OsmTags;
  *
  */
 public class OsmTagUtils {
+
+  /** logegr to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmTagUtils.class.getCanonicalName());
   
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
-  public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";  
+  public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
 
   
   /** Verify if the passed in value tag is present in the list of value tags provided
@@ -106,7 +116,7 @@ public class OsmTagUtils {
     return false;
   }
 
-  /** Collect the value for the first "ref" related key tag that we support. In order of precedence we currently support the following ref key tags
+  /** Collect the values for any "ref" related key tag that we support. We currently support the following ref key tags
    * 
    * <ul>
    * <li>ref</li>
@@ -115,17 +125,61 @@ public class OsmTagUtils {
    * </ul>
    * 
    * @param tags to verify
-   * @return found value, null if none is present
+   * @return found values, empty if present
    */
-  public static String getValueForSupportedRefKeys(Map<String, String> tags) {
-    if(tags.containsKey(OsmTags.REF)) {
-      return tags.get(OsmTags.REF);
-    }else if(tags.containsKey(OsmTags.LOC_REF)) {
-      return tags.get(OsmTags.LOC_REF);
-    }else if(tags.containsKey(OsmTags.LOCAL_REF)) {
-      return tags.get(OsmTags.LOCAL_REF);
+  public static List<String> getValuesForSupportedRefKeys(Map<String, String> tags) {
+    final List<String> refs = new ArrayList<>(1);
+
+    Consumer<String> addToRefsForTag =
+        (osmRefTag) -> {
+          if(tags.containsKey(osmRefTag)) {
+            refs.addAll(Arrays.asList(StringUtils.splitByAnythingExceptAlphaNumeric(tags.get(osmRefTag))));
+          }
+        };
+
+    addToRefsForTag.accept(OsmTags.REF);
+    addToRefsForTag.accept(OsmTags.LOC_REF);
+    addToRefsForTag.accept(OsmTags.LOCAL_REF);
+
+    return refs;
+  }
+
+  /**
+   * Parse value for key as Integer, return null and log warning if not possible to perform conversion
+   *
+   * @param tags to extract from
+   * @param tagKey key to get value for
+   * @return parsed integer
+   */
+  public static Integer getValueAsInt(Map<String, String> tags, String tagKey) {
+    try {
+      return Integer.parseInt(tags.get(tagKey));
+    }catch(NumberFormatException nfe){
+      LOGGER.warning(String.format("Value for tag %s is not integer, tagging error", tagKey));
     }
     return null;
-  } 
-    
+  }
+
+  /**
+   * Combine two string and add '=' in between
+   *
+   * @param key to use
+   * @param value to use
+   * @return key=value
+   */
+  public static String toConcatEqualsString(String key, String value){
+    return toConcatWithSep(key, value, "=");
+  }
+
+  /**
+   * Combine two string and add separator, e.g, '=' in between
+   *
+   * @param key to use
+   * @param value to use
+   * @param sep separator to use
+   * @return result e.g., a=b for ('a','b','=')
+   */
+  public static String toConcatWithSep(String key, String value,String sep){
+    return String.format("%s%s%s",key, sep, value);
+  }
 }

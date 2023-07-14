@@ -207,6 +207,13 @@ public class OsmRailwayTags {
   public static boolean hasRailwayKeyTag(Map<String, String> tags) {
     return tags.containsKey(OsmRailwayTags.RAILWAY);
   }
-   
-    
+
+  /**
+   * Get the railway key tag used
+   *
+   * @return railway key tag
+   */
+  public static String getRailwayKeyTag() {
+    return OsmRailwayTags.RAILWAY;
+  }
 }

@@ -3,10 +3,7 @@ package org.goplanit.osm.util;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmPtv1Tags;
-import org.goplanit.osm.tags.OsmPtv2Tags;
-import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.*;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 
@@ -31,14 +28,16 @@ public class OsmPtVersionSchemeUtils {
    */
   public static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
     if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags)) {
+      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags) || OsmWaterwayTags.isWaterBasedWay(tags)) {
         return OsmPtv1Tags.hasPtv1ValueTag(tags);
       }
+      /* we also consider ferry terminals as "ptv1" although technically they are an amenity */
+      return OsmPtv1Tags.isFerryTerminal(tags);
     }else if(scheme.equals(OsmPtVersionScheme.VERSION_2)) {
       return OsmPtv2Tags.hasPtv2ValueTag(tags);
-    }else {
+    }
+    else {
      LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility with, ignored",scheme.value()));
-
     }
     return false;
   }
@@ -72,16 +71,19 @@ public class OsmPtVersionSchemeUtils {
     /* Context: The parser assumed a valid Ptv2 tagging and ignored the Ptv1 tag. However, it was only a valid Ptv1 tag and incorrectly tagged Ptv2 stop_location.
      * We therefore identify this special situation */    
     if(OsmPtv1Tags.isTramStop(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 tram_stop (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      LOGGER.fine(String.format("Identified Ptv1 tram_stop (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isBusStop(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 bus_stop (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      LOGGER.fine(String.format("Identified Ptv1 bus_stop (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isHalt(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 halt (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+      LOGGER.fine(String.format("Identified Ptv1 halt (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
-    }else if(OsmPtv1Tags.isStation(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 station (%d) that is also tagged as Ptv2 public_transport=stop_location", osmNode.getId()));
+    }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
+      LOGGER.fine(String.format("Identified Ptv1 station (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
+      return true;
+    }else if(OsmPtv1Tags.isFerryTerminal(tags)){
+      LOGGER.fine(String.format("Identified Ptv1 ferry terminal (%d) for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }
     return false;

@@ -105,7 +105,7 @@ public class Osm4JUtils {
     }else if( entity instanceof OsmWay){
       return EntityType.Way;
     }else {
-      LOGGER.severe(String.format("unknown osm entity %d encountered when registering transfer zone, transfer zone not registered",entity.getId()));
+      LOGGER.severe(String.format("Unknown OSM entity %d encountered when registering transfer zone, transfer zone not registered",entity.getId()));
       return null;
     }
   }

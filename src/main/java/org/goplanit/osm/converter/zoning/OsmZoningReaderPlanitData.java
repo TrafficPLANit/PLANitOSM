@@ -1,26 +1,24 @@
 package org.goplanit.osm.converter.zoning;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
+import de.topobyte.osm4j.core.model.iface.OsmEntity;
+import de.topobyte.osm4j.core.model.iface.OsmTag;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.utils.exceptions.PlanItException;
-import org.goplanit.utils.geo.PlanitGraphGeoUtils;
+import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.osm.util.Osm4JUtils;
+import org.goplanit.osm.util.OsmTagUtils;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.geo.GeoContainerUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.TransportLayer;
-import org.goplanit.utils.network.layer.physical.Link;
-import org.goplanit.utils.network.layer.physical.Links;
+import org.goplanit.utils.network.layer.NetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinks;
 import org.goplanit.utils.zoning.DirectedConnectoid;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
@@ -45,14 +43,17 @@ public class OsmZoningReaderPlanitData {
   
   /** track created transfer zones by their osm id that were extracted from an OsmNode or way (osm id is key) */
   private final Map<EntityType, Map<Long, TransferZone>> transferZonesByOsmEntityId = new TreeMap<EntityType,Map<Long,TransferZone>>();
+
+  /** track transfer zone OSM layer index, if absent it is expected to reflect default layer of 0 */
+  private final Map<TransferZone, Integer> transferZonesLayerIndex = new TreeMap<>();
   
   /** in addition to tracking transfer zones by their Osm entity id, we also track them spatially, to be able to map them to close by stop positions if needed */  
-  private final Map<EntityType, Quadtree> transferZonesBySpatialIndex = new TreeMap<EntityType, Quadtree>();
+  private final Map<EntityType, Quadtree> transferZonesBySpatialIndex = new TreeMap<>();
     
   /* OSM <-> CONNECTOID TRACKING */
   
   /** track created connectoids by their location and layer they reside on, needed to avoid creating duplicates when dealing with multiple modes/layers */
-  private final Map<TransportLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByOsmNodeId = new HashMap<TransportLayer,Map<Point, List<DirectedConnectoid>>>();
+  private final Map<NetworkLayer,Map<Point, List<DirectedConnectoid>>> directedConnectoidsByLocation = new HashMap<>();
   
   
   /* TRANSFER ZONE <-> CONNECTOID TRACKING */
@@ -77,11 +78,11 @@ public class OsmZoningReaderPlanitData {
    * @param osmNetwork to use
    */
   protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
-    Collection<Links> linksCollection = new ArrayList<Links>();
+    Collection<MacroscopicLinks> linksCollection = new ArrayList<>();
     for(MacroscopicNetworkLayer layer : osmNetwork.getTransportLayers()) {
       linksCollection.add(layer.getLinks());
     }
-    spatiallyIndexedPlanitLinks = PlanitGraphGeoUtils.createSpatiallyIndexedPlanitEdges(linksCollection);
+    spatiallyIndexedPlanitLinks = GeoContainerUtils.toGeoIndexed(linksCollection);
   }
       
         
@@ -132,18 +133,17 @@ public class OsmZoningReaderPlanitData {
    * 
    * @param entityType to collect for
    * @return available transfer zones by osm id
-   * @throws PlanItException thrown if error
    */
-  public Collection<TransferZone> getTransferZonesByOsmId(EntityType entityType) throws PlanItException {
+  public SortedSet<TransferZone> getTransferZonesByOsmId(EntityType entityType) {
+    transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<>());
     switch (entityType) {
       case Node:
-          transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
-          return Collections.unmodifiableCollection(transferZonesByOsmEntityId.get(entityType).values());
       case Way:
-        transferZonesByOsmEntityId.putIfAbsent(entityType, new TreeMap<Long,TransferZone>());
-        return Collections.unmodifiableCollection(transferZonesByOsmEntityId.get(entityType).values());
+          return transferZonesByOsmEntityId.get(entityType).values().stream().collect(
+              Collectors.toCollection(() -> new TreeSet<>()));
       default:
-        throw new PlanItException("Unspported entity type encountered for transfer zone tracked in zoning reader, this shoudn't happen");
+        throw new PlanItRunTimeException(
+            "Unsupported entity type encountered for transfer zone tracked in zoning reader, this shouldn't happen");
     }
   }  
   
@@ -156,10 +156,10 @@ public class OsmZoningReaderPlanitData {
   public Collection<TransferZone> getTransferZonesSpatially(Envelope boundingBox) {
     
     final Set<TransferZone> correctZones = new HashSet<TransferZone>();
-    final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor = 
-        new PlanitJtsIntersectZoneVisitor<TransferZone>(PlanitJtsUtils.create2DPolygon(boundingBox), correctZones);          
+    final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor =
+            new PlanitJtsIntersectZoneVisitor<>(PlanitJtsUtils.create2DPolygon(boundingBox), correctZones);
     
-    /* query the spatially indexed entries AND apply the visitor that filteres out false positives due to the coarseness of the quadtrees grid */
+    /* query the spatially indexed entries AND apply the visitor that filters out false positives due to the coarseness of the quadtrees grid */
     for( Entry<EntityType, Quadtree> entry : transferZonesBySpatialIndex.entrySet()) {
       transferZonesBySpatialIndex.get(entry.getKey()).query(boundingBox, spatialZoneFilterVisitor);
     }
@@ -175,7 +175,7 @@ public class OsmZoningReaderPlanitData {
    * @return previous entry in container, if any
    */
   public TransferZone addTransferZoneByOsmId(EntityType entityType, long osmEntityId, TransferZone transferZone) {
-    transferZonesByOsmEntityId.putIfAbsent(entityType, new HashMap<Long,TransferZone>());
+    transferZonesByOsmEntityId.putIfAbsent(entityType, new HashMap<>());
     transferZonesBySpatialIndex.putIfAbsent(entityType, new Quadtree());    
     
     /* spatial index */
@@ -198,8 +198,8 @@ public class OsmZoningReaderPlanitData {
    * @return registered directed connectoids indexed by location
    */
   public Map<Point, List<DirectedConnectoid>> getDirectedConnectoidsByLocation(MacroscopicNetworkLayer networkLayer) {
-    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap<Point, List<DirectedConnectoid>>());
-    return Collections.unmodifiableMap(directedConnectoidsByOsmNodeId.get(networkLayer));
+    directedConnectoidsByLocation.putIfAbsent(networkLayer, new HashMap<>());
+    return Collections.unmodifiableMap(directedConnectoidsByLocation.get(networkLayer));
   }
   
   /** Collect the registered connectoids by given locations and network layer (unmodifiable)
@@ -220,9 +220,9 @@ public class OsmZoningReaderPlanitData {
    * @return true when successful, false otherwise
    */
   public boolean addDirectedConnectoidByLocation(MacroscopicNetworkLayer networkLayer, Point connectoidLocation , DirectedConnectoid connectoid) {
-    directedConnectoidsByOsmNodeId.putIfAbsent(networkLayer,  new HashMap< Point, List<DirectedConnectoid>>());
-    Map<Point, List<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
-    connectoidsForLayer.putIfAbsent(connectoidLocation, new ArrayList<DirectedConnectoid>(1));
+    directedConnectoidsByLocation.putIfAbsent(networkLayer, new HashMap<>());
+    Map<Point, List<DirectedConnectoid>> connectoidsForLayer = directedConnectoidsByLocation.get(networkLayer);
+    connectoidsForLayer.putIfAbsent(connectoidLocation, new ArrayList<>(1));
     List<DirectedConnectoid> connectoids = connectoidsForLayer.get(connectoidLocation);
     if(!connectoids.contains(connectoid)) {
       return connectoids.add(connectoid);
@@ -236,7 +236,7 @@ public class OsmZoningReaderPlanitData {
    * @return true when present, false otherwise
    */
   public boolean hasAnyDirectedConnectoidsForLocation(Point location) {
-    for( Entry<TransportLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByOsmNodeId.entrySet()) {
+    for( Entry<NetworkLayer, Map<Point, List<DirectedConnectoid>>> entry : directedConnectoidsByLocation.entrySet()) {
       if(hasDirectedConnectoidForLocation(entry.getKey(), location)) {
         return true;
       }
@@ -250,8 +250,8 @@ public class OsmZoningReaderPlanitData {
    * @param point to use
    * @return true when present, false otherwise
    */  
-  public boolean hasDirectedConnectoidForLocation(TransportLayer networkLayer, Point point) {
-    Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByOsmNodeId.get(networkLayer);
+  public boolean hasDirectedConnectoidForLocation(NetworkLayer networkLayer, Point point) {
+    Map<Point, List<DirectedConnectoid>>  connectoidsForLayer = directedConnectoidsByLocation.get(networkLayer);
     return connectoidsForLayer != null && connectoidsForLayer.get(point) != null && !connectoidsForLayer.get(point).isEmpty();
   }  
   
@@ -261,7 +261,7 @@ public class OsmZoningReaderPlanitData {
    * @param connectoid ...this connectoid
    */
   public void addConnectoidByTransferZone(TransferZone transferZone, DirectedConnectoid connectoid) {    
-    connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<DirectedConnectoid>(1));
+    connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<>(1));
     List<DirectedConnectoid> connectoids = connectoidsByTransferZone.get(transferZone);
     if(!connectoids.contains(connectoid)) {
       connectoids.add(connectoid);
@@ -315,7 +315,7 @@ public class OsmZoningReaderPlanitData {
    */
   public void reset() {
     transferZonesByOsmEntityId.clear();
-    directedConnectoidsByOsmNodeId.clear();     
+    directedConnectoidsByLocation.clear();
     connectoidsByTransferZone.clear();
     spatiallyIndexedPlanitLinks = new Quadtree();
   }
@@ -326,7 +326,7 @@ public class OsmZoningReaderPlanitData {
    * 
    * @param links to remove
    */
-  public void removeLinksFromSpatialLinkIndex(Collection<Link> links) {
+  public void removeLinksFromSpatialLinkIndex(Collection<MacroscopicLink> links) {
     if(links != null) {
       links.forEach( link -> spatiallyIndexedPlanitLinks.remove(link.createEnvelope(), link));
     }
@@ -336,7 +336,7 @@ public class OsmZoningReaderPlanitData {
    * 
    * @param links to add
    */  
-  public void addLinksToSpatialLinkIndex(Collection<Link> links) {
+  public void addLinksToSpatialLinkIndex(Collection<MacroscopicLink> links) {
     if(links != null) {
       links.forEach( link -> spatiallyIndexedPlanitLinks.insert(link.createEnvelope(), link));
     }
@@ -347,9 +347,45 @@ public class OsmZoningReaderPlanitData {
    * @param searchBoundingBox to use
    * @return links found intersecting or within bounding box provided
    */
-  public Collection<Link> findLinksSpatially(Envelope searchBoundingBox) {
-    return PlanitGraphGeoUtils.<Link>findEdgesSpatially(searchBoundingBox,spatiallyIndexedPlanitLinks);    
+  public Collection<MacroscopicLink> findLinksSpatially(Envelope searchBoundingBox) {
+    return GeoContainerUtils.queryEdgeQuadtree(spatiallyIndexedPlanitLinks, searchBoundingBox);
   }
-  
 
+  /**
+   * Given a transfer zone and the OSM entity it is based on (including tags), we register its vertical layer index if
+   * explicitly tagged. Used to filter eligible road/rail infrastructure when mapping waiting areas (transfer zones) to
+   * the network via connectoids
+   *
+   * @param transferZone to extract layer information for
+   * @param osmEntity the OSM entity the transfer zone is based on
+   * @param tags to extract the layer information from
+   */
+  public void registerTransferZoneVerticalLayerIndex(TransferZone transferZone, OsmEntity osmEntity, Map<String, String> tags) {
+
+    if(transferZonesLayerIndex.containsKey(transferZone)){
+      LOGGER.warning(String.format("Layer index already registered for transfer zone %s, this shouldn't happen", transferZone.getIdsAsString()));
+    }
+
+    if(!OsmTagUtils.containsAnyKey(tags, OsmTags.LAYER)){
+      /* no layer tag, so default applies, which we do not explicitly store */
+      return;
+    }
+
+    var layerValue = OsmTagUtils.getValueAsInt(tags, OsmTags.LAYER);
+    if(layerValue != null) {
+      transferZonesLayerIndex.put(transferZone, layerValue);
+    }
+  }
+
+  /**
+   * Collect vertical layer index for this transfer zone
+   *
+   * @param transferZone to collect layer index for
+   * @return found layer index, when nothing is registered, null is returned, this may indicate the default level or absence
+   * of information that should be obtained otherwise and does not reflect the default layer
+   */
+  public Integer getTransferZoneVerticalLayerIndex(TransferZone transferZone) {
+    var layerIndex = transferZonesLayerIndex.get(transferZone);
+    return layerIndex;
+  }
 }
