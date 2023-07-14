@@ -36,8 +36,8 @@
 	   </dependency>
 
 		<dependency>
-			<groupId>org.goplanit.gtfs</groupId>
-			<artifactId>planit-gtfs</artifactId>
+			<groupId>org.goplanit.io</groupId>
+			<artifactId>planit-io</artifactId>
 		</dependency>
 
 		<dependency>

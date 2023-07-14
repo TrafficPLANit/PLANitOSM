@@ -41,6 +41,7 @@ For example, a way is just a sequence of node ids. To interpret the geometry of 
 PLANit OSM has the following PLANit specific dependencies (See pom.xml):
 
 * planit-parentpom
+* planit-io
 * planit-core
 * planit-utils
 
