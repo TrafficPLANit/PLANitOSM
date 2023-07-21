@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
-import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.misc.Pair;
@@ -304,7 +303,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
   /** remove all rail modes from mapping
    * 
    */
-  public void deactivateAllRailModes() {
+  public void deactivateAllOsmRailModes() {
     deactivateOsmModes(OsmRailModeTags.getSupportedRailModeTags());
   }    
   
@@ -312,15 +311,15 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * 
    * @param remainingOsmRailModes to explicitly keep if present
    */
-  public void deactivateAllRailModesExcept(final String... remainingOsmRailModes) {
-    deactivateAllRailModesExcept(Arrays.asList(remainingOsmRailModes));
+  public void deactivateAllOsmRailModesExcept(final String... remainingOsmRailModes) {
+    deactivateAllOsmRailModesExcept(Arrays.asList(remainingOsmRailModes));
   } 
   
   /** remove all rail modes from mapping except for the passed in ones
    * 
    * @param remainingOsmRailModes to explicitly keep if present
    */
-  public void deactivateAllRailModesExcept(final List<String> remainingOsmRailModes) {
+  public void deactivateAllOsmRailModesExcept(final List<String> remainingOsmRailModes) {
     Collection<String> toBeRemovedModes = OsmRailModeTags.getSupportedRailModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRailModes);
   }   
