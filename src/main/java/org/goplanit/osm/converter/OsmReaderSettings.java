@@ -88,14 +88,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public void setInputSource(final String inputSource) {
     try {
-      setInputSource(new URL(inputSource));
-      return;
-    } catch (Exception e) {
-    }
-    
-    /* try again, now as local file rather than web based */
-    try {
-      setInputSource(UrlUtils.createFromLocalPath(inputSource));
+      setInputSource(UrlUtils.createFrom(inputSource));
     }catch (Exception e) {
       throw new PlanItRunTimeException("Unable to extract URL from input source %s",inputSource);
     }
