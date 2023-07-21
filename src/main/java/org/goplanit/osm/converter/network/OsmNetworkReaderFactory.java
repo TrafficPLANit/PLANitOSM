@@ -19,9 +19,8 @@ public class OsmNetworkReaderFactory {
   /** Create a PLANitOSMReader which will create its own macroscopic network and non-locale specific defaults for any right hand driving country
    * 
    * @return created osm reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmNetworkReader create() throws PlanItException {
+  public static OsmNetworkReader create() {
     return create(CountryNames.GLOBAL);    
   }  
   
@@ -29,9 +28,8 @@ public class OsmNetworkReaderFactory {
    * 
    * @param countryName to use for the defaults to apply
    * @return created osm reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmNetworkReader create(String countryName) throws PlanItException {
+  public static OsmNetworkReader create(String countryName) {
     return create(new OsmNetworkReaderSettings(countryName));
   }  
   
@@ -74,9 +72,8 @@ public class OsmNetworkReaderFactory {
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @return created osm reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmNetworkReader create(URL inputQuery, String countryName) throws PlanItException {
+  public static OsmNetworkReader create(URL inputQuery, String countryName) {
     OsmNetworkReader reader =  create(countryName);
     reader.getSettings().setInputSource(inputQuery);
     return reader;
@@ -89,9 +86,8 @@ public class OsmNetworkReaderFactory {
    * based on a right hand driving approach
    * @param osmNetworkToPopulate the network to populate
    * @return created osm reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmNetworkReader create(URL inputQuery, String countryName, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+  public static OsmNetworkReader create(URL inputQuery, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
     OsmNetworkReader reader = new OsmNetworkReader(countryName, osmNetworkToPopulate);
     reader.getSettings().setInputSource(inputQuery);
     return reader;
@@ -101,9 +97,8 @@ public class OsmNetworkReaderFactory {
    * 
    * @param settings to use, make sure they are consistent with the network and country provided here otherwise an exception will be thrown
    * @return created osm reader
-   * @throws PlanItException thrown if error
    */
-  public static OsmNetworkReader create(OsmNetworkReaderSettings settings) throws PlanItException {
+  public static OsmNetworkReader create(OsmNetworkReaderSettings settings) {
     return new OsmNetworkReader(settings, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));
   }   
   

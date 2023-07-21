@@ -91,9 +91,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param osmNetworkReader to use
    * @param osmZoningReader to use
    * @param zoning to use
-   * @throws PlanItException thrown if error
    */
-  private void removeDanglingEntities(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) throws PlanItException {
+  private void removeDanglingEntities(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) {
     
     /* subnetworks */
     if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
@@ -153,10 +152,9 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * given the configuration options that have been set
    * 
    * @return network and zoning that has been parsed, or null if detected problem has occurred and logged
-   * @throws PlanItException thrown if error
    */  
   @Override
-  public Pair<MacroscopicNetwork, Zoning> read() throws PlanItException {
+  public Pair<MacroscopicNetwork, Zoning> read() {
     
     /* only proceed when configuration is valid */
     if(!isSettingsValid()) {

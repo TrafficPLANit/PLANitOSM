@@ -47,10 +47,9 @@ public class OsmNetworkReader implements NetworkReader {
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
    * 
-   * @throws PlanItException thrown if error
    */
-  public void initialiseBeforeParsing() throws PlanItException {
-    PlanItException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null && getOsmNetworkToPopulate().getTransportLayers().size()>0,
+  public void initialiseBeforeParsing() {
+    PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null && getOsmNetworkToPopulate().getTransportLayers().size()>0,
         "Network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* gis initialisation */
@@ -87,9 +86,8 @@ public class OsmNetworkReader implements NetworkReader {
    * 
    * @param osmReader to use
    * @param osmHandler to use
-   * @throws PlanItException thorw if error
    */
-  private void read(OsmReader osmReader, DefaultOsmHandler osmHandler) throws PlanItException {
+  private void read(OsmReader osmReader, DefaultOsmHandler osmHandler) {
        
     try {
       osmReader.setHandler(osmHandler);      
@@ -97,7 +95,7 @@ public class OsmNetworkReader implements NetworkReader {
     } catch (OsmInputException e) {
       String cause = e.getCause()!=null ? e.getCause().getMessage() : "";
       LOGGER.severe(e.getMessage() + "cause:" + cause);
-      throw new PlanItException("error during parsing of osm file",e);
+      throw new PlanItRunTimeException("Error during parsing of OSM file",e);
     }
   }
 
@@ -113,38 +111,31 @@ public class OsmNetworkReader implements NetworkReader {
   /** Perform preprocessing if needed, only needed when we have set a bounding box and we need to restrict the OSM entities
    *  parsed to this bounding box
    * 
-   * @throws PlanItException thrown if error
    */
-  private void doPreprocessing() throws PlanItException {
+  private void doPreprocessing(){
     
     LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes");
-    
-//    /* preprocessing currently is only needed in case of bounding polygon present and user specified
-//     * OSM ways to keep outside of this bounding polygon, otherwise skip */
-//    if(getSettings().hasBoundingPolygon() && 
-//        (getSettings().hasKeepOsmWaysOutsideBoundingPolygon() || getSettings().hasKeepOsmNodesOutsideBoundingPolygon())) {
-      
-      /* reader to parse the actual file or source location */
-      OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
-      if(osmReader == null) {
-        LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
-      }
-      
-      /* set handler to deal with call backs from osm4j */
-      OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
-      read(osmReader, osmHandler);  
-//    }
+
+    /* reader to parse the actual file or source location */
+    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
+    if(osmReader == null) {
+      LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
+      return;
+    }
+
+    /* set handler to deal with call backs from osm4j */
+    OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
+    read(osmReader, osmHandler);
   }
 
   /** Perform main processing of OSM network reader
-   * 
-   * @throws PlanItException thrown if error
    */
-  private void doMainProcessing() throws PlanItException{
+  private void doMainProcessing() {
 
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
     if(osmReader == null) {
       LOGGER.severe("Unable to create OSM reader for network, aborting");
+      return;
     }   
     OsmNetworkMainProcessingHandler osmHandler = new OsmNetworkMainProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
     read(osmReader, osmHandler);     
@@ -159,10 +150,8 @@ public class OsmNetworkReader implements NetworkReader {
   }
   
   /** Remove dangling subnetworks when settings dictate it
-   *  
-   * @throws PlanItException thrown if error
    */
-  protected void removeDanglingSubNetworks() throws PlanItException {
+  protected void removeDanglingSubNetworks() {
     removeDanglingSubNetworks(null);
   }
   
@@ -172,9 +161,8 @@ public class OsmNetworkReader implements NetworkReader {
    * are removed if affected.
    * 
    * @param zoning to also remove connectoids from when they reference removed road/rail subnetworks
-   * @throws PlanItException thrown if error
    */  
-  public void removeDanglingSubNetworks(Zoning zoning) throws PlanItException {
+  public void removeDanglingSubNetworks(Zoning zoning) {
     if(settings.isRemoveDanglingSubnetworks()) {
 
       Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
@@ -243,9 +231,8 @@ public class OsmNetworkReader implements NetworkReader {
    * Constructor 
    * 
    * @param osmNetwork network to populate 
-   * @throws PlanItException thrown if error
    */
-  protected OsmNetworkReader(final PlanitOsmNetwork osmNetwork) throws PlanItException{
+  protected OsmNetworkReader(final PlanitOsmNetwork osmNetwork){
     this(CountryNames.GLOBAL, osmNetwork);
   }  
   
@@ -254,9 +241,8 @@ public class OsmNetworkReader implements NetworkReader {
    * 
    * @param countryName to use
    * @param osmNetwork network to populate
-   * @throws PlanItException thrown if error 
    */
-  protected OsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork) throws PlanItException{
+  protected OsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork){
     this(null, countryName, osmNetwork);
   }  
   
@@ -266,9 +252,8 @@ public class OsmNetworkReader implements NetworkReader {
    * @param inputSource to use
    * @param countryName to use
    * @param osmNetworkToPopulate network to populate
-   * @throws PlanItException thrown if error
    */
-  protected OsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException{
+  protected OsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate){
     this(new OsmNetworkReaderSettings(inputSource, countryName), osmNetworkToPopulate);
   }    
     
@@ -277,9 +262,8 @@ public class OsmNetworkReader implements NetworkReader {
    *  
    * @param settings for populating the network
    * @param osmNetworkToPopulate network to populate
-   * @throws PlanItException throw if settings are inconsistent with reader configuration (different country name or network used)
    */
-  protected OsmNetworkReader(OsmNetworkReaderSettings settings, final PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException{
+  protected OsmNetworkReader(OsmNetworkReaderSettings settings, final PlanitOsmNetwork osmNetworkToPopulate){
     this.settings = settings;   
     this.networkData = new OsmNetworkReaderData();
     this.osmNetworkToPopulate = osmNetworkToPopulate;
@@ -290,13 +274,12 @@ public class OsmNetworkReader implements NetworkReader {
    * given the configuration options that have been set
    * 
    * @return macroscopic network that has been parsed
-   * @throws PlanItException thrown if error
-   */  
+   */
   @Override
-  public MacroscopicNetwork read() throws PlanItException {
-    PlanItException.throwIfNull(getSettings().getInputSource(),"Input source not set for OSM network to parse");
-    PlanItException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"Country name not set for OSM network to parse");
-    PlanItException.throwIfNull(getOsmNetworkToPopulate(),"PLANit network to populate not set for OSM network to parse");
+  public MacroscopicNetwork read() {
+    PlanItRunTimeException.throwIfNull(getSettings().getInputSource(),"Input source not set for OSM network to parse");
+    PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"Country name not set for OSM network to parse");
+    PlanItRunTimeException.throwIfNull(getOsmNetworkToPopulate(),"PLANit network to populate not set for OSM network to parse");
 
     logInfo();
     
