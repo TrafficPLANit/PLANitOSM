@@ -182,7 +182,7 @@ public class BasicOsmReaderTest {
       osmReader.getSettings().setInputSource(EXAMPLE_REMOTE_URL);
       
       osmReader.getSettings().getHighwaySettings().deactivateAllOsmHighwayTypesExcept(OsmHighwayTags.FOOTWAY);
-      osmReader.getSettings().getHighwaySettings().deactivateAllRoadModesExcept(OsmRoadModeTags.FOOT);
+      osmReader.getSettings().getHighwaySettings().deactivateAllOsmRoadModesExcept(OsmRoadModeTags.FOOT);
                         
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);

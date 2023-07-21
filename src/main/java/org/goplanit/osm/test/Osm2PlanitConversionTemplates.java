@@ -46,7 +46,7 @@ public class Osm2PlanitConversionTemplates {
     OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(inputFile, countryName);
     osmReader.getSettings().excludeOsmWaysFromParsing(excludedOsmWays);
     
-    osmReader.getSettings().getHighwaySettings().deactivateAllRoadModesExcept(OsmRoadModeTags.MOTOR_CAR);
+    osmReader.getSettings().getHighwaySettings().deactivateAllOsmRoadModesExcept(OsmRoadModeTags.MOTOR_CAR);
     osmReader.getSettings().setRemoveDanglingSubnetworks(true);
     osmReader.getSettings().setDiscardDanglingNetworksBelow(20);
     osmReader.getSettings().deactivateAllOsmWayTypesExcept(

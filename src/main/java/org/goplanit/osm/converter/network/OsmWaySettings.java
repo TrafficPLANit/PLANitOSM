@@ -318,12 +318,12 @@ public abstract class OsmWaySettings {
     }
     LOGGER.fine(String.format("OSM mode %s is deactivated", osmMode));
     
-    var predefinedModeType = activatedOsmMode2PlanitModeTypeMap.remove(osmMode);
+    activatedOsmMode2PlanitModeTypeMap.remove(osmMode);
   }
   
   /**Remove all provided modes from mapping
    * 
-   * @param osmModes to deactive
+   * @param osmModes to deactivate
    */
   protected void deactivateOsmModes(Collection<String> osmModes) {
     for(String osmMode : osmModes) {

@@ -405,21 +405,21 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * 
    * @param deactivateAllRoadModesExcept to explicitly keep if present
    */
-  public void deactivateAllRoadModesExcept(final String... deactivateAllRoadModesExcept) {
+  public void deactivateAllOsmRoadModesExcept(final String... deactivateAllRoadModesExcept) {
     List<String> exceptionList = null;
     if(deactivateAllRoadModesExcept==null) {
-      exceptionList = new ArrayList<String>(0);
+      exceptionList = new ArrayList<>(0);
     }else {
       exceptionList = Arrays.asList(deactivateAllRoadModesExcept);
     }    
-    deactivateAllRoadModesExcept(exceptionList);
+    deactivateAllOsmRoadModesExcept(exceptionList);
   }   
   
   /** remove all road modes from mapping except for the passed in ones
    * 
    * @param remainingOsmRoadModes to explicitly keep if present
    */
-  public void deactivateAllRoadModesExcept(final List<String> remainingOsmRoadModes) {
+  public void deactivateAllOsmRoadModesExcept(final List<String> remainingOsmRoadModes) {
     Collection<String> toBeRemovedModes = OsmRoadModeTags.getSupportedRoadModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRoadModes);
   }  
@@ -436,7 +436,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * remove all road modes from the network when parsing
    */
   public void removeAllRoadModes() {
-    deactivateAllRoadModesExcept((String[])null);
+    deactivateAllOsmRoadModesExcept((String[])null);
   }
   
   /** convenience method that collects the currently mapped PLANit road mode for the given OSM mode
