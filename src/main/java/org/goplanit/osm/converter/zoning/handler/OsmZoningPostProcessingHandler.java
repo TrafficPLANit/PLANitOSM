@@ -542,10 +542,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var tags = OsmModelUtil.getTagsAsMap(osmFerryStop);
 
     boolean terminalOnNetworkNode = hasNetworkLayersWithActiveOsmNode(osmFerryStop.getId());
-    if(terminalOnNetworkNode && getSettings().isOverwriteWaitingAreaOfStopPosition(osmFerryStop.getId())) {
+    if(terminalOnNetworkNode && getSettings().isOverwriteWaitingAreaOfStopLocation(osmFerryStop.getId())) {
 
       /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
-      Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmFerryStop.getId());
+      Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmFerryStop.getId());
       var ferryTerminalTransferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
       LOGGER.fine(String.format("Mapped ferry stop %d to overwritten waiting area %d", osmFerryStop.getId(), result.second()));
       PlanitTransferZoneUtils.updateTransferZoneStationName(ferryTerminalTransferZone, tags);
@@ -632,7 +632,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     String waterWayKey = OsmWaterwayTags.ROUTE;
     String waterWayValue = OsmWaterwayTags.FERRY;
     var linkSegmentType = getReferenceNetwork().getDefaultLinkSegmentTypeByOsmTag(waterWayKey, waterWayValue).get(networkLayer);
-    var speedLimit = getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getDefaultSpeedLimit(waterWayValue);
+    var speedLimit = getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(waterWayValue);
     var lanes = getNetworkToZoningData().getNetworkSettings().getDefaultDirectionalLanesByWayType(waterWayKey, waterWayValue);
     /* a->b */
     PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
@@ -716,7 +716,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       singletonSet.add(osmMode);
       Collection<TransferZone> matchedTransferZones =
           getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, singletonSet, false);
-      boolean suppressLogging = getSettings().isOverwriteWaitingAreaOfStopPosition(osmNode.getId());
+      boolean suppressLogging = getSettings().isOverwriteWaitingAreaOfStopLocation(osmNode.getId());
 
       if(!suppressLogging && (matchedTransferZones == null || matchedTransferZones.isEmpty())) {
         logWarningIfNotNearBoundingBox(String.format(
@@ -969,7 +969,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     TransferZone stationTransferZone = null;
     EntityType osmStationEntityType = Osm4JUtils.getEntityType(osmStation);
     boolean stationOnTrack = EntityType.Node.equals(osmStationEntityType) && hasNetworkLayersWithActiveOsmNode(osmStation.getId());
-    if(stationOnTrack && !getSettings().isOverwriteWaitingAreaOfStopPosition(osmStation.getId())) {
+    if(stationOnTrack && !getSettings().isOverwriteWaitingAreaOfStopLocation(osmStation.getId())) {
       /* transfer zone + connectoids */
             
       /* station is stop_location as well as transfer zone, create both transfer zone and connectoids based on this location */      
@@ -986,10 +986,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             
       /* transfer zone*/
       {        
-        if(getSettings().isOverwriteWaitingAreaOfStopPosition(osmStation.getId())) {
+        if(getSettings().isOverwriteWaitingAreaOfStopLocation(osmStation.getId())) {
           
           /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
-          Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmStation.getId());
+          Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmStation.getId());
           stationTransferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
           LOGGER.fine(String.format("Mapped station stop_position %d to overwritten waiting area %d", osmStation.getId(), result.second()));
           
@@ -1069,7 +1069,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
     /* find the transfer zones this stop position is eligible for */
     Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, modeResult.first(), transferZoneGroup, suppressLogging);
-    suppressLogging = suppressLogging || getSettings().isOverwriteWaitingAreaOfStopPosition(osmNode.getId());
+    suppressLogging = suppressLogging || getSettings().isOverwriteWaitingAreaOfStopLocation(osmNode.getId());
           
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       /* still no match, issue warning */
@@ -1108,7 +1108,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var eligibleOsmModes = eligibleModes!= null ? eligibleModes.first() : null;
     Collection<TransferZone> matchedTransferZones =
         getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, eligibleOsmModes, transferZoneGroup, suppressLogging);
-    suppressLogging = suppressLogging || getSettings().isOverwriteWaitingAreaOfStopPosition(osmNode.getId());
+    suppressLogging = suppressLogging || getSettings().isOverwriteWaitingAreaOfStopLocation(osmNode.getId());
             
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
       

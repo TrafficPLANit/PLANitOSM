@@ -4,8 +4,6 @@ import java.util.*;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
-import de.topobyte.osm4j.core.model.iface.OsmNode;
-import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.OsmModeConversionBase;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
@@ -52,7 +50,7 @@ public class OsmPublicTransportModeConversion extends OsmModeConversionBase {
 
     SortedSet<String> eligibleOsmModes;
     if(ptSettings.isOverwriteWaitingAreaModeAccess(osmPtEntityId, osmEntityType)){
-      eligibleOsmModes = ptSettings.getOverwrittemWaitingAreaModeAccess(osmPtEntityId, osmEntityType);
+      eligibleOsmModes = ptSettings.getOverwrittenWaitingAreaModeAccess(osmPtEntityId, osmEntityType);
     }else {
       eligibleOsmModes = OsmModeUtils.collectEligibleOsmPublicTransportModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
     }

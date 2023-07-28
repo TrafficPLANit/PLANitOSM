@@ -1,10 +1,6 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
@@ -110,7 +106,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
   public boolean isOsmRailwayTypeDeactivated(final String osmRailWayValue) {
-      return isOsmRailwayTypeDeactivated(osmRailWayValue);
+      return isOsmWayTypeDeactivated(osmRailWayValue);
   }
     
   /**
@@ -222,10 +218,10 @@ public class OsmRailwaySettings extends OsmWaySettings {
   }  
   
   /**
-   * collect the overwrite type values that should be used
+   * collect the overwritten type values that should be used
    * 
    * @param osmWayType to collect overwrite values for
-   * @return the new values capacity (pcu/lane/h) and maxDensity (pcu/km/lane)
+   * @return the new values' capacity (pcu/lane/h) and maxDensity (pcu/km/lane)
    */
   public final Pair<Double,Double> getOverwrittenCapacityMaxDensityByOsmRailwayType(String osmWayType) {
     return getOverwrittenCapacityMaxDensityByOsmWayType(osmWayType);
@@ -241,16 +237,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
   public double getDefaultSpeedLimitByOsmRailwayType(String osmWayValue){
     return getDefaultSpeedLimitByOsmTypeValue(OsmRailwayTags.getRailwayKeyTag(), osmWayValue);
   }  
-  
-  /** Collect the default speed limit for a given railway tag value, where we extract the key and value from the passed in tags, if available
-   * 
-   * @param tags to extract way key value pair from (highway,railway keys currently supported)
-   * @return speedLimit in km/h 
-   */  
-  public Double getDefaultSpeedLimitByOsmRailwayType(Map<String, String> tags){
-    return getDefaultSpeedLimitByOsmWayType(OsmRailwayTags.getRailwayKeyTag(), tags);
-  }   
-  
+
   /* mode */
   
   /** activate an OSM rail mode based on its (default) mapping to a PLANit mode. This means that the osmMode will be added to the PLANit network
@@ -341,7 +328,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @param planitModeType to collect mapped mode for (if any)
    * @return mapped osm modes, if not available empty collection is returned
    */  
-  public final Collection<String> getMappedOsmRailModes(final PredefinedModeType planitModeType) {
+  public final TreeSet<String> getMappedOsmRailModes(final PredefinedModeType planitModeType) {
     return getAcivatedOsmModes(planitModeType);
   }   
     

@@ -1022,7 +1022,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;
 
     /* only when way type is marked as supported in settings we parse it */
-    if(settings.getWaterwaySettings().isOsmWaterwayActivated(osmWayValue)) {
+    if(settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmWayValue)) {
       var waterwaySettings = settings.getWaterwaySettings();
       boolean isOverwrite = waterwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmWaterwayRouteType(osmWayValue);
 
@@ -1031,7 +1031,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       if(!activatedPlanitModes.isEmpty()) {
 
         /* create the PLANit link segment type based on OSM tag and possibly overwritten default values*/
-        double maxSpeedKmH = waterwaySettings.getDefaultSpeedLimit(osmWayValue);
+        double maxSpeedKmH = waterwaySettings.getDefaultSpeedLimitByOsmWaterwayType(osmWayValue);
         if(isOverwrite) {
           /* type is overwritten, so use overwritten data instead of defaults */
           final Pair<Double,Double> capacityDensityPair = waterwaySettings.getOverwrittenCapacityMaxDensityByOsmWaterwayRouteType(osmWayValue);

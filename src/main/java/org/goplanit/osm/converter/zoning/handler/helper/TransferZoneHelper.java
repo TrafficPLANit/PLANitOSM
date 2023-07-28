@@ -21,7 +21,6 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
@@ -800,10 +799,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     Collection<TransferZone> matchedTransferZones = null;
     
     /* USER OVERWRITE */
-    if(getSettings().isOverwriteWaitingAreaOfStopPosition(osmNode.getId())) {
+    if(getSettings().isOverwriteWaitingAreaOfStopLocation(osmNode.getId())) {
       
       /* do not search simply use provided waiting area (transfer zone) */
-      Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmNode.getId());
+      Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmNode.getId());
       TransferZone foundZone = zoningReaderData.getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
       if(foundZone==null) {
         if(!suppressLogging) LOGGER.severe(String.format("User overwritten waiting area (platform, pole %d) for OSM node %d, not available",result.second(), osmNode.getId()));

@@ -12,10 +12,10 @@ import java.util.*;
 public class OsmRoadModeTags {
   
   /** all currently available mode tags */
-  private static final Set<String> MODE_TAGS = new HashSet<String>();
+  private static final Set<String> MODE_TAGS = new HashSet<>();
   
   /** all currently available public transport based road mode tags */
-  private static final Set<String> PT_MODE_TAGS = new HashSet<String>();  
+  private static final Set<String> PT_MODE_TAGS = new HashSet<>();
   
   /**
    * populate the available pt road mode tags

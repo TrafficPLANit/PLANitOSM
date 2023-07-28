@@ -133,7 +133,7 @@ public abstract class OsmWaySettings {
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
   protected boolean isOsmWayTypeDeactivated(final String osmWayValueType) {
-      return !isOsmWayTypeActivated(osmWayValueType);
+      return !isParserActive() || !isOsmWayTypeActivated(osmWayValueType);
   }
     
   /**
@@ -213,8 +213,7 @@ public abstract class OsmWaySettings {
   /* overwrite */  
 
   /**
-   * Choose to overwrite the given highway type defaults with the given values. Activates the parser implicitly since it is assumed
-   * this type is to be parsed
+   * Choose to overwrite the given highway type defaults with the given values.
    * 
    * @param osmWayKey the way key
    * @param osmWayType the value type to set these values for
@@ -222,11 +221,8 @@ public abstract class OsmWaySettings {
    * @param maxDensityPerLane new value pcu/km/lane
    */
   protected void overwriteOsmWayTypeDefaultCapacityMaxDensity(String osmWayKey, String osmWayType, double capacityPerLanePerHour, double maxDensityPerLane) {
-    if(!isOsmWayTypeActivated(osmWayType)) {
-      activateOsmWayType(osmWayType);
-    }
     overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.of(capacityPerLanePerHour,maxDensityPerLane));
-    LOGGER.info(String.format("Overwriting defaults for osm road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
+    LOGGER.info(String.format("Overwriting defaults for OSM road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
   }          
   
   /**
@@ -362,8 +358,8 @@ public abstract class OsmWaySettings {
    * @param planitModeType to collect mapped OSM modes for this type (if any)
    * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
    */  
-  protected Collection<String> getAcivatedOsmModes(final PredefinedModeType planitModeType) {
-    Set<String> mappedOsmModes = new HashSet<>();
+  protected TreeSet<String> getAcivatedOsmModes(final PredefinedModeType planitModeType) {
+    TreeSet<String> mappedOsmModes = new TreeSet<>();
     if(!isParserActive()) {
       return mappedOsmModes;
     }

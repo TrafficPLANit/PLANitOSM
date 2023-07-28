@@ -159,7 +159,7 @@
                     <usedtotype>public</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="tram" externalid="funicular;tram;monorail;funicular;tram;monorail" predefined="true">
+            <mode id="tram" externalid="funicular;monorail;tram;funicular;monorail;tram" predefined="true">
                 <name>tram</name>
                 <maxspeed>40.0</maxspeed>
                 <pcu>3.0</pcu>

@@ -334,7 +334,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     }else if(tags.containsKey(OsmRailwayTags.getRailwayKeyTag())){
       return getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.getRailwayKeyTag()));
     }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
-      return getWaterwaySettings().getDefaultSpeedLimit(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
+      return getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
     }else {
       throw new PlanItRunTimeException("No default speed limit available, tags do not contain activated highway, railway, or waterway key (tags: %s", tags);
     }
@@ -356,9 +356,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param planitModeType to get mapped PLANit modes for
    * @return mapped OSM modes, empty if no matches
    */  
-  public Collection<String> getMappedOsmModes(PredefinedModeType planitModeType) {
-    Collection<String> theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitModeType);
-    Collection<String> theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitModeType);
+  public TreeSet<String> getMappedOsmModes(PredefinedModeType planitModeType) {
+    var theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitModeType);
+    var theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitModeType);
     theRoadModes.addAll(theOsmRailModes);
     return theRoadModes;
   }  
@@ -369,7 +369,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return mapped OSM modes, empty if no matches
    */
   public Set<String> getMappedOsmModes(Collection<PredefinedModeType> planitModeTypes) {
-    HashSet<String> mappedOsmModes = new HashSet<>();
+    Set<String> mappedOsmModes = new TreeSet<>();
     
     if(planitModeTypes == null) {
       return mappedOsmModes;

@@ -86,9 +86,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
     /* ... exception 1: train/tram/ferry platforms because trains/trams/ferries have entrances on both sides */
     boolean mustAvoidCrossingTraffic = ZoningConverterUtils.isAvoidCrossTrafficForAccessMode(accessMode);
-    if(osmStopLocationNodeId != null && settings.isOverwriteWaitingAreaOfStopPosition(osmStopLocationNodeId)) {
+    if(osmStopLocationNodeId != null && settings.isOverwriteWaitingAreaOfStopLocation(osmStopLocationNodeId)) {
       /* ... exception 2: user override with mapping to this zone for this node, in which case we allow crossing traffic regardless */
-      mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenWaitingAreaOfStopPosition(osmStopLocationNodeId).second());
+      mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(settings.getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNodeId).second());
     } 
     return mustAvoidCrossingTraffic;   
   }   
@@ -465,7 +465,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* function that takes a node and collects any overwritten waiting area that is pre-specified for it. Used to
        *  override default mapping between waiting area and stop location when needed */
       this.getOverwrittenWaitingAreaSourceIdForNode = n -> {
-        var result = transferSettings.getOverwrittenWaitingAreaOfStopPosition(n.getExternalId() != null ? Long.valueOf(n.getExternalId()) : null);
+        var result = transferSettings.getOverwrittenWaitingAreaOfStopLocation(n.getExternalId() != null ? Long.valueOf(n.getExternalId()) : null);
         return result!= null ? String.valueOf(result.second()) : null;
       };
     }
@@ -499,7 +499,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         if(osmNode == null){
           return null;
         }
-        var result = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmNode.getId());
+        var result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmNode.getId());
         return result!= null ? String.valueOf(result.second()) : null;
       };
 
@@ -777,11 +777,11 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     
     /* special case - user overwrite verification */
     OsmNode osmStopLocationNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(connectoidLocation);
-    if(osmStopLocationNode != null && getSettings().isOverwriteWaitingAreaOfStopPosition(osmStopLocationNode.getId())) {
+    if(osmStopLocationNode != null && getSettings().isOverwriteWaitingAreaOfStopLocation(osmStopLocationNode.getId())) {
       /* user has chosen to overwrite waiting area for this connectoid (stop_location), so the transfer zone provided should correspond to the chosen waiting area id, otherwise
        * we simply ignore and return (when processing incomplete transfer zones, it might try to use a stop_location for a transfer zone that is incomplete but indicated by the user to
        * not be used for this connectoid, so there can be a valid reason why this method is invoked, as well as a valid reason to not create connectoids when checking for this situation */
-      Pair<EntityType, Long>  overwriteResult = getSettings().getOverwrittenWaitingAreaOfStopPosition(osmStopLocationNode.getId());
+      Pair<EntityType, Long>  overwriteResult = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNode.getId());
       /* when type match (point=node, otherwise=way)  and id match we can continue, otherwise not */
       if( !(waitingAreaGeometry instanceof Point && Long.valueOf(transferZone.getExternalId()) == overwriteResult.second())) {
         return;
