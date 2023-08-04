@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.network;
 import java.util.*;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.goplanit.osm.defaults.OsmHighwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
@@ -260,7 +261,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmHighwayValueTypes to activate
    */
   public void activateOsmHighwayTypes(final String... osmHighwayValueTypes) {
-    activateOsmWayTypes(osmHighwayValueTypes);
+    activateOsmHighwayTypes(Arrays.asList(osmHighwayValueTypes));
   }  
   
   /** Activate all passed in highway types

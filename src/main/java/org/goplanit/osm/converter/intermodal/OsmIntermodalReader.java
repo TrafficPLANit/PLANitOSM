@@ -117,7 +117,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param osmNetworkToPopulate to populate
    * @param zoningToPopulate to populate
    */
-  protected OsmIntermodalReader(final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+  protected OsmIntermodalReader(
+      final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
     this(new OsmIntermodalReaderSettings(countryName), osmNetworkToPopulate, zoningToPopulate);
   }   
   
@@ -129,7 +130,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param osmNetworkToPopulate to populate
    * @param zoningToPopulate to populate
    */
-  protected OsmIntermodalReader(final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
+  protected OsmIntermodalReader(
+      final URL inputSource, final String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
     this(new OsmIntermodalReaderSettings(inputSource, countryName), osmNetworkToPopulate, zoningToPopulate);
   }     
 
@@ -140,7 +142,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
    * @param zoningToPopulate to populate
    * @param osmNetworkToPopulate to populate
    */
-  protected OsmIntermodalReader(OsmIntermodalReaderSettings settings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate){
+  protected OsmIntermodalReader(
+      OsmIntermodalReaderSettings settings, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate){
     this.settings = settings;
     this.zoningToPopulate = zoningToPopulate;
     this.osmNetworkToPopulate = osmNetworkToPopulate;
@@ -168,11 +171,16 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
     osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(false);
     
-    PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();    
-    
+    PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
+
+    //TODO: ugly, should be done in a less ugly way
+    /* ensure crs are compatible */
+    zoningToPopulate.setCoordinateReferenceSystem(network.getCoordinateReferenceSystem());
+
     /* ZONING READER */
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
-    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(ptSettings, zoningToPopulate, network, osmNetworkReader.createNetworkToZoningReaderData());
+    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(
+        ptSettings, zoningToPopulate, network, osmNetworkReader.createNetworkToZoningReaderData());
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
