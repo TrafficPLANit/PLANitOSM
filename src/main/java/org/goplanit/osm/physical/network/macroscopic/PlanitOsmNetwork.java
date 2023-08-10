@@ -1179,11 +1179,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       LOGGER.severe("Initialising modes on OSM network, but found pre-existing modes on this supposedly empty network, shouldn't happen");
     }
 
-    /* initialise road and rail modes on PLANit network as mode instances rather than the type placeholders */
+    /* initialise road, rail, and water modes on PLANit network as mode instances rather than the type placeholders */
     var mappedPlanitModes = settings.getActivatedPlanitModeTypes();
     for(var modeType : mappedPlanitModes){
       var newMode = getModes().getFactory().registerNew(modeType);
-      newMode.appendExternalId(settings.getMappedOsmModes(modeType).stream().collect(Collectors.joining(";")), ';');
+      newMode.appendExternalId(settings.getMappedOsmModes(modeType).stream().distinct().collect(Collectors.joining(";")), ';');
     }
 
   }

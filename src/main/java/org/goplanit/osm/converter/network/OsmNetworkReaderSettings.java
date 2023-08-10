@@ -357,10 +357,12 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return mapped OSM modes, empty if no matches
    */  
   public TreeSet<String> getMappedOsmModes(PredefinedModeType planitModeType) {
-    var theRoadModes  = osmHighwaySettings.getMappedOsmRoadModes(planitModeType);
+    var theModes  = osmHighwaySettings.getMappedOsmRoadModes(planitModeType);
     var theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitModeType);
-    theRoadModes.addAll(theOsmRailModes);
-    return theRoadModes;
+    theModes.addAll(theOsmRailModes);
+    var theOsmWaterModes = osmWaterwaySettings.getMappedOsmWaterModes(planitModeType);
+    theModes.addAll(theOsmWaterModes);
+    return theModes;
   }  
   
   /** Collect the mapped OSM modes based on the provided PLANit mode types (if any)
