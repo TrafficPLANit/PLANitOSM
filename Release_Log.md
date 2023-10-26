@@ -2,6 +2,29 @@
 
 PLANitOSM release log.
 
+## 0.4.0
+
+**Enhancements**
+
+* [GENERAL] Support for waterways (ferries) in OSM parser
+* [GENERAL] More fine grained options in OSM settings to configure network, zone parsing
+* [GENERAL] Improved pipeline for identifying best mapping of stop to nearby OSM way
+* #52, #51 Allow to connect dangling ferry stops to road network (for provided OSM modes) (default off)
+* #47 Add option to suppress warnings for OSM stop area relations
+* #44,43 Update to Junit5
+* #41 Bring over improved way of identifying most appropriate access link for a waiting area (stop) from PLANitGTFS
+* #39 GTFS support - STEP 5 - add unit tests for integrating GTFS and OSM for various Australian states
+* #34 Add CI by running tests whenever pusing a commit
+* #32 Reduce memory footprint required by supporting pre-parsing identifying and loading only the nodes that we should parse
+
+**Bug fixes**
+
+* #48 Defaults regarding modeaccess, speed limits etc, should be extended to use combined key/values, rather than only OSMway value as this is not unique
+* #42 Should always construct PLANit entities in same sorted order. Needed to compare integration test results
+* #31 when lanes value is not a number an exception was thrown and parser crashes. Instead default number of lanes should be used and issue should be logged
+* #30 When maxspeed tag value is invalid, an exception is thrown and the link is dismissed rather than reverting to the default speed
+* #29 When collecting mode support with post/prefix a nullpointerexception can occur as the tags are collected without the post-prefix in some cases
+
 ## 0.3.0
 
 * edge segments of broken edges are not properly removed from vertices when updating them, leading to too many entry and exit edge segments. This has been fixed #10
