@@ -58,7 +58,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
     super(new OsmWaterwayTypeConfiguration(), waterwaySpeedLimitDefaults, osmModeAccessWaterwayDefaults);
     activateParser(DEFAULT_WATERWAYS_PARSER_ACTIVE);
   }
-  
+
   /**
    * Verify if the passed in OSM waterway type is explicitly deactivated. Deactivated route types will be ignored
    * when processing ways.
@@ -67,7 +67,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
   public boolean isOsmWaterwayTypeDeactivated(final String osmWaterWayValue) {
-      return isOsmWaterwayTypeDeactivated(osmWaterWayValue);
+      return isOsmWayTypeDeactivated(osmWaterWayValue);
   }
 
   /**
@@ -77,9 +77,85 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * @param osmWayValue, e.g. ferry (waterways are directly linked to modes) or a highway type (Assuming the key was ferry, e.g. ferry=_a_highway_type_
    * @return true when supported, false if not (which means it is unsupported, or not registered)
    */
-  public boolean isOsmWaterwayActivated(String osmWayValue) {
+  public boolean isOsmWaterwayTypeActivated(String osmWayValue) {
     return isOsmWayTypeActivated(osmWayValue);
-  }  
+  }
+
+
+  /**
+   * Choose to not parse the given waterway type, e.g. ferry=primary.
+   *
+   * @param osmWayValue to use
+   */
+  public void deactivateOsmWaterwayType(String osmWayValue) {
+    deactivateOsmWayType(osmWayValue);
+  }
+
+  /** deactivate all types for railway except the ones provides
+   *
+   * @param osmWaterwayTypes to not deactivate
+   */
+  public void deactivateAllOsmWaterwayTypesExcept(String... osmWaterwayTypes) {
+    deactivateAllOsmWaterwayTypesExcept(Arrays.asList(osmWaterwayTypes));
+  }
+
+  /** deactivate all types for waterway except the ones provides
+   *
+   * @param osmWaterwayTypes to not deactivate
+   */
+  public void deactivateAllOsmWaterwayTypesExcept(List<String> osmWaterwayTypes) {
+    deactivateAllOsmWaterwayTypes();
+    for(String osmWayType : osmWaterwayTypes) {
+      if(OsmWaterwayTags.hasKeyForValueType(osmWayType) &&
+          OsmWaterwayTags.isWaterBasedWay(OsmWaterwayTags.getKeyForValueType(osmWayType), osmWayType)) {
+        activateOsmWaterwayType(osmWayType);
+      }
+    }
+  }
+
+  /**
+   * Choose to add given waterway type to parsed types on top of the defaults, e.g. ferry=primary.
+   *
+   * @param osmWayValue to use
+   */
+  public void activateOsmWaterwayType(String osmWayValue) {
+    activateOsmWayType(osmWayValue);
+  }
+
+  /** activate all passed in waterway types
+   * @param osmWaterwayValueTypes to activate
+   */
+  public void activateOsmWaterwayTypes(String... osmWaterwayValueTypes) {
+    activateOsmWayTypes(osmWaterwayValueTypes);
+  }
+
+  /** activate all passed in waterway types
+   * @param osmWaterwayValueTypes to activate
+   */
+  public void activateOsmWaterwayTypes(List<String> osmWaterwayValueTypes) {
+    activateOsmWayTypes(osmWaterwayValueTypes);
+  }
+
+  /**
+   * activate all known OSM waterway types
+   */
+  public void activateAllOsmWaterwayTypes() {
+    activateAllOsmWayTypes();
+  }
+
+  /**
+   * deactivate all types for waterways
+   */
+  public void deactivateAllOsmWaterwayTypes() {
+    deactivateAllOsmWayTypes();
+  }
+
+  /**
+   * Log all de-activated OSM waterway types
+   */
+  public void logUnsupportedOsmWaterwayTypes() {
+    logUnsupportedOsmWayTypes();
+  }
 
   /* overwrite */
   
@@ -109,7 +185,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
   }  
   
   /**
-   * collect the overwritten type values that should be used
+   * Collect the overwritten type values that should be used
    * 
    * @param osmWayRouteType to collect overwrite values for
    * @return the new values capacity (pcu/lane/h) and maxDensity (pcu/km/lane)
@@ -125,7 +201,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * @param waterwayValue value to use
    * @return speedLimit in km/h 
    */  
-  public Double getDefaultSpeedLimit(String waterwayValue){
+  public Double getDefaultSpeedLimitByOsmWaterwayType(String waterwayValue){
     return getDefaultSpeedLimitByOsmTypeValue(OsmWaterwayTags.getKeyForValueType(waterwayValue), waterwayValue);
   }   
   
@@ -179,7 +255,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
   /** remove all water modes from mapping
    * 
    */
-  public void deactivateAllWaterModes() {
+  public void deactivateAllOsmWaterModes() {
     deactivateOsmModes(OsmWaterModeTags.getSupportedWaterModeTags());
   }    
   
@@ -187,15 +263,15 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * 
    * @param remainingOsmWaterModes to explicitly keep if present
    */
-  public void deactivateAllWaterModesExcept(final String... remainingOsmWaterModes) {
-    deactivateAllWaterModesExcept(Arrays.asList(remainingOsmWaterModes));
+  public void deactivateAllOsmWaterModesExcept(final String... remainingOsmWaterModes) {
+    deactivateAllOsmWaterModesExcept(Arrays.asList(remainingOsmWaterModes));
   } 
   
   /** remove all water modes from mapping except for the passed in ones
    * 
    * @param remainingOsmWaterModes to explicitly keep if present
    */
-  public void deactivateAllWaterModesExcept(final List<String> remainingOsmWaterModes) {
+  public void deactivateAllOsmWaterModesExcept(final List<String> remainingOsmWaterModes) {
     Collection<String> toBeRemovedModes = OsmWaterModeTags.getSupportedWaterModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmWaterModes);
   }   

@@ -4,6 +4,7 @@ import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.locationtech.jts.geom.Envelope;
@@ -42,7 +43,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String inputSource, final String countryName) {
-    this(UrlUtils.createFromLocalPath(inputSource), countryName);
+    this(UrlUtils.createFrom(inputSource), countryName);
   }
 
   /**
@@ -121,13 +122,12 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   
   /** Set the input file to use, which is internally converted into a URL
    * @param inputFile to use
-   * @throws PlanItException thrown if error
    */
-  public void setInputFile(final String inputFile) throws PlanItException {
+  public void setInputFile(final String inputFile) {
     try{
       setInputSource(UrlUtils.createFromLocalPath(inputFile));
     }catch(Exception e) {
-      throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
+      throw new PlanItRunTimeException("Unable to extract URL from input file location %s",inputFile);
     }
   }     
   
@@ -137,9 +137,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param y1, first y coordinate
    * @param x2, second x coordinate
    * @param y2, second y coordinate
-   * @throws PlanItException thrown if error
    */
-  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) throws PlanItException {
+  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) {
     setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
   }
   

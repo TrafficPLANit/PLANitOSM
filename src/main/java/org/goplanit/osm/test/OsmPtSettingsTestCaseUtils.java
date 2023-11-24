@@ -37,7 +37,7 @@ public class OsmPtSettingsTestCaseUtils {
         Triple.of(6553012228L, EntityType.Way, 142553711L)
     );
 
-    /* platform has no moade support but PLANit correctly inferred stop location - tagging incomplete = suppress logging by explicit allocation mapping */
+    /* platform has no mode support but PLANit correctly inferred stop location - tagging incomplete = suppress logging by explicit allocation mapping */
     settings.overwriteWaitingAreaOfStopLocations(
         Triple.of(6585559395L, EntityType.Way, 701216857L),
         Triple.of(6585559394L, EntityType.Way, 701216858L)

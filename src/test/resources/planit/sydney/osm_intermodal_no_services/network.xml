@@ -3,7 +3,7 @@
     <id>1</id>
     <configuration>
         <modes>
-            <mode id="bicycle" externalid="bicycle;bicycle" predefined="true">
+            <mode id="bicycle" externalid="bicycle" predefined="true">
                 <name>bicycle</name>
                 <maxspeed>15.0</maxspeed>
                 <pcu>0.2</pcu>
@@ -16,7 +16,7 @@
                     <usedtotype>private</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="bus" externalid="bus;bus" predefined="true">
+            <mode id="bus" externalid="bus" predefined="true">
                 <name>bus</name>
                 <maxspeed>100.0</maxspeed>
                 <pcu>2.0</pcu>
@@ -29,7 +29,7 @@
                     <usedtotype>public</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="car" externalid="motorcar;motorcar" predefined="true">
+            <mode id="car" externalid="motorcar" predefined="true">
                 <name>car</name>
                 <maxspeed>130.0</maxspeed>
                 <pcu>1.0</pcu>
@@ -42,9 +42,9 @@
                     <usedtotype>private</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="ferry" externalid="" predefined="true">
+            <mode id="ferry" externalid="ferry" predefined="true">
                 <name>ferry</name>
-                <maxspeed>70.0</maxspeed>
+                <maxspeed>20.0</maxspeed>
                 <pcu>6.0</pcu>
                 <physicalfeatures>
                     <vehicletype>vehicle</vehicletype>
@@ -55,7 +55,7 @@
                     <usedtotype>public</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="goods" externalid="goods;goods" predefined="true">
+            <mode id="goods" externalid="goods" predefined="true">
                 <name>goods</name>
                 <maxspeed>100.0</maxspeed>
                 <pcu>1.8</pcu>
@@ -68,7 +68,7 @@
                     <usedtotype>goods</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="hgv" externalid="hgv;hgv" predefined="true">
+            <mode id="hgv" externalid="hgv" predefined="true">
                 <name>hgv</name>
                 <maxspeed>90.0</maxspeed>
                 <pcu>2.5</pcu>
@@ -81,7 +81,7 @@
                     <usedtotype>goods</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="lhgv" externalid="hgv_articulated;hgv_articulated" predefined="true">
+            <mode id="lhgv" externalid="hgv_articulated" predefined="true">
                 <name>lhgv</name>
                 <maxspeed>90.0</maxspeed>
                 <pcu>3.0</pcu>
@@ -94,7 +94,7 @@
                     <usedtotype>goods</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="light_rail" externalid="light_rail;light_rail" predefined="true">
+            <mode id="light_rail" externalid="light_rail" predefined="true">
                 <name>light_rail</name>
                 <maxspeed>70.0</maxspeed>
                 <pcu>6.0</pcu>
@@ -107,7 +107,7 @@
                     <usedtotype>public</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="motor_bike" externalid="motorcycle;motorcycle" predefined="true">
+            <mode id="motor_bike" externalid="motorcycle" predefined="true">
                 <name>motor_bike</name>
                 <maxspeed>130.0</maxspeed>
                 <pcu>0.5</pcu>
@@ -120,7 +120,7 @@
                     <usedtotype>private</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="pedestrian" externalid="foot;foot" predefined="true">
+            <mode id="pedestrian" externalid="foot" predefined="true">
                 <name>pedestrian</name>
                 <maxspeed>5.0</maxspeed>
                 <pcu>0.1</pcu>
@@ -133,7 +133,7 @@
                     <usedtotype>private</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="subway" externalid="subway;subway" predefined="true">
+            <mode id="subway" externalid="subway" predefined="true">
                 <name>subway</name>
                 <maxspeed>60.0</maxspeed>
                 <pcu>6.0</pcu>
@@ -146,7 +146,7 @@
                     <usedtotype>public</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="train" externalid="narrow_gauge;train;narrow_gauge;train" predefined="true">
+            <mode id="train" externalid="narrow_gauge;train" predefined="true">
                 <name>train</name>
                 <maxspeed>140.0</maxspeed>
                 <pcu>10.0</pcu>
@@ -159,7 +159,7 @@
                     <usedtotype>public</usedtotype>
                 </usabilityfeatures>
             </mode>
-            <mode id="tram" externalid="funicular;tram;monorail;funicular;tram;monorail" predefined="true">
+            <mode id="tram" externalid="funicular;monorail;tram" predefined="true">
                 <name>tram</name>
                 <maxspeed>40.0</maxspeed>
                 <pcu>3.0</pcu>

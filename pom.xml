@@ -6,7 +6,7 @@
 	<parent>
     <groupId>org.goplanit.parentpom</groupId>
     <artifactId>planit-parentpom</artifactId>
-		<version>0.3.1a1</version>
+		<version>0.5.a1</version>
 	</parent>
 
 	<groupId>org.goplanit.osm</groupId>
@@ -36,8 +36,8 @@
 	   </dependency>
 
 		<dependency>
-			<groupId>org.goplanit.gtfs</groupId>
-			<artifactId>planit-gtfs</artifactId>
+			<groupId>org.goplanit.io</groupId>
+			<artifactId>planit-io</artifactId>
 		</dependency>
 
 		<dependency>
@@ -101,7 +101,6 @@
 
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<id>javadoc-jar</id>

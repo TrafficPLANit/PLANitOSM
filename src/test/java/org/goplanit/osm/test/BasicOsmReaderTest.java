@@ -82,14 +82,14 @@ public class BasicOsmReaderTest {
       osmReader.getSettings().getHighwaySettings().overwriteCapacityMaxDensityDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
-      osmReader.getSettings().getHighwaySettings().addAllowedHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
+      osmReader.getSettings().getHighwaySettings().addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
 
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
 
-      // when input source is updated this will fail, mainl meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
+      // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
       assertEquals(network.getTransportLayers().size(), 1);
       assertEquals(network.getTransportLayers().getFirst().getLinks().size(), 1075);
@@ -182,7 +182,7 @@ public class BasicOsmReaderTest {
       osmReader.getSettings().setInputSource(EXAMPLE_REMOTE_URL);
       
       osmReader.getSettings().getHighwaySettings().deactivateAllOsmHighwayTypesExcept(OsmHighwayTags.FOOTWAY);
-      osmReader.getSettings().getHighwaySettings().deactivateAllRoadModesExcept(OsmRoadModeTags.FOOT);
+      osmReader.getSettings().getHighwaySettings().deactivateAllOsmRoadModesExcept(OsmRoadModeTags.FOOT);
                         
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);

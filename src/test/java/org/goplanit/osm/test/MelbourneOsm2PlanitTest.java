@@ -1,14 +1,11 @@
 package org.goplanit.osm.test;
 
-import org.goplanit.gtfs.converter.intermodal.GtfsIntermodalReaderSettings;
-import org.goplanit.gtfs.enums.RouteTypeChoice;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
 import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
-import org.goplanit.utils.resource.ResourceUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;

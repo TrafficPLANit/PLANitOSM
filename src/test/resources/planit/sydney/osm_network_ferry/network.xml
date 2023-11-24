@@ -3,9 +3,9 @@
     <id>1</id>
     <configuration>
         <modes>
-            <mode id="ferry" externalid="" predefined="true">
+            <mode id="ferry" externalid="ferry" predefined="true">
                 <name>ferry</name>
-                <maxspeed>70.0</maxspeed>
+                <maxspeed>20.0</maxspeed>
                 <pcu>6.0</pcu>
                 <physicalfeatures>
                     <vehicletype>vehicle</vehicletype>

@@ -1022,7 +1022,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     Map<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;
 
     /* only when way type is marked as supported in settings we parse it */
-    if(settings.getWaterwaySettings().isOsmWaterwayActivated(osmWayValue)) {
+    if(settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmWayValue)) {
       var waterwaySettings = settings.getWaterwaySettings();
       boolean isOverwrite = waterwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmWaterwayRouteType(osmWayValue);
 
@@ -1031,7 +1031,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       if(!activatedPlanitModes.isEmpty()) {
 
         /* create the PLANit link segment type based on OSM tag and possibly overwritten default values*/
-        double maxSpeedKmH = waterwaySettings.getDefaultSpeedLimit(osmWayValue);
+        double maxSpeedKmH = waterwaySettings.getDefaultSpeedLimitByOsmWaterwayType(osmWayValue);
         if(isOverwrite) {
           /* type is overwritten, so use overwritten data instead of defaults */
           final Pair<Double,Double> capacityDensityPair = waterwaySettings.getOverwrittenCapacityMaxDensityByOsmWaterwayRouteType(osmWayValue);
@@ -1179,11 +1179,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       LOGGER.severe("Initialising modes on OSM network, but found pre-existing modes on this supposedly empty network, shouldn't happen");
     }
 
-    /* initialise road and rail modes on PLANit network as mode instances rather than the type placeholders */
+    /* initialise road, rail, and water modes on PLANit network as mode instances rather than the type placeholders */
     var mappedPlanitModes = settings.getActivatedPlanitModeTypes();
     for(var modeType : mappedPlanitModes){
       var newMode = getModes().getFactory().registerNew(modeType);
-      newMode.appendExternalId(settings.getMappedOsmModes(modeType).stream().collect(Collectors.joining(";")), ';');
+      newMode.appendExternalId(settings.getMappedOsmModes(modeType).stream().distinct().collect(Collectors.joining(";")), ';');
     }
 
   }

@@ -1,22 +1,15 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.goplanit.osm.defaults.OsmHighwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 
@@ -202,7 +195,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmHighwayValue, e.g. primary, road
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
-  public boolean isOsmHighWayTypeDeactivated(final String osmHighwayValue) {
+  public boolean isOsmHighwayTypeDeactivated(final String osmHighwayValue) {
     return isOsmWayTypeDeactivated(osmHighwayValue);      
   }
     
@@ -268,7 +261,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmHighwayValueTypes to activate
    */
   public void activateOsmHighwayTypes(final String... osmHighwayValueTypes) {
-    activateOsmWayTypes(osmHighwayValueTypes);
+    activateOsmHighwayTypes(Arrays.asList(osmHighwayValueTypes));
   }  
   
   /** Activate all passed in highway types
@@ -345,23 +338,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
       return nonUrbanSpeedLimitDefaults.getSpeedLimit(OsmHighwayTags.getHighwayKeyTag(), osmWayValue);
     }     
   }
-  
-  /** Collect the default speed limit for a given highway tag value, where we extract the key and value from the passed in tags, if available
-   * 
-   * @param tags to extract way key value pair from (highway,railway keys currently supported)
-   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
-   * @throws PlanItException thrown if error
-   */  
-  public Double getDefaultSpeedLimitByOsmHighwayType(final Map<String, String> tags) throws PlanItException {
-    String osmWayKey = null;
-    if(tags.containsKey(OsmHighwayTags.HIGHWAY)) {
-      osmWayKey = OsmHighwayTags.HIGHWAY;      
-    }else {
-      throw new PlanItException("no OSM highway key contained in provided osmTags when collecting default speed limit by OsmHighwayType");
-    }
-    return getDefaultSpeedLimitByOsmHighwayType(tags.get(osmWayKey));
-  }  
-  
+
   /** activate OSM road mode based on its default mapping to PLANit mode. This means that the osmMode will be added to the PLANit network, but also any of its restrictions
    *  will be imposed on the PLANit mode that is provided. 
    * 
@@ -405,21 +382,21 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * 
    * @param deactivateAllRoadModesExcept to explicitly keep if present
    */
-  public void deactivateAllRoadModesExcept(final String... deactivateAllRoadModesExcept) {
+  public void deactivateAllOsmRoadModesExcept(final String... deactivateAllRoadModesExcept) {
     List<String> exceptionList = null;
     if(deactivateAllRoadModesExcept==null) {
-      exceptionList = new ArrayList<String>(0);
+      exceptionList = new ArrayList<>(0);
     }else {
       exceptionList = Arrays.asList(deactivateAllRoadModesExcept);
     }    
-    deactivateAllRoadModesExcept(exceptionList);
+    deactivateAllOsmRoadModesExcept(exceptionList);
   }   
   
   /** remove all road modes from mapping except for the passed in ones
    * 
    * @param remainingOsmRoadModes to explicitly keep if present
    */
-  public void deactivateAllRoadModesExcept(final List<String> remainingOsmRoadModes) {
+  public void deactivateAllOsmRoadModesExcept(final List<String> remainingOsmRoadModes) {
     Collection<String> toBeRemovedModes = OsmRoadModeTags.getSupportedRoadModeTags();
     deactivateAllModesExcept(toBeRemovedModes, remainingOsmRoadModes);
   }  
@@ -436,7 +413,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * remove all road modes from the network when parsing
    */
   public void removeAllRoadModes() {
-    deactivateAllRoadModesExcept((String[])null);
+    deactivateAllOsmRoadModesExcept((String[])null);
   }
   
   /** convenience method that collects the currently mapped PLANit road mode for the given OSM mode
@@ -456,7 +433,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param planitModeType to collect mapped mode for (if any)
    * @return mapped osm modes, if not available empty collection is returned
    */  
-  public final Collection<String> getMappedOsmRoadModes(final PredefinedModeType planitModeType) {
+  public final TreeSet<String> getMappedOsmRoadModes(final PredefinedModeType planitModeType) {
     return getAcivatedOsmModes(planitModeType);
   }      
 
@@ -475,8 +452,8 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmHighwayType to use
    * @param osmModes to allow
    */
-  public void addAllowedHighwayModes(final String osmHighwayType, final String... osmModes) {
-    addAllowedHighwayModes(osmHighwayType, Arrays.asList(osmModes));
+  public void addAllowedOsmHighwayModes(final String osmHighwayType, final String... osmModes) {
+    addAllowedOsmHighwayModes(osmHighwayType, Arrays.asList(osmModes));
   }
   
   /** add allowed osm modes to highwaytype
@@ -484,9 +461,9 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param osmHighwayType to use
    * @param osmModes to allow
    */
-  public void addAllowedHighwayModes(final String osmHighwayType, final List<String> osmModes) {
+  public void addAllowedOsmHighwayModes(final String osmHighwayType, final List<String> osmModes) {
     addAllowedOsmWayModes(OsmHighwayTags.getHighwayKeyTag(), osmHighwayType, osmModes);
-  }  
+  }
     
   /**
    * Log all de-activated OSM highwayway types

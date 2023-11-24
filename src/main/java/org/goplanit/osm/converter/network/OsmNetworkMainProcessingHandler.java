@@ -258,7 +258,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     Function<String, Boolean> isTypeConfigurationMissingLambda = osmTypeValueToUse -> false;
     if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
       osmTypeKeyToUse = OsmHighwayTags.getHighwayKeyTag();
-      isWayActivatedLambda = osmTypeValueToUse -> settings.getHighwaySettings().isOsmHighWayTypeDeactivated(osmTypeValueToUse);
+      isWayActivatedLambda = osmTypeValueToUse -> settings.getHighwaySettings().isOsmHighwayTypeDeactivated(osmTypeValueToUse);
       isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse);
     }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
       osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
@@ -266,7 +266,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);
     }else if(OsmWaterwayTags.isWaterBasedWay(tags) && settings.isWaterwayParserActive()) {
       osmTypeKeyToUse = OsmWaterwayTags.getUsedKeyTag(tags);
-      isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayActivated(osmTypeValueToUse);
+      isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmTypeValueToUse);
       isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // not yet aware of situations for waterways where this happens
     }
     
