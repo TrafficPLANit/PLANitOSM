@@ -26,6 +26,7 @@ import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.math.Precision;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.mode.TrackModeType;
@@ -291,7 +292,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       var idealAccessResult = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, referenceOsmMode, directionModeSpatiallyCompatibleLinks);
       var idealAccessLink = idealAccessResult==null ? null : idealAccessResult.first();
       if(idealAccessLink==null) {
-        throw new PlanItRunTimeException("No appropriate link could be found from selection of eligible closeby links when finding stop locations for station %s, this should not happen", transferZone.getExternalId());
+        idealAccessResult = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, referenceOsmMode, directionModeSpatiallyCompatibleLinks);
+        LOGGER.severe(String.format(
+                "DISCARD No appropriate link could be found from selection of eligible closeby OSM ways [%s] when finding stop locations for station %s, this should not happen, as a workaround, consider excluding this stop",
+                directionModeSpatiallyCompatibleLinks.stream().map( l ->l.getExternalId()).collect(Collectors.joining(",")), transferZone.getExternalId()));
+        return null;
       }
       
       if(maxMatches==1) {

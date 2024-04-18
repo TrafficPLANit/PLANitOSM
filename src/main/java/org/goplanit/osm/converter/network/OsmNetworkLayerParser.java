@@ -9,6 +9,7 @@ import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdge
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
+import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.osm.util.OsmWayUtils;
 import org.goplanit.osm.util.PlanitNetworkLayerUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
@@ -531,7 +532,7 @@ public class OsmNetworkLayerParser {
         result =  extractDirectionalWaterwayLanes(tags);
       }
     }catch(Exception e) {
-      LOGGER.warning(String.format("Something went wrong when parsing number of lanes for OSM way (id:%s), possible tagging error, reverting to default bi-direactional configuration",link.getExternalId()));
+      LOGGER.warning(String.format("Something went wrong when parsing number of lanes for OSM way (id:%s), possible tagging error, reverting to default bi-directional configuration",link.getExternalId()));
     }
     
     /* we assume that only when both are not set something went wrong or no information is ever available,
@@ -798,12 +799,12 @@ public class OsmNetworkLayerParser {
       link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);
       if(link != null) {
         
-        if(isPartOfCircularWay) {
-          /* when circular we only accept one direction as accessible regardless of what has been identified so far;
+        if(isPartOfCircularWay && OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT)) {
+          /* when circular and one-way, i.e. tagged as roundabout, we only accept one direction as accessible regardless of what has been identified so far;
            * clockwise equates to forward direction while anti-clockwise equates to backward direction */
-          if(OsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
+          if (OsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
             linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
-          }else {
+          } else {
             linkSegmentTypes = Pair.of(null, linkSegmentTypes.second());
           }
         }
