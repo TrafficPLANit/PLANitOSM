@@ -36,6 +36,11 @@
 	   </dependency>
 
 		<dependency>
+			<groupId>org.goplanit.utils</groupId>
+			<artifactId>planit-utils</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.goplanit.io</groupId>
 			<artifactId>planit-io</artifactId>
 		</dependency>
@@ -66,6 +71,10 @@
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
 			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.goplanit.utils</groupId>
+			<artifactId>planit-utils</artifactId>
 		</dependency>
 	</dependencies>
 	
