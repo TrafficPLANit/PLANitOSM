@@ -1,6 +1,6 @@
 package org.goplanit.osm.tags;
 
-/** tags used by Osm Multiplogyon relation
+/** tags used by Osm Multipolygon relation
  * 
  * @author markr
  *
