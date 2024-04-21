@@ -80,17 +80,19 @@ public class OsmZoningReader implements ZoningReader {
   private void validateZoningBoundingPolygon() {
 
     boolean zoningBoundingPolygonWithinNetworkBoundingPolygon = true;
-    if(getSettings().hasBoundingPolygon() && network2ZoningData.getNetworkSettings().hasBoundingPolygon() &&
-       !getSettings().getBoundingPolygon().equalsTopo(network2ZoningData.getNetworkSettings().getBoundingPolygon())){
+    if(getSettings().hasBoundingBoundary() && network2ZoningData.getNetworkSettings().hasBoundingBoundary() &&
+            getSettings().getBoundingArea().hasBoundingPolygon() && network2ZoningData.getNetworkSettings().getBoundingArea().hasBoundingPolygon() &&
+            !getSettings().getBoundingArea().getBoundingPolygon().equalsTopo(network2ZoningData.getNetworkSettings().getBoundingArea().getBoundingPolygon())){
       /* check if it falls within the network bounding polygon */
       zoningBoundingPolygonWithinNetworkBoundingPolygon = 
-          getSettings().getBoundingPolygon().within(network2ZoningData.getNetworkSettings().getBoundingPolygon());
-    }else if(!getSettings().hasBoundingPolygon() && network2ZoningData.getNetworkSettings().hasBoundingPolygon()) {
+          getSettings().getBoundingArea().getBoundingPolygon().within(network2ZoningData.getNetworkSettings().getBoundingArea().getBoundingPolygon());
+    }else if(!getSettings().hasBoundingBoundary() && network2ZoningData.getNetworkSettings().hasBoundingBoundary()) {
         zoningBoundingPolygonWithinNetworkBoundingPolygon = false;
     }
     if(!zoningBoundingPolygonWithinNetworkBoundingPolygon) {
-      LOGGER.warning("SALVAGE: Bounding polygon for network is more restrictive than public transport, truncating to network bounding polygon");
-      getSettings().setBoundingPolygon(network2ZoningData.getNetworkSettings().getBoundingPolygon());
+      LOGGER.warning("SALVAGE: Bounding polygon for network is more restrictive than public transport, " +
+              "replacing with network bounding polygon");
+      getSettings().setBoundingArea(network2ZoningData.getNetworkSettings().getBoundingArea());
     }
   }
 

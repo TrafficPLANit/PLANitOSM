@@ -424,9 +424,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());    
     if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId()) &&
-        (   !settings.hasBoundingPolygon() ||
+        (   !settings.hasBoundingBoundary() || !settings.getBoundingArea().hasBoundingPolygon() ||
             keepOutsideBoundingPolygon ||
-            OsmNodeUtils.createPoint(osmNode).within(settings.getBoundingPolygon()))) {
+            OsmNodeUtils.createPoint(osmNode).within(settings.getBoundingArea().getBoundingPolygon()))) {
       
       /* store actual OSM node for later processing in memory */
       getNetworkData().getOsmNodeData().registerEligibleOsmNode(osmNode);

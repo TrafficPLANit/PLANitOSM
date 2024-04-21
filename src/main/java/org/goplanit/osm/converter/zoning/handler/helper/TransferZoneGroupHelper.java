@@ -68,12 +68,12 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
       
       /* we do not issue warning when we have a bounding box, as it is possible this is the reason it is not available, not ideal but sufficient for now */
       boolean logDiscardWarning  = false;
-      if(!getSettings().hasBoundingPolygon()) {
+      if(!getSettings().hasBoundingBoundary()) {
         /* tags available, use as is to extract mode compatibility for verification if it is rightly not available */
         if(tags!=null) {
           Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
               ptModeParser.collectPublicTransportModesFromPtEntity(osmId, type, tags, OsmModeUtils.identifyPtv1DefaultMode(osmId, tags));
-          if( OsmModeUtils.hasEligibleOsmMode(modeResult) && !getSettings().hasBoundingPolygon()) {      
+          if( OsmModeUtils.hasEligibleOsmMode(modeResult) && !getSettings().hasBoundingBoundary()) {
             /* not parsed due to problems (or outside bounding box), discard */
             logDiscardWarning = true;
           }

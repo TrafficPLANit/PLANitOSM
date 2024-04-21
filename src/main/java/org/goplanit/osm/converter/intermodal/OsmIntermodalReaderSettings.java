@@ -1,9 +1,9 @@
 package org.goplanit.osm.converter.intermodal;
 
 import org.goplanit.converter.ConverterReaderSettings;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.UrlUtils;
@@ -130,31 +130,13 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
       throw new PlanItRunTimeException("Unable to extract URL from input file location %s",inputFile);
     }
   }     
-  
-  /** Set a square bounding box based on provided envelope
-   * 
-   * @param x1, first x coordinate
-   * @param y1, first y coordinate
-   * @param x2, second x coordinate
-   * @param y2, second y coordinate
-   */
-  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) {
-    setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
-  }
-  
-  /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
-   * @param boundingBox to use
-   */
-  public final void setBoundingBox(Envelope boundingBox) {
-    setBoundingPolygon(PlanitJtsUtils.create2DPolygon(boundingBox));
-  }
-  
+
   /** Set a polygon based bounding box to restrict parsing to
-   * @param boundingPolygon to use
+   * @param osmBoundary to use
    */
-  public final void setBoundingPolygon(Polygon boundingPolygon) {
-    getNetworkSettings().setBoundingPolygon(boundingPolygon);
-    getPublicTransportSettings().setBoundingPolygon(boundingPolygon);
+  public final void setBoundingArea(OsmBoundary osmBoundary) {
+    getNetworkSettings().setBoundingArea(osmBoundary.deepClone());
+    getPublicTransportSettings().setBoundingArea(osmBoundary.deepClone());
   }   
   
 }

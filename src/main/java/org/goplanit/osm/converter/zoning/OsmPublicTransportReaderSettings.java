@@ -182,8 +182,14 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
 
     if(isParserActive()) {
       LOGGER.info(String.format("OSM (transfer) zoning input file: %s", getInputSource()));
-      if(hasBoundingPolygon()) {
-        LOGGER.info(String.format("Bounding polygon set to: %s",getBoundingPolygon().toString()));
+      if(hasBoundingBoundary()) {
+        if(getBoundingArea().hasBoundingPolygon()) {
+          LOGGER.info(String.format("Bounding polygon set to: %s", getBoundingArea().getBoundingPolygon().toString()));
+        }else if(getBoundingArea().hasBoundaryName()){
+          LOGGER.info(String.format(
+                  "Bounding boundary set to: %s %s", getBoundingArea().getBoundaryName(),
+                  getBoundingArea().hasBoundaryAdminLevel() ? "admin_level:"+ getBoundingArea().getBoundaryAdminLevel() : ""));
+        }
       }
 
       LOGGER.info(String.format("Stop location to waiting area search radius: %.2fm", getStopToWaitingAreaSearchRadiusMeters()));
@@ -279,7 +285,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmIds to exclude (int or long)
    */
   public void excludeOsmNodesById(final Collection<Number> osmIds) {
-    osmIds.forEach( osmId -> excludeOsmNodeById(osmId));
+    osmIds.forEach(this::excludeOsmNodeById);
   }
   
   /** Provide OSM id of node that we are not to parse as public transport infrastructure, for example 
@@ -307,7 +313,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmIds to exclude (int or long)
    */
   public void excludeOsmWaysById(final Collection<Number> osmIds) {
-    osmIds.forEach( osmId -> excludeOsmWayById(osmId));
+    osmIds.forEach(this::excludeOsmWayById);
   }   
   
   /** Provide OSM id of way that we are not to parse as public transport infrastructure, for example 
@@ -356,7 +362,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)}
    * @param overwriteTriples triples to provide (stopLocationOsmId, waitingAreaEntityType, waitingAreasOsmId)
    */
-  public void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
+  @SafeVarargs
+  public final void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
     Arrays.stream(overwriteTriples).forEach(t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
   }
 
@@ -417,6 +424,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     }
 
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<>());
+    assert waitingAreaOsmId != null;
+    assert osmWayId != null;
     overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId.longValue(), osmWayId.longValue());
   }  
   
@@ -561,8 +570,9 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
     if(overwritesByType == null){
       LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes access for waiting areas", osmEntityType.toString()));
+      return;
     }
-    overwritesByType.put(osmId.longValue(), new TreeSet(Arrays.asList(osmModes)));
+    overwritesByType.put(osmId.longValue(), new TreeSet<>(Arrays.asList(osmModes)));
   }
 
   /**

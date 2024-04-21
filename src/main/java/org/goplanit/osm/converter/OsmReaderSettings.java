@@ -23,11 +23,11 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
   private URL inputSource;
   
   /** country name to use to initialise OSM defaults for */
-  private final String countryName;  
-  
-  /** allow to restrict parsing to only within the bounding polygon, when null entire input is parsed */
-  private Polygon boundingPolygon = null;
-  
+  private final String countryName;
+
+  /** OsmBoundary to apply, if null no restriction is applied */
+  private OsmBoundary osmBoundary = null;
+
   /**
    * Default constructor with default locale (Global)
    */
@@ -113,50 +113,33 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public final String getCountryName() {
     return this.countryName;
-  } 
-  
-  /** Set an additional (more restricting) square bounding box based on provided envelope
-   * 
-   * @param x1, first x coordinate
-   * @param y1, first y coordinate
-   * @param x2, second x coordinate
-   * @param y2, second y coordinate
-   * @throws PlanItException thrown if error
-   */
-  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) throws PlanItException {
-    setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
   }
-  
-  /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
-   * 
-   * @param boundingBox to use
+
+
+  /**
+   * boundary to restrict parsing to
+   *
+   * @param osmBoundary to apply
    */
-  public final void setBoundingBox(Envelope boundingBox) {
-    setBoundingPolygon(PlanitJtsUtils.create2DPolygon(boundingBox));
+  public void setBoundingArea(final OsmBoundary osmBoundary){
+    this.osmBoundary = osmBoundary;
   }
-  
-  /** Set a polygon based bounding box to restrict parsing to
-   * 
-   * @param boundingPolygon to use
+
+  /**
+   * The OsmBoundary configured by the user
+   *
+   * @return osmBoundary
    */
-  public final void setBoundingPolygon(Polygon boundingPolygon) {
-    this.boundingPolygon = boundingPolygon;
-  } 
-  
+  public OsmBoundary getBoundingArea(){
+    return this.osmBoundary;
+  }
+
   /** Set a polygon based bounding box to restrict parsing to
    * 
    * @return boundingPolygon used, can be null
    */
-  public final Polygon getBoundingPolygon() {
-    return this.boundingPolygon;
-  }  
-  
-  /** Set a polygon based bounding box to restrict parsing to
-   * 
-   * @return boundingPolygon used, can be null
-   */
-  public final boolean hasBoundingPolygon() {
-    return this.boundingPolygon!=null;
+  public final boolean hasBoundingBoundary() {
+    return this.osmBoundary!=null;
   }   
    
 }

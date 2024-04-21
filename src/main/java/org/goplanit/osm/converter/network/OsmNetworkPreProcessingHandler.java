@@ -36,7 +36,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   protected void handleEligibleOsmWay(OsmWay osmWay, Map<String,String> tags) {
     var settings = getSettings();
      
-    if(settings.hasBoundingPolygon() && settings.isKeepOsmWayOutsideBoundingPolygon(osmWay.getId())) {
+    if(settings.hasBoundingBoundary() && settings.isKeepOsmWayOutsideBoundingPolygon(osmWay.getId())) {
       
       if(settings.isOsmWayExcluded(osmWay.getId())) {
         LOGGER.warning("OSM way %d is marked for exclusion as well as keeping it, this is conflicting, OSM way exclusion takes precedence");

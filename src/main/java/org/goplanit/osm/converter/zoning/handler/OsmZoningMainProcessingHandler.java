@@ -425,8 +425,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* collect OSM node */
       OsmNode osmNode = getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNode(member.getId());
       if(osmNode == null) {
-        if(!getSettings().hasBoundingPolygon() && !suppressLogging) {
-          LOGGER.warning(String.format("DISCARD: OSM node %d (without role tag) referenced in stop_area %d not available, expected to reside outside bounding box, if not verify correctness", member.getId(), osmRelation.getId()));
+        if(!getSettings().hasBoundingBoundary() && !suppressLogging) {
+          LOGGER.warning(String.format(
+                  "DISCARD: OSM node %d (without role tag) referenced in stop_area %d not available, expected to reside outside bounding box, if not verify correctness", member.getId(), osmRelation.getId()));
         }
         return;
       }

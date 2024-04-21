@@ -1178,7 +1178,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     OsmNode stopPositionNode = getNetworkToZoningData().getNetworkOsmNodes().get(member.getId());
     if(stopPositionNode==null) {
       /* likely missing because it falls outside bounding box, ignore */
-      if(!getSettings().hasBoundingPolygon() && !suppressLogging) {
+      if(!getSettings().hasBoundingBoundary() && !suppressLogging) {
         LOGGER.warning(String.format("DISCARD: Unable to extract ptv2 stop position %d in OSM relation (stop area) %s, OSM node missing", member.getId(), transferZoneGroup.getExternalId()));
       }
       return;

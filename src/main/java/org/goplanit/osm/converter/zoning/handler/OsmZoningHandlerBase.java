@@ -1,11 +1,8 @@
 package org.goplanit.osm.converter.zoning.handler;
 
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.logging.Logger;
-
+import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.*;
-import org.goplanit.osm.converter.network.OsmNetworkReaderData;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
@@ -23,8 +20,9 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Geometry;
 
-import de.topobyte.osm4j.core.access.DefaultOsmHandler;
-import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 
 /**
  * Base Handler for all zoning handlers. Contains shared functionality that is used across the different zoning handlers 
@@ -131,10 +129,10 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when no bounding area, or covered by bounding area, false otherwise
    */
   protected boolean isCoveredByZoningBoundingPolygon(OsmNode osmNode) {    
-    if(!getSettings().hasBoundingPolygon()) {
+    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundingPolygon()) {
       return true;
     }else {
-      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmNode, getSettings().getBoundingPolygon());
+      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmNode, getSettings().getBoundingArea().getBoundingPolygon());
     }
   }
 
@@ -145,10 +143,12 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when no bounding area, or covered by bounding area, false otherwise
    */
   protected boolean isNearNetworkBoundingBox(OsmNode osmNode) {
-    if(!getSettings().hasBoundingPolygon()){
+    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundingPolygon()){
       return false;
     }
-    return OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(osmNode), getSettings().getBoundingPolygon().getEnvelopeInternal(), getGeoUtils());
+    return OsmBoundingAreaUtils.isNearNetworkBoundingBox(
+            OsmNodeUtils.createPoint(osmNode),
+            getSettings().getBoundingArea().getBoundingPolygon().getEnvelopeInternal(), getGeoUtils());
   }
   
   /** Verify if OSM way has at least one node that resides within the zoning bounding polygon. If no bounding area is defined
@@ -158,11 +158,13 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when no bounding area, or covered by bounding area, false otherwise
    */
   protected boolean isCoveredByZoningBoundingPolygon(OsmWay osmWay) {    
-    if(!getSettings().hasBoundingPolygon()) {
+    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundingPolygon()) {
       return true;
     }else {
       return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(
-              osmWay, zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getSettings().getBoundingPolygon());
+              osmWay,
+              zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
+              getSettings().getBoundingArea().getBoundingPolygon());
     }
   }  
   

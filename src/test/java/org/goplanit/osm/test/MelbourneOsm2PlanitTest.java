@@ -3,6 +3,7 @@ package org.goplanit.osm.test;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
 import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
@@ -12,8 +13,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.time.DayOfWeek;
-import java.time.LocalTime;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.fail;
@@ -69,7 +68,8 @@ public class MelbourneOsm2PlanitTest {
       var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       // apply bounding box
-      inputSettings.getNetworkSettings().setBoundingBox(144.995842, 144.921341, -37.855068,-37.786996);
+      inputSettings.getNetworkSettings().setBoundingArea(
+              OsmBoundary.of(144.995842, 144.921341, -37.855068,-37.786996));
 
       /* minimise warnings Melbourne v2 */
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());

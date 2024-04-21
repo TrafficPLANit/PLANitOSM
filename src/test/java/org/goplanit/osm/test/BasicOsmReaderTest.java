@@ -140,11 +140,11 @@ public class BasicOsmReaderTest {
       assertEquals(0, zoning.getOdConnectoids().size());
       assertEquals(131, zoning.getTransferConnectoids().size());
 
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM),true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL),  true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.FERRY),  true);
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.FERRY));
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      

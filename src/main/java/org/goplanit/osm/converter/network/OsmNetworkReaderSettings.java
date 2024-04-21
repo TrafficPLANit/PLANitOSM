@@ -207,8 +207,14 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     LOGGER.info(String.format("OSM network input source: %s",getInputSource()));
     LOGGER.info(String.format("Country to base defaults on: %s",getCountryName()));
     LOGGER.info(String.format("Setting Coordinate Reference System: %s",getSourceCRS().getName()));
-    if(hasBoundingPolygon()) {
-      LOGGER.info(String.format("Bounding polygon set to: %s", getBoundingPolygon().toString()));
+    if(hasBoundingBoundary()) {
+      if(getBoundingArea().hasBoundingPolygon()) {
+        LOGGER.info(String.format("Bounding polygon set to: %s", getBoundingArea().getBoundingPolygon().toString()));
+      }else if(getBoundingArea().hasBoundaryName()){
+        LOGGER.info(String.format(
+                "Bounding boundary set to: %s %s", getBoundingArea().getBoundaryName(),
+                getBoundingArea().hasBoundaryAdminLevel() ? "admin_level:"+ getBoundingArea().getBoundaryAdminLevel() : ""));
+      }
     }
 
     getHighwaySettings().logSettings();
@@ -448,7 +454,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return true if mapped, false otherwise
    */
   public boolean hasMappedPlanitModeType(final String osmMode) {
-    var mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);;
+    var mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
     if(mappedMode == null) {
       mappedMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
     }
@@ -463,8 +469,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return true if any is mapped, false otherwise
    */  
   public boolean hasAnyMappedPlanitModeType(final String... osmModes) {
-    for(int index=0;index<osmModes.length;++index) {
-      if(hasMappedPlanitModeType(osmModes[index])) {
+    for (String osmMode : osmModes) {
+      if (hasMappedPlanitModeType(osmMode)) {
         return true;
       }
     }
@@ -575,7 +581,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public void excludeOsmWayFromParsing(Number osmWayId) {
     if(osmWayId.longValue() <= 0) {
-      LOGGER.warning(String.format("invalid OSM way id provided to be excluded, ignored", osmWayId.longValue()));
+      LOGGER.warning(String.format("invalid OSM way id (%d) provided to be excluded, ignored", osmWayId.longValue()));
       return;
     }
     excludedOsmWays.add(osmWayId.longValue());
@@ -598,7 +604,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public void excludeOsmWaysFromParsing(List<Number> osmWayIds) {
     if(osmWayIds==null) {
-      LOGGER.warning(String.format("OSM way ids are null, ignored excluding them"));
+      LOGGER.warning("OSM way ids are null, ignored excluding them");
       return;
     }    
     osmWayIds.forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId.longValue()));
