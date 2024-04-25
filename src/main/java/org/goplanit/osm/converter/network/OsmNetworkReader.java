@@ -113,7 +113,24 @@ public class OsmNetworkReader implements NetworkReader {
    * 
    */
   private void doPreprocessing(){
-    
+
+    OsmNetworkPreProcessingHandler osmHandler;
+
+    /* identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
+    if(settings.hasBoundingBoundary() && !settings.getBoundingArea().hasBoundingPolygon()) {
+      LOGGER.info("Pre-processing: Identifying relations representing public transport platforms");
+
+      /* reader to parse the actual file or source location */
+      OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
+      if(osmReader == null) {
+        LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
+        return;
+      }
+      osmHandler = new OsmNetworkPreProcessingHandler(
+          OsmNetworkPreProcessingHandler.Stage.IDENTIFY_BOUNDARY_BY_NAME, getOsmNetworkToPopulate(), networkData, settings);
+    }
+
+    /* regular preprocessing */
     LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes");
 
     /* reader to parse the actual file or source location */
@@ -124,7 +141,8 @@ public class OsmNetworkReader implements NetworkReader {
     }
 
     /* set handler to deal with call backs from osm4j */
-    OsmNetworkPreProcessingHandler osmHandler = new OsmNetworkPreProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
+    osmHandler = new OsmNetworkPreProcessingHandler(
+        OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING, getOsmNetworkToPopulate(), networkData, settings);
     read(osmReader, osmHandler);
   }
 
@@ -298,7 +316,7 @@ public class OsmNetworkReader implements NetworkReader {
     }
 
     if(!osmNetworkToPopulate.isEmpty()) {
-      LOGGER.info(String.format("Bounding box of final network: %s", getNetworkReaderData().getBoundingBox().toString()));
+      LOGGER.info(String.format("Bounding box of final network: %s", getNetworkReaderData().getNetworkSpanningBoundingBox().toString()));
     }
     LOGGER.info("OSM full network parsing...DONE");
     

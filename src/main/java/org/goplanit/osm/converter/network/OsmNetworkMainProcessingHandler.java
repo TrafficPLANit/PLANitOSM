@@ -69,9 +69,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * the circular way in between connecting in and outgoing links/linksegments that were parsed during the regular parsing phase
    * 
    * @param circularOsmWay the circular osm way to parse 
-   * @throws PlanItException thrown if error
    */
-  private void handleRawCircularWay(final OsmWay circularOsmWay) throws PlanItException {
+  private void handleRawCircularWay(final OsmWay circularOsmWay){
         
     Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer;
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(circularOsmWay);
@@ -103,10 +102,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param osmWayTags tags of the way
    * @param initialNodeIndex offset for starting point, part of the recursion
    * @return set of created links per layer for this circular way if any, empty set if none
-   * @throws PlanItException thrown if error
    */
   private Map<NetworkLayer, Set<MacroscopicLink>> handleRawCircularWay(
-      final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) throws PlanItException {
+      final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) {
 
     Map<NetworkLayer, Set<MacroscopicLink>> createdLinksByLayer = new TreeMap<>();
     int finalNodeIndex = (circularOsmWay.getNumberOfNodes()-1);
@@ -327,7 +325,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         
         handleRawCircularWay(entry.getValue());
                 
-      }catch (PlanItException e) {
+      }catch (Exception e) {
         LOGGER.severe(e.getMessage());
         LOGGER.severe(String.format("Unable to process circular way OSM id: %d",entry.getKey()));
       }        
@@ -443,7 +441,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       
       if(!keepOutsideBoundingPolygon) {
         /* track bounding box of OSM nodes within bounding polygon (if any) */
-        getNetworkData().updateBoundingBox(osmNode);
+        getNetworkData().updateSpanningBoundingBox(osmNode);
       }
     }
   }
@@ -455,11 +453,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
 
-    if(osmWay.getId() == 4868934L){
-      int bla = 4;
-    }
-
-    wrapHandleOsmWay(osmWay, this::handleOsmWay);    
+    wrapHandleOsmWay(osmWay, this::handleOsmWay);
             
   }
 

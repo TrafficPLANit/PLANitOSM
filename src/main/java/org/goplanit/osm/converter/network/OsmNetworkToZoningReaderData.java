@@ -71,7 +71,7 @@ public class OsmNetworkToZoningReaderData {
    * @return network bounding box
    */
   public Envelope getNetworkBoundingBox() {
-    return networkData.getBoundingBox();
+    return networkData.getNetworkSpanningBoundingBox();
   }
   
   /** network reader settings as used for populating the planti network absed on osm data

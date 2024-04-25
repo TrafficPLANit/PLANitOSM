@@ -103,7 +103,17 @@ public class OsmBoundaryTags {
    * @param tags to verify
    * @return true if boundary=* exists, false otherwise
    */
-  public static boolean hasHighwayKeyTag(Map<String, String> tags) {
+  public static boolean hasBoundaryKeyTag(Map<String, String> tags) {
     return tags.containsKey(getBoundaryKeyTag());
+  }
+
+  /** Verify if tags contain the value for tha boundary key indicated
+   *
+   * @param tags to verify
+   * @param boundaryValueTag tag to verify  for boundary=value
+   * @return true if a match false otherwise
+   */
+  public static boolean hasBoundaryValueTag(Map<String, String> tags, String boundaryValueTag) {
+    return hasBoundaryKeyTag(tags) && tags.get(getBoundaryKeyTag()).equals(boundaryValueTag);
   }
 }

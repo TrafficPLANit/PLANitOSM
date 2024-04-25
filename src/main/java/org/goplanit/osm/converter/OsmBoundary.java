@@ -17,8 +17,6 @@ public class OsmBoundary {
 
   private final String adminLevel;
 
-  /** boundary value, e.g., administrative, forest etc.,
-   * see <a href="https://wiki.openstreetmap.org/wiki/Key:boundary">OSM wiki</a> for options */
   private final String boundaryType;
 
   /** boundary name to determine boundary, mutually exclusive to boundingPolygon */
@@ -156,6 +154,12 @@ public class OsmBoundary {
     return adminLevel;
   }
 
+  public boolean hasBoundaryType(){ return boundaryType != null; }
+
+  /** boundary value, e.g., administrative, forest etc.,
+   *
+   * @return boundary value type
+   */
   public String getBoundaryType(){ return boundaryType; }
 
   public String getBoundaryName(){

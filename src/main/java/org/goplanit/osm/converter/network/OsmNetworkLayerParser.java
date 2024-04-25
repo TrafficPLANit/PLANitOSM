@@ -96,7 +96,7 @@ public class OsmNetworkLayerParser {
    * @return true when near, false otherwise
    */
   private boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils){
-    return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
+    return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getNetworkSpanningBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
   }
 
   /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on

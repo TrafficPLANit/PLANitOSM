@@ -4,9 +4,11 @@ import java.util.*;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.locationtech.jts.geom.Coordinate;
@@ -29,8 +31,14 @@ public class OsmNetworkReaderData {
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays =new HashMap<>();
     
-  /** on the fly tracking of bounding box of all parsed nodes in the network */
+  /** on the fly tracking of network spanning (square) bounding box of all parsed nodes in the network */
   private Envelope networkBoundingBox;
+
+  /** the osmBoundary derived from the user configuration, which in case the user configuration was based on a name only
+   * will have been expanded with the polygon identified during network pre-processing. Use this polygon for main processing, instead
+   * of the one from user settings.
+   */
+  private OsmBoundary osmBoundingArea = null;
 
   /**
    * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used to construct links
@@ -81,7 +89,7 @@ public class OsmNetworkReaderData {
   /** update bounding box to include osm node
    * @param osmNode to expand so that bounding box includes it
    */
-  public void updateBoundingBox(OsmNode osmNode) {
+  public void updateSpanningBoundingBox(OsmNode osmNode) {
     Coordinate coordinate = OsmNodeUtils.createCoordinate(osmNode);
     if(networkBoundingBox==null) {
       networkBoundingBox = new Envelope(coordinate);
@@ -90,12 +98,34 @@ public class OsmNetworkReaderData {
     }
   }
   
-  /** collect the network bounding box so far
+  /** collect the network spanning bounding box so far (crude)
    * 
-   * @return network bounding box
+   * @return network spanning bounding box
    */
-  public Envelope getBoundingBox() {
+  public Envelope getNetworkSpanningBoundingBox() {
     return networkBoundingBox;
+  }
+
+  /**
+   * Access to the bounding area to apply (if any). Will always have a polygon
+   * to base the bounding area of as the naming has already been handled and converted into a polygon
+   * during preprocessing
+   *
+   * @return bounding area
+   */
+  public OsmBoundary getBoundingAreaWithPolygon(){
+    return this.osmBoundingArea;
+  }
+
+  /**
+   * Set the bounding area. It is expected a polygon is available. If not an exception is thrown
+   * @param osmBoundary to use
+   */
+  public void setBoundingAreaWithPolygon(OsmBoundary osmBoundary){
+    if(!osmBoundary.hasBoundingPolygon()){
+      throw new PlanItRunTimeException("Setting OSM bounding area for network without polygon, this should not happen");
+    }
+    this.osmBoundingArea = osmBoundary;
   }
 
   /**

@@ -11,12 +11,22 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmBoundaryTags;
+import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.OsmTagUtils;
 
 /**
- * Preprocessing Handler that identifies which nodes of osm ways  - that are marked for inclusion even if they fall (partially) outside the bounding polygon -
+ * Preprocessing Handler that has two stages:
+ *<p>
+ *IDENTIFY_BOUNDARY_BY_NAME: only required when bounding area of network is defined by a name only. Here we only register
+ *all the members of the relation for parsing during the regular pre-processing stage. Required to be able to construct the
+ *spatial boundry during main processing but requires two passes during preprocessing.
+ *</p><p>
+ *REGULAR_PREPROCESSING: regular preprocessing where we register nodes of ways for eligibility of the network and extract
+ *the ways part of a bounding boundary that was identified in the IDENTIFY_BOUNDARY_BY_NAME stage
+ * identifies which nodes of osm ways  - that are marked for inclusion even if they fall (partially) outside the bounding polygon -
  * are to be kept. Since we only know what nodes these are after parsing OSM ways (and nodes are parsed before the ways), this pre-processing is the only way
  * that we can identify these nodes before the main parsing pass.
+ * </p>
  * 
  * @author markr
  * 
@@ -28,6 +38,18 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkPreProcessingHandler.class.getCanonicalName());
+
+  /** pre-processing stage to apply */
+  private final Stage stage;
+
+  /**
+   * Preprocessing of network has two stages, identified by this enum.
+   *
+   */
+  public enum Stage {
+    IDENTIFY_BOUNDARY_BY_NAME,
+    REGULAR_PREPROCESSING,
+  }
   
   private final LongAdder nodeCounter;
 
@@ -66,14 +88,16 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   /**
    * Constructor
    *
-   * @param networkToPopulate the network to populate
-   * @param networkData to populate
-   * @param settings for the handler
+   * @param preProcessStage        the preProcess stage to apply tot his preProcessing
+   * @param networkToPopulate      the network to populate
+   * @param networkData            to populate
+   * @param settings               for the handler
    */
   public OsmNetworkPreProcessingHandler(
-          final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+      Stage preProcessStage, final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
     super(networkToPopulate, networkData, settings);
     this.nodeCounter = new LongAdder();
+    this.stage = preProcessStage;
   }
 
   /**
@@ -92,7 +116,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) {
-    
     wrapHandleOsmWay(osmWay, this::handleEligibleOsmWay);
   }
 
@@ -104,10 +127,11 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmRelation osmRelation) {
 
-    /* only keep going when boundary is active */
-    if(!getSettings().hasBoundingBoundary()){
+    /* only keep going when boundary is active and based on name */
+    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundaryName()){
       return;
     }
+    var boundarySettings = getSettings().getBoundingArea();
 
     /* check for boundary tags on relation */
     var tags = OsmModelUtil.getTagsAsMap(osmRelation);
@@ -121,8 +145,31 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     }
 
     /* boundary compatible relation - now check against settings  */
-    //TODO CONTINUE HERE --> populate initialiseBoundingArea in basenetwork reader to have polygon
-    // then compare against this relation...
+    if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmTags.NAME, boundarySettings.getBoundaryName())){
+
+      // found, no see if more specific checks are required based on type and/or admin_level. Below flags switch to
+      // true if the item is not used or it is used AND it is matched
+      boolean boundaryTypeMatch =
+          boundarySettings.hasBoundaryType() && OsmBoundaryTags.hasBoundaryValueTag(tags, boundarySettings.getBoundaryType());
+      boolean adminLevelMatch = boundarySettings.hasBoundaryAdminLevel() &&
+          OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, boundarySettings.getBoundaryAdminLevel());
+      boolean boundaryAdministrativeMatch = !boundarySettings.getBoundaryType().equals(OsmBoundaryTags.ADMINISTRATIVE) ||
+          boundarySettings.hasBoundaryAdminLevel() &&
+              OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, boundarySettings.getBoundaryAdminLevel());
+
+      if(boundaryTypeMatch && adminLevelMatch && boundaryAdministrativeMatch){
+
+        // full match found -> register as the bounding area polygon to use
+
+        //TODO below requires first implementing the two phases (enum created but not yet enforced)
+        // stage 1: do nothing by register the name and not create the polygon. In stage 2 extract the ways with outer roles
+        //          and in complete() create the overall polygon from the line strings --> then put it on the network data there
+        //          and it can be used in main processing (also to be implemented because it is not yet used
+        //          then remove the initialise bit from the basehandler I think that is still there but is not needed.
+        //          then feed this through all the way
+        //getNetworkData().setBoundingAreaWithPolygon();
+      }
+    }
   }
   
   /** Log total number of parsed nodes and percentage retained

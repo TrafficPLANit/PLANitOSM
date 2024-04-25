@@ -53,7 +53,11 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * this information to apply during parsing. This is what happens here
    */
   protected void initialiseUserDefinedBoundary() {
-    //TODO --> continue here
+    if(getSettings().hasBoundingBoundary()){
+      if(getSettings().getBoundingArea().hasBoundaryName()){
+
+      }
+    }
   }
 
 
