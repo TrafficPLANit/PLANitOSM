@@ -1,6 +1,9 @@
 package org.goplanit.osm.tags;
 
+import org.apache.commons.collections4.set.UnmodifiableSet;
+
 import java.util.Map;
+import java.util.Set;
 
 /** tags used by Osm Boundary relation, e.g. boundary=administrative
  * 
@@ -48,12 +51,42 @@ public class OsmBoundaryTags {
 
   public static final String ADMIN_LEVEL = "admin_level";
 
+  /** list all supported values for boundary key */
+  protected final static UnmodifiableSet<String> boundaryValueTags;
+
+  static {
+    boundaryValueTags = (UnmodifiableSet<String>) Set.of(
+            ADMINISTRATIVE,
+            ABORIGINAL,
+            FOREST,
+            FOREST_COMPARTMENT,
+            HAZARD,
+            HEALTH,
+            MARITIME,
+            MARKER,
+            NATIONAL_PARK,
+            PLACE,
+            POLITICAL,
+            POSTAL_CODE,
+            PROTECED_AREA
+    );
+  }
+
   /** get the boundary key tag
    *
    * @return boundary key tag
    */
   public static String getBoundaryKeyTag() {
     return BOUNDARY;
+  }
+
+  /**
+   * Access to set of all boundary value tags that are supported (in no particular order)
+   *
+   * @return boundary value tags
+   */
+  public static UnmodifiableSet<String> getBoundaryValues(){
+    return boundaryValueTags;
   }
 
   /** verify if passed in tag is indeed the boundary key tag

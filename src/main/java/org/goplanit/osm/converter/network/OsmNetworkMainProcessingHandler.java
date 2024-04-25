@@ -43,7 +43,25 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
     return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getNetwork(), getNetworkData());
-  }                                           
+  }
+
+  /**
+   * Verify if node is spatially eligible for processing, taking into account bounding polygong and other
+   * user settings
+   *
+   * @param osmNode to verify
+   * @return true when eligible, false otherwise
+   */
+  private boolean isNodeSpatiallyEligible(final OsmNode osmNode) {
+    var settings = getSettings();
+    return getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
+            &&
+            ( !settings.hasBoundingBoundary() ||
+                    !settings.getBoundingArea().hasBoundingPolygon() ||
+                    settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId())||
+                    OsmNodeUtils.createPoint(osmNode).within(settings.getBoundingArea().getBoundingPolygon())
+            );
+  }
        
   
   /**
@@ -66,10 +84,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       }
       
       createdLinksByLayer = handleRawCircularWay(circularOsmWay, tags, 0 /* start at initial index */);
-      
       if(createdLinksByLayer!=null) {
         /* register that OSM way has multiple planit links mapped (needed in case of subsequent break link actions on nodes of the osm way */
-        createdLinksByLayer.entrySet().stream().forEach( entry -> {
+        createdLinksByLayer.entrySet().forEach(entry -> {
           OsmNetworkReaderLayerData layerData = getNetworkData().getLayerParsers().get(entry.getKey()).getLayerData();
           layerData.updateOsmWaysWithMultiplePlanitLinks(circularOsmWay.getId(), entry.getValue());
         });
@@ -259,11 +276,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
       osmTypeKeyToUse = OsmHighwayTags.getHighwayKeyTag();
       isWayActivatedLambda = osmTypeValueToUse -> settings.getHighwaySettings().isOsmHighwayTypeDeactivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmHighwayTags.isNonRoadBasedHighwayValueTag(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = OsmHighwayTags::isNonRoadBasedHighwayValueTag;
     }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
       osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
       isWayActivatedLambda = osmTypeValueToUse -> settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = osmTypeValueToUse -> OsmRailwayTags.isNonRailBasedRailway(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = OsmRailwayTags::isNonRailBasedRailway;
     }else if(OsmWaterwayTags.isWaterBasedWay(tags) && settings.isWaterwayParserActive()) {
       osmTypeKeyToUse = OsmWaterwayTags.getUsedKeyTag(tags);
       isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmTypeValueToUse);
@@ -416,18 +433,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmNode osmNode) {
     var settings = getSettings();
 
-    if(osmNode.getId() == 251451479L){
-      int bla = 4;
-    }
-
-    /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are 
+     /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
-    boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());    
-    if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId()) &&
-        (   !settings.hasBoundingBoundary() || !settings.getBoundingArea().hasBoundingPolygon() ||
-            keepOutsideBoundingPolygon ||
-            OsmNodeUtils.createPoint(osmNode).within(settings.getBoundingArea().getBoundingPolygon()))) {
-      
+    boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());
+    if(isNodeSpatiallyEligible(osmNode) || keepOutsideBoundingPolygon){
+
       /* store actual OSM node for later processing in memory */
       getNetworkData().getOsmNodeData().registerEligibleOsmNode(osmNode);
       
@@ -512,3 +522,5 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }  
   
 }
+
+

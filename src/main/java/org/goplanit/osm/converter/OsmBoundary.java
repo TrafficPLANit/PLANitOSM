@@ -1,13 +1,25 @@
 package org.goplanit.osm.converter;
 
+import org.goplanit.osm.tags.OsmBoundaryTags;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 
+/**
+ * OSMBoundary helper class to define a boundary to restrict parsing to. This can be a user defined bounding box or polygon
+ * as well as a name based reference to an OSM relation via the boundary:_some_type_ key value combination. When the _type_ chosen
+ * is administrative it is possible to provide the admin_level as an additional discriminator.
+ *
+ * @author markr
+ */
 public class OsmBoundary {
 
   private final String adminLevel;
+
+  /** boundary value, e.g., administrative, forest etc.,
+   * see <a href="https://wiki.openstreetmap.org/wiki/Key:boundary">OSM wiki</a> for options */
+  private final String boundaryType;
 
   /** boundary name to determine boundary, mutually exclusive to boundingPolygon */
   private final String boundaryName;
@@ -17,13 +29,12 @@ public class OsmBoundary {
 
   /**
    * Constructor
+   *
    * @param boundaryName to use to determine boundary polygon from OSM data
-   * @param adminLevel admin level to search for (in case multiple exist)
+   * @param boundaryType type (value) of boundary
    */
-  private OsmBoundary(String boundaryName, String adminLevel) {
-    this.boundingPolygon = null;
-    this.boundaryName = boundaryName;
-    this.adminLevel = adminLevel;
+  private OsmBoundary(String boundaryName, String boundaryType) {
+    this(boundaryName, boundaryType, null, null);
   }
 
   /**
@@ -32,22 +43,67 @@ public class OsmBoundary {
    * @param boundingPolygon to use
    */
   private OsmBoundary(final Polygon boundingPolygon) {
-    this.boundingPolygon = boundingPolygon;
-    boundaryName = null;
-    adminLevel = null;
+    this(null, null, null, boundingPolygon);
   }
 
   /**
    * Constructor
    *
    * @param boundaryName to use to determine boundaring polygon from OSM data
-   * @param adminLevel admin level to search for (in case multiple exist)
+   * @param boundaryType type (value) of boundary
    * @param boundingPolygon to use
    */
-  private OsmBoundary(String boundaryName, String adminLevel, final Polygon boundingPolygon) {
+  private OsmBoundary(String boundaryName, String boundaryType, final Polygon boundingPolygon) {
+    this(boundaryName, boundaryType, null, boundingPolygon);
+  }
+
+  /**
+   * Constructor
+   *
+   * @param boundaryName to use to determine boundaring polygon from OSM data
+   * @param boundaryType type (value) of boundary
+   * @param boundingPolygon to use
+   */
+  private OsmBoundary(String boundaryName, String boundaryType, String adminLevel, final Polygon boundingPolygon) {
     this.boundingPolygon = boundingPolygon;
     this.boundaryName = boundaryName;
+    this.boundaryType = boundaryType;
     this.adminLevel = adminLevel;
+  }
+
+  /**
+   * Create a polygon based on name only to restrict parsing to. If name is not unique
+   * then first match will be chosen
+   *
+   * @param boundaryName to restrict to
+   * @return OsmBoundary to use in setting
+   */
+  public static OsmBoundary of(String boundaryName) {
+    return OsmBoundary.of(boundaryName, null);
+  }
+
+  /**
+   * Create a polygon based on type and name to restrict parsing to, if name and type are not unique first
+   * match will be chosen
+   *
+   * @param boundaryName to restrict to
+   * @param boundaryType type of boundary (optional)
+   * @return OsmBoundary to use in setting
+   */
+  public static OsmBoundary of(String boundaryName, String boundaryType) {
+    return new OsmBoundary(boundaryName, boundaryType);
+  }
+
+  /**
+   * Create a polygon based on name of administrative type for a given admin level (if provided)
+   * to restrict parsing to.
+   *
+   * @param boundaryName to restrict to
+   * @param adminLevel admin level of the boundary (optional)
+   * @return OsmBoundary to use in setting
+   */
+  public static OsmBoundary ofAdminstrativeType(String boundaryName, String adminLevel) {
+    return new OsmBoundary(boundaryName, OsmBoundaryTags.ADMINISTRATIVE, adminLevel, null);
   }
 
   /**
@@ -100,6 +156,8 @@ public class OsmBoundary {
     return adminLevel;
   }
 
+  public String getBoundaryType(){ return boundaryType; }
+
   public String getBoundaryName(){
     return boundaryName;
   }
@@ -109,6 +167,6 @@ public class OsmBoundary {
    * @return deep clone
    */
   public OsmBoundary deepClone() {
-    return new OsmBoundary(boundaryName, adminLevel, boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null);
+    return new OsmBoundary(boundaryName, boundaryType, adminLevel, boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null);
   }
 }

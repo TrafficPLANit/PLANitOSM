@@ -32,8 +32,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   private final OsmNetworkReaderData networkData;  
   
   /** the settings to adhere to */
-  private final OsmNetworkReaderSettings settings;  
-  
+  private final OsmNetworkReaderSettings settings;
+
   /**
    * Constructor
    *
@@ -45,6 +45,15 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
     this.networkToPopulate = networkToPopulate;
     this.settings = settings;
     this.networkData = networkData;
+    initialiseUserDefinedBoundary();
+  }
+
+  /**
+   * If the user defined a bounding area in some way shape or form, we must construct a bounding polygon from
+   * this information to apply during parsing. This is what happens here
+   */
+  protected void initialiseUserDefinedBoundary() {
+    //TODO --> continue here
   }
 
 

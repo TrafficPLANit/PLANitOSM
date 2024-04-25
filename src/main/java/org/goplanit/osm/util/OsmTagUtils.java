@@ -1,9 +1,6 @@
 package org.goplanit.osm.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -33,12 +30,22 @@ public class OsmTagUtils {
    * @return true when present, false otherwise
    */
   public static boolean matchesAnyValueTag(final String valueTag, final String... valueTags) {
-    for(int index=0; index < valueTags.length;++ index) {
-      if(valueTag.equals(valueTags[index])) {
+    for(String value :  valueTags) {
+      if(valueTag.equals(value)) {
         return true;
       }
     }
     return false;
+  }
+
+  /** Verify if the passed in value tag is present in the collection of value tags provided
+   *
+   * @param valueTag to check
+   * @param valueTags to check against
+   * @return true when present, false otherwise
+   */
+  public static boolean matchesAnyValueTag(final String valueTag, final Collection<String> valueTags) {
+    return matchesAnyValueTag(valueTag, (String[])valueTags.toArray());
   }
     
   /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
