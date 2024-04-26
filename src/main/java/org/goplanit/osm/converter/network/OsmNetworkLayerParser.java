@@ -313,8 +313,7 @@ public class OsmNetworkLayerParser {
       /* identify explicitly excluded and included modes with anything related to mode and direction specific key tags <?:>mode<:?>=<?> */
       Set<Mode> excludedModes = modeParser.getExplicitlyExcludedModes(tags, forwardDirection, settings);
       Set<Mode> includedModes = modeParser.getExplicitlyIncludedModes(tags, forwardDirection, settings);
-          
-      
+
       /* global access is defined for both ways, or explored direction coincides with the main direction of the one way */
       boolean isOneWay = OsmOneWayTags.isOneWay(tags);
       /*                                              two way || oneway->forward    || oneway->backward and reversed oneway */  
@@ -799,9 +798,14 @@ public class OsmNetworkLayerParser {
       link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);
       if(link != null) {
         
-        if(isPartOfCircularWay && OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT)) {
-          /* when circular and one-way, i.e. tagged as roundabout, we only accept one direction as accessible regardless of what has been identified so far;
-           * clockwise equates to forward direction while anti-clockwise equates to backward direction */
+        if(isPartOfCircularWay && (
+            OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT) ||
+                OsmOneWayTags.isOneWay(tags))) {
+
+          /* when circular and one-way, i.e. tagged as roundabout or explicitly so, we only accept one direction as accessible regardless of what has been identified so far;
+           * clockwise equates to forward direction while anti-clockwise equates to backward direction
+           * TODO: ideally we do better and allow for active modes/access modifiers to overrule --> this should therefore eventually
+           *  be dealt with directly when we extract the link segment types instead */
           if (OsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
             linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
           } else {

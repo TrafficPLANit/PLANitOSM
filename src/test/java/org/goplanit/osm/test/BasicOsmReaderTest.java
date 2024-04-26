@@ -93,7 +93,7 @@ public class BasicOsmReaderTest {
       // are deemed correct
       assertEquals(network.getTransportLayers().size(), 1);
       assertEquals(network.getTransportLayers().getFirst().getLinks().size(), 1075);
-      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2119);
+      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2123);
       assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 882);
       
     }catch(Exception e) {
@@ -131,7 +131,7 @@ public class BasicOsmReaderTest {
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
       assertEquals(1234, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2437, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(2441, network.getTransportLayers().getFirst().getLinkSegments().size());
       assertEquals(1030, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );

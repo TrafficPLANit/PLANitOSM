@@ -763,10 +763,6 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       MacroscopicNetworkLayer networkLayer,
       boolean suppressLogging) {
 
-    if(osmWaitingAreaId == 459973944L){
-      int bla = 4;
-    }
-
     /* geo location on planit link, possibly inserted for this purpose by this method if no viable osm node/existing coordinate is present */
     Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(
         transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
