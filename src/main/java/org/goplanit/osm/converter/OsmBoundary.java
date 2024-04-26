@@ -120,6 +120,7 @@ public class OsmBoundary {
    * @param y1, first y coordinate
    * @param x2, second x coordinate
    * @param y2, second y coordinate
+   * @return created boundary
    */
   public static OsmBoundary of(Number x1, Number x2, Number y1, Number y2){
     return of(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
@@ -129,6 +130,7 @@ public class OsmBoundary {
    * (which internally is converted to the bounding polygon that happens to be square)
    *
    * @param boundingBox to use
+   * @return created boundary
    */
   public static OsmBoundary of(Envelope boundingBox) {
     return of(PlanitJtsUtils.create2DPolygon(boundingBox));
