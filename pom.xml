@@ -72,10 +72,7 @@
 			<artifactId>junit-jupiter-engine</artifactId>
 			<optional>true</optional>
 		</dependency>
-		<dependency>
-			<groupId>org.goplanit.utils</groupId>
-			<artifactId>planit-utils</artifactId>
-		</dependency>
+
 	</dependencies>
 	
 	<build>
