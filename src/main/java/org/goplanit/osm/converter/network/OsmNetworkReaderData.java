@@ -270,6 +270,7 @@ public class OsmNetworkReaderData {
    * Verify if OSM way is part of bounding area boundary
    *
    * @param osmWayId to verify
+   * @return true when registered, false otherwise
    */
   public boolean isRegisteredBoundaryOsmWay(long osmWayId) {
     return osmBoundaryOsmWayTracker.containsKey(osmWayId);
