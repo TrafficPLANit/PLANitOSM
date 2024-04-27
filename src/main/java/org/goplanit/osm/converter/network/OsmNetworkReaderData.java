@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.network;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.OsmBoundary;
@@ -10,6 +11,7 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -35,10 +37,17 @@ public class OsmNetworkReaderData {
   private Envelope networkBoundingBox;
 
   /** the osmBoundary derived from the user configuration, which in case the user configuration was based on a name only
-   * will have been expanded with the polygon identified during network pre-processing. Use this polygon for main processing, instead
-   * of the one from user settings.
+   * will have been expanded with the polygon identified during network pre-processing. This polygon will then be used to
+   * create this new bounding area that is used for main processing, instead of the one from user settings. If a polygon was
+   * directly set, we create a copy instead
    */
   private OsmBoundary osmBoundingArea = null;
+
+  /**
+   * OSMWay ids that make up the outer polygon of the to be constructed osmBoundingArea (if any), contiguous nature of
+   * these can be reconstructed by ordering them by their integer value which is incrementally created upon adding entries.
+   */
+  private Map<Long, Pair<Integer,OsmWay>> osmBoundaryOsmWayTracker = new HashMap<>();
 
   /**
    * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used to construct links
@@ -72,7 +81,22 @@ public class OsmNetworkReaderData {
       OsmNetworkLayerParser layerHandler = new OsmNetworkLayerParser(macroNetworkLayer, this, settings, geoUtils);
       osmLayerParsers.put(macroNetworkLayer, layerHandler);
     }
-  }    
+  }
+
+  /**
+   * Initialise bounding area based on original bounding area set by user in settings. In case it has no polygon
+   * but just a name, then we do nothing here, but instead await the pre-processing which will update the bounding area
+   * at a later stage (with a polygon)
+   *
+   * @param settings to collect current bounding area information from
+   */
+  protected void initialiseBoundingArea(OsmNetworkReaderSettings settings) {
+    boolean thisNoBoundaryNorPolygon = (this.osmBoundingArea==null || !getBoundingAreaWithPolygon().hasBoundingPolygon());
+    boolean settingsHasBoundaryAndPolygon = settings.hasBoundingBoundary() && settings.getBoundingArea().hasBoundingPolygon();
+    if(thisNoBoundaryNorPolygon && settingsHasBoundaryAndPolygon) {
+      setBoundingAreaWithPolygon(settings.getBoundingArea().deepClone());
+    }
+  }
 
   /**
    * reset
@@ -86,7 +110,8 @@ public class OsmNetworkReaderData {
     osmLayerParsers.clear();    
   }  
   
-  /** update bounding box to include osm node
+  /** update bounding box to include OSM node
+   *
    * @param osmNode to expand so that bounding box includes it
    */
   public void updateSpanningBoundingBox(OsmNode osmNode) {
@@ -196,5 +221,83 @@ public class OsmNetworkReaderData {
     return this.osmLayerParsers;
   }
 
- 
+  /**
+   * Register portions of the named OSM boundary to construct a single coherent polygon during regular pre-processing
+   * stage but before main processing (as main processing relies on the boundary to be finalised to do the actual parsing)
+   *
+   * @param osmWayId to register as part of the future OSM boundary
+   */
+  public void registerBoundaryOsmWayOuterRoleSection(long osmWayId) {
+    osmBoundaryOsmWayTracker.put(osmWayId,Pair.of(osmBoundaryOsmWayTracker.size(), null /* to be added in next stage */));
+  }
+
+  /**
+   * Register actual OsmWay  portion of the named OSM boundary to construct a single coherent polygon during regular pre-processing
+   * stage but before main processing (as main processing relies on the boundary to be finalised to do the actual parsing).
+   * <p> Requires the osmWayId to have been registered already in stage 1 of preprocessing </p>
+   *
+   * @param osmWay to update registered entry with as part of the future OSM boundary
+   */
+  public void updateBoundaryRegistrationWithOsmWay(OsmWay osmWay) {
+    if(!isRegisteredBoundaryOsmWay(osmWay.getId())){
+      LOGGER.severe("Should not update boundary with OSM way when it has not been identified as being part of boundary during " +
+          "initial stage of preprocessing, ignored");
+    }
+    var valueWithoutOsmWay = osmBoundaryOsmWayTracker.get(osmWay.getId());
+    osmBoundaryOsmWayTracker.put(osmWay.getId(),Pair.of(valueWithoutOsmWay.first(), osmWay /* update now available */));
+  }
+
+  /**
+   * Extract an ordered list of the registered OSM ways for the bounding boundary in the order they were registered in
+   *
+   * @return ordered list of OSM ways
+   */
+  public List<OsmWay> getRegisteredBoundaryOsmWaysInOrder() {
+    if(!hasRegisteredBoundaryOsmWay()){
+      LOGGER.severe("Unable to constructed sorted list of OSM ways as none have been registered");
+      return List.of();
+    }
+    if(osmBoundaryOsmWayTracker.values().iterator().next().second() == null){
+      LOGGER.severe("Registered OSM ways do not have an OSM way object attached to them, unable to constructed sorted list of OSM ways");
+      return List.of();
+    }
+    // sort by integer index and then collect the OSM ways as list
+    return osmBoundaryOsmWayTracker.entrySet().stream().sorted(
+        Comparator.comparingInt( e -> e.getValue().first())).map( e -> e.getValue().second()).collect(Collectors.toList());
+  }
+
+  /**
+   * Verify if OSM way is part of bounding area boundary
+   *
+   * @param osmWayId to verify
+   */
+  public boolean isRegisteredBoundaryOsmWay(long osmWayId) {
+    return osmBoundaryOsmWayTracker.containsKey(osmWayId);
+  }
+
+  /**
+   * Check if any OSM ways have been registered for constructing the OSM bounding boundary polygon from
+   *
+   * @return true if present, false otherwise
+   */
+  public boolean hasRegisteredBoundaryOsmWay() {
+    return !osmBoundaryOsmWayTracker.isEmpty();
+  }
+
+  /** check if bounding area is available
+   *
+   * @return true if present, false otherwise
+   */
+   public boolean hasBoundingBoundary(){
+     return osmBoundingArea != null;
+   }
+
+  /** get the bounding area
+   *
+   * @return bounding area
+   */
+  public OsmBoundary getBoundingArea(){
+    return osmBoundingArea;
+  }
+
 }

@@ -181,7 +181,12 @@ public class OsmWayUtils {
    * @return coordinate array found, empty when no nodes were found available
    * @throws PlanItException thrown if error
    */
-  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes, int startNodeIndex, int endNodeIndex, PlanitExceptionConsumer<Set<Long>> missingNodeConsumer) throws PlanItException{
+  public static Coordinate[] createCoordinateArray(
+      OsmWay osmWay,
+      Map<Long,OsmNode> osmNodes,
+      int startNodeIndex,
+      int endNodeIndex,
+      PlanitExceptionConsumer<Set<Long>> missingNodeConsumer) throws PlanItException{
     Set<Long> missingNodes = null;
         
     /* in the special case the end node index is smaller than start node index (circular way) we "loop around" to accommodate this */
@@ -198,7 +203,7 @@ public class OsmWayUtils {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode==null) {
         if(missingNodes==null) {
-          missingNodes = new HashSet<Long>();
+          missingNodes = new HashSet<>();
         }
         missingNodes.add(osmWay.getNodeId(index));
         continue;
@@ -213,7 +218,7 @@ public class OsmWayUtils {
         OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
         if(osmNode==null) {
           if(missingNodes==null) {
-            missingNodes = new HashSet<Long>();
+            missingNodes = new HashSet<>();
           }
           missingNodes.add(osmWay.getNodeId(index));
           continue;

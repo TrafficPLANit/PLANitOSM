@@ -46,7 +46,6 @@ public class OsmNetworkReader implements NetworkReader {
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
-   * 
    */
   public void initialiseBeforeParsing() {
     PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null && getOsmNetworkToPopulate().getTransportLayers().size()>0,
@@ -78,8 +77,9 @@ public class OsmNetworkReader implements NetworkReader {
     settings.excludeOsmWayTypesWithoutActivatedModes();
     settings.logUnsupportedOsmWayTypes();
         
-    /* initialise layer specific parsers */
+    /* initialise layer specific parsers and bounding area*/
     networkData.initialiseLayerParsers(getOsmNetworkToPopulate(), settings, geoUtils);
+    networkData.initialiseBoundingArea(settings);
   }  
            
   /** Read based on reader and handler where the reader performs a callback to the handler provided
@@ -116,9 +116,10 @@ public class OsmNetworkReader implements NetworkReader {
 
     OsmNetworkPreProcessingHandler osmHandler;
 
-    /* identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
+    /* STAGE 1 - BOUNDARY IDENTIFICATION
+     * identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
     if(settings.hasBoundingBoundary() && !settings.getBoundingArea().hasBoundingPolygon()) {
-      LOGGER.info("Pre-processing: Identifying relations representing public transport platforms");
+      LOGGER.info(String.format("Pre-processing: Identifying bounding boundary for %s", settings.getBoundingArea().getBoundaryName()));
 
       /* reader to parse the actual file or source location */
       OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
@@ -128,9 +129,10 @@ public class OsmNetworkReader implements NetworkReader {
       }
       osmHandler = new OsmNetworkPreProcessingHandler(
           OsmNetworkPreProcessingHandler.Stage.IDENTIFY_BOUNDARY_BY_NAME, getOsmNetworkToPopulate(), networkData, settings);
+      read(osmReader, osmHandler);
     }
 
-    /* regular preprocessing */
+    /* STAGE 2 - REGULAR PREPROCESSING */
     LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes");
 
     /* reader to parse the actual file or source location */

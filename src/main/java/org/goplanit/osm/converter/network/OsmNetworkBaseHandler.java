@@ -45,21 +45,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
     this.networkToPopulate = networkToPopulate;
     this.settings = settings;
     this.networkData = networkData;
-    initialiseUserDefinedBoundary();
   }
-
-  /**
-   * If the user defined a bounding area in some way shape or form, we must construct a bounding polygon from
-   * this information to apply during parsing. This is what happens here
-   */
-  protected void initialiseUserDefinedBoundary() {
-    if(getSettings().hasBoundingBoundary()){
-      if(getSettings().getBoundingArea().hasBoundaryName()){
-
-      }
-    }
-  }
-
 
   /** verify if tags represent an highway or railway that is specifically aimed at road based or rail based infrastructure, e.g.,
    * asphalt or tracks and NOT an area, platform, stops, etc. and is also activated for parsing based on the settings
@@ -87,7 +73,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * @param osmWay to parse
    * @param osmWayConsumer to apply to eligible OSM way
    */
-  protected void wrapHandleOsmWay(OsmWay osmWay, BiConsumer<OsmWay, Map<String, String>> osmWayConsumer) {
+  protected void wrapHandleInfrastructureOsmWay(OsmWay osmWay, BiConsumer<OsmWay, Map<String, String>> osmWayConsumer) {
         
     if(!settings.isOsmWayExcluded(osmWay.getId())) {
       

@@ -93,8 +93,20 @@ public class OsmBoundary {
   }
 
   /**
-   * Create a polygon based on name of administrative type for a given admin level (if provided)
-   * to restrict parsing to.
+   * Create full OsM boundary with all members populated
+   *
+   * @param boundaryName to restrict to
+   * @param boundaryType type of boundary (optional)
+   * @param adminLevel admin level of the boundary (optional)
+   * @param boundingPolygon to restrict to
+   * @return OsmBoundary to use in setting
+   */
+  public static OsmBoundary of(String boundaryName, String boundaryType, String adminLevel, Polygon boundingPolygon) {
+    return new OsmBoundary(boundaryName, boundaryType, adminLevel, boundingPolygon);
+  }
+
+  /**
+   * Create OSM boundary of administrative type
    *
    * @param boundaryName to restrict to
    * @param adminLevel admin level of the boundary (optional)

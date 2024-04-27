@@ -10,7 +10,6 @@ import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.NetworkLayer;
@@ -53,20 +52,20 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @return true when eligible, false otherwise
    */
   private boolean isNodeSpatiallyEligible(final OsmNode osmNode) {
-    var settings = getSettings();
-    return getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
+    var networkData = getNetworkData();
+    return networkData.getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
             &&
-            ( !settings.hasBoundingBoundary() ||
-                    !settings.getBoundingArea().hasBoundingPolygon() ||
-                    settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId())||
-                    OsmNodeUtils.createPoint(osmNode).within(settings.getBoundingArea().getBoundingPolygon())
+            ( !networkData.hasBoundingBoundary() ||
+              !networkData.getBoundingArea().hasBoundingPolygon() ||
+              getSettings().isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId())||
+              OsmNodeUtils.createPoint(osmNode).within(networkData.getBoundingArea().getBoundingPolygon())
             );
   }
        
   
   /**
-   * now parse the remaining circular osmWays, which by default are converted into multiple links/linksegments for each part of
-   * the circular way in between connecting in and outgoing links/linksegments that were parsed during the regular parsing phase
+   * now parse the remaining circular osmWays, which by default are converted into multiple links/link segments for each part of
+   * the circular way in between connecting in and outgoing links/link segments that were parsed during the regular parsing phase
    * 
    * @param circularOsmWay the circular osm way to parse 
    */
@@ -453,7 +452,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
 
-    wrapHandleOsmWay(osmWay, this::handleOsmWay);
+    wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWay);
             
   }
 
