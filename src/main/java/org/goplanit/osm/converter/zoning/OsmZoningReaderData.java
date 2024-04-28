@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.zoning;
 
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.locale.CountryNames;
 
 /**
@@ -25,7 +26,11 @@ public class OsmZoningReaderData {
   OsmZoningReaderPlanitData planitData = new OsmZoningReaderPlanitData();
   
   /* OSM entity related tracking during parsing */
-  OsmZoningReaderOsmData osmData = new OsmZoningReaderOsmData();   
+  OsmZoningReaderOsmData osmData = new OsmZoningReaderOsmData();
+
+  /** the osmBoundary used during parsing.
+   */
+  private OsmBoundary osmBoundingArea = null;
   
   /**
    * Default constructor using country set to GLOBAL (right hand drive)
@@ -54,7 +59,8 @@ public class OsmZoningReaderData {
    */
   public void reset() {
     planitData.reset();
-    osmData.reset();        
+    osmData.reset();
+    osmBoundingArea = null;
   }
 
   /** collect the planit related tracking data 
@@ -72,5 +78,30 @@ public class OsmZoningReaderData {
   public OsmZoningReaderOsmData getOsmData() {
     return osmData;
   }
-  
+
+  /** get the bounding area
+   *
+   * @return bounding area
+   */
+  public OsmBoundary getBoundingArea(){
+    return osmBoundingArea;
+  }
+
+  /**
+   * Set the bounding area to use
+   *
+   * @param osmBoundingArea to use
+   */
+  public void setBoundingArea(OsmBoundary osmBoundingArea){
+    this.osmBoundingArea = osmBoundingArea;
+  }
+
+  /**
+   * Check if zoning has a bounding boundary area set
+   *
+   * @return ture if present, false otherwise
+   */
+  public boolean hasBoundingArea() {
+    return getBoundingArea() != null;
+  }
 }

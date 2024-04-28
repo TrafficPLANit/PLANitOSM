@@ -1252,17 +1252,14 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmNode osmNode) {
 
-    if(osmNode.getId() == 7053939943L){
-      int bla = 4;
-    }
-
     /* parse as stand-alone PT-entity node */
     wrapHandlePtOsmNode(osmNode, this::extractTransferInfrastructure);
 
     /* When earmarked to be needed by PT OSM ways/relations during pre-processing but not yet fully registered, we now register the entire node in memory for OSM way/relations/node
      *  handling during main process */
+    // todo: unlike network we seem to register all preregistered OSM nodes. They should be checked whether they fall in bounding area
+    // this is not yet done causing memory use overhead that is not needed
     registerIfPreregistered(osmNode);
-
   }
 
   /**

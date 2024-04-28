@@ -128,12 +128,17 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmNode to verify
    * @return true when no bounding area, or covered by bounding area, false otherwise
    */
-  protected boolean isCoveredByZoningBoundingPolygon(OsmNode osmNode) {    
-    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundingPolygon()) {
+  protected boolean isCoveredByZoningBoundingPolygon(OsmNode osmNode) {
+    if(!getZoningReaderData().hasBoundingArea()){
       return true;
-    }else {
-      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmNode, getSettings().getBoundingArea().getBoundingPolygon());
     }
+
+    var boundingArea = getZoningReaderData().getBoundingArea();
+    if(!boundingArea.hasBoundingPolygon()){
+      return true;
+    }
+
+    return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmNode, boundingArea.getBoundingPolygon());
   }
 
   /** Verify if node resides near the zoning bounding polygon based on #OsmNetworkReaderData. If no bounding area is defined
@@ -143,12 +148,18 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when no bounding area, or covered by bounding area, false otherwise
    */
   protected boolean isNearNetworkBoundingBox(OsmNode osmNode) {
-    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundingPolygon()){
+    if(!getZoningReaderData().hasBoundingArea()){
       return false;
     }
+
+    var boundingArea = getZoningReaderData().getBoundingArea();
+    if(!boundingArea.hasBoundingPolygon()){
+      return false;
+    }
+
+    // todo with a name based bounding area spanning envelope is too crude...change this and releated code
     return OsmBoundingAreaUtils.isNearNetworkBoundingBox(
-            OsmNodeUtils.createPoint(osmNode),
-            getSettings().getBoundingArea().getBoundingPolygon().getEnvelopeInternal(), getGeoUtils());
+        OsmNodeUtils.createPoint(osmNode), boundingArea.getBoundingPolygon().getEnvelopeInternal(), getGeoUtils());
   }
   
   /** Verify if OSM way has at least one node that resides within the zoning bounding polygon. If no bounding area is defined
@@ -157,15 +168,21 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmWay to verify
    * @return true when no bounding area, or covered by bounding area, false otherwise
    */
-  protected boolean isCoveredByZoningBoundingPolygon(OsmWay osmWay) {    
-    if(!getSettings().hasBoundingBoundary() || !getSettings().getBoundingArea().hasBoundingPolygon()) {
+  protected boolean isCoveredByZoningBoundingPolygon(OsmWay osmWay) {
+    if(!getZoningReaderData().hasBoundingArea()){
       return true;
-    }else {
-      return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(
-              osmWay,
-              zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
-              getSettings().getBoundingArea().getBoundingPolygon());
     }
+
+    var boundingArea = getZoningReaderData().getBoundingArea();
+    if(!boundingArea.hasBoundingPolygon()){
+      return true;
+    }
+
+    // todo with a name based bounding area spanning envelope is too crude...change this and releated code
+    return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(
+            osmWay,
+            zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
+            boundingArea.getBoundingPolygon());
   }  
   
   

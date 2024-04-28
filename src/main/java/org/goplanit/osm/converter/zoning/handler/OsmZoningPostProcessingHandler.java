@@ -646,9 +646,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
         ferryLink, false /* B->A */, linkSegmentType, speedLimit, lanes, networkLayer);
 
-    /* register the ferry terminal as a network node so we can look it up by its id when needed (this is needed when verifying
+    /* register the ferry terminal as a network node, so we can look it up by its id when needed (this is needed when verifying
      * if the OSM node is now part of the physical network such that we can process the ferry terminal as a regular terminal from
      * now on */
+    getNetworkToZoningData().preRegisterOsmNode(osmFerryStop.getId());
     getNetworkToZoningData().registerNetworkOsmNode(osmFerryStop);
   }
 

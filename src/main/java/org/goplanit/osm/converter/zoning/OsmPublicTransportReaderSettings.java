@@ -183,13 +183,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     if(isParserActive()) {
       LOGGER.info(String.format("OSM (transfer) zoning input file: %s", getInputSource()));
       if(hasBoundingBoundary()) {
-        if(getBoundingArea().hasBoundingPolygon()) {
-          LOGGER.info(String.format("Bounding polygon set to: %s", getBoundingArea().getBoundingPolygon().toString()));
-        }else if(getBoundingArea().hasBoundaryName()){
-          LOGGER.info(String.format(
-                  "Bounding boundary set to: %s %s", getBoundingArea().getBoundaryName(),
-                  getBoundingArea().hasBoundaryAdminLevel() ? "admin_level:"+ getBoundingArea().getBoundaryAdminLevel() : ""));
-        }
+        LOGGER.info(String.format("Pt bounding boundary set to: %s",getBoundingArea().toString()));
       }
 
       LOGGER.info(String.format("Stop location to waiting area search radius: %.2fm", getStopToWaitingAreaSearchRadiusMeters()));

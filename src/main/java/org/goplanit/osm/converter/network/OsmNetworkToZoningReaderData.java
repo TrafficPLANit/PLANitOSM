@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.locationtech.jts.geom.Envelope;
@@ -73,6 +74,15 @@ public class OsmNetworkToZoningReaderData {
   public Envelope getNetworkBoundingBox() {
     return networkData.getNetworkSpanningBoundingBox();
   }
+
+  /**
+   * Access to bounding boundary of the network
+   *
+   * @return network bounding boundary
+   */
+  public OsmBoundary getNetworkBoundingBoundary() {
+    return networkData.getBoundingArea();
+  }
   
   /** network reader settings as used for populating the planti network absed on osm data
    * @return network reader settings used
@@ -95,10 +105,20 @@ public class OsmNetworkToZoningReaderData {
    * This may happen when we artificially expand the network while identifying OSM nodes that should in
    * fact be part of the network, such as dangling ferry stops that we want to connect.
    *
+   * @param osmNodeId  node to register
+   */
+  public void preRegisterOsmNode(long osmNodeId){
+    networkData.getOsmNodeData().preRegisterEligibleOsmNode(osmNodeId);
+  }
+
+  /**
+   * Register additional OSM nodes as being part of the network after the network has been parsed.
+   * This may happen when we artificially expand the network while identifying OSM nodes that should in
+   * fact be part of the network, such as dangling ferry stops that we want to connect.
+   *
    * @param osmNode  node to register
    */
   public void registerNetworkOsmNode(OsmNode osmNode){
-    networkData.getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());
     networkData.getOsmNodeData().registerEligibleOsmNode(osmNode);
   }
 

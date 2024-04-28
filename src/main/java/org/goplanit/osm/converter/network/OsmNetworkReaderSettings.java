@@ -208,13 +208,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     LOGGER.info(String.format("Country to base defaults on: %s",getCountryName()));
     LOGGER.info(String.format("Setting Coordinate Reference System: %s",getSourceCRS().getName()));
     if(hasBoundingBoundary()) {
-      if(getBoundingArea().hasBoundingPolygon()) {
-        LOGGER.info(String.format("Bounding polygon set to: %s", getBoundingArea().getBoundingPolygon().toString()));
-      }else if(getBoundingArea().hasBoundaryName()){
-        LOGGER.info(String.format(
-                "Bounding boundary set to: %s %s", getBoundingArea().getBoundaryName(),
-                getBoundingArea().hasBoundaryAdminLevel() ? "admin_level:"+ getBoundingArea().getBoundaryAdminLevel() : ""));
-      }
+      LOGGER.info(String.format("Network bounding boundary set to: %s",getBoundingArea().toString()));
     }
 
     getHighwaySettings().logSettings();

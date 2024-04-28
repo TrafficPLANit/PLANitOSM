@@ -1,6 +1,7 @@
 package org.goplanit.osm.converter;
 
 import org.goplanit.osm.tags.OsmBoundaryTags;
+import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.locationtech.jts.geom.Envelope;
@@ -185,6 +186,23 @@ public class OsmBoundary {
    * @return deep clone
    */
   public OsmBoundary deepClone() {
-    return new OsmBoundary(boundaryName, boundaryType, adminLevel, boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null);
+    return new OsmBoundary(boundaryName, boundaryType, adminLevel, (boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null));
+  }
+
+  @Override
+  public String toString(){
+    StringBuilder sb = new StringBuilder();
+    if(hasBoundaryName()){
+      sb.append(OsmTags.NAME).append(": ").append(getBoundaryName());
+    }
+    if(hasBoundaryType()){
+      sb.append(sb.length()>0? " " : "");
+      sb.append(OsmBoundaryTags.getBoundaryKeyTag()).append(": ").append(getBoundaryType());
+    }
+    if(hasBoundingPolygon()) {
+      sb.append(sb.length()>0? " " : "");
+      sb.append("geometry: ").append(getBoundingPolygon().toString());
+    }
+    return sb.toString();
   }
 }

@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.goplanit.converter.network.NetworkReader;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
+import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -79,8 +80,29 @@ public class OsmNetworkReader implements NetworkReader {
         
     /* initialise layer specific parsers and bounding area*/
     networkData.initialiseLayerParsers(getOsmNetworkToPopulate(), settings, geoUtils);
-    networkData.initialiseBoundingArea(settings);
-  }  
+  }
+
+  /**
+   * Helper to create an OSM4jReader, handler for a given stage and perform the parsing
+   *
+   * @param stage to apply
+   * @param boundaryManager to use
+   */
+  private void createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage stage, OsmBoundaryManager boundaryManager){
+    /* reader to parse the actual file or source location */
+    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
+    if(osmReader == null) {
+      LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
+      return;
+    }
+    var osmHandler = new OsmNetworkPreProcessingHandler(
+        stage,
+        boundaryManager,
+        getOsmNetworkToPopulate(),
+        networkData,
+        settings);
+    read(osmReader, osmHandler);
+  }
            
   /** Read based on reader and handler where the reader performs a callback to the handler provided
    * 
@@ -115,37 +137,33 @@ public class OsmNetworkReader implements NetworkReader {
   private void doPreprocessing(){
 
     OsmNetworkPreProcessingHandler osmHandler;
+    OsmBoundaryManager boundaryManager = new OsmBoundaryManager(getSettings().getBoundingArea());
 
     /* STAGE 1 - BOUNDARY IDENTIFICATION
      * identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
-    if(settings.hasBoundingBoundary() && !settings.getBoundingArea().hasBoundingPolygon()) {
-      LOGGER.info(String.format("Pre-processing: Identifying bounding boundary for %s", settings.getBoundingArea().getBoundaryName()));
-
-      /* reader to parse the actual file or source location */
-      OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
-      if(osmReader == null) {
-        LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
-        return;
-      }
-      osmHandler = new OsmNetworkPreProcessingHandler(
-          OsmNetworkPreProcessingHandler.Stage.IDENTIFY_BOUNDARY_BY_NAME, getOsmNetworkToPopulate(), networkData, settings);
-      read(osmReader, osmHandler);
+    if(boundaryManager.isConfigured() && !boundaryManager.isComplete()) {
+      LOGGER.info(String.format("Pre-processing: Identifying network bounding boundary for %s", settings.getBoundingArea().getBoundaryName()));
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
     }
 
     /* STAGE 2 - REGULAR PREPROCESSING */
-    LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes");
-
-    /* reader to parse the actual file or source location */
-    OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
-    if(osmReader == null) {
-      LOGGER.severe("Unable to create OSM reader for preprocessing network, aborting");
-      return;
+    {
+      LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes for network building");
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING, boundaryManager);
     }
 
-    /* set handler to deal with call backs from osm4j */
-    osmHandler = new OsmNetworkPreProcessingHandler(
-        OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING, getOsmNetworkToPopulate(), networkData, settings);
-    read(osmReader, osmHandler);
+    /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
+    if(boundaryManager.isConfigured() && !boundaryManager.isComplete())
+    {
+      LOGGER.info("Preprocessing: Finalising network bounding boundary, tracking OSM nodes for boundary");
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FINALISE_BOUNDARY_BY_NAME, boundaryManager);
+
+      if(!boundaryManager.isComplete()){
+        LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
+        return;
+      }
+      networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
+    }
   }
 
   /** Perform main processing of OSM network reader
@@ -194,7 +212,7 @@ public class OsmNetworkReader implements NetworkReader {
       {
         LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
         if (discardMaxsize != Integer.MAX_VALUE) {
-          LOGGER.info(String.format("Removing dangling subnetworks with more than %s vertices", String.valueOf(discardMaxsize)));
+          LOGGER.info(String.format("Removing dangling subnetworks with more than %d vertices", discardMaxsize));
         }        
         if(zoning == null) {
           LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
