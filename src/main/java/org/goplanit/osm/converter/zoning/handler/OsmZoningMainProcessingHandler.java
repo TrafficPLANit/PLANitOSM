@@ -1274,11 +1274,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       firstOsmWay = false;
     }
 
-    if(osmWay.getId() == 459973944L)
-    {
-      int bla = 4;
-    }
-
     /* delegate after verifying eligibility */
     super.wrapHandlePtOsmWay(osmWay, this::handlePtOsmWay);
             

@@ -101,9 +101,9 @@ public class OsmZoningReader implements ZoningReader {
     if(boundaryManager.isConfigured() && boundaryManager.isComplete()){
       // able to compare, perform comparison
       boolean sameBoundingArea =
-          !networkBoundingPolygon.equalsTopo(network2ZoningData.getNetworkSettings().getBoundingArea().getBoundingPolygon());
+          !networkBoundingPolygon.equalsTopo(boundaryManager.getCompleteBoundingArea().getBoundingPolygon());
       if(!sameBoundingArea &&
-          !getSettings().getBoundingArea().getBoundingPolygon().within(network2ZoningData.getNetworkSettings().getBoundingArea().getBoundingPolygon())){
+          !boundaryManager.getCompleteBoundingArea().getBoundingPolygon().within(networkBoundingPolygon)){
         LOGGER.warning("SALVAGE: Bounding polygon for network is more restrictive than public transport, " +
             "replacing with network bounding polygon");
         boundaryManager.overrideBoundingArea(networkBoundingBoundary.deepClone());
@@ -247,13 +247,13 @@ public class OsmZoningReader implements ZoningReader {
     {
       LOGGER.info("Preprocessing: Finalising zoning bounding boundary, tracking OSM nodes for boundary");
       preProcessFinaliseBoundingBoundary(boundaryManager, profiler);
-
-      if(!boundaryManager.isComplete()){
-        LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
-        return;
-      }
-      zoningReaderData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
     }
+
+    if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
+      LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
+      return;
+    }
+    zoningReaderData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
   }
 
   /**

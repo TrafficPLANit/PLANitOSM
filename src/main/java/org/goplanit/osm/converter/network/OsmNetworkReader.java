@@ -157,13 +157,14 @@ public class OsmNetworkReader implements NetworkReader {
     {
       LOGGER.info("Preprocessing: Finalising network bounding boundary, tracking OSM nodes for boundary");
       createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FINALISE_BOUNDARY_BY_NAME, boundaryManager);
-
-      if(!boundaryManager.isComplete()){
-        LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
-        return;
-      }
-      networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
     }
+
+    if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
+      LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
+      return;
+    }
+
+    networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
   }
 
   /** Perform main processing of OSM network reader
