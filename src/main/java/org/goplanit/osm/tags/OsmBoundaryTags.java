@@ -52,25 +52,20 @@ public class OsmBoundaryTags {
   public static final String ADMIN_LEVEL = "admin_level";
 
   /** list all supported values for boundary key */
-  protected final static UnmodifiableSet<String> boundaryValueTags;
-
-  static {
-    boundaryValueTags = (UnmodifiableSet<String>) Set.of(
-            ADMINISTRATIVE,
-            ABORIGINAL,
-            FOREST,
-            FOREST_COMPARTMENT,
-            HAZARD,
-            HEALTH,
-            MARITIME,
-            MARKER,
-            NATIONAL_PARK,
-            PLACE,
-            POLITICAL,
-            POSTAL_CODE,
-            PROTECED_AREA
-    );
-  }
+  protected final static Set<String> boundaryValueTags = Set.of(
+      ADMINISTRATIVE,
+      ABORIGINAL,
+      FOREST,
+      FOREST_COMPARTMENT,
+      HAZARD,
+      HEALTH,
+      MARITIME,
+      MARKER,
+      NATIONAL_PARK,
+      PLACE,
+      POLITICAL,
+      POSTAL_CODE,
+      PROTECED_AREA);
 
   /** get the boundary key tag
    *
@@ -85,7 +80,7 @@ public class OsmBoundaryTags {
    *
    * @return boundary value tags
    */
-  public static UnmodifiableSet<String> getBoundaryValues(){
+  public static Set<String> getBoundaryValues(){
     return boundaryValueTags;
   }
 

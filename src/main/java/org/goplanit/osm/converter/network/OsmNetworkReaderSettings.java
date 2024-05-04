@@ -208,7 +208,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     LOGGER.info(String.format("Country to base defaults on: %s",getCountryName()));
     LOGGER.info(String.format("Setting Coordinate Reference System: %s",getSourceCRS().getName()));
     if(hasBoundingBoundary()) {
-      LOGGER.info(String.format("Network bounding boundary set to: %s",getBoundingArea().toString()));
+      LOGGER.info(String.format("Network bounding boundary %s",getBoundingArea().toString()));
     }
 
     getHighwaySettings().logSettings();

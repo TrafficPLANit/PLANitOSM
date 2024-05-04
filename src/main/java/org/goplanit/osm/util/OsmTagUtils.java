@@ -45,7 +45,7 @@ public class OsmTagUtils {
    * @return true when present, false otherwise
    */
   public static boolean matchesAnyValueTag(final String valueTag, final Collection<String> valueTags) {
-    return matchesAnyValueTag(valueTag, (String[])valueTags.toArray());
+    return matchesAnyValueTag(valueTag, valueTags.toArray(String[]::new));
   }
     
   /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}

@@ -5,6 +5,7 @@ import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
+import org.goplanit.osm.tags.OsmBoundaryTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;
@@ -80,6 +81,39 @@ public class MelbourneOsm2PlanitTest {
       //todo: Error for differences is 99% certain due to layers exactly on top of each other. Fix https://github.com/TrafficPLANit/PLANitOSM/issues/40
       PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
       PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("test1Osm2PlanitIntermodalNoServicesBoundingBox");
+    }
+  }
+
+  /**
+   * Test that is identical to {@link this.test1Osm2PlanitIntermodalNoServicesBoundingBox} only now we use a named
+   * bounding box for the "Melbourne District" which is a political boundary
+   */
+  @Test
+  public void test2Osm2PlanitIntermodalNoServicesNamedBoundingBox() {
+
+    final String PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
+    final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_intermodal_no_services_named_bb").toAbsolutePath().toString();
+    try {
+
+      var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+      var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
+
+      // apply a boundary area based on name (osm relation id: 3898547)
+      inputSettings.getNetworkSettings().setBoundingArea(
+          OsmBoundary.of("Melbourne District", OsmBoundaryTags.POLITICAL));
+
+      /* minimise warnings Melbourne v2 */
+      OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());
+      OsmPtSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getPublicTransportSettings());
+
+      Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
+
+      //PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+      //PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
 
     } catch (Exception e) {
       e.printStackTrace();
