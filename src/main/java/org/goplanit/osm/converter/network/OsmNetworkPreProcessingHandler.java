@@ -187,6 +187,10 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     }else if(stage.equals(Stage.FINALISE_BOUNDARY_BY_NAME)) {
       // finalise bounding boundary now that OSM nodes are registered and available for polygon building
       boundaryManager.stepThreeCompleteConstructionBoundingBoundary(getNetworkData().getOsmNodeData().getRegisteredOsmNodes());
+    }else if(stage.equals(Stage.IDENTIFY_BOUNDARY_BY_NAME) && boundaryManager.isConfigured()){
+      boolean success = boundaryManager.hasRegisteredRelationMembers();
+      String boundaryName = getSettings().getBoundingArea().getBoundaryName();
+      LOGGER.info((success ? "Registered relation members for boundary " : "Unable to identify bounding area for name ") + boundaryName );
     }
 
   }

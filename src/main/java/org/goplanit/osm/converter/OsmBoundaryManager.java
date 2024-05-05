@@ -18,6 +18,7 @@ import org.locationtech.jts.geom.Coordinate;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Builder for OSM bounding boundaries. This class has a number of methods and internal state to be able to construct
@@ -150,14 +151,17 @@ public class OsmBoundaryManager {
       // found, no see if more specific checks are required based on type and/or admin_level. Below flags switch to
       // true if the item is not used or it is used AND it is matched
       boolean boundaryTypeMatch =
-          originalBoundary.hasBoundaryType() && OsmBoundaryTags.hasBoundaryValueTag(tags, originalBoundary.getBoundaryType());
-      boolean adminLevelMatch = originalBoundary.hasBoundaryAdminLevel() &&
+          !originalBoundary.hasBoundaryType() || OsmBoundaryTags.hasBoundaryValueTag(tags, originalBoundary.getBoundaryType());
+      boolean adminLevelMatch = !originalBoundary.hasBoundaryAdminLevel() ||
           OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
       boolean boundaryAdministrativeMatch = !originalBoundary.getBoundaryType().equals(OsmBoundaryTags.ADMINISTRATIVE) ||
           originalBoundary.hasBoundaryAdminLevel() &&
               OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
 
       if(boundaryTypeMatch && adminLevelMatch && boundaryAdministrativeMatch){
+
+        LOGGER.info(String.format(
+            "Found OSMRelation for bounding boundary: %s OsmRelationId:%d", originalBoundary.getBoundaryName(), osmRelation.getId()));
 
         // full match found -> register all members with correct roles to extract bounding area polygon from in next stage
         for(int memberIndex = 0; memberIndex < osmRelation.getNumberOfMembers(); ++memberIndex){
@@ -166,6 +170,7 @@ public class OsmBoundaryManager {
             registerBoundaryOsmWayOuterRoleSection(currMember.getId());
           }
         }
+
       }
     }
   }
@@ -200,15 +205,25 @@ public class OsmBoundaryManager {
     }
 
     List<OsmWay> boundaryOsmWays = getRegisteredBoundaryOsmWaysInOrder();
-    List<Coordinate> contiguousBoundaryCoords = new ArrayList<>();
+    Deque<Coordinate> contiguousBoundaryCoords = new LinkedList<>() {
+    };
     for(var osmWay : boundaryOsmWays){
       var coordArray = OsmWayUtils.createCoordinateArrayNoThrow(osmWay,osmNodes);
-      if(!contiguousBoundaryCoords.isEmpty() &&
-          !contiguousBoundaryCoords.get(contiguousBoundaryCoords.size()-1).equals2D(coordArray[0])){
-        LOGGER.severe("Bounding boundary outer role OSM ways supposed to be contiguous, but this was not found to be the case, this shouldn't happen, ignore");
-        return;
+      if(!contiguousBoundaryCoords.isEmpty()){
+        boolean success = PlanitJtsUtils.addCoordsContiguous(contiguousBoundaryCoords, coordArray);
+        if(!success){
+          LOGGER.severe(String.format("Bounding boundaries OSM way %d supposed to be contiguous with adjacent one, " +
+              "but this was not found to be the case, this shouldn't happen, ignore", osmWay.getId()));
+          contiguousBoundaryCoords.clear();
+          break;
+        }
+      }else{
+        contiguousBoundaryCoords.addAll(Arrays.asList(coordArray));
       }
-      contiguousBoundaryCoords.addAll(Arrays.stream(coordArray).collect(Collectors.toList()));
+    }
+    if(contiguousBoundaryCoords.isEmpty()){
+      LOGGER.severe("Unable to construct bounding boundary polygon");
+      return;
     }
 
     // now convert to polygon
@@ -266,6 +281,15 @@ public class OsmBoundaryManager {
       LOGGER.severe("Final boundary (with polygon) not available, either original boundary not configured, or final boundary not yet completed");
     }
     return null;
+  }
+
+  /**
+   * Check if any OSMRelation members have been registered for OSMWay extraction in the next phase
+   *
+   * @return true if present, false otherwise
+   */
+  public boolean hasRegisteredRelationMembers(){
+    return !this.osmBoundaryOsmWayTracker.isEmpty();
   }
 
 }

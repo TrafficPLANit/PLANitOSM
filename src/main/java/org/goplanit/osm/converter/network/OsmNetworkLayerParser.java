@@ -95,8 +95,18 @@ public class OsmNetworkLayerParser {
    * @param geoUtils to use
    * @return true when near, false otherwise
    */
-  private boolean isNearNetworkBoundingBox(Geometry geometry, PlanitJtsCrsUtils geoUtils){
-    return geoUtils.isGeometryNearBoundingBox(geometry, networkData.getNetworkSpanningBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
+  private boolean isNearNetworkBoundingArea(Geometry geometry, PlanitJtsCrsUtils geoUtils){
+    if(networkData.getNetworkSpanningBoundingBox() == null){
+      LOGGER.warning("No network spanning bounding box present, this shouldn't happen");
+    }
+
+    if(networkData.hasBoundingArea() && networkData.getBoundingArea().hasBoundingPolygon()){
+      return geoUtils.isGeometryNearGeometry(
+          geometry, networkData.getBoundingArea().getBoundingPolygon(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
+    }else{
+      return geoUtils.isGeometryNearBoundingBox(
+          geometry, networkData.getNetworkSpanningBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
+    }
   }
 
   /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on
@@ -220,6 +230,7 @@ public class OsmNetworkLayerParser {
       networkData.registerProcessedOsmWayAsUnavailable(osmWay.getId());
       return null;
     }
+
     /* If truncated to a single node or not available (because fully/partially outside bounding box), it is not valid and mark as such */
     if(nodeLastResult == null || nodeFirstResult == null || nodeLastResult.first().idEquals(nodeFirstResult.first())) {
       LOGGER.fine(String.format("DISCARD: OSM way %d truncated to single node, unable to create PLANit link for it", osmWay.getId()));
@@ -301,7 +312,8 @@ public class OsmNetworkLayerParser {
       var allowedPlanitModes = modeParser.getActivatedPlanitModes(settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
       /* reduce included modes to only the predefined modes supported by the layer the link segment type resides on, expensive, but overwrites are rare so ok */
       if(!allowedPlanitModes.isEmpty()) {
-        allowedPlanitModes.retainAll(networkLayer.getSupportedModes().stream().filter(m -> m.isPredefinedModeType()).collect(Collectors.toList()));
+        allowedPlanitModes.retainAll(networkLayer.getSupportedModes().stream().filter(
+            Mode::isPredefinedModeType).collect(Collectors.toList()));
       }
 
       toBeAddedModes = linkSegmentType.getDisallowedModesFrom(allowedPlanitModes);
@@ -336,7 +348,8 @@ public class OsmNetworkLayerParser {
     }
 
     /* use the identified changes to the modes to update the link segment type (and register it if needed) */
-    MacroscopicLinkSegmentType finalLinkSegmentType = updateExistingLinkSegmentType(toBeAddedModes, toBeRemovedModes, tags, linkSegmentType);
+    MacroscopicLinkSegmentType finalLinkSegmentType =
+        updateExistingLinkSegmentType(toBeAddedModes, toBeRemovedModes, tags, linkSegmentType);
     return finalLinkSegmentType;
   }  
       
@@ -642,7 +655,7 @@ public class OsmNetworkLayerParser {
       startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(startNodeIndex!=null) {
         nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
-        if(nodeFirst!= null && !isNearNetworkBoundingBox(nodeFirst.getPosition(), geoUtils)) {       
+        if(nodeFirst!= null && !isNearNetworkBoundingArea(nodeFirst.getPosition(), geoUtils)) {
           /* quite far from bounding box, so log for user verification to be sure */
           LOGGER.warning(String.format("SALVAGED: OSM way %s geometry incomplete, likely cut-off by network bounding box, truncated at OSM node %s",osmWay.getId(), nodeFirst.getExternalId()));
         }
@@ -669,7 +682,7 @@ public class OsmNetworkLayerParser {
       endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(endNodeIndex != null) {
         nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
-        if(nodeLast!= null && !isNearNetworkBoundingBox(nodeLast.getPosition(), geoUtils)) {
+        if(nodeLast!= null && !isNearNetworkBoundingArea(nodeLast.getPosition(), geoUtils)) {
           //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
           LOGGER.fine(String.format("OSM way %s not fully available, likely due to network bounding box, please verify, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));
         }

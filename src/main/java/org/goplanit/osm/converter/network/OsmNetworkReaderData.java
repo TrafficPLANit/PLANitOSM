@@ -200,7 +200,7 @@ public class OsmNetworkReaderData {
    *
    * @return true if present, false otherwise
    */
-   public boolean hasBoundingBoundary(){
+   public boolean hasBoundingArea(){
      return osmBoundingArea != null;
    }
 
