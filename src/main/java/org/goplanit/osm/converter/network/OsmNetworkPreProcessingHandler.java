@@ -6,6 +6,8 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.goplanit.osm.util.OsmNodeUtils;
+import org.goplanit.utils.geo.PlanitJtsUtils;
 
 import java.io.IOException;
 import java.util.Map;
@@ -18,19 +20,22 @@ import java.util.logging.Logger;
  *IDENTIFY_BOUNDARY_BY_NAME: only required when bounding area of network is defined by a name only. Here we only register
  *all the members of the relation for parsing during the regular pre-processing stage. Required to be able to construct the
  *spatial boundry during main processing but requires two passes during preprocessing.
- *</p><p>
- *REGULAR_PREPROCESSING: regular preprocessing where we register nodes of ways for eligibility of the network and extract
- *the ways part of a bounding boundary that was identified in the IDENTIFY_BOUNDARY_BY_NAME stage
- * identifies which nodes of osm ways  - that are marked for inclusion even if they fall (partially) outside the bounding polygon -
- * are to be kept. Since we only know what nodes these are after parsing OSM ways (and nodes are parsed before the ways), this pre-processing is the only way
- * that we can identify these nodes before the main parsing pass.
+ *</p>
+ * <p>
+ *   IDENTIFY_WAYS_FOR_BOUNDARY: preregister the nodes and register the ways part of the bounding boundary
  * </p>
  * <p>
  *   FINALISE_BOUNDARY_BY_NAME: register the nodes marked for network or boundary and finalise boundary by converting them
  *   into a polygon.
  * </p>
- * TODO: split in three classes, one per stage so code is less entangled than it is now.
- * 
+ * <p>
+ * REGULAR_PREPROCESSING_WAYS: identify ways (and their nodes) that are eligible since they form the network. Only do so for ways that
+ * fall within the bounding area for at least one node (if a bounding area is especified)
+ * </p>
+ * REGULAR_PREPROCESSING_NODES: identify and register nodes that are part of the ways that make
+ * up the network.
+ * </p>
+ *
  * @author markr
  * 
  *
@@ -49,13 +54,16 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   private final Stage stage;
 
   /**
-   * Preprocessing of network has two stages, identified by this enum.
+   * Preprocessing of network has at maximum six stages (three for a bounding boundary and three for
+   * regular preprocessing, identified by this enum.
    *
    */
   public enum Stage {
     IDENTIFY_BOUNDARY_BY_NAME,
-    REGULAR_PREPROCESSING,
-    FINALISE_BOUNDARY_BY_NAME
+    IDENTIFY_WAYS_FOR_BOUNDARY,
+    FINALISE_BOUNDARY_BY_NAME,
+    REGULAR_PREPROCESSING_WAYS,
+    REGULAR_PREPROCESSING_NODES,
   }
   
   private final LongAdder nodeCounter;
@@ -71,7 +79,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     if(settings.isKeepOsmWayOutsideBoundingPolygon(osmWay.getId())) {
 
       if(!settings.hasBoundingBoundary()){
-        LOGGER.warning("OSM way %d is marked for inclusion beyond bounding polygon but not boundary was set, verify correctness");
+        LOGGER.warning("OSM way %d is marked for inclusion beyond bounding polygon but no boundary was set, verify correctness");
       }
       if(settings.isOsmWayExcluded(osmWay.getId())) {
         LOGGER.warning("OSM way %d is marked for exclusion as well as keeping it, this is conflicting, OSM way exclusion takes precedence");
@@ -83,11 +91,32 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         //todo ugly since we are modifying user settings, this should be tracked in network internal data structure
         settings.setKeepOsmNodeOutsideBoundingPolygon(osmWay.getNodeId(index));
       }
+      return;
     }
-    
-    /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail, or boundary) */
-    for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-      getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+
+    // REGULAR PROCESS
+    boolean osmWayEligible = true;
+    if(getNetworkData().hasBoundingArea()){
+      // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
+
+      if(osmWay.getId() == 4269134L){
+        int bla = 4;
+      }
+
+      osmWayEligible = false;
+      for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+        if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmWay.getNodeId(index))){
+          osmWayEligible = true;
+          break;
+        }
+      }
+    }
+
+    if(osmWayEligible) {
+      /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail, or boundary) */
+      for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
+        getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+      }
     }
   }
 
@@ -115,21 +144,38 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmNode node) {
-    switch (stage){
-      case REGULAR_PREPROCESSING:
-        nodeCounter.increment();
-        return;
-      case FINALISE_BOUNDARY_BY_NAME:
-        // register actual instance so available during complete() where we construct the boundary from the OSM ways and nodes
-        // that make up the actual bounding boundary polygon
-        //todo: instead of using the osmNodeData transfer this to the boundaryManager
-        // (do the same for the zoning handler version of this)
-        if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(node.getId())){
-          getNetworkData().getOsmNodeData().registerEligibleOsmNode(node);
-        }
-        return;
-      default:
-        return;
+
+    if(stage.equals(Stage.FINALISE_BOUNDARY_BY_NAME)){
+
+      // register actual instance so available during complete() where we construct the boundary from the OSM ways and nodes
+      // that make up the actual bounding boundary polygon
+      //todo: instead of using the osmNodeData transfer this to the boundaryManager
+      // (do the same for the zoning handler version of this)
+      if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(node.getId())){
+        getNetworkData().getOsmNodeData().registerEligibleOsmNode(node);
+      }
+
+    }else if(stage.equals(Stage.REGULAR_PREPROCESSING_WAYS)){
+
+      // pre-register if bounding area is present and it falls within this area
+      if(getNetworkData().hasBoundingArea() &&
+          OsmNodeUtils.createPoint(node).within(getNetworkData().getBoundingArea().getBoundingPolygon())){
+        getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(node.getId());
+      }
+
+    }else if(stage.equals(Stage.REGULAR_PREPROCESSING_NODES)){
+
+      if(node.getId() == 9768877765L){
+        int bla = 4;
+      }
+
+      // register any remaining OSM nodes that are deemed eligible based on identified OSM ways
+      var osmNodeData = getNetworkData().getOsmNodeData();
+      if(osmNodeData.containsPreregisteredOsmNode(node.getId())){
+        getNetworkData().getOsmNodeData().registerEligibleOsmNode(node);
+      }
+
+      nodeCounter.increment();
     }
   }
 
@@ -141,19 +187,22 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) {
-    // no action if stage is Stage.IDENTIFY_BOUNDARY_BY_NAME or Stage.FINALISE_BOUNDARY_BY_NAME
-    if(!stage.equals(Stage.REGULAR_PREPROCESSING)) {
-      return;
-    }
 
-    // update registered OSM way ids with actual OSM way containing geometry (if needed)
-    boolean match = boundaryManager.stepTwoAttachBoundaryRelationMemberOsmWays(osmWay);
-    if(match){
-      handleEligibleOsmWay(osmWay, OsmModelUtil.getTagsAsMap(osmWay));
-    }
 
-    // regular OSM way parsing representing infrastructure for networks
-    wrapHandleInfrastructureOsmWay(osmWay, this::handleEligibleOsmWay);
+    if(stage.equals(Stage.IDENTIFY_WAYS_FOR_BOUNDARY)) {
+      // boundary stage identifying ways
+
+      // update registered OSM way ids with actual OSM way containing geometry (if needed)
+      boolean match = boundaryManager.stepTwoAttachBoundaryRelationMemberOsmWays(osmWay);
+      if (match) {
+        handleEligibleOsmWay(osmWay, OsmModelUtil.getTagsAsMap(osmWay));
+      }
+
+    }else if(stage.equals(Stage.REGULAR_PREPROCESSING_WAYS)) {
+
+      // regular stage for ways identifying network links
+      wrapHandleInfrastructureOsmWay(osmWay, this::handleEligibleOsmWay);
+    }
   }
 
   /**
@@ -178,20 +227,27 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   public void complete() throws IOException {
     super.complete();
 
-    if(stage.equals(Stage.REGULAR_PREPROCESSING)) {
+    if(stage.equals(Stage.IDENTIFY_BOUNDARY_BY_NAME) && boundaryManager.isConfigured()){
+      // BOUNDARY STAGE 1
+
+      boolean success = boundaryManager.hasRegisteredRelationMembers();
+      String boundaryName = getSettings().getBoundingArea().getBoundaryName();
+      LOGGER.info((success ? "Registered relation members for boundary " : "Unable to identify bounding area for name ") + boundaryName );
+    }else if(stage.equals(Stage.FINALISE_BOUNDARY_BY_NAME)) {
+      // BOUNDARY STAGE 3
+
+      // finalise bounding boundary now that OSM nodes are registered and available for polygon building
+      boundaryManager.stepThreeCompleteConstructionBoundingBoundary(getNetworkData().getOsmNodeData().getRegisteredOsmNodes());
+    }else if(stage.equals(Stage.REGULAR_PREPROCESSING_NODES)) {
+
       // regular pre-registration for networks
       int totalOsmNodes = (int) nodeCounter.sum();
       int preRegisteredOsmNodes = getNetworkData().getOsmNodeData().getRegisteredOsmNodes().size();
       LOGGER.info(String.format("Total OSM nodes in source: %d",totalOsmNodes));
       LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double)totalOsmNodes));
-    }else if(stage.equals(Stage.FINALISE_BOUNDARY_BY_NAME)) {
-      // finalise bounding boundary now that OSM nodes are registered and available for polygon building
-      boundaryManager.stepThreeCompleteConstructionBoundingBoundary(getNetworkData().getOsmNodeData().getRegisteredOsmNodes());
-    }else if(stage.equals(Stage.IDENTIFY_BOUNDARY_BY_NAME) && boundaryManager.isConfigured()){
-      boolean success = boundaryManager.hasRegisteredRelationMembers();
-      String boundaryName = getSettings().getBoundingArea().getBoundaryName();
-      LOGGER.info((success ? "Registered relation members for boundary " : "Unable to identify bounding area for name ") + boundaryName );
     }
+
+
 
   }
 

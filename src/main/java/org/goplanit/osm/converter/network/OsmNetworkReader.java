@@ -128,16 +128,19 @@ public class OsmNetworkReader implements NetworkReader {
 
     getSettings().logSettings();
 
-  }    
-  
-  /** Perform preprocessing if needed, only needed when we have set a bounding box and we need to restrict the OSM entities
-   *  parsed to this bounding box
-   * 
-   */
-  private void doPreprocessing(){
+  }
 
-    OsmNetworkPreProcessingHandler osmHandler;
+  /**
+   * If a bounding area has been configured, preform preprocessing to extract the extent of the boundary for which
+   * we need to perform the actual parsing, before doing any other parsing
+   *
+   */
+  private void performBoundingAreaPreProcessing() {
+
     OsmBoundaryManager boundaryManager = new OsmBoundaryManager(getSettings().getBoundingArea());
+    if(!getSettings().hasBoundingBoundary()){
+      return;
+    }
 
     /* STAGE 1 - BOUNDARY IDENTIFICATION
      * identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
@@ -149,7 +152,7 @@ public class OsmNetworkReader implements NetworkReader {
     /* STAGE 2 - REGULAR PREPROCESSING */
     {
       LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes for network building");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING, boundaryManager);
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
     }
 
     /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
@@ -161,11 +164,34 @@ public class OsmNetworkReader implements NetworkReader {
 
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
       LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
-      return;
     }
 
     networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
   }
+  
+  /** Perform preprocessing if needed, only needed when we have set a bounding box and we need to restrict the OSM entities
+   *  parsed to this bounding box
+   * 
+   */
+  private void doPreprocessing(){
+
+    // boundary based preprocessing (3 stages if needed)
+    performBoundingAreaPreProcessing();
+
+    /* STAGE 1 -
+     * identify OSM ways that are eligble from a network perspective (are they roads etc.). If a bounding area is specified then
+     * they should at least have one node within the bounding area to be considered */
+    LOGGER.info(String.format("Pre-processing: Identifying eligible network OSM ways"));
+    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING_WAYS, null);
+
+    /* STAGE 2 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */
+    {
+      LOGGER.info("Preprocessing: reducing memory footprint, identifying remaining OSM nodes required for network building");
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING_NODES, null);
+    }
+
+  }
+
 
   /** Perform main processing of OSM network reader
    */

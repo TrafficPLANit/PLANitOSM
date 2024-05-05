@@ -805,6 +805,10 @@ public class OsmNetworkLayerParser {
 
     MacroscopicLink link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
+
+      if(osmWay.getId() == 4269134L){
+        int bla = 4;
+      }
       
       /* a link only consists of start and end node, no direction and has no model information, we allow truncation near bounding box but only if it is not a circular way */
       boolean allowGeometryTruncation = !isPartOfCircularWay;
