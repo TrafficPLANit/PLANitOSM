@@ -7,10 +7,11 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
-import org.goplanit.utils.geo.PlanitJtsUtils;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
@@ -49,6 +50,13 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
   /** Builder to keep track of constructing bounding boundary */
   private OsmBoundaryManager boundaryManager;
+
+  /** track all OSM nodes that we tentatively preregister but not(yet) as the
+   * officially pre-registered ones. We do this two stage approach to avoid checking against these secondary nodes
+   * that are not in the bounding box but only added to avoid having partial OSM ways nodes in the end. In complete() they
+   * will be added fully though.
+   */
+  private Set<Long> secondaryPreregisteredOsmNodes = new TreeSet<>();
 
   /** pre-processing stage to apply */
   private final Stage stage;
@@ -97,12 +105,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     // REGULAR PROCESS
     boolean osmWayEligible = true;
     if(getNetworkData().hasBoundingArea()){
+
       // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
-
-      if(osmWay.getId() == 4269134L){
-        int bla = 4;
-      }
-
       osmWayEligible = false;
       for(int index=0;index<osmWay.getNumberOfNodes();++index) {
         if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmWay.getNodeId(index))){
@@ -115,7 +119,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     if(osmWayEligible) {
       /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail, or boundary) */
       for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
-        getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+        // to be preregistered in full in complete() to avoid checking against these in above check regarding bounding boundary
+        secondaryPreregisteredOsmNodes.add(osmWay.getNodeId(index));
       }
     }
   }
@@ -160,6 +165,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       // pre-register if bounding area is present and it falls within this area
       if(getNetworkData().hasBoundingArea() &&
           OsmNodeUtils.createPoint(node).within(getNetworkData().getBoundingArea().getBoundingPolygon())){
+
         getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(node.getId());
       }
 
@@ -227,6 +233,12 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   public void complete() throws IOException {
     super.complete();
 
+    /* if we had any secondary preregistered osm nodes, this is the time to preregister them properly
+     * used both in REGULAR_PREPROCESSING_WAYS as well as IDENTIFY_WAYS_FOR_BOUNDARY
+     */
+    this.secondaryPreregisteredOsmNodes.forEach(osmNodeId -> getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmNodeId));
+    secondaryPreregisteredOsmNodes.clear();
+
     if(stage.equals(Stage.IDENTIFY_BOUNDARY_BY_NAME) && boundaryManager.isConfigured()){
       // BOUNDARY STAGE 1
 
@@ -246,9 +258,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       LOGGER.info(String.format("Total OSM nodes in source: %d",totalOsmNodes));
       LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double)totalOsmNodes));
     }
-
-
-
   }
 
   /**

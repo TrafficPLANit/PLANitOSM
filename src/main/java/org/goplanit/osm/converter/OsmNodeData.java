@@ -39,6 +39,9 @@ public class OsmNodeData {
    * @param osmNodeId to pre-register
    */
   public void preRegisterEligibleOsmNode(long osmNodeId) {
+    if(osmNodeId == 223007282L){
+      int bla = 4;
+    }
     osmNodes.put(osmNodeId, null);
   }
 
