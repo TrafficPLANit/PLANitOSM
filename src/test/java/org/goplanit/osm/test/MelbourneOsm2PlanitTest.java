@@ -95,7 +95,7 @@ public class MelbourneOsm2PlanitTest {
   @Test
   public void test2Osm2PlanitIntermodalNoServicesNamedBoundingBox() {
 
-    final String PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
+    final String PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_named_bb").toAbsolutePath().toString();
     final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_intermodal_no_services_named_bb").toAbsolutePath().toString();
     try {
 

@@ -53,11 +53,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   private boolean isNodeSpatiallyEligible(final OsmNode osmNode) {
     var networkData = getNetworkData();
+    boolean noBoundingPolygon = !networkData.hasBoundingArea() || !networkData.getBoundingArea().hasBoundingPolygon();
+
     return networkData.getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
             &&
-            ( !networkData.hasBoundingArea() ||
-              !networkData.getBoundingArea().hasBoundingPolygon() ||
-              getSettings().isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId())||
+            ( noBoundingPolygon || getSettings().isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId()) ||
               OsmNodeUtils.createPoint(osmNode).within(networkData.getBoundingArea().getBoundingPolygon())
             );
   }
@@ -430,6 +430,13 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmNode osmNode) {
     var settings = getSettings();
 
+    if(osmNode.getId() == 76459469L){
+      int bla = 4; // in
+    }
+    if(osmNode.getId() == 9075314507L){
+      int bla = 4; // out
+    }
+
      /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());
@@ -451,6 +458,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
+
+    if(osmWay.getId() == 924632749L){
+      int bla = 4;
+    }
 
     wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWay);
             

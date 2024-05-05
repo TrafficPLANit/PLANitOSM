@@ -22,6 +22,7 @@ import org.goplanit.zoning.Zoning;
 
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
+import org.locationtech.jts.geom.TopologyException;
 
 /**
  * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit zoning instance comprising of the identified transfer zones.
@@ -99,9 +100,16 @@ public class OsmZoningReader implements ZoningReader {
     var networkBoundingPolygon = networkBoundingBoundary.getBoundingPolygon();
 
     if(boundaryManager.isConfigured() && boundaryManager.isComplete()){
-      // able to compare, perform comparison
-      boolean sameBoundingArea =
-          !networkBoundingPolygon.equalsTopo(boundaryManager.getCompleteBoundingArea().getBoundingPolygon());
+
+      // able to compare, attempt to perform comparison (this may go wrong if any of the two polygons is malformed)
+      boolean sameBoundingArea = true;
+      try {
+        sameBoundingArea = !networkBoundingPolygon.equalsTopo(boundaryManager.getCompleteBoundingArea().getBoundingPolygon());
+      }catch(TopologyException e){
+        LOGGER.warning(e.getMessage());
+        LOGGER.warning("Comparing network and zoning Bounding polygons caused unexpected exception, comparison skipped");
+      }
+
       if(!sameBoundingArea &&
           !boundaryManager.getCompleteBoundingArea().getBoundingPolygon().within(networkBoundingPolygon)){
         LOGGER.warning("SALVAGE: Bounding polygon for network is more restrictive than public transport, " +

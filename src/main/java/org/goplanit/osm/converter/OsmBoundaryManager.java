@@ -205,7 +205,7 @@ public class OsmBoundaryManager {
     }
 
     List<OsmWay> boundaryOsmWays = getRegisteredBoundaryOsmWaysInOrder();
-    Deque<Coordinate> contiguousBoundaryCoords = new LinkedList<>() {
+    LinkedList<Coordinate> contiguousBoundaryCoords = new LinkedList<>() {
     };
     for(var osmWay : boundaryOsmWays){
       var coordArray = OsmWayUtils.createCoordinateArrayNoThrow(osmWay,osmNodes);
@@ -226,6 +226,9 @@ public class OsmBoundaryManager {
       return;
     }
 
+    // close the contiguous coordinates by adding the last coordinate as the first if not done so already
+    contiguousBoundaryCoords = PlanitJtsUtils.makeClosed2D(contiguousBoundaryCoords);
+
     // now convert to polygon
     var boundingBoundaryPolygon = PlanitJtsUtils.createPolygon(
         contiguousBoundaryCoords.toArray(new Coordinate[0]));
@@ -241,6 +244,7 @@ public class OsmBoundaryManager {
             originalBoundary.getBoundaryType(),
             originalBoundary.getBoundaryAdminLevel(),
             boundingBoundaryPolygon);
+    LOGGER.info("Bounding boundary construction complete");
   }
 
   public void overrideBoundingArea(OsmBoundary override){
