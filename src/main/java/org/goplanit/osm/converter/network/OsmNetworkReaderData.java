@@ -245,6 +245,7 @@ public class OsmNetworkReaderData {
    * it falls within the area deemed suitable for the final result.
    *
    * @param osmWayId OSM way id to mark as eligible
+   * @return true when eligible, false otherwise
    */
   public boolean isSpatialInfraEligibleOsmWay(long osmWayId) {
     return spatialInfrastructureEligibleOsmWays.contains(osmWayId);

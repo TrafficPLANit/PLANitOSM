@@ -40,6 +40,7 @@ public class Osm2PlanitConversionTemplates {
    *
    * @param osmSettings the input settings
    * @param planitSettings the output settings
+   * @throws PlanItException thrown if error
    */
   public static void osm2PlanitSettingsBased(
       OsmNetworkReaderSettings osmSettings, PlanitNetworkWriterSettings planitSettings) throws PlanItException {

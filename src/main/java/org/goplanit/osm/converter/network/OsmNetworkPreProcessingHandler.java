@@ -33,6 +33,7 @@ import java.util.logging.Logger;
  * REGULAR_PREPROCESSING_WAYS: identify ways (and their nodes) that are eligible since they form the network. Only do so for ways that
  * fall within the bounding area for at least one node (if a bounding area is especified)
  * </p>
+ * <p>
  * REGULAR_PREPROCESSING_NODES: identify and register nodes that are part of the ways that make
  * up the network.
  * </p>
