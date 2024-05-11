@@ -430,13 +430,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmNode osmNode) {
     var settings = getSettings();
 
-    if(osmNode.getId() == 76459469L){
-      int bla = 4; // in
-    }
-    if(osmNode.getId() == 9075314507L){
-      int bla = 4; // out
-    }
-
      /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are
      * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());
@@ -461,6 +454,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
     if(osmWay.getId() == 924632749L){
       int bla = 4;
+    }
+
+    /* filter out OSMWays that have been spatially deemed ineligible */
+    if(!getNetworkData().isSpatialInfraEligibleOsmWay(osmWay.getId())){
+      return;
     }
 
     wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWay);

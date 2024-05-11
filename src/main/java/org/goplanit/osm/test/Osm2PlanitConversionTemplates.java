@@ -7,13 +7,16 @@ import org.goplanit.converter.network.NetworkConverterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriter;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
+import org.goplanit.io.converter.network.PlanitNetworkReaderSettings;
 import org.goplanit.io.converter.network.PlanitNetworkWriter;
 import org.goplanit.io.converter.network.PlanitNetworkWriterFactory;
+import org.goplanit.io.converter.network.PlanitNetworkWriterSettings;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReader;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -31,6 +34,25 @@ public class Osm2PlanitConversionTemplates {
   /** the logger */
   @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(Osm2PlanitConversionTemplates.class.getCanonicalName());
+
+  /**
+   * Template for simple car centric conversion of OSM network to PLANit network, with only the main road types active
+   *
+   * @param osmSettings the input settings
+   * @param planitSettings the output settings
+   */
+  public static void osm2PlanitSettingsBased(
+      OsmNetworkReaderSettings osmSettings, PlanitNetworkWriterSettings planitSettings) throws PlanItException {
+
+    /* OSM reader */
+    OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(osmSettings);
+
+    /* PLANit writer */
+    PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(planitSettings);
+
+    /* perform the conversion*/
+    NetworkConverterFactory.create(osmReader, planitWriter).convert();
+  }
   
   /**
    * Template for simple car centric conversion of OSM network to PLANit network, with only the main road types active

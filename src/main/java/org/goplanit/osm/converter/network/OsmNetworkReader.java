@@ -146,20 +146,20 @@ public class OsmNetworkReader implements NetworkReader {
      * identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()) {
       LOGGER.info(String.format("Pre-processing: Identifying network bounding boundary for %s", settings.getBoundingArea().getBoundaryName()));
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
     }
 
     /* STAGE 2 - REGULAR PREPROCESSING */
     {
       LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes for network building");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
     }
 
     /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete())
     {
       LOGGER.info("Preprocessing: Finalising network bounding boundary, tracking OSM nodes for boundary");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FINALISE_BOUNDARY_BY_NAME, boundaryManager);
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager);
     }
 
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
@@ -182,12 +182,12 @@ public class OsmNetworkReader implements NetworkReader {
      * identify OSM ways that are eligble from a network perspective (are they roads etc.). If a bounding area is specified then
      * they should at least have one node within the bounding area to be considered */
     LOGGER.info(String.format("Pre-processing: Identifying eligible network OSM ways"));
-    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING_WAYS, null);
+    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FOUR_REGULAR_PREPROCESSING_WAYS, null);
 
     /* STAGE 2 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */
     {
       LOGGER.info("Preprocessing: reducing memory footprint, identifying remaining OSM nodes required for network building");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.REGULAR_PREPROCESSING_NODES, null);
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FIVE_REGULAR_PREPROCESSING_NODES, null);
     }
 
   }
