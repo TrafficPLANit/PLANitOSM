@@ -15,6 +15,7 @@ import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
+import org.goplanit.utils.id.ExternalIdAble;
 import org.goplanit.utils.misc.IterableUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
@@ -92,17 +93,6 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     } 
     return mustAvoidCrossingTraffic;   
   }   
-  
-  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
-   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore, the resulting warning message is likely
-   * more confusing than helpful in those situations and is therefore ignored
-   * 
-   * @param message to log if not too close to bounding box
-   * @param geometry to determine distance to bounding box to
-   */
-  private void logWarningIfNotNearBoundingBox(String message, Geometry geometry) {
-    OsmBoundingAreaUtils.logWarningIfNotNearBoundingBox(message, geometry, getNetworkToZoningData().getNetworkBoundingBox(), geoUtils);
-  }    
 
   /** Find the link segments that are accessible for the given access link, node, mode combination taking into account the relative location of the transfer zone if needed,
    * mode compatibility, and vertical plane compatibility. OSM layaer tagging is patch and inconsistent. So For the latter,
@@ -164,7 +154,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param allowedModes to add to the connectoid for the given access zone
    */  
   private void updateDirectedConnectoid(DirectedConnectoid connectoidToUpdate, TransferZone accessZone, Set<Mode> allowedModes) {    
-    final Set<Mode> realAllowedModes = ((MacroscopicLinkSegment)connectoidToUpdate.getAccessLinkSegment()).getAllowedModesFrom(allowedModes);
+    final Set<Mode> realAllowedModes = connectoidToUpdate.getAccessLinkSegment().getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
       if(!connectoidToUpdate.hasAccessZone(accessZone)) {
         connectoidToUpdate.addAccessZone(accessZone);
@@ -246,7 +236,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
           !IterableUtils.asStream(linkSegments).allMatch(
               ls -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex((Link) ls.getParent()) == this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone))) {
         LOGGER.warning(String.format("OSM vertical layer index (layer=%d) of PLANit transfer zone (%s) not compatible with selected access link segments [%s] for its connectoids, this shouldn't happen, verify correctness",
-                osmVerticalLayerIndex, transferZone.getIdsAsString(), IterableUtils.asStream(linkSegments).map(ls -> ls.getIdsAsString()).collect(Collectors.joining(","))));
+                osmVerticalLayerIndex, transferZone.getIdsAsString(), IterableUtils.asStream(linkSegments).map(ExternalIdAble::getIdsAsString).collect(Collectors.joining(","))));
       }
     }
 
@@ -716,8 +706,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* layer */
       MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByPredefinedModeType(modeType);
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode) && !suppressLogging) {
-        logWarningIfNotNearBoundingBox(
-            String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type deactivated or node dangling)",osmNode.getId(), modeType), OsmNodeUtils.createPoint(osmNode));
+        LOGGER.warning(
+            String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type deactivated " +
+                "or node dangling)",osmNode.getId(), modeType));
         continue;
       }
       
@@ -763,12 +754,13 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       MacroscopicNetworkLayer networkLayer,
       boolean suppressLogging) {
 
-    /* geo location on planit link, possibly inserted for this purpose by this method if no viable osm node/existing coordinate is present */
+    /* geolocation on planit link, possibly inserted for this purpose by this method if no viable osm node/existing coordinate is present */
     Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(
         transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     if(!suppressLogging && connectoidLocation == null) {
-      logWarningIfNotNearBoundingBox(
-          String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()), transferZone.getGeometry());
+      LOGGER.warning(
+          String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is " +
+              "likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()));
     }
     
     /* special case - user overwrite verification */
@@ -779,9 +771,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
        * not be used for this connectoid, so there can be a valid reason why this method is invoked, as well as a valid reason to not create connectoids when checking for this situation */
       Pair<EntityType, Long>  overwriteResult = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNode.getId());
       /* when type match (point=node, otherwise=way)  and id match we can continue, otherwise not */
-      if( !(waitingAreaGeometry instanceof Point && Long.valueOf(transferZone.getExternalId()) == overwriteResult.second())) {
+      if( !(waitingAreaGeometry instanceof Point && Long.parseLong(transferZone.getExternalId()) == overwriteResult.second())) {
         return;
-      }else if( Long.valueOf(transferZone.getExternalId()) != overwriteResult.second()) {
+      }else if( Long.parseLong(transferZone.getExternalId()) != overwriteResult.second()) {
         return;
       }
       suppressLogging = true;

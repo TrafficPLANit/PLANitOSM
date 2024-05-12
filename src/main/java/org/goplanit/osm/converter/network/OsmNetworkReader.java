@@ -181,7 +181,7 @@ public class OsmNetworkReader implements NetworkReader {
     /* STAGE 1 -
      * identify OSM ways that are eligble from a network perspective (are they roads etc.). If a bounding area is specified then
      * they should at least have one node within the bounding area to be considered */
-    LOGGER.info(String.format("Pre-processing: Identifying eligible network OSM ways"));
+    LOGGER.info("Pre-processing: Identifying eligible network OSM ways");
     createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FOUR_REGULAR_PREPROCESSING_WAYS, null);
 
     /* STAGE 2 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */
@@ -362,9 +362,6 @@ public class OsmNetworkReader implements NetworkReader {
       removeDanglingSubNetworks();
     }
 
-    if(!osmNetworkToPopulate.isEmpty()) {
-      LOGGER.info(String.format("Bounding box of final network: %s", getNetworkReaderData().getNetworkSpanningBoundingBox().toString()));
-    }
     LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */

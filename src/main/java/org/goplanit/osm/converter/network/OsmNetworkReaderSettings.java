@@ -476,11 +476,13 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return true if any is mapped, false otherwise
    */  
   public boolean hasAnyMappedPlanitModeType(final Collection<String> osmModes) {
-    if(osmModes!=null) {
-      for(String osmMode : osmModes) {
-        if(hasMappedPlanitModeType(osmMode)) {
-          return true;
-        }
+    if(osmModes==null) {
+      return false;
+    }
+
+    for(String osmMode : osmModes) {
+      if(hasMappedPlanitModeType(osmMode)) {
+        return true;
       }
     }
     return false;

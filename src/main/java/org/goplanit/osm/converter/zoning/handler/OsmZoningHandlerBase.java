@@ -18,7 +18,6 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.functionalinterface.TriConsumer;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.zoning.Zoning;
-import org.locationtech.jts.geom.Geometry;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -207,18 +206,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     }
     return OsmPtVersionScheme.NONE;
   }          
-  
-  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
-   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
-   * more confusing than helpful in those situation and is therefore ignored
-   * 
-   * @param message to log if not too close to bounding box
-   * @param geometry to determine distance to bounding box to
-   */
-  protected void logWarningIfNotNearBoundingBox(String message, Geometry geometry) {
-    OsmBoundingAreaUtils.logWarningIfNotNearBoundingBox(message, geometry, getNetworkToZoningData().getNetworkBoundingBox(), geoUtils);
-  }
-  
+
   /** Wrap the handling of OSM way for OSM zoning by checking if it is eligible and catch any run time PLANit exceptions, if eligible delegate to consumer.
    * 
    * @param osmWay to parse

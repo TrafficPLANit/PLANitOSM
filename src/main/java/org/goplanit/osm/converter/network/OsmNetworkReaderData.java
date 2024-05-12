@@ -1,17 +1,13 @@
 package org.goplanit.osm.converter.network;
 
-import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -30,9 +26,6 @@ public class OsmNetworkReaderData {
 
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays =new HashMap<>();
-    
-  /** on the fly tracking of network spanning (square) bounding box of all parsed nodes in the network */
-  private Envelope networkBoundingBox;
 
   /** the osmBoundary used during parsing.
    */
@@ -59,9 +52,10 @@ public class OsmNetworkReaderData {
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
   private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<>();
   
-  /** the distance that qualifies as being near to the network bounding box. Used to suppress warnings of incomplete osm ways due to bounding box (which
-   * is to be expected). when beyond this distance, warnings of missing nodes/ways will be generated as something else is going on */
-  public static final double BOUNDINGBOX_NEARNESS_DISTANCE_METERS = 200;  
+  /** the distance that qualifies as being near to the network bounding area. USed to be used with
+   * cruder version of bounding area when this was tracked as rectagnular gounding box and not a polygon */
+  @Deprecated
+  public static final double BOUNDINGAREA_NEARNESS_DISTANCE_METERS = 200;
   
   /**
    * initialise for each layer
@@ -86,33 +80,12 @@ public class OsmNetworkReaderData {
     osmNodeData.reset();
     
     /* reset layer handlers as well */
-    osmLayerParsers.forEach( (layer, handler) -> {handler.reset();});
+    osmLayerParsers.forEach( (layer, handler) -> handler.reset());
     osmLayerParsers.clear();
 
     osmBoundingArea = null;
     spatialInfrastructureEligibleOsmWays.clear();
   }  
-  
-  /** update bounding box to include OSM node
-   *
-   * @param osmNode to expand so that bounding box includes it
-   */
-  public void updateSpanningBoundingBox(OsmNode osmNode) {
-    Coordinate coordinate = OsmNodeUtils.createCoordinate(osmNode);
-    if(networkBoundingBox==null) {
-      networkBoundingBox = new Envelope(coordinate);
-    }else {
-      networkBoundingBox.expandToInclude(coordinate);
-    }
-  }
-  
-  /** collect the network spanning bounding box so far (crude)
-   * 
-   * @return network spanning bounding box
-   */
-  public Envelope getNetworkSpanningBoundingBox() {
-    return networkBoundingBox;
-  }
 
   /**
    * Access to the bounding area to apply (if any). Will always have a polygon

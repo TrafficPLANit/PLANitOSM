@@ -105,17 +105,13 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     }
 
     // REGULAR PROCESS
-    boolean osmWayEligible = true;
-    if(getNetworkData().hasBoundingArea()){
-
-      // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
-      osmWayEligible = false;
-      for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-        if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmWay.getNodeId(index))){
-          osmWayEligible = true;
-          getNetworkData().registerSpatialInfraEligibleOsmWayId(osmWay.getId());
-          break;
-        }
+    // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
+    boolean osmWayEligible = false;
+    for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+      if(getNetworkData().getOsmNodeData().containsPreregisteredOsmNode(osmWay.getNodeId(index))){
+        osmWayEligible = true;
+        getNetworkData().registerSpatialInfraEligibleOsmWayId(osmWay.getId());
+        break;
       }
     }
 
@@ -167,7 +163,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     }else if(stage.equals(Stage.FOUR_REGULAR_PREPROCESSING_WAYS)){
 
       // pre-register if bounding area is present and it falls within this area, if no bounding area all are eligible
-      if(getNetworkData().hasBoundingArea() &&
+      if(!getNetworkData().hasBoundingArea() ||
           OsmNodeUtils.createPoint(node).within(getNetworkData().getBoundingArea().getBoundingPolygon())){
 
         getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(node.getId());

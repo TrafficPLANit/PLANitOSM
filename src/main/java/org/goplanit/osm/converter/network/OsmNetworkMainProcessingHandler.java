@@ -437,11 +437,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
       /* store actual OSM node for later processing in memory */
       getNetworkData().getOsmNodeData().registerEligibleOsmNode(osmNode);
-      
-      if(!keepOutsideBoundingPolygon) {
-        /* track bounding box of OSM nodes within bounding polygon (if any) */
-        getNetworkData().updateSpanningBoundingBox(osmNode);
-      }
     }
   }
 
@@ -451,10 +446,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmWay osmWay) throws IOException {
-
-    if(osmWay.getId() == 924632749L){
-      int bla = 4;
-    }
 
     /* filter out OSMWays that have been spatially deemed ineligible */
     if(!getNetworkData().isSpatialInfraEligibleOsmWay(osmWay.getId())){

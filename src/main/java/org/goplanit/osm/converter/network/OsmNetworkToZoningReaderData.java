@@ -1,15 +1,13 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
-import org.locationtech.jts.geom.Envelope;
 
-import de.topobyte.osm4j.core.model.iface.OsmNode;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * Class that hosts all the data gathered (e.g., references, mappings, etc.) during the parsing of the OSM network
@@ -31,7 +29,7 @@ public class OsmNetworkToZoningReaderData {
   private final OsmNetworkReaderData networkData;  
   
   /** layer specific data that is to be made available to the zoning reader */
-  private final Map<NetworkLayer, OsmNetworkReaderLayerData> networkLayerData = new HashMap<NetworkLayer, OsmNetworkReaderLayerData>();
+  private final Map<NetworkLayer, OsmNetworkReaderLayerData> networkLayerData = new HashMap<>();
   
   /** register layer specific data
    * @param networkLayer to register for
@@ -63,16 +61,7 @@ public class OsmNetworkToZoningReaderData {
    * @return layer data
    */
   public OsmNetworkReaderLayerData  getNetworkLayerData(NetworkLayer networkLayer) {
-    OsmNetworkReaderLayerData data =  networkLayerData.get(networkLayer);
-    return data;
-  }
-
-  /** collect the bounding box of the network that is parsed
-   * 
-   * @return network bounding box
-   */
-  public Envelope getNetworkBoundingBox() {
-    return networkData.getNetworkSpanningBoundingBox();
+    return networkLayerData.get(networkLayer);
   }
 
   /**

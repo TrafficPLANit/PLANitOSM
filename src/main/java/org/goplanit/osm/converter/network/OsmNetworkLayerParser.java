@@ -1,11 +1,9 @@
 package org.goplanit.osm.converter.network;
 
-import java.util.*;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
+import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
+import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
@@ -27,11 +25,11 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
-import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 
-import de.topobyte.osm4j.core.model.iface.OsmNode;
-import de.topobyte.osm4j.core.model.iface.OsmWay;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Takes care of populating a PLANit layer based on the OSM way information that has been identified
@@ -87,26 +85,6 @@ public class OsmNetworkLayerParser {
     /* whenever a link(segment) is broken we ensure that its XML id is synced with the internal id to ensure it remains unique */
     networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLink);
     networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLinkSegment);
-  }
-
-  /** Check if geometry is near network bounding box
-   * 
-   * @param geometry to check
-   * @param geoUtils to use
-   * @return true when near, false otherwise
-   */
-  private boolean isNearNetworkBoundingArea(Geometry geometry, PlanitJtsCrsUtils geoUtils){
-    if(networkData.getNetworkSpanningBoundingBox() == null){
-      LOGGER.warning("No network spanning bounding box present, this shouldn't happen");
-    }
-
-    if(networkData.hasBoundingArea() && networkData.getBoundingArea().hasBoundingPolygon()){
-      return geoUtils.isGeometryNearGeometry(
-          geometry, networkData.getBoundingArea().getBoundingPolygon(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
-    }else{
-      return geoUtils.isGeometryNearBoundingBox(
-          geometry, networkData.getNetworkSpanningBoundingBox(), OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
-    }
   }
 
   /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on
@@ -242,7 +220,7 @@ public class OsmNetworkLayerParser {
     Node nodeLast = nodeLastResult.first();
 
     /* parse geometry */
-    LineString lineString = null;          
+    LineString lineString;
     try {
       lineString = extractPartialLinkGeometry(osmWay, nodeFirstResult.second(), nodeLastResult.second());
     }catch (PlanItException e) {
@@ -302,8 +280,8 @@ public class OsmNetworkLayerParser {
   private MacroscopicLinkSegmentType extractDirectionalLinkSegmentTypeByOsmWay(
       OsmWay osmWay, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType, boolean forwardDirection){
 
-    Set<Mode> toBeAddedModes = null;
-    Set<Mode> toBeRemovedModes = null;
+    Set<Mode> toBeAddedModes;
+    Set<Mode> toBeRemovedModes;
     
     /* check if modes are overwritten by user settings directly */
     if(settings.isModeAccessOverwrittenByOsmWayId(osmWay.getId())) {
@@ -579,8 +557,6 @@ public class OsmNetworkLayerParser {
 
 
   /** Extract a link segment from the way corresponding to the link and the indicated direction
-   * @param osmWay the way
-   * @param tags tags that belong to the way
    * @param link the link corresponding to this way
    * @param linkSegmentType the link segment type corresponding to this way
    * @param directionAb the direction to create the segment for
@@ -588,9 +564,7 @@ public class OsmNetworkLayerParser {
    * @param numLanes to apply
    * @return created link segment, or null if already exists
    */  
-  private MacroscopicLinkSegment extractMacroscopicLinkSegment(
-      OsmWay osmWay,
-      Map<String, String> tags,
+  private MacroscopicLinkSegment createAndRegisterMacroscopicLinkSegment(
       MacroscopicLink link,
       MacroscopicLinkSegmentType linkSegmentType,
       boolean directionAb,
@@ -614,7 +588,7 @@ public class OsmNetworkLayerParser {
   private void extractMacroscopicLinkSegments(OsmWay osmWay, Map<String, String> tags, MacroscopicLink link, Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes){
                 
     /* match A->B of PLANit link to geometric forward/backward direction of OSM paradigm */
-    boolean directionAbIsForward = link.isGeometryInAbDirection() ? true : false;
+    boolean directionAbIsForward = link.isGeometryInAbDirection();
     if(!directionAbIsForward) {
       LOGGER.warning("DirectionAB is not forward in geometry SHOULD NOT HAPPEN!");
     }
@@ -629,14 +603,14 @@ public class OsmNetworkLayerParser {
     if(linkSegmentTypeAb!=null) {
       Double speedLimit = directionAbIsForward ? speedLimits.first() : speedLimits.second();
       var numLanes = directionAbIsForward ? lanes.first() : lanes.second();
-      extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeAb, true /* A->B */, speedLimit, numLanes);
+      createAndRegisterMacroscopicLinkSegment(link, linkSegmentTypeAb, true /* A->B */, speedLimit, numLanes);
     }
     /* create link segment B->A when eligible */
     MacroscopicLinkSegmentType linkSegmentTypeBa = directionAbIsForward ? linkSegmentTypes.second() : linkSegmentTypes.first();
     if(linkSegmentTypeBa!=null) {
       Double speedLimit = directionAbIsForward ? speedLimits.second() : speedLimits.first();
       var numLanes = directionAbIsForward ? lanes.second() : lanes.first();
-      extractMacroscopicLinkSegment(osmWay, tags, link, linkSegmentTypeBa, false /* B->A */, speedLimit, numLanes);
+      createAndRegisterMacroscopicLinkSegment(link, linkSegmentTypeBa, false /* B->A */, speedLimit, numLanes);
     }                 
     
   }   
@@ -655,12 +629,11 @@ public class OsmNetworkLayerParser {
       startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(startNodeIndex!=null) {
         nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
-        if(nodeFirst!= null && !isNearNetworkBoundingArea(nodeFirst.getPosition(), geoUtils)) {
-          /* quite far from bounding box, so log for user verification to be sure */
-          LOGGER.warning(String.format("SALVAGED: OSM way %s geometry incomplete, likely cut-off by network bounding box, truncated at OSM node %s",osmWay.getId(), nodeFirst.getExternalId()));
+        if(nodeFirst!= null) {
+          LOGGER.fine(String.format("SALVAGED: OSM way %s geometry incomplete, truncated at OSM (start) node %s",osmWay.getId(), nodeFirst.getExternalId()));
         }
       }else {
-        /* ignore, osm way likely completely outside user specified bounding box within input  and therefore this is most likely intended behaviour */
+        /* ignore, OSM way likely completely outside what is available/eligible  and therefore this is most likely intended behaviour */
         return null;
       }
     }
@@ -682,12 +655,11 @@ public class OsmNetworkLayerParser {
       endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(endNodeIndex != null) {
         nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
-        if(nodeLast!= null && !isNearNetworkBoundingArea(nodeLast.getPosition(), geoUtils)) {
-          //TODO: check across all available node locations if it is near bounding box, because likely this is just a long road/rail with few nodes and we're checking the "far" node only now on distance to bbox */
-          LOGGER.fine(String.format("OSM way %s not fully available, likely due to network bounding box, please verify, truncated at osm node %s",osmWay.getId(), nodeLast.getExternalId()));
+        if(nodeLast!= null) {
+          LOGGER.fine(String.format("SALVAGED: OSM way %s geometry incomplete, truncated at OSM (end) node %s",osmWay.getId(), nodeLast.getExternalId()));
         }
       }else {
-        /* ignore, osm way likely completely outside user specified bounding box within input */
+        /* ignore, OSM way likely completely outside what is available/eligible  and therefore this is most likely intended behaviour */
         return null;
       }
     }
@@ -727,7 +699,7 @@ public class OsmNetworkLayerParser {
    * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return the link corresponding to this way
    */
-  private MacroscopicLink extractLink(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
+  private MacroscopicLink extractLink(OsmWay osmWay, Map<String, String> tags, Integer startNodeIndex, Integer endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
 
     /* create the link */
     MacroscopicLink link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
@@ -737,6 +709,12 @@ public class OsmNetworkLayerParser {
       if(allowTruncationIfGeometryIncomplete) {
         startNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeA().getPosition(), networkData);
         endNodeIndex = OsmWayUtils.getOsmWayNodeIndexByLocation(osmWay, link.getNodeB().getPosition(), networkData);
+        if(startNodeIndex == null){
+          throw new PlanItRunTimeException("Start node index for OSM way (%d) could not be determined, ignore", osmWay.getId());
+        }
+        if(endNodeIndex == null){
+          throw new PlanItRunTimeException("End node index for OSM way (%d) could not be determined, ignore", osmWay.getId());
+        }
       }
 
       /* register internal nodes for breaking links later on during parsing */
@@ -806,10 +784,6 @@ public class OsmNetworkLayerParser {
     MacroscopicLink link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
 
-      if(osmWay.getId() == 4269134L){
-        int bla = 4;
-      }
-      
       /* a link only consists of start and end node, no direction and has no model information, we allow truncation near bounding box but only if it is not a circular way */
       boolean allowGeometryTruncation = !isPartOfCircularWay;
       link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);

@@ -18,6 +18,7 @@ import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.id.ExternalIdAble;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.Pair;
@@ -153,14 +154,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     if(isOsmWay && !OsmWayUtils.isAllOsmWayNodesAvailable((OsmWay)osmEntity,osmNodeData.getRegisteredOsmNodes())){
       Integer availableOsmNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(0,  (OsmWay) osmEntity, osmNodeData.getRegisteredOsmNodes());
       if(availableOsmNodeIndex!=null) {
-        OsmNode referenceNode = osmNodeData.getRegisteredOsmNodes().get(((OsmWay) osmEntity).getNodeId(availableOsmNodeIndex));
-        if(OsmBoundingAreaUtils.isNearNetworkBoundingBox(OsmNodeUtils.createPoint(referenceNode), getNetworkToZoningData().getNetworkBoundingBox(), geoUtils)) {
-          LOGGER.info(String.format("OSM waiting area way (%d) geometry incomplete, network bounding box cut-off, truncated to available nodes",osmEntity.getId()));
+          LOGGER.warning(String.format("OSM waiting area way (%d) geometry incomplete, network bounding box cut-off, " +
+              "truncated to available nodes",osmEntity.getId()));
           geometryExtractionLogLevel = Level.OFF;
-        }
       }/*else {
-        not a single node present, this implies entire transfer zone is outside of accepted bounding box, something which we could not verify until now
-        in this case, we do not report back to user as this is most likely intended behaviour since bounding box was set by user explicitly
+        not a single node present, this implies entire transfer zone is outside accepted bounding area, something
+        which we could not verify until now in this case, we do not report back to user as this is most likely
+         intended behaviour since bounding box was set by user explicitly
       }*/
     }
     
@@ -208,7 +208,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param geoUtils to use
    * @return transfer zone created, null if something happened making it impossible to create the zone
    */
-  private TransferZone createAndRegisterTransferZoneWithoutConnectoids(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
+  private TransferZone createAndRegisterTransferZoneWithoutConnectoids(
+      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
 
     TransferZone transferZone = createAndPopulateTransferZone(osmEntity, tags, transferZoneType, geoUtils);
     if(transferZone != null) {
@@ -282,7 +283,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         
     /* remove all link's that are not reachable without experiencing cross-traffic from the perspective of the transfer zone*/
     if(planitLinksToCheck!=null){
-      Collection<MacroscopicLink> accessibleLinks = ZoningConverterUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
+      var accessibleLinks = ZoningConverterUtils.excludeLinksOnWrongSideOf(transferZone.getGeometry(), planitLinksToCheck, isLeftHandDrive, Collections.singleton(accessMode), geoUtils);
       if(accessibleLinks==null || accessibleLinks.isEmpty()) {
         /* all links experience cross-traffic, so not reachable */
         return true;
@@ -571,11 +572,11 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     if(matchedTransferZones!=null && !matchedTransferZones.isEmpty() && !suppressLogging){
       if(allowModelessTransferZoneMatches) {
         LOGGER.info(String.format("SALVAGED: Platform(s)/pole(s) (%s) spatially matched to stop_position (%s) despite platform's absence of explicit mode support, verify correctness",
-            matchedTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(",")), osmNode.getId()));
+            matchedTransferZones.stream().map(ExternalIdAble::getExternalId).collect(Collectors.joining(",")), osmNode.getId()));
       }
       if(layerMismatch){
         LOGGER.warning(String.format("SALVAGED: Layer mismatch between stop position %d (or its OSM way), and all potential waiting areas (%s), possible tagging error, ignoring layer information",
-            osmNode.getId(), matchedTransferZones.stream().map(tz -> tz.getExternalId()).collect(Collectors.joining(","))));
+            osmNode.getId(), matchedTransferZones.stream().map(ExternalIdAble::getExternalId).collect(Collectors.joining(","))));
       }
     }
 
@@ -839,7 +840,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
               osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, onlySelectClosestMatch, suppressLogging, geoUtils);
           LOGGER.warning(String.format(
               "Mismatch between spatially/mode/layer eligible waiting area(s) identified (%s) and name/ref compatible waiting area(s) for stop location %d, choosing closest name/ref based waiting area: %s, verify correctness",
-              potentialTransferZonesIrrespectiveOfGroup.stream().map( tz -> tz.getExternalId()).collect(Collectors.joining(",")),
+              potentialTransferZonesIrrespectiveOfGroup.stream().map(ExternalIdAble::getExternalId).collect(Collectors.joining(",")),
               osmNode.getId(),
               matchedTransferZones.stream().findFirst().get().getExternalId()));
         }else{
@@ -858,11 +859,11 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
             osmNode, tags, TransferZoneType.PLATFORM, eligibleOsmModes, geoUtils);
         if(transferZone== null) {
-          if(!suppressLogging) LOGGER.fine(String.format("Unable to convert stop_location %d residing on road infrastucture into a transfer zone for modes %s",osmNode.getId(), eligibleOsmModes.toString()));
+          if(!suppressLogging) LOGGER.fine(String.format("Unable to convert stop_location %d residing on road infrastucture into a transfer zone for modes %s",osmNode.getId(), eligibleOsmModes));
         }else {
           if(OsmPtv1Tags.isBusStop(tags) && !suppressLogging){
             /* halt and tram_stop are common and valid to be located on road infrastructure without platform, so never log that situation */
-            LOGGER.fine(String.format("SALVAGED: process Ptv2 stop_position %d as Ptv1 tag representing both stop and waiting area in one for modes %s",osmNode.getId(), eligibleOsmModes.toString()));
+            LOGGER.fine(String.format("SALVAGED: process Ptv2 stop_position %d as Ptv1 tag representing both stop and waiting area in one for modes %s",osmNode.getId(), eligibleOsmModes));
           }
           matchedTransferZones = Collections.singleton(transferZone);
         }

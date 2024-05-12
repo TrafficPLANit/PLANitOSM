@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.network.OsmNetworkReaderData;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.locationtech.jts.geom.Envelope;
@@ -65,15 +64,18 @@ public class OsmBoundingAreaUtils {
     LoggingUtils.logWarningIf(LOGGER, message,geometry, g -> !isNearNetworkBoundingBox(g, boundingBox, geoUtils));
   }  
   
-  /** check if geometry is near network bounding box using buffer based on PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS
+  /** check if geometry is near network bounding box using buffer based on
+   * PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS. Should not longer be needed with improved bounding area
+   * identification in preprocessing + use of bounding area polygon.
    * 
    * @param geometry to check
    * @param networkBoundingBox to consider
    * @param geoUtils to use
    * @return true when near, false otherwise
    */
+  @Deprecated
   public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils){    
-    return geoUtils.isGeometryNearBoundingBox(geometry, networkBoundingBox, OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
+    return geoUtils.isGeometryNearBoundingBox(geometry, networkBoundingBox, OsmNetworkReaderData.BOUNDINGAREA_NEARNESS_DISTANCE_METERS);
   }
   
   /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
