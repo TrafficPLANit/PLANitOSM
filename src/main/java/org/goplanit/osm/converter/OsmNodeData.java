@@ -30,7 +30,8 @@ public class OsmNodeData {
    */
   public void registerEligibleOsmNode(OsmNode osmNode) {
     if(!osmNodes.containsKey(osmNode.getId())) {
-      LOGGER.severe("Only OSM nodes that have already been marked as eligible can be complemented with the actual OSM node contents");
+      LOGGER.severe("Only OSM nodes that have already been marked as eligible can be complemented with the actual " +
+          "OSM node contents");
     }
     osmNodes.put(osmNode.getId(), osmNode);
   }
@@ -39,10 +40,7 @@ public class OsmNodeData {
    * @param osmNodeId to pre-register
    */
   public void preRegisterEligibleOsmNode(long osmNodeId) {
-    if(osmNodeId == 223007282L){
-      int bla = 4;
-    }
-    osmNodes.put(osmNodeId, null);
+     osmNodes.put(osmNodeId, null);
   }
 
   /** Collect an OSM node

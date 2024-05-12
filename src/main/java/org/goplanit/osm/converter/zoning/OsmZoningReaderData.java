@@ -1,5 +1,7 @@
 package org.goplanit.osm.converter.zoning;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.OsmBoundary;
@@ -31,6 +33,12 @@ public class OsmZoningReaderData {
   /** the osmBoundary used during parsing.
    */
   private OsmBoundary osmBoundingArea = null;
+
+  /** Track OSM ways that are deemed eligible for parsing (after pre-processing). This is needed because we can't rely on nodes
+   * being available as the way to do this since nodes may be shared between OSM ways and while on of the shared ways is
+   * eligible another might not be. Hence the separate eligibility tracking
+   */
+  private final Set<Long> spatialInfrastructureEligibleOsmWays = new HashSet<>();
   
   /**
    * Default constructor using country set to GLOBAL (right hand drive)
@@ -61,6 +69,7 @@ public class OsmZoningReaderData {
     planitData.reset();
     osmData.reset();
     osmBoundingArea = null;
+    spatialInfrastructureEligibleOsmWays.clear();
   }
 
   /** collect the planit related tracking data 
@@ -103,5 +112,35 @@ public class OsmZoningReaderData {
    */
   public boolean hasBoundingArea() {
     return getBoundingArea() != null;
+  }
+
+  /**
+   * Track all OSMWays that have been identified as being spatially eligible PT infrastructure for parsing as part of
+   * the zoning, i.e., they are infrastructure that is being parsed and they fall within the area configured to be
+   * produced even if the input file or data spans a larger area
+   *
+   * @param osmWayId OSM way id to mark as eligible
+   */
+  public void registerSpatialInfraEligibleOsmWayId(long osmWayId) {
+    spatialInfrastructureEligibleOsmWays.add(osmWayId);
+  }
+
+  /**
+   * Verify if OSMWay is identified as being spatially eligible for parsing as part of the zoning, i.e.,
+   * it falls within the area deemed suitable for the final result.
+   *
+   * @param osmWayId OSM way id to mark as eligible
+   * @return true when eligible, false otherwise
+   */
+  public boolean isSpatialInfraEligibleOsmWay(long osmWayId) {
+    return spatialInfrastructureEligibleOsmWays.contains(osmWayId);
+  }
+
+  /**
+   * how many eligible OSM ways have been registered to date
+   * @return count
+   */
+  public int getNumSpatialInfraEligibleOsmWays() {
+    return spatialInfrastructureEligibleOsmWays.size();
   }
 }

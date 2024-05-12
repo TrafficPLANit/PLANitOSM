@@ -104,7 +104,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       return;
     }
 
-    // REGULAR PROCESS
     // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
     boolean osmWayEligible = false;
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
@@ -197,7 +196,9 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       // update registered OSM way ids with actual OSM way containing geometry (if needed)
       boolean match = boundaryManager.stepTwoAttachBoundaryRelationMemberOsmWays(osmWay);
       if (match) {
-        handleEligibleOsmWay(osmWay, OsmModelUtil.getTagsAsMap(osmWay));
+        for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
+          getNetworkData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+        }
       }
 
     }else if(stage.equals(Stage.FOUR_REGULAR_PREPROCESSING_WAYS)) {
@@ -247,7 +248,14 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
       // finalise bounding boundary now that OSM nodes are registered and available for polygon building
       boundaryManager.stepThreeCompleteConstructionBoundingBoundary(getNetworkData().getOsmNodeData().getRegisteredOsmNodes());
+    }else if(stage.equals(Stage.FOUR_REGULAR_PREPROCESSING_WAYS)) {
+      // STAGE 4
+
+      int eligibleOsmWays = getNetworkData().getNumSpatialInfraEligibleOsmWays();
+      LOGGER.info(String.format("Total OSM ways in source: %d",osmWayCounter.sum()));
+      LOGGER.info(String.format("Total OSM ways identified as part of network: %d (%.2f%%)",eligibleOsmWays, eligibleOsmWays/(double) osmWayCounter.sum()));
     }else if(stage.equals(Stage.FIVE_REGULAR_PREPROCESSING_NODES)) {
+      // STAGE 5
 
       // regular pre-registration for networks
       int preRegisteredOsmNodes = getNetworkData().getOsmNodeData().getRegisteredOsmNodes().size();
@@ -255,11 +263,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       LOGGER.info(String.format("Total OSM nodes in source: %d",osmNodeCounter.sum()));
       LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double) osmNodeCounter.sum()));
 
-    }else if(stage.equals(Stage.FOUR_REGULAR_PREPROCESSING_WAYS)) {
-
-      int eligibleOsmWays = getNetworkData().getNumSpatialInfraEligibleOsmWays();
-      LOGGER.info(String.format("Total OSM ways in source: %d",osmWayCounter.sum()));
-      LOGGER.info(String.format("Total OSM ways identified as part of network: %d (%.2f%%)",eligibleOsmWays, eligibleOsmWays/(double) osmWayCounter.sum()));
     }
   }
 

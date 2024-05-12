@@ -49,9 +49,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmZoningMainProcessingHandler.class.getCanonicalName());
 
-  /** flag required due to absence of callback when node parsing is complete and way parsing has not started */
-  private boolean firstOsmWay;
-
   /** When an OSM node has been identified in pre-processing as used by pt/zoning infrastructure, finalise registration by adding the actual OSM node instance
    *  otherwise ignore
    *
@@ -64,14 +61,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-  /** it is possible some preregistered OSM nodes part of ways are not available, for example when the way crosses the bounding box and
-   * is only partly present. In those cases we want to prune those nodes from the pre-registered nodes to avoid issues later on where
-   * the index exists, but not the actual value. this method is to be called after the processing of all OSM nodes but before we do OSM ways
-   */
-  private void pruneUnavailablePreregisteredOsmNodes() {
-    getZoningReaderData().getOsmData().getOsmNodeData().removeRegisteredOsmNodesIf(e -> e.getValue()==null);
-  }
-            
   /** Extract the platform member of a Ptv2 stop_area and register it on the transfer zone group
    * 
    * @param transferZoneGroup to register on
@@ -581,6 +570,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       processPtv2StopPosition(osmNode, tags);
       if(notYetButToBeAttachedToNetwork){
         getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());
+        getZoningReaderData().getOsmData().getOsmNodeData().registerEligibleOsmNode(osmNode);
       }
 
     }else {
@@ -1164,17 +1154,12 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   protected void handlePtOsmWay(OsmWay osmWay, OsmPtVersionScheme ptVersion, Map<String,String> tags){
     if(ptVersion != OsmPtVersionScheme.NONE ) {
       /* regular pt entity*/
-      
-      /* skip if none of the OSM way nodes fall within the zoning bounding box*/
-      if(!isCoveredByZoningBoundingPolygon(osmWay)) {
-        return;
-      }   
-    
+
       /* extract the (pt) transfer infrastructure to populate the PLANit memory model with */ 
       extractTransferInfrastructure(osmWay, ptVersion, tags);
     
     }else{
-      /* multi-polygon used as pt platform */
+      /* assumed multi-polygon used as pt platform */
       
       if(isCoveredByZoningBoundingPolygon(osmWay)) {
         /* even though OSM way itself appears not to be public transport related, it is marked for keeping
@@ -1229,7 +1214,6 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
     super(transferSettings, zoningReaderData, network2ZoningData, referenceNetwork, zoningToPopulate, profiler);
-    firstOsmWay = true;
   }
   
   /**
@@ -1252,14 +1236,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmNode osmNode) {
 
-    /* parse as stand-alone PT-entity node */
+    /* parse as stand-alone PT-entity node - it is conjectured that it is cheaper to just process each node
+    * than to spatially verify it is within bounding area, since only a very small portion of nodes are PT
+    * labelled nodes */
     wrapHandlePtOsmNode(osmNode, this::extractTransferInfrastructure);
 
-    /* When earmarked to be needed by PT OSM ways/relations during pre-processing but not yet fully registered, we now register the entire node in memory for OSM way/relations/node
-     *  handling during main process */
-    // todo: unlike network we seem to register all preregistered OSM nodes. They should be checked whether they fall in bounding area
-    // this is not yet done causing memory use overhead that is not needed
-    registerIfPreregistered(osmNode);
   }
 
   /**
@@ -1269,9 +1250,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   @Override
   public void handle(OsmWay osmWay) {
-    if(firstOsmWay){
-      pruneUnavailablePreregisteredOsmNodes();
-      firstOsmWay = false;
+
+    /* only proceed if identified as eligible during preprocessing */
+    if(!getZoningReaderData().isSpatialInfraEligibleOsmWay(osmWay.getId())){
+      return;
     }
 
     /* delegate after verifying eligibility */
@@ -1305,7 +1287,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {
-    firstOsmWay = true;
+
   }
 
   
