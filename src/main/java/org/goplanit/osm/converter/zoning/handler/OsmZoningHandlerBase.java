@@ -121,31 +121,15 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     return skipOsmPtEntity(EntityType.Way, osmWay.getId());
   }
 
-  /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
-   * this always returns true
-   * 
-   * @param osmNode to verify
-   * @return true when no bounding area, or covered by bounding area, false otherwise
-   */
-  protected boolean isCoveredByZoningBoundingPolygon(OsmNode osmNode) {
-    if(!getZoningReaderData().hasBoundingArea()){
-      return true;
-    }
-
-    var boundingArea = getZoningReaderData().getBoundingArea();
-    if(!boundingArea.hasBoundingPolygon()){
-      return true;
-    }
-
-    return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(osmNode, boundingArea.getBoundingPolygon());
-  }
-
   /** Verify if node resides near the zoning bounding polygon based on #OsmNetworkReaderData. If no bounding area is defined
    * this always returns true
    *
    * @param osmNode to verify
    * @return true when no bounding area, or covered by bounding area, false otherwise
+   *
+   * todo: should no longer be used and instead we should only use the boundary area as a reference point instead
    */
+  @Deprecated
   protected boolean isNearNetworkBoundingBox(OsmNode osmNode) {
     if(!getZoningReaderData().hasBoundingArea()){
       return false;
@@ -212,7 +196,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmWay to parse
    * @param osmWayConsumer to apply to eligible OSM way
    */
-  protected void wrapHandlePtOsmWay(OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
+  protected void wrapHandleSpatialAndPtCompatibleOsmWay(OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);  
     
     try {       
@@ -224,7 +208,12 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         if(skipOsmWay(osmWay)) {
           LOGGER.fine(String.format("Skipped OSM way %d, marked for exclusion", osmWay.getId()));
           return;
-        }                    
+        }
+
+        /* lastly check if OSM way is spatially eligible */
+        if(!getZoningReaderData().getOsmData().isOsmWaySpatiallyEligible(osmWay.getId())){
+          return;
+        }
         
         // Delegate, deemed eligible
         osmWayConsumer.accept(osmWay, ptVersion, tags);
@@ -243,7 +232,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmRelation to wrap parsing of
    * @param osmRelationConsumer to apply when relation is has Ptv2 public transport tags and is either a stop area or multipolygon transport platform
    */
-  protected void wrapHandlePtOsmRelation(OsmRelation osmRelation, BiConsumer<OsmRelation, Map<String, String>> osmRelationConsumer){
+  protected void wrapHandleSpatialAndPtCompatibleOsmRelation(OsmRelation osmRelation, BiConsumer<OsmRelation, Map<String, String>> osmRelationConsumer){
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);
     try {
 
@@ -269,6 +258,11 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
           return;
         }
 
+        /* lastly check if spatially eligible */
+        if(!getZoningReaderData().getOsmData().isOsmRelationSpatiallyEligible(osmRelation.getId())){
+          return;
+        }
+
         /* when not returned, it represents a potentially supported OSM Pt relation */
         osmRelationConsumer.accept(osmRelation, tags);
       }
@@ -284,7 +278,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmNode to parse
    * @param osmNodeConsumer to apply to eligible OSM way
    */
-  protected void wrapHandlePtOsmNode(OsmNode osmNode, TriConsumer<OsmNode, OsmPtVersionScheme, Map<String, String>> osmNodeConsumer) {
+  protected void wrapHandleSpatialAndPtCompatibleOsmNode(OsmNode osmNode, TriConsumer<OsmNode, OsmPtVersionScheme, Map<String, String>> osmNodeConsumer) {
 
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmNode);
     try {
@@ -299,8 +293,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
           return;
         }
 
-        /* verify if within designated bounding polygon */
-        if(!isCoveredByZoningBoundingPolygon(osmNode)) {
+        /* verify if identified as spatially acceptable */
+        if(!getZoningReaderData().getOsmData().isOsmNodeSpatiallyEligible(osmNode.getId())) {
           return;
         }
 

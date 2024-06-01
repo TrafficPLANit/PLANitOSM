@@ -66,24 +66,25 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
     TransferZone transferZone = zoningReaderData.getPlanitData().getTransferZoneByOsmId(type, osmId);
     if( transferZone==null) {
       
-      /* we do not issue warning when we have a bounding box, as it is possible this is the reason it is not available, not ideal but sufficient for now */
-      boolean logDiscardWarning  = false;
-      if(!getSettings().hasBoundingBoundary()) {
+      /* we do not issue warning when we have a bounding area, as it is possible this is the reason it is not available,
+       * not ideal but sufficient for now */
+      boolean logWithDiscardWarning  = false;
+      if(!zoningReaderData.hasBoundingArea()) {
         /* tags available, use as is to extract mode compatibility for verification if it is rightly not available */
         if(tags!=null) {
           Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
               ptModeParser.collectPublicTransportModesFromPtEntity(osmId, type, tags, OsmModeUtils.identifyPtv1DefaultMode(osmId, tags));
-          if( OsmModeUtils.hasEligibleOsmMode(modeResult) && !getSettings().hasBoundingBoundary()) {
-            /* not parsed due to problems (or outside bounding box), discard */
-            logDiscardWarning = true;
+          if(OsmModeUtils.hasEligibleOsmMode(modeResult)) {
+            /* not parsed due to problems), discard */
+            logWithDiscardWarning = true;
           }
         }else if(!zoningReaderData.getOsmData().isWaitingAreaWithoutMappedPlanitMode(type, osmId)){
-          /* tags not available (because it is a way), it might have been discarded for valid reasons still, if so, it should be registered as a waiting area without mapped modes, if not 
-           * issue warning */
-          logDiscardWarning = true;
+          /* tags not available (because it is a way), it might have been discarded for valid reasons still, if so,
+           * it should be registered as a waiting area without mapped modes, if not issue warning */
+          logWithDiscardWarning = true;
         }
         
-        if(logDiscardWarning && !suppressLogging) {
+        if(logWithDiscardWarning && !suppressLogging) {
           LOGGER.warning(String.format("DISCARD: Waiting area OSM entity %d (type %s) not available, referenced by stop_area %s, problem unless ineligible or geometry outside parsed area",osmId, type.toString(), transferZoneGroup.getExternalId()));
         }
       }

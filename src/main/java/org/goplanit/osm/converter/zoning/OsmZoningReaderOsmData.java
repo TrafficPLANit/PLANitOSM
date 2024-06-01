@@ -54,6 +54,15 @@ public class OsmZoningReaderOsmData {
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   private final OsmNodeData osmNodeData = new OsmNodeData();
 
+  /* temporary storage of tracking eligible osmWays by id (based on whether they fall partially within boundary of parsing */
+  private final Set<Long> spatiallyEligibleOsmWays = new HashSet<>();
+
+  /* temporary storage of tracking eligible osmNodes by id based on whether they fall partially within boundary of parsing*/
+  private final Set<Long> spatiallyEligibleOsmNodes = new HashSet<>();
+
+  /* temporary storage of tracking eligible osmRelations by id based on whether they fall partially within boundary*/
+  private final Set<Long> spatiallyEligibleOsmRelations = new HashSet<>();
+
 
   /**
    * Access to OSM node data
@@ -61,6 +70,30 @@ public class OsmZoningReaderOsmData {
    */
   public OsmNodeData getOsmNodeData(){
     return osmNodeData;
+  }
+
+  public boolean isOsmWaySpatiallyEligible(long osmWayId){
+    return spatiallyEligibleOsmWays.contains(osmWayId);
+  }
+
+  public void markOsmWaySpatiallyEligible(long osmWayId){
+    spatiallyEligibleOsmWays.add(osmWayId);
+  }
+
+  public boolean isOsmNodeSpatiallyEligible(long osmNodeId){
+    return spatiallyEligibleOsmNodes.contains(osmNodeId);
+  }
+
+  public void markOsmNodeSpatiallyEligible(long osmNodeId){
+    spatiallyEligibleOsmNodes.add(osmNodeId);
+  }
+
+  public void markOsmRelationSpatiallyEligible(long osmRelationId) {
+    spatiallyEligibleOsmRelations.add(osmRelationId);
+  }
+
+  public boolean isOsmRelationSpatiallyEligible(long osmRelationId) {
+    return spatiallyEligibleOsmRelations.contains(osmRelationId);
   }
 
   /* UNPROCESSED RELATED METHODS */  
@@ -403,6 +436,9 @@ public class OsmZoningReaderOsmData {
     waitingAreaWithoutMappedPlanitMode.clear();    
     ignoreStopAreaStopPositions.clear();
     osmNodeData.reset();
+    spatiallyEligibleOsmRelations.clear();
+    spatiallyEligibleOsmWays.clear();
+    spatiallyEligibleOsmNodes.clear();
   }
 
 }

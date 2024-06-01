@@ -3,6 +3,9 @@ package org.goplanit.osm.util;
 import java.util.Map;
 import java.util.logging.Logger;
 
+import de.topobyte.osm4j.core.model.iface.EntityType;
+import org.goplanit.osm.converter.OsmBoundary;
+import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderData;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.LoggingUtils;
@@ -24,6 +27,75 @@ public class OsmBoundingAreaUtils {
   
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmBoundingAreaUtils.class.getCanonicalName());
+
+  /**
+   * Verify if node is within boundary provided.
+   *
+   * @param osmNode to check
+   * @param osmBoundary to use for verification
+   * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
+   * @return true when within boundary, false otherwise
+   */
+  public static boolean isPartlyOrWhollyWithinBoundaryArea(OsmNode osmNode, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+    return isPartlyOrWhollyWithinBoundaryArea(OsmNodeUtils.createPoint(osmNode), osmBoundary, isWithinWhenNoBoundary);
+  }
+
+  /**
+   * Verify if OSM way is within boundary provided by checking any available OSM node individually (not efficient)
+   *
+   * @param osmWay to check
+   * @param osmBoundary to use for verification
+   * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
+   * @return true when within boundary, false otherwise
+   */
+  public static boolean isPartlyOrWhollyWithinBoundaryArea(
+      OsmWay osmWay, OsmNodeData nodeData, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+
+    boolean anyWithinBoundary = false;
+    for(int index = 0; index < osmWay.getNumberOfNodes(); ++index){
+      var osmNode = nodeData.getRegisteredOsmNode(osmWay.getNodeId(index));
+      if(osmNode != null && isPartlyOrWhollyWithinBoundaryArea(osmNode, osmBoundary, isWithinWhenNoBoundary)){
+        anyWithinBoundary = true;
+        break;
+      }
+    }
+    return anyWithinBoundary;
+  }
+
+  /**
+   * Verify if geometry is within boundary provided.
+   *
+   * @param geometry to check
+   * @param osmBoundary to use for verification
+   * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
+   * @return true when within boundary, false otherwise
+   */
+  public static boolean isPartlyOrWhollyWithinBoundaryArea(Geometry geometry, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+    if(osmBoundary == null || !osmBoundary.hasBoundingPolygon()){
+      return isWithinWhenNoBoundary;
+    }
+
+    return geometry.within(osmBoundary.getBoundingPolygon()) || geometry.overlaps(osmBoundary.getBoundingPolygon());
+  }
+
+  /**
+   * Verify if OSM entity (node or way) is within boundary provided.
+   *
+   * @param entity to check
+   * @param osmBoundary to use for verification
+   * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
+   * @return true when within boundary, false otherwise
+   */
+  public static boolean isPartlyOrWhollyWithinBoundaryArea(
+      OsmEntity entity, EntityType type, OsmNodeData nodeData, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+    if(type ==  EntityType.Node){
+      return isPartlyOrWhollyWithinBoundaryArea((OsmNode) entity, osmBoundary, isWithinWhenNoBoundary);
+    }else if(type == EntityType.Way){
+      return isPartlyOrWhollyWithinBoundaryArea((OsmWay) entity, nodeData, osmBoundary, isWithinWhenNoBoundary);
+    }
+    LOGGER.severe(String.format("Unsupported OSM entity type for OSM entity(%d) when determining if entity falls within boundary", entity.getId()));
+    return false;
+  }
 
   
   /** Create a (Rectangular) bounding box around the OSM ways geometry based on the provided offset
@@ -132,7 +204,7 @@ public class OsmBoundingAreaUtils {
    * @param geoUtils used to extract distances based on underlying crs
    * @return bounding box
    */
-  public static Envelope createBoundingBoxForOsmWay(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
+  public static Envelope createBoundingBoxForOsmEntity(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
     /* search bounding box */
     Envelope boundingBox = null; 
     switch (Osm4JUtils.getEntityType(osmEntity)) {

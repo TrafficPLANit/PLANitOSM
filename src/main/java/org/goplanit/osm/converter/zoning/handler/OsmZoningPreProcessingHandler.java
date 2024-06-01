@@ -2,8 +2,6 @@ package org.goplanit.osm.converter.zoning.handler;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.*;
@@ -27,7 +25,7 @@ import org.goplanit.zoning.Zoning;
  * <p>
  * To avoid keeping all ways and nodes in memory, we preprocess by first identifying which nodes/ways we must keep to be able
  * to properly parse the OSM relations (that are always parsed last).In case a (separate) named boundary for the zoning exists
- * firstidentify the polygon that goes with that (stages one to three) before then pre-processing the the remainder of the
+ * first identify the polygon that goes with that (stages one to three) before then pre-processing the the remainder of the
  * stages specific to the zoning.
  * </p>
  *<p>
@@ -82,13 +80,6 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   /** track processing stage within pre-processor */
   private final Stage stage;
 
-  /** track all OSM nodes that we tentatively preregister but not(yet) as the
-   * officially pre-registered ones. We do this two stage approach to avoid checking against these secondary nodes
-   * that are not in the bounding box but only added to avoid having partial OSM ways nodes in the end. In complete() they
-   * will be added fully though.
-   */
-  private Set<Long> secondaryPreregisteredOsmNodes = new TreeSet<>();
-
   /** Determine if relation represents a platform worth retaining
    * @param osmRelation to verify
    * @param tags of relation
@@ -97,15 +88,15 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
     /* conditions to pre-process/mark for keeping a relation representing a pt platform by its outer-role geometry */
     boolean preserveOuterRole = false;
+    boolean multiPolygonFound = false;
     if(tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.MULTIPOLYGON) &&
             tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
       /* only consider multi-polygons representing public_transport=platform to be parsed as relation based pt platforms*/
-      getProfiler().incrementMultiPolygonPlatformCounter();
+      multiPolygonFound = true;
       preserveOuterRole = true;
     }else if( tags.get(OsmRelationTypeTags.TYPE).equals(OsmRelationTypeTags.PUBLIC_TRANSPORT) &&
             tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT).equals(OsmPtv2Tags.PLATFORM_ROLE)) {
       /* alternatively mark relations that represent a complex platform to keep the outer role geometry to be parsed */
-      getProfiler().incrementPlatformRelationCounter();
       preserveOuterRole = true;
     }
 
@@ -123,10 +114,18 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
         /* only collect outer area, mapped as ways */
         if(member.getType() == EntityType.Way && member.getRole().equals(OsmMultiPolygonTags.OUTER_ROLE)) {
+
           /* mark for keeping in regular handler despite not having specific PT tags */
           getZoningReaderData().getOsmData().markOsmRelationOuterRoleOsmWayToKeep(member.getId());
+
+          if(multiPolygonFound){
+            getProfiler().incrementMultiPolygonPlatformCounter();
+          }else{
+            getProfiler().incrementPlatformRelationCounter();
+          }
         }
       }
+
     }
   }
 
@@ -141,25 +140,17 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /** pre-register all nodes of given OSM way on data to be kept in memory during main parsing phase (may be delayed)
+   * Invoked wrapped only so we know the osm way is Pt infrastructure based otherwise the marking of these OSM ways
+   * upgrading them form spatial to spatial AND PT enabled is not correct
    *
    * @param osmWay to pre-register nodes for
    */
-  private void conditionalAndDelayedPreregistrationOfOsmWayNodes(final OsmWay osmWay){
-    // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
-    boolean osmWayEligible = false;
-    var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
-    for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-      if(osmNodeData.containsPreregisteredOsmNode(osmWay.getNodeId(index))){
-        osmWayEligible = true;
-        getZoningReaderData().registerSpatialInfraEligibleOsmWayId(osmWay.getId());
-        break;
-      }
-    }
+  private void preRegistrationOfSpatialAndPtCompatibleOsmWayNodes(final OsmWay osmWay){
 
-    if(osmWayEligible) {
+    if(getZoningReaderData().getOsmData().isOsmWaySpatiallyEligible(osmWay.getId())) {
       for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
         // to be preregistered in full in complete() to avoid checking against these in above check regarding bounding boundary
-        secondaryPreregisteredOsmNodes.add(osmWay.getNodeId(index));
+        getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(osmWay.getNodeId(index));
       }
     }
   }
@@ -177,17 +168,69 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
+  /**
+   * Register OSM way as spatially eligible if it has at least one spatially eligible node
+   *
+   * @param osmWay to check
+   */
+  private void markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(OsmWay osmWay) {
+    var osmData = getZoningReaderData().getOsmData();
+    for(int index = 0; index < osmWay.getNumberOfNodes(); ++index){
+      if(osmData.isOsmNodeSpatiallyEligible(osmWay.getNodeId(index))){
+        osmData.markOsmWaySpatiallyEligible(osmWay.getId());
+        break;
+      }
+    }
+  }
+
+  /**
+   * Register OSM way as spatially eligible if it has at least one spatially eligible member (node or way)
+   *
+   * @param osmRelation to check
+   */
+  private void markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember(OsmRelation osmRelation) {
+    /* lastly make sure at least one member of relation is spatially eligible */
+    boolean relationSpatiallyEligible = false;
+    for(int index = 0; index <osmRelation.getNumberOfMembers(); ++index){
+      var member = osmRelation.getMember(index);
+      if(member.getType() == EntityType.Node && getZoningReaderData().getOsmData().isOsmNodeSpatiallyEligible(member.getId())){
+        relationSpatiallyEligible = true;
+        break;
+      }
+      if(member.getType() == EntityType.Way && getZoningReaderData().getOsmData().isOsmWaySpatiallyEligible(member.getId())){
+        relationSpatiallyEligible = true;
+        break;
+      }
+    }
+    if(relationSpatiallyEligible){
+      var osmData = getZoningReaderData().getOsmData();
+      osmData.markOsmRelationSpatiallyEligible(osmRelation.getId());
+
+      /* in addition, also mark all nodes and ways spatially eligible so entire relation can be parsed if available */
+      for(int index = 0; index <osmRelation.getNumberOfMembers(); ++index){
+        var member = osmRelation.getMember(index);
+        if(member.getType() == EntityType.Node){
+          osmData.markOsmNodeSpatiallyEligible(member.getId());
+        }
+        if(member.getType() == EntityType.Way && getZoningReaderData().getOsmData().isOsmWaySpatiallyEligible(member.getId())){
+          osmData.markOsmWaySpatiallyEligible(member.getId());
+        }
+      }
+    }
+  }
+
   /** given the OSM way determine if its nodes are to be pre-registered such that are kept in-memory during the main processing pass
    *
    * @param osmWay to check
    * @param osmPtVersionScheme to use
    * @param tags tags
    */
-  private void preRegisterEligiblePtNodesOfWay(OsmWay osmWay, OsmPtVersionScheme osmPtVersionScheme, Map<String, String> tags) {
+  private void preRegisterNodesOfSpatiallyEligiblePtWay(
+      OsmWay osmWay, OsmPtVersionScheme osmPtVersionScheme, Map<String, String> tags) {
     // unused parameters are present to make it callable from generic wraphandler...
 
     // all within boundary nodes of eligible OSM ways are to be pre-registered for in-memory storage during main pass
-    conditionalAndDelayedPreregistrationOfOsmWayNodes(osmWay);
+    preRegistrationOfSpatialAndPtCompatibleOsmWayNodes(osmWay);
   }
 
   private void preRegisterEligiblePtNodesOfRelation(OsmRelation osmRelation, Map<String, String> stringStringMap) {
@@ -261,18 +304,19 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
       if(osmNodeData.containsPreregisteredOsmNode(node.getId())) {
         osmNodeData.registerEligibleOsmNode(node);
       }
-    }else if(stage == Stage.FIVE_PREREGISTER_ZONING_WAY_NODES) {
+    }else if(stage == Stage.FOUR_IDENTIFY_RELATION_MEMBERS) {
 
-      // pre-register if bounding area is present and it falls within this area, if no bounding area all are eligible
+      // pre-register if bounding area is present and it falls within this area, if no bounding area then all are eligible
+      // used to exclude identifying relations that do not have any preregistered nodes available
       if(!getZoningReaderData().hasBoundingArea() ||
           OsmNodeUtils.createPoint(node).within(getZoningReaderData().getBoundingArea().getBoundingPolygon())){
 
-        getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(node.getId());
+        getZoningReaderData().getOsmData().markOsmNodeSpatiallyEligible(node.getId());
       }
 
     }else if(stage == Stage.SIX_REGISTER_ZONING_NODES_AND_WAYS){
 
-      // finalise as now all remaining pre registered nodes can be captured (for example those part of ways not fully
+      // finalise as now all remaining pre-registered nodes can be captured (for example those part of ways not fully
       // in bounding area)
       var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
       if(osmNodeData.containsPreregisteredOsmNode(node.getId())) {
@@ -295,13 +339,22 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
         /* make sure that all their nodes are preregistered to be made available during the actual parsing of the zoning */
         registerOsmWayNodes(osmWay);
       }
+    }else if(stage == Stage.FOUR_IDENTIFY_RELATION_MEMBERS){
+      // only when an OSM way has at least one pre-registered node we mark it as eligible because if not then it falls
+      // outside the bounding area, or no nodes are available. We utilise preregistered nodes and ways to identify which
+      // relations are worth keeping, i.e., fall at least partially within bounding area
+      if(!getZoningReaderData().hasBoundingArea()){
+        getZoningReaderData().getOsmData().markOsmWaySpatiallyEligible(osmWay.getId());
+      }else{
+        markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(osmWay);
+      }
     }else if(stage == Stage.FIVE_PREREGISTER_ZONING_WAY_NODES) {
 
       /* identify nodes of way that would normally not be considered PT but has been identified as such in preceding pre-processing pass */
       identifyPlatformOuterRoleNodes(osmWay);
 
       /* regular OSM way handling of eligible PT identified OSM ways */
-      wrapHandlePtOsmWay(osmWay, this::preRegisterEligiblePtNodesOfWay);
+      wrapHandleSpatialAndPtCompatibleOsmWay(osmWay, this::preRegisterNodesOfSpatiallyEligiblePtWay);
     }
   }
 
@@ -316,15 +369,18 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
       /* STAGE 1: identify members of bounding boundary if the OSM relation matches  */
       boundaryManager.stepOneIdentifyAndRegisterBoundingAreaRelationMembers(osmRelation);
-    }else if (stage == Stage.FOUR_IDENTIFY_RELATION_MEMBERS) {
 
-      /* STAGE 4: identify members of bounding boundary if the OSM relation matches  */
+    }else if (stage == Stage.FOUR_IDENTIFY_RELATION_MEMBERS) {
+      /* STAGE 4: identify members of bounding boundary if the OSM relation matches and it is spatially eligible  */
+
+      /* mark spatially eligible relation if applicable and pass on to all members if so */
+      markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember(osmRelation);
 
       /* delegate to identifyPlatformAsRelation when eligible */
-      wrapHandlePtOsmRelation(osmRelation, this::identifyPlatformAsRelation);
+      wrapHandleSpatialAndPtCompatibleOsmRelation(osmRelation, this::identifyPlatformAsRelation);
 
       /* delegate to identify OSM nodes to be collected in memory for when processing relations they are contained in later on */
-      wrapHandlePtOsmRelation(osmRelation, this::preRegisterEligiblePtNodesOfRelation);
+      wrapHandleSpatialAndPtCompatibleOsmRelation(osmRelation, this::preRegisterEligiblePtNodesOfRelation);
     }
   }
 
@@ -337,12 +393,6 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
     if(stage.equals(Stage.THREE_FINALISE_BOUNDARY_BY_NAME)) {
       boundaryManager.stepThreeCompleteConstructionBoundingBoundary(
           getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes());
-    }else if(stage.equals(Stage.SIX_REGISTER_ZONING_NODES_AND_WAYS)){
-
-      /* convert to preregistration status now */
-      this.secondaryPreregisteredOsmNodes.forEach(
-          osmNodeId -> getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(osmNodeId));
-      secondaryPreregisteredOsmNodes.clear();
     }
 
   }

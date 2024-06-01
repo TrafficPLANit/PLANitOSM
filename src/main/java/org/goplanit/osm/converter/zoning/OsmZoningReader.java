@@ -77,7 +77,7 @@ public class OsmZoningReader implements ZoningReader {
   
   /** Make sure that if a bounding area is available on the network, any explicitly defined zoning bounding polygon
    * should ideally not exceed the network bounding area since it makes little sense to try and parse pt infrastructure
-   * outside of the network's geographically parsed area. If it does exceed, log a warning and replace it with the network
+   * outside the network's geographically parsed area. If it does exceed, log a warning and replace it with the network
    * bounding area instead.
    * <p>
    *   In case the bounding area for the zoning is based on a name rather than a polygon, we cannot yet detect such a mismatch
@@ -157,7 +157,7 @@ public class OsmZoningReader implements ZoningReader {
    */
   private void doPreprocessing(OsmBoundaryManager boundaryManager, final OsmZoningHandlerProfiler profiler){
 
-    // boundary based preprocessing (3 stages if needed)
+    // STAGE 1-3: BOUNDARY PREPROCESSING (3 stages if active)
     performBoundingAreaPreProcessing(boundaryManager, profiler);
     if(boundaryManager.isConfigured()){
       if(!boundaryManager.isComplete()) {
@@ -167,24 +167,24 @@ public class OsmZoningReader implements ZoningReader {
       }
     }
 
+    //todo 4-5-6 cam be further improved. I think stage 6 can be combined with 5 now that we have distinction
+    // between spatial and (pre-)registered nodes. We should move spatial eligibility into boundary manager and
+    // then apply this approach to network too when it works here...
+
     // STAGE 4: PROCESS RELATIONS WITH MEMBERS THAT NEED TRACKING
     {
       /* identify all relations that represent a (single) platform either as a single polygon, or multi-polygon
        * and mark their ways to be kept, which then in the next pass ensures these ways' nodes are pre-registered to be kept as well */
-
-      //TODO: also mark all nodes (within bounding area) for pre-registration so that we only then consider ways/relations that have
-      // at least one preregistered node to be eligible
-      // Improvement, first filter by eligible ways/nodes -> then apply spatial filter -> then process remaining ones that are left?
-
       createHandlerAndRead(Stage.FOUR_IDENTIFY_RELATION_MEMBERS, boundaryManager, profiler);
+      LOGGER.info("Pre-processing: Identifying eligible public transport infrastructure compatible relations");
       if (zoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
-        LOGGER.info(String.format("Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms", zoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
+        LOGGER.info(String.format("Pre-processing: Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms", zoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
       }
     }
 
     // STAGE 5: PREREGISTER NODES of WAYS
     {
-      LOGGER.info("Pre-processing: Identifying OSM ways for public transport parsing");
+      LOGGER.info("Pre-processing: Identifying OSM ways for public transport infrastructure parsing");
       createHandlerAndRead(Stage.FIVE_PREREGISTER_ZONING_WAY_NODES, boundaryManager, profiler);
     }
 
@@ -199,7 +199,8 @@ public class OsmZoningReader implements ZoningReader {
 
   private void performBoundingAreaPreProcessing(
       OsmBoundaryManager boundaryManager, final OsmZoningHandlerProfiler profiler) {
-    if (!getSettings().hasBoundingBoundary()) {
+    if (!boundaryManager.isConfigured()) {
+      LOGGER.info("Pre-processing: No zoning bounding boundary defined, skip pre-processing all OSM entities eligible");
       return;
     }
 
@@ -225,6 +226,8 @@ public class OsmZoningReader implements ZoningReader {
         LOGGER.info("Preprocessing: Finalising network bounding boundary, tracking OSM nodes for boundary");
         createHandlerAndRead(OsmZoningPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager, profiler);
       }
+    }else{
+      LOGGER.info("Skip pre-processing boundary identification stages, zoning bounding boundary directly defined");
     }
 
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){

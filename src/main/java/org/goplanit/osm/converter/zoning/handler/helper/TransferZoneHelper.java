@@ -144,7 +144,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    */
   private TransferZone createAndPopulateTransferZone(OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, PlanitJtsCrsUtils geoUtils){
     TransferZone transferZone = null;
-        
+
     var osmNodeData = zoningReaderData.getOsmData().getOsmNodeData();
 
     /* Verify if there are nodes missing before extracting geometry, if so and we are near bounding box log this information to user, but avoid logging the
@@ -735,6 +735,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    */
   public TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
       OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, SortedSet<String> eligibleOsmModes, PlanitJtsCrsUtils geoUtils){
+
     TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM, geoUtils);
     if(transferZone != null) {
       PlanitTransferZoneUtils.registerOsmModesOnTransferZone(transferZone, eligibleOsmModes);

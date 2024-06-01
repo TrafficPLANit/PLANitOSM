@@ -253,7 +253,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
       int eligibleOsmWays = getNetworkData().getNumSpatialInfraEligibleOsmWays();
       LOGGER.info(String.format("Total OSM ways in source: %d",osmWayCounter.sum()));
-      LOGGER.info(String.format("Total OSM ways identified as part of network: %d (%.2f%%)",eligibleOsmWays, eligibleOsmWays/(double) osmWayCounter.sum()));
+      LOGGER.info(String.format("Total OSM ways identified as part of network: %d (%.2f%%)",eligibleOsmWays, eligibleOsmWays*100/(double) osmWayCounter.sum()));
     }else if(stage.equals(Stage.FIVE_REGULAR_PREPROCESSING_NODES)) {
       // STAGE 5
 
@@ -261,7 +261,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       int preRegisteredOsmNodes = getNetworkData().getOsmNodeData().getRegisteredOsmNodes().size();
       int eligibleOsmWays = getNetworkData().getNumSpatialInfraEligibleOsmWays();
       LOGGER.info(String.format("Total OSM nodes in source: %d",osmNodeCounter.sum()));
-      LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes/(double) osmNodeCounter.sum()));
+      LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes*100/(double) osmNodeCounter.sum()));
 
     }
   }
