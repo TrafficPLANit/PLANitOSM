@@ -44,6 +44,7 @@ public class OsmBoundingAreaUtils {
    * Verify if OSM way is within boundary provided by checking any available OSM node individually (not efficient)
    *
    * @param osmWay to check
+   * @param nodeData registered node information
    * @param osmBoundary to use for verification
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
@@ -82,6 +83,8 @@ public class OsmBoundingAreaUtils {
    * Verify if OSM entity (node or way) is within boundary provided.
    *
    * @param entity to check
+   * @param type  entity type
+   * @param nodeData registered node information
    * @param osmBoundary to use for verification
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
