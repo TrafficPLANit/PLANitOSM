@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.zoning;
 import java.util.*;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.OsmSpatialEligibilityData;
 import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmPtVersionScheme;
@@ -40,28 +41,23 @@ public class OsmZoningReaderOsmData {
   private final SortedMap<Long, OsmNode> unprocessedStopPositions= new TreeMap<>();
   
   /** the registered osm ways to keep based on their outer_role identification in a multi_polygon */
-  private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<Long,OsmWay>();
+  private final Map<Long, OsmWay> osmOuterRoleOsmWaysToKeep = new TreeMap<>();
   
   /* INVALID OSM */
   
   /** Stop positions found to be invalid or not needed due to inactive modes and are therefore to be ignored */
-  private final Map<EntityType, Set<Long>> ignoreStopAreaStopPositions = new TreeMap<EntityType, Set<Long>>();
+  private final Map<EntityType, Set<Long>> ignoreStopAreaStopPositions = new TreeMap<>();
   
   /** osm waiting areas (platform, poles) found to be valid but not mapped to a planit mode, used to avoid logging user warnings when referenced by other 
    * osm entities such as stop_areas */  
-  private final Map<EntityType, Set<Long>> waitingAreaWithoutMappedPlanitMode = new TreeMap<EntityType, Set<Long>>();
+  private final Map<EntityType, Set<Long>> waitingAreaWithoutMappedPlanitMode = new TreeMap<>();
 
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   private final OsmNodeData osmNodeData = new OsmNodeData();
 
-  /* temporary storage of tracking eligible osmWays by id (based on whether they fall partially within boundary of parsing */
-  private final Set<Long> spatiallyEligibleOsmWays = new HashSet<>();
 
-  /* temporary storage of tracking eligible osmNodes by id based on whether they fall partially within boundary of parsing*/
-  private final Set<Long> spatiallyEligibleOsmNodes = new HashSet<>();
-
-  /* temporary storage of tracking eligible osmRelations by id based on whether they fall partially within boundary*/
-  private final Set<Long> spatiallyEligibleOsmRelations = new HashSet<>();
+  /** track spatial eligibility of SOM entities, for example based on boundary used (if any) */
+  private final OsmSpatialEligibilityData osmSpatialEligibilityData = new OsmSpatialEligibilityData();
 
 
   /**
@@ -72,28 +68,13 @@ public class OsmZoningReaderOsmData {
     return osmNodeData;
   }
 
-  public boolean isOsmWaySpatiallyEligible(long osmWayId){
-    return spatiallyEligibleOsmWays.contains(osmWayId);
-  }
-
-  public void markOsmWaySpatiallyEligible(long osmWayId){
-    spatiallyEligibleOsmWays.add(osmWayId);
-  }
-
-  public boolean isOsmNodeSpatiallyEligible(long osmNodeId){
-    return spatiallyEligibleOsmNodes.contains(osmNodeId);
-  }
-
-  public void markOsmNodeSpatiallyEligible(long osmNodeId){
-    spatiallyEligibleOsmNodes.add(osmNodeId);
-  }
-
-  public void markOsmRelationSpatiallyEligible(long osmRelationId) {
-    spatiallyEligibleOsmRelations.add(osmRelationId);
-  }
-
-  public boolean isOsmRelationSpatiallyEligible(long osmRelationId) {
-    return spatiallyEligibleOsmRelations.contains(osmRelationId);
+  /**
+   * Access to OSM spatial eligibility data
+   *
+   * @return OSM boundary data
+   */
+  public OsmSpatialEligibilityData getOsmSpatialEligibilityData(){
+    return osmSpatialEligibilityData;
   }
 
   /* UNPROCESSED RELATED METHODS */  
@@ -436,9 +417,7 @@ public class OsmZoningReaderOsmData {
     waitingAreaWithoutMappedPlanitMode.clear();    
     ignoreStopAreaStopPositions.clear();
     osmNodeData.reset();
-    spatiallyEligibleOsmRelations.clear();
-    spatiallyEligibleOsmWays.clear();
-    spatiallyEligibleOsmNodes.clear();
+    osmSpatialEligibilityData.reset();
   }
 
 }

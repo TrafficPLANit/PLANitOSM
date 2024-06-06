@@ -18,7 +18,6 @@ import org.locationtech.jts.geom.Coordinate;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Builder for OSM bounding boundaries. This class has a number of methods and internal state to be able to construct
@@ -43,6 +42,22 @@ public class OsmBoundaryManager {
    * these can be reconstructed by ordering them by their integer value which is incrementally created upon adding entries.
    */
   private final Map<Long, Pair<Integer, OsmWay>> osmBoundaryOsmWayTracker = new HashMap<>();
+
+  /**
+   * Track OSM boundary nodes
+   */
+  private final OsmNodeData osmNodeData = new OsmNodeData();
+
+  /**
+   * Preregister the OSM way's nodes
+   *
+   * @param osmWay to preregister nodes for
+   */
+  private void preregisterOsmWayNodes(final OsmWay osmWay) {
+    for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+      osmNodeData.preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+    }
+  }
 
   /**
    * Register portions of the named OSM boundary to construct a single coherent polygon during regular pre-processing
@@ -71,13 +86,18 @@ public class OsmBoundaryManager {
    *
    * @param osmWay to update registered entry with as part of the future OSM boundary
    */
-  private void updateBoundaryRegistrationWithOsmWay(OsmWay osmWay) {
+  private void updateBoundaryRegistrationWithOsmWayAndNodes(OsmWay osmWay) {
     if(!isRegisteredBoundaryOsmWay(osmWay.getId())){
       LOGGER.severe("Should not update boundary with OSM way when it has not been identified as being part of boundary during " +
           "initial stage of preprocessing, ignored");
     }
+
+    // way registration
     var valueWithoutOsmWay = osmBoundaryOsmWayTracker.get(osmWay.getId());
     osmBoundaryOsmWayTracker.put(osmWay.getId(),Pair.of(valueWithoutOsmWay.first(), osmWay /* update now available */));
+
+    // nodes registration
+    preregisterOsmWayNodes(osmWay);
   }
 
   /**
@@ -182,9 +202,9 @@ public class OsmBoundaryManager {
    * @param osmWay to check and/or attach
    * @return true if matched, false otherwise
    */
-  public boolean stepTwoAttachBoundaryRelationMemberOsmWays(OsmWay osmWay) {
+  public boolean stepTwoAttachBoundaryOsmWaysAndPreregisterItsNodes(OsmWay osmWay) {
     if(isRegisteredBoundaryOsmWay(osmWay.getId())){
-      updateBoundaryRegistrationWithOsmWay(osmWay);
+      updateBoundaryRegistrationWithOsmWayAndNodes(osmWay);
       return true;
     }
     return false;
@@ -196,11 +216,14 @@ public class OsmBoundaryManager {
    * adheres to the bounding boundary configuration (without a polygon) configured by the user in the network settings.
    * The result is a new OsmBoundingBoundary that will be used in the actual processing
    *
-   * @param osmNodes to use
    */
-  public void stepThreeCompleteConstructionBoundingBoundary(Map<Long, OsmNode> osmNodes) {
+  public void stepThreeCompleteConstructionBoundingBoundary() {
     if(!isConfigured()){
       // no boundary configured, no need to complete
+      return;
+    }
+    if(isComplete()){
+      // already done, no need to continue
       return;
     }
 
@@ -208,7 +231,7 @@ public class OsmBoundaryManager {
     LinkedList<Coordinate> contiguousBoundaryCoords = new LinkedList<>() {
     };
     for(var osmWay : boundaryOsmWays){
-      var coordArray = OsmWayUtils.createCoordinateArrayNoThrow(osmWay,osmNodes);
+      var coordArray = OsmWayUtils.createCoordinateArrayNoThrow(osmWay, osmNodeData.getRegisteredOsmNodes());
       if(!contiguousBoundaryCoords.isEmpty()){
         boolean success = PlanitJtsUtils.addCoordsContiguous(contiguousBoundaryCoords, coordArray);
         if(!success){
@@ -245,6 +268,10 @@ public class OsmBoundaryManager {
             originalBoundary.getBoundaryAdminLevel(),
             boundingBoundaryPolygon);
     LOGGER.info("Bounding boundary construction complete");
+
+    // free up temporary registered OSM entities to free up space
+    this.osmNodeData.reset();
+    osmBoundaryOsmWayTracker.clear();
   }
 
   public void overrideBoundingArea(OsmBoundary override){
@@ -296,4 +323,22 @@ public class OsmBoundaryManager {
     return !this.osmBoundaryOsmWayTracker.isEmpty();
   }
 
+  /**
+   * Verify if OSM node is a preregistered boundary node
+   *
+   * @param osmNodeId to verify
+   * @return ture when preregistered false otherwise
+   */
+  public boolean isPreregisteredBoundaryOsmNode(long osmNodeId) {
+    return this.osmNodeData.containsPreregisteredOsmNode(osmNodeId);
+  }
+
+  /**
+   * Register OSM node as boundary node
+   *
+   * @param osmNode to register
+   */
+  public void registerBoundaryOsmNode(OsmNode osmNode) {
+    osmNodeData.registerEligibleOsmNode(osmNode);
+  }
 }

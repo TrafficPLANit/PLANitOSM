@@ -167,10 +167,6 @@ public class OsmZoningReader implements ZoningReader {
       }
     }
 
-    //todo 4-5-6 cam be further improved. I think stage 6 can be combined with 5 now that we have distinction
-    // between spatial and (pre-)registered nodes. We should move spatial eligibility into boundary manager and
-    // then apply this approach to network too when it works here...
-
     // STAGE 4: PROCESS RELATIONS WITH MEMBERS THAT NEED TRACKING
     {
       /* identify all relations that represent a (single) platform either as a single polygon, or multi-polygon

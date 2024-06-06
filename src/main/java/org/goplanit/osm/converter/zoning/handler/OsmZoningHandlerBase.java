@@ -211,7 +211,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         }
 
         /* lastly check if OSM way is spatially eligible */
-        if(!getZoningReaderData().getOsmData().isOsmWaySpatiallyEligible(osmWay.getId())){
+        if(!getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
           return;
         }
         
@@ -232,7 +232,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmRelation to wrap parsing of
    * @param osmRelationConsumer to apply when relation is has Ptv2 public transport tags and is either a stop area or multipolygon transport platform
    */
-  protected void wrapHandleSpatialAndPtCompatibleOsmRelation(OsmRelation osmRelation, BiConsumer<OsmRelation, Map<String, String>> osmRelationConsumer){
+  protected void wrapHandleSpatialAndPtCompatibleOsmRelation(
+      OsmRelation osmRelation, BiConsumer<OsmRelation, Map<String, String>> osmRelationConsumer){
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);
     try {
 
@@ -259,7 +260,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         }
 
         /* lastly check if spatially eligible */
-        if(!getZoningReaderData().getOsmData().isOsmRelationSpatiallyEligible(osmRelation.getId())){
+        if(!getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmRelationSpatiallyEligible(osmRelation.getId())){
           return;
         }
 
@@ -294,7 +295,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         }
 
         /* verify if identified as spatially acceptable */
-        if(!getZoningReaderData().getOsmData().isOsmNodeSpatiallyEligible(osmNode.getId())) {
+        if(!getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmNodeSpatiallyEligible(osmNode.getId())) {
           return;
         }
 
