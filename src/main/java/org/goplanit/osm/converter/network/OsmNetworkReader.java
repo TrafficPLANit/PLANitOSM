@@ -8,8 +8,10 @@ import org.goplanit.converter.network.NetworkReader;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
 import org.goplanit.osm.converter.OsmBoundaryManager;
+import org.goplanit.osm.converter.OsmBoundingBoundaryPreProcessingHandler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
+import org.goplanit.osm.util.OsmHandlerUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -21,8 +23,6 @@ import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnVertexRemovalHandler;
 
-import de.topobyte.osm4j.core.access.DefaultOsmHandler;
-import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
 
 /**
@@ -86,9 +86,8 @@ public class OsmNetworkReader implements NetworkReader {
    * Helper to create an OSM4jReader, handler for a given stage and perform the parsing
    *
    * @param stage to apply
-   * @param boundaryManager to use
    */
-  private void createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage stage, OsmBoundaryManager boundaryManager){
+  private void createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage stage){
     /* reader to parse the actual file or source location */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(settings.getInputSource());
     if(osmReader == null) {
@@ -97,28 +96,10 @@ public class OsmNetworkReader implements NetworkReader {
     }
     var osmHandler = new OsmNetworkPreProcessingHandler(
         stage,
-        boundaryManager,
         getOsmNetworkToPopulate(),
         networkData,
         settings);
-    read(osmReader, osmHandler);
-  }
-           
-  /** Read based on reader and handler where the reader performs a callback to the handler provided
-   * 
-   * @param osmReader to use
-   * @param osmHandler to use
-   */
-  private void read(OsmReader osmReader, DefaultOsmHandler osmHandler) {
-       
-    try {
-      osmReader.setHandler(osmHandler);      
-      osmReader.read();
-    } catch (OsmInputException e) {
-      String cause = e.getCause()!=null ? e.getCause().getMessage() : "";
-      LOGGER.severe(e.getMessage() + "cause:" + cause);
-      throw new PlanItRunTimeException("Error during parsing of OSM file",e);
-    }
+    OsmHandlerUtils.readWithHandler(osmReader, osmHandler);
   }
 
   /**
@@ -135,59 +116,60 @@ public class OsmNetworkReader implements NetworkReader {
    * we need to perform the actual parsing, before doing any other parsing
    *
    */
-  private void performBoundingAreaPreProcessing() {
+  private void performBoundingAreaExtraction() {
 
     OsmBoundaryManager boundaryManager = new OsmBoundaryManager(getSettings().getBoundingArea());
     if(!getSettings().hasBoundingBoundary()){
       return;
     }
 
-    /* STAGE 1 - BOUNDARY IDENTIFICATION
-     * identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
+    /* identify OSM relation by name if bounding area is specified by name rather than an explicit bounding box */
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()) {
-      LOGGER.info(String.format("Pre-processing: Identifying network bounding boundary for %s", settings.getBoundingArea().getBoundaryName()));
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
+
+      /* STAGE 1 - BOUNDARY RELATION IDENTIFICATION */
+      {
+        LOGGER.info(String.format("Boundary identification: Locating bounding boundary %s", settings.getBoundingArea().getBoundaryName()));
+        OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
+            settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
+      }
+
+      /* STAGE 2 - REGULAR PREPROCESSING */
+      {
+        LOGGER.info("Boundary identification: Locating OSM ways part of network bounding boundary");
+        OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
+            settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
+      }
+
+      /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
+      {
+        LOGGER.info("Boundary identification: Finalising network bounding boundary, constructing polygon from OSM ways' OSM nodes");
+        OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
+            settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager);
+      }
     }
 
-    /* STAGE 2 - REGULAR PREPROCESSING */
-    {
-      LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes for network building");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
-    }
-
-    /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
-    if(boundaryManager.isConfigured() && !boundaryManager.isComplete())
-    {
-      LOGGER.info("Preprocessing: Finalising network bounding boundary, tracking OSM nodes for boundary");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager);
-    }
 
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
-      LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
+      LOGGER.severe("Boundary identification: User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
     }
 
     networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
   }
   
-  /** Perform preprocessing if needed, only needed when we have set a bounding box and we need to restrict the OSM entities
-   *  parsed to this bounding box
-   * 
+  /** Perform preprocessing if needed, identify the OSM entities eligible for processing
    */
   private void doPreprocessing(){
 
-    // boundary based preprocessing (3 stages if needed)
-    performBoundingAreaPreProcessing();
-
     /* STAGE 1 -
-     * identify OSM ways that are eligble from a network perspective (are they roads etc.). If a bounding area is specified then
+     * identify OSM ways that are eligible from a network perspective (are they roads etc.). If a bounding area is specified then
      * they should at least have one node within the bounding area to be considered */
     LOGGER.info("Pre-processing: Identifying eligible network OSM ways");
-    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FOUR_REGULAR_PREPROCESSING_WAYS, null);
+    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_REGULAR_PREPROCESSING_WAYS);
 
     /* STAGE 2 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */
     {
       LOGGER.info("Preprocessing: reducing memory footprint, identifying remaining OSM nodes required for network building");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.FIVE_REGULAR_PREPROCESSING_NODES, null);
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.TWO_REGULAR_PREPROCESSING_NODES);
     }
 
   }
@@ -203,7 +185,7 @@ public class OsmNetworkReader implements NetworkReader {
       return;
     }   
     OsmNetworkMainProcessingHandler osmHandler = new OsmNetworkMainProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
-    read(osmReader, osmHandler);     
+    OsmHandlerUtils.readWithHandler(osmReader, osmHandler);
   }
   
   /** Collect the network data gathered
@@ -349,7 +331,10 @@ public class OsmNetworkReader implements NetworkReader {
     logInfo();
     
     /* initialise */
-    initialiseBeforeParsing();    
+    initialiseBeforeParsing();
+
+    // boundary identification and construction (if needed)
+    performBoundingAreaExtraction();
     
     /* preprocessing (if needed)*/
     doPreprocessing();

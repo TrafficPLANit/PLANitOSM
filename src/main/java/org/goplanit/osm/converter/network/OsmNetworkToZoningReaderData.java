@@ -97,7 +97,7 @@ public class OsmNetworkToZoningReaderData {
    * @param osmNodeId  node to register
    */
   public void preRegisterOsmNode(long osmNodeId){
-    networkData.getOsmNodeData().preRegisterEligibleOsmNode(osmNodeId);
+    networkData.getOsmNodeData().preregisterEligibleOsmNode(osmNodeId);
   }
 
   /**

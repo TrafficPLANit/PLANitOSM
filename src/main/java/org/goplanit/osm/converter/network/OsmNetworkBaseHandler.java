@@ -4,6 +4,8 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
+import de.topobyte.osm4j.core.access.OsmInputException;
+import de.topobyte.osm4j.core.access.OsmReader;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;

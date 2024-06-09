@@ -56,7 +56,7 @@ public class OsmZoningReaderOsmData {
   private final OsmNodeData osmNodeData = new OsmNodeData();
 
 
-  /** track spatial eligibility of SOM entities, for example based on boundary used (if any) */
+  /** track spatial eligibility of OSM entities, for example based on boundary used (if any) */
   private final OsmSpatialEligibilityData osmSpatialEligibilityData = new OsmSpatialEligibilityData();
 
 

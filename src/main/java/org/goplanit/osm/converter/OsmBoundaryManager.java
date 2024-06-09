@@ -55,7 +55,7 @@ public class OsmBoundaryManager {
    */
   private void preregisterOsmWayNodes(final OsmWay osmWay) {
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
-      osmNodeData.preRegisterEligibleOsmNode(osmWay.getNodeId(index));
+      osmNodeData.preregisterEligibleOsmNode(osmWay.getNodeId(index));
     }
   }
 
@@ -267,11 +267,6 @@ public class OsmBoundaryManager {
             originalBoundary.getBoundaryType(),
             originalBoundary.getBoundaryAdminLevel(),
             boundingBoundaryPolygon);
-    LOGGER.info("Bounding boundary construction complete");
-
-    // free up temporary registered OSM entities to free up space
-    this.osmNodeData.reset();
-    osmBoundaryOsmWayTracker.clear();
   }
 
   public void overrideBoundingArea(OsmBoundary override){
@@ -340,5 +335,37 @@ public class OsmBoundaryManager {
    */
   public void registerBoundaryOsmNode(OsmNode osmNode) {
     osmNodeData.registerEligibleOsmNode(osmNode);
+  }
+
+  /**
+   * Log the OSM boundary relation's members (OSM ways) that make up the boundary
+   */
+  public void logStepOneRegisteredRelationMemberStats() {
+    if(isConfigured() && this.originalBoundary.hasBoundaryName()){
+      boolean success = hasRegisteredRelationMembers();
+      int numOsmWays = getRegisteredBoundaryOsmWaysInOrder().size();
+      LOGGER.info((success ?
+          String.format("Registered %d relation member OSM ways for boundary: ",numOsmWays) :
+          "Unable to identify bounding area for: ") + this.originalBoundary.getBoundaryName() );
+    }
+  }
+
+  /**
+   * Log the OSM bounding boundary OSM nodes used to create the final boundary
+   */
+  public void logStepThreeCompletedBoundingBoundaryStats() {
+    if(isComplete() && this.finalBoundaryWithPolygon.hasBoundaryName()){
+      LOGGER.info(String.format(
+          "Bounding boundary %s finalised using total of %d OSM nodes", finalBoundaryWithPolygon.getBoundaryName(), osmNodeData.getRegisteredOsmNodes().size()));
+    }
+  }
+
+  /**
+   * Free all temporary resources used during construction of bounding boundary after completion
+   */
+  public void freeResourcesAfterCompletion() {
+    // free up temporary registered OSM entities to free up space
+    this.osmNodeData.reset();
+    osmBoundaryOsmWayTracker.clear();
   }
 }

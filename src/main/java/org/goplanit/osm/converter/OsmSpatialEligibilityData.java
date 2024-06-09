@@ -1,5 +1,7 @@
 package org.goplanit.osm.converter;
 
+import de.topobyte.osm4j.core.model.iface.OsmWay;
+
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -41,6 +43,22 @@ public class OsmSpatialEligibilityData {
 
   public boolean isOsmRelationSpatiallyEligible(long osmRelationId) {
     return spatiallyEligibleOsmRelations.contains(osmRelationId);
+  }
+
+  /**
+   * Register OSM way as spatially eligible if it has at least one spatially eligible node
+   *
+   * @param osmWay to check
+   * @return true when spatially eligible node found and OSM way marked as eligible
+   */
+  public boolean markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(OsmWay osmWay) {
+    for(int index = 0; index < osmWay.getNumberOfNodes(); ++index){
+      if(isOsmNodeSpatiallyEligible(osmWay.getNodeId(index))){
+        markOsmWaySpatiallyEligible(osmWay.getId());
+        return true;
+      }
+    }
+    return false;
   }
 
   public void reset(){

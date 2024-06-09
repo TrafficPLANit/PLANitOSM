@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.zoning.ZoningReader;
 import org.goplanit.osm.converter.OsmBoundaryManager;
+import org.goplanit.osm.converter.OsmBoundingBoundaryPreProcessingHandler;
 import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerBase;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
@@ -38,16 +39,7 @@ public class OsmZoningReader implements ZoningReader {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmZoningReader.class.getCanonicalName());
-  
-  /** the handler conducting parsing in preparation for the osmHandler*/
-  private OsmZoningPreProcessingHandler osmPreProcessingHandler = null;
-      
-  /** the handler conducting the main parsing pass */
-  private OsmZoningMainProcessingHandler osmHandler = null;   
-  
-  /** the handler for the final parsing as post-processing step of the reader */
-  private OsmZoningPostProcessingHandler osmPostProcessingHandler = null;
-  
+
   /** the settings the user can configure for parsing transfer zones */
   private final OsmPublicTransportReaderSettings transferSettings;
   
@@ -157,21 +149,11 @@ public class OsmZoningReader implements ZoningReader {
    */
   private void doPreprocessing(OsmBoundaryManager boundaryManager, final OsmZoningHandlerProfiler profiler){
 
-    // STAGE 1-3: BOUNDARY PREPROCESSING (3 stages if active)
-    performBoundingAreaPreProcessing(boundaryManager, profiler);
-    if(boundaryManager.isConfigured()){
-      if(!boundaryManager.isComplete()) {
-        LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
-      }else {
-        zoningReaderData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
-      }
-    }
-
     // STAGE 4: PROCESS RELATIONS WITH MEMBERS THAT NEED TRACKING
     {
       /* identify all relations that represent a (single) platform either as a single polygon, or multi-polygon
        * and mark their ways to be kept, which then in the next pass ensures these ways' nodes are pre-registered to be kept as well */
-      createHandlerAndRead(Stage.FOUR_IDENTIFY_RELATION_MEMBERS, boundaryManager, profiler);
+      createPreProcessingHandlerAndRead(Stage.ONE_IDENTIFY_ZONING_RELATION_MEMBERS, profiler);
       LOGGER.info("Pre-processing: Identifying eligible public transport infrastructure compatible relations");
       if (zoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
         LOGGER.info(String.format("Pre-processing: Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms", zoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
@@ -181,22 +163,26 @@ public class OsmZoningReader implements ZoningReader {
     // STAGE 5: PREREGISTER NODES of WAYS
     {
       LOGGER.info("Pre-processing: Identifying OSM ways for public transport infrastructure parsing");
-      createHandlerAndRead(Stage.FIVE_PREREGISTER_ZONING_WAY_NODES, boundaryManager, profiler);
+      createPreProcessingHandlerAndRead(Stage.TWO_PREREGISTER_ZONING_WAY_NODES, profiler);
     }
 
     // STAGE 5: FINALISE REGISTRATION OF IDENTIFIED NODES AND WAYS
     {
       LOGGER.info("Pre-processing: registering eligible OSM nodes of identified OSM ways for public transport processing");
-      createHandlerAndRead(Stage.SIX_REGISTER_ZONING_NODES_AND_WAYS, boundaryManager, profiler);
+      createPreProcessingHandlerAndRead(Stage.THREE_REGISTER_ZONING_NODES_AND_WAYS, profiler);
     }
 
     pruneUnavailablePreregisteredOsmNodes();
   }
 
-  private void performBoundingAreaPreProcessing(
-      OsmBoundaryManager boundaryManager, final OsmZoningHandlerProfiler profiler) {
+  /**
+   * In case there is a separate named boundary for the zoning defined, extract its polygon here
+   *
+   * @param boundaryManager to use
+   */
+  private void performBoundingAreaPreProcessing(OsmBoundaryManager boundaryManager) {
     if (!boundaryManager.isConfigured()) {
-      LOGGER.info("Pre-processing: No zoning bounding boundary defined, skip pre-processing all OSM entities eligible");
+      LOGGER.info("Boundary identification: No zoning bounding boundary defined, all OSM entities eligible");
       return;
     }
 
@@ -207,20 +193,23 @@ public class OsmZoningReader implements ZoningReader {
       /* STAGE 1 - BOUNDARY IDENTIFICATION */
       {
         LOGGER.info(String.format(
-            "Pre-processing: Identifying zoning bounding boundary for %s", getSettings().getBoundingArea().getBoundaryName()));
-        createHandlerAndRead(OsmZoningPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager, profiler);
+            "Boundary identification: Identifying zoning bounding boundary for %s", getSettings().getBoundingArea().getBoundaryName()));
+        OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
+            getSettings().getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
       }
 
       /* STAGE 2 - REGULAR PREPROCESSING */
       {
-        LOGGER.info("Preprocessing: reducing memory footprint, identifying required OSM nodes for network building");
-        createHandlerAndRead(OsmZoningPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager, profiler);
+        LOGGER.info("Boundary identification: Locating OSM ways part of zoning bounding boundary");
+        OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
+            getSettings().getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
       }
 
       /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
       {
-        LOGGER.info("Preprocessing: Finalising network bounding boundary, tracking OSM nodes for boundary");
-        createHandlerAndRead(OsmZoningPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager, profiler);
+        LOGGER.info("Preprocessing: Finalising network bounding boundary, constructing polygon from OSM ways' OSM nodes");
+        OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
+            getSettings().getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager);
       }
     }else{
       LOGGER.info("Skip pre-processing boundary identification stages, zoning bounding boundary directly defined");
@@ -234,8 +223,15 @@ public class OsmZoningReader implements ZoningReader {
     zoningReaderData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
   }
 
-  private void createHandlerAndRead(
-      Stage preProcessingStage, OsmBoundaryManager boundaryManager, OsmZoningHandlerProfiler profiler) {
+  /**
+   * Convenience method to create a preProcessing handler and perform a read pass absed ona  given
+   * stage
+   *
+   * @param preProcessingStage stage to execute
+   * @param profiler to use
+   */
+  private void createPreProcessingHandlerAndRead(
+      Stage preProcessingStage, OsmZoningHandlerProfiler profiler) {
 
     /* reader to parse the actual file or source location */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(getSettings().getInputSource());
@@ -247,7 +243,7 @@ public class OsmZoningReader implements ZoningReader {
         this.getReferenceNetwork(),
         this.zoning,
         this.transferSettings,
-        boundaryManager, this.zoningReaderData,
+        this.zoningReaderData,
         this.network2ZoningData,
         preProcessingStage,
         profiler);
@@ -267,7 +263,7 @@ public class OsmZoningReader implements ZoningReader {
     }else {
 
       /* handler to deal with callbacks from osm4j */
-      osmHandler = new OsmZoningMainProcessingHandler(
+      var osmHandler = new OsmZoningMainProcessingHandler(
           this.transferSettings, 
           this.zoningReaderData,
           this.network2ZoningData,
@@ -291,7 +287,7 @@ public class OsmZoningReader implements ZoningReader {
     }else {
 
       /* handler to deal with callbacks from osm4j */
-      osmPostProcessingHandler = new OsmZoningPostProcessingHandler(
+      var osmPostProcessingHandler = new OsmZoningPostProcessingHandler(
           this.transferSettings, 
           this.zoningReaderData,
           this.network2ZoningData,
@@ -379,6 +375,9 @@ public class OsmZoningReader implements ZoningReader {
     
     OsmZoningHandlerProfiler handlerProfiler = new OsmZoningHandlerProfiler();
     logInfo();
+
+    // Named bounding boundary extraction (if needed)
+    performBoundingAreaPreProcessing(boundaryManager);
                 
     /* preprocessing (multi-polygon relation: OSM way identification)*/
     doPreprocessing(boundaryManager, handlerProfiler);
@@ -415,9 +414,6 @@ public class OsmZoningReader implements ZoningReader {
   @Override
   public void reset() {
     /* free memory */
-    this.osmHandler.reset();
-    this.osmPreProcessingHandler.reset();
-    this.osmPostProcessingHandler.reset();
     this.zoningReaderData.reset();
   }  
 

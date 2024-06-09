@@ -572,7 +572,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
        * is dealt with by extracting it as a stop position rather than a separate platform */
       processPtv2StopPosition(osmNode, tags);
       if(notYetButToBeAttachedToNetwork){
-        getZoningReaderData().getOsmData().getOsmNodeData().preRegisterEligibleOsmNode(osmNode.getId());
+        getZoningReaderData().getOsmData().getOsmNodeData().preregisterEligibleOsmNode(osmNode.getId());
         getZoningReaderData().getOsmData().getOsmNodeData().registerEligibleOsmNode(osmNode);
       }
 

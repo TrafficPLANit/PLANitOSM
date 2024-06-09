@@ -4,6 +4,7 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.OsmNodeData;
+import org.goplanit.osm.converter.OsmSpatialEligibilityData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -42,6 +43,9 @@ public class OsmNetworkReaderData {
    * eligible another might not be. Hence the separate eligibility tracking
    */
   private final Set<Long> spatialInfrastructureEligibleOsmWays = new HashSet<>();
+
+  /** track spatial eligibility of OSM entities, for example based on boundary used (if any) */
+  private final OsmSpatialEligibilityData osmSpatialEligibilityData = new OsmSpatialEligibilityData();
 
   /** Track OSM ways that have been processed and identified as being unavailable/not used. This has been communicated if needed
    *  to users, so any subsequent dependencies on this OSM way can be safely ignored without issuing further warnings
@@ -85,6 +89,7 @@ public class OsmNetworkReaderData {
 
     osmBoundingArea = null;
     spatialInfrastructureEligibleOsmWays.clear();
+    osmSpatialEligibilityData.reset();
   }  
 
   /**
@@ -115,6 +120,15 @@ public class OsmNetworkReaderData {
    */
   public OsmNodeData getOsmNodeData(){
   return osmNodeData;
+  }
+
+  /**
+   * Access to OSM spatial eligibility data
+   *
+   * @return OSM boundary data
+   */
+  public OsmSpatialEligibilityData getOsmSpatialEligibilityData(){
+    return osmSpatialEligibilityData;
   }
 
   /** collect the identified circular ways (unmodifiable)
