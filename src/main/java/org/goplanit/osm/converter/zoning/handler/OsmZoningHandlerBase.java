@@ -88,7 +88,46 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         (entityType.equals(EntityType.Node) && getSettings().isExcludedOsmNode(osmId)) 
         ||
         (entityType.equals(EntityType.Way) && getSettings().isExcludedOsmWay(osmId)); 
-  }    
+  }
+
+  /**
+   * Check if OSM relation is PT compatible
+   *
+   * @param osmRelation to check
+   * @param tags of relation
+   * @return true when compatible, false otherwise
+   */
+  private boolean isPtCompatibleRelation(OsmRelation osmRelation, Map<String, String> tags) {
+
+    if(!getSettings().isParserActive()){
+      return false;
+    }
+
+    if(!tags.containsKey(OsmRelationTypeTags.TYPE) || !OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
+      return false;
+    }
+    String ptv2Type = tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT);
+    String relationType = tags.get(OsmRelationTypeTags.TYPE);
+
+    /* public transport type */
+    boolean isCompatible = true;
+    if (relationType.equals(OsmRelationTypeTags.PUBLIC_TRANSPORT)) {
+      /* stop_area: is only supported/expected type under PT relation */
+      if (!ptv2Type.equals(OsmPtv2Tags.STOP_AREA)) {
+        /* anything else is not expected */
+        LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported", tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));
+        isCompatible = false;
+      }
+    } else if (relationType.equals(OsmRelationTypeTags.MULTIPOLYGON)) {
+      /* multi_polygons are only accepted when  representing public transport platforms */
+      if (!ptv2Type.equals(OsmPtv2Tags.PLATFORM_ROLE)) {
+        isCompatible = false;
+      }
+    } else {
+      isCompatible = false;
+    }
+    return isCompatible;
+  }
 
   protected PlanitOsmNetwork getReferenceNetwork(){
     return referenceNetwork;
@@ -227,7 +266,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   }
 
   /**
-   * Wrap the handling of OSM relation by performing basic checks on eligibility and wrapping any run time excpetions thrown
+   * Wrap the handling of OSM relation by performing basic checks on eligibility on pt and spatial aspects
+   * and wrapping any run time exceptions thrown
    *
    * @param osmRelation to wrap parsing of
    * @param osmRelationConsumer to apply when relation is has Ptv2 public transport tags and is either a stop area or multipolygon transport platform
@@ -237,34 +277,35 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);
     try {
 
-      /* only parse when parser is active and type is available */
-      if(getSettings().isParserActive() && tags.containsKey(OsmRelationTypeTags.TYPE) && OsmPtv2Tags.hasPublicTransportKeyTag(tags)) {
+      boolean ptCompatible = isPtCompatibleRelation(osmRelation, tags);
+      boolean spatialCompatible =
+          getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmRelationSpatiallyEligible(
+              osmRelation.getId());
 
-        /* public transport type */
-        String ptv2Type = tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT);
-        String relationType = tags.get(OsmRelationTypeTags.TYPE);
-        if(relationType.equals(OsmRelationTypeTags.PUBLIC_TRANSPORT)) {
-          /* stop_area: is only supported/expected type under PT relation */
-          if(!ptv2Type.equals(OsmPtv2Tags.STOP_AREA)) {
-            /* anything else is not expected */
-            LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported", tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));
-            return;
-          }
-        }else if(relationType.equals(OsmRelationTypeTags.MULTIPOLYGON)) {
-          /* multi_polygons are only accepted when  representing public transport platforms */
-          if(!ptv2Type.equals(OsmPtv2Tags.PLATFORM_ROLE)) {
-            return;
-          }
-        }else{
-          return;
-        }
+      /* lastly check if spatially eligible */
+      if(ptCompatible && spatialCompatible){
+        osmRelationConsumer.accept(osmRelation, tags);
+      }
 
-        /* lastly check if spatially eligible */
-        if(!getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmRelationSpatiallyEligible(osmRelation.getId())){
-          return;
-        }
+    } catch (PlanItRunTimeException e) {
+      LOGGER.severe(e.getMessage());
+      LOGGER.severe(String.format("Error during parsing of OSM relation (id:%d) for transfer infrastructure", osmRelation.getId()));
+    }
+  }
 
-        /* when not returned, it represents a potentially supported OSM Pt relation */
+  /**
+   * Wrap the handling of OSM relation by performing basic checks on eligibility on pt aspects
+   * and wrapping any run time exceptions thrown
+   *
+   * @param osmRelation to wrap parsing of
+   * @param osmRelationConsumer to apply when relation is has Ptv2 public transport tags and is either a stop area or multipolygon transport platform
+   */
+  protected void wrapHandlePtCompatibleOsmRelation(
+      OsmRelation osmRelation, BiConsumer<OsmRelation, Map<String, String>> osmRelationConsumer){
+    Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmRelation);
+    try {
+
+      if(isPtCompatibleRelation(osmRelation, tags)){
         osmRelationConsumer.accept(osmRelation, tags);
       }
 

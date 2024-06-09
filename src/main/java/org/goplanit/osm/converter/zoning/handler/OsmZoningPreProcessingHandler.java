@@ -59,7 +59,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * @param osmRelation to verify
    * @param tags of relation
    */
-  private void identifyPlatformAsRelation(OsmRelation osmRelation, Map<String, String> tags) {
+  private void identifyRelationAsComplexPlatform(OsmRelation osmRelation, Map<String, String> tags) {
 
     /* conditions to pre-process/mark for keeping a relation representing a pt platform by its outer-role geometry */
     boolean preserveOuterRole = false;
@@ -143,8 +143,10 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * Register OSM way as spatially eligible if it has at least one spatially eligible member (node or way)
    *
    * @param osmRelation to check
+   * @param tags  tags of relation
    */
-  private void markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember(OsmRelation osmRelation) {
+  private void markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember(
+      OsmRelation osmRelation, Map<String, String> tags) {
     var osmBoundaryData = getZoningReaderData().getOsmData().getOsmSpatialEligibilityData();
 
     /* lastly make sure at least one member of relation is spatially eligible */
@@ -307,13 +309,16 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   public void handle(OsmRelation osmRelation) throws IOException {
 
     if (stage == Stage.ONE_IDENTIFY_ZONING_RELATION_MEMBERS) {
-      /* STAGE 4: identify members of bounding boundary if the OSM relation matches and it is spatially eligible  */
+      /* STAGE 1: identify members of bounding boundary if the OSM relation matches and it is spatially eligible  */
 
-      /* mark spatially eligible relation if applicable and pass on to all members if so */
-      markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember(osmRelation);
 
-      /* delegate to identifyPlatformAsRelation when eligible */
-      wrapHandleSpatialAndPtCompatibleOsmRelation(osmRelation, this::identifyPlatformAsRelation);
+      /* mark as spatially eligible relation if applicable to filter remaining action below */
+      wrapHandlePtCompatibleOsmRelation(osmRelation, this::markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember);
+
+      //todo: bottom two calls can be combined if we create method that calls both in succession
+
+      /* delegate to identifyPlatformAsRelation when eligible both spatially */
+      wrapHandleSpatialAndPtCompatibleOsmRelation(osmRelation, this::identifyRelationAsComplexPlatform);
 
       /* delegate to identify OSM nodes to be collected in memory for when processing relations they are contained in later on */
       wrapHandleSpatialAndPtCompatibleOsmRelation(osmRelation, this::preRegisterEligiblePtNodesOfRelation);
