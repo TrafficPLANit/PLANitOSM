@@ -92,7 +92,8 @@ public class MelbourneOsm2PlanitTest {
 
   /**
    * Test that is identical to {@link this.test1Osm2PlanitIntermodalNoServicesBoundingBox} only now we use a named
-   * bounding box for the "Melbourne District" which is a political boundary
+   * bounding box for the "Melbourne District" which is a political boundary applied both to the network and zoning
+   * (pt infrastructure)
    */
   @Test
   public void test2Osm2PlanitIntermodalNoServicesNamedBoundingBox() {
@@ -101,29 +102,25 @@ public class MelbourneOsm2PlanitTest {
     final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_intermodal_no_services_named_bb").toAbsolutePath().toString();
     try {
 
-      // todo: continue with intermodal aspect --> update zoning pre-processing and parser the same way as we did for network
-      //var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
-      var inputSettings = new OsmNetworkReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
-      //var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
-      var outputSettings = new PlanitNetworkWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
+      var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+      var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       // apply a boundary area based on name (osm relation id: 3898547)
-      inputSettings./*getNetworkSettings().*/setBoundingArea(
+      inputSettings.setBoundingArea(
           OsmBoundary.of("Melbourne District", OsmBoundaryTags.POLITICAL));
 
       /* minimise warnings Melbourne v2 */
-      OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings/*.getNetworkSettings()*/);
-      //OsmPtSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getPublicTransportSettings());
+      OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());
+      OsmPtSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getPublicTransportSettings());
 
-      //Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
-      Osm2PlanitConversionTemplates.osm2PlanitSettingsBased(inputSettings, outputSettings);
+      Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
 
-      //PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
-      //PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
 
     } catch (Exception e) {
       e.printStackTrace();
-      fail("test1Osm2PlanitIntermodalNoServicesBoundingBox");
+      fail("test2Osm2PlanitIntermodalNoServicesNamedBoundingBox");
     }
   }
 

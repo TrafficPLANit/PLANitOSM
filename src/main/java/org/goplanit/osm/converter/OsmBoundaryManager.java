@@ -129,6 +129,17 @@ public class OsmBoundaryManager {
   }
 
   /**
+   * Count number of currently registered OSM ways for boundary
+   * @return
+   */
+  private int getNumberOfPreregisteredBoundaryOsmWays() {
+    if(!hasRegisteredBoundaryOsmWay()){
+      return 0;
+    }
+    return osmBoundaryOsmWayTracker.size();
+  }
+
+  /**
    * Constructor
    * @param originalBoundary as defined by user
    */
@@ -343,7 +354,7 @@ public class OsmBoundaryManager {
   public void logStepOneRegisteredRelationMemberStats() {
     if(isConfigured() && this.originalBoundary.hasBoundaryName()){
       boolean success = hasRegisteredRelationMembers();
-      int numOsmWays = getRegisteredBoundaryOsmWaysInOrder().size();
+      int numOsmWays = getNumberOfPreregisteredBoundaryOsmWays();
       LOGGER.info((success ?
           String.format("Registered %d relation member OSM ways for boundary: ",numOsmWays) :
           "Unable to identify bounding area for: ") + this.originalBoundary.getBoundaryName() );

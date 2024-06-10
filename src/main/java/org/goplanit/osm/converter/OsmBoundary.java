@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.goplanit.osm.tags.OsmBoundaryTags;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.utils.geo.PlanitJtsUtils;
@@ -14,7 +15,7 @@ import org.locationtech.jts.geom.Polygon;
  *
  * @author markr
  */
-public class OsmBoundary {
+public final class OsmBoundary {
 
   private final String adminLevel;
 
@@ -188,6 +189,27 @@ public class OsmBoundary {
   public OsmBoundary deepClone() {
     return new OsmBoundary(
         boundaryName, boundaryType, adminLevel, (boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null));
+  }
+
+  @Override
+  public boolean equals(Object obj){
+    if (obj == null){
+      return false;
+    }
+    if (obj == this){
+      return true;
+    }
+    if(obj.getClass() != getClass()) {
+      return false;
+    }
+
+    OsmBoundary rhs = (OsmBoundary) obj;
+    return new EqualsBuilder()
+        .append(this.adminLevel, rhs.adminLevel)
+        .append(this.boundaryName, rhs.boundaryName)
+        .append(this.boundaryType, rhs.boundaryType)
+        .append(this.boundingPolygon, rhs.boundingPolygon)
+        .isEquals();
   }
 
   @Override

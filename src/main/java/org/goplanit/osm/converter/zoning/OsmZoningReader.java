@@ -73,12 +73,14 @@ public class OsmZoningReader implements ZoningReader {
    * bounding area instead.
    * <p>
    *   In case the bounding area for the zoning is based on a name rather than a polygon, we cannot yet detect such a mismatch
-   *   as the polygon for the zoning is yet to be extracted from the OSM data. In such a case this check is ignored.
+   *   as the polygon for the zoning is yet to be extracted from the OSM data. In such a case this check is ignored. Instead
+   *   we see if we can copy the polygon from the network to the zoning if the two bounding areas are identically defined in
+   *   the settings
    * </p>
    *
    * @param boundaryManager bounding area manager for zoning
    */
-  private void validateZoningBoundingPolygon(OsmBoundaryManager boundaryManager) {
+  private void syncAndValidateZoningBoundingArea(OsmBoundaryManager boundaryManager) {
     var networkBoundingBoundary = network2ZoningData.getNetworkBoundingBoundary();
     if(networkBoundingBoundary==null){
       // undefined for network unable to determine if zoning boundary falls within easily
@@ -107,6 +109,15 @@ public class OsmZoningReader implements ZoningReader {
             "replacing with network bounding polygon");
         boundaryManager.overrideBoundingArea(networkBoundingBoundary.deepClone());
       }
+    }else if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
+
+      // zoning adopted a named bounding area, this may or may not be the same named area as the network area applied
+      // verify if both are identically configured, if this is the case, adopt the bounding polygon identified during
+      // network parsing to avoid overhead of extracting it again from the OSM data
+      if(getSettings().getBoundingArea().equals(network2ZoningData.getNetworkSettings().getBoundingArea())){
+        LOGGER.info("Zoning bounding boundary identical to network's, copying boundary polygon");
+        boundaryManager.overrideBoundingArea(networkBoundingBoundary);
+      }
     }
   }
 
@@ -129,9 +140,9 @@ public class OsmZoningReader implements ZoningReader {
     /* spatially index all links to register on data trackers for use in handlers */
     zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(getReferenceNetwork());
     
-    /* make sure that if a bounding box has been set, the zoning bounding box does not exceed the network bounding box
-     * since it makes little sense to try and parse pt infrastructure outside of the network's geographically parsed area */
-    validateZoningBoundingPolygon(boundaryManager);
+    /* make sure that if a network bounding boundary has been set, the zoning bounding area is synced when relevant and validated
+    * it is not inconsistent */
+    syncAndValidateZoningBoundingArea(boundaryManager);
   }
 
   /** it is possible some preregistered OSM nodes part of ways are not available, for example when the way crosses the bounding box and

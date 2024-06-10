@@ -179,8 +179,9 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
 
     /* ZONING READER */
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
+    var n2zData = osmNetworkReader.createNetworkToZoningReaderData();
     OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(
-        ptSettings, zoningToPopulate, network, osmNetworkReader.createNetworkToZoningReaderData());
+        ptSettings, zoningToPopulate, network, n2zData);
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
@@ -192,13 +193,6 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
       osmZoningReader.getSettings().setRemoveDanglingZones(false);    
       osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(false);      
     }
-    boolean originalHasBoundingBoundary = ptSettings.hasBoundingBoundary();
-    if(originalHasBoundingBoundary && osmNetworkReader.getSettings().hasBoundingBoundary()){
-      /* when bounding boundary set on network but not on zoning, then bound the zoning to the network boundary */
-      LOGGER.info("Syncing zoning bounding area to network bounding area");
-      ptSettings.setBoundingArea(osmNetworkReader.getSettings().getBoundingArea().deepClone());
-    }
-               
     Zoning zoning = osmZoningReader.read();
 
     /* restore original settings on dangling and ...*/
@@ -208,11 +202,6 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     /* ... remove dangling entities if indicated */
     removeDanglingEntities(osmNetworkReader, osmZoningReader, zoning);
 
-    /* restore original settings on bounding area */
-    if(!originalHasBoundingBoundary) {
-      osmZoningReader.getSettings().setBoundingArea(null);
-    }
-    
     /* return result */
     return Pair.of(network, zoning);
   }
