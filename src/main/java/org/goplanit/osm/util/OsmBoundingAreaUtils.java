@@ -126,33 +126,6 @@ public class OsmBoundingAreaUtils {
     return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
   }
 
-  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
-   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
-   * more confusing than helpful in those situation and is therefore ignored
-   * 
-   * @param message to log if not too close to bounding box
-   * @param geometry to determine distance to bounding box to
-   * @param boundingBox to use
-   * @param geoUtils to use
-   */
-  public static void logWarningIfNotNearBoundingBox(String message, final Geometry geometry, final Envelope boundingBox, final PlanitJtsCrsUtils geoUtils) {
-    LoggingUtils.logWarningIf(LOGGER, message,geometry, g -> !isNearNetworkBoundingBox(g, boundingBox, geoUtils));
-  }  
-  
-  /** check if geometry is near network bounding box using buffer based on
-   * PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS. Should not longer be needed with improved bounding area
-   * identification in preprocessing + use of bounding area polygon.
-   * 
-   * @param geometry to check
-   * @param networkBoundingBox to consider
-   * @param geoUtils to use
-   * @return true when near, false otherwise
-   */
-  @Deprecated
-  public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils){    
-    return geoUtils.isGeometryNearBoundingBox(geometry, networkBoundingBox, OsmNetworkReaderData.BOUNDINGAREA_NEARNESS_DISTANCE_METERS);
-  }
-  
   /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
    * or if no node is provided (null), false is returned by definition
    * 
@@ -190,7 +163,7 @@ public class OsmBoundingAreaUtils {
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
       long osmNodeId = osmWay.getNodeId(index);
       OsmNode osmNode = osmNodes.get(osmNodeId);
-      if(osmNode!=null && isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
+      if(isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
         coveredByBoundingPolygon = true;
         break;
       }

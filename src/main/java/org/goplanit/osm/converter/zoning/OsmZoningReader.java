@@ -119,7 +119,9 @@ public class OsmZoningReader implements ZoningReader {
     
     /* if not set, create zoning to populate here based on network id tokens */
     if(zoning==null) {
-      this.zoning = new Zoning(getReferenceNetwork().getIdGroupingToken(),getReferenceNetwork().getNetworkGroupingTokenId());
+      this.zoning = new Zoning(
+          getReferenceNetwork().getIdGroupingToken(),getReferenceNetwork().getNetworkGroupingTokenId());
+      this.zoning.setXmlId(zoning.getId());
     }
     
     /* make country name available in zoning reader data during parsing */

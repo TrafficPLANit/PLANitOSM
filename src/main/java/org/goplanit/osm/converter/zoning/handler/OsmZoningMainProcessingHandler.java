@@ -370,7 +370,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   private void processPtv2StopAreaMemberWayWithoutRole(
       TransferZoneGroup transferZoneGroup, OsmRelation osmRelation, OsmRelationMember osmWayMember, boolean suppressLogging) {
     
-    boolean unidentified = false; 
+    boolean unidentified = true;
     /* we do not store all OSM ways in memory, so we cannot simply collect and check  tags, instead we must rely
      * on unprocessed or already processed entities. For ways these are restricted to:
      * 

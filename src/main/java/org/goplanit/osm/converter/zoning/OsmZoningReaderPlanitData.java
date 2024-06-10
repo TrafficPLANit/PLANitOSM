@@ -1,15 +1,9 @@
 package org.goplanit.osm.converter.zoning;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
+import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
-import de.topobyte.osm4j.core.model.iface.OsmTag;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmTags;
-import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.GeoContainerUtils;
@@ -26,7 +20,9 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.index.quadtree.Quadtree;
 
-import de.topobyte.osm4j.core.model.iface.EntityType;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.logging.Logger;
 
 /**
  * Data specifically required in the zoning reader while parsing OSM data
@@ -42,7 +38,7 @@ public class OsmZoningReaderPlanitData {
   /* OSM <-> TRANSFER ZONE TRACKING */
   
   /** track created transfer zones by their osm id that were extracted from an OsmNode or way (osm id is key) */
-  private final Map<EntityType, Map<Long, TransferZone>> transferZonesByOsmEntityId = new TreeMap<EntityType,Map<Long,TransferZone>>();
+  private final Map<EntityType, Map<Long, TransferZone>> transferZonesByOsmEntityId = new TreeMap<>();
 
   /** track transfer zone OSM layer index, if absent it is expected to reflect default layer of 0 */
   private final Map<TransferZone, Integer> transferZonesLayerIndex = new TreeMap<>();
@@ -59,12 +55,12 @@ public class OsmZoningReaderPlanitData {
   /* TRANSFER ZONE <-> CONNECTOID TRACKING */
   
   /** track mapping from osm stop_area (transfer zone) to connectoids that refer to it (stop_position), track this because planit only tracks the other way around */
-  private final Map<TransferZone, List<DirectedConnectoid> > connectoidsByTransferZone = new HashMap<TransferZone, List<DirectedConnectoid>>();
+  private final Map<TransferZone, List<DirectedConnectoid> > connectoidsByTransferZone = new HashMap<>();
   
   /* OSM <-> TRANSFER ZONE GROUP TRACKING */
   
   /** track mapping from osm stop_area id to the transfer zone group that goes with it on the planit side */
-  private final Map<Long, TransferZoneGroup> transferZoneGroupsByOsmId = new HashMap<Long, TransferZoneGroup>();
+  private final Map<Long, TransferZoneGroup> transferZoneGroupsByOsmId = new HashMap<>();
   
   /* SPATIAL LINK TRACKING */
   
@@ -139,8 +135,7 @@ public class OsmZoningReaderPlanitData {
     switch (entityType) {
       case Node:
       case Way:
-          return transferZonesByOsmEntityId.get(entityType).values().stream().collect(
-              Collectors.toCollection(() -> new TreeSet<>()));
+          return new TreeSet<>(transferZonesByOsmEntityId.get(entityType).values());
       default:
         throw new PlanItRunTimeException(
             "Unsupported entity type encountered for transfer zone tracked in zoning reader, this shouldn't happen");
@@ -155,7 +150,7 @@ public class OsmZoningReaderPlanitData {
    */
   public Collection<TransferZone> getTransferZonesSpatially(Envelope boundingBox) {
     
-    final Set<TransferZone> correctZones = new HashSet<TransferZone>();
+    final Set<TransferZone> correctZones = new HashSet<>();
     final PlanitJtsIntersectZoneVisitor<TransferZone> spatialZoneFilterVisitor =
             new PlanitJtsIntersectZoneVisitor<>(PlanitJtsUtils.create2DPolygon(boundingBox), correctZones);
     
@@ -286,7 +281,7 @@ public class OsmZoningReaderPlanitData {
     if(transferZone == null) {
       return null;
     }
-    connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<DirectedConnectoid>(1));
+    connectoidsByTransferZone.putIfAbsent(transferZone, new ArrayList<>(1));
     return connectoidsByTransferZone.get(transferZone);
   }  
   
@@ -385,7 +380,6 @@ public class OsmZoningReaderPlanitData {
    * of information that should be obtained otherwise and does not reflect the default layer
    */
   public Integer getTransferZoneVerticalLayerIndex(TransferZone transferZone) {
-    var layerIndex = transferZonesLayerIndex.get(transferZone);
-    return layerIndex;
+    return transferZonesLayerIndex.get(transferZone);
   }
 }

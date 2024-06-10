@@ -80,6 +80,7 @@ public class OsmIntermodalReaderFactory {
    */
   public static OsmIntermodalReader create(URL inputSource, String countryName) {
     PlanitOsmNetwork networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
+    networkToPopulate.setXmlId(networkToPopulate.getId());
     return create(inputSource, countryName, networkToPopulate, new Zoning(networkToPopulate.getIdGroupingToken(), networkToPopulate.getNetworkGroupingTokenId()));    
   }  
   
@@ -94,7 +95,7 @@ public class OsmIntermodalReaderFactory {
    */
   public static OsmIntermodalReader create(
       URL inputSource, String countryName, PlanitOsmNetwork osmNetworkToPopulate, Zoning zoningToPopulate) {
-    return new OsmIntermodalReader(inputSource, countryName, osmNetworkToPopulate, zoningToPopulate);      
+    return new OsmIntermodalReader(inputSource, countryName, osmNetworkToPopulate, zoningToPopulate);
   }    
   
   /** Create a PLANitOsmIntermodalReader which requires the user to set the remaining required settings on the provided settings instances
@@ -104,6 +105,7 @@ public class OsmIntermodalReaderFactory {
    */
   public static OsmIntermodalReader create(OsmIntermodalReaderSettings settings) {
     var networkToPopulate = new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken());
+    networkToPopulate.setXmlId(networkToPopulate.getId());
     var zoningToPopulate = new Zoning(networkToPopulate.getIdGroupingToken(),  networkToPopulate.getNetworkGroupingTokenId());
     return create(settings, networkToPopulate, zoningToPopulate);
   }    

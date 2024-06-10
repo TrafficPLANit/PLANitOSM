@@ -186,7 +186,8 @@ public class OsmBoundary {
    * @return deep clone
    */
   public OsmBoundary deepClone() {
-    return new OsmBoundary(boundaryName, boundaryType, adminLevel, (boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null));
+    return new OsmBoundary(
+        boundaryName, boundaryType, adminLevel, (boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null));
   }
 
   @Override

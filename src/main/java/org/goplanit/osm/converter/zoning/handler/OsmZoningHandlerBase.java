@@ -160,30 +160,6 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     return skipOsmPtEntity(EntityType.Way, osmWay.getId());
   }
 
-  /** Verify if node resides near the zoning bounding polygon based on #OsmNetworkReaderData. If no bounding area is defined
-   * this always returns true
-   *
-   * @param osmNode to verify
-   * @return true when no bounding area, or covered by bounding area, false otherwise
-   *
-   * todo: should no longer be used and instead we should only use the boundary area as a reference point instead
-   */
-  @Deprecated
-  protected boolean isNearNetworkBoundingBox(OsmNode osmNode) {
-    if(!getZoningReaderData().hasBoundingArea()){
-      return false;
-    }
-
-    var boundingArea = getZoningReaderData().getBoundingArea();
-    if(!boundingArea.hasBoundingPolygon()){
-      return false;
-    }
-
-    // todo with a name based bounding area spanning envelope is too crude...change this and releated code
-    return OsmBoundingAreaUtils.isNearNetworkBoundingBox(
-        OsmNodeUtils.createPoint(osmNode), boundingArea.getBoundingPolygon().getEnvelopeInternal(), getGeoUtils());
-  }
-  
   /** Verify if OSM way has at least one node that resides within the zoning bounding polygon. If no bounding area is defined
    * this always returns true
    * 
@@ -200,7 +176,6 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       return true;
     }
 
-    // todo with a name based bounding area spanning envelope is too crude...change this and releated code
     return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(
             osmWay,
             zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
