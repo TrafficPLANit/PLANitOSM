@@ -44,6 +44,7 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
   /**
    * Helper to create an OSM4jReader for bounding area identification (before any pre-processing), handler for a given stage and perform the parsing
    *
+   * @param osmInputSource OSM input source to use
    * @param stage to apply
    * @param boundaryManager to use
    */
