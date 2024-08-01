@@ -625,11 +625,15 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           osmFerryStop.getId(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters(), OsmModelUtil.getTagsAsMap(osmFerryStop)));
       return;
     }
+
     var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
         OsmNodeUtils.createCoordinate(osmFerryStop),
         spatiallyMatchedLinks, getSettings().getFerryStopToFerryRouteSearchRadiusMeters(),
         suppressLogging,
         getGeoUtils());
+    if(closestLinkWithDistance == null || closestLinkWithDistance.anyIsNull()){
+      return;
+    }
 
     /* create network node at ferry terminal location + find closest node on chosen ferry link */
     var ferryStopNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(
