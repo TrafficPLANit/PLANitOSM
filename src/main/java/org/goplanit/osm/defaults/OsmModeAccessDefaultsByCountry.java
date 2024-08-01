@@ -16,7 +16,7 @@ import org.goplanit.utils.misc.StringUtils;
 
 /**
  * The defaults for the mode access in case no specific restrictions are indicated on the highway=type way.
- * Based on the information provided on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions
+ * Based on the information provided on <a href="https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions">access restrictions</a>
  * <p>
  * Note: not all highway types have defaults following the references wiki page. Those missing types are listed below with the assigned defaults based on
  * PLANit's own rules:
@@ -24,7 +24,7 @@ import org.goplanit.utils.misc.StringUtils;
  * <li>highway:service, same as road</li>
  * <li>track, same as road</li>
  * </ul>
- * 
+ *
  * @author markr
  *
  */
@@ -142,6 +142,12 @@ public class OsmModeAccessDefaultsByCountry {
     {
       var keyValue = Pair.of(OsmHighwayTags.getHighwayKeyTag(), OsmHighwayTags.TERTIARY_LINK);
       GLOBAL_MODE_ACCESS_DEFAULTS.getHighwayModeAccessDefaults().addDefaultAllowedModeCategories(keyValue, OsmRoadModeCategoryTags.VEHICLE);
+      GLOBAL_MODE_ACCESS_DEFAULTS.getHighwayModeAccessDefaults().addDefaultAllowedModes(keyValue, OsmRoadModeTags.FOOT);
+    }
+    /* BUSWAY */
+    {
+      var keyValue = Pair.of(OsmHighwayTags.getHighwayKeyTag(), OsmHighwayTags.BUSWAY);
+      GLOBAL_MODE_ACCESS_DEFAULTS.getHighwayModeAccessDefaults().addDefaultAllowedModeCategories(keyValue, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
       GLOBAL_MODE_ACCESS_DEFAULTS.getHighwayModeAccessDefaults().addDefaultAllowedModes(keyValue, OsmRoadModeTags.FOOT);
     }
     /* UNCLASSIFIED */

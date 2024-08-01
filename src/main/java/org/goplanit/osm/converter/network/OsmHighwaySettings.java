@@ -30,7 +30,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
   /**
    * track overwrite values for OSM highway types where we want different defaults for capacity and max density
    */
-  protected final Map<String, Pair<Double,Double>> overwriteByOsmHighwayType = new HashMap<String, Pair<Double,Double>>();
+  protected final Map<String, Pair<Double,Double>> overwriteByOsmHighwayType = new HashMap<>();
     
   /**
    * When the user has activated a highway type for which the reader has no support, this alternative will be used, default is
@@ -148,7 +148,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    */
   public static String DEFAULT_HIGHWAY_TYPE_WHEN_UNSUPPORTED = OsmHighwayTags.TERTIARY;  
   
-  /**  default value whether or not speed limits are based on urban area defaults: true */
+  /**  default value whether speed limits are based on urban area defaults: true */
   public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;   
   
   /** by default the highway parser is activated */

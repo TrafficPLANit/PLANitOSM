@@ -8,6 +8,7 @@ import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmBoundaryTags;
+import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;

@@ -18,7 +18,7 @@ import org.goplanit.utils.misc.Pair;
 
 /**
  * Convenience class for quickly collecting the speed limits for various countries, where possible
- * based on https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed (highway types)
+ * based on <a href="https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed">OSM max speed</a> (highway types)
  * <p>
  * Note that a distinction is made between inside or outside a place, which refers to the road being
  * inside or outside an urban area. this significantly impacts the speed limit.
@@ -29,7 +29,7 @@ import org.goplanit.utils.misc.Pair;
  * Note 1: railway speed limits are not known in OSM, so we use a global default for all types, which the user
  * may override if required. Also no distinction is made between inside or outside an urban area.
  * </p>
- * 
+ *
  * @author markr
  *
  */
@@ -253,7 +253,8 @@ public class OsmSpeedLimitDefaultsByCountry {
     setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.SECONDARY,       50,   80);
     setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.SECONDARY_LINK,  50,   80);    
     setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TERTIARY,        50,   80);
-    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TERTIARY_LINK,   50,   80);    
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.TERTIARY_LINK,   50,   80);
+    setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.BUSWAY,          50,   80);
     setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.UNCLASSIFIED,    50,   80);
     setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.RESIDENTIAL,     40,   80);
     setGlobalHighwaySpeedLimitDefaults(OsmHighwayTags.LIVING_STREET,   20,   20);

@@ -1,8 +1,6 @@
 package org.goplanit.osm.defaults;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Interface with common functionality for configuration OSM ways (highway/rail/waterway)
@@ -54,15 +52,15 @@ public interface OsmInfrastructureConfiguration {
 
   /** create a copy of the currently supported way types in set form
    *
-   * @return set of supported types (by underlying key), any modifications on this set have no impact on the instance internals
+   * @return map of supported types (by underlying key), any modifications on this set have no impact on the instance internals
    */
-  Map<String, Set<String>> getActivatedTypes();
+  SortedMap<String, SortedSet<String>> getActivatedTypes();
 
   /** create a copy of the currently unsupported way types in set form
    *
    * @return deactivated way types (by underlying key), any modifications on this set have no impact on the instance internals
    */
-  Map<String,Set<String>> getDeactivatedTypes();
+  SortedMap<String, SortedSet<String>> getDeactivatedTypes();
 
   /**
    * deactivate all types explicitly

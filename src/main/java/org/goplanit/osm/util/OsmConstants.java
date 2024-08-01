@@ -46,6 +46,9 @@ public class OsmConstants {
   /** default for this type in pcu/h/lane */
   public static final double TERTIARY_LINK_CAPACITY = 800;
 
+  /** default for this type in pcu/h/lane (given this is bus only capacity is likely not overly important */
+  public static final double BUSWAY_CAPACITY = 1000;
+
   /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
   public static final double UNCLASSIFIED_LINK_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 

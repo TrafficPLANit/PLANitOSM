@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<macroscopicnetwork xmlns:gml="http://www.opengis.net/gml" xmlns:ns3="http://www.w3.org/1999/xlink" xmlns:ns4="http://www.w3.org/2001/SMIL20/" xmlns:ns5="http://www.w3.org/2001/SMIL20/Language" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://trafficplanit.github.io/PLANitManual/xsd/macroscopicnetworkinput.xsd">
+<macroscopicnetwork xmlns:gml="http://www.opengis.net/gml" xmlns:ns3="http://www.w3.org/1999/xlink" xmlns:ns4="http://www.w3.org/2001/SMIL20/" xmlns:ns5="http://www.w3.org/2001/SMIL20/Language" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://www.goplanit.org/xsd/macroscopicnetworkinput.xsd">
     <id>1</id>
     <configuration>
         <modes>
@@ -22,17 +22,7 @@
         <layer id="all">
             <layerconfiguration>
                 <linksegmenttypes>
-                    <linksegmenttype id="0" externalid="route=ferry">
-                        <name>route=ferry</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>600.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="1" externalid="ferry=living_street">
+                    <linksegmenttype id="0" externalid="ferry=living_street">
                         <name>ferry=living_street</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
@@ -42,87 +32,7 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="10" externalid="ferry=secondary_link">
-                        <name>ferry=secondary_link</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1000.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="11" externalid="ferry=service">
-                        <name>ferry=service</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>600.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="12" externalid="ferry=tertiary">
-                        <name>ferry=tertiary</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1000.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="13" externalid="ferry=tertiary_link">
-                        <name>ferry=tertiary_link</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>800.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="14" externalid="ferry=track">
-                        <name>ferry=track</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>600.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="15" externalid="ferry=trunk">
-                        <name>ferry=trunk</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>2000.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="16" externalid="ferry=trunk_link">
-                        <name>ferry=trunk_link</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1700.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="17" externalid="ferry=unclassified">
-                        <name>ferry=unclassified</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>600.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="ferry">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="2" externalid="ferry=motorway">
+                    <linksegmenttype id="1" externalid="ferry=motorway">
                         <name>ferry=motorway</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>2000.0</capacitylane>
@@ -132,7 +42,87 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="3" externalid="ferry=motorway_link">
+                    <linksegmenttype id="10" externalid="ferry=service">
+                        <name>ferry=service</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>600.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="11" externalid="ferry=tertiary">
+                        <name>ferry=tertiary</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>1000.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="12" externalid="ferry=tertiary_link">
+                        <name>ferry=tertiary_link</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>800.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="13" externalid="ferry=track">
+                        <name>ferry=track</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>600.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="14" externalid="ferry=trunk">
+                        <name>ferry=trunk</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>2000.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="15" externalid="ferry=trunk_link">
+                        <name>ferry=trunk_link</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>1700.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="16" externalid="ferry=unclassified">
+                        <name>ferry=unclassified</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>600.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="17" externalid="route=ferry">
+                        <name>route=ferry</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>600.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="2" externalid="ferry=motorway_link">
                         <name>ferry=motorway_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1800.0</capacitylane>
@@ -142,7 +132,7 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="4" externalid="ferry=pedestrian">
+                    <linksegmenttype id="3" externalid="ferry=pedestrian">
                         <name>ferry=pedestrian</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
@@ -152,7 +142,7 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="5" externalid="ferry=primary">
+                    <linksegmenttype id="4" externalid="ferry=primary">
                         <name>ferry=primary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1600.0</capacitylane>
@@ -162,7 +152,7 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="6" externalid="ferry=primary_link">
+                    <linksegmenttype id="5" externalid="ferry=primary_link">
                         <name>ferry=primary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1400.0</capacitylane>
@@ -172,7 +162,7 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="7" externalid="ferry=residential">
+                    <linksegmenttype id="6" externalid="ferry=residential">
                         <name>ferry=residential</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
@@ -182,7 +172,7 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="8" externalid="ferry=road">
+                    <linksegmenttype id="7" externalid="ferry=road">
                         <name>ferry=road</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>0.0</capacitylane>
@@ -192,10 +182,20 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="9" externalid="ferry=secondary">
+                    <linksegmenttype id="8" externalid="ferry=secondary">
                         <name>ferry=secondary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1200.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="ferry">
+<maxspeed>20.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="9" externalid="ferry=secondary_link">
+                        <name>ferry=secondary_link</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>1000.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -467,11 +467,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578222.93926493,-3922324.02789086 1578212.13893169,-3922372.4261668 1578209.00461299,-3922390.39398511</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="0" dir="a_b" typeref="0">
+                    <linksegment id="0" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1" dir="b_a" typeref="0">
+                    <linksegment id="1" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -481,11 +481,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579325.74611821,-3922050.35950715 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="2" dir="a_b" typeref="0">
+                    <linksegment id="2" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="3" dir="b_a" typeref="0">
+                    <linksegment id="3" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -494,11 +494,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578184.00296544,-3922561.33406635 1578182.14174599,-3922570.86781221 1578179.41395219,-3922590.67373743 1578178.65579136,-3922617.96821222 1578181.05485635,-3922653.50511662 1578189.11698487,-3922698.78792976 1578197.7908226,-3922754.40182608</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="20" dir="a_b" typeref="0">
+                    <linksegment id="20" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="21" dir="b_a" typeref="0">
+                    <linksegment id="21" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -507,11 +507,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578188.51196783,-3922978.742817 1578190.05127396,-3922987.2636688 1578191.74832944,-3922990.79421338 1578194.4251622,-3922994.15898334 1578196.52905737,-3922996.21967756 1578199.41415374,-3922998.47707222 1578202.72275868,-3923000.42524954 1578208.79614446,-3923003.21088343 1578214.71660458,-3923005.21808312 1578220.11283405,-3923007.18649496 1578246.49775348,-3923014.13972999</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="22" dir="a_b" typeref="0">
+                    <linksegment id="22" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="23" dir="b_a" typeref="0">
+                    <linksegment id="23" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -521,11 +521,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578222.93926493,-3922324.02789086 1578137.42314676,-3922494.7751173 1578106.94543773,-3922558.75180226 1578075.03832007,-3922644.0387794 1578050.32963947,-3922722.86612389</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="24" dir="a_b" typeref="0">
+                    <linksegment id="24" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="25" dir="b_a" typeref="0">
+                    <linksegment id="25" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -535,11 +535,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1581040.67228396,-3922020.4436872 1581036.87425525,-3922014.02772711 1581028.99105913,-3922005.56680668 1581020.01899655,-3921997.72418164 1580821.88254635,-3921853.04121006 1580786.66564101,-3921826.63146006 1580733.85052202,-3921793.20556486 1580660.33304457,-3921754.65230508 1580477.06075577,-3921701.84200274 1580284.17613563,-3921650.60510699 1580035.01648421,-3921595.93395362 1579750.70146825,-3921537.50256131 1579734.64421994,-3921535.01063006 1579721.06723161,-3921534.07462443 1579707.71392112,-3921535.96501858 1579694.59325311,-3921541.83022493 1579683.58207949,-3921549.24478294 1579673.83955985,-3921556.48896032 1579662.81595869,-3921566.21845655 1579648.87305164,-3921580.8804967 1579548.3869414,-3921700.54797735 1579454.18739979,-3921783.38180545 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="26" dir="a_b" typeref="0">
+                    <linksegment id="26" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="27" dir="b_a" typeref="0">
+                    <linksegment id="27" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -549,11 +549,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579707.9534058,-3920931.14963548 1579722.51121736,-3920956.1886529 1579729.91346539,-3920966.39743745 1579736.50407405,-3920976.49435184 1579742.61468335,-3920988.05094895 1579747.81073439,-3921001.11870317 1579750.29341214,-3921014.79254383 1579749.57036013,-3921029.07142537 1579745.72342442,-3921043.76615411 1579739.80029631,-3921056.87160543 1579731.28300719,-3921068.57254554 1579681.17216406,-3921122.47618065 1579667.22413617,-3921138.25116219 1579651.88156213,-3921156.93018085 1579638.2366177,-3921174.48443562 1579626.90575906,-3921191.76738157 1579537.818251,-3921340.83822688 1579477.36315499,-3921462.39250815 1579462.23658978,-3921498.45401081 1579442.14392895,-3921553.28853946 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="28" dir="a_b" typeref="0">
+                    <linksegment id="28" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="29" dir="b_a" typeref="0">
+                    <linksegment id="29" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -563,11 +563,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579189.88462069,-3922016.63342999</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="30" dir="a_b" typeref="0">
+                    <linksegment id="30" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="31" dir="b_a" typeref="0">
+                    <linksegment id="31" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -577,11 +577,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579480.74743075,-3921591.62104959 1579521.99844164,-3921513.66299873 1579545.69118092,-3921472.62313007 1579569.56398404,-3921433.3790286 1579593.30054517,-3921397.01199181 1579602.70304807,-3921384.95400258 1579613.38114671,-3921375.97876007 1579626.50112204,-3921369.44511665 1579641.89557711,-3921365.1518045 1579658.44682977,-3921363.72440308 1579696.25186414,-3921362.8878087 1579751.83363323,-3921365.01415127 1580174.65380636,-3921383.90221935 1580247.77453703,-3921385.66492474 1580313.11218622,-3921379.6499395 1580388.40689323,-3921363.2915941 1580459.70995101,-3921330.80161877 1580532.28897826,-3921289.33287055 1580734.28121479,-3921153.99218063 1580907.47608527,-3921031.34433381 1580964.23871348,-3920991.1824936 1581030.37076795,-3920956.86877763 1581092.3155266,-3920939.90934413 1581153.5346982,-3920931.98299214 1581206.398289,-3920930.66707384 1581286.73227087,-3920931.37076516</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="32" dir="a_b" typeref="0">
+                    <linksegment id="32" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="33" dir="b_a" typeref="0">
+                    <linksegment id="33" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -591,11 +591,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579500.78969567,-3921607.47018151 1579542.32775733,-3921543.27329743 1579566.54781815,-3921507.30692074 1579595.86259171,-3921461.95215603 1579604.68993223,-3921449.28027247 1579614.15197562,-3921437.46437859 1579625.47375788,-3921425.43705678 1579632.81904407,-3921416.16950187 1579650.8518487,-3921408.37511835 1579666.89610052,-3921403.61452752 1579685.5743445,-3921401.85665066 1579705.50594804,-3921402.39885763 1580364.36847742,-3921442.8632667 1580497.80452634,-3921446.9978847 1580633.14272513,-3921443.81161258 1580760.04372931,-3921431.73351382 1581385.5737425,-3921353.3514662 1581471.38436142,-3921338.99682575 1581535.24136394,-3921324.87646895 1581600.14770317,-3921300.99977901 1581648.74334886,-3921274.98371333 1581695.10949564,-3921242.63459605 1581739.95582355,-3921205.40916657 1582088.40791171,-3920858.69625423</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="34" dir="a_b" typeref="0">
+                    <linksegment id="34" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="35" dir="b_a" typeref="0">
+                    <linksegment id="35" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -605,11 +605,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579435.96130051,-3921508.27575294</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="36" dir="a_b" typeref="0">
+                    <linksegment id="36" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="37" dir="b_a" typeref="0">
+                    <linksegment id="37" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -618,11 +618,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578222.93926493,-3922324.02789086 1578226.40537703,-3922306.48447696 1578229.53286537,-3922289.10604831 1578232.28001351,-3922267.81046659 1578235.28716668,-3922241.92856762 1578235.84559619,-3922218.91707778</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="38" dir="a_b" typeref="0">
+                    <linksegment id="38" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="39" dir="b_a" typeref="0">
+                    <linksegment id="39" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -632,11 +632,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579371.92799423,-3922062.74989473 1579341.09891292,-3921967.8175386 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="4" dir="a_b" typeref="0">
+                    <linksegment id="4" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="5" dir="b_a" typeref="0">
+                    <linksegment id="5" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -646,11 +646,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578255.93486211,-3922313.95965359 1578248.1698004,-3922288.57659288 1578237.56006181,-3922264.21625097 1578235.84559619,-3922218.91707778</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="40" dir="a_b" typeref="0">
+                    <linksegment id="40" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="41" dir="b_a" typeref="0">
+                    <linksegment id="41" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -660,11 +660,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578249.62059113,-3922335.72179969 1578235.44624136,-3922333.80299971 1578222.93926493,-3922324.02789086</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="42" dir="a_b" typeref="0">
+                    <linksegment id="42" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="43" dir="b_a" typeref="0">
+                    <linksegment id="43" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -674,11 +674,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578235.84559619,-3922218.91707778 1578205.40257307,-3921968.04790147 1578172.15710433,-3921687.64745509</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="44" dir="a_b" typeref="0">
+                    <linksegment id="44" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="45" dir="b_a" typeref="0">
+                    <linksegment id="45" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -687,11 +687,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578184.00296544,-3922561.33406635 1578212.98324432,-3922549.78828123 1578252.51151472,-3922529.99437362</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="46" dir="a_b" typeref="0">
+                    <linksegment id="46" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="47" dir="b_a" typeref="0">
+                    <linksegment id="47" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -700,11 +700,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578201.13809354,-3922440.96729328 1578205.14554597,-3922464.01743358 1578209.88479656,-3922477.16669179 1578219.51107245,-3922497.87216065 1578232.48370322,-3922514.31613922 1578252.51151472,-3922529.99437362</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="48" dir="a_b" typeref="0">
+                    <linksegment id="48" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="49" dir="b_a" typeref="0">
+                    <linksegment id="49" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -713,11 +713,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578222.93926493,-3922324.02789086 1578243.29766786,-3922361.39210095 1578255.90018748,-3922379.37776158</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="50" dir="a_b" typeref="0">
+                    <linksegment id="50" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="51" dir="b_a" typeref="0">
+                    <linksegment id="51" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -726,11 +726,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578209.00461299,-3922390.39398511 1578249.44999628,-3922401.7894783</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="52" dir="a_b" typeref="0">
+                    <linksegment id="52" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="53" dir="b_a" typeref="0">
+                    <linksegment id="53" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -739,11 +739,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579433.59479781,-3921258.85747486 1579472.02718795,-3921320.55492013 1579495.029652,-3921343.51670806</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="54" dir="a_b" typeref="0">
+                    <linksegment id="54" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="55" dir="b_a" typeref="0">
+                    <linksegment id="55" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -753,11 +753,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578427.21167809,-3921107.76270399 1578518.88127415,-3921071.92979335 1578576.32189092,-3921050.1047503 1578637.30311902,-3921025.64921091 1578710.70350385,-3920993.27088463 1578799.34146898,-3920958.34782765 1578893.946647,-3920908.24304101 1578929.07555132,-3920886.09678318 1578959.0966976,-3920864.87297594 1578987.8208772,-3920841.79994284 1579008.5837609,-3920818.77724546 1579017.64846112,-3920806.67241003 1579022.93894801,-3920793.83596751 1579032.53264796,-3920774.58699774 1579039.9091781,-3920760.16689894 1579050.27166327,-3920745.59020494 1579056.3631067,-3920729.16653105</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="56" dir="a_b" typeref="0">
+                    <linksegment id="56" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="57" dir="b_a" typeref="0">
+                    <linksegment id="57" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -767,11 +767,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578206.23400211,-3921224.48818272 1578227.17222737,-3921205.84300651 1578247.32170518,-3921190.56412117 1578265.18448551,-3921177.78812081 1578285.78687037,-3921165.96858651 1578327.9210154,-3921144.08368154 1578373.91651763,-3921125.60418342 1578427.21167809,-3921107.76270399</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="58" dir="a_b" typeref="0">
+                    <linksegment id="58" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="59" dir="b_a" typeref="0">
+                    <linksegment id="59" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -781,11 +781,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579460.14715285,-3921573.01088465 1579482.53555435,-3921522.89213459 1579510.54378902,-3921464.15902732 1579545.79430707,-3921392.52451726 1579563.1550367,-3921364.12191738 1579573.53955168,-3921347.29872601 1579583.8263403,-3921332.60049409 1579597.63892366,-3921319.42404491 1579611.31639307,-3921312.68878907 1579623.66196027,-3921309.14465234 1579637.55922164,-3921307.01726992 1579654.73509122,-3921305.5757141 1579673.59626477,-3921305.45797116 1579691.69270842,-3921306.30405529 1580173.50144457,-3921350.34149349 1580199.73026986,-3921350.7058967 1580224.87713251,-3921348.40405712 1580247.84285414,-3921342.98368205 1580269.77996704,-3921332.35387781 1580286.41561928,-3921315.42424058 1580296.90146446,-3921295.85343488 1580304.25982154,-3921273.4901945 1580306.40156126,-3921241.98756102 1580304.52490638,-3921211.38986111 1580301.64987229,-3921182.16922908 1580288.54861386,-3921066.11306373 1580288.18262984,-3921053.06502731 1580289.87181252,-3921036.56929319 1580297.13031294,-3921010.61722753 1580304.83582788,-3920988.83658331 1580309.3728438,-3920969.68187128 1580309.56900384,-3920960.50928646 1580308.70381216,-3920949.46402829</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="6" dir="a_b" typeref="0">
+                    <linksegment id="6" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="7" dir="b_a" typeref="0">
+                    <linksegment id="7" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -794,11 +794,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579435.96130051,-3921508.27575294 1579443.84528218,-3921444.3298407 1579445.33872019,-3921388.65835254</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="60" dir="a_b" typeref="0">
+                    <linksegment id="60" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="61" dir="b_a" typeref="0">
+                    <linksegment id="61" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -808,11 +808,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578201.13809354,-3922440.96729328 1578184.00296544,-3922561.33406635</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="62" dir="a_b" typeref="0">
+                    <linksegment id="62" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="63" dir="b_a" typeref="0">
+                    <linksegment id="63" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -822,11 +822,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1583786.0439466,-3923789.38768198 1583755.35911793,-3923615.59454638 1583714.27280352,-3923406.19159252 1583677.2636994,-3923249.75990908 1583649.75181407,-3923156.17032181 1583616.64697209,-3923059.81427951 1583578.19554708,-3922972.28756413 1583537.383619,-3922910.50991536 1583499.1636264,-3922872.80429095 1583451.58889437,-3922839.8542442 1583385.59224413,-3922809.29311359 1583303.08521932,-3922783.02268028 1583153.37231698,-3922742.06530746 1583074.00276646,-3922723.41431362 1583009.34957459,-3922712.10989266 1582679.55864754,-3922656.54113868 1582545.49313039,-3922626.60819292 1582484.36025154,-3922605.75749516 1582410.80366845,-3922574.88240767 1581454.98842884,-3921996.63006455 1581182.49745892,-3921861.51605377 1581087.46577451,-3921819.82428018 1580961.55435349,-3921788.04053865 1580723.39815093,-3921733.91399594 1580286.61263564,-3921636.37293855 1579715.53958043,-3921516.53935019 1579693.73891963,-3921522.27726121 1579675.05917002,-3921534.1590226 1579545.83249237,-3921683.89033125 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="64" dir="a_b" typeref="0">
+                    <linksegment id="64" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="65" dir="b_a" typeref="0">
+                    <linksegment id="65" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -836,11 +836,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579399.20244395,-3921484.06405318 1579417.38976001,-3921370.50574393 1579415.3703699,-3921314.16088292 1579406.3313903,-3921261.21459302 1579379.37247519,-3921197.84654366 1579330.11922701,-3921127.34110143 1579291.31068336,-3921097.22319215 1579247.55841159,-3921080.52426587 1579187.90395469,-3921068.16082376 1578931.37090912,-3921079.46936235 1578607.46582359,-3921105.18130611 1578506.42816599,-3921122.53815374 1578391.53158276,-3921158.14583316 1578341.89077349,-3921184.87723784 1578299.75671657,-3921206.76211134 1578279.15437228,-3921218.58163106 1578261.29162149,-3921231.35762059 1578241.14217506,-3921246.63649434 1578206.29267426,-3921271.42939418 1578171.61463116,-3921285.53179313 1578142.35127326,-3921291.8263814 1578113.85407364,-3921291.41043583 1578084.55502343,-3921284.46898516 1578051.92745217,-3921272.48066007 1578012.90884433,-3921251.63802952 1577886.26669515,-3921163.09961116 1577851.61301476,-3921135.31862104 1577812.87201749,-3921109.0800014 1577773.11534102,-3921085.89813164 1577739.53772093,-3921069.80400155 1577700.9384593,-3921055.3575136 1577660.07128057,-3921043.81764871 1577629.31762107,-3921037.17841165 1577596.63266986,-3921033.9709945 1577567.71868076,-3921034.69077687 1577535.92160338,-3921040.62697465 1577473.04838031,-3921056.17393301 1577324.33038441,-3921091.26844233 1577255.46303384,-3921101.35842817 1577213.26235894,-3921101.19713676 1577181.86607709,-3921101.11960845 1577112.97719889,-3921082.80738476</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="66" dir="a_b" typeref="0">
+                    <linksegment id="66" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="67" dir="b_a" typeref="0">
+                    <linksegment id="67" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -850,11 +850,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579707.9534058,-3920931.14963548 1579722.66924638,-3920946.00847753 1579748.30482612,-3920971.98423244 1579764.70579399,-3920999.56060031 1579778.72590786,-3921035.23993609 1579791.69108153,-3921072.03244647 1579809.98615867,-3921109.39267569 1579842.09378192,-3921152.58864392 1579899.85845951,-3921235.95334874 1579923.41515005,-3921261.56520481 1579958.36084499,-3921286.8650246 1580003.45384396,-3921309.13120829 1580085.52199143,-3921326.33804587 1580121.8127873,-3921332.51123311 1580169.62563785,-3921336.3973468 1580223.17090701,-3921335.3716205 1580256.24902691,-3921324.07276895 1580270.42915993,-3921308.64222916 1580279.32143488,-3921292.20410279 1580288.21781918,-3921271.35604582 1580289.62170407,-3921252.48199015 1580289.42554186,-3921241.70711933 1580272.15427071,-3921067.07119327 1580273.09270938,-3921042.60879711 1580275.76284862,-3921026.81634773 1580282.54880035,-3921006.24539711 1580305.28337562,-3920961.66693004 1580308.70381216,-3920949.46402829</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="68" dir="a_b" typeref="0">
+                    <linksegment id="68" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="69" dir="b_a" typeref="0">
+                    <linksegment id="69" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -863,11 +863,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578199.62277219,-3922796.95552686 1578201.9921581,-3922792.7042233 1578205.93903335,-3922788.73701613 1578209.22885062,-3922785.42554625 1578214.43312347,-3922783.32447181 1578221.72188548,-3922781.13181504 1578235.78585275,-3922779.12609898 1578267.54258094,-3922775.48087807</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="70" dir="a_b" typeref="0">
+                    <linksegment id="70" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="71" dir="b_a" typeref="0">
+                    <linksegment id="71" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -876,11 +876,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578197.7908226,-3922754.40182608 1578202.61325983,-3922756.69213903 1578207.90696044,-3922757.98927047 1578220.55916649,-3922759.35318876 1578239.04007718,-3922760.9630367 1578247.74772646,-3922762.1623742 1578252.8605687,-3922763.42347887 1578257.18216308,-3922764.96542668 1578260.43229229,-3922767.47357857 1578263.35385664,-3922770.8831905 1578267.54258094,-3922775.48087807</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="72" dir="a_b" typeref="0">
+                    <linksegment id="72" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="73" dir="b_a" typeref="0">
+                    <linksegment id="73" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -890,11 +890,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1577407.59920119,-3922023.88373866 1577591.27493634,-3921976.60738305 1577730.54423686,-3921930.78230059 1577768.68635498,-3921917.01079416 1577803.33429519,-3921905.94365078 1577839.38527978,-3921902.09758541 1577873.71598129,-3921903.79515431 1577908.28304804,-3921911.87378285 1577940.0616072,-3921925.56056317 1577973.93217984,-3921947.13134157 1578004.3332742,-3921971.89988661 1578107.63786025,-3922065.60375617 1578145.77321047,-3922101.47292277 1578178.73986502,-3922135.6057668 1578202.18075893,-3922162.66866129 1578217.80515398,-3922184.82374728 1578228.85995695,-3922203.05276973 1578235.84559619,-3922218.91707778</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="74" dir="a_b" typeref="0">
+                    <linksegment id="74" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="75" dir="b_a" typeref="0">
+                    <linksegment id="75" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -904,11 +904,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579321.77261014,-3921906.2577869 1579517.12388303,-3921625.61495849 1579559.38362401,-3921566.36245135 1579591.37403306,-3921522.08923652 1579619.90722891,-3921485.16934336 1579628.26326357,-3921474.83823393 1579637.13322572,-3921464.756173 1579646.7382735,-3921455.61076596 1579658.07190216,-3921447.1380044 1579670.88132127,-3921441.44147139 1579684.73135104,-3921438.03795499 1579700.82331518,-3921437.6499369 1579719.9474731,-3921437.78015719</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="76" dir="a_b" typeref="0">
+                    <linksegment id="76" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="77" dir="b_a" typeref="0">
+                    <linksegment id="77" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -918,11 +918,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578209.00461299,-3922390.39398511 1578203.57331082,-3922425.24209193 1578201.13809354,-3922440.96729328</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="78" dir="a_b" typeref="0">
+                    <linksegment id="78" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="79" dir="b_a" typeref="0">
+                    <linksegment id="79" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -932,11 +932,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1580666.26693841,-3921602.3596881 1580588.1133247,-3921617.48655321 1580547.21516757,-3921621.41309576 1580509.01624766,-3921620.25455331 1580461.03809129,-3921615.68696058 1580415.25164712,-3921607.49020563 1580076.56939656,-3921545.87445732 1579737.86814734,-3921484.25527851 1579720.78386674,-3921482.00048193 1579705.47889059,-3921480.9265426 1579690.93427506,-3921481.61694319 1579676.65878988,-3921485.00635452 1579664.64688087,-3921491.72609886 1579653.57923555,-3921500.22438426 1579641.66521146,-3921511.29018545 1579630.88156213,-3921523.45850939 1579597.39239171,-3921564.91883682 1579533.81128398,-3921645.64616951 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="8" dir="a_b" typeref="0">
+                    <linksegment id="8" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="9" dir="b_a" typeref="0">
+                    <linksegment id="9" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -946,11 +946,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579433.59479781,-3921258.85747486 1579438.59532965,-3921284.80663226 1579443.32519622,-3921318.18067783 1579444.64302153,-3921353.65728002 1579445.33872019,-3921388.65835254</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="80" dir="a_b" typeref="0">
+                    <linksegment id="80" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="81" dir="b_a" typeref="0">
+                    <linksegment id="81" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -960,11 +960,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579719.9474731,-3921437.78015719 1580374.33409704,-3921513.04629536 1581047.28793154,-3921552.55331554 1581220.79947809,-3921572.13810367 1581374.03234494,-3921601.0340437 1581531.26536764,-3921641.34356286 1582419.24024432,-3921941.95537908 1582700.26012171,-3922025.4169646</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="82" dir="a_b" typeref="0">
+                    <linksegment id="82" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="83" dir="b_a" typeref="0">
+                    <linksegment id="83" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -974,11 +974,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579435.96130051,-3921508.27575294 1579468.91790333,-3921418.69402817 1579488.32510573,-3921362.36186165 1579495.029652,-3921343.51670806</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="84" dir="a_b" typeref="0">
+                    <linksegment id="84" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="85" dir="b_a" typeref="0">
+                    <linksegment id="85" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -988,11 +988,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579445.33872019,-3921388.65835254 1579438.94384643,-3921419.75302552 1579428.55404717,-3921460.95581943 1579410.08319877,-3921527.35196535 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="86" dir="a_b" typeref="0">
+                    <linksegment id="86" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="87" dir="b_a" typeref="0">
+                    <linksegment id="87" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1001,11 +1001,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578199.62277219,-3922796.95552686 1578197.70279673,-3922843.88201719 1578189.89291081,-3922939.17089182 1578189.1818526,-3922958.2968816 1578188.51196783,-3922978.742817</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="88" dir="a_b" typeref="0">
+                    <linksegment id="88" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="89" dir="b_a" typeref="0">
+                    <linksegment id="89" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1014,11 +1014,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578197.7908226,-3922754.40182608 1578199.62277219,-3922796.95552686</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="90" dir="a_b" typeref="0">
+                    <linksegment id="90" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="91" dir="b_a" typeref="0">
+                    <linksegment id="91" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1027,11 +1027,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579495.029652,-3921343.51670806 1579513.10257882,-3921356.46583477 1579562.80782912,-3921387.60780451 1579585.89581334,-3921397.20536065 1579607.58775425,-3921405.94228623 1579657.98264324,-3921420.61816216 1579719.9474731,-3921437.78015719</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="92" dir="a_b" typeref="0">
+                    <linksegment id="92" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="93" dir="b_a" typeref="0">
+                    <linksegment id="93" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1041,11 +1041,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579495.029652,-3921343.51670806 1579499.92448879,-3921323.50885704 1579505.70720864,-3921298.81195714 1579507.32396308,-3921276.02456856 1579505.05379176,-3921255.95363997 1579499.19804959,-3921228.92875722 1579475.54533476,-3921115.95295788 1579464.58580556,-3921062.10731213 1579450.19228854,-3920976.26938358 1579440.84876237,-3920936.9917336 1579433.03743053,-3920906.82412833 1579425.06927466,-3920881.43518596 1579416.16527994,-3920858.79075939 1579395.97379415,-3920819.26568083</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="94" dir="a_b" typeref="0">
+                    <linksegment id="94" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="95" dir="b_a" typeref="0">
+                    <linksegment id="95" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1055,11 +1055,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578239.81143039,-3922612.69166633 1578184.00296544,-3922561.33406635</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="96" dir="a_b" typeref="0">
+                    <linksegment id="96" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="97" dir="b_a" typeref="0">
+                    <linksegment id="97" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1069,11 +1069,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578252.73202136,-3922694.60758499 1578197.7908226,-3922754.40182608</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="98" dir="a_b" typeref="0">
+                    <linksegment id="98" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="99" dir="b_a" typeref="0">
+                    <linksegment id="99" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1083,11 +1083,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579279.38189964,-3922039.29185267 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="10" dir="a_b" typeref="0">
+                    <linksegment id="10" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="11" dir="b_a" typeref="0">
+                    <linksegment id="11" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1097,11 +1097,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578270.28212003,-3922724.08968677 1578267.54258094,-3922775.48087807</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="100" dir="a_b" typeref="0">
+                    <linksegment id="100" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="101" dir="b_a" typeref="0">
+                    <linksegment id="101" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1111,11 +1111,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578263.41931538,-3922655.05912008 1578197.7908226,-3922754.40182608</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="102" dir="a_b" typeref="0">
+                    <linksegment id="102" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="103" dir="b_a" typeref="0">
+                    <linksegment id="103" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1125,11 +1125,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578267.22369108,-3922571.38155245 1578252.51151472,-3922529.99437362</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="104" dir="a_b" typeref="0">
+                    <linksegment id="104" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="105" dir="b_a" typeref="0">
+                    <linksegment id="105" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1139,11 +1139,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578265.16235823,-3922792.76192045 1578267.54258094,-3922775.48087807</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="106" dir="a_b" typeref="0">
+                    <linksegment id="106" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="107" dir="b_a" typeref="0">
+                    <linksegment id="107" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1153,11 +1153,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578261.65318818,-3922849.53813077 1578199.62277219,-3922796.95552686</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="108" dir="a_b" typeref="0">
+                    <linksegment id="108" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="109" dir="b_a" typeref="0">
+                    <linksegment id="109" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1167,11 +1167,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1579235.49578836,-3922028.10925986 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="12" dir="a_b" typeref="0">
+                    <linksegment id="12" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="13" dir="b_a" typeref="0">
+                    <linksegment id="13" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1180,11 +1180,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578323.37449416,-3923017.81214885 1578280.70706232,-3923018.45070932 1578270.14577702,-3923017.08510444 1578259.95831851,-3923015.77099972 1578255.09253273,-3923015.14534725 1578246.49775348,-3923014.13972999</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="14" dir="a_b" typeref="0">
+                    <linksegment id="14" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="15" dir="b_a" typeref="0">
+                    <linksegment id="15" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1194,11 +1194,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1583548.7485431,-3922535.78323256 1583488.61399938,-3922499.83910662 1583418.14247019,-3922455.71719176 1583346.26693512,-3922414.01928914 1583215.39409528,-3922357.05321625 1582897.08219299,-3922257.32124769 1582343.40306286,-3922086.11269831 1581755.30154889,-3921911.56260437 1581575.40022898,-3921866.19392997 1581309.22026524,-3921809.50149183 1580677.70049285,-3921696.71441776 1579728.1046046,-3921507.22286513 1579711.56575203,-3921504.85392396 1579694.33542556,-3921507.56869446 1579681.48600967,-3921512.81418448 1579670.96701017,-3921520.09611752 1579538.01984123,-3921674.43795373 1579321.77261014,-3921906.2577869</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="16" dir="a_b" typeref="0">
+                    <linksegment id="16" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="17" dir="b_a" typeref="0">
+                    <linksegment id="17" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -1208,11 +1208,11 @@
                     <gml:LineString>
                         <gml:coordinates decimal="." cs="," ts=" ">1578427.21167809,-3921107.76270399 1578506.04680594,-3921089.6859084 1578600.01287763,-3921072.6691817 1578704.50377829,-3921061.27955737 1578817.80269252,-3921052.26256584 1578936.46392662,-3921045.06577988 1578939.80084175,-3921044.92409679 1579094.75039122,-3921038.39608108 1579187.59179311,-3921039.40538385 1579221.16337418,-3921044.27647058 1579249.56322724,-3921051.27504619 1579278.3641696,-3921060.69011553 1579303.74604397,-3921071.44950645 1579327.75544927,-3921085.76202338 1579347.3478682,-3921103.06330943 1579374.45432134,-3921134.95452763 1579395.15337754,-3921166.40831023 1579409.98051254,-3921197.85481521 1579423.70347706,-3921228.61459201 1579433.59479781,-3921258.85747486</gml:coordinates>
                     </gml:LineString>
-                    <linksegment id="18" dir="a_b" typeref="0">
+                    <linksegment id="18" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="19" dir="b_a" typeref="0">
+                    <linksegment id="19" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>

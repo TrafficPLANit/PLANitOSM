@@ -131,8 +131,8 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
    * {@inheritDoc}
    */
   @Override
-  public Map<String,Set<String>> getActivatedTypes() {
-    var map = new TreeMap<String,Set<String>>();
+  public SortedMap<String,SortedSet<String>> getActivatedTypes() {
+    var map = new TreeMap<String,SortedSet<String>>();
     map.put(osmKey, new TreeSet<>(activatedOsmTypes));
     return map;
   }
@@ -141,8 +141,8 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
    * {@inheritDoc}
    */
   @Override
-  public Map<String,Set<String>> getDeactivatedTypes() {
-    var map = new TreeMap<String,Set<String>>();
+  public SortedMap<String,SortedSet<String>> getDeactivatedTypes() {
+    var map = new TreeMap<String,SortedSet<String>>();
     map.put(osmKey, new TreeSet<>(deactivatedOsmTypes));
     return map;
   }
@@ -152,7 +152,7 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
    */
   @Override
   public void deactivateAll() {
-    getActivatedTypes().values().stream().flatMap(e -> e.stream()).forEach(activatedType -> deactivate(activatedType));
+    getActivatedTypes().values().stream().flatMap(Collection::stream).forEach(this::deactivate);
   }
 
   /**

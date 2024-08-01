@@ -51,11 +51,9 @@ public class OsmWaterwayTypeConfiguration implements OsmInfrastructureConfigurat
       /* the waterway types that will be parsed by default, i.e., supported based on ferry=_highway_type_ key. */
       {
         final var defaultSupported = new HashSet<String>();
-        OsmWaterwayTags.getAllSupportedHighwayTypesAsWaterWayTypes().forEach( highwayType ->
-            defaultSupported.add(highwayType));
+        OsmWaterwayTags.getAllSupportedHighwayTypesAsWaterWayTypes().forEach(defaultSupported::add);
         final var defaultUnSupported = new HashSet<String>();
-        OsmWaterwayTags.getAllUnsupportedHighwayTypesAsWaterWayTypes().forEach( highwayType ->
-            defaultUnSupported.add(highwayType));
+        OsmWaterwayTags.getAllUnsupportedHighwayTypesAsWaterWayTypes().forEach(defaultUnSupported::add);
         DEFAULT_FERRYHIGHWAY_CONFIGURATION = new OsmInfrastructureConfigurationImpl(
             OsmWaterwayTags.FERRY, defaultSupported, defaultUnSupported);
       }
@@ -143,22 +141,22 @@ public class OsmWaterwayTypeConfiguration implements OsmInfrastructureConfigurat
    * {@inheritDoc}
    */
   @Override
-  public Map<String,Set<String>> getActivatedTypes() {
-    var result = new HashMap<String, Set<String>>();
+  public SortedMap<String,SortedSet<String>> getActivatedTypes() {
+    var result = new TreeMap<String, SortedSet<String>>();
     result.putAll(routeFerryConfiguration.getActivatedTypes());
     result.putAll(ferryHighwayConfiguration.getActivatedTypes());
-    return Collections.unmodifiableMap(result);
+    return Collections.unmodifiableSortedMap(result);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public Map<String,Set<String>> getDeactivatedTypes() {
-    var result = new TreeMap<String, Set<String>>();
+  public SortedMap<String,SortedSet<String>> getDeactivatedTypes() {
+    var result = new TreeMap<String, SortedSet<String>>();
     result.putAll(routeFerryConfiguration.getDeactivatedTypes());
     result.putAll(ferryHighwayConfiguration.getDeactivatedTypes());
-    return Collections.unmodifiableMap(result);
+    return Collections.unmodifiableSortedMap(result);
   }
 
   /**

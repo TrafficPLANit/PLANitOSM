@@ -299,7 +299,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
     
   /**
    * Collect all OSM modes that are allowed for the given OSM waterway type as configured by the user. Note we allow
-   * tagging values related to the key route=_mode_, e.g., ferry, as well as the de-factor standard where the 'ferry' is used
+   * tagging values related to the key route=_mode_, e.g., ferry, as well as the de-facto standard where the 'ferry' is used
    * as keyword and the way type reflects the equivalent of highway options, e.g., trunk, as in ferry=trunk.
    * 
    * @param osmWaterwayType to use

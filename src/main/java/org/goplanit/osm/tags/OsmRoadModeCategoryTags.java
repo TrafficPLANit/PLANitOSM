@@ -47,10 +47,10 @@ public class OsmRoadModeCategoryTags {
    */
   private static void populateModesByCategory() {
     /** no modes within this category yet */
-    osmCategory2Modes.put(HIGH_OCCUPANCY_VEHICLE, new HashSet<String>());
+    osmCategory2Modes.put(HIGH_OCCUPANCY_VEHICLE, new HashSet<>());
     
     /** all public service vehicles */
-    Set<String> publicServiceVehicles = new HashSet<String>();
+    Set<String> publicServiceVehicles = new HashSet<>();
     {
       publicServiceVehicles.add(OsmRoadModeTags.BUS);
       publicServiceVehicles.add(OsmRoadModeTags.TAXI);
@@ -60,7 +60,7 @@ public class OsmRoadModeCategoryTags {
     osmCategory2Modes.put(PUBLIC_SERVICE_VEHICLE, publicServiceVehicles);
     
     /** all motor vehicles */
-    Set<String> motorVehicles = new HashSet<String>(publicServiceVehicles);
+    Set<String> motorVehicles = new HashSet<>(publicServiceVehicles);
     {
       motorVehicles.add(OsmRoadModeTags.MOTOR_CAR);
       /* single tracked */
