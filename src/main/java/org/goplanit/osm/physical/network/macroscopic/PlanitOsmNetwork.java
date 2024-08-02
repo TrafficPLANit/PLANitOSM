@@ -863,10 +863,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
                   osmWayValue, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getExplicitCapacityPerLaneOrDefault(),
                   linkSegmentType.getExplicitMaximumDensityPerLaneOrDefault()));
         }
-      }else {
-        linkSegmentTypes = defaultPlanitLinkSegmentTypesByOsmKeyValue.get(OsmHighwayTags.getHighwayKeyTag()).get(osmWayValue);
       }
-
     }
     return linkSegmentTypes;
   }
@@ -1101,6 +1098,46 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       }
     }
     /* ------------------ FOR EACH OSM WAY TYPE ----------------------------------------- */
+
+    /* when we find functionally equivalent link segment types --> aggregate them into a single one by
+     * - identify duplicates in network
+     * - update extern id and name, so we retain original OSM information
+     * - recreate the ids on the container
+     * - replace the key/value mapping in the defaultPlanitLinkSegmentTypesByOsmKeyValue used in parsing
+     */
+    final boolean consolidateLinkSegmentTypes = false;
+    if(consolidateLinkSegmentTypes){
+      /* identify any functional duplicates, as in identical content, just different names, ids, external ids etc. */
+      for(var layer : getTransportLayers()){
+        var linkSegmentTypes = layer.getLinkSegmentTypes();
+        int originalNumTypes = linkSegmentTypes.size();
+        var functionalDuplicates = linkSegmentTypes.findFunctionalDuplicates();
+        for(var duplicatesEntry : functionalDuplicates){
+          String concatenatedExternalId = duplicatesEntry.stream().map( MacroscopicLinkSegmentType::getExternalId).collect(Collectors.joining(","));
+          duplicatesEntry.forEach(lst -> {
+            lst.setName(concatenatedExternalId);
+            lst.setExternalId(concatenatedExternalId);
+          });
+          duplicatesEntry.stream().skip(1).forEach( lst -> linkSegmentTypes.remove( lst.getId()));
+        }
+        functionalDuplicates.stream().flatMap( e -> e.stream().skip(1)).forEach( lst -> linkSegmentTypes.remove( lst.getId()));
+        linkSegmentTypes.recreateIds();
+
+        for(var keyEntry : defaultPlanitLinkSegmentTypesByOsmKeyValue.entrySet()){
+          for(var valueEntry : keyEntry.getValue().entrySet()){
+            MacroscopicLinkSegmentType lst = valueEntry.getValue().get(layer);
+            // check if it is marked as duplicate
+            var duplicatesForEntry = functionalDuplicates.stream().filter( e -> e.contains(lst)).findFirst().orElse(null);
+            if(!CollectionUtils.nullOrEmpty(duplicatesForEntry) && duplicatesForEntry.first() != lst){
+              MacroscopicLinkSegmentType replacementType = duplicatesForEntry.first();
+              valueEntry.getValue().put(layer, replacementType);
+            }
+          }
+        }
+        LOGGER.info(String.format("%s Consolidated %d link segment types due to functional equivalence",
+                NetworkLayer.createLayerLogPrefix(layer), originalNumTypes - linkSegmentTypes.size()));
+      }
+    }
   }
 
   /**

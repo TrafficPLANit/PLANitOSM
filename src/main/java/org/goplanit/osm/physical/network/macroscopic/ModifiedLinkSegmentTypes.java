@@ -75,7 +75,7 @@ public class ModifiedLinkSegmentTypes {
       if(linkSegmentTypesWithAddedModes.containsKey(theAddedModes)) {
         Set<MacroscopicLinkSegmentType> candidateLinkSegmentTypes = linkSegmentTypesWithAddedModes.get(theAddedModes);
         if(!candidateLinkSegmentTypes.isEmpty()) {
-          candidateLinkSegmentTypes  = new HashSet<MacroscopicLinkSegmentType>(candidateLinkSegmentTypes);
+          candidateLinkSegmentTypes  = new HashSet<>(candidateLinkSegmentTypes);
           Set<MacroscopicLinkSegmentType> otherCandidateLinkSegmentTypes = linkSegmentTypesWithRemovedModes.get(theRemovedModes);
           if(otherCandidateLinkSegmentTypes != null) {
             candidateLinkSegmentTypes.retainAll(otherCandidateLinkSegmentTypes);

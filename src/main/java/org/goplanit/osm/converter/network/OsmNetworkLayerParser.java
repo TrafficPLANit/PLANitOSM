@@ -106,8 +106,9 @@ public class OsmNetworkLayerParser {
     networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLinkSegment);
   }
 
-  /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any) and possible changes to the default speeds based on
-   * the available tags. The updated link segment type is returned, which in turn is registered properly on the network if it is indeed changed from the passed in existing one
+  /** update the passed in existing link segment type based on proposed changes in added and/or removed modes (if any)
+   * and possible changes to the default speeds based on the available tags. The updated link segment type is returned,
+   * which in turn is registered properly on the network if it is indeed changed from the passed in existing one
    * 
    * @param toBeAddedModes modes to add
    * @param toBeRemovedModes modes to remove
@@ -127,7 +128,8 @@ public class OsmNetworkLayerParser {
       return linkSegmentType;
     }
 
-    MacroscopicLinkSegmentType finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(linkSegmentType, toBeAddedModes, toBeRemovedModes);
+    MacroscopicLinkSegmentType finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(
+            linkSegmentType, toBeAddedModes, toBeRemovedModes);
     if(finalLinkSegmentType==null) {
 
       /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
@@ -149,6 +151,7 @@ public class OsmNetworkLayerParser {
 
       /* update mode properties */
       if(!toBeAddedModes.isEmpty()) {
+        // we only consider the defaults for type, not any overwritten link speeds in tags here, that is done on the link itself
         double osmWayTypeMaxSpeed = getDefaultSpeedLimitByOsmWayType(settings, tags);
         for(var newMode: toBeAddedModes) {
           double modeMaxSpeedOnLinkType = Math.min(newMode.getMaximumSpeedKmH(),osmWayTypeMaxSpeed);
