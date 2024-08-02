@@ -1104,6 +1104,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
      * - update extern id and name, so we retain original OSM information
      * - recreate the ids on the container
      * - replace the key/value mapping in the defaultPlanitLinkSegmentTypesByOsmKeyValue used in parsing
+     *
+     * https://github.com/TrafficPLANit/PLANitOSM/issues/59
      */
     final boolean consolidateLinkSegmentTypes = false;
     if(consolidateLinkSegmentTypes){
