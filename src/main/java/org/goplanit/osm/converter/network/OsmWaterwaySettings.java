@@ -241,7 +241,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
     if(osmWaterModes == null) {
       return;
     }
-    osmWaterModes.forEach( osmRailMode -> deactivateOsmWaterMode(osmRailMode));
+    osmWaterModes.forEach(this::deactivateOsmWaterMode);
   }   
   
   /** deactivate provided water modes

@@ -114,6 +114,26 @@ public class OsmLaneDefaults {
   public Integer setDefaultDirectionalLanesByHighwayType(String type, Integer defaultNumberOfLanesPerDirection) {
     return lanesPerDirection.put(type,defaultNumberOfLanesPerDirection);
   }
+
+  /** Check if the number of lanes based on the way key value, e.g. highway=primary, for any direction (not total) has a default
+   * available
+   *
+   * @param osmWayKey key to use
+   * @param osmWayValue way type value
+   * @return true when available, false otherwise
+   */
+  public boolean containsDefaultDirectionalLanes(String osmWayKey, String osmWayValue) {
+    if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
+      return lanesPerDirection.containsKey(osmWayValue);
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) || OsmWaterwayTags.isAnyWaterwayKeyTag(osmWayKey)){
+      return true;
+    }else{
+      LOGGER.warning(String.format(
+              "Unknown OSM way key tag [%s], unable to determine if lane defaults have been set", osmWayKey));
+      return false;
+
+    }
+  }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).
    * In case no number of lanes is specified for the type, we revert to the missing default
@@ -126,7 +146,7 @@ public class OsmLaneDefaults {
       return lanesPerDirection.get(osmWayValue); 
     }else {
       LOGGER.warning(
-          String.format("highway type [%s] has no number of default lanes associated with it, reverting to missing default: %d", osmWayValue, DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED));
+          String.format("Highway type [%s] has no number of default lanes associated with it, reverting to missing default: %d", osmWayValue, DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED));
       return DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
     }
   }

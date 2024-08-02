@@ -63,7 +63,7 @@ public class OsmWaterwayTags {
   public static final String ROUTE = "route";
 
   /* ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as used as a
-   * a way to indicate a ferry that replaces a type of highway, in which case it may be ferr=primary, indicating a highway section
+   * way to indicate a ferry that replaces a type of highway, in which case it may be ferry=primary, indicating a highway section
    * that is a ferry. The latter may or may not have the route=ferry tagging, so, we should support it separately as another valid
    * ferry key
    */

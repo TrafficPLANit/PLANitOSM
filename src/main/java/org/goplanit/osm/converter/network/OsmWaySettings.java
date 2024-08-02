@@ -5,7 +5,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
@@ -44,10 +43,6 @@ public abstract class OsmWaySettings {
     
   /** mapping from each supported OSM mode to a PLANit predefined mode type on this instance */
   private  final Map<String, PredefinedModeType> activatedOsmMode2PlanitModeTypeMap = new TreeMap<>();
-  
-  /** Default mapping (specific to this network) from each supported OSM mode to an available PLANit mode. Can be used
-   * to re-activate OSM modes if needed */
-  //private  final Map<String, Mode> defaultOsmMode2PlanitModeMap= new HashMap<>();
 
   /** Default mapping (specific to this network) from each supported OSM mode to an available PLANit (predefined mode type. Can be used
    * to re-activate OSM modes if needed */
@@ -88,9 +83,28 @@ public abstract class OsmWaySettings {
     if(!hasMappedMode) {
       deactivateOsmWayType(osmWayValue);      
     } 
-  }    
-  
-  
+  }
+
+  /** Add a new default the speed limit for a currently unregistered key value way tag value, e.g. railway=typeValue. Only to be
+   * used for custom tags that are added on-the-fly by the user, otherwise we should go through the "normal" default initialisation
+   * procedure.
+   *
+   * @param osmWayKey key to use
+   * @param osmWayValue way value type to collect default speed limit for
+   * @param speedLimitKmH in km/h
+   * @return true when added, false otherwise
+   */
+  private boolean addDefaultSpeedLimit(String osmWayKey, String osmWayValue, double speedLimitKmH){
+    if(speedLimitDefaults.containsSpeedLimit(osmWayKey, osmWayValue)){
+      LOGGER.warning("unable to add default speed limit because a default is already available, consider " +
+              "overwriting the default via settings instead");
+      return false;
+    }
+    speedLimitDefaults.setSpeedLimitDefault(osmWayKey, osmWayValue, speedLimitKmH);
+    return true;
+  }
+
+
   /** Constructor
    * 
    * @param infrastructureTypeConfiguration to use
@@ -220,9 +234,10 @@ public abstract class OsmWaySettings {
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
    */
-  protected void overwriteOsmWayTypeDefaultCapacityMaxDensity(String osmWayKey, String osmWayType, double capacityPerLanePerHour, double maxDensityPerLane) {
+  protected void overwriteOsmWayTypeDefaultCapacityMaxDensity(
+          String osmWayKey, String osmWayType, double capacityPerLanePerHour, double maxDensityPerLane) {
     overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.of(capacityPerLanePerHour,maxDensityPerLane));
-    LOGGER.info(String.format("Overwriting defaults for OSM road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
+    LOGGER.info(String.format("Custom defaults for OSM road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
   }          
   
   /**
@@ -405,7 +420,29 @@ public abstract class OsmWaySettings {
    */
   protected void addAllowedOsmWayModes(String osmWayKey, String osmWayTypeValue, final List<String> osmModes) {
     osmModeAccessDefaults.addAllowedModes(osmWayKey, osmWayTypeValue, osmModes);
-  }       
+  }
+
+  /** register a custom new way key-value pair with defaults to parse outside the default supported tags. It is assumed it has
+   * been verified that this combination does not exist in the regular tagging that is supported beforehand, so it will just be
+   * added without further checking at this point.
+   *
+   * @param osmWayKey to use
+   * @param osmWayTypeValue to use
+   * @param speedLimitKmh default to use
+   * @param capacityPerLanePcuH default to use
+   * @param maxDensityPerLanePcuH default to use
+   * @param allowedOsmModes default allowed mode(s) to use
+   * @return true when registration was successful, false otherwise
+   */
+  protected boolean registerNewSupportedOsmWayType(
+          String osmWayKey, String osmWayTypeValue, double speedLimitKmh, double capacityPerLanePcuH, double maxDensityPerLanePcuH, String... allowedOsmModes) {
+
+    this.infrastructureTypeConfiguration.activate(osmWayTypeValue);
+    boolean success = addDefaultSpeedLimit(osmWayKey, osmWayTypeValue, speedLimitKmh);
+    addAllowedOsmWayModes(osmWayKey, osmWayTypeValue, Arrays.asList(allowedOsmModes));
+    overwriteOsmWayTypeDefaultCapacityMaxDensity(osmWayKey, osmWayTypeValue, capacityPerLanePcuH, maxDensityPerLanePcuH);
+    return success;
+  }
   
   /* public */
 

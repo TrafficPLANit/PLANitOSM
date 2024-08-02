@@ -31,6 +31,17 @@ public class PlanitOsmUtils {
   
   /** the logger */
   static final Logger LOGGER = Logger.getLogger(PlanitOsmUtils.class.getCanonicalName());
+
+  /**
+   * Create an external idea like "_key_=_value_". If key is empty or null just return "_value_"
+   *
+   * @param osmKeyTag key to use
+   * @param osmValueTag value to use
+   * @return external id
+   */
+  public static String createExternalIdByOsmKeyValue(String osmKeyTag, String osmValueTag) {
+    return osmKeyTag != null ? OsmTagUtils.toConcatEqualsString(osmKeyTag, osmValueTag) : osmValueTag;
+  }
   
   /**
    * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)

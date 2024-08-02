@@ -3,6 +3,8 @@ package org.goplanit.osm.converter.network;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
@@ -26,14 +28,14 @@ public class OsmNetworkHandlerProfiler {
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkHandlerProfiler.class.getCanonicalName());  
   
   /**
-   * track a counter by highway tag of the encountered entities
+   * track a counter by way key value tags, e.g. highway=primary tag of the encountered entities
    */
-  private final Map<String, LongAdder> counterBywayTag = new HashMap<String, LongAdder>();
+  private final SortedMap<String, SortedMap<String, LongAdder>> counterByWayKeyValueTag = new TreeMap<>();
   
-  /** track how many osmways have no explicit speed limit defined */
+  /** track how many OSM ways have no explicit speed limit defined */
   private LongAdder missingSpeedLimitCounter = new LongAdder();
   
-  /** track how many osmways have no lane defined */
+  /** track how many OSM ways have no lane defined */
   private LongAdder missingLaneCounter = new LongAdder();  
     
   /**
@@ -57,11 +59,14 @@ public class OsmNetworkHandlerProfiler {
   /**
    * Increment counter for passed in osm tag 
    * 
-   * @param tagType to increment counter for
+   * @param keyTag to increment counter for
+   * @param valueTag to increment counter for
    */
-  public void incrementOsmTagCounter(String tagType) {
-    counterBywayTag.putIfAbsent(tagType, new LongAdder());
-    counterBywayTag.get(tagType).increment();    
+  public void incrementOsmTagCounter(String keyTag, String valueTag) {
+    counterByWayKeyValueTag.putIfAbsent(keyTag, new TreeMap<>());
+    var keyEntry = counterByWayKeyValueTag.get(keyTag);
+    keyEntry.putIfAbsent(valueTag, new LongAdder());
+    keyEntry.get(valueTag).increment();
   }
 
   /**
@@ -71,23 +76,17 @@ public class OsmNetworkHandlerProfiler {
    */
   public void logOsmProfileInformation(MacroscopicNetworkLayer networkLayer) {
     long totalCount = 0;
-    for(Entry<String, LongAdder> entry : counterBywayTag.entrySet()) {
-      long count = entry.getValue().longValue();
+    for(var outerEntry : counterByWayKeyValueTag.entrySet()) {
+      for(var innerEntry : outerEntry.getValue().entrySet()) {
+      long count = innerEntry.getValue().longValue();
       totalCount += count;
-      if(OsmHighwayTags.isRoadBasedHighwayValueTag(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed highway:%s count:%d",
-            NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
-      }else if(OsmRailwayTags.isRailBasedRailway(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed railway:%s count:%d",
-            NetworkLayer.createLayerLogPrefix(networkLayer), entry.getKey(), count));
-      }else if(OsmWaterwayTags.isAnyWaterwayKeyTag(entry.getKey())) {
-        LOGGER.info(String.format("%s [STATS] processed water way %s=%s count:%d",
-            NetworkLayer.createLayerLogPrefix(networkLayer), OsmWaterwayTags.getKeyForValueType(entry.getKey()), entry.getKey(), count));
+        LOGGER.info(String.format("%s [STATS] processed %-7s=%-20s count:%-4d",
+            NetworkLayer.createLayerLogPrefix(networkLayer), outerEntry.getKey(), innerEntry.getKey(), count));
       }
     }
 
-    double percentageDefaultspeedLimits = 100*(missingSpeedLimitCounter.longValue()/totalCount);
-    double percentageDefaultLanes = 100*(missingLaneCounter.longValue()/totalCount);
+    double percentageDefaultspeedLimits = 100*((double) missingSpeedLimitCounter.longValue() /totalCount);
+    double percentageDefaultLanes = 100*((double) missingLaneCounter.longValue() /totalCount);
     LOGGER.info(String.format("%s [STATS] Applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
     LOGGER.info(String.format("%s [STATS] Applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultLanes, 100-percentageDefaultLanes));
   }

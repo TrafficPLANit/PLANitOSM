@@ -9,6 +9,8 @@ import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmBoundaryTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.tags.OsmRailModeTags;
+import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;
@@ -74,6 +76,12 @@ public class MelbourneOsm2PlanitTest {
       // apply bounding box
       inputSettings.getNetworkSettings().setBoundingArea(
               OsmBoundary.of(144.995842, 144.921341, -37.855068,-37.786996));
+
+      // example of explicitly registering (unsupported or deactivated) types and providing defaults, so they can be parsed directly
+      inputSettings.getNetworkSettings().registerNewOsmWayType(
+              "highway","proposed", 1, 30, 500, 180, OsmRoadModeTags.MOTOR_CAR);
+      inputSettings.getNetworkSettings().registerNewOsmWayType(
+              "railway", "disused", 1, 30, 500, 180, OsmRailModeTags.TRAIN);
 
       /* minimise warnings Melbourne v2 */
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());

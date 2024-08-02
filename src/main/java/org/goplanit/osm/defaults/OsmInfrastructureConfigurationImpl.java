@@ -24,7 +24,8 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
   
   /**
    * the OSM types that are marked as deactivate OSM types, i.e., will be ignored when parsing unless activated. This differs
-   * from unactivatableOsmTypes because deactivatesOsmTypes can in fact be activated whereas unactivatableOsmTypes cannot
+   * from unactivatable OsmTypes because deactivatesOsmTypes can in fact be activated whereas unactivatable OsmTypes cannot (unless
+   * they are explicitly newly registered with their required defaults)
    */
   protected final Set<String> deactivatedOsmTypes;
    
@@ -102,7 +103,6 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
     }
     deactivatedOsmTypes.add(osmValue);
     LOGGER.fine(String.format("Deactivating OSM type %s=%s", osmKey, osmValue));
-    return;
   }
 
   /**
@@ -160,7 +160,7 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
    */
   @Override
   public void activateAll() {
-    getDeactivatedTypes().values().stream().flatMap(e -> e.stream()).forEach(deactivatedType -> activate(deactivatedType));
+    getDeactivatedTypes().values().stream().flatMap(Collection::stream).forEach(this::activate);
   }
 
   /**

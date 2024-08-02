@@ -87,31 +87,6 @@ public class Osm2PlanitConversionTemplates {
   }
 
   /**
-   * Template for parsing all road, pedestrian, bicycle, and rail infrastructure of OSM network to PLANit network
-   * 
-   * @param inputFile the input file
-   * @param outputPath the output path
-   * @param countryName the country name
-   * @throws PlanItException thrown if error
-   */
-  public static void osm2PlanitNetworkComprehensive(String inputFile, String outputPath, String countryName) throws PlanItException {    
-    
-    /* OSM reader */
-    OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(inputFile, countryName);    
-    
-    /* reader configuration */
-    osmReader.getSettings().activateRailwayParser(true);
-    osmReader.getSettings().getHighwaySettings().activateAllOsmHighwayTypes();
-    
-    /* PLANit writer */
-    PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(outputPath, countryName);
-    
-    /* convert */
-    NetworkConverter theConverter = NetworkConverterFactory.create(osmReader, planitWriter);
-    theConverter.convert();       
-  }
-
-  /**
    * Template for parsing intermodal road and rail infrastructure of OSM network to PLANit network for your typical assignment but without pedestrian or cyclist infrastructure
    *
    * @param inputFile the input file

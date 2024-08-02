@@ -137,9 +137,9 @@ public class OsmSpeedLimitDefaults {
   /**
    * clone
    * 
-   * @return shallow copy
+   * @return deep copy
    */
-  public OsmSpeedLimitDefaults shallowClone() {
+  public OsmSpeedLimitDefaults deepClone() {
     return new OsmSpeedLimitDefaults(this);
   }
   

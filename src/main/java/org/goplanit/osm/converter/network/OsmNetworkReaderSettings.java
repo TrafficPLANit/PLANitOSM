@@ -1,27 +1,23 @@
 package org.goplanit.osm.converter.network;
 
+import org.goplanit.osm.converter.OsmReaderSettings;
+import org.goplanit.osm.defaults.*;
+import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
+import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.misc.CollectionUtils;
+import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.mode.PredefinedModeType;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import org.goplanit.osm.converter.OsmReaderSettings;
-import org.goplanit.osm.defaults.OsmLaneDefaults;
-import org.goplanit.osm.defaults.OsmModeAccessDefaults;
-import org.goplanit.osm.defaults.OsmModeAccessDefaultsByCountry;
-import org.goplanit.osm.defaults.OsmSpeedLimitDefaults;
-import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsByCountry;
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmWaterwayTags;
-import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitJtsCrsUtils;
-import org.goplanit.utils.locale.CountryNames;
-import org.goplanit.utils.misc.UrlUtils;
-import org.goplanit.utils.mode.PredefinedModeType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 /**
  * All general settings (and sub-settings classes) for the OSM reader pertaining to parsing  network infrastructure.
@@ -46,13 +42,13 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** all settings specific to OSM waterway (ferry) tags*/
   protected OsmWaterwaySettings osmWaterwaySettings;
 
-  /** the default speed limits used in case no explicit information is available on the osmway's tags */
+  /** the default speed limits used in case no explicit information is available on the OSM way's tags */
   protected final OsmSpeedLimitDefaults speedLimitConfiguration;
   
-  /** the default mode access configuration used in case no explicit access information is available on the osmway's tags */
+  /** the default mode access configuration used in case no explicit access information is available on the OSM way's tags */
   protected final OsmModeAccessDefaults modeAccessConfiguration;  
   
-  /** the default number of lanes used in case no explicit information is available on the osmway's tags */
+  /** the default number of lanes used in case no explicit information is available on the OSM way's tags */
   protected final OsmLaneDefaults laneConfiguration = new OsmLaneDefaults();  
       
   /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
@@ -322,23 +318,6 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public OsmLaneDefaults getLaneConfiguration() {
     return this.laneConfiguration;
   }  
-  
-  /** Collect the default speed limit for a given highway/railway/waterway tag value, where we extract the key and value from the passed in tags, if available
-   * 
-   * @param tags to extract way key value pair from (highway,railway keys currently supported)
-   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
-   */    
-  public Double getDefaultSpeedLimitByOsmWayType(Map<String, String> tags){
-    if(tags.containsKey(OsmHighwayTags.getHighwayKeyTag())) {
-      return getHighwaySettings().getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.getHighwayKeyTag()));
-    }else if(tags.containsKey(OsmRailwayTags.getRailwayKeyTag())){
-      return getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.getRailwayKeyTag()));
-    }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
-      return getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
-    }else {
-      throw new PlanItRunTimeException("No default speed limit available, tags do not contain activated highway, railway, or waterway key (tags: %s", tags);
-    }
-  }   
 
   /** Collect the number of lanes/tracks for a given OSM way key/value for either direction (not total), 
    * e.g. highway=value, railway=value based on the defaults provided
@@ -411,11 +390,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
     TreeSet<PredefinedModeType> mappedPlanitModes = new TreeSet<>();
-    
-    if(osmModes == null) {
+    if(CollectionUtils.nullOrEmpty(osmModes)) {
       return mappedPlanitModes;
-    } 
-    
+    }
+
     for(String osmMode : osmModes) {
       var theMode = getMappedPlanitModeType(osmMode);
       if(theMode != null) {
@@ -440,7 +418,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     Stream<PredefinedModeType> waterwayModes =
         isWaterwayParserActive() ? getWaterwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
 
-    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toCollection(() -> new TreeSet<>()));
+    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toCollection(TreeSet::new));
   }
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
@@ -488,7 +466,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return false;
   }  
 
-  /** the minimum size an identified dangling network must have for it to NOT be removed when danlging networks are removed
+  /** the minimum size an identified dangling network must have for it to NOT be removed when dangling networks are removed
    * 
    * @param discardBelow this number of vertices
    */
@@ -568,7 +546,59 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         osmRailwaySettings.activateOsmRailwayType(osmWayType);
       }
     }
-  }  
+  }
+
+  /** register a custom new way key value tag with defaults to parse in addition to the default supported.configured tags.
+   *
+   * @param osmWayTypeValue to use
+   * @param numLanes default to use
+   * @param speedLimitKmh default to use
+   * @param capacityPerLanePcuH default to use
+   * @param maxDensityPerLanePcuH max density to apply
+   * @param allowedOsmModes default allowed mode(s) to use
+   */
+  public void registerNewOsmWayType(
+          String osmWayKey, String osmWayTypeValue, int numLanes, double speedLimitKmh, double capacityPerLanePcuH, double maxDensityPerLanePcuH, String... allowedOsmModes) {
+    boolean success = true;
+    OsmWaySettings settings = null;
+
+    /* deal with LANE configuration */
+    if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
+      settings = this.osmHighwaySettings;
+      if(laneConfiguration.containsDefaultDirectionalLanes(osmWayKey,osmWayTypeValue)){
+        LOGGER.warning(String.format("Not allowed to add an OSM type that already exists, ignored %s=%s", osmWayKey, osmWayTypeValue));
+        return;
+      }
+      success = laneConfiguration.setDefaultDirectionalLanesByHighwayType(osmWayTypeValue, numLanes) == null;
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)){
+      settings = this.osmRailwaySettings;
+      if(laneConfiguration.getDefaultDirectionalRailwayTracks() != numLanes){
+        LOGGER.warning(String.format("Custom railway=%s number of tracks set to %d (instead of %d), this is a global setting, overwrite globally to change it",
+                osmWayTypeValue, laneConfiguration.getDefaultDirectionalRailwayTracks(), numLanes));
+      }
+    }else if(OsmWaterwayTags.isAnyWaterwayKeyTag(osmWayKey)) {
+      settings = this.osmWaterwaySettings;
+      if (laneConfiguration.getDefaultDirectionalWaterwayLanes() != numLanes) {
+        LOGGER.warning(String.format("Custom waterway [%s=%s] waterway lanes set to %d (instead of %d), this is a global setting, overwrite globally to change it",
+                osmWayKey, osmWayTypeValue, laneConfiguration.getDefaultDirectionalRailwayTracks(), numLanes));
+      }
+    }else{
+      LOGGER.warning(String.format("Custom way type for %s=%s is not allowed due to key not being a known or supported OSM way type", osmWayKey, osmWayTypeValue));
+      return;
+    }
+
+    if(!success){
+      LOGGER.warning(String.format("Unable to register new OsmWay type %s=%s due to issue regarding lane configuration", osmWayKey, osmWayTypeValue));
+      return;
+    }
+
+    /* deal with remainder of WAY TYPE configuration */
+    success = settings.registerNewSupportedOsmWayType(
+            osmWayKey, osmWayTypeValue, speedLimitKmh, capacityPerLanePcuH, maxDensityPerLanePcuH, allowedOsmModes);
+    if(!success){
+      LOGGER.warning(String.format("Unable to register new OsmWaytype %s=%s due to issue regarding way type configuration", osmWayKey, osmWayTypeValue));
+    }
+  }
   
   /**
    * exclude specific OSM ways from being parsed based on their id

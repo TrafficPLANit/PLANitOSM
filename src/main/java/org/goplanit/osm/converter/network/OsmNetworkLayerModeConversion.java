@@ -13,6 +13,7 @@ import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.osm.util.OsmWayUtils;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
+import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 
@@ -500,7 +501,8 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
    * @param includedModesToUpdate the set to supplement with found access information of allowed modes, e.g. access=yes, access=bus, etc.
    * @param excludedModesToUpdate the set to supplement with found access information of disallowed modes, e.g. access=no, etc.
    */
-  public void updateAccessKeyBasedModeRestrictions(final Map<String, String> tags, final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
+  public void updateAccessKeyBasedModeRestrictions(
+          final Map<String, String> tags, final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
     
     String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
     
@@ -521,7 +523,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
       }
       
       /*... retain all that are supported by the layer */
-      if(osmAllowedModesForWayType!= null) {
+      if(!CollectionUtils.nullOrEmpty(osmAllowedModesForWayType)) {
         Set<Mode> allowedModes =getActivatedPlanitModes(osmAllowedModesForWayType);
         allowedModes.retainAll(networkLayer.getSupportedModes());
         includedModesToUpdate.addAll(allowedModes);

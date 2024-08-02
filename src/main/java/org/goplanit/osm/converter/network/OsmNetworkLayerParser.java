@@ -74,7 +74,26 @@ public class OsmNetworkLayerParser {
   
   /** listener with functionality to sync XML ids to unique internal id upon breaking a link segment, ensures that when persisting
    * OSM network by XML id,  we do not have duplicate ids */
-  private final SyncXmlIdToIdBreakEdgeSegmentHandler syncXmlIdToIdOnBreakLinkSegment = new SyncXmlIdToIdBreakEdgeSegmentHandler();  
+  private final SyncXmlIdToIdBreakEdgeSegmentHandler syncXmlIdToIdOnBreakLinkSegment = new SyncXmlIdToIdBreakEdgeSegmentHandler();
+
+  /**
+   * Collect the default speed limit for a given highway/railway/waterway tag value, where we extract the key and value from the passed in tags, if available
+   *
+   * @param settings to use
+   * @param tags     to extract way key value pair from (highway,railway keys currently supported)
+   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
+   */
+  private static Double getDefaultSpeedLimitByOsmWayType(OsmNetworkReaderSettings settings, Map<String, String> tags){
+    if(tags.containsKey(OsmHighwayTags.getHighwayKeyTag())) {
+      return settings.getHighwaySettings().getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.getHighwayKeyTag()));
+    }else if(tags.containsKey(OsmRailwayTags.getRailwayKeyTag())){
+      return settings.getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.getRailwayKeyTag()));
+    }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
+      return settings.getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
+    }else {
+      throw new PlanItRunTimeException("No default speed limit available, tags do not contain activated highway, railway, or waterway key (tags: %s", tags);
+    }
+  }
   
   /**
    * Initialise the layer specific event listeners, for example when modifications are made to the underlying network and based on user configuration
@@ -130,7 +149,7 @@ public class OsmNetworkLayerParser {
 
       /* update mode properties */
       if(!toBeAddedModes.isEmpty()) {
-        double osmWayTypeMaxSpeed = settings.getDefaultSpeedLimitByOsmWayType(tags);
+        double osmWayTypeMaxSpeed = getDefaultSpeedLimitByOsmWayType(settings, tags);
         for(var newMode: toBeAddedModes) {
           double modeMaxSpeedOnLinkType = Math.min(newMode.getMaximumSpeedKmH(),osmWayTypeMaxSpeed);
           var accessGroup = AccessGroupPropertiesFactory.create(modeMaxSpeedOnLinkType, newMode);
@@ -408,7 +427,7 @@ public class OsmNetworkLayerParser {
     }
     
     if(useNonDirectionalDefault) {
-      nonDirectionalSpeedLimitKmh = settings.getDefaultSpeedLimitByOsmWayType(tags);
+      nonDirectionalSpeedLimitKmh = getDefaultSpeedLimitByOsmWayType(settings, tags);
       layerData.getProfiler().incrementMissingSpeedLimitCounter();
     }
     
@@ -699,7 +718,8 @@ public class OsmNetworkLayerParser {
    * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
    * @return the link corresponding to this way
    */
-  private MacroscopicLink extractLink(OsmWay osmWay, Map<String, String> tags, Integer startNodeIndex, Integer endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
+  private MacroscopicLink extractLink(
+          OsmWay osmWay, Map<String, String> tags, Integer startNodeIndex, Integer endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
 
     /* create the link */
     MacroscopicLink link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);

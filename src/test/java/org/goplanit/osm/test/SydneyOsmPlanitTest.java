@@ -1,9 +1,16 @@
 package org.goplanit.osm.test;
 
+import org.goplanit.converter.network.NetworkConverter;
+import org.goplanit.converter.network.NetworkConverterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
+import org.goplanit.io.converter.network.PlanitNetworkWriter;
+import org.goplanit.io.converter.network.PlanitNetworkWriterFactory;
 import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
+import org.goplanit.osm.converter.network.OsmNetworkReader;
+import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
+import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;
@@ -104,7 +111,22 @@ public class SydneyOsmPlanitTest {
     final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_comprehensive");
 
     try {
-      Osm2PlanitConversionTemplates.osm2PlanitNetworkComprehensive(SYDNEYCBD_2023_PBF.toAbsolutePath().toString(), PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+      /* OSM reader */
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(
+              SYDNEYCBD_2023_PBF.toAbsolutePath().toString(),  CountryNames.AUSTRALIA);
+
+      /* reader configuration */
+      osmReader.getSettings().activateRailwayParser(true);
+      osmReader.getSettings().getHighwaySettings().activateAllOsmHighwayTypes();
+
+      /* PLANit writer */
+      PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+
+      /* convert */
+      NetworkConverter theConverter = NetworkConverterFactory.create(osmReader, planitWriter);
+      theConverter.convert();
+
       PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
