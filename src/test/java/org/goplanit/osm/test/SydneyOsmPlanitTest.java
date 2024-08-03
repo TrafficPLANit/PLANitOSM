@@ -81,7 +81,9 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateHighwayParser(false);
       readerSettings.getNetworkSettings().activateRailwayParser(false);
       readerSettings.getNetworkSettings().activateWaterwayParser(true);
+
       readerSettings.getNetworkSettings().setRemoveDanglingSubnetworks(false);
+      readerSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
 
@@ -118,6 +120,7 @@ public class SydneyOsmPlanitTest {
       /* reader configuration */
       osmReader.getSettings().activateRailwayParser(true);
       osmReader.getSettings().getHighwaySettings().activateAllOsmHighwayTypes();
+      osmReader.getSettings().setConsolidateLinkSegmentTypes(false);
 
       /* PLANit writer */
       PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(

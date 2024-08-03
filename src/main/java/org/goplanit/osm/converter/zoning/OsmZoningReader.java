@@ -414,7 +414,7 @@ public class OsmZoningReader implements ZoningReader {
       PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning);
     }    
     
-    LOGGER.info(" OSM zoning parsing...DONE");
+    LOGGER.info("OSM zoning parsing...DONE");
     
     /* return parsed zoning */
     return this.zoning;    

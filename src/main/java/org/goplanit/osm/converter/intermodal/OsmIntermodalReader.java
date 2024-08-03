@@ -36,15 +36,15 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReader.class.getCanonicalName());
   
   /** the settings to use */
-  private OsmIntermodalReaderSettings settings;
+  private final OsmIntermodalReaderSettings settings;
   
   /** the zoning to populate if any */
-  private Zoning zoningToPopulate;
+  private final Zoning zoningToPopulate;
 
   /** the network to populate */
-  private PlanitOsmNetwork osmNetworkToPopulate;
-       
-    
+  private final PlanitOsmNetwork osmNetworkToPopulate;
+
+
   /** Make sure settings are consistent for those properties that are assumed to be
    * 
    * @return true when valid, false otherwise
@@ -147,7 +147,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     this.settings = settings;
     this.zoningToPopulate = zoningToPopulate;
     this.osmNetworkToPopulate = osmNetworkToPopulate;
-  }  
+  }
   
    
   /**

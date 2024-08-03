@@ -71,7 +71,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /* SETTINGS */
   
   /** the crs of the OSM source */
-  protected CoordinateReferenceSystem sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;  
+  protected CoordinateReferenceSystem sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
+
+  private boolean consolidateLinkSegmentTypes = DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES;
 
   /** flag indicating if dangling subnetworks should be removed after parsing the network
    * OSM network often have small roads that appear to be connected to larger roads, but in fact are not. 
@@ -92,10 +94,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected int discardSubNetworkAboveSize = Integer.MAX_VALUE;
   
   /**
-   * indicate whether or not to keep the largest subnetwork when {@code removeDanglingSubNetworks} is set to true even when it does
+   * indicate whether to keep the largest subnetwork when {@code removeDanglingSubNetworks} even when it does
    * not adhere to the criteria of {@code discardSubNetworkBelowSize} and/or {@code discardSubNetworkAbovesize} 
    */
-  protected boolean alwaysKeepLargestsubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
+  protected boolean alwaysKeepLargestSubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
       
   /**
    * Conduct general initialisation for any instance of this class
@@ -127,6 +129,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   
   /** by default we always keep the largest subnetwork */
   public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
+
+  /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
+  public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
@@ -200,12 +205,14 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("OSM network input source: %s",getInputSource()));
-    LOGGER.info(String.format("Country to base defaults on: %s",getCountryName()));
-    LOGGER.info(String.format("Setting Coordinate Reference System: %s",getSourceCRS().getName()));
+    LOGGER.info(String.format("%-40s: %s","OSM network input source", getInputSource()));
+    LOGGER.info(String.format("%-40s: %s","Country to base defaults on",getCountryName()));
+    LOGGER.info(String.format("%-40s: %s","Setting Coordinate Reference System",getSourceCRS().getName()));
     if(hasBoundingBoundary()) {
-      LOGGER.info(String.format("Network bounding boundary %s",getBoundingArea().toString()));
+      LOGGER.info(String.format("%-40s %s","Network bounding boundary", getBoundingArea().toString()));
     }
+    LOGGER.info(String.format("%-40s: %s","Consolidating functionally equivalent OSM link types", isConsolidateLinkSegmentTypes()));
+    LOGGER.info(String.format("%-40s: %s","Always keep largest parsed sub-network", isAlwaysKeepLargestSubnetwork()));
 
     getHighwaySettings().logSettings();
     getRailwaySettings().logSettings();
@@ -501,7 +508,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @return true when kept false otherwise
    */
   public boolean isAlwaysKeepLargestSubnetwork() {
-    return alwaysKeepLargestsubNetwork;
+    return alwaysKeepLargestSubNetwork;
   }
 
   /** indicate to keep the largest subnetwork always even when removing dangling subnetworks and the largest one
@@ -510,7 +517,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param alwaysKeepLargestSubnetwork when true we always keep it, otherwise not
    */
   public void setAlwaysKeepLargestSubnetwork(boolean alwaysKeepLargestSubnetwork) {
-    this.alwaysKeepLargestsubNetwork = alwaysKeepLargestSubnetwork;
+    this.alwaysKeepLargestSubNetwork = alwaysKeepLargestSubnetwork;
   }  
 
   /**
@@ -799,6 +806,23 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */  
   public boolean isKeepOsmNodeOutsideBoundingPolygon(Number osmNodeId) {
     return includedOutsideBoundingPolygonOsmNodes.contains(osmNodeId.longValue());
-  }  
+  }
 
+  /** Flag on whether to consolidate functionally equivalent link segment types for various OSM way types into a single
+   * PLANit type
+   *
+   * @return flag set
+   */
+  public boolean isConsolidateLinkSegmentTypes() {
+    return consolidateLinkSegmentTypes;
+  }
+
+  /** Flag on whether to consolidate functionally equivalent link segment types for various OSM way types into a single
+   * PLANit type
+   *
+   * @param flag to set
+   * */
+  public void setConsolidateLinkSegmentTypes(boolean flag) {
+    this.consolidateLinkSegmentTypes = flag;
+  }
 }

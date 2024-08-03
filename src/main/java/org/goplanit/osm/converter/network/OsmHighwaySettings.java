@@ -446,7 +446,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("Highway (road) parser activated: %s", isParserActive()));
+    LOGGER.info(String.format("%-40s: %s","Highway (road) parser activated", isParserActive()));
   }
 
 }

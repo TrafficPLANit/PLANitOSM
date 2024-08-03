@@ -46,10 +46,13 @@ public class BasicOsmReaderTest {
    * @param osmReader to configure
    */
   private void configureForRoadAndPt(final OsmIntermodalReader osmReader){
+
+    var highwaySettings = osmReader.getSettings().getNetworkSettings().getHighwaySettings();
+
     /* test out excluding a particular type highway:road from parsing */
-    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+    highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+    highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+    highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
 
     /* activate railways */
     osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
@@ -74,15 +77,16 @@ public class BasicOsmReaderTest {
   public void osmReaderRoadInfrastructureTest() {
     try {
       OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
-      
+      var highwaySettings = osmReader.getSettings().getHighwaySettings();
+
       /* test out excluding a particular type highway:road from parsing */
-      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
+      highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.ROAD);
       
       /* test out setting different defaults for the highway:primary type*/
-      osmReader.getSettings().getHighwaySettings().overwriteCapacityMaxDensityDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
+      highwaySettings.overwriteCapacityMaxDensityDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
-      osmReader.getSettings().getHighwaySettings().addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
+      highwaySettings.addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
 
@@ -111,6 +115,7 @@ public class BasicOsmReaderTest {
     try {
       OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
       configureForRoadAndPt(osmReader);
+      osmReader.getSettings().getNetworkSettings().setConsolidateLinkSegmentTypes(true);
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getNetworkSettings());
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getPublicTransportSettings());
@@ -130,6 +135,7 @@ public class BasicOsmReaderTest {
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
+
       assertEquals(1234, network.getTransportLayers().getFirst().getLinks().size());
       assertEquals(2441, network.getTransportLayers().getFirst().getLinkSegments().size());
       assertEquals(1030, network.getTransportLayers().getFirst().getNodes().size());

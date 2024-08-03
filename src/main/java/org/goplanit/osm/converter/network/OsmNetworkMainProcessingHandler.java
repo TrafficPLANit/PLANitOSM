@@ -510,7 +510,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       networkLayerHandler.complete();      
     });
         
-    LOGGER.info(" OSM basic network parsing...DONE");
+    LOGGER.info("OSM basic network parsing...DONE");
   }
   
   /**

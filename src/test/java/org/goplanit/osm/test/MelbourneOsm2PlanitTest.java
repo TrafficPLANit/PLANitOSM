@@ -73,6 +73,8 @@ public class MelbourneOsm2PlanitTest {
       var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
       var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
+      inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
+
       // apply bounding box
       inputSettings.getNetworkSettings().setBoundingArea(
               OsmBoundary.of(144.995842, 144.921341, -37.855068,-37.786996));
@@ -113,6 +115,8 @@ public class MelbourneOsm2PlanitTest {
 
       var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
       var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
+
+      inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
       // apply a boundary area based on name (osm relation id: 3898547)
       inputSettings.setBoundingArea(

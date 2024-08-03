@@ -319,6 +319,6 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("Waterway parser activated: %s", String.valueOf(isParserActive())));
+    LOGGER.info(String.format("%-40s: %s","Waterway parser activated", isParserActive()));
   }
 }

@@ -160,11 +160,11 @@ public class OsmModeConversionBase {
     osmLinkModes.clear(); // used by addMappedOsmLinkModesByPlanitMode consumer, so reset
     if(link.hasEdgeSegmentAb()) {
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAllowedModes();
-      planitModes.forEach( planitMode -> addMappedOsmLinkModesByPlanitMode.accept(planitMode));
+      planitModes.forEach(addMappedOsmLinkModesByPlanitMode::accept);
     }
     if(link.hasEdgeSegmentBa()) {      
       Collection<Mode> planitModes = ((MacroscopicLinkSegment)link.getEdgeSegmentBa()).getLinkSegmentType().getAllowedModes();
-      planitModes.forEach( planitMode -> addMappedOsmLinkModesByPlanitMode.accept(planitMode));
+      planitModes.forEach(addMappedOsmLinkModesByPlanitMode::accept);
     }
 
     if(osmLinkModes==null || osmLinkModes.isEmpty()) {

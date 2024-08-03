@@ -347,6 +347,6 @@ public class OsmRailwaySettings extends OsmWaySettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("Railway parser activated: %s", isParserActive()));
+    LOGGER.info(String.format("%-40s: %s","Railway parser activated", isParserActive()));
   }
 }

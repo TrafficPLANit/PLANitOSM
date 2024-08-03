@@ -1,14 +1,15 @@
 package org.goplanit.osm.util;
 
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.network.LayeredNetwork;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
-import org.goplanit.osm.converter.network.*;
-import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
+import org.goplanit.osm.converter.network.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
-
-import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;

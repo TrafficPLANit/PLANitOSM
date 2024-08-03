@@ -27,6 +27,7 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.id.ExternalIdAble;
 import org.goplanit.utils.math.Precision;
+import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.mode.TrackModeType;
@@ -140,7 +141,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private Pair<MacroscopicLink, Set<LinkSegment>> findMostAppropriateStopLocationLinkForWaitingArea(TransferZone transferZone, String osmAccessMode, Collection<MacroscopicLink> eligibleLinks) {
     // prep
-    Function<MacroscopicLink, String> linkToSourceId = l -> l.getExternalId();
+    Function<MacroscopicLink, String> linkToSourceId = ExternalIdAble::getExternalId;
     var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
     var accessMode = getReferenceNetwork().getModes().get(accessModeType);
 
@@ -254,8 +255,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }    
   
     /* filter based on mode compatibility */
-    Collection<MacroscopicLink> modeAndSpatiallyCompatibleLinks = getPtModeHelper().filterModeCompatibleLinks(eligibleOsmModes, spatiallyMatchedLinks, false /*only exact matches allowed */);
-    if(modeAndSpatiallyCompatibleLinks == null || modeAndSpatiallyCompatibleLinks.isEmpty()) {
+    var modeAndSpatiallyCompatibleLinks = getPtModeHelper().filterModeCompatibleLinks(
+        eligibleOsmModes, spatiallyMatchedLinks, false /*only exact matches allowed */);
+    if(CollectionUtils.nullOrEmpty(modeAndSpatiallyCompatibleLinks)) {
       return null;
     }
 
@@ -450,10 +452,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         var networkSettings = getNetworkToZoningData().getNetworkSettings();
         var tags = OsmModelUtil.getTagsAsMap(osmStation);
 
-        if(osmStation.getId() == 3935689548L){
-          int bla = 4;
-        }
-
         /* suppress warnings in case we cannot create a station that lies outside the bounding area */
         boolean outsideBoundingArea =
             !OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(
@@ -461,13 +459,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         boolean suppressWarnings = outsideBoundingArea;
 
         /* mode compatibility check */
-        Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
-            getPtModeHelper().collectPublicTransportModesFromPtEntity(
+        var modeResult = getPtModeHelper().collectPublicTransportModesFromPtEntity(
                 osmStation, tags, OsmModeUtils.identifyPtv1DefaultMode(osmStation.getId(), tags, true));
         if(!OsmModeUtils.hasMappedPlanitMode(modeResult)){
           return;
         }
-        Collection<String> eligibleOsmModes = modeResult!= null ? modeResult.first() : null;
+        Collection<String> eligibleOsmModes = modeResult.first();
 
         /* special case - when a ferry terminal is marked as a station, we process it as a stand-alone ferry terminal
          * rather than a station... */
@@ -817,7 +814,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     long osmEntityId = Long.parseLong(transferZone.getExternalId());
 
     // only when transfer zone falls within boundary area we log warnings as if we can't complete in such cases it is
-    // likely due to the network being truncated and it is expected behaviour
+    // likely due to the network being truncated, and it is expected behaviour
     boolean suppressWarning =
         !OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(
             transferZone.getGeometry(), getZoningReaderData().getBoundingArea(), true);

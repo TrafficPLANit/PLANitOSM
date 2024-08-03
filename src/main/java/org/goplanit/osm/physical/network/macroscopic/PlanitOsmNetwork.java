@@ -41,7 +41,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * generated uid
    */
   private static final long serialVersionUID = -2227509715172627526L;
-    
+
   /**
    * The logger
    */
@@ -858,7 +858,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
 
           /* convert to comma separated string by mode name */
           String csvModeString = String.join(",", linkSegmentType.getAllowedModes().stream().map(Mode::getName).collect(Collectors.joining(",")));
-          LOGGER.info(String.format("%s %s highway:%s - modes: %s speed: %.2f (km/h) capacity: %.2f (pcu/lane/h), max density: %.2f (pcu/km/lane)",
+          LOGGER.info(String.format("%s %s highway=%-15s modes: %-60s speed (km/h): %-6.1f  capacity (pcu/lane/h): %-8.1f max_density (pcu/km/lane): %-8.1f",
               NetworkLayer.createLayerLogPrefix(layer),isCustom ? "[CUSTOM] " : "[DEFAULT]",
                   osmWayValue, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getExplicitCapacityPerLaneOrDefault(),
                   linkSegmentType.getExplicitMaximumDensityPerLaneOrDefault()));
@@ -910,7 +910,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           
           String csvModeString = String.join(",",
               linkSegmentType.getAllowedModes().stream().map(Mode::getName).collect(Collectors.joining(",")));
-          LOGGER.info(String.format("%s %s railway:%s - modes: %s speed: %s (km/h)", NetworkLayer.createLayerLogPrefix(layer), isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", osmWayValue, csvModeString, railwayMaxSpeed));
+          LOGGER.info(String.format("%s %s railway=%-15s modes: %-20s speed (km/h): %s ", NetworkLayer.createLayerLogPrefix(layer), isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", osmWayValue, csvModeString, railwayMaxSpeed));
         }
         
       }else {
@@ -978,7 +978,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
 
           String csvModeString = String.join(",", linkSegmentType.getAllowedModes().stream().map(
               Mode::getName).collect(Collectors.joining(",")));
-          LOGGER.info(String.format("%s %s %s=%s - modes: %s speed: %s (km/h)",
+          LOGGER.info(String.format("%s %s %7s=%-15s modes: %-20s speed (km/h): %s ",
               NetworkLayer.createLayerLogPrefix(layer), isOverwrite ? "[OVERWRITE] " : "[DEFAULT]",
               osmWayKey , osmWayValue, csvModeString, maxSpeedKmH));
         }
@@ -1107,8 +1107,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
      *
      * https://github.com/TrafficPLANit/PLANitOSM/issues/59
      */
-    final boolean consolidateLinkSegmentTypes = false;
-    if(consolidateLinkSegmentTypes){
+    if(settings.isConsolidateLinkSegmentTypes()){
       /* identify any functional duplicates, as in identical content, just different names, ids, external ids etc. */
       for(var layer : getTransportLayers()){
         var linkSegmentTypes = layer.getLinkSegmentTypes();
@@ -1116,21 +1115,25 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         var functionalDuplicates = linkSegmentTypes.findFunctionalDuplicates();
         for(var duplicatesEntry : functionalDuplicates){
           String concatenatedExternalId = duplicatesEntry.stream().map( MacroscopicLinkSegmentType::getExternalId).collect(Collectors.joining(","));
-          duplicatesEntry.forEach(lst -> {
-            lst.setName(concatenatedExternalId);
-            lst.setExternalId(concatenatedExternalId);
-          });
+          // update keep entry with extended external id/name
+          var consolidatedKeepEntry = duplicatesEntry.first();
+          consolidatedKeepEntry.setName(concatenatedExternalId);
+          consolidatedKeepEntry.setExternalId(concatenatedExternalId);
+          // remove redundant entries from network container
           duplicatesEntry.stream().skip(1).forEach( lst -> linkSegmentTypes.remove( lst.getId()));
         }
-        functionalDuplicates.stream().flatMap( e -> e.stream().skip(1)).forEach( lst -> linkSegmentTypes.remove( lst.getId()));
+        // fix up ids to be contiguous again
         linkSegmentTypes.recreateIds();
 
+        // fix up osm key/value mapping based on new consolidated
         for(var keyEntry : defaultPlanitLinkSegmentTypesByOsmKeyValue.entrySet()){
           for(var valueEntry : keyEntry.getValue().entrySet()){
             MacroscopicLinkSegmentType lst = valueEntry.getValue().get(layer);
-            // check if it is marked as duplicate
-            var duplicatesForEntry = functionalDuplicates.stream().filter( e -> e.contains(lst)).findFirst().orElse(null);
-            if(!CollectionUtils.nullOrEmpty(duplicatesForEntry) && duplicatesForEntry.first() != lst){
+            // check if it is marked as duplicate (by external id because we can't use contains since id of chucked types are no longer valid)
+            // if so, get the first entry we earmarked previously as the one to keep (with updated external id/name)
+            var duplicatesForEntry = functionalDuplicates.stream().filter( de -> de.stream().anyMatch(
+                e -> e.getExternalId().equals(lst.getExternalId()))).findFirst().orElse(null);
+            if(!CollectionUtils.nullOrEmpty(duplicatesForEntry)){
               MacroscopicLinkSegmentType replacementType = duplicatesForEntry.first();
               valueEntry.getValue().put(layer, replacementType);
             }
