@@ -557,6 +557,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** register a custom new way key value tag with defaults to parse in addition to the default supported.configured tags.
    *
+   * @param osmWayKey to use
    * @param osmWayTypeValue to use
    * @param numLanes default to use
    * @param speedLimitKmh default to use
