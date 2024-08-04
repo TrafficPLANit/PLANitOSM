@@ -7,10 +7,7 @@ import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
-import org.goplanit.osm.util.OsmTagUtils;
-import org.goplanit.osm.util.OsmWayUtils;
-import org.goplanit.osm.util.PlanitNetworkLayerUtils;
-import org.goplanit.osm.util.PlanitOsmUtils;
+import org.goplanit.osm.util.*;
 import org.goplanit.utils.arrays.ArrayUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
@@ -28,6 +25,8 @@ import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.LineString;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -448,133 +447,61 @@ public class OsmNetworkLayerParser {
   }
 
   /**
-   * parse the number of lanes on the road based on provided tags in forward and backward direction (if explicitly set), when not available defaults are used
-   *
-   * @param tags containing lane information
-   * @return forward backwards lanes, null if not defined
-   */
-  private Pair<Integer, Integer> extractDirectionalHighwayLanes(Map<String, String> tags) {
-    Integer totalLanes = null;
-    Integer lanesForward = null;
-    Integer lanesBackward = null;
-
-    if(tags.containsKey(OsmLaneTags.LANES)) {
-      totalLanes = Integer.parseInt(tags.get(OsmLaneTags.LANES));
-    }
-    if(tags.containsKey(OsmLaneTags.LANES_FORWARD)) {
-      lanesForward = Integer.parseInt(tags.get(OsmLaneTags.LANES_FORWARD));
-    }
-    if(tags.containsKey(OsmLaneTags.LANES_BACKWARD)) {
-      lanesBackward = Integer.parseInt(tags.get(OsmLaneTags.LANES_BACKWARD));
-    }
-
-    /* one way exceptions or implicit directional lanes */
-    if(totalLanes!=null && (lanesForward==null || lanesBackward==null)) {
-      if(OsmOneWayTags.isOneWay(tags)) {
-        boolean isReversedOneWay = OsmOneWayTags.isReversedOneWay(tags);
-        if(isReversedOneWay && lanesBackward==null) {
-          lanesBackward = totalLanes;
-        }else if(!isReversedOneWay && lanesForward==null) {
-          lanesForward = totalLanes;
-        }else if( (lanesForward==null && lanesBackward==null) && totalLanes%2==0) {
-          /* two directions, with equal number of lanes does not require directional tags, simply split in two */
-          lanesBackward = totalLanes/2;
-          lanesForward = lanesBackward;
-        }
-      }
-    }
-    return Pair.of(lanesForward, lanesBackward);
-  }
-
-  /**
-   * parse the number of lanes on the rail based on provided tags in forward and backward direction (if explicitly set), when not available defaults are used
-   *
-   * @param tags containing lane information
-   * @return forward backwards lanes, null if not defined
-   */
-  private Pair<Integer, Integer> extractDirectionalRailwayLanes(Map<String, String> tags) {
-    Integer lanesForward = null;
-    Integer lanesBackward = null;
-    if(tags.containsKey(OsmRailFeatureTags.TRACKS)) {
-      /* assumption is that same rail is used in both directions */
-      lanesForward = Integer.parseInt(tags.get(OsmRailFeatureTags.TRACKS));
-      lanesBackward = lanesForward;
-    }
-    return Pair.of(lanesForward, lanesBackward);
-  }
-
-  /** Waterways have no lanes, so we cannot obtain them from tagging, instead directly collect the default in
-   * apply to both directions
-   * @param tags to use
-   * @return lanes for waterways (Default always as long as tags are waterway supporting)
-   */
-  private Pair<Integer, Integer> extractDirectionalWaterwayLanes(Map<String, String> tags) {
-    var usedKeyTag = OsmWaterwayTags.getUsedKeyTag(tags);
-    var defaultLanes =
-        settings.getDefaultDirectionalLanesByWayType(usedKeyTag, tags.get(usedKeyTag));
-    // due to always using defaults, we must indicate lanes are missing for logging purposes
-    layerData.getProfiler().incrementMissingLaneCounter();
-    return Pair.of(defaultLanes,defaultLanes);
-  }
-  
-  /**
    * parse the number of lanes on the link in forward and backward direction (if explicitly set), when not available defaults are used
-   * 
-   * @param link for which lanes are specified (and its link segments)
+   *
+   * @param osmWay the source
    * @param tags containing lane information
    * @param linkSegmentTypes identified in forward and backward direction based on tags, useful to assign a minimum number of lanes in case no explicit lanes could be found by type is present 
    */
   private Pair<Integer, Integer> extractDirectionalLanes(
-      Link link, Map<String, String> tags, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes ) {
+      OsmWay osmWay,
+      Map<String, String> tags,
+      Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes ) {
 
-    Pair<Integer, Integer> result = null;
-    String osmWayKey = null;
+    /* prep for waterways which rely on defaults which we construct here dependent on key and config
+    * todo: for rail/highway we apply one-way check outside extraction, but not for waterway, seems inconsistent
+    *  consider moving this outside extraction function
+    * */
+    final Function<String, Integer> defaultLanesForWaterways = (waterWayKeyTag) ->
+        settings.getDefaultDirectionalLanesByWayType(waterWayKeyTag, tags.get(waterWayKeyTag));
+
+    Pair<Integer, Integer> lanesPair = null;
+    String usedOsmWayKey = null;
     try {
-      /* collect total and direction specific road based lane information */
-      if(tags.containsKey(OsmHighwayTags.getHighwayKeyTag())) {
-        osmWayKey = OsmHighwayTags.getHighwayKeyTag();
-        result = extractDirectionalHighwayLanes(tags);
+      var resultForUsedOsmKey =
+          OsmLaneUtils.extractDirectionalLanes(osmWay, tags, defaultLanesForWaterways);
+      lanesPair = resultForUsedOsmKey.second();
+      usedOsmWayKey = resultForUsedOsmKey.first();
 
-      /* convert number of tracks to lanes */
-      }else if(tags.containsKey(OsmRailwayTags.getRailwayKeyTag())) {
-        osmWayKey = OsmRailwayTags.getRailwayKeyTag();
-        result =  extractDirectionalRailwayLanes(tags);
-      }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
-        osmWayKey = OsmWaterwayTags.getUsedKeyTag(tags);
-        result =  extractDirectionalWaterwayLanes(tags);
-      }
     }catch(Exception e) {
-      LOGGER.warning(String.format("Something went wrong when parsing number of lanes for OSM way (id:%s), possible tagging error, reverting to default bi-directional configuration",link.getExternalId()));
+      LOGGER.warning(String.format("Something went wrong when parsing number of lanes for OSM way (id:%s), " +
+          "possible tagging error, reverting to default bi-directional configuration",osmWay.getId()));
     }
-    
+
     /* we assume that only when both are not set something went wrong or no information is ever available,
      * otherwise it is assumed it is a one-way link and it is properly configured */
-    boolean missingLaneInformation = false;
-    if(result == null || result.bothNull()) {
-      var lanesForward = settings.getDefaultDirectionalLanesByWayType(osmWayKey, tags.get(osmWayKey));
-      result = Pair.of(lanesForward,lanesForward);
+    if(Pair.nullOrEmpty(lanesPair)) {
+      var lanesForward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
+      lanesPair = Pair.of(lanesForward,lanesForward);
       layerData.getProfiler().incrementMissingLaneCounter();
     }
 
     /* when no lanes are allocated for vehicle modes, but direction has activated modes (for example due to presence of opposite lanes, or active modes -> assign 1 lane */
 
     // forward lane update
-    if(result.first() == null && linkSegmentTypes.first()!=null) {
-      var lanesForward = settings.getDefaultDirectionalLanesByWayType(osmWayKey, tags.get(osmWayKey));
-      result = Pair.of(lanesForward, result.second());
-      missingLaneInformation = true;
-    }
-    // backward lane update
-    if(result.second() == null && linkSegmentTypes.second()!=null) {
-      var lanesBackward = settings.getDefaultDirectionalLanesByWayType(osmWayKey, tags.get(osmWayKey));
-      result = Pair.of(result.first(), lanesBackward);
-      missingLaneInformation = true;
-    }
-    if(missingLaneInformation) {
+    if(lanesPair.first() == null && linkSegmentTypes.first()!=null) {
+      var lanesForward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
+      lanesPair = Pair.of(lanesForward, lanesPair.second());
       layerData.getProfiler().incrementMissingLaneCounter();
     }
-    
-    return result;
+    // backward lane update
+    if(lanesPair.second() == null && linkSegmentTypes.second()!=null) {
+      var lanesBackward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
+      lanesPair = Pair.of(lanesPair.first(), lanesBackward);
+      layerData.getProfiler().incrementMissingLaneCounter();
+    }
+
+    return lanesPair;
   }
 
 
@@ -618,7 +545,7 @@ public class OsmNetworkLayerParser {
     /* speed limits in forward and backward direction based on tags and defaults if missing*/
     Pair<Double,Double> speedLimits = extractDirectionalSpeedLimits(link, tags);
     /* lanes in forward and backward direction based on tags and defaults if missing */
-    Pair<Integer,Integer> lanes = extractDirectionalLanes(link, tags, linkSegmentTypes);
+    Pair<Integer,Integer> lanes = extractDirectionalLanes(osmWay, tags, linkSegmentTypes);
     
     /* create link segment A->B when eligible */
     MacroscopicLinkSegmentType linkSegmentTypeAb = directionAbIsForward ? linkSegmentTypes.first() : linkSegmentTypes.second();
