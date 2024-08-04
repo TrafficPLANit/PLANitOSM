@@ -128,7 +128,7 @@ public class OsmNetworkReader implements NetworkReader {
 
       /* STAGE 1 - BOUNDARY RELATION IDENTIFICATION */
       {
-        LOGGER.info(String.format("Boundary identification: Locating bounding boundary %s", settings.getBoundingArea().getBoundaryName()));
+        LOGGER.info(String.format("Boundary identification: Locating bounding boundary \"%s\"", settings.getBoundingArea().getBoundaryName()));
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
             settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
       }

@@ -130,7 +130,7 @@ public class OsmBoundaryManager {
 
   /**
    * Count number of currently registered OSM ways for boundary
-   * @return
+   * @return num found
    */
   private int getNumberOfPreregisteredBoundaryOsmWays() {
     if(!hasRegisteredBoundaryOsmWay()){
@@ -185,14 +185,15 @@ public class OsmBoundaryManager {
           !originalBoundary.hasBoundaryType() || OsmBoundaryTags.hasBoundaryValueTag(tags, originalBoundary.getBoundaryType());
       boolean adminLevelMatch = !originalBoundary.hasBoundaryAdminLevel() ||
           OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
-      boolean boundaryAdministrativeMatch = !originalBoundary.getBoundaryType().equals(OsmBoundaryTags.ADMINISTRATIVE) ||
+      boolean boundaryAdministrativeMatch =
+          !originalBoundary.hasBoundaryType() || !originalBoundary.getBoundaryType().equals(OsmBoundaryTags.ADMINISTRATIVE) ||
           originalBoundary.hasBoundaryAdminLevel() &&
               OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
 
       if(boundaryTypeMatch && adminLevelMatch && boundaryAdministrativeMatch){
 
         LOGGER.info(String.format(
-            "Found OSMRelation for bounding boundary: %s OsmRelationId:%d", originalBoundary.getBoundaryName(), osmRelation.getId()));
+            "Found OSMRelation for bounding boundary: \"%s\" OsmRelationId:%d", originalBoundary.getBoundaryName(), osmRelation.getId()));
 
         // full match found -> register all members with correct roles to extract bounding area polygon from in next stage
         for(int memberIndex = 0; memberIndex < osmRelation.getNumberOfMembers(); ++memberIndex){
@@ -239,8 +240,8 @@ public class OsmBoundaryManager {
     }
 
     List<OsmWay> boundaryOsmWays = getRegisteredBoundaryOsmWaysInOrder();
-    LinkedList<Coordinate> contiguousBoundaryCoords = new LinkedList<>() {
-    };
+    LinkedList<Coordinate> contiguousBoundaryCoords = new LinkedList<>();
+
     for(var osmWay : boundaryOsmWays){
       var coordArray = OsmWayUtils.createCoordinateArrayNoThrow(osmWay, osmNodeData.getRegisteredOsmNodes());
       if(!contiguousBoundaryCoords.isEmpty()){
@@ -357,7 +358,7 @@ public class OsmBoundaryManager {
       int numOsmWays = getNumberOfPreregisteredBoundaryOsmWays();
       LOGGER.info((success ?
           String.format("Registered %d relation member OSM ways for boundary: ",numOsmWays) :
-          "Unable to identify bounding area for: ") + this.originalBoundary.getBoundaryName() );
+          "Unable to identify bounding area for: ") + "\"" + this.originalBoundary.getBoundaryName() + "\"");
     }
   }
 
