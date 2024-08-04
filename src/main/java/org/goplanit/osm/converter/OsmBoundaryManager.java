@@ -193,7 +193,7 @@ public class OsmBoundaryManager {
       if(boundaryTypeMatch && adminLevelMatch && boundaryAdministrativeMatch){
 
         LOGGER.info(String.format(
-            "Found OSMRelation for bounding boundary: \"%s\" OsmRelationId:%d", originalBoundary.getBoundaryName(), osmRelation.getId()));
+            "Boundary identification: Found OSMRelation \"%s\" OsmRelationId:%d", originalBoundary.getBoundaryName(), osmRelation.getId()));
 
         // full match found -> register all members with correct roles to extract bounding area polygon from in next stage
         for(int memberIndex = 0; memberIndex < osmRelation.getNumberOfMembers(); ++memberIndex){
@@ -357,7 +357,7 @@ public class OsmBoundaryManager {
       boolean success = hasRegisteredRelationMembers();
       int numOsmWays = getNumberOfPreregisteredBoundaryOsmWays();
       LOGGER.info((success ?
-          String.format("Registered %d relation member OSM ways for boundary: ",numOsmWays) :
+          String.format("Boundary identification: registered %d relation member OSM ways for boundary: ",numOsmWays) :
           "Unable to identify bounding area for: ") + "\"" + this.originalBoundary.getBoundaryName() + "\"");
     }
   }
@@ -368,7 +368,7 @@ public class OsmBoundaryManager {
   public void logStepThreeCompletedBoundingBoundaryStats() {
     if(isComplete() && this.finalBoundaryWithPolygon.hasBoundaryName()){
       LOGGER.info(String.format(
-          "Bounding boundary %s finalised using total of %d OSM nodes", finalBoundaryWithPolygon.getBoundaryName(), osmNodeData.getRegisteredOsmNodes().size()));
+          "Boundary identification: \"%s\" finalised using total of %d OSM nodes", finalBoundaryWithPolygon.getBoundaryName(), osmNodeData.getRegisteredOsmNodes().size()));
     }
   }
 

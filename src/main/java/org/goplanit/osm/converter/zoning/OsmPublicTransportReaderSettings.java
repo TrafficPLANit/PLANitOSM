@@ -178,21 +178,21 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("%-40s: %s","Public transport infrastructure parser activated", isParserActive()));
+    LOGGER.info(String.format("%-60s: %s",      "Public transport infrastructure parser activated", isParserActive()));
 
     if(isParserActive()) {
-      LOGGER.info(String.format("%-40s: %s","OSM (transfer) zoning input file", getInputSource()));
+      LOGGER.info(String.format("%-60s: %s",    "OSM (transfer) zoning input file", getInputSource()));
       if(hasBoundingBoundary()) {
-        LOGGER.info(String.format("%-40s: %s","Pt bounding boundary set to", getBoundingArea().toString()));
+        LOGGER.info(String.format("%-60s: %s",  "Pt bounding boundary set to", getBoundingArea().toString()));
       }
 
-      LOGGER.info(String.format("%-40s: %.2fm", "Stop location to waiting area search radius", getStopToWaitingAreaSearchRadiusMeters()));
-      LOGGER.info(String.format("%-40s: %.2fm", "Station location to waiting area search radius", getStationToWaitingAreaSearchRadiusMeters()));
-      LOGGER.info(String.format("%-40s: %.2fm", "Station location to parallel tracks search radius", getStationToParallelTracksSearchRadiusMeters()));
-      LOGGER.info(String.format("%-40s: %s", "Remove dangling transfer zones", isRemoveDanglingZones()));
-      LOGGER.info(String.format("%-40s: %s", "Remove dangling transfer zone groups", isRemoveDanglingTransferZoneGroups()));
-      LOGGER.info(String.format("%-40s: %s", "Connect dangling ferry stops to nearby ferry routes (if present)", connectDanglingFerryStopToNearbyFerryRoute));
-      LOGGER.info(String.format("%-40s: %.2fm", "Ferry stop to ferry route search radius", getFerryStopToFerryRouteSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %.2fm", "Stop location to waiting area search radius", getStopToWaitingAreaSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %.2fm", "Station location to waiting area search radius", getStationToWaitingAreaSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %.2fm", "Station location to parallel tracks search radius", getStationToParallelTracksSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zones", isRemoveDanglingZones()));
+      LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zone groups", isRemoveDanglingTransferZoneGroups()));
+      LOGGER.info(String.format("%-60s: %s",    "Connect dangling ferry stops to nearby ferry routes (if present)", connectDanglingFerryStopToNearbyFerryRoute));
+      LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius", getFerryStopToFerryRouteSearchRadiusMeters()));
     }
   }
 
