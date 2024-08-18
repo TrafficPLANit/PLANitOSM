@@ -26,7 +26,6 @@ import org.locationtech.jts.geom.LineString;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -480,7 +479,7 @@ public class OsmNetworkLayerParser {
 
     /* we assume that only when both are not set something went wrong or no information is ever available,
      * otherwise it is assumed it is a one-way link and it is properly configured */
-    if(Pair.nullOrEmpty(lanesPair)) {
+    if(Pair.isNullOrEmpty(lanesPair)) {
       var lanesForward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
       lanesPair = Pair.of(lanesForward,lanesForward);
       layerData.getProfiler().incrementMissingLaneCounter();
