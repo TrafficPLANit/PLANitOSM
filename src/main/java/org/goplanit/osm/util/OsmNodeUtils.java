@@ -70,9 +70,6 @@ public class OsmNodeUtils {
    * @return x coordinate
    */
   public static double getX(final OsmNode osmNode) {
-    if(osmNode == null){
-      int bla = 4;
-    }
     return osmNode.getLongitude();
   }
   
