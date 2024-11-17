@@ -208,8 +208,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       return Pair.of(selectedAccessLink, accessLinkSegments);
     }
 
-    /* 4) Remaining options are all valid and close ... choose based on importance, the premise being that road based PT services tend to be located on main roads, rather than smaller roads
-     * so, we choose the first link segment with the highest capacity found (if they differ) and then return its parent link as the candidate */
+    /* 4) Remaining options are all valid and close ... choose based on importance, the premise being that road based
+     * PT services tend to be located on main roads, rather than smaller roads so, we choose the first link segment
+     * with the highest capacity found (if they differ) and then return its parent link as the candidate */
     if(!(accessMode.getPhysicalFeatures().getTrackType() == TrackModeType.RAIL) &&
         filteredCandidates.size()>1 &&
         filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(accessLinkSegments::contains).map(
@@ -218,16 +219,20 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       // retain only edge segments with the maximum capacity
       var maxCapacity = accessLinkSegments.stream().map(
           ls -> ((MacroscopicLinkSegment)ls).getCapacityOrDefaultPcuHLane()).max(Comparator.naturalOrder());
-      var lowerCapacitySegments = filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(ls -> Precision.smaller( ls.getCapacityOrDefaultPcuHLane(), maxCapacity.get(), Precision.EPSILON_6)).collect(Collectors.toUnmodifiableSet());
+      var lowerCapacitySegments =
+          filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(
+              ls -> Precision.smaller( ls.getCapacityOrDefaultPcuHLane(), maxCapacity.get(), Precision.EPSILON_6)).collect(
+                  Collectors.toUnmodifiableSet());
       accessLinkSegments.removeAll(lowerCapacitySegments);
       filteredCandidates.removeAll(
-          lowerCapacitySegments.stream().map(MacroscopicLinkSegment::getParentLink).collect(Collectors.toUnmodifiableSet()));
+          lowerCapacitySegments.stream().map(MacroscopicLinkSegment::getParent).collect(Collectors.toUnmodifiableSet()));
     }
 
     /* now find the closest remaining*/
     MacroscopicLink finalSelectedAccessLink = filteredCandidates.iterator().next();
     if(filteredCandidates.size()>1) {
-      finalSelectedAccessLink = (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(transferZone.getGeometry(), filteredCandidates, getGeoUtils());
+      finalSelectedAccessLink = (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(
+          transferZone.getGeometry(), filteredCandidates, getGeoUtils());
     }
     final var dummy = finalSelectedAccessLink;
     accessLinkSegments.removeIf(ls -> !ls.getParent().equals(dummy)); // sync
