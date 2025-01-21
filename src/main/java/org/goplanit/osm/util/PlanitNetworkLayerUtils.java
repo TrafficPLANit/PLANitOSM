@@ -223,7 +223,8 @@ public class PlanitNetworkLayerUtils {
    * @param layerData to register on
    * @return created node, null when something went wrong
    */
-  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
+  public static Node createPopulateAndRegisterNode(
+      Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
     /* create */
     Node node = networkLayer.getNodes().getFactory().registerNew(osmNodeLocation, true);
     if(node!= null) {
