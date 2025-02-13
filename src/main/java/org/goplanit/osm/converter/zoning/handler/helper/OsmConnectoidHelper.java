@@ -234,7 +234,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       var osmVerticalLayerIndex = this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
       if (osmVerticalLayerIndex != null &&
           !IterableUtils.asStream(linkSegments).allMatch(
-              ls -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex((Link) ls.getParent()) == this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone))) {
+              ls -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(
+                      (Link) ls.getParent()) ==
+                      this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone))) {
         LOGGER.warning(String.format("OSM vertical layer index (layer=%d) of PLANit transfer zone (%s) not compatible with selected access link segments [%s] for its connectoids, this shouldn't happen, verify correctness",
                 osmVerticalLayerIndex, transferZone.getIdsAsString(), IterableUtils.asStream(linkSegments).map(ExternalIdAble::getIdsAsString).collect(Collectors.joining(","))));
       }

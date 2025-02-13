@@ -33,9 +33,10 @@ public class PlanitTransferZoneUtils {
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(PlanitTransferZoneUtils.class.getCanonicalName());
   
-  /** to be able to retain the supported osm modes on a planit transfer zone, we place tham on the zone as an input property under this key.
-   *  This avoids having to store all osm tags, while still allowing to leverage the information in the rare cases it is needed when this information is lacking
-   *  on stop_positions that use this transfer zone
+  /** to be able to retain the supported osm modes on a planit transfer zone, we place them on the zone as an input
+   * property under this key. This avoids having to store all osm tags, while still allowing to leverage the
+   * information in the rare cases it is needed when this information is lacking on stop_positions that use this
+   * transfer zone
    */
   private static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";  
   
@@ -54,7 +55,12 @@ public class PlanitTransferZoneUtils {
    * @return closest zone found
    */
   private static Zone findZoneClosest(
-      OsmEntity osmEntity, Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
+      OsmEntity osmEntity,
+      Collection<? extends Zone> zones,
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      PlanitJtsCrsUtils geoUtils){
+
     EntityType type = Osm4JUtils.getEntityType(osmEntity);
     switch (type) {
     case Node:
@@ -104,7 +110,8 @@ public class PlanitTransferZoneUtils {
     
     Set<TransferZone> closestPerGroup = new HashSet<>();
     for(TransferZoneGroup group : transferZoneGroups) {
-      TransferZone closestOfGroup = (TransferZone) findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, suppressLogging, geoUtils);
+      TransferZone closestOfGroup =
+              (TransferZone) findZoneClosest(osmEntity, group.getTransferZones(), osmNodes, suppressLogging, geoUtils);
       closestPerGroup.add(closestOfGroup);
     }
     /* now find closest across all groups */
@@ -127,14 +134,16 @@ public class PlanitTransferZoneUtils {
         return location.equals(transferZone.getGeometry());
       }
     }else { 
-      throw new PlanItException("Transferzone representing platform/pole %s has no valid geometry attached, unable to verify location", transferZone.getExternalId());
+      throw new PlanItException("Transferzone representing platform/pole %s has no valid geometry attached, " +
+              "unable to verify location", transferZone.getExternalId());
     }
       
     return false;
   }
 
-  /** process an osm entity that is classified as a (train) station. For this to register on the transfer zone, we try to utilise its name and use it for the zone
-   * name if it is empty. We also record it as an input property for future reference, e.g. key=station and value the name of the osm station
+  /** process an osm entity that is classified as a (train) station. For this to register on the transfer zone, we
+   * try to utilise its name and use it for the zone name if it is empty. We also record it as an input property for
+   * future reference, e.g. key=station and value the name of the osm station.
    *   
    * @param transferZone the osm station relates to 
    * @param tags of the osm entity representation a station
@@ -174,7 +183,8 @@ public class PlanitTransferZoneUtils {
    */
   @SuppressWarnings("unchecked")
   public static SortedSet<String> getRegisteredOsmModesForTransferZone(final TransferZone transferZone){
-    SortedSet<String> eligibleOsmModes = (SortedSet<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
+    SortedSet<String> eligibleOsmModes =
+            (SortedSet<String>) transferZone.getInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY);
     if(eligibleOsmModes != null)
     {
       return Collections.unmodifiableSortedSet(eligibleOsmModes);
