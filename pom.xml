@@ -47,7 +47,7 @@
 
 		<dependency>
 			<groupId>org.geotools</groupId>
-			<artifactId>gt-geometry</artifactId>
+			<artifactId>gt-main</artifactId>
 		</dependency>
 		
 		<!-- https://mvnrepository.com/artifact/de.topobyte/osm4j-core -->

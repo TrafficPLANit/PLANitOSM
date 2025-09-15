@@ -10,7 +10,7 @@ import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import java.net.URL;
 import java.nio.file.Path;
