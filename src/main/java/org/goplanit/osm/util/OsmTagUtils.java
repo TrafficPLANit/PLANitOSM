@@ -6,6 +6,7 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.utils.misc.CharacterUtils;
 import org.goplanit.utils.misc.StringUtils;
 
 /**
@@ -22,6 +23,26 @@ public class OsmTagUtils {
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
   public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
 
+  /** input property key used for persisting original OSM keys */
+  public static final String PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY = "osm_tags";
+
+  /**
+   * Convert the OSM key value tags into a single string in the form of
+   * \{\(key1\):\(value1\),\(key2\):\(value2\)\} when using a comma as separator and a colon as key value separator
+   *
+   * @param osmTags to convert to string
+   * @return string form of osm tags
+   */
+  public static String osm4jTagsToString(Map<String,String> osmTags, Character separator, Character keyValueSeparator){
+    final StringBuilder sb = new StringBuilder();
+    sb.append("{");
+    osmTags.forEach((k,v) ->
+            sb.append("(").append(k).append(")").append(keyValueSeparator).
+                    append("(").append(v).append(")").append(separator));
+    sb.deleteCharAt(sb.length()-1); // remove final separator
+    sb.append("}");
+    return sb.toString();
+  }
   
   /** Verify if the passed in value tag is present in the list of value tags provided
    * 

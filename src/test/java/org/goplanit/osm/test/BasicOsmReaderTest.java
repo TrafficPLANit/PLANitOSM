@@ -9,6 +9,8 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
+import org.goplanit.utils.graph.Edge;
+import org.goplanit.utils.graph.Vertex;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -77,6 +79,7 @@ public class BasicOsmReaderTest {
   public void osmReaderRoadInfrastructureTest() {
     try {
       OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
+      osmReader.getSettings().setRetainOsmTags(true);
       var highwaySettings = osmReader.getSettings().getHighwaySettings();
 
       /* test out excluding a particular type highway:road from parsing */
@@ -99,7 +102,12 @@ public class BasicOsmReaderTest {
       assertEquals(network.getTransportLayers().getFirst().getLinks().size(), 1075);
       assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2123);
       assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 882);
-      
+
+      assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(Edge::hasInputProperty) : "OSM tags not retained on all links";
+
+      //todo flesh out this assert as not all nodes will have tags...
+      //assert network.getTransportLayers().getFirst().getNodes().stream().allMatch(Vertex::hasInputProperty) : "OSM tags not retained on all nodes";
+
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
       e.printStackTrace();

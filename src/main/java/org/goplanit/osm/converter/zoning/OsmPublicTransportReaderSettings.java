@@ -178,6 +178,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   @Override
   public void logSettings() {
+    super.logSettings();
     LOGGER.info(String.format("%-60s: %s",      "Public transport infrastructure parser activated", isParserActive()));
 
     if(isParserActive()) {

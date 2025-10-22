@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.network;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
 import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
@@ -28,6 +29,10 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import static org.goplanit.osm.util.OsmTagUtils.PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY;
+import static org.goplanit.utils.misc.CharacterUtils.COMMA;
+import static org.goplanit.utils.misc.CharacterUtils.COLON;
 
 /**
  * Takes care of populating a PLANit layer based on the OSM way information that has been identified
@@ -205,12 +210,19 @@ public class OsmNetworkLayerParser {
    * @return created or fetched link
    */
   private MacroscopicLink createAndPopulateLink(
-      OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
+      OsmWay osmWay,
+      Map<String, String> tags,
+      int startNodeIndex,
+      int endNodeIndex,
+      boolean allowTruncationIfGeometryIncomplete){
+
     if(startNodeIndex < 0 || startNodeIndex >= osmWay.getNumberOfNodes()){
-      throw new PlanItRunTimeException("Invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
+      throw new PlanItRunTimeException(
+              "Invalid start node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
     }
     if(endNodeIndex < 0 || endNodeIndex >= osmWay.getNumberOfNodes()){
-      throw new PlanItRunTimeException("Invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
+      throw new PlanItRunTimeException(
+              "Invalid end node index %d when extracting link from Osm way %s",startNodeIndex, osmWay.getId());
     }
 
     /* collect memory model nodes */
@@ -231,7 +243,8 @@ public class OsmNetworkLayerParser {
 
     /* If truncated to a single node or not available (because fully/partially outside bounding box), it is not valid and mark as such */
     if(nodeLastResult == null || nodeFirstResult == null || nodeLastResult.first().idEquals(nodeFirstResult.first())) {
-      LOGGER.fine(String.format("DISCARD: OSM way %d truncated to single node, unable to create PLANit link for it", osmWay.getId()));
+      LOGGER.fine(String.format("DISCARD: OSM way %d truncated to single node, unable to create PLANit link for it",
+              osmWay.getId()));
       networkData.registerProcessedOsmWayAsUnavailable(osmWay.getId());
       return null;
     }
@@ -244,7 +257,8 @@ public class OsmNetworkLayerParser {
     try {
       lineString = extractPartialLinkGeometry(osmWay, nodeFirstResult.second(), nodeLastResult.second());
     }catch (PlanItException e) {
-      LOGGER.fine(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be created, likely outside bounding box",osmWay.getId()));
+      LOGGER.fine(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be " +
+              "created, likely outside bounding box",osmWay.getId()));
       return null;
     }
 
@@ -272,6 +286,11 @@ public class OsmNetworkLayerParser {
       OsmNetworkHandlerHelper.setLinkOsmWayType(link,  OsmWayUtils.findWayTypeValueForEligibleKey(tags));
       /* register the links vertical layer index (used in the zoning reader for example) */
       OsmNetworkHandlerHelper.setLinkVerticalLayerIndex(link, tags);
+
+      /* register original OSM tags as custom input property if indicated to be retained */
+      if(settings.isRetainOsmTags()){
+        link.addInputProperty(PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY,OsmTagUtils.osm4jTagsToString(tags,COMMA, COLON));
+      }
     }
     return link;      
   }  
@@ -571,14 +590,17 @@ public class OsmNetworkLayerParser {
    * @return extracted node (first node to use for OSM way), and start nod index used. Null if not even a first node could be extracted, this only happens when no references osm node is available
    * likely due to user specifying an internal bounding box outside of which this osm way resides
    */
-  private Pair<Node,Integer> extractFirstNode(OsmWay osmWay, Integer startNodeIndex, boolean changeStartNodeIndexIfNotPresent){
+  private Pair<Node,Integer> extractFirstNode(
+          OsmWay osmWay, Integer startNodeIndex, boolean changeStartNodeIndexIfNotPresent){
     Node nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
     if(nodeFirst==null && changeStartNodeIndexIfNotPresent) {
-      startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
+      startNodeIndex = OsmWayUtils.findFirstAvailableOsmNodeIndexAfter(
+              startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(startNodeIndex!=null) {
         nodeFirst = extractNode(osmWay.getNodeId(startNodeIndex));
         if(nodeFirst!= null) {
-          LOGGER.fine(String.format("SALVAGED: OSM way %s geometry incomplete, truncated at OSM (start) node %s",osmWay.getId(), nodeFirst.getExternalId()));
+          LOGGER.fine(String.format("SALVAGED: OSM way %s geometry incomplete, truncated at OSM (start) node %s",
+                  osmWay.getId(), nodeFirst.getExternalId()));
         }
       }else {
         /* ignore, OSM way likely completely outside what is available/eligible  and therefore this is most likely intended behaviour */
@@ -597,14 +619,17 @@ public class OsmNetworkLayerParser {
    * @return extracted node and end node index used. Null if no node could be extracted, this only happens when no references osm node is available
    * likely due to user specifying an internal bounding box outside of which this osm way resides
    */
-  private  Pair<Node,Integer> extractLastNode(OsmWay osmWay, final Integer startNodeIndex, Integer endNodeIndex, boolean changeEndNodeIndexIfNotPresent){    
+  private  Pair<Node,Integer> extractLastNode(
+          OsmWay osmWay, final Integer startNodeIndex, Integer endNodeIndex, boolean changeEndNodeIndexIfNotPresent){
     Node nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));        
     if(nodeLast==null && changeEndNodeIndexIfNotPresent) {
-      endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
+      endNodeIndex = OsmWayUtils.findLastAvailableOsmNodeIndexAfter(
+              startNodeIndex, osmWay, networkData.getOsmNodeData().getRegisteredOsmNodes());
       if(endNodeIndex != null) {
         nodeLast = extractNode(osmWay.getNodeId(endNodeIndex));
         if(nodeLast!= null) {
-          LOGGER.fine(String.format("SALVAGED: OSM way %s geometry incomplete, truncated at OSM (end) node %s",osmWay.getId(), nodeLast.getExternalId()));
+          LOGGER.fine(String.format("SALVAGED: OSM way %s geometry incomplete, truncated at OSM (end) node %s",
+                  osmWay.getId(), nodeLast.getExternalId()));
         }
       }else {
         /* ignore, OSM way likely completely outside what is available/eligible  and therefore this is most likely intended behaviour */
@@ -634,7 +659,16 @@ public class OsmNetworkLayerParser {
       /* create and register */
       node = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
     }
-    
+
+    /* register original OSM tags as custom input property if indicated to be retained (we only do this for
+    *  nodes that are converted into PLANit nodes, not for intermediate nodes (shape nodes) */
+    if(settings.isRetainOsmTags()){
+      var tags = OsmModelUtil.getTagsAsMap(osmNode);
+      if(!tags.isEmpty()) {
+        node.addInputProperty(PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY, OsmTagUtils.osm4jTagsToString(tags, COMMA, COLON));
+      }
+    }
+
     return node;
   }   
   
@@ -648,10 +682,15 @@ public class OsmNetworkLayerParser {
    * @return the link corresponding to this way
    */
   private MacroscopicLink extractLink(
-          OsmWay osmWay, Map<String, String> tags, Integer startNodeIndex, Integer endNodeIndex, boolean allowTruncationIfGeometryIncomplete){
+          OsmWay osmWay,
+          Map<String, String> tags,
+          Integer startNodeIndex,
+          Integer endNodeIndex,
+          boolean allowTruncationIfGeometryIncomplete){
 
     /* create the link */
-    MacroscopicLink link = createAndPopulateLink(osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
+    MacroscopicLink link = createAndPopulateLink(
+            osmWay, tags, startNodeIndex, endNodeIndex, allowTruncationIfGeometryIncomplete);
     if(link != null) {
 
       /* if geometry might be truncated, update the actual used start and end indices used if needed to correctly register remaining internal nodes */
@@ -727,8 +766,13 @@ public class OsmNetworkLayerParser {
    * @param linkSegmentTypes to use
    * @return created link (if any), if no link could be created null is returned
    */    
-  public MacroscopicLink extractPartialOsmWay(OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex,
-      boolean isPartOfCircularWay, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes) {
+  public MacroscopicLink extractPartialOsmWay(
+      OsmWay osmWay,
+      Map<String, String> tags,
+      int startNodeIndex,
+      int endNodeIndex,
+      boolean isPartOfCircularWay,
+      Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> linkSegmentTypes) {
 
     MacroscopicLink link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {

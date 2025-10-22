@@ -10,6 +10,8 @@ import org.goplanit.utils.macroscopic.MacroscopicConstants;
  */
 public class OsmConstants {
 
+  // MODELLING
+
   /** pcu/km/lane */
   public static final double DEFAULT_MAX_DENSITY_LANE= MacroscopicConstants.DEFAULT_MAX_DENSITY_PCU_KM_LANE;
   

@@ -205,6 +205,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   @Override
   public void logSettings() {
+    super.logSettings();
     LOGGER.info(String.format("%-40s: %s","OSM network input source", getInputSource()));
     LOGGER.info(String.format("%-40s: %s","Country to base defaults on",getCountryName()));
     LOGGER.info(String.format("%-40s: %s","Setting Coordinate Reference System",getSourceCRS().getName()));

@@ -1,6 +1,7 @@
 package org.goplanit.osm.converter;
 
 import java.net.URL;
+import java.util.logging.Logger;
 
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -19,6 +20,8 @@ import org.locationtech.jts.geom.Polygon;
  */
 public abstract class OsmReaderSettings implements ConverterReaderSettings {
 
+  private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
+
   /** input source to use */
   private URL inputSource;
   
@@ -27,6 +30,14 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
 
   /** OsmBoundary to apply, if null no restriction is applied */
   private OsmBoundary osmBoundary = null;
+
+  /**
+   * Flag to indicate if OSM tags are to be retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   */
+  private boolean retainOsmTags = DEFAULT_RETAIN_OSM_TAGS;
+
+  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
 
   /**
    * Default constructor with default locale (Global)
@@ -64,7 +75,15 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
   public OsmReaderSettings(final URL inputSource, final String countryName) {
     this.inputSource = inputSource;
     this.countryName = countryName;
-  }  
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings() {
+    LOGGER.info(String.format("%-40s: %s", "Retain original OSM tags", isRetainOsmTags()));
+  }
   
   /** The input source used 
    * 
@@ -140,6 +159,25 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public final boolean hasBoundingBoundary() {
     return this.osmBoundary!=null;
-  }   
-   
+  }
+
+  /**
+   * Flag to indicate if OSM tags are retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   *
+   * @return flag
+   */
+  public boolean isRetainOsmTags() {
+    return retainOsmTags;
+  }
+
+  /**
+   * Flag to indicate if OSM tags are to be retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   *
+   * @param retainOsmTags flag to set
+   */
+  public void setRetainOsmTags(boolean retainOsmTags) {
+    this.retainOsmTags = retainOsmTags;
+  }
 }
