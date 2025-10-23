@@ -31,6 +31,8 @@ public class OsmTagUtils {
    * \{\(key1\):\(value1\),\(key2\):\(value2\)\} when using a comma as separator and a colon as key value separator
    *
    * @param osmTags to convert to string
+   * @param separator separator between entries
+   * @param keyValueSeparator separator between single entry key value pair
    * @return string form of osm tags
    */
   public static String osm4jTagsToString(Map<String,String> osmTags, Character separator, Character keyValueSeparator){
