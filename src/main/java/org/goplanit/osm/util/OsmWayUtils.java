@@ -590,38 +590,6 @@ public class OsmWayUtils {
     return null;
   }
 
-
-  /** find the most prominent (important) of the edges based on the osm highway type they carry
-   * @param edges to check
-   * @return osm highway type found to be the most prominent
-   */
-  public static String findMostProminentOsmHighWayType(Set<? extends Edge> edges) {
-    String mostProminent = OsmHighwayTags.UNCLASSIFIED; /* lowest priority option */
-    for(Edge edge : edges) {
-      String osmWayType = OsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
-      if(OsmHighwayTags.compareHighwayType(mostProminent,osmWayType)<0) {
-        mostProminent = osmWayType;
-      }
-    }
-    return mostProminent;
-  }
-
-
-  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the OSM highway tags ordering
-   * @param osmHighwayType to use as a reference
-   * @param edgesToFilter the collection being filtered
-   */
-  public static void removeEdgesWithOsmHighwayTypesLessImportantThan(String osmHighwayType, Set<? extends Edge> edgesToFilter) {
-    Iterator<? extends Edge> iterator = edgesToFilter.iterator();
-    while(iterator.hasNext()) {
-      Edge edge = iterator.next();
-      String osmWayType = OsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
-      if(OsmHighwayTags.compareHighwayType(osmHighwayType,osmWayType)>0) {
-        iterator.remove();
-      }
-    }
-  }
-  
   /** finds the first available osm node index on the osm way
    * @param offsetIndex to start search from
    * @param osmWay to collect from

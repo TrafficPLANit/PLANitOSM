@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.zoning;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
+import net.opengis.gml.GeneralTransformationRefType;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.OsmTagUtils;
@@ -9,6 +10,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.GeoContainerUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
+import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
@@ -23,6 +25,7 @@ import org.locationtech.jts.index.quadtree.Quadtree;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Data specifically required in the zoning reader while parsing OSM data
@@ -41,7 +44,7 @@ public class OsmZoningReaderPlanitData {
   private final Map<EntityType, Map<Long, TransferZone>> transferZonesByOsmEntityId = new TreeMap<>();
 
   /** track transfer zone OSM layer index, if absent it is expected to reflect default layer of 0 */
-  private final Map<TransferZone, Integer> transferZonesLayerIndex = new TreeMap<>();
+  private final Map<TransferZone, Integer> transferZonesOsmLayerIndex = new TreeMap<>();
   
   /** in addition to tracking transfer zones by their Osm entity id, we also track them spatially, to be able to map them to close by stop positions if needed */  
   private final Map<EntityType, Quadtree> transferZonesBySpatialIndex = new TreeMap<>();
@@ -64,9 +67,9 @@ public class OsmZoningReaderPlanitData {
   
   /* SPATIAL LINK TRACKING */
   
-  /** to be able to map stand-alone stations and platforms to connectoids in the network, we must be able to spatially find close by created
-   * links, this is what we do here. */
-  private Quadtree spatiallyIndexedPlanitLinks = null; 
+  /** to be able to map stand-alone stations and platforms to connectoids in the network, we must be able to spatially
+   * find close by created links, this is what we do here. */
+  private Map<MacroscopicNetworkLayer, Quadtree> spatiallyIndexedPlanitLinksByLayer = new TreeMap<>();
   
   
   /** initialise based on links in provided network
@@ -74,11 +77,9 @@ public class OsmZoningReaderPlanitData {
    * @param osmNetwork to use
    */
   protected void initialiseSpatiallyIndexedLinks(PlanitOsmNetwork osmNetwork) {
-    Collection<MacroscopicLinks> linksCollection = new ArrayList<>();
     for(MacroscopicNetworkLayer layer : osmNetwork.getTransportLayers()) {
-      linksCollection.add(layer.getLinks());
+      spatiallyIndexedPlanitLinksByLayer.put(layer, GeoContainerUtils.toGeoIndexed(layer.getLinks()));
     }
-    spatiallyIndexedPlanitLinks = GeoContainerUtils.toGeoIndexed(linksCollection);
   }
       
         
@@ -312,7 +313,7 @@ public class OsmZoningReaderPlanitData {
     transferZonesByOsmEntityId.clear();
     directedConnectoidsByLocation.clear();
     connectoidsByTransferZone.clear();
-    spatiallyIndexedPlanitLinks = new Quadtree();
+    spatiallyIndexedPlanitLinksByLayer = new TreeMap<>();
   }
 
   /* SPATIAL LINK INDEX RELATED METHODS */
@@ -323,17 +324,23 @@ public class OsmZoningReaderPlanitData {
    */
   public void removeLinksFromSpatialLinkIndex(Collection<MacroscopicLink> links) {
     if(links != null) {
-      links.forEach( link -> spatiallyIndexedPlanitLinks.remove(link.createEnvelope(), link));
+      // we do not know in which layer the link resides, so we try each layer
+      links.forEach( link -> spatiallyIndexedPlanitLinksByLayer.forEach(
+          (k,v) -> v.remove(link.createEnvelope(), link)));
     }
   }  
   
-  /** Add provided links to local spatial index based on their bounding box
-   * 
-   * @param links to add
+  /**
+   * Add provided links to local spatial index based on their bounding box
+   *
+   * @param networkLayer the link belong to
+   * @param links        to add
    */  
-  public void addLinksToSpatialLinkIndex(Collection<MacroscopicLink> links) {
+  public void addLinksToSpatialLinkIndex(MacroscopicNetworkLayer networkLayer, Collection<MacroscopicLink> links) {
     if(links != null) {
-      links.forEach( link -> spatiallyIndexedPlanitLinks.insert(link.createEnvelope(), link));
+      spatiallyIndexedPlanitLinksByLayer.computeIfAbsent(networkLayer, nl -> new Quadtree());
+      links.forEach(
+          link -> spatiallyIndexedPlanitLinksByLayer.get(networkLayer).insert(link.createEnvelope(), link));
     }
   }   
     
@@ -342,7 +349,29 @@ public class OsmZoningReaderPlanitData {
    * @param searchBoundingBox to use
    * @return links found intersecting or within bounding box provided
    */
-  public Collection<MacroscopicLink> findLinksSpatially(Envelope searchBoundingBox) {
+  public Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> findLinksSpatially(Envelope searchBoundingBox) {
+    var result = new TreeMap<MacroscopicNetworkLayer, Collection<MacroscopicLink>>();
+    for(var entry : spatiallyIndexedPlanitLinksByLayer.entrySet()) {
+      var foundLinks = findLinksSpatially(entry.getKey(), searchBoundingBox);
+      if(CollectionUtils.nullOrEmpty(foundLinks)) {
+        continue;
+      }
+      result.put(entry.getKey(), foundLinks);
+    }
+    return result;
+  }
+
+  /** Find links spatially based on the provided bounding box
+   *
+   * @param networkLayer restrict to looking within given layer
+   * @param searchBoundingBox to use
+   * @return links found intersecting or within bounding box provided
+   */
+  public Collection<MacroscopicLink> findLinksSpatially(MacroscopicNetworkLayer networkLayer, Envelope searchBoundingBox) {
+    var spatiallyIndexedPlanitLinks = spatiallyIndexedPlanitLinksByLayer.get(networkLayer);
+    if(spatiallyIndexedPlanitLinks == null){
+      return Collections.emptySet();
+    }
     return GeoContainerUtils.queryEdgeQuadtree(spatiallyIndexedPlanitLinks, searchBoundingBox);
   }
 
@@ -355,10 +384,12 @@ public class OsmZoningReaderPlanitData {
    * @param osmEntity the OSM entity the transfer zone is based on
    * @param tags to extract the layer information from
    */
-  public void registerTransferZoneVerticalLayerIndex(TransferZone transferZone, OsmEntity osmEntity, Map<String, String> tags) {
+  public void registerTransferZoneOsmVerticalLayerIndex(
+      TransferZone transferZone, OsmEntity osmEntity, Map<String, String> tags) {
 
-    if(transferZonesLayerIndex.containsKey(transferZone)){
-      LOGGER.warning(String.format("Layer index already registered for transfer zone %s, this shouldn't happen", transferZone.getIdsAsString()));
+    if(transferZonesOsmLayerIndex.containsKey(transferZone)){
+      LOGGER.warning(String.format("Layer index already registered for transfer zone %s, this shouldn't happen",
+          transferZone.getIdsAsString()));
     }
 
     if(!OsmTagUtils.containsAnyKey(tags, OsmTags.LAYER)){
@@ -368,7 +399,7 @@ public class OsmZoningReaderPlanitData {
 
     var layerValue = OsmTagUtils.getValueAsInt(tags, OsmTags.LAYER);
     if(layerValue != null) {
-      transferZonesLayerIndex.put(transferZone, layerValue);
+      transferZonesOsmLayerIndex.put(transferZone, layerValue);
     }
   }
 
@@ -379,7 +410,7 @@ public class OsmZoningReaderPlanitData {
    * @return found layer index, when nothing is registered, null is returned, this may indicate the default level or absence
    * of information that should be obtained otherwise and does not reflect the default layer
    */
-  public Integer getTransferZoneVerticalLayerIndex(TransferZone transferZone) {
-    return transferZonesLayerIndex.get(transferZone);
+  public Integer getTransferZoneOsmVerticalLayerIndex(TransferZone transferZone) {
+    return transferZonesOsmLayerIndex.get(transferZone);
   }
 }

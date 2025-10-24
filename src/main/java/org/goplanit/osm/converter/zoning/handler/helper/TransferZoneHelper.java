@@ -218,7 +218,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
 
       /** OSM waiting areas may have an explicit layer which can be used to identify which rail/road infrastructure is at the same level
        *  Therefore, we register it here, for when mapping to connectoids later on */
-      this.zoningReaderData.getPlanitData().registerTransferZoneVerticalLayerIndex(transferZone, osmEntity, tags);
+      this.zoningReaderData.getPlanitData().registerTransferZoneOsmVerticalLayerIndex(transferZone, osmEntity, tags);
 
       /* ...and register locally */
       zoningReaderData.getPlanitData().addTransferZoneByOsmId(Osm4JUtils.getEntityType(osmEntity), osmEntity.getId(), transferZone);
@@ -681,8 +681,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     final var finalVerticalLayerIndex = osmVerticalLayerIndex;
     final var planitData = this.zoningReaderData.getPlanitData();
     return potentialTransferZones.stream().filter(
-        tz ->  (isDefaultVerticalLayer && planitData.getTransferZoneVerticalLayerIndex(tz) == null)  ||
-            planitData.getTransferZoneVerticalLayerIndex(tz) == finalVerticalLayerIndex).collect(Collectors.toSet());
+        tz ->  (isDefaultVerticalLayer && planitData.getTransferZoneOsmVerticalLayerIndex(tz) == null)  ||
+            planitData.getTransferZoneOsmVerticalLayerIndex(tz) == finalVerticalLayerIndex).collect(Collectors.toSet());
   }
 
   /** Attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
@@ -905,17 +905,37 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * In case the transfer zone has no explicit layer specified, it depends on the user whether we would assume the default layer or we assume the layer is in fact unknown
    *
    * @param transferZone to match against
-   * @param linksToFilter the links to filter
-   * @param assumeDefaultLayerForZoneIfAbsent when true, we assume a transfer zone without an explicitly tagged layer is given default layer, when false we assume it is unknown
+   * @param linksByLayerToFilter the links to filter
+   * @param assumeDefaultLayerForZoneIfAbsent when true, we assume a transfer zone without an explicitly tagged layer
+   *                                          is given default layer, when false we assume it is unknown
    *                                          and links will not be filtered
    * @return remaining links, which is the same collection as passed in, only without the ineligible links removed
    */
-  public Collection<MacroscopicLink> filterVerticalLayerCompatibleLinks(
-      TransferZone transferZone, Collection<MacroscopicLink> linksToFilter, boolean assumeDefaultLayerForZoneIfAbsent) {
-    Integer transferZoneLayerIndex = this.zoningReaderData.getPlanitData().getTransferZoneVerticalLayerIndex(transferZone);
-    linksToFilter.removeIf( link ->
-        (transferZoneLayerIndex!=null && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(link) != transferZoneLayerIndex) ||
-                (transferZoneLayerIndex == null && assumeDefaultLayerForZoneIfAbsent && OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(link) != 0));
-    return  linksToFilter;
+  public Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> filterVerticalLayerCompatibleLinks(
+      TransferZone transferZone,
+      Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> linksByLayerToFilter,
+      boolean assumeDefaultLayerForZoneIfAbsent) {
+
+    Integer transferZoneOsmLayerIndex =
+        this.zoningReaderData.getPlanitData().getTransferZoneOsmVerticalLayerIndex(transferZone);
+    var iter = linksByLayerToFilter.entrySet().iterator();
+    while(iter.hasNext()){
+      var entry = iter.next();
+      var layer = entry.getKey();
+      var links = entry.getValue();
+
+      final var osmLayerData = getNetworkToZoningData().getNetworkLayerData(layer);
+      links.removeIf( link ->
+          (transferZoneOsmLayerIndex!=null &&
+              osmLayerData.getLinkVerticalLayerIndex(link) != transferZoneOsmLayerIndex)
+              ||
+              (transferZoneOsmLayerIndex == null && assumeDefaultLayerForZoneIfAbsent &&
+                  osmLayerData.getLinkVerticalLayerIndex(link) != 0));
+
+      if(links.isEmpty()){
+        iter.remove();
+      }
+    }
+    return  linksByLayerToFilter;
   }
 }

@@ -8,6 +8,7 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
@@ -179,18 +180,30 @@ public class OsmModeConversionBase {
    * In case no eligible modes are provided (null), we allow any transfer zone with at least one valid mapped mode
    *  
    * @param referenceOsmModes to map against (may be null)
-   * @param potentialLinks to extract mode compatible links from
-   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
-   * @return matched links that are deemed compatible
+   * @param potentialLinksByLayer to extract mode compatible links from
+   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water
+   *                                mode, when false only exact matches are allowed
+   * @return matched links that are deemed compatible by layer, if a layer has no matches, it is excluded from the
+   * map entirely
    */   
-  public Collection<MacroscopicLink> filterModeCompatibleLinks(Collection<String> referenceOsmModes, Collection<MacroscopicLink> potentialLinks, boolean allowPseudoModeMatches) {
-    Set<MacroscopicLink> modeCompatibleLinks = new HashSet<>();
-    for(var link : potentialLinks) {
-      if(isLinkModeCompatible(link, referenceOsmModes, allowPseudoModeMatches)) {
-        modeCompatibleLinks.add(link);
+  public Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> filterModeCompatibleLinks(
+      Collection<String> referenceOsmModes,
+      Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> potentialLinksByLayer,
+      boolean allowPseudoModeMatches) {
+
+    var modeCompatibleLinksByLayer = new TreeMap<MacroscopicNetworkLayer, Collection<MacroscopicLink>>();
+    for(var entry : potentialLinksByLayer.entrySet()) {
+      Set<MacroscopicLink> modeCompatibleLinks = new HashSet<>();
+      for (var link : entry.getValue()) {
+        if (isLinkModeCompatible(link, referenceOsmModes, allowPseudoModeMatches)) {
+          modeCompatibleLinks.add(link);
+        }
       }
-    }    
-    return modeCompatibleLinks;
+      if(!modeCompatibleLinks.isEmpty()){
+        modeCompatibleLinksByLayer.put(entry.getKey(),modeCompatibleLinks);
+      }
+    }
+    return modeCompatibleLinksByLayer;
   }
 
   

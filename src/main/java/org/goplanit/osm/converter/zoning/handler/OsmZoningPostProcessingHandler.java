@@ -132,20 +132,24 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-  /** From the provided options, select the most appropriate based on proximity, mode compatibility, relative location to transfer zone, and importance of the osm way type
+  /** From the provided options, select the most appropriate based on proximity, mode compatibility, relative location
+   * to transfer zone, and importance of the OSM way type
    *
    * @param transferZone under consideration
    * @param osmAccessMode access mode to use
    * @param eligibleLinks for connectoids
    * @return most appropriate link that is found
    */
-  private Pair<MacroscopicLink, Set<LinkSegment>> findMostAppropriateStopLocationLinkForWaitingArea(TransferZone transferZone, String osmAccessMode, Collection<MacroscopicLink> eligibleLinks) {
+  private Pair<MacroscopicLink, Set<LinkSegment>> findMostAppropriateStopLocationLinkForWaitingArea(
+      TransferZone transferZone, String osmAccessMode, Collection<MacroscopicLink> eligibleLinks) {
+
     // prep
     Function<MacroscopicLink, String> linkToSourceId = ExternalIdAble::getExternalId;
     var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
     var accessMode = getReferenceNetwork().getModes().get(accessModeType);
 
-    /* 1) reduce candidates to access links related to access link segments that are deemed valid in terms of mode and location (closest already complies as per above) */
+    /* 1) reduce candidates to access links related to access link segments that are deemed valid in terms of mode
+    and location (closest already complies as per above) */
     Set<LinkSegment> accessLinkSegments = new HashSet<>(2);
     for(var currAccessLink : eligibleLinks) {
       boolean mustAvoidCrossingTraffic =  ZoningConverterUtils.isAvoidCrossTrafficForAccessMode(accessMode);
@@ -168,7 +172,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var candidatesToFilter =
         accessLinkSegments.stream().flatMap( ls -> Stream.of((MacroscopicLink)ls.getParent())).collect(Collectors.toSet());
 
-    /* 2) make sure a valid stop_location on each remaining link can be created (for example if stop_location would be on an extreme node, it is possible no access link segment upstream of that node remains
+    /* 2) make sure a valid stop_location on each remaining link can be created (for example if stop_location would be
+     * on an extreme node, it is possible no access link segment upstream of that node remains
      *    which would render an otherwise valid position invalid */
     var candidatesWithValidConnectoidLocation = new HashSet<MacroscopicLink>();
     for(var candidate : candidatesToFilter){
@@ -196,10 +201,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       return Pair.of(selectedAccessLink, accessLinkSegments);
     }
 
-    /* 3) all proper candidates so  reduce options further based on proximity to closest viable link, while removing options outside of the closest distance buffer */
+    /* 3) all proper candidates so  reduce options further based on proximity to closest viable link, while removing
+     * options outside of the closest distance buffer */
     var filteredCandidates =
         PlanitGraphGeoUtils.findEdgesWithinClosestDistanceDeltaToGeometry(
-            transferZone.getGeometry(), candidatesWithValidConnectoidLocation, OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M, getGeoUtils()).keySet();
+            transferZone.getGeometry(),
+            candidatesWithValidConnectoidLocation,
+            OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M,
+            getGeoUtils()).keySet();
     accessLinkSegments.removeIf( ls -> !filteredCandidates.contains((MacroscopicLink) ls.getParent())); // sync
 
     if(filteredCandidates.size()==1){
@@ -249,27 +258,30 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * @param searchBoundingBox to use
    * @return all links that are deemed accessible for this waiting area
    */
-  private Collection<MacroscopicLink> findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
+  private Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>>
+  findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
       TransferZone transferZone, Long osmEntityId, String eligibleOsmMode, Envelope searchBoundingBox) {
         
     Collection<String> eligibleOsmModes = Collections.singleton(eligibleOsmMode);
     /* match links spatially */
-    Collection<MacroscopicLink> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);
-    if(spatiallyMatchedLinks == null || spatiallyMatchedLinks.isEmpty()) {
+    Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> spatiallyMatchedLinksByLayer =
+        getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);
+    if(spatiallyMatchedLinksByLayer == null || spatiallyMatchedLinksByLayer.isEmpty()) {
       return null;
     }    
   
     /* filter based on mode compatibility */
-    var modeAndSpatiallyCompatibleLinks = getPtModeHelper().filterModeCompatibleLinks(
-        eligibleOsmModes, spatiallyMatchedLinks, false /*only exact matches allowed */);
-    if(CollectionUtils.nullOrEmpty(modeAndSpatiallyCompatibleLinks)) {
+    var modeAndSpatiallyCompatibleLinksByLayer = getPtModeHelper().filterModeCompatibleLinks(
+        eligibleOsmModes, spatiallyMatchedLinksByLayer, false /*only exact matches allowed */);
+    if(CollectionUtils.nullOrEmpty(modeAndSpatiallyCompatibleLinksByLayer.values())) {
       return null;
     }
 
     /* filter based on vertical layer index compatibility */
-    Collection<MacroscopicLink> modeSpatiallyAndVerticalPlaneCompatibleLinks = getTransferZoneHelper().filterVerticalLayerCompatibleLinks(
-        transferZone, modeAndSpatiallyCompatibleLinks, true);
-    if(modeSpatiallyAndVerticalPlaneCompatibleLinks == null || modeSpatiallyAndVerticalPlaneCompatibleLinks.isEmpty()) {
+    var modeSpatiallyAndVerticalPlaneCompatibleLinks =
+        getTransferZoneHelper().filterVerticalLayerCompatibleLinks(
+            transferZone, modeAndSpatiallyCompatibleLinksByLayer, true);
+    if(CollectionUtils.nullOrEmpty(modeSpatiallyAndVerticalPlaneCompatibleLinks.values())) {
       return null;
     }
     
@@ -289,22 +301,31 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private TreeSet<MacroscopicLink> findStopLocationLinksForStation(
       OsmEntity stationEntity, TransferZone transferZone, String referenceOsmMode, Envelope searchBoundingBox, Integer maxMatches){
-        
-    Collection<MacroscopicLink> directionModeSpatiallyCompatibleLinks = findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
-        transferZone, stationEntity.getId(), referenceOsmMode, searchBoundingBox);
-    if(directionModeSpatiallyCompatibleLinks==null || directionModeSpatiallyCompatibleLinks.isEmpty()) {
+
+    Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> dirModeSpatiallyCompatibleLinksByLayer =
+        findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
+            transferZone, stationEntity.getId(), referenceOsmMode, searchBoundingBox);
+    if(dirModeSpatiallyCompatibleLinksByLayer == null || dirModeSpatiallyCompatibleLinksByLayer.isEmpty()){
       return null;
     }
-    
+
+    var flattenedDirModeSpatiallyCompatibleLinks = dirModeSpatiallyCompatibleLinksByLayer.size() == 1 ?
+        dirModeSpatiallyCompatibleLinksByLayer.values().iterator().next() :
+        dirModeSpatiallyCompatibleLinksByLayer.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+
     /* #matches compatibility */
-    TreeSet<MacroscopicLink> chosenLinksForStopLocations = new TreeSet<>();;
+    TreeSet<MacroscopicLink> chosenLinksForStopLocations = new TreeSet<>();
     {
-      var idealAccessResult = findMostAppropriateStopLocationLinkForWaitingArea(transferZone, referenceOsmMode, directionModeSpatiallyCompatibleLinks);
+      var idealAccessResult = findMostAppropriateStopLocationLinkForWaitingArea(
+          transferZone, referenceOsmMode, flattenedDirModeSpatiallyCompatibleLinks);
       var idealAccessLink = idealAccessResult==null ? null : idealAccessResult.first();
       if(idealAccessLink==null) {
         LOGGER.severe(String.format(
-                "DISCARD No appropriate link could be found from selection of eligible closeby OSM ways [%s] when finding stop locations for station %s, this should not happen, as a workaround, consider excluding this stop",
-                directionModeSpatiallyCompatibleLinks.stream().map(ExternalIdAble::getExternalId).collect(Collectors.joining(",")), transferZone.getExternalId()));
+                "DISCARD No appropriate link could be found from selection of eligible closeby OSM ways [%s] when " +
+                    "finding stop locations for station %s, this should not happen, as a workaround, consider excluding" +
+                    " this stop",
+            flattenedDirModeSpatiallyCompatibleLinks.stream().map(ExternalIdAble::getExternalId).collect(
+                Collectors.joining(",")), transferZone.getExternalId()));
         return null;
       }
       
@@ -315,7 +336,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
       }else if(maxMatches>1) {
 
-        /* multiple matches allowed, indicating we are searching for parallel platforms -> use closest match to establish a virtual line from station to this link's closest intersection point
+        /* multiple matches allowed, indicating we are searching for parallel platforms -> use closest match to
+         * establish a virtual line from station to this link's closest intersection point
          * and use it to identify other links that intersect with this virtual line, these are our parallel platforms */
         LineSegment stationToClosestPointOnClosestLinkSegment;
        
@@ -329,17 +351,27 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                   (OsmWay)stationEntity, idealAccessLink.getGeometry(), getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
         }else {
           throw new PlanItRunTimeException("Unknown entity type %s for osm station encountered, this should not happen", Osm4JUtils.getEntityType(stationEntity));
-        }      
-        final LineSegment interSectionLineSegment = getGeoUtils().createExtendedLineSegment(stationToClosestPointOnClosestLinkSegment, getSettings().getStationToParallelTracksSearchRadiusMeters(), true, true);
-        final Geometry virtualInterSectionGeometryForParallelTracks = PlanitJtsUtils.createLineString(interSectionLineSegment.getCoordinate(0),interSectionLineSegment.getCoordinate(1));
+        }
+
+        final LineSegment interSectionLineSegment = getGeoUtils().createExtendedLineSegment(
+            stationToClosestPointOnClosestLinkSegment,
+            getSettings().getStationToParallelTracksSearchRadiusMeters(),
+            true,
+            true);
+        final Geometry virtualInterSectionGeometryForParallelTracks =
+            PlanitJtsUtils.createLineString(
+                interSectionLineSegment.getCoordinate(0),interSectionLineSegment.getCoordinate(1));
         
         /* find all links of compatible modes that intersect with virtual line reflecting parallel accessible (train) tracks eligible to create a platform for */
-        for(var link : directionModeSpatiallyCompatibleLinks) {
+        for(var link : flattenedDirModeSpatiallyCompatibleLinks) {
           if( link.getGeometry().intersects(virtualInterSectionGeometryForParallelTracks)) {
             /* intersect so still possible */
-            final LinearLocation closestLinkLinearLocation = getGeoUtils().getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(transferZone.getGeometry(), link.getGeometry());
+            final LinearLocation closestLinkLinearLocation =
+                getGeoUtils().getClosestGeometryExistingCoordinateToProjectedLinearLocationOnLineString(
+                    transferZone.getGeometry(), link.getGeometry());
             final var closestLinkLocation = closestLinkLinearLocation.getCoordinate(link.getGeometry());
-            final double distanceStationToPotentialAccessLink = getGeoUtils().getClosestDistanceInMeters(closestLinkLocation, transferZone.getGeometry());
+            final double distanceStationToPotentialAccessLink =
+                getGeoUtils().getClosestDistanceInMeters(closestLinkLocation, transferZone.getGeometry());
             if(distanceStationToPotentialAccessLink < getSettings().getStationToWaitingAreaSearchRadiusMeters()) {
               /* within distance set, so valid */
               chosenLinksForStopLocations.add(link);  
@@ -347,14 +379,16 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           }
         }
       }else if(maxMatches < 1) {
-        LOGGER.severe(String.format("Invalid number of maximum matches %d provided when finding stop location links for station %d",maxMatches, stationEntity.getId()));
+        LOGGER.severe(String.format("Invalid number of maximum matches %d provided when finding stop location links " +
+            "for station %d",maxMatches, stationEntity.getId()));
         return null;
       }        
     }  
     
     if(chosenLinksForStopLocations.isEmpty()) {
       /* cannot happen because at least the closestLinkForStopLocation we know exists should be found here */
-      throw new PlanItRunTimeException("No links could be identified from virtual line connecting station to closest by point on closest link for osm station %d, this should not happen", stationEntity.getId());
+      throw new PlanItRunTimeException("No links could be identified from virtual line connecting station to " +
+          "closest by point on closest link for osm station %d, this should not happen", stationEntity.getId());
     }
     
     return chosenLinksForStopLocations;
@@ -620,17 +654,22 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var planitWaterMode = getReferenceNetwork().getModes().get(getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getMappedPlanitWaterMode(osmMode));
     var networkLayer = this.getReferenceNetwork().getLayerByMode(planitWaterMode);
     var boundingBox = getGeoUtils().createBoundingBox(ferryStopLocation.getEnvelopeInternal(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters());
-    Collection<MacroscopicLink> spatiallyMatchedLinks = getZoningReaderData().getPlanitData().findLinksSpatially(boundingBox);
-    spatiallyMatchedLinks.removeIf( l -> !l.isModeAllowedOnAnySegment(planitWaterMode));
+    Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> spatiallyMatchedLinks =
+        getZoningReaderData().getPlanitData().findLinksSpatially(boundingBox);
+    spatiallyMatchedLinks.values().forEach( links -> links.removeIf( l -> !l.isModeAllowedOnAnySegment(planitWaterMode)));
     if(spatiallyMatchedLinks.isEmpty()){
       LOGGER.warning(String.format("DISCARD: Dangling ferry stop %d, no mode compatible OSM ways within %.2fm found (tags: %s)",
           osmFerryStop.getId(), getSettings().getFerryStopToFerryRouteSearchRadiusMeters(), OsmModelUtil.getTagsAsMap(osmFerryStop)));
       return;
     }
 
+    var flattenedSpatiallyMatchedLinks = spatiallyMatchedLinks.size() == 1 ?
+        spatiallyMatchedLinks.values().iterator().next() :
+        spatiallyMatchedLinks.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
     var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
         OsmNodeUtils.createCoordinate(osmFerryStop),
-        spatiallyMatchedLinks, getSettings().getFerryStopToFerryRouteSearchRadiusMeters(),
+        flattenedSpatiallyMatchedLinks,
+        getSettings().getFerryStopToFerryRouteSearchRadiusMeters(),
         suppressLogging,
         getGeoUtils());
     if(closestLinkWithDistance == null || closestLinkWithDistance.anyIsNull()){
@@ -648,14 +687,22 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         getGeoUtils());
 
     /* create new ferry link to attach to ferry network */
-    var lineString = PlanitJtsUtils.createLineString(ferryStopLocation.getCoordinate(), closestNodeWithDistance.first().getPosition().getCoordinate());
+    var lineString = PlanitJtsUtils.createLineString(
+        ferryStopLocation.getCoordinate(), closestNodeWithDistance.first().getPosition().getCoordinate());
     var ferryLink = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
-        ferryStopNode, closestNodeWithDistance.first(), lineString, networkLayer, null, "dummy-ferry-link", getGeoUtils());
+        ferryStopNode,
+        closestNodeWithDistance.first(),
+        lineString,
+        networkLayer,
+        null,
+        "dummy-ferry-link",
+        getGeoUtils());
 
     /* create new ferry link segments */
     String waterWayKey = OsmWaterwayTags.ROUTE;
     String waterWayValue = OsmWaterwayTags.FERRY;
-    var linkSegmentType = getReferenceNetwork().getDefaultLinkSegmentTypeByOsmTag(waterWayKey, waterWayValue).get(networkLayer);
+    var linkSegmentType = getReferenceNetwork().getDefaultLinkSegmentTypeByOsmTag(
+        waterWayKey, waterWayValue).get(networkLayer);
     var speedLimit = getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(waterWayValue);
     var lanes = getNetworkToZoningData().getNetworkSettings().getDefaultDirectionalLanesByWayType(waterWayKey, waterWayValue);
     /* a->b */
@@ -825,23 +872,29 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             transferZone.getGeometry(), getZoningReaderData().getBoundingArea(), true);
         
     /* validate mode support */
-    Collection<String> accessOsmModes = 
-        OsmModeUtils.extractPublicTransportModesFrom(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone));
+    Collection<String> accessOsmModes = OsmModeUtils.extractPublicTransportModesFrom(
+        PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone));
     if(!getNetworkToZoningData().getNetworkSettings().hasAnyMappedPlanitModeType(accessOsmModes)) {
-      if(!suppressWarning) LOGGER.warning(String.format("DISCARD: Waiting area (OSM id %d) has no supported public transport planit modes present", osmEntityId));
+      if(!suppressWarning) LOGGER.warning(String.format("DISCARD: Waiting area (OSM id %d) has no supported public " +
+          "transport planit modes present", osmEntityId));
       return;             
     }
         
     /* validate location is separated from infrastructure */
-    boolean transferZoneOnInfrastructure = osmEntityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(osmEntityId);
+    boolean transferZoneOnInfrastructure = osmEntityType.equals(EntityType.Node) &&
+        hasNetworkLayersWithActiveOsmNode(osmEntityId);
     if(transferZoneOnInfrastructure) {
-      /* all waiting areas that are on road/rail/ferry infrastructure should immediately have been processed including their connectoid creation, so if we still find one here
-       * something went wrong that is worth logging */
-      if(!suppressWarning) LOGGER.severe(String.format("DISCARD: Waiting area (OSM id %d) on top of road/rail/waterway infrastructure did not yet receive connectoids (stop location), this shouldn't happen, verify correctness", osmEntityId));
+      // all waiting areas that are on road/rail/ferry infrastructure should immediately have been processed including
+      // their connectoid creation, so if we still find one here
+      // something went wrong that is worth logging
+      if(!suppressWarning) LOGGER.severe(String.format("DISCARD: Waiting area (OSM id %d) on top of road/rail/waterway " +
+          "infrastructure did not yet receive connectoids (stop location), this shouldn't happen, verify correctness",
+          osmEntityId));
       return;
     }     
     
-    /* per mode - find links, because if the transfer zone supports both a rail and road mode, we require different links for our connectoids */
+    //per mode - find links, because if the transfer zone supports both a rail and road mode, we require different
+    // links for our connectoids
     for(String osmAccessMode : accessOsmModes) {
       var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
       MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByPredefinedModeType(accessModeType);
@@ -851,32 +904,40 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
         /* user override for what link to use for connectoids */        
         long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmEntityId, osmEntityType);
-        selectedAccessLink = PlanitLinkOsmUtils.getClosestLinkWithOsmWayIdToGeometry( osmWayId, transferZone.getGeometry(), networkLayer, getGeoUtils());
+        selectedAccessLink = PlanitLinkOsmUtils.getClosestLinkWithOsmWayIdToGeometry(
+            osmWayId, transferZone.getGeometry(), networkLayer, getGeoUtils());
         if(selectedAccessLink == null) {
           if(!suppressWarning){
-            LOGGER.warning(String.format("DISCARD: User nominated OSM way %d not available for waiting area %s",osmWayId, transferZone.getExternalId()));
+            LOGGER.warning(String.format("DISCARD: User nominated OSM way %d not available for waiting area %s",
+                osmWayId, transferZone.getExternalId()));
           }
           return;
         }
         
       }else if(OsmWaterModeTags.isWaterModeTag(osmAccessMode)){
 
-        /* water based mode, i.e. ferry is special case since dangling platforms without stop positions that are not on any infrastructure are likely
-        unused. Also, we do not yet support parsing it as a stop and create connection to nearest ferry route since the OSM node(s) of the platform are not available anymore
-         this would require some thinking on how to treat this (can't be done during main processing because it might have a stop location found later etc.)*/
+        /* water based mode, i.e. ferry is special case since dangling platforms without stop positions that are not on
+         * any infrastructure are likely unused. Also, we do not yet support parsing it as a stop and create connection
+         * to nearest ferry route since the OSM node(s) of the platform are not available anymore this would require
+         * some thinking on how to treat this (can't be done during main processing because it might have a stop
+         * location found later etc.)
+         */
         if(!suppressWarning){
-          LOGGER.warning(String.format("DISCARD: Ptv2 platform (%d) for water mode %s without stop_position/ferry_terminal and disconnected from waterway network, ignore", osmEntityId, osmAccessMode));
+          LOGGER.warning(String.format("DISCARD: Ptv2 platform (%d) for water mode %s without stop_position/" +
+              "ferry_terminal and disconnected from waterway network, ignore", osmEntityId, osmAccessMode));
         }
         continue;
       }else {
         
         /* regular approach */                     
-        Envelope searchBoundingBox = getGeoUtils().createBoundingBox(transferZone.getEnvelope(), getSettings().getStopToWaitingAreaSearchRadiusMeters());
+        Envelope searchBoundingBox = getGeoUtils().createBoundingBox(
+            transferZone.getEnvelope(), getSettings().getStopToWaitingAreaSearchRadiusMeters());
         
         /* collect spatially, mode, compatible links */
-        Collection<MacroscopicLink> modeSpatiallyCompatibleLinks = findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
-            transferZone, osmEntityId, osmAccessMode, searchBoundingBox);
-        if((modeSpatiallyCompatibleLinks == null || modeSpatiallyCompatibleLinks.isEmpty())) {
+        Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> modeSpatiallyCompatibleLinksByLayer =
+            findModeBBoxVerticalLayerIdxCompatibleLinksForTransferZone(
+                transferZone, osmEntityId, osmAccessMode, searchBoundingBox);
+        if(modeSpatiallyCompatibleLinksByLayer == null || modeSpatiallyCompatibleLinksByLayer.isEmpty()) {
           if(!suppressWarning) {
             LOGGER.warning(String.format("DISCARD: No accessible links (max distance %.2fm) for waiting area %s (mode: %s), " +
                     "spatially not available, tagging error, or perhaps nearby road types are deactivated)",
@@ -884,10 +945,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           }
           continue;
         }
+
+        var flattenedSpatiallyMatchedLinks = modeSpatiallyCompatibleLinksByLayer.size() == 1 ?
+            modeSpatiallyCompatibleLinksByLayer.values().iterator().next() :
+            modeSpatiallyCompatibleLinksByLayer.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
         
         /* based on candidates, now select the most appropriate option based on a multitude of criteria */
         var accessResult =
-            findMostAppropriateStopLocationLinkForWaitingArea(transferZone, osmAccessMode, modeSpatiallyCompatibleLinks);
+            findMostAppropriateStopLocationLinkForWaitingArea(transferZone, osmAccessMode, flattenedSpatiallyMatchedLinks);
         selectedAccessLink = accessResult==null ? null : accessResult.first();
       }
        
@@ -1146,7 +1211,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
 
     /* find the transfer zones this stop position is eligible for */
-    Collection<TransferZone> matchedTransferZones = getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, modeResult.first(), transferZoneGroup, suppressLogging);
+    Collection<TransferZone> matchedTransferZones =
+        getTransferZoneHelper().findTransferZonesForStopPosition(osmNode, tags, modeResult.first(), transferZoneGroup, suppressLogging);
     suppressLogging = suppressLogging || getSettings().isOverwriteWaitingAreaOfStopLocation(osmNode.getId());
           
     if(matchedTransferZones == null || matchedTransferZones.isEmpty()) {
@@ -1316,9 +1382,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void extractPtv2StopAreaPostProcessingEntities(OsmRelation osmRelation) throws PlanItException{
   
     /* transfer zone group */
-    TransferZoneGroup transferZoneGroup = getZoningReaderData().getPlanitData().getTransferZoneGroupByOsmId(osmRelation.getId());
+    TransferZoneGroup transferZoneGroup =
+        getZoningReaderData().getPlanitData().getTransferZoneGroupByOsmId(osmRelation.getId());
     if(transferZoneGroup == null) {
-      LOGGER.severe(String.format("Found stop_area %d in post-processing for which no PLANit transfer zone group has been created, this should not happen",osmRelation.getId()));
+      LOGGER.severe(String.format("Found stop_area %d in post-processing for which no PLANit transfer zone group " +
+          "has been created, this should not happen",osmRelation.getId()));
     }
         
     /* process only stop_positions */

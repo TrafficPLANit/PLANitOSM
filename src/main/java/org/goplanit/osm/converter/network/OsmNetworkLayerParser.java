@@ -282,10 +282,8 @@ public class OsmNetworkLayerParser {
       link = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
           nodeFirst, nodeLast, lineString, networkLayer,String.valueOf(osmWay.getId()), tags.get(OsmTags.NAME), geoUtils);
 
-      /* store OSM way type for future reference (used in zoning reader for example) */
-      OsmNetworkHandlerHelper.setLinkOsmWayType(link,  OsmWayUtils.findWayTypeValueForEligibleKey(tags));
       /* register the links vertical layer index (used in the zoning reader for example) */
-      OsmNetworkHandlerHelper.setLinkVerticalLayerIndex(link, tags);
+      getLayerData().setLinkVerticalLayerIndex(link, tags);
 
       /* register original OSM tags as custom input property if indicated to be retained */
       if(settings.isRetainOsmTags()){

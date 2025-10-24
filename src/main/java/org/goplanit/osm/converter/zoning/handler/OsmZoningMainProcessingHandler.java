@@ -16,6 +16,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
@@ -443,7 +444,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param planitModeTypes supported mode types
    * @return if true it is discarded and should not be processed again later on, for example as part of a stop area
    */
-  private boolean extractPtv2Ptv1StopPosition(OsmNode osmNode, Map<String, String> tags, Collection<PredefinedModeType> planitModeTypes) {
+  private boolean extractPtv2Ptv1StopPosition(
+      OsmNode osmNode, Map<String, String> tags, Collection<PredefinedModeType> planitModeTypes) {
     boolean DISCARD = true;
 
     var readerData = getZoningReaderData();
@@ -476,7 +478,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
     /* ensure nearby mode compatible links exist to match the potentially salvaged Ptv1 entry to spatially */
     Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBox(osmNode, searchRadius, getGeoUtils());
-    Collection<MacroscopicLink> spatiallyMatchedLinks = readerData.getPlanitData().findLinksSpatially(searchBoundingBox);
+    Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> spatiallyMatchedLinks =
+        readerData.getPlanitData().findLinksSpatially(searchBoundingBox);
     spatiallyMatchedLinks = getPtModeHelper().filterModeCompatibleLinks(
         getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModeTypes), spatiallyMatchedLinks, false /*only exact matches allowed */);
 

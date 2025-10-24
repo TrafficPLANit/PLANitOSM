@@ -62,15 +62,16 @@ class OsmZoningHelperBase {
 
   /**
    * Based on the location of the stop position, determine if the PLANit links that it resides on, or borders or
-   * reside in a particular layer. If so, the OSM vertical layer index is retrieved and provided. If inconsistent indices are found
-   * across the links the user is warned, if no matching links are known on the layer null is returned.
+   * reside in a particular layer. If so, the OSM vertical layer index is retrieved and provided. If inconsistent
+   * indices are found across the links the user is warned, if no matching links are known on the layer null is returned.
    *
    * @param stopPositionLocation  to find layer index for
    * @param layer to check
    * @return OSM vertical layer index found, and boolean indicating if the found layer index was the same across
    *  all eligible links (true), false otherwise
    */
-  protected Pair<Integer,Boolean> findOsmVerticalLayerIndexByStopPositionPlanitLinks(Point stopPositionLocation, NetworkLayer layer) {
+  protected Pair<Integer,Boolean> findOsmVerticalLayerIndexByStopPositionPlanitLinks(
+      Point stopPositionLocation, NetworkLayer layer) {
     var layerData = getNetworkToZoningData().getNetworkLayerData(layer);
 
     Collection<MacroscopicLink> planitLinks = layerData.findPlanitLinksWithInternalLocation(stopPositionLocation);
@@ -82,8 +83,9 @@ class OsmZoningHelperBase {
     }
 
     if(planitLinks!=null && !planitLinks.isEmpty()) {
-      final Integer verticalLayerIndex = OsmNetworkHandlerHelper.getMostFrequentVerticalLayerIndex(planitLinks);
-      final boolean consistent = planitLinks.stream().allMatch(l -> OsmNetworkHandlerHelper.getLinkVerticalLayerIndex(l) == verticalLayerIndex);
+      final int verticalLayerIndex = layerData.getMostFrequentVerticalLayerIndex(planitLinks);
+      final boolean consistent = planitLinks.stream().allMatch(
+          l -> layerData.getLinkVerticalLayerIndex(l) == verticalLayerIndex);
       return Pair.of(verticalLayerIndex, consistent);
     }
 
