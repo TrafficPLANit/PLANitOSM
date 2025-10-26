@@ -39,7 +39,8 @@ public class CountrySpecificDefaultUtils {
    * @param resourceDir to use
    * @param callBack to use
    */
-  public static void callForEachFileInResourceDir(final String resourceDir, final BiConsumer<InputStreamReader, String> callBack) {
+  public static void callForEachFileInResourceDir(
+      final String resourceDir, final BiConsumer<InputStreamReader, String> callBack) {
     try {
       /* country specific based on resource files*/
       URI uri = null;
@@ -51,8 +52,8 @@ public class CountrySpecificDefaultUtils {
         return;
       }
       
-      /* when jar, we cannot utilise regular file based approach and instead we must use an alternate file system to access the directory stream 
-       * since a file system is closeable, we must have access to it */
+      /* when jar, we cannot utilise regular file based approach and instead we must use an alternate file system to
+       * access the directory stream since a file system is closeable, we must have access to it */
       FileSystem fs = null;
       DirectoryStream<Path> directoryStream = null;
       if (UriUtils.isInJar(uri)) {
@@ -65,7 +66,8 @@ public class CountrySpecificDefaultUtils {
       for(Path resourcePath: directoryStream){
         String fullCountryName = CountrySpecificDefaultUtils.extractCountryNameFromFile(resourcePath);
         if(StringUtils.isNullOrBlank(fullCountryName)) {
-          LOGGER.warning(String.format("DISCARD: Unrecognised country code encountered (%s) when parsing default OSM highway speed limit values", fullCountryName));
+          LOGGER.warning(String.format("DISCARD: Unrecognised country code encountered (%s) when parsing default " +
+              "OSM highway speed limit values", fullCountryName));
           continue;
         }
         

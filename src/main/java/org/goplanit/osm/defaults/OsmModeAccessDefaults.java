@@ -9,7 +9,8 @@ import org.goplanit.utils.locale.CountryNames;
  * highway/railway/waterway-like type.
  * 
  * Disallowed modes take precedence over any other setting, allowed modes take precedence over mode category settings
- * and mode category settings define groups of allowed modes (when not present, it is assumed the category is not allowed as a whole)
+ * and mode category settings define groups of allowed modes (when not present, it is assumed the category is not
+ * allowed as a whole)
  * 
  * @author markr
  *

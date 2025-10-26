@@ -8,8 +8,8 @@ import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 /**
- * Manage OSM nodes that are retained in memory for parsing. This is supported through a two stage process where nodes can be pre-registered
- * and then be registered at a later point.
+ * Manage OSM nodes that are retained in memory for parsing. This is supported through a two stage process where nodes
+ * can be pre-registered and then be registered at a later point.
  */
 public class OsmNodeData {
 
@@ -44,12 +44,15 @@ public class OsmNodeData {
    */
   public void preregisterOsmWayNodes(OsmWay osmWay) {
     for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
-      // to be preregistered in full in complete() to avoid checking against these in above check regarding bounding boundary
+      // to be preregistered in full in complete() to avoid checking against these in above check regarding
+      // bounding boundary
       preregisterEligibleOsmNode(osmWay.getNodeId(index));
     }
   }
 
-  /** Pre-register an OSM node for future population with the actual node contents (see {@link #registerEligibleOsmNode(OsmNode)}
+  /** Pre-register an OSM node for future population with the actual node contents
+   * (see {@link #registerEligibleOsmNode(OsmNode)}
+   *
    * @param osmNodeId to pre-register
    */
   public void preregisterEligibleOsmNode(long osmNodeId) {

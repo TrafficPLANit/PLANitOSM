@@ -12,10 +12,12 @@ public class OsmSpatialEligibilityData {
 
   private static final Logger LOGGER = Logger.getLogger(OsmSpatialEligibilityData.class.getCanonicalName());
 
-  /* temporary storage of tracking eligible osmWays by id (based on whether they fall partially within boundary of parsing */
+  /* temporary storage of tracking eligible osmWays by id (based on whether they fall partially within boundary of
+  parsing */
   private final Set<Long> spatiallyEligibleOsmWays = new HashSet<>();
 
-  /* temporary storage of tracking eligible osmNodes by id based on whether they fall partially within boundary of parsing*/
+  /* temporary storage of tracking eligible osmNodes by id based on whether they fall partially within boundary of
+  parsing*/
   private final Set<Long> spatiallyEligibleOsmNodes = new HashSet<>();
 
   /* temporary storage of tracking eligible osmRelations by id based on whether they fall partially within boundary*/

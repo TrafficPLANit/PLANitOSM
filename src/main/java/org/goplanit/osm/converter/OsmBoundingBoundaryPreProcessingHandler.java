@@ -23,8 +23,8 @@ import java.util.logging.Logger;
  *   ways part of the bounding boundary
  * </p>
  * <p>
- *   FINALISE_BOUNDARY_BY_NAME: register the nodes marked for network or boundary and finalise boundary by converting them
- *   into a polygon.
+ *   FINALISE_BOUNDARY_BY_NAME: register the nodes marked for network or boundary and finalise boundary by
+ *   converting them into a polygon.
  * </p>
  * @author markr
  */
@@ -33,7 +33,8 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
   /**
    * The logger for this class
    */
-  private static final Logger LOGGER = Logger.getLogger(OsmBoundingBoundaryPreProcessingHandler.class.getCanonicalName());
+  private static final Logger LOGGER =
+      Logger.getLogger(OsmBoundingBoundaryPreProcessingHandler.class.getCanonicalName());
 
   /** Builder to keep track of constructing bounding boundary */
   private final OsmBoundaryManager boundaryManager;
@@ -42,14 +43,17 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
   private final Stage stage;
 
   /**
-   * Helper to create an OSM4jReader for bounding area identification (before any pre-processing), handler for a given stage and perform the parsing
+   * Helper to create an OSM4jReader for bounding area identification (before any pre-processing), handler for a given
+   * stage and perform the parsing
    *
    * @param osmInputSource OSM input source to use
    * @param stage to apply
    * @param boundaryManager to use
    */
   public static void createHandlerAndRead(URL osmInputSource,
-                                          OsmBoundingBoundaryPreProcessingHandler.Stage stage, OsmBoundaryManager boundaryManager){
+                                          OsmBoundingBoundaryPreProcessingHandler.Stage stage,
+                                          OsmBoundaryManager boundaryManager){
+
     /* reader to parse the actual file or source location */
     OsmReader osmReader = Osm4JUtils.createOsm4jReader(osmInputSource);
     if(osmReader == null) {
@@ -98,8 +102,8 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
       return;
     }
 
-    // register actual instance so available during complete() where we construct the boundary from the OSM ways and nodes
-    // that make up the actual bounding boundary polygon
+    // register actual instance so available during complete() where we construct the boundary from the
+    // OSM ways and nodes that make up the actual bounding boundary polygon
     if(boundaryManager.isPreregisteredBoundaryOsmNode(node.getId())){
       boundaryManager.registerBoundaryOsmNode(node);
     }
@@ -120,7 +124,8 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
       return;
     }
 
-    // update registered OSM way ids with actual OSM way containing geometry (if needed) as well as preregister its nodes
+    // update registered OSM way ids with actual OSM way containing geometry (if needed) as well as preregister
+    // its nodes
     boundaryManager.stepTwoAttachBoundaryOsmWaysAndPreregisterItsNodes(osmWay);
 
   }

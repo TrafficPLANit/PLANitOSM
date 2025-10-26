@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
  * Builder for OSM bounding boundaries. This class has a number of methods and internal state to be able to construct
  * an OsmBoundary instance with a polygon constructed from OSM ways based on the description provided in an OSMBoundary
  * without a polygon present but with the naming and other related information required to extract the polygon from
- * an OSM file. the builder can track this information and finally build a new OsmBoundary instance with the required information
+ * an OSM file. the builder can track this information and finally build a new OsmBoundary instance with the required
+ * information
  *
  * @author markr
  */
@@ -39,7 +40,8 @@ public class OsmBoundaryManager {
 
   /**
    * OSMWay ids that make up the outer polygon of the to be constructed osmBoundingArea (if any), contiguous nature of
-   * these can be reconstructed by ordering them by their integer value which is incrementally created upon adding entries.
+   * these can be reconstructed by ordering them by their integer value which is incrementally created upon adding
+   * entries.
    */
   private final Map<Long, Pair<Integer, OsmWay>> osmBoundaryOsmWayTracker = new HashMap<>();
 
@@ -61,12 +63,14 @@ public class OsmBoundaryManager {
 
   /**
    * Register portions of the named OSM boundary to construct a single coherent polygon during regular pre-processing
-   * stage but before main processing (as main processing relies on the boundary to be finalised to do the actual parsing)
+   * stage but before main processing (as main processing relies on the boundary to be finalised to do the actual
+   * parsing)
    *
    * @param osmWayId to register as part of the future OSM boundary
    */
   private void registerBoundaryOsmWayOuterRoleSection(long osmWayId) {
-    osmBoundaryOsmWayTracker.put(osmWayId,Pair.of(osmBoundaryOsmWayTracker.size(), null /* to be added in next stage */));
+    osmBoundaryOsmWayTracker.put(
+        osmWayId,Pair.of(osmBoundaryOsmWayTracker.size(), null /* to be added in next stage */));
   }
 
   /**
@@ -80,21 +84,24 @@ public class OsmBoundaryManager {
   }
 
   /**
-   * Register actual OsmWay  portion of the named OSM boundary to construct a single coherent polygon during regular pre-processing
-   * stage but before main processing (as main processing relies on the boundary to be finalised to do the actual parsing).
+   * Register actual OsmWay  portion of the named OSM boundary to construct a single coherent polygon during regular
+   * pre-processing stage but before main processing (as main processing relies on the boundary to be finalised to do
+   * the actual parsing).
    * <p> Requires the osmWayId to have been registered already in stage 1 of preprocessing </p>
    *
    * @param osmWay to update registered entry with as part of the future OSM boundary
    */
   private void updateBoundaryRegistrationWithOsmWayAndNodes(OsmWay osmWay) {
     if(!isRegisteredBoundaryOsmWay(osmWay.getId())){
-      LOGGER.severe("Should not update boundary with OSM way when it has not been identified as being part of boundary during " +
+      LOGGER.severe(
+          "Should not update boundary with OSM way when it has not been identified as being part of boundary during " +
           "initial stage of preprocessing, ignored");
     }
 
     // way registration
     var valueWithoutOsmWay = osmBoundaryOsmWayTracker.get(osmWay.getId());
-    osmBoundaryOsmWayTracker.put(osmWay.getId(),Pair.of(valueWithoutOsmWay.first(), osmWay /* update now available */));
+    osmBoundaryOsmWayTracker.put(
+        osmWay.getId(),Pair.of(valueWithoutOsmWay.first(), osmWay /* update now available */));
 
     // nodes registration
     preregisterOsmWayNodes(osmWay);
@@ -120,12 +127,14 @@ public class OsmBoundaryManager {
       return List.of();
     }
     if(osmBoundaryOsmWayTracker.values().iterator().next().second() == null){
-      LOGGER.severe("Registered OSM ways do not have an OSM way object attached to them, unable to constructed sorted list of OSM ways");
+      LOGGER.severe("Registered OSM ways do not have an OSM way object attached to them, " +
+          "unable to constructed sorted list of OSM ways");
       return List.of();
     }
     // sort by integer index and then collect the OSM ways as list
     return osmBoundaryOsmWayTracker.entrySet().stream().sorted(
-        Comparator.comparingInt(e -> e.getValue().first())).map(e -> e.getValue().second()).collect(Collectors.toList());
+        Comparator.comparingInt(e -> e.getValue().first())).map(
+            e -> e.getValue().second()).collect(Collectors.toList());
   }
 
   /**
@@ -181,21 +190,26 @@ public class OsmBoundaryManager {
 
       // found, no see if more specific checks are required based on type and/or admin_level. Below flags switch to
       // true if the item is not used or it is used AND it is matched
-      boolean boundaryTypeMatch =
-          !originalBoundary.hasBoundaryType() || OsmBoundaryTags.hasBoundaryValueTag(tags, originalBoundary.getBoundaryType());
+      boolean boundaryTypeMatch = !originalBoundary.hasBoundaryType() ||
+          OsmBoundaryTags.hasBoundaryValueTag(tags, originalBoundary.getBoundaryType());
       boolean adminLevelMatch = !originalBoundary.hasBoundaryAdminLevel() ||
-          OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
+          OsmTagUtils.keyMatchesAnyValueTag(
+              tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
       boolean boundaryAdministrativeMatch =
-          !originalBoundary.hasBoundaryType() || !originalBoundary.getBoundaryType().equals(OsmBoundaryTags.ADMINISTRATIVE) ||
-          originalBoundary.hasBoundaryAdminLevel() &&
-              OsmTagUtils.keyMatchesAnyValueTag(tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
+          !originalBoundary.hasBoundaryType() ||
+              !originalBoundary.getBoundaryType().equals(OsmBoundaryTags.ADMINISTRATIVE) ||
+              originalBoundary.hasBoundaryAdminLevel() &&
+              OsmTagUtils.keyMatchesAnyValueTag(
+                  tags, OsmBoundaryTags.ADMIN_LEVEL, originalBoundary.getBoundaryAdminLevel());
 
       if(boundaryTypeMatch && adminLevelMatch && boundaryAdministrativeMatch){
 
         LOGGER.info(String.format(
-            "Boundary identification: Found OSMRelation \"%s\" OsmRelationId:%d", originalBoundary.getBoundaryName(), osmRelation.getId()));
+            "Boundary identification: Found OSMRelation \"%s\" OsmRelationId:%d",
+            originalBoundary.getBoundaryName(), osmRelation.getId()));
 
-        // full match found -> register all members with correct roles to extract bounding area polygon from in next stage
+        // full match found -> register all members with correct roles to extract bounding area polygon from in
+        // next stage
         for(int memberIndex = 0; memberIndex < osmRelation.getNumberOfMembers(); ++memberIndex){
           var currMember = osmRelation.getMember(memberIndex);
           if(OsmRelationUtils.isMemberOfTypeAndRole(currMember, EntityType.Way, OsmMultiPolygonTags.OUTER_ROLE)){
@@ -268,7 +282,8 @@ public class OsmBoundaryManager {
     var boundingBoundaryPolygon = PlanitJtsUtils.createPolygon(
         contiguousBoundaryCoords.toArray(new Coordinate[0]));
     if(boundingBoundaryPolygon == null){
-      LOGGER.severe("Unable to construct bounding boundary polygon from OSM way coordinates listed under bounding boundary name");
+      LOGGER.severe("Unable to construct bounding boundary polygon from OSM way coordinates listed " +
+          "under bounding boundary name");
       return;
     }
 
@@ -283,7 +298,8 @@ public class OsmBoundaryManager {
 
   public void overrideBoundingArea(OsmBoundary override){
     if(override == null || !override.hasBoundingPolygon()){
-      LOGGER.warning("Unable to override bounding area on boundary manager, only allowed when it is fully configured and" +
+      LOGGER.warning(
+          "Unable to override bounding area on boundary manager, only allowed when it is fully configured and" +
           "contains bounding polygon.");
     }
     this.finalBoundaryWithPolygon = override;
@@ -316,7 +332,8 @@ public class OsmBoundaryManager {
     if(isConfigured() && isComplete()){
       return finalBoundaryWithPolygon;
     }else{
-      LOGGER.severe("Final boundary (with polygon) not available, either original boundary not configured, or final boundary not yet completed");
+      LOGGER.severe("Final boundary (with polygon) not available, either original boundary not configured, or " +
+          "final boundary not yet completed");
     }
     return null;
   }
@@ -368,7 +385,8 @@ public class OsmBoundaryManager {
   public void logStepThreeCompletedBoundingBoundaryStats() {
     if(isComplete() && this.finalBoundaryWithPolygon.hasBoundaryName()){
       LOGGER.info(String.format(
-          "Boundary identification: \"%s\" finalised using total of %d OSM nodes", finalBoundaryWithPolygon.getBoundaryName(), osmNodeData.getRegisteredOsmNodes().size()));
+          "Boundary identification: \"%s\" finalised using total of %d OSM nodes",
+          finalBoundaryWithPolygon.getBoundaryName(), osmNodeData.getRegisteredOsmNodes().size()));
     }
   }
 

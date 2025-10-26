@@ -52,13 +52,15 @@ public interface OsmInfrastructureConfiguration {
 
   /** create a copy of the currently supported way types in set form
    *
-   * @return map of supported types (by underlying key), any modifications on this set have no impact on the instance internals
+   * @return map of supported types (by underlying key), any modifications on this set have no impact on the
+   * instance internals
    */
   SortedMap<String, SortedSet<String>> getActivatedTypes();
 
   /** create a copy of the currently unsupported way types in set form
    *
-   * @return deactivated way types (by underlying key), any modifications on this set have no impact on the instance internals
+   * @return deactivated way types (by underlying key), any modifications on this set have no impact on the
+   * instance internals
    */
   SortedMap<String, SortedSet<String>> getDeactivatedTypes();
 

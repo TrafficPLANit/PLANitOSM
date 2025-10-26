@@ -9,9 +9,9 @@ import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Polygon;
 
 /**
- * OSMBoundary helper class to define a boundary to restrict parsing to. This can be a user defined bounding box or polygon
- * as well as a name based reference to an OSM relation via the boundary:_some_type_ key value combination. When the _type_ chosen
- * is administrative it is possible to provide the admin_level as an additional discriminator.
+ * OSMBoundary helper class to define a boundary to restrict parsing to. This can be a user defined bounding box or
+ * polygon as well as a name based reference to an OSM relation via the boundary:_some_type_ key value combination.
+ * When the _type_ chosen is administrative it is possible to provide the admin_level as an additional discriminator.
  *
  * @author markr
  */
@@ -137,7 +137,9 @@ public final class OsmBoundary {
    * @return created boundary
    */
   public static OsmBoundary of(Number x1, Number x2, Number y1, Number y2){
-    return of(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
+    return of(
+        new Envelope(
+            PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
   }
 
   /** Set a square bounding box based on provided envelope

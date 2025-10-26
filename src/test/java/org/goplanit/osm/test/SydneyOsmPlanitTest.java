@@ -45,12 +45,13 @@ public class SydneyOsmPlanitTest {
   public static void setUp() throws Exception {
     if (LOGGER == null) {
       LOGGER = Logging.createLogger(SydneyOsmPlanitTest.class);
-    } 
+    }
+    IdGenerator.reset();
   }
 
   /**
    * run garbage collection after each test as it apparently is not triggered properly within
-   * Eclipse (or takes too long before being triggered)
+   * in some test environments (or takes too long before being triggered)
    */
   @AfterEach
   public void afterTest() {

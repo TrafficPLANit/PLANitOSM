@@ -10,12 +10,13 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.graph.Edge;
-import org.goplanit.utils.graph.Vertex;
+import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.zoning.Zoning;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +66,16 @@ public class BasicOsmReaderTest {
     if (LOGGER == null) {
       LOGGER = Logging.createLogger(BasicOsmReaderTest.class);
     } 
+  }
+
+  /**
+   * run garbage collection after each test as it apparently is not triggered properly within
+   * in some test environments (or takes too long before being triggered)
+   */
+  @AfterEach
+  public void afterTest() {
+    IdGenerator.reset();
+    System.gc();
   }
 
   @AfterAll

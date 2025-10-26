@@ -43,9 +43,14 @@ public class MelbourneOsm2PlanitTest {
     IdGenerator.reset();
   }
 
+  /**
+   * run garbage collection after each test as it apparently is not triggered properly within
+   * in some test environments (or takes too long before being triggered)
+   */
   @AfterEach
-  public void afterEach() {
+  public void afterTest() {
     IdGenerator.reset();
+    System.gc();
   }
 
   @AfterAll
