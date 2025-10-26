@@ -1,7 +1,7 @@
 # PLANitOSM
 
 ![Master Branch](https://github.com/TrafficPLANit/PLANit/actions/workflows/maven_master.yml/badge.svg?branch=master)
-![Develop Branch](https://github.com/TrafficPLANit/PLANit/actions/workflows/maven_develop.yml/badge.svg?branch=develop)
+[![Maven build branch:develop](https://github.com/TrafficPLANit/PLANitOSM/actions/workflows/maven_develop.yml/badge.svg?branch=develop)](https://github.com/TrafficPLANit/PLANitOSM/actions/workflows/maven_develop.yml)
 
 PLANitOSM provides parsers that are able to parse Open Street Map data and convert these into a PLANit compatible networks. A large number of options is provided to manipulate and filter the OSM data to extract the network that the user desires. The resulting networks are topologically sound and particularly aimed at being useful for traffic assignment and simulation purposes, although they can also be used to just filter our particular aspects of the OSM data. The created networks can in turn be exported to other formats, or manipulated in memory. 
 
