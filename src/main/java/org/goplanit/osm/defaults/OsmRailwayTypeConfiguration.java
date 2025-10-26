@@ -54,8 +54,8 @@ public class OsmRailwayTypeConfiguration extends OsmInfrastructureConfigurationI
   /**
    * Since we are building a macroscopic network based on OSM, we provide a mapping from
    * the common OSM railway types to macroscopic link segment types that we explicitly do not activate either because
-   * they are not used in general assignment (miniature) or because we cannot properly convert them (turn tables, razed), or because
-   * they do not represent a railway as such (platform as a way)
+   * they are not used in general assignment (miniature) or because we cannot properly convert them
+   * (turn tables, razed), or because they do not represent a railway as such (platform as a way)
    * 
    * <ul>
    * <li>FUNICULAR</li>
