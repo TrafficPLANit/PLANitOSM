@@ -1,6 +1,7 @@
 package org.goplanit.osm.util;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -36,7 +37,8 @@ public class OsmBoundingAreaUtils {
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
    */
-  public static boolean isPartlyOrWhollyWithinBoundaryArea(OsmNode osmNode, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+  public static boolean isPartlyOrWhollyWithinBoundaryArea(
+          OsmNode osmNode, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
     return isPartlyOrWhollyWithinBoundaryArea(OsmNodeUtils.createPoint(osmNode), osmBoundary, isWithinWhenNoBoundary);
   }
 
@@ -71,7 +73,8 @@ public class OsmBoundingAreaUtils {
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
    */
-  public static boolean isPartlyOrWhollyWithinBoundaryArea(Geometry geometry, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+  public static boolean isPartlyOrWhollyWithinBoundaryArea(
+          Geometry geometry, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
     if(osmBoundary == null || !osmBoundary.hasBoundingPolygon()){
       return isWithinWhenNoBoundary;
     }
@@ -90,13 +93,19 @@ public class OsmBoundingAreaUtils {
    * @return true when within boundary, false otherwise
    */
   public static boolean isPartlyOrWhollyWithinBoundaryArea(
-      OsmEntity entity, EntityType type, OsmNodeData nodeData, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+      OsmEntity entity,
+      EntityType type,
+      OsmNodeData nodeData,
+      OsmBoundary osmBoundary,
+      boolean isWithinWhenNoBoundary){
+
     if(type ==  EntityType.Node){
       return isPartlyOrWhollyWithinBoundaryArea((OsmNode) entity, osmBoundary, isWithinWhenNoBoundary);
     }else if(type == EntityType.Way){
       return isPartlyOrWhollyWithinBoundaryArea((OsmWay) entity, nodeData, osmBoundary, isWithinWhenNoBoundary);
     }
-    LOGGER.severe(String.format("Unsupported OSM entity type for OSM entity(%d) when determining if entity falls within boundary", entity.getId()));
+    LOGGER.severe(String.format("Unsupported OSM entity type for OSM entity(%d) when determining if entity falls " +
+            "within boundary", entity.getId()));
     return false;
   }
 
@@ -109,7 +118,12 @@ public class OsmBoundingAreaUtils {
    * @param geoUtils to extract length based on crs
    * @return created bounding box as Envelope
    */
-  private static Envelope createBoundingBox(final OsmWay osmWay, double offsetInMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) {
+  private static Envelope createBoundingBox(
+          final OsmWay osmWay,
+          double offsetInMeters,
+          final Map<Long,OsmNode> osmNodes,
+          final PlanitJtsCrsUtils geoUtils) {
+
     double minX = Double.POSITIVE_INFINITY;
     double minY = Double.POSITIVE_INFINITY;
     double maxX = Double.NEGATIVE_INFINITY;
@@ -151,7 +165,8 @@ public class OsmBoundingAreaUtils {
    * @param boundingPolygon defining the area 
    * @return true when covered by bounding area, false otherwise
    */
-  public static boolean isCoveredByZoningBoundingPolygon(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Polygon boundingPolygon) {
+  public static boolean isCoveredByZoningBoundingPolygon(
+          OsmWay osmWay, Map<Long, OsmNode> osmNodes, Polygon boundingPolygon) {
     if(osmWay==null || boundingPolygon==null) {
       return false;
     }
@@ -180,10 +195,11 @@ public class OsmBoundingAreaUtils {
    * @param geoUtils used to extract distances based on underlying crs
    * @return bounding box
    */
-  public static Envelope createBoundingBoxForOsmEntity(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
+  public static Envelope createBoundingBoxForOsmEntity(
+          OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
     /* search bounding box */
     Envelope boundingBox = null; 
-    switch (Osm4JUtils.getEntityType(osmEntity)) {
+    switch (Objects.requireNonNull(Osm4JUtils.getEntityType(osmEntity))) {
     case Node:
       boundingBox = createBoundingBox((OsmNode)osmEntity,offsetInMeters, geoUtils);
       break;
@@ -191,7 +207,8 @@ public class OsmBoundingAreaUtils {
       boundingBox = createBoundingBox((OsmWay)osmEntity, offsetInMeters, osmNodes, geoUtils);
       break;  
     default:
-      LOGGER.severe(String.format("unknown entity type %s when identifying bounding box for osm entity %s",Osm4JUtils.getEntityType(osmEntity).toString(), osmEntity.getId()));
+      LOGGER.severe(String.format("unknown entity type %s when identifying bounding box for osm entity %s",
+              Osm4JUtils.getEntityType(osmEntity).toString(), osmEntity.getId()));
       break;
     }
     return boundingBox;

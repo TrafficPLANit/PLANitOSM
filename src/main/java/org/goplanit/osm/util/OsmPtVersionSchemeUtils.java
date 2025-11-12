@@ -28,7 +28,8 @@ public class OsmPtVersionSchemeUtils {
    */
   public static boolean isCompatibleWith(OsmPtVersionScheme scheme, Map<String, String> tags) {
     if(scheme.equals(OsmPtVersionScheme.VERSION_1)) {
-      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags) || OsmWaterwayTags.isWaterBasedWay(tags)) {
+      if(OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags) ||
+              OsmWaterwayTags.isWaterBasedWay(tags)) {
         return OsmPtv1Tags.hasPtv1ValueTag(tags);
       }
       /* we also consider ferry terminals as "ptv1" although technically they are an amenity */
@@ -37,7 +38,8 @@ public class OsmPtVersionSchemeUtils {
       return OsmPtv2Tags.hasPtv2ValueTag(tags);
     }
     else {
-     LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility with, ignored",scheme.value()));
+     LOGGER.severe(String.format("unknown OSM public transport scheme %s provided to check compatibility " +
+             "with, ignored",scheme.value()));
     }
     return false;
   }
@@ -68,22 +70,27 @@ public class OsmPtVersionSchemeUtils {
    */
   public static boolean isPtv2StopPositionPtv1Stop(OsmNode osmNode, Map<String, String> tags) {
     
-    /* Context: The parser assumed a valid Ptv2 tagging and ignored the Ptv1 tag. However, it was only a valid Ptv1 tag and incorrectly tagged Ptv2 stop_location.
-     * We therefore identify this special situation */    
+    /* Context: The parser assumed a valid Ptv2 tagging and ignored the Ptv1 tag. However, it was only a valid Ptv1
+    tag and incorrectly tagged Ptv2 stop_location. We therefore identify this special situation */
     if(OsmPtv1Tags.isTramStop(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 tram_stop (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
+      LOGGER.fine(String.format(
+              "Identified Ptv1 tram_stop (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isBusStop(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 bus_stop (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
+      LOGGER.fine(String.format(
+              "Identified Ptv1 bus_stop (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isHalt(tags)) {
-      LOGGER.fine(String.format("Identified Ptv1 halt (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
+      LOGGER.fine(String.format(
+              "Identified Ptv1 halt (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
-      LOGGER.fine(String.format("Identified Ptv1 station (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
+      LOGGER.fine(String.format(
+              "Identified Ptv1 station (%d)  for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }else if(OsmPtv1Tags.isFerryTerminal(tags)){
-      LOGGER.fine(String.format("Identified Ptv1 ferry terminal (%d) for incorrectly tagged Ptv2 entity", osmNode.getId()));
+      LOGGER.fine(String.format(
+              "Identified Ptv1 ferry terminal (%d) for incorrectly tagged Ptv2 entity", osmNode.getId()));
       return true;
     }
     return false;

@@ -71,7 +71,8 @@ public class OsmTagUtils {
     return matchesAnyValueTag(valueTag, valueTags.toArray(String[]::new));
   }
     
-  /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+  /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are
+   * filtered by applying {@link #VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
    * @param keyTag to check 
@@ -82,14 +83,16 @@ public class OsmTagUtils {
     return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
   }   
   
-  /** Verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+  /** Verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags
+   * are filtered by applying {@link #VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
    * @param keyTags to check 
    * @param valueTags to check
    * @return true when match is present, false otherwise
    */  
-  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
+  public static boolean anyKeyMatchesAnyValueTag(
+          final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
     return anyKeyMatchesAnyValueTag(tags, VALUETAG_SPECIALCHAR_STRIP_REGEX, keyTags, valueTags);
   }
   
@@ -101,11 +104,13 @@ public class OsmTagUtils {
    * @param valueTags to check
    * @return true when match is present, false otherwise
    */  
-  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, String regEx, final String[] keyTags, final String... valueTags) {
+  public static boolean anyKeyMatchesAnyValueTag(
+          final Map<String,String> tags, String regEx, final String[] keyTags, final String... valueTags) {
     if(containsAnyKey(tags, keyTags)) {
       for(int index=0; index < keyTags.length;++ index) {
         String currentKey = keyTags[index];
-        if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey).replaceAll(regEx, ""), valueTags)) {
+        if(tags.containsKey(currentKey) &&
+                matchesAnyValueTag(tags.get(currentKey).replaceAll(regEx, ""), valueTags)) {
           return true;
         }
       }
@@ -124,7 +129,8 @@ public class OsmTagUtils {
     if(subTagConditions != null) {    
       for(int index=0;index<subTagConditions.length;++index) {
         String subTag = subTagConditions[index];
-        compositeKey  = (subTag!=null && !subTag.isBlank()) ? compositeKey.concat(":").concat(subTag) : compositeKey; 
+        compositeKey  =
+                (subTag!=null && !subTag.isBlank()) ? compositeKey.concat(":").concat(subTag) : compositeKey;
       }
     }
     return compositeKey;

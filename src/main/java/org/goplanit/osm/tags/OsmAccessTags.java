@@ -15,7 +15,8 @@ public class OsmAccessTags {
    * <li>designated</li>
    * </ul>
    */
-  protected static final String[] POSTIVE_ACCESS_VALUE_TAGS = {OsmAccessTags.YES,OsmAccessTags.PERMISSIVE, OsmAccessTags.DESIGNATED};
+  protected static final String[] POSTIVE_ACCESS_VALUE_TAGS =
+          {OsmAccessTags.YES,OsmAccessTags.PERMISSIVE, OsmAccessTags.DESIGNATED};
 
   /**
    * <ul>
@@ -32,7 +33,9 @@ public class OsmAccessTags {
    * </ul>
    */  
   protected static final String[] NEGATIVE_ACCESS_VALUE_TAGS = 
-    {OsmAccessTags.NO, OsmAccessTags.NONE, OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY, OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE, OsmAccessTags.DISMOUNT, OsmAccessTags.DISCOURAGED};
+    {OsmAccessTags.NO, OsmAccessTags.NONE, OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY,
+            OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE, OsmAccessTags.DISMOUNT,
+            OsmAccessTags.DISCOURAGED};
   
   /** key: access tag */
   public static final String ACCESS = "access";

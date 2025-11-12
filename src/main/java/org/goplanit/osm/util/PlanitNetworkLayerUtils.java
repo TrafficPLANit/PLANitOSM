@@ -72,7 +72,9 @@ public class PlanitNetworkLayerUtils {
    * @param networkData to extract layer specific data from
    * @return true when one or more layers are found, false otherwise
    */
-  public static boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkReaderData networkData){
+  public static boolean hasNetworkLayersWithActiveOsmNode(
+          long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkReaderData networkData){
+
     OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);
     if(osmNode != null) {      
       for(NetworkLayer networkLayer : network.getTransportLayers()) {
@@ -105,7 +107,9 @@ public class PlanitNetworkLayerUtils {
       MacroscopicNetworkLayer networkLayer){
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
+      linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(
+              link, directionAb, true /*register on nodes and link*/);
+
       /* Xml id */
       linkSegment.setXmlId(Long.toString(linkSegment.getId()));
       /* external id, identical to link since OSM has no directional ids */
@@ -119,7 +123,11 @@ public class PlanitNetworkLayerUtils {
 
     }else{
       LOGGER.warning(String.format(
-          "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), link.getExternalId()));
+          "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%s), ignored entity",
+              linkSegment.getId(),
+              link.getVertexA().getExternalId(),
+              link.getVertexB().getExternalId(),
+              link.getExternalId()));
     }
 
     /* link segment type */

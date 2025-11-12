@@ -35,7 +35,8 @@ public class OsmDirectionTags {
    * @return true when direction=clockwise is present, false otherwise
    */
   public static boolean isDirectionExplicitClockwise(Map<String,String> tags) {
-    return tags.containsKey(OsmDirectionTags.DIRECTION) && tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE);
+    return tags.containsKey(OsmDirectionTags.DIRECTION) &&
+            tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.CLOCKWISE);
   }
   
   /** check if explicit driving direction in clockwise direction is provided
@@ -43,7 +44,8 @@ public class OsmDirectionTags {
    * @return true when direction=anticlockwise is present, false otherwise
    */  
   public static boolean isDirectionExplicitAntiClockwise(Map<String,String> tags) {
-    return tags.containsKey(OsmDirectionTags.DIRECTION) && tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.ANTI_CLOCKWISE);
+    return tags.containsKey(OsmDirectionTags.DIRECTION) &&
+            tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.ANTI_CLOCKWISE);
   }  
     
 }

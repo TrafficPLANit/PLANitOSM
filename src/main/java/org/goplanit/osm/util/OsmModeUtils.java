@@ -25,23 +25,27 @@ public class OsmModeUtils {
    * Note that the actual value of the tags will be stripped from special characters to make it more universal to match the pre-specified mode 
    * access value tags that we expect to be passed in.
    * 
-   * @param isprefix when true prefix applied, when false, postfix
+   * @param isPrefix when true prefix applied, when false, postfix
    * @param alteration, the post or prefix alteration of the mode key
    * @param tags to find explicitly included/excluded (PLANit) modes from
    * @param modeAccessValueTags used to filter the modes by
    * @return modes found with specified value tag
    */    
-  protected static Set<String> getPrefixedOrPostfixedOsmRoadModesWithValueTag(boolean isprefix, String alteration, Map<String, String> tags, final String... modeAccessValueTags) {
+  protected static Set<String> getPrefixedOrPostfixedOsmRoadModesWithValueTag(
+          boolean isPrefix, String alteration, Map<String, String> tags, final String... modeAccessValueTags) {
     Set<String> foundModes = new HashSet<String>();    
     
     /* osm modes extracted from road mode category */
     Collection<String> roadModeCategories = OsmRoadModeCategoryTags.getRoadModeCategories();
     for(String roadModeCategory : roadModeCategories) {
-      String compositeKey = isprefix ? OsmTagUtils.createCompositeOsmKey(alteration, roadModeCategory) : OsmTagUtils.createCompositeOsmKey(roadModeCategory, alteration);      
+      String compositeKey =
+              isPrefix ? OsmTagUtils.createCompositeOsmKey(alteration, roadModeCategory) :
+                      OsmTagUtils.createCompositeOsmKey(roadModeCategory, alteration);
       if(tags.containsKey(compositeKey)) {
-        String valueTag = tags.get(compositeKey).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");        
-        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
-          if(modeAccessValueTags[index].equals(valueTag)){
+        String valueTag =
+                tags.get(compositeKey).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        for (String modeAccessValueTag : modeAccessValueTags) {
+          if (modeAccessValueTag.equals(valueTag)) {
             foundModes.addAll(OsmRoadModeCategoryTags.getRoadModesByCategory(roadModeCategory));
           }
         }
@@ -51,11 +55,14 @@ public class OsmModeUtils {
     /* osm road mode */
     Collection<String> roadModes = OsmRoadModeTags.getSupportedRoadModeTags();
     for(String roadMode : roadModes) {
-      String compositeKey = isprefix ? OsmTagUtils.createCompositeOsmKey(alteration, roadMode) : OsmTagUtils.createCompositeOsmKey(roadMode, alteration);      
+      String compositeKey = isPrefix ?
+              OsmTagUtils.createCompositeOsmKey(alteration, roadMode) :
+              OsmTagUtils.createCompositeOsmKey(roadMode, alteration);
       if(tags.containsKey(compositeKey)){
-        String valueTag = tags.get(compositeKey).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
-        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
-          if(modeAccessValueTags[index].equals(valueTag)){
+        String valueTag =
+                tags.get(compositeKey).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+        for (String modeAccessValueTag : modeAccessValueTags) {
+          if (modeAccessValueTag.equals(valueTag)) {
             foundModes.add(roadMode);
           }
         }
@@ -72,15 +79,16 @@ public class OsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */  
-  protected static Set<String> getOsmModesWithValueTag(Map<String, String> tags, Collection<String> supportedOsmModes, final String... modeAccessValueTags) {
+  protected static Set<String> getOsmModesWithValueTag(
+          Map<String, String> tags, Collection<String> supportedOsmModes, final String... modeAccessValueTags) {
     Set<String> foundModes = new HashSet<String>();    
     
     /* osm mode */
     for(String osmMode : supportedOsmModes) {     
       if(tags.containsKey(osmMode)){
         String valueTag = tags.get(osmMode).replaceAll(OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
-        for(int index = 0 ; index < modeAccessValueTags.length ; ++index) {
-          if(modeAccessValueTags[index].equals(valueTag)){
+        for (String modeAccessValueTag : modeAccessValueTags) {
+          if (modeAccessValueTag.equals(valueTag)) {
             foundModes.add(osmMode);
           }
         }
@@ -98,7 +106,9 @@ public class OsmModeUtils {
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
-  protected static Set<String> collectEligibleOsmModesOnPtOsmEntity(Map<String, String> tags, Set<String> selectableOsmModes, String defaultOsmMode) {
+  protected static Set<String> collectEligibleOsmModesOnPtOsmEntity(
+          Map<String, String> tags, Set<String> selectableOsmModes, String defaultOsmMode) {
+
     Set<String> explicitlyIncludedOsmModes = getOsmModesWithValueTag(tags, selectableOsmModes, OsmTags.YES);
     if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
       Set<String> explicitlyExcludedOsmModes = getOsmModesWithValueTag(tags, selectableOsmModes, OsmTags.NO);
@@ -143,7 +153,11 @@ public class OsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */  
-  public static Set<String> getPostfixedOsmRoadModesWithValueTag(String postFix, Map<String, String> tags, final String... modeAccessValueTags) {
+  public static Set<String> getPostfixedOsmRoadModesWithValueTag(
+          String postFix,
+          Map<String, String> tags,
+          final String... modeAccessValueTags) {
+
     return getPrefixedOrPostfixedOsmRoadModesWithValueTag(false, postFix, tags, modeAccessValueTags);
   }  
   
@@ -155,7 +169,8 @@ public class OsmModeUtils {
    * @param modeAccessValueTags used to filter the modes by
    * @return modes found with specified value tag
    */  
-  public static Collection<String> getPrefixedOsmRoadModesWithValueTag(String prefix, Map<String, String> tags, final String... modeAccessValueTags) {
+  public static Collection<String> getPrefixedOsmRoadModesWithValueTag(
+          String prefix, Map<String, String> tags, final String... modeAccessValueTags) {
     return getPrefixedOrPostfixedOsmRoadModesWithValueTag(true, prefix, tags, modeAccessValueTags);
   }
   
@@ -168,7 +183,8 @@ public class OsmModeUtils {
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
-  public static Set<String> collectEligibleOsmWaterModesOnPtOsmEntity(Map<String, String> tags, String defaultOsmMode) {
+  public static Set<String> collectEligibleOsmWaterModesOnPtOsmEntity(
+          Map<String, String> tags, String defaultOsmMode) {
     return collectEligibleOsmModesOnPtOsmEntity(tags, OsmWaterModeTags.getSupportedWaterModeTags(), defaultOsmMode);       
   }
   
@@ -192,7 +208,9 @@ public class OsmModeUtils {
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
-  public static Set<String> collectEligibleOsmRoadModesOnPtOsmEntity(long osmEntityId, Map<String, String> tags, String defaultOsmMode) {
+  public static Set<String> collectEligibleOsmRoadModesOnPtOsmEntity(
+          long osmEntityId, Map<String, String> tags, String defaultOsmMode) {
+
     Set<String> explicitlyIncludedOsmModes = getOsmRoadModesWithValueTag(tags, OsmTags.YES);
     if(explicitlyIncludedOsmModes != null && !explicitlyIncludedOsmModes.isEmpty()) {
       Set<String> explicitlyExcludedOsmModes = getOsmRoadModesWithValueTag(tags, OsmTags.NO);
@@ -254,7 +272,8 @@ public class OsmModeUtils {
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm modes, can be empty if no modes are found and default is null
    */
-  public static Collection<String> collectEligibleOsmModesOnPtOsmEntity(long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {    
+  public static Collection<String> collectEligibleOsmModesOnPtOsmEntity(
+          long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {
     
     Collection<String> eligibleOsmModes = collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags);            
     if((eligibleOsmModes==null || eligibleOsmModes.isEmpty()) && defaultOsmMode != null) {
@@ -274,8 +293,10 @@ public class OsmModeUtils {
    * @param defaultOsmMode used when no explicit modes can be found (can be null)
    * @return list of eligible osm public transport modes, can be empty if no modes are found and default is null
    */  
-  public static TreeSet<String> collectEligibleOsmPublicTransportModesOnPtOsmEntity(long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {
-    TreeSet<String> eligibleOsmPtModes = extractPublicTransportModesFrom(collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags));
+  public static TreeSet<String> collectEligibleOsmPublicTransportModesOnPtOsmEntity(
+          long osmPtEntityId, Map<String, String> tags, String defaultOsmMode) {
+    TreeSet<String> eligibleOsmPtModes =
+            extractPublicTransportModesFrom(collectEligibleOsmModesOnPtOsmEntity(osmPtEntityId, tags));
     
     if((eligibleOsmPtModes==null || eligibleOsmPtModes.isEmpty()) && defaultOsmMode != null) {
       /* use default mode when no modes are found across all pt modes*/
@@ -347,7 +368,9 @@ public class OsmModeUtils {
    * @param suppressWarning when true do not log warning if no match could be found,
    * @return default mode, null if no match could be made
    */
-  public static String identifyPtv1DefaultMode(long osmId, Map<String, String> tags, String backupDefaultMode, boolean suppressWarning) {
+  public static String identifyPtv1DefaultMode(
+          long osmId, Map<String, String> tags, String backupDefaultMode, boolean suppressWarning) {
+
     String foundMode = null;
     if(OsmPtv1Tags.hasPtv1ValueTag(tags)) {
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
@@ -417,7 +440,11 @@ public class OsmModeUtils {
    * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
    * @return compatible modes found
    */
-  public static Collection<String> extractCompatibleOsmModes(final Collection<String> osmModesToCheck, final Collection<String> referenceOsmModes, boolean allowPseudoMatches) {
+  public static Collection<String> extractCompatibleOsmModes(
+          final Collection<String> osmModesToCheck,
+          final Collection<String> referenceOsmModes,
+          boolean allowPseudoMatches) {
+
     Set<String> overlappingModes = new HashSet<>();
     if(referenceOsmModes !=null) {
       if(allowPseudoMatches) {
@@ -462,27 +489,21 @@ public class OsmModeUtils {
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasEligibleOsmMode(Pair<? extends SortedSet<String>, SortedSet<PredefinedModeType>> modeResult) {
-    if(modeResult!= null && modeResult.first()!=null && !modeResult.first().isEmpty()) {
-      /* eligible modes available */
-      return true;
-    }else {
-      return false;
-    }
-  }  
+  public static boolean hasEligibleOsmMode(
+          Pair<? extends SortedSet<String>, SortedSet<PredefinedModeType>> modeResult) {
+    // eligible modes available when this holds
+    return modeResult != null && modeResult.first() != null && !modeResult.first().isEmpty();
+  }
 
   /** Check to see if pair with eligible modes contains any mapped PLANit mode
    * 
    * @param modeResult of collectEligibleModes on zoning base handler
    * @return true when has at least one mapped PLANit mode present
    */
-  public static boolean hasMappedPlanitMode(Pair<? extends SortedSet<String>, SortedSet<PredefinedModeType>> modeResult) {
-    if(modeResult!= null && modeResult.second()!=null && !modeResult.second().isEmpty()) {
-      /* eligible modes mapped to planit mode*/
-      return true;
-    }else {
-      return false;
-    }
+  public static boolean hasMappedPlanitMode(
+          Pair<? extends SortedSet<String>, SortedSet<PredefinedModeType>> modeResult) {
+    // eligible modes mapped to planit mode when this holds
+    return modeResult != null && modeResult.second() != null && !modeResult.second().isEmpty();
   }
 
 }

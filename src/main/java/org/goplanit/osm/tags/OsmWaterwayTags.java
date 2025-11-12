@@ -48,11 +48,13 @@ public class OsmWaterwayTags {
     DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS.add(FERRY);
 
     /* ferry=_highway_type */
-    DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(OsmHighwayTypeConfiguration.DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES);
-    DEFAULT_DEACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(OsmHighwayTypeConfiguration.DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES);
+    DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(
+            OsmHighwayTypeConfiguration.DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES);
+    DEFAULT_DEACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(
+            OsmHighwayTypeConfiguration.DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES);
   }
 
-  /**
+  /*
    * populate the available railway tags
    */
   static {
@@ -62,10 +64,10 @@ public class OsmWaterwayTags {
   /* key */
   public static final String ROUTE = "route";
 
-  /* ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as used as a
-   * way to indicate a ferry that replaces a type of highway, in which case it may be ferry=primary, indicating a highway section
-   * that is a ferry. The latter may or may not have the route=ferry tagging, so, we should support it separately as another valid
-   * ferry key
+  /* ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as
+   *used as a way to indicate a ferry that replaces a type of highway, in which case it may be ferry=primary,
+   * indicating a highway section that is a ferry. The latter may or may not have the route=ferry tagging, so, we
+   * should support it separately as another valid ferry key
    */
   public static final String FERRY = OsmWaterModeTags.FERRY;
 
@@ -136,7 +138,8 @@ public class OsmWaterwayTags {
     }else if(isWaterWayTaggedAsHighway(tags)){
       return FERRY;
     }
-    LOGGER.severe(String.format("Water way is neither tagged as route=ferry or ferry=<some_highway_tag> for tags: %s",tags));
+    LOGGER.severe(String.format("Water way is neither tagged as route=ferry or ferry=<some_highway_tag> " +
+            "for tags: %s",tags));
     return null;
   }
 

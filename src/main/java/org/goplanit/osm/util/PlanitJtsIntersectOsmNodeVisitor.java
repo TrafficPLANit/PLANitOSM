@@ -24,10 +24,10 @@ public class PlanitJtsIntersectOsmNodeVisitor implements ItemVisitor{
     private static final Logger LOGGER = Logger.getLogger(PlanitJtsIntersectOsmNodeVisitor.class.getCanonicalName());
 
     /** result to populate */  
-    private Collection<OsmNode> filteredResultToPopulate;
+    private final Collection<OsmNode> filteredResultToPopulate;
     
     /** filter to apply, i.e., the area to filter intersection test on */
-    private Polygon geometryFilter;
+    private final Polygon geometryFilter;
       
     /** Constructor
      * 

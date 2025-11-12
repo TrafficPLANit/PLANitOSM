@@ -25,7 +25,8 @@ public class PlanitZoningUtils {
     /* delegate to zoning modifier */
     int originalNumberOfTransferZones = zoning.getTransferZones().size();
     zoning.getZoningModifier().removeDanglingZones();
-    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)", zoning.getTransferZones().size(), originalNumberOfTransferZones));
+    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)",
+            zoning.getTransferZones().size(), originalNumberOfTransferZones));
   }  
   
   /**
@@ -37,7 +38,8 @@ public class PlanitZoningUtils {
     /* delegate to zoning modifier */
     int originalNumberOfTransferZoneGroups = zoning.getTransferZoneGroups().size();
     zoning.getZoningModifier().removeDanglingTransferZoneGroups();    
-    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)", zoning.getTransferZoneGroups().size(), originalNumberOfTransferZoneGroups));    
+    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)",
+            zoning.getTransferZoneGroups().size(), originalNumberOfTransferZoneGroups));
   }    
   
   

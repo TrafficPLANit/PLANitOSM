@@ -68,7 +68,8 @@ public class PlanitTransferZoneUtils {
     case Way:
       return OsmWayUtils.findZoneClosest((OsmWay)osmEntity, zones, osmNodes, suppressLogging, geoUtils);
     default:
-      if (!suppressLogging) LOGGER.warning(String.format("unsupported osm entity type when finding closest zone to %d",osmEntity.getId()));
+      if (!suppressLogging) LOGGER.warning(String.format("unsupported osm entity type when finding closest zone to %d",
+              osmEntity.getId()));
       break;
     }
     return null;
@@ -156,7 +157,8 @@ public class PlanitTransferZoneUtils {
         transferZone.setName(stationName);
       }
     }
-    /* only set when not already set, because when already set it is likely the existing station name is more accurate */
+    // only set when not already set, because when already set it is likely the existing station name is
+    // more accurate
     if(!hasTransferZoneStationName(transferZone)) {
       setTransferZoneStationName(transferZone, stationName);
     }
@@ -169,7 +171,8 @@ public class PlanitTransferZoneUtils {
    * @param transferZone to use
    * @param eligibleOsmModes to add
    */
-  public static void registerOsmModesOnTransferZone(final TransferZone transferZone, SortedSet<String> eligibleOsmModes) {
+  public static void registerOsmModesOnTransferZone(
+          final TransferZone transferZone, SortedSet<String> eligibleOsmModes) {
     if(transferZone != null && eligibleOsmModes!= null) {
       /* register identified eligible access modes */
       transferZone.addInputProperty(TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY, eligibleOsmModes);
@@ -212,7 +215,8 @@ public class PlanitTransferZoneUtils {
     }else if(transferZoneGeometry instanceof Polygon || transferZoneGeometry instanceof LineString) {
       return EntityType.Way;
     }else {
-      throw new PlanItRunTimeException("Unknown geometry type encountered for transferZoneGeometry %s",transferZoneGeometry);
+      throw new PlanItRunTimeException("Unknown geometry type encountered for transferZoneGeometry %s",
+              transferZoneGeometry);
     }
   }
 

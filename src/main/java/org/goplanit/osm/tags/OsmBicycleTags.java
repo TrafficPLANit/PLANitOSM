@@ -27,7 +27,8 @@ public class OsmBicycleTags {
    * </ul>
    */
   protected static final String[] CYCLEWAY_REGULAR_POSITIVE_VALUE_TAGS = 
-    {OsmBicycleTags.LANE, OsmBicycleTags.SHARED_LANE, OsmBicycleTags.SHOULDER, OsmBicycleTags.TRACK, OsmBicycleTags.SHARE_BUSWAY};
+    {OsmBicycleTags.LANE, OsmBicycleTags.SHARED_LANE, OsmBicycleTags.SHOULDER, OsmBicycleTags.TRACK,
+            OsmBicycleTags.SHARE_BUSWAY};
   
   /**
    * <ul>
@@ -64,12 +65,15 @@ public class OsmBicycleTags {
    * <li>cycleway:right</li>
    * </ul>
    */  
-  protected static final String[] LOCATION_BASED_CYCLEWAY_KEY_TAGS = {OsmBicycleTags.CYCLEWAY_RIGHT, OsmBicycleTags.CYCLEWAY_LEFT};    
+  protected static final String[] LOCATION_BASED_CYCLEWAY_KEY_TAGS =
+          {OsmBicycleTags.CYCLEWAY_RIGHT, OsmBicycleTags.CYCLEWAY_LEFT};
 
   /**
    * combining {@code basicCycleWayKeyTags} and {@code locationBasedCycleWayKeyTags}
    */  
-  protected static final String[] BASIC_AND_LOCATION_BASED_KEY_TAGS = Stream.concat(Stream.of(BASIC_CYCLEWAY_KEY_TAGS),Stream.of(LOCATION_BASED_CYCLEWAY_KEY_TAGS)).toArray(String[]::new); 
+  protected static final String[] BASIC_AND_LOCATION_BASED_KEY_TAGS =
+          Stream.concat(Stream.of(BASIC_CYCLEWAY_KEY_TAGS),Stream.of(
+                  LOCATION_BASED_CYCLEWAY_KEY_TAGS)).toArray(String[]::new);
   
   /**
    * <ul>
@@ -96,9 +100,11 @@ public class OsmBicycleTags {
   
   public static final String CYCLEWAY_LEFT = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.LEFT);    
   
-  public static final String CYCLEWAY_RIGHT_ONEWAY = OsmTagUtils.createCompositeOsmKey(CYCLEWAY_RIGHT, OsmOneWayTags.ONEWAY);
+  public static final String CYCLEWAY_RIGHT_ONEWAY =
+          OsmTagUtils.createCompositeOsmKey(CYCLEWAY_RIGHT, OsmOneWayTags.ONEWAY);
   
-  public static final String CYCLEWAY_LEFT_ONEWAY = OsmTagUtils.createCompositeOsmKey(CYCLEWAY_LEFT, OsmOneWayTags.ONEWAY);
+  public static final String CYCLEWAY_LEFT_ONEWAY =
+          OsmTagUtils.createCompositeOsmKey(CYCLEWAY_LEFT, OsmOneWayTags.ONEWAY);
     
   /* values */
     
@@ -193,11 +199,14 @@ public class OsmBicycleTags {
    * @param cyclewayKeys eligible keys, assumed to be valid cycleway keys from this class (not checked)
    * @return true when present, false otherwise
    */
-  public static boolean isCyclewayIncludedForAnyOf(Map<String, String> tags, boolean oppositeDirection, String... cyclewayKeys) {
+  public static boolean isCyclewayIncludedForAnyOf(
+          Map<String, String> tags, boolean oppositeDirection, String... cyclewayKeys) {
     if(!oppositeDirection) {
-      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularPositiveValueTags());
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(
+              tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularPositiveValueTags());
     }else {
-      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayPositiveOppositeDirectionValueTags());
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(
+              tags, cyclewayKeys, OsmBicycleTags.getCycleWayPositiveOppositeDirectionValueTags());
     }
   }    
   
@@ -229,7 +238,8 @@ public class OsmBicycleTags {
    * @return true when present, false otherwise
    */  
   public static boolean isCyclewayExcludedForAnyOf(Map<String, String> tags, String... cyclewayKeys) {
-    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularNegativeValueTags());
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(
+            tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularNegativeValueTags());
   }   
   
 
@@ -240,7 +250,8 @@ public class OsmBicycleTags {
    * @return true when present, false otherwise
    */
   public static boolean isNoOneWayCyclewayInAnyLocation(Map<String, String> tags) {
-    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, getCycleWayOneWayLocationBasedKeyTags(), OsmBicycleTags.getCycleWayRegularNegativeValueTags());
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(
+            tags, getCycleWayOneWayLocationBasedKeyTags(), OsmBicycleTags.getCycleWayRegularNegativeValueTags());
   }
   
 }

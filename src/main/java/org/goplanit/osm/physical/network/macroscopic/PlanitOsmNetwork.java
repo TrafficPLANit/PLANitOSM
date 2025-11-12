@@ -170,7 +170,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           return createFerry(maxSpeed, modes);
         default:
           LOGGER.warning(
-              String.format("OSM type is supported for water way but factory method is missing, unexpected for type %s=%s", osmWaterwayKey, waterwayValue));
+              String.format("OSM type is supported for water way but factory method is missing, unexpected " +
+                      "for type %s=%s", osmWaterwayKey, waterwayValue));
           return null;
       }
     }else if(OsmWaterwayTags.FERRY.equals(osmWaterwayKey)){
@@ -235,14 +236,19 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    *  
    * @param osmKeyTag of the type
    * @param osmValueTag of the type
-   * @param capacityPcuPerhour capacity in pcu/h
+   * @param capacityPcuPerHour capacity in pcu/h
    * @param maxDensityPcuPerKm max density
    * @param maxSpeed the max speed (km/h)
    * @param modes to identify layers to register link segment types on
    * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single entry, otherwise it might have more
    */
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createOsmLinkSegmentType(
-      String osmKeyTag, String osmValueTag, double capacityPcuPerhour, double maxDensityPcuPerKm, double maxSpeed, Collection<? extends Mode> modes) {
+      String osmKeyTag,
+      String osmValueTag,
+      double capacityPcuPerHour,
+      double maxDensityPcuPerKm,
+      double maxSpeed,
+      Collection<? extends Mode> modes) {
 
     /* per layer (via mode) check if type is to be created */
     SortedMap<NetworkLayer, MacroscopicLinkSegmentType> typesPerLayer = new TreeMap<>();
@@ -254,7 +260,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         String externalId = PlanitOsmUtils.createExternalIdByOsmKeyValue(osmKeyTag, osmValueTag);
 
         /* new type */
-        linkSegmentType = networkLayer.linkSegmentTypes.getFactory().registerNew(externalId, capacityPcuPerhour, maxDensityPcuPerKm);
+        linkSegmentType = networkLayer.linkSegmentTypes.getFactory().registerNew(
+                externalId, capacityPcuPerHour, maxDensityPcuPerKm);
         /* XML id */
         linkSegmentType.setXmlId(Long.toString(linkSegmentType.getId()));
 
@@ -270,7 +277,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       double cappedMaxSpeed = Math.min(maxSpeed, mode.getMaximumSpeedKmH());
 
       var accessGroupProperties = AccessGroupPropertiesFactory.create(cappedMaxSpeed, mode);
-      var matchedExistingAccessGroupProperties = linkSegmentType.findEqualAccessPropertiesForAnyMode(accessGroupProperties);
+      var matchedExistingAccessGroupProperties =
+              linkSegmentType.findEqualAccessPropertiesForAnyMode(accessGroupProperties);
       if(matchedExistingAccessGroupProperties != null){
         linkSegmentType.registerModeOnAccessGroup(mode, matchedExistingAccessGroupProperties);
       }else {
@@ -291,7 +299,12 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single entry, otherwise it might have more
    */
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createDefaultOsmLinkSegmentType(
-      String nameKey, String nameValue, double capacityPcuPerhour, double maxSpeedKmh, Collection<? extends Mode> modes) {
+      String nameKey,
+      String nameValue,
+      double capacityPcuPerhour,
+      double maxSpeedKmh,
+      Collection<? extends Mode> modes) {
+
     return createOsmLinkSegmentType(
             nameKey,
             nameValue,
@@ -594,7 +607,10 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createSteps(
       double osmHighwayTypeMaxSpeed, Collection<? extends Mode> modes) {
     return createDefaultOsmLinkSegmentType(
-        OsmHighwayTags.getHighwayKeyTag(), OsmHighwayTags.STEPS, OsmConstants.STEPS_CAPACITY, osmHighwayTypeMaxSpeed, modes);
+            OsmHighwayTags.getHighwayKeyTag(),
+            OsmHighwayTags.STEPS,
+            OsmConstants.STEPS_CAPACITY,
+            osmHighwayTypeMaxSpeed, modes);
   }   
   
   /**
@@ -688,7 +704,10 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createFunicular(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes) {
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.FUNICULAR, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+        OsmRailwayTags.getRailwayKeyTag(),
+        OsmRailwayTags.FUNICULAR,
+        OsmConstants.RAILWAY_CAPACITY,
+        osmRailwayTypeMaxSpeed, modes);
   }   
   
   /**
@@ -702,7 +721,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createLightRail(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.LIGHT_RAIL, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+        OsmRailwayTags.getRailwayKeyTag(),
+        OsmRailwayTags.LIGHT_RAIL,
+        OsmConstants.RAILWAY_CAPACITY,
+        osmRailwayTypeMaxSpeed,
+        modes);
   }   
   
   /**
@@ -716,7 +739,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createMonoRail(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.MONO_RAIL, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+        OsmRailwayTags.getRailwayKeyTag(),
+        OsmRailwayTags.MONO_RAIL,
+        OsmConstants.RAILWAY_CAPACITY,
+        osmRailwayTypeMaxSpeed,
+        modes);
   }    
   
   /**
@@ -730,7 +757,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createNarrowGauge(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.NARROW_GAUGE, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+            OsmRailwayTags.getRailwayKeyTag(),
+            OsmRailwayTags.NARROW_GAUGE,
+            OsmConstants.RAILWAY_CAPACITY,
+            osmRailwayTypeMaxSpeed,
+            modes);
   }    
   
   /**
@@ -744,7 +775,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createRail(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.RAIL, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+            OsmRailwayTags.getRailwayKeyTag(),
+            OsmRailwayTags.RAIL,
+            OsmConstants.RAILWAY_CAPACITY,
+            osmRailwayTypeMaxSpeed,
+            modes);
   }    
   
   /**
@@ -758,7 +793,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createSubway(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.SUBWAY, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+        OsmRailwayTags.getRailwayKeyTag(),
+            OsmRailwayTags.SUBWAY, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
   } 
   
   /**
@@ -772,7 +808,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createTram(
       double osmRailwayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmRailwayTags.getRailwayKeyTag(), OsmRailwayTags.TRAM, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
+        OsmRailwayTags.getRailwayKeyTag(),
+            OsmRailwayTags.TRAM, OsmConstants.RAILWAY_CAPACITY, osmRailwayTypeMaxSpeed, modes);
   }
 
   /**
@@ -786,13 +823,15 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createFerry(
       double osmWayTypeMaxSpeed, Collection<? extends Mode> modes){
     return createDefaultOsmLinkSegmentType(
-        OsmWaterwayTags.getKeyForValueType(OsmWaterwayTags.FERRY), OsmWaterwayTags.FERRY, OsmConstants.WATERWAY_CAPACITY, osmWayTypeMaxSpeed, modes);
+        OsmWaterwayTags.getKeyForValueType(OsmWaterwayTags.FERRY),
+            OsmWaterwayTags.FERRY, OsmConstants.WATERWAY_CAPACITY, osmWayTypeMaxSpeed, modes);
   }
 
   /**
    * the PLANit link segment types per layer (value) that are activated by OSM way (key, value)
    */
-  protected final SortedMap<String, SortedMap<String, SortedMap<NetworkLayer, MacroscopicLinkSegmentType>>> defaultPlanitLinkSegmentTypesByOsmKeyValue;
+  protected final SortedMap<String, SortedMap<String, SortedMap<NetworkLayer, MacroscopicLinkSegmentType>>>
+          defaultPlanitLinkSegmentTypesByOsmKeyValue;
 
   /**
    * collect the PLANit (predefined) mode types that are mapped, i.e., are marked to be activated in the final network for the given
@@ -843,9 +882,16 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         double osmHighwayTypeMaxSpeed = highwaySettings.getDefaultSpeedLimitByOsmHighwayType(osmWayValue);
         if(isCustom) {
           /* type is overwritten, so use overwritten data instead of defaults */
-          final Pair<Double,Double> capacityDensityPair = highwaySettings.getOverwrittenCapacityMaxDensityByOsmHighwayType(osmWayValue);
-          linkSegmentTypes = createOsmLinkSegmentType(OsmHighwayTags.getHighwayKeyTag(), osmWayValue, capacityDensityPair.first(),
-            capacityDensityPair.second(), osmHighwayTypeMaxSpeed, activatedPlanitModes);
+          final Pair<Double,Double> capacityDensityPair =
+                  highwaySettings.getOverwrittenCapacityMaxDensityByOsmHighwayType(osmWayValue);
+          linkSegmentTypes = createOsmLinkSegmentType(
+                  OsmHighwayTags.getHighwayKeyTag(),
+                  osmWayValue,
+                  capacityDensityPair.first(),
+                  capacityDensityPair.second(),
+                  osmHighwayTypeMaxSpeed,
+                  activatedPlanitModes);
+
         }else {
           /* use default link segment type values */
           linkSegmentTypes = createOsmRoadWayLinkSegmentType(osmWayValue, osmHighwayTypeMaxSpeed, activatedPlanitModes);
@@ -857,9 +903,12 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           MacroscopicLinkSegmentType linkSegmentType = entry.getValue();
 
           /* convert to comma separated string by mode name */
-          String csvModeString = String.join(",", linkSegmentType.getAllowedModes().stream().map(Mode::getName).collect(Collectors.joining(",")));
-          LOGGER.info(String.format("%s %s highway=%-15s modes: %-60s speed (km/h): %-6.1f  capacity (pcu/lane/h): %-8.1f max_density (pcu/km/lane): %-8.1f",
-              NetworkLayer.createLayerLogPrefix(layer),isCustom ? "[CUSTOM] " : "[DEFAULT]",
+          String csvModeString = String.join(",",
+                  linkSegmentType.getAllowedModes().stream().map(Mode::getName).collect(
+                          Collectors.joining(",")));
+          LOGGER.info(String.format("%s %s highway=%-15s modes: %-60s speed (km/h): %-6.1f  " +
+                          "capacity (pcu/lane/h): %-8.1f max_density (pcu/km/lane): %-8.1f",
+                  NetworkLayer.createLayerLogPrefix(layer),isCustom ? "[CUSTOM] " : "[DEFAULT]",
                   osmWayValue, csvModeString, osmHighwayTypeMaxSpeed, linkSegmentType.getExplicitCapacityPerLaneOrDefault(),
                   linkSegmentType.getExplicitMaximumDensityPerLaneOrDefault()));
         }
@@ -876,28 +925,37 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createOsmCompatibleRailLinkSegmentTypeByLayer(
       final String osmWayValue, final OsmNetworkReaderSettings settings){
-    SortedMap<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;
-    
+
     if(!settings.isRailwayParserActive()) {
-      LOGGER.warning(String.format("Railways are not activated, cannot create link segment types for railway=%s", osmWayValue));
-      return linkSegmentTypes;
+      LOGGER.warning(String.format("Railways are not activated, cannot create link segment types for railway=%s",
+              osmWayValue));
+      return null;
     }
+    SortedMap<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypes = null;
   
     /* only when way type is marked as supported in settings we parse it */
     if(settings.isRailwayParserActive() && settings.getRailwaySettings().isOsmRailwayTypeActivated(osmWayValue)) {
       OsmRailwaySettings railwaySettings = settings.getRailwaySettings();
       boolean isOverwrite = railwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmRailwayType(osmWayValue);
       
-      Set<PredefinedMode> activatedPlanitModes = getAvailableModesFromModeTypes(settings.getActivatedPlanitModeTypes(railwaySettings.collectAllowedOsmRailwayModes(osmWayValue)));
+      Set<PredefinedMode> activatedPlanitModes =
+              getAvailableModesFromModeTypes(settings.getActivatedPlanitModeTypes(
+                      railwaySettings.collectAllowedOsmRailwayModes(osmWayValue)));
       if(!activatedPlanitModes.isEmpty()) {
         
         /* create the PLANit link segment type based on OSM way tag and possibly overwritten default values*/
         double railwayMaxSpeed = railwaySettings.getDefaultSpeedLimitByOsmRailwayType(osmWayValue);
         if(isOverwrite) {
           /* type is overwritten, so use overwritten data instead of defaults */
-          final Pair<Double,Double> capacityDensityPair = railwaySettings.getOverwrittenCapacityMaxDensityByOsmRailwayType(osmWayValue);
+          final Pair<Double,Double> capacityDensityPair =
+                  railwaySettings.getOverwrittenCapacityMaxDensityByOsmRailwayType(osmWayValue);
           linkSegmentTypes = createOsmLinkSegmentType(
-                  OsmRailwayTags.getRailwayKeyTag(), osmWayValue, capacityDensityPair.first(), capacityDensityPair.second(), railwayMaxSpeed, activatedPlanitModes);
+                  OsmRailwayTags.getRailwayKeyTag(),
+                  osmWayValue,
+                  capacityDensityPair.first(),
+                  capacityDensityPair.second(),
+                  railwayMaxSpeed,
+                  activatedPlanitModes);
         }else {
           /* use default link segment type values */
           linkSegmentTypes = createOsmRailWayLinkSegmentType(osmWayValue, railwayMaxSpeed, activatedPlanitModes);
@@ -910,17 +968,21 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           
           String csvModeString = String.join(",",
               linkSegmentType.getAllowedModes().stream().map(Mode::getName).collect(Collectors.joining(",")));
-          LOGGER.info(String.format("%s %s railway=%-15s modes: %-20s speed (km/h): %s ", NetworkLayer.createLayerLogPrefix(layer), isOverwrite ? "[OVERWRITE] " : "[DEFAULT]", osmWayValue, csvModeString, railwayMaxSpeed));
+          LOGGER.info(String.format("%s %s railway=%-15s modes: %-20s speed (km/h): %s ",
+                  NetworkLayer.createLayerLogPrefix(layer), isOverwrite ? "[OVERWRITE] " : "[DEFAULT]",
+                  osmWayValue, csvModeString, railwayMaxSpeed));
         }
         
       }else {
-        LOGGER.warning(String.format("Railway:%s is supported but none of the default modes are mapped, type ignored", osmWayValue));
+        LOGGER.warning(String.format("Railway:%s is supported but none of the default modes are mapped, type ignored",
+                osmWayValue));
       }
     }
     else {
         /* ... not supported and no replacement available skip type entirely*/
         LOGGER.info(String.format(
-            "Railway type (%s) chosen to be included in network, but not available as supported type by reader, exclude from processing", osmWayValue));
+            "Railway type (%s) chosen to be included in network, but not available as supported type by reader, " +
+                    "exclude from processing", osmWayValue));
     }     
     return linkSegmentTypes;
   }
@@ -959,9 +1021,16 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         double maxSpeedKmH = waterwaySettings.getDefaultSpeedLimitByOsmWaterwayType(osmWayValue);
         if(isOverwrite) {
           /* type is overwritten, so use overwritten data instead of defaults */
-          final Pair<Double,Double> capacityDensityPair = waterwaySettings.getOverwrittenCapacityMaxDensityByOsmWaterwayRouteType(osmWayValue);
+          final Pair<Double,Double> capacityDensityPair =
+                  waterwaySettings.getOverwrittenCapacityMaxDensityByOsmWaterwayRouteType(osmWayValue);
           linkSegmentTypeByLayer = createOsmLinkSegmentType(
-                  osmWayKey, osmWayValue, capacityDensityPair.first(), capacityDensityPair.second(), maxSpeedKmH, activatedPlanitModes);
+                  osmWayKey,
+                  osmWayValue,
+                  capacityDensityPair.first(),
+                  capacityDensityPair.second(),
+                  maxSpeedKmH,
+                  activatedPlanitModes);
+
         }else {
           /* use default link segment type values */
           linkSegmentTypeByLayer = createOsmWaterWayLinkSegmentType(osmWayValue, maxSpeedKmH, activatedPlanitModes);
@@ -984,14 +1053,15 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         }
 
       }else {
-        LOGGER.warning(String.format("IGNORE: %s=%s is supported but none of the default modes are mapped for the link segment type",
-            osmWayKey , osmWayValue));
+        LOGGER.warning(String.format("IGNORE: %s=%s is supported but none of the default modes are mapped for the " +
+                        "link segment type", osmWayKey , osmWayValue));
       }
     }
     else {
       /* ... not supported and no replacement available skip type entirely*/
       LOGGER.info(String.format(
-          "Waterway (%s=%s) chosen to be included in network, but not available as supported type by reader, exclude from processing", osmWayKey, osmWayValue));
+          "Waterway (%s=%s) chosen to be included in network, but not available as supported type by reader, " +
+                  "exclude from processing", osmWayKey, osmWayValue));
     }
     return linkSegmentTypeByLayer;
   }
@@ -1002,7 +1072,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @return predefined mode types found
    * */
   protected Set<PredefinedMode> getAvailableModesFromModeTypes(Collection<PredefinedModeType> predefinedModeTypes){
-    return predefinedModeTypes.stream().map( mt -> getModes().get(mt)).filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
+    return predefinedModeTypes.stream().map( mt -> getModes().get(mt)).filter(Objects::nonNull).
+            collect(Collectors.toUnmodifiableSet());
   }
   
   /**
@@ -1073,7 +1144,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         SortedMap<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer = null;
 
         /* only create type when there are one or more activated modes for it */
-        Set<PredefinedModeType> activatedPlanitModeTypes = collectMappedPlanitModeTypes(osmWayLikeKey, osmWayLikeValueToUse, settings);
+        Set<PredefinedModeType> activatedPlanitModeTypes =
+                collectMappedPlanitModeTypes(osmWayLikeKey, osmWayLikeValueToUse, settings);
         if (activatedPlanitModeTypes != null && !activatedPlanitModeTypes.isEmpty()) {
 
           if (OsmHighwayTags.isHighwayKeyTag(osmWayLikeKey)) {
@@ -1083,7 +1155,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
           } else if (OsmWaterwayTags.isWaterBasedWay(osmWayLikeKey, osmWayLikeValueToUse)) {
             linkSegmentTypesByLayer = createOsmCompatibleWaterLinkSegmentTypeByLayer(osmWayLikeValueToUse, settings);
           } else {
-            LOGGER.severe(String.format("DISCARD: OSM %s=%s combination not recognised as valid when creating OSM compatible link segment types", osmWayLikeKey, osmWayLikeValueToUse));
+            LOGGER.severe(String.format("DISCARD: OSM %s=%s combination not recognised as valid when creating " +
+                    "OSM compatible link segment types", osmWayLikeKey, osmWayLikeValueToUse));
           }
           /* ------------------ LINK SEGMENT TYPE ----------------------------------------------- */
 
@@ -1114,7 +1187,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         int originalNumTypes = linkSegmentTypes.size();
         var functionalDuplicates = linkSegmentTypes.findFunctionalDuplicates();
         for(var duplicatesEntry : functionalDuplicates){
-          String concatenatedExternalId = duplicatesEntry.stream().map( MacroscopicLinkSegmentType::getExternalId).collect(Collectors.joining(","));
+          String concatenatedExternalId = duplicatesEntry.stream().map(MacroscopicLinkSegmentType::getExternalId).
+                  collect(Collectors.joining(","));
           // update keep entry with extended external id/name
           var consolidatedKeepEntry = duplicatesEntry.first();
           consolidatedKeepEntry.setName(concatenatedExternalId);
@@ -1129,8 +1203,9 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
         for(var keyEntry : defaultPlanitLinkSegmentTypesByOsmKeyValue.entrySet()){
           for(var valueEntry : keyEntry.getValue().entrySet()){
             MacroscopicLinkSegmentType lst = valueEntry.getValue().get(layer);
-            // check if it is marked as duplicate (by external id because we can't use contains since id of chucked types are no longer valid)
-            // if so, get the first entry we earmarked previously as the one to keep (with updated external id/name)
+            // check if it is marked as duplicate (by external id because we can't use contains since id of chucked
+            // types are no longer valid) if so, get the first entry we earmarked previously as the one to keep
+            // (with updated external id/name)
             var duplicatesForEntry = functionalDuplicates.stream().filter( de -> de.stream().anyMatch(
                 e -> e.getExternalId().equals(lst.getExternalId()))).findFirst().orElse(null);
             if(!CollectionUtils.nullOrEmpty(duplicatesForEntry)){
@@ -1153,14 +1228,16 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   public void createAndRegisterOsmCompatiblePlanitPredefinedModes(OsmNetworkReaderSettings settings) {
     if(!getModes().isEmpty()){
-      LOGGER.severe("Initialising modes on OSM network, but found pre-existing modes on this supposedly empty network, shouldn't happen");
+      LOGGER.severe("Initialising modes on OSM network, but found pre-existing modes on this supposedly empty " +
+              "network, shouldn't happen");
     }
 
     /* initialise road, rail, and water modes on PLANit network as mode instances rather than the type placeholders */
     var mappedPlanitModes = settings.getActivatedPlanitModeTypes();
     for(var modeType : mappedPlanitModes){
       var newMode = getModes().getFactory().registerNew(modeType);
-      newMode.appendExternalId(settings.getMappedOsmModes(modeType).stream().distinct().collect(Collectors.joining(";")), ';');
+      newMode.appendExternalId(settings.getMappedOsmModes(modeType).stream().distinct().
+              collect(Collectors.joining(";")), ';');
     }
 
   }

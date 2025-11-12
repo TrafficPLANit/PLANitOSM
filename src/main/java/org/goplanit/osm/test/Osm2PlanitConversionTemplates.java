@@ -64,7 +64,8 @@ public class Osm2PlanitConversionTemplates {
    * @param excludedOsmWays allow to exclude certain ways by id (if any)
    * @throws PlanItException thrown if error 
    */  
-  public static void osm2PlanitCarSimple(String inputFile, String outputPath, String countryName, Long... excludedOsmWays) throws PlanItException {
+  public static void osm2PlanitCarSimple(
+          String inputFile, String outputPath, String countryName, Long... excludedOsmWays) throws PlanItException {
               
     OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(inputFile, countryName);
     osmReader.getSettings().excludeOsmWaysFromParsing(excludedOsmWays);
@@ -94,14 +95,16 @@ public class Osm2PlanitConversionTemplates {
    * @param countryName the country name
    * @throws PlanItException thrown if error
    */
-  public static void osm2PlanitBasicIntermodalNoServices(String inputFile, String outputPath, String countryName) throws PlanItException {
+  public static void osm2PlanitBasicIntermodalNoServices(
+          String inputFile, String outputPath, String countryName) throws PlanItException {
 
     /* OSM intermodal reader */
     OsmIntermodalReader osmIntermodalReader = OsmIntermodalReaderFactory.create(inputFile, countryName);
 
-    osmIntermodalReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-    osmIntermodalReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-    osmIntermodalReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+    var highWaySettings = osmIntermodalReader.getSettings().getNetworkSettings().getHighwaySettings();
+    highWaySettings.deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+    highWaySettings.deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+    highWaySettings.deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
 
     /* activate railways */
     osmIntermodalReader.getSettings().getNetworkSettings().activateRailwayParser(true);
@@ -112,7 +115,7 @@ public class Osm2PlanitConversionTemplates {
     planitIntermodalWriter.getSettings().setOutputDirectory(outputPath);
 
     /* convert */
-    IntermodalConverter theConverter = IntermodalConverterFactory.create(osmIntermodalReader, planitIntermodalWriter);
+    var theConverter = IntermodalConverterFactory.create(osmIntermodalReader, planitIntermodalWriter);
     theConverter.convert();
   }
 
@@ -134,7 +137,7 @@ public class Osm2PlanitConversionTemplates {
     PlanitIntermodalWriter planitWriter = PlanitIntermodalWriterFactory.create(writerSettings);
 
     /* convert */
-    IntermodalConverter theConverter = IntermodalConverterFactory.create(osmReader, planitWriter);
+    var theConverter = IntermodalConverterFactory.create(osmReader, planitWriter);
     theConverter.convert();
   }
 

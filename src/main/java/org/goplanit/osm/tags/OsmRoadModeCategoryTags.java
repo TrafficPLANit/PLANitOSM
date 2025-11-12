@@ -14,10 +14,7 @@ import java.util.logging.Logger;
  * @author markr
  *
  */
-/**
- * @author markr
- *
- */
+
 public class OsmRoadModeCategoryTags {
   
   /**
@@ -35,7 +32,7 @@ public class OsmRoadModeCategoryTags {
    */
   private static final Map<String, Set<String> > osmMode2Categories = new HashMap<String, Set<String> >();  
   
-  /** initialise the grouping of modes to categories as it is currently outlined on 
+  /* initialise the grouping of modes to categories as it is currently outlined on
    * https://wiki.openstreetmap.org/wiki/Key:access */
   static {
     populateModesByCategory();
@@ -46,10 +43,10 @@ public class OsmRoadModeCategoryTags {
    * populate the modes by category
    */
   private static void populateModesByCategory() {
-    /** no modes within this category yet */
+    /* no modes within this category yet */
     osmCategory2Modes.put(HIGH_OCCUPANCY_VEHICLE, new HashSet<>());
     
-    /** all public service vehicles */
+    /* all public service vehicles */
     Set<String> publicServiceVehicles = new HashSet<>();
     {
       publicServiceVehicles.add(OsmRoadModeTags.BUS);
@@ -59,7 +56,7 @@ public class OsmRoadModeCategoryTags {
     }
     osmCategory2Modes.put(PUBLIC_SERVICE_VEHICLE, publicServiceVehicles);
     
-    /** all motor vehicles */
+    /* all motor vehicles */
     Set<String> motorVehicles = new HashSet<>(publicServiceVehicles);
     {
       motorVehicles.add(OsmRoadModeTags.MOTOR_CAR);
@@ -69,7 +66,6 @@ public class OsmRoadModeCategoryTags {
       motorVehicles.add(OsmRoadModeTags.MOFA);
       /* tourist vehicles */
       motorVehicles.add(OsmRoadModeTags.MOTOR_HOME);
-      motorVehicles.add(OsmRoadModeTags.TOURIST_BUS);
       motorVehicles.add(OsmRoadModeTags.TOURIST_BUS);
       motorVehicles.add(OsmRoadModeTags.COACH);
       /* freight modes */
@@ -83,7 +79,7 @@ public class OsmRoadModeCategoryTags {
     }  
     osmCategory2Modes.put(MOTOR_VEHICLE, motorVehicles);    
     
-    /** all vehicles*/
+    /* all vehicles*/
     Set<String> vehicles = new HashSet<String>(motorVehicles);
     {
       /* non-motorised single tracked */
@@ -147,9 +143,10 @@ public class OsmRoadModeCategoryTags {
    */
   public static Collection<String> getRoadModesByCategory(String osmModeCategory){
     if(!osmCategory2Modes.containsKey(osmModeCategory)) {
-      LOGGER.warning(String.format("OSM mode category %s is not listed among available categories, ignored",osmModeCategory));
+      LOGGER.warning(String.format(
+              "OSM mode category %s is not listed among available categories, ignored",osmModeCategory));
     }
-    return osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<String>());  
+    return osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<>());
   }  
   
   /**
@@ -159,7 +156,7 @@ public class OsmRoadModeCategoryTags {
    * @return true when part of the category false otherwise
    */
   public static boolean containsRoadMode(String osmModeCategory){
-    return osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<String>()).contains(osmModeCategory); 
+    return osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<>()).contains(osmModeCategory);
   }
 
   /** Given the mode, find the related mode category
@@ -173,7 +170,8 @@ public class OsmRoadModeCategoryTags {
       /* when rail/water mode, there are no categories, but if not, then the mode is invalid altogether */
       if(!(OsmRailwayTags.isRailBasedRailway(OsmRailModeTags.convertModeToRailway(osmMode)) ||
           (OsmWaterModeTags.isWaterModeTag(osmMode)))) {
-        LOGGER.warning(String.format("Mode %s is not a recognised OSM mode when obtaining its parent category, ignored", osmMode));
+        LOGGER.warning(String.format(
+                "Mode %s is not a recognised OSM mode when obtaining its parent category, ignored", osmMode));
       }
       return null;
     } 
@@ -191,7 +189,8 @@ public class OsmRoadModeCategoryTags {
     if(modeCategories == null) {
       return false;
     }else if(!isRoadModeCategoryTag(osmModeCategory)) {
-      LOGGER.warning(String.format("mode category %s is not a recognised OSM mode category, ignored", osmModeCategory));   
+      LOGGER.warning(String.format(
+              "mode category %s is not a recognised OSM mode category, ignored", osmModeCategory));
       return false; 
     }
     return modeCategories.contains(osmModeCategory);

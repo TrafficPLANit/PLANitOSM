@@ -30,7 +30,8 @@ public class OsmBusWayTags {
    * <li>busway:right</li>
    * </ul>
    */
-  protected static final String[] BUSWAY_SCHEME_KEYTAGS = {OsmBusWayTags.BUSWAY, OsmBusWayTags.BUSWAY_RIGHT, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_BOTH};
+  protected static final String[] BUSWAY_SCHEME_KEYTAGS =
+          {OsmBusWayTags.BUSWAY, OsmBusWayTags.BUSWAY_RIGHT, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_BOTH};
     
   /*keys*/
   

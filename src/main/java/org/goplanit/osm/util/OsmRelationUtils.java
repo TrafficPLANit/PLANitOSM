@@ -64,7 +64,8 @@ public class OsmRelationUtils {
    * @param role role
    * @return true if match, false otherwise
    */
-  public static boolean isMemberOfTypeAndRole(@NotNull OsmRelationMember member, @NotNull EntityType typeToCheck, @NotNull String role){
+  public static boolean isMemberOfTypeAndRole(
+          @NotNull OsmRelationMember member, @NotNull EntityType typeToCheck, @NotNull String role){
     assert member != null;
     assert typeToCheck != null;
     assert role != null;
