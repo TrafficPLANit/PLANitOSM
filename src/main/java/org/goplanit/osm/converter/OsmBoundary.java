@@ -152,26 +152,50 @@ public final class OsmBoundary {
     return of(PlanitJtsUtils.create2DPolygon(boundingBox));
   }
 
+  /** Check if has bounding polygon
+   *
+   * @return flag
+   */
   public boolean hasBoundingPolygon(){
     return this.boundingPolygon != null;
   }
 
+  /** get bounding polygon if any
+   *
+   * @return polygon
+   */
   public Polygon getBoundingPolygon(){
     return this.boundingPolygon;
   }
 
+  /** check if has boundary name
+   *
+   * @return flag
+   */
   public boolean hasBoundaryName(){
     return !StringUtils.isNullOrBlank(boundaryName);
   }
 
+  /** check if has boundary admin level
+   *
+   * @return flag
+   */
   public boolean hasBoundaryAdminLevel(){
     return !StringUtils.isNullOrBlank(adminLevel);
   }
 
+  /** get boundary admin level
+   *
+   * @return level
+   */
   public String getBoundaryAdminLevel(){
     return adminLevel;
   }
 
+  /** check if has boundary type
+   *
+   * @return flag
+   */
   public boolean hasBoundaryType(){ return boundaryType != null; }
 
   /** boundary value, e.g., administrative, forest etc.,
@@ -180,6 +204,10 @@ public final class OsmBoundary {
    */
   public String getBoundaryType(){ return boundaryType; }
 
+  /**
+   * Get boundary name
+   * @return name
+   */
   public String getBoundaryName(){
     return boundaryName;
   }

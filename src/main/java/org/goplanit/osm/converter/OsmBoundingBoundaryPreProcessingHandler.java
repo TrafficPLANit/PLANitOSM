@@ -71,8 +71,11 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
    *
    */
   public enum Stage {
+    /** ONE_IDENTIFY_BOUNDARY_BY_NAME stage */
     ONE_IDENTIFY_BOUNDARY_BY_NAME,
+    /** TWO_IDENTIFY_WAYS_FOR_BOUNDARY stage */
     TWO_IDENTIFY_WAYS_FOR_BOUNDARY,
+    /** THREE_FINALISE_BOUNDARY_BY_NAME stage */
     THREE_FINALISE_BOUNDARY_BY_NAME,
   }
 

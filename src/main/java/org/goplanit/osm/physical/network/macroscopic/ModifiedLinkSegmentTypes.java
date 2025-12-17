@@ -34,7 +34,8 @@ public class ModifiedLinkSegmentTypes {
    *
    */
   public class ModifiedLinkSegmentTypesModes{
-    
+
+    /** original link segment type */
     protected final MacroscopicLinkSegmentType original;
     
     /** the segment types with added modes compared to the original */

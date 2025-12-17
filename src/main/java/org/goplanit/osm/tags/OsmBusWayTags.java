@@ -39,17 +39,22 @@ public class OsmBusWayTags {
   public static final String BUSWAY = "busway";     
   
   /* busway scheme */
-    
+
+  /** BUSWAY_RIGHT */
   public static final String BUSWAY_RIGHT = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.RIGHT);
-  
+
+  /** BUSWAY_LEFT */
   public static final String BUSWAY_LEFT = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.LEFT);
-  
+
+  /** BUSWAY_BOTH */
   public static final String BUSWAY_BOTH = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.BOTH);
    
   /* values for the busway scheme */
-      
+
+  /** LANE */
   public static final String LANE = OsmLaneTags.LANE;
-      
+
+  /** OPPOSITE_LANE */
   public static final String OPPOSITE_LANE = OsmLaneTags.OPPOSITE_LANE;
      
  

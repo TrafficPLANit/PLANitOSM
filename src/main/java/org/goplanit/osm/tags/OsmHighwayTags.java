@@ -106,9 +106,10 @@ public class OsmHighwayTags {
     public static final String HIGHWAY = "highway";
   
     /* values */
-    
-    public static final String MOTORWAY = "motorway";
 
+    /** MOTORWAY */
+    public static final String MOTORWAY = "motorway";
+    /** MOTORWAY_LINK */
     public static final String MOTORWAY_LINK = "motorway_link";
 
     public static final String TRUNK = "trunk";
@@ -148,25 +149,26 @@ public class OsmHighwayTags {
 
     /** footway can be used as highway=footway, or footway=sidewalk/crossing */
     public static final String FOOTWAY ="footway";
-    
-    public static final String BRIDLEWAY = "bridleway";
-    
-    public static final String STEPS = "steps";
-    
-    public static final String CORRIDOR = "corridor";
-       
-    public static final String CYCLEWAY = "cycleway";
-    
-    public static final String PATH = "path";
-    
-    public static final String ELEVATOR = "elevator";
-    
-    public static final String PROPOSED = "proposed";
-    
-    public static final String CONSTRUCTION = "construction";
-    
-    public static final String TURNING_CIRCLE = "turning_circle";
 
+    /** BRIDLEWAY */
+    public static final String BRIDLEWAY = "bridleway";
+    /** STEPS */
+    public static final String STEPS = "steps";
+    /** CORRIDOR */
+    public static final String CORRIDOR = "corridor";
+    /** CYCLEWAY */
+    public static final String CYCLEWAY = "cycleway";
+    /** PATH */
+    public static final String PATH = "path";
+    /** ELEVATOR */
+    public static final String ELEVATOR = "elevator";
+    /** PROPOSED */
+    public static final String PROPOSED = "proposed";
+    /** CONSTRUCTION */
+    public static final String CONSTRUCTION = "construction";
+    /** TURNING_CIRCLE */
+    public static final String TURNING_CIRCLE = "turning_circle";
+    /** RACEWAY */
     public static final String RACEWAY = "raceway";    
     
     /* area based highway value tags */

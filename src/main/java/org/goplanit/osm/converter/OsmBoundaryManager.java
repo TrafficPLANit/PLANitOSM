@@ -296,6 +296,10 @@ public class OsmBoundaryManager {
             boundingBoundaryPolygon);
   }
 
+  /** override area with provided
+   *
+   * @param override to override with
+   */
   public void overrideBoundingArea(OsmBoundary override){
     if(override == null || !override.hasBoundingPolygon()){
       LOGGER.warning(

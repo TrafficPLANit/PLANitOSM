@@ -15,8 +15,10 @@ public class OsmDirectionTags {
   
   /* possible values */
 
+  /** CLOCKWISE */
   public static final String CLOCKWISE = "clockwise";
-  
+
+  /** ANTI_CLOCKWISE */
   public static final String ANTI_CLOCKWISE = "anticlockwise";
   
   /* other direction related tags that can be used in combination with road modes */

@@ -13,6 +13,8 @@ import java.util.Set;
 public class OsmBoundaryTags {
 
   /* key */
+
+  /** BOUNDARY tag */
   public static final String BOUNDARY = "boundary";
 
   /* values - types */
@@ -24,31 +26,43 @@ public class OsmBoundaryTags {
   public static final String ABORIGINAL = "aboriginal_lands";
 
   /** single forest demarcation,  */
+
+  /** FOREST tag */
   public static final String FOREST = "forest";
 
+  /** FOREST COMPARTMENT tag */
   public static final String FOREST_COMPARTMENT = "forest_compartment";
 
+  /** HAZARD tag */
   public static final String HAZARD = "hazard";
 
+  /** HEALTH tag */
   public static final String HEALTH = "health";
 
+  /** MARITIME tag */
   public static final String MARITIME = "maritime";
 
   /** point, cannot be used for bounding box purposes */
   public static final String MARKER = "marker";
 
+  /** NATIONAL PARK tag */
   public static final String NATIONAL_PARK = "national_park";
 
+  /** PLACE tag */
   public static final String PLACE = "place";
 
+  /** POLITICAL tag */
   public static final String POLITICAL = "political";
 
+  /** POSTAL CODE tag */
   public static final String POSTAL_CODE = "postal_code";
 
-  public static final String PROTECED_AREA = "proteced_area";
+  /** PROTECTED AREAD tag */
+  public static final String PROTECTED_AREA = "protected_area";
 
   /* values - attributes */
 
+  /** ADMIN LEVEL tag */
   public static final String ADMIN_LEVEL = "admin_level";
 
   /** list all supported values for boundary key */
@@ -65,7 +79,7 @@ public class OsmBoundaryTags {
       PLACE,
       POLITICAL,
       POSTAL_CODE,
-      PROTECED_AREA);
+      PROTECTED_AREA);
 
   /** get the boundary key tag
    *

@@ -43,10 +43,18 @@ class OsmZoningHelperBase {
     return this.transferSettings;
   }
 
+  /**
+   * Get reference network at hand
+   * @return network
+   */
   protected PlanitOsmNetwork getReferenceNetwork(){
     return referenceNetwork;
   }
 
+  /**
+   * Collect network to zoning data ported over to be made available
+   * @return instance of OsmNetworkToZoningReaderData
+   */
   protected OsmNetworkToZoningReaderData getNetworkToZoningData(){
     return network2ZoningData;
   }
