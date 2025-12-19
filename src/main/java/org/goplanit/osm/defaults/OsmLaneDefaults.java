@@ -124,7 +124,7 @@ public class OsmLaneDefaults {
    * @param osmWayValue way type value
    * @return true when available, false otherwise
    */
-  public boolean containsDefaultDirectionalLanes(String osmWayKey, String osmWayValue) {
+  public Boolean containsDefaultDirectionalLanes(String osmWayKey, String osmWayValue) {
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       return lanesPerDirection.containsKey(osmWayValue);
     }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) || OsmWaterwayTags.isAnyWaterwayKeyTag(osmWayKey)){
@@ -172,7 +172,7 @@ public class OsmLaneDefaults {
    * @return waterwayLanesPerDirectionIfUnspecified in case not explicitly specified
    */
   public Integer getDefaultDirectionalWaterwayLanes() {
-    return this.tracksPerDirectionIfUnspecified;
+    return this.waterwayLanesPerDirectionIfUnspecified;
   }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).

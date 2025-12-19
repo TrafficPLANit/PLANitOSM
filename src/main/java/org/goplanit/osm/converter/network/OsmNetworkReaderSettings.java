@@ -21,7 +21,8 @@ import java.util.stream.Stream;
 
 /**
  * All general settings (and sub-settings classes) for the OSM reader pertaining to parsing  network infrastructure.
- * contains additional settings for highway and railway (e.g., highway settings and railway settings members, respectively).
+ * contains additional settings for highway and railway (e.g., highway settings and railway settings members,
+ * respectively).
  * 
  * @author markr
  *

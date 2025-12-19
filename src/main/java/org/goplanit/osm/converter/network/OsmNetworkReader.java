@@ -63,18 +63,22 @@ public class OsmNetworkReader implements NetworkReader {
     /* initialise the modes on the network based on the settings chosen */
     getOsmNetworkToPopulate().createAndRegisterOsmCompatiblePlanitPredefinedModes(getSettings());
     if(getOsmNetworkToPopulate().getModes().firstMatch( m -> !m.isPredefinedModeType()) != null){
-      // todo if we support custom modes, then all locations where we determine the mapping from OSM mode to PLANit mode needs revisiting to account for such custom mode mappings
-      //  + settings need updating to support this activation somehow !!
-      throw new PlanItRunTimeException("OSM based PLANit networks currently support only predefined mode mappings, but found custom PLANit mode, this is not allowed");
+      // todo if we support custom modes, then all locations where we determine the mapping from OSM mode to PLANit
+      //  mode needs revisiting to account for such custom mode mappings + settings need updating to support this
+      //  activation somehow !!
+      throw new PlanItRunTimeException("OSM based PLANit networks currently support only predefined mode mappings, " +
+          "but found custom PLANit mode, this is not allowed");
     }
-    //todo: make the configuration configurable again via the settings, however this requires changing the configurator to work with predefined mode types rather than actual mode
-    //      instances
-    var planitInfrastructureLayerConfiguration = MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
+    //todo: make the configuration configurable again via the settings, however this requires changing the configurator
+    // to work with predefined mode types rather than actual mode instances
+    var planitInfrastructureLayerConfiguration =
+        MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
 
     /* (default) link segment types (on the network) */
     getOsmNetworkToPopulate().createAndRegisterLayers(planitInfrastructureLayerConfiguration);
     getOsmNetworkToPopulate().createAndRegisterOsmCompatibleLinkSegmentTypes(getSettings());
-    /* when modes are deactivated causing supported osm way types to have no active modes, add them to unsupported way types to avoid warnings during parsing */
+    // when modes are deactivated causing supported OSM way types to have no active modes, add them to unsupported
+    // way types to avoid warnings during parsing
     settings.excludeOsmWayTypesWithoutActivatedModes();
     settings.logUnsupportedOsmWayTypes();
         
