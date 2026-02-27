@@ -6,11 +6,8 @@ import java.util.logging.Logger;
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.UrlUtils;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Polygon;
 
 /**
  * Settings relevant for a Planit Xml reader
@@ -120,7 +117,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) throws PlanItException {
     try{
-      setInputSource(UrlUtils.createFromLocalPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
     }catch(Exception e) {
       throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
     }

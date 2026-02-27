@@ -5,10 +5,7 @@ import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.UrlUtils;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Polygon;
 
 import java.net.URL;
 
@@ -125,7 +122,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) {
     try{
-      setInputSource(UrlUtils.createFromLocalPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
     }catch(Exception e) {
       throw new PlanItRunTimeException("Unable to extract URL from input file location %s",inputFile);
     }
