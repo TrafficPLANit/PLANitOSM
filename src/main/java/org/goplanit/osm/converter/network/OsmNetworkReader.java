@@ -167,7 +167,7 @@ public class OsmNetworkReader implements NetworkReader {
     /* STAGE 1 -
      * identify OSM ways that are eligible from a network perspective (are they roads etc.). If a bounding area is specified then
      * they should at least have one node within the bounding area to be considered */
-    LOGGER.info("Pre-processing: Identifying eligible network OSM ways");
+    LOGGER.info("Pre-processing: Identifying eligible network OSM entities");
     createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_REGULAR_PREPROCESSING_WAYS);
 
     /* STAGE 2 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */

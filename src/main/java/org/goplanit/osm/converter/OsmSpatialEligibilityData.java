@@ -47,6 +47,18 @@ public class OsmSpatialEligibilityData {
     return spatiallyEligibleOsmRelations.contains(osmRelationId);
   }
 
+  public int countSpatiallyEligibleNodes(){
+    return spatiallyEligibleOsmNodes.size();
+  }
+
+  public int countSpatiallyEligibleWays(){
+    return spatiallyEligibleOsmWays.size();
+  }
+
+  public int countSpatiallyEligibleRelations(){
+    return spatiallyEligibleOsmRelations.size();
+  }
+
   /**
    * Register OSM way as spatially eligible if it has at least one spatially eligible node
    *

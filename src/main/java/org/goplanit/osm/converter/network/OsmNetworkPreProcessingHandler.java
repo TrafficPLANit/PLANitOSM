@@ -5,6 +5,8 @@ import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 
 import java.io.IOException;
 import java.util.Map;
@@ -48,6 +50,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   private final LongAdder osmNodeCounter;
   private final LongAdder osmWayCounter;
 
+  private final PreparedPolygon preppedBoundingPolygon;
+
   /** Mark all nodes of eligible OSM ways (e.g., road, rail, etc.) to be parsed during the main processing phase
    * 
    * @param osmWay to handle
@@ -80,6 +84,11 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       getNetworkData().registerSpatialInfraEligibleOsmWayId(osmWay.getId());
       /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail, or boundary) */
       getNetworkData().getOsmNodeData().preregisterOsmWayNodes(osmWay);
+
+      if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays() % 10000 == 0 ){
+        LOGGER.info(String.format("Ways preprocessing part 1 has identified %d (out of %d) spatially eligible OSM ways",
+            getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays(), osmWayCounter.sum()));
+      }
     }
   }
 
@@ -100,6 +109,14 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     this.osmNodeCounter = new LongAdder();
     this.osmWayCounter = new LongAdder();
     this.stage = preProcessStage;
+
+    if(getNetworkData().hasBoundingArea()){
+      // prepare polygon for faster checks
+      this.preppedBoundingPolygon = (PreparedPolygon) PreparedGeometryFactory.prepare(
+          getNetworkData().getBoundingArea().getBoundingPolygon());
+    }else{
+      this.preppedBoundingPolygon = null;
+    }
   }
 
   /**
@@ -114,10 +131,14 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       // mark as spatially eligible if bounding area is present and it falls within this area, or
       // if no bounding area all are eligible. Only OSM ways with at least one spatially eligible nodes will be considered
       // for parsing
-      if(!getNetworkData().hasBoundingArea() ||
-          OsmNodeUtils.createPoint(node).within(getNetworkData().getBoundingArea().getBoundingPolygon())){
+      if(!getNetworkData().hasBoundingArea() || preppedBoundingPolygon.contains(OsmNodeUtils.createPoint(node))){
 
         getNetworkData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
+
+        if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes() % 10000 == 0 ){
+          LOGGER.info(String.format("Node preprocessing part 1 has identified %d (out of %d) spatially eligible OSM nodes",
+              getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes(), osmNodeCounter.sum()));
+        }
       }
 
     }else if(stage.equals(Stage.TWO_REGULAR_PREPROCESSING_NODES)){
@@ -126,10 +147,15 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       var osmNodeData = getNetworkData().getOsmNodeData();
       if(osmNodeData.containsPreregisteredOsmNode(node.getId())){
         osmNodeData.registerEligibleOsmNode(node);
-      }
 
-      osmNodeCounter.increment();
+        if(osmNodeCounter.sum() % 100000 == 0 ){
+          LOGGER.info(String.format("Node preprocessing part 2 has processed %d OSM nodes",
+              osmNodeCounter.sum(), osmNodeCounter.sum()));
+        }
+      }
     }
+
+    osmNodeCounter.increment();
   }
 
 
@@ -177,7 +203,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       int preRegisteredOsmNodes = getNetworkData().getOsmNodeData().getRegisteredOsmNodes().size();
       LOGGER.info(String.format("Total OSM nodes in source: %d",osmNodeCounter.sum()));
       LOGGER.info(String.format("Total OSM nodes identified as part of network: %d (%.2f%%)",preRegisteredOsmNodes, preRegisteredOsmNodes*100/(double) osmNodeCounter.sum()));
-
     }
   }
 

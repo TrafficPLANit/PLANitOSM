@@ -83,6 +83,10 @@ public class OsmNodeData {
     return osmNodes.containsKey(osmNodeId);
   }
 
+  public int countPreregisteredOsmNodes(){
+    return osmNodes.size();
+  }
+
   /**
    * Remove all registered OSM node based on provided predicate
    *
