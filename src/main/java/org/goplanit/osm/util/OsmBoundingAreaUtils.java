@@ -15,6 +15,9 @@ import org.locationtech.jts.geom.Polygon;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
+
+import javax.annotation.Nullable;
 
 /**
  * Utilities regarding the use of a bounding box when parsing OSM data
@@ -32,12 +35,18 @@ public class OsmBoundingAreaUtils {
    *
    * @param osmNode to check
    * @param osmBoundary to use for verification
+   * @param preparedBoundingPolygon only non-null when osm boundary has a bounding polygon. this is prepped version of
+   *                                that to speed up comparison
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
    */
   public static boolean isPartlyOrWhollyWithinBoundaryArea(
-          OsmNode osmNode, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
-    return isPartlyOrWhollyWithinBoundaryArea(OsmNodeUtils.createPoint(osmNode), osmBoundary, isWithinWhenNoBoundary);
+          OsmNode osmNode,
+          OsmBoundary osmBoundary,
+          @Nullable PreparedPolygon preparedBoundingPolygon,
+          boolean isWithinWhenNoBoundary){
+    return isPartlyOrWhollyWithinBoundaryArea(
+        OsmNodeUtils.createPoint(osmNode), osmBoundary, preparedBoundingPolygon, isWithinWhenNoBoundary);
   }
 
   /**
@@ -46,16 +55,23 @@ public class OsmBoundingAreaUtils {
    * @param osmWay to check
    * @param nodeData registered node information
    * @param osmBoundary to use for verification
+   * @param preparedBoundingPolygon only non-null when osm boundary has a bounding polygon. this is prepped version of
+   *                                that to speed up comparison
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
    */
   public static boolean isPartlyOrWhollyWithinBoundaryArea(
-      OsmWay osmWay, OsmNodeData nodeData, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+      OsmWay osmWay,
+      OsmNodeData nodeData,
+      OsmBoundary osmBoundary,
+      @Nullable PreparedPolygon preparedBoundingPolygon,
+      boolean isWithinWhenNoBoundary){
 
     boolean anyWithinBoundary = false;
     for(int index = 0; index < osmWay.getNumberOfNodes(); ++index){
       var osmNode = nodeData.getRegisteredOsmNode(osmWay.getNodeId(index));
-      if(osmNode != null && isPartlyOrWhollyWithinBoundaryArea(osmNode, osmBoundary, isWithinWhenNoBoundary)){
+      if(osmNode != null &&
+          isPartlyOrWhollyWithinBoundaryArea(osmNode, osmBoundary, preparedBoundingPolygon, isWithinWhenNoBoundary)){
         anyWithinBoundary = true;
         break;
       }
@@ -64,20 +80,25 @@ public class OsmBoundingAreaUtils {
   }
 
   /**
-   * Verify if geometry is within boundary provided.
+   * Verify if geometry is (partly) within boundary provided.
    *
    * @param geometry to check
-   * @param osmBoundary to use for verification
+   * @param osmBoundary to use for verification (may be null)
+   * @param preparedBoundingPolygon only non-null when osm boundary has a bounding polygon. this is prepped version of
+   *                                that to speed up comparison
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
    * @return true when within boundary, false otherwise
    */
   public static boolean isPartlyOrWhollyWithinBoundaryArea(
-          Geometry geometry, OsmBoundary osmBoundary, boolean isWithinWhenNoBoundary){
+          Geometry geometry,
+          @Nullable OsmBoundary osmBoundary,
+          @Nullable PreparedPolygon preparedBoundingPolygon,
+          boolean isWithinWhenNoBoundary){
     if(osmBoundary == null || !osmBoundary.hasBoundingPolygon()){
       return isWithinWhenNoBoundary;
     }
 
-    return geometry.within(osmBoundary.getBoundingPolygon()) || geometry.overlaps(osmBoundary.getBoundingPolygon());
+    return preparedBoundingPolygon.intersects(geometry);
   }
 
   /**
@@ -87,20 +108,24 @@ public class OsmBoundingAreaUtils {
    * @param type  entity type
    * @param nodeData registered node information
    * @param osmBoundary to use for verification
-   * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined, false otherwise
+   * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
+   *                               false otherwise
    * @return true when within boundary, false otherwise
    */
   public static boolean isPartlyOrWhollyWithinBoundaryArea(
       OsmEntity entity,
       EntityType type,
       OsmNodeData nodeData,
-      OsmBoundary osmBoundary,
+      @Nullable OsmBoundary osmBoundary,
+      @Nullable PreparedPolygon preparedBoundingPolygon,
       boolean isWithinWhenNoBoundary){
 
     if(type ==  EntityType.Node){
-      return isPartlyOrWhollyWithinBoundaryArea((OsmNode) entity, osmBoundary, isWithinWhenNoBoundary);
+      return isPartlyOrWhollyWithinBoundaryArea(
+          (OsmNode) entity, osmBoundary, preparedBoundingPolygon, isWithinWhenNoBoundary);
     }else if(type == EntityType.Way){
-      return isPartlyOrWhollyWithinBoundaryArea((OsmWay) entity, nodeData, osmBoundary, isWithinWhenNoBoundary);
+      return isPartlyOrWhollyWithinBoundaryArea(
+          (OsmWay) entity, nodeData, osmBoundary, preparedBoundingPolygon, isWithinWhenNoBoundary);
     }
     LOGGER.severe(String.format("Unsupported OSM entity type for OSM entity(%d) when determining if entity falls " +
             "within boundary", entity.getId()));

@@ -121,10 +121,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmNode node) {
 
-    if(node.getId() == 264155966L){
-      int bla = 4;
-    }
-
     if(stage.equals(Stage.ONE_REGULAR_PREPROCESSING_WAYS)){
 
       // mark as spatially eligible if bounding area is present and it falls within this area, or

@@ -455,14 +455,19 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       return !DISCARD; // not discarded
     }    
     
-    /* Ptv1 tags as well, use this context to determine if a tagging mistake has occurred and/or how to process in case special treatment is needed due
-     * to user error or contextual interpretation that indicates we should use the Ptv1 tag instead of the Ptv2 tag to process this entity */
+    /* Ptv1 tags as well, use this context to determine if a tagging mistake has occurred and/or how to process in
+     case special treatment is needed due to user error or contextual interpretation that indicates we should use the
+     Ptv1 tag instead of the Ptv2 tag to process this entity */
     if(OsmPtv1Tags.isTramStop(tags)){
       /* tagging error because Ptv1 tram stop must also be on a tram track  */
-      if(OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(osmNode, readerData.getBoundingArea(), true)) LOGGER.warning(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) resides on discarded(out of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
+      if(OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(
+          osmNode, readerData.getBoundingArea(), getPreparedBoundingPolygon(), true))
+        LOGGER.warning(String.format("DISCARD: Ptv2 stop_position with railway=tram_stop (%d) resides on discarded(out " +
+            "of bounds) OSM way, or it does not reside on an OSM way", osmNode.getId()));
       return DISCARD;
     }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
-      /* When stop position is a ferry terminal it may not (yet) be connected, how to deal with this is determined in post-processing, so keep it for now*/
+      /* When stop position is a ferry terminal it may not (yet) be connected, how to deal with this is determined
+      in post-processing, so keep it for now*/
       readerData.getOsmData().addUnprocessedStopPosition(osmNode);
       return !DISCARD;
     }
@@ -484,21 +489,30 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModeTypes), spatiallyMatchedLinks, false /*only exact matches allowed */);
 
     if( (spatiallyMatchedLinks == null || spatiallyMatchedLinks.isEmpty()) &&
-        OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(osmNode, readerData.getBoundingArea(), true)) {
-      /* tagging error: discard, most likely stop_position resides on deactivated OSM road type that has not been parsed and if not it could not be mapped anyway*/
-      LOGGER.info(String.format("DISCARD: Ptv2 stop_position %d on deactivated/non-existent infrastructure (Ptv1 tag conversion infeasible, no nearby compatible infrastructure)", osmNode.getId()));
+        OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(
+            osmNode, readerData.getBoundingArea(), getPreparedBoundingPolygon(), true)) {
+      /* tagging error: discard, most likely stop_position resides on deactivated OSM road type that has not been
+      parsed and if not it could not be mapped anyway*/
+      LOGGER.info(String.format("DISCARD: Ptv2 stop_position %d on deactivated/non-existent infrastructure " +
+          "(Ptv1 tag conversion infeasible, no nearby compatible infrastructure)", osmNode.getId()));
       return DISCARD;
     }
 
     /* expected to be salvageable, log user feedback and do it */
     if(OsmPtv1Tags.isBusStop(tags)) {
-      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 bus_stop (%d), yet does not reside on parsed road infrastructure, attempt to parse as pole instead", osmNode.getId()));
+      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 bus_stop (%d), " +
+          "yet does not reside on parsed road infrastructure, attempt to parse as pole instead", osmNode.getId()));
     }else if(OsmPtv1Tags.isHalt(tags)) {
-      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 halt (%d), yet it does not reside on parsed road infrastructure, attempt to parse as small station instead", osmNode.getId()));
+      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 halt (%d), yet " +
+          "it does not reside on parsed road infrastructure, attempt to parse as small station instead", osmNode.getId()));
     }else if(OsmPtv1Tags.isRailwayStation(tags, true)) {
-      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));
-    }else if(OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(osmNode, readerData.getBoundingArea(), true)){
-      LOGGER.warning(String.format("DISCARD: Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location on node %d but found none, while not residing on parsed road infrastructure, possible tagging error and/or dangling node", osmNode.getId()));
+      LOGGER.info(String.format("SALVAGED: Ptv2 public_transport=stop_position also tagged as Ptv1 station (%d), " +
+          "yet it does not reside on parsed road infrastructure, attempt to parse as Ptv1 station instead", osmNode.getId()));
+    }else if(OsmBoundingAreaUtils.isPartlyOrWhollyWithinBoundaryArea(
+        osmNode, readerData.getBoundingArea(), getPreparedBoundingPolygon(), true)){
+      LOGGER.warning(String.format("DISCARD: Expected additional Ptv1 tagging for Ptv2 public_transport=stop_location " +
+          "on node %d but found none, while not residing on parsed road infrastructure, possible tagging error and/or " +
+          "dangling node", osmNode.getId()));
       return DISCARD;
     }
 
