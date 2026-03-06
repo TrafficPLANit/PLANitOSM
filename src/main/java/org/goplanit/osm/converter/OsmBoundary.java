@@ -139,7 +139,8 @@ public final class OsmBoundary {
   public static OsmBoundary of(Number x1, Number x2, Number y1, Number y2){
     return of(
         new Envelope(
-            PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
+            PlanitJtsUtils.createPoint(x1, y1).getCoordinate(),
+            PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
   }
 
   /** Set a square bounding box based on provided envelope
@@ -218,7 +219,10 @@ public final class OsmBoundary {
    */
   public OsmBoundary deepClone() {
     return new OsmBoundary(
-        boundaryName, boundaryType, adminLevel, (boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null));
+        boundaryName,
+        boundaryType,
+        adminLevel,
+        (boundingPolygon!= null ? (Polygon) boundingPolygon.copy() : null));
   }
 
   @Override

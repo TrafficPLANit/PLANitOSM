@@ -6,7 +6,7 @@ import java.util.logging.Logger;
 import org.goplanit.converter.zoning.ZoningReader;
 import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.converter.OsmBoundingBoundaryPreProcessingHandler;
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerBase;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningPostProcessingHandler;
@@ -87,7 +87,8 @@ public class OsmZoningReader implements ZoningReader {
       return;
     }
     if(!networkBoundingBoundary.hasBoundingPolygon()){
-      LOGGER.severe("Network bounding boundary configured but no polygon available, this shouldn't happen when parsing zoning");
+      LOGGER.severe("Network bounding boundary configured but no polygon available, " +
+          "this shouldn't happen when parsing zoning");
       return;
     }
     var networkBoundingPolygon = networkBoundingBoundary.getBoundingPolygon();
@@ -343,8 +344,13 @@ public class OsmZoningReader implements ZoningReader {
    * @param network2ZoningData to use
    */
   protected OsmZoningReader(
-      URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
-    this(new OsmPublicTransportReaderSettings(inputSource, countryName), zoningToPopulate, referenceNetwork, network2ZoningData);
+      URL inputSource,
+      String countryName,
+      Zoning zoningToPopulate,
+      PlanitOsmNetwork referenceNetwork,
+      OsmNetworkToZoningReaderData network2ZoningData){
+    this(new OsmPublicTransportReaderSettings(
+        inputSource, countryName), zoningToPopulate, referenceNetwork, network2ZoningData);
   }
 
   /**
@@ -356,7 +362,10 @@ public class OsmZoningReader implements ZoningReader {
    * @param network2ZoningData to use
    */
   protected OsmZoningReader(
-      OsmPublicTransportReaderSettings settings,  Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
+      OsmPublicTransportReaderSettings settings,
+      Zoning zoningToPopulate,
+      PlanitOsmNetwork referenceNetwork,
+      OsmNetworkToZoningReaderData network2ZoningData){
     this.transferSettings = settings;
     this.referenceNetwork = referenceNetwork;
     this.zoning = zoningToPopulate;
@@ -364,7 +373,8 @@ public class OsmZoningReader implements ZoningReader {
   }
 
   /**
-   * Parse a local *.osm or *.osm.pbf file and convert it into a PLANit Zoning instance given the configuration options that have been set
+   * Parse a local *.osm or *.osm.pbf file and convert it into a PLANit Zoning instance given the configuration options
+   * that have been set
    * 
    * @return macroscopic zoning that has been parsed
    */

@@ -1,17 +1,19 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.handler;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
-import de.topobyte.osm4j.core.access.OsmInputException;
-import de.topobyte.osm4j.core.access.OsmReader;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import org.goplanit.utils.geo.PlanitGeometryOperationUtils;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 
 /**
  * Base handler for networks with common functionality. Requires derived hanlder for concrete implementation.
@@ -31,10 +33,13 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   private final PlanitOsmNetwork networkToPopulate;
   
   /** the network data tracking all relevant data during parsing of the osm network */
-  private final OsmNetworkReaderData networkData;  
+  private final OsmNetworkReaderData networkData;
   
   /** the settings to adhere to */
   private final OsmNetworkReaderSettings settings;
+
+  /** spatially indexed version of bounding polygon if any for quick comparisons */
+  private final PreparedPolygon preppedBoundingPolygon;
 
   /**
    * Constructor
@@ -43,10 +48,22 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * @param networkData to use
    * @param settings for the handler
    */
-  protected OsmNetworkBaseHandler(final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+  protected OsmNetworkBaseHandler(
+      final PlanitOsmNetwork networkToPopulate,
+      final OsmNetworkReaderData networkData,
+      final OsmNetworkReaderSettings settings) {
+
     this.networkToPopulate = networkToPopulate;
     this.settings = settings;
     this.networkData = networkData;
+
+    if(getNetworkData().hasBoundingArea()){
+      // prepare polygon for faster checks
+      this.preppedBoundingPolygon = PlanitGeometryOperationUtils.extractPreparedPolygonForQuickSpatialComparisons(
+          getNetworkData().getBoundingArea().getBoundingPolygon());
+    }else{
+      this.preppedBoundingPolygon = null;
+    }
   }
 
   /** verify if tags represent an highway or railway that is specifically aimed at road based or rail based infrastructure, e.g.,
@@ -105,6 +122,10 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
 
   protected PlanitOsmNetwork getNetwork(){
     return this.networkToPopulate;
+  }
+
+  protected PreparedPolygon getPreparedBoundingPolygon(){
+    return preppedBoundingPolygon;
   }
 
 

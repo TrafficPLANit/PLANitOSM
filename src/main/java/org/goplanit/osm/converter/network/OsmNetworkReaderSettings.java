@@ -8,6 +8,7 @@ import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.CollectionUtils;
+import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
@@ -211,7 +212,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     LOGGER.info(String.format("%-40s: %s","Country to base defaults on",getCountryName()));
     LOGGER.info(String.format("%-40s: %s","Setting Coordinate Reference System",getSourceCRS().getName()));
     if(hasBoundingBoundary()) {
-      LOGGER.info(String.format("%-40s %s","Network bounding boundary", getBoundingArea().toString()));
+      LOGGER.info(String.format("%-40s %s","Network bounding boundary", StringUtils.truncateToWithMessage(
+          getBoundingArea().toString(),500)));
     }
     LOGGER.info(String.format("%-40s: %s","Consolidating functionally equivalent OSM link types", isConsolidateLinkSegmentTypes()));
     LOGGER.info(String.format("%-40s: %s","Always keep largest parsed sub-network", isAlwaysKeepLargestSubnetwork()));

@@ -1,10 +1,12 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.data;
 
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.osm.converter.network.handler.OsmNetworkHandlerHelper;
+import org.goplanit.osm.converter.network.handler.OsmNetworkHandlerProfiler;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
@@ -29,7 +31,7 @@ public class OsmNetworkReaderLayerData {
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderLayerData.class.getCanonicalName());
   
   /** profiler for the network layer */
-  private final OsmNetworkHandlerProfiler profiler = new OsmNetworkHandlerProfiler();  
+  private final OsmNetworkHandlerProfiler profiler = new OsmNetworkHandlerProfiler();
   
   /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only track globally when
    * part of intermodal reader where follow up components require this information, otherwise it is locally discarded after use */
@@ -275,7 +277,7 @@ public class OsmNetworkReaderLayerData {
    * @param newOsmWayToPlanitLinkMapping contains new mapping from osm way id to known planit links that cover this osm way
    */
   public void updateOsmWaysWithMultiplePlanitLinks(Map<Long, Set<MacroscopicLink>> newOsmWayToPlanitLinkMapping) {
-    OsmNetworkHandlerHelper.addAllTo(newOsmWayToPlanitLinkMapping, osmWaysWithMultiplePlanitLinks);    
+    OsmNetworkHandlerHelper.addAllTo(newOsmWayToPlanitLinkMapping, osmWaysWithMultiplePlanitLinks);
   }
   
   /** update all known OSM ways with multiple PLANit links. To use whenever a PLANit link is broken and split into multiple

@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.*;
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -256,8 +256,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
       // mark spatially eligible if bounding area is present and it falls within this area, if no bounding area then all are eligible
       // used to exclude identifying relations that do not have any preregistered nodes available
-      if(!getZoningReaderData().hasBoundingArea() ||
-          OsmNodeUtils.createPoint(node).within(getZoningReaderData().getBoundingArea().getBoundingPolygon())){
+      if(!getZoningReaderData().hasBoundingArea() || getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node))){
 
         getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
       }

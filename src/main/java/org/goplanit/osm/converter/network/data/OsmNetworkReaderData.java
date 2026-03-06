@@ -1,10 +1,12 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.data;
 
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.converter.OsmSpatialEligibilityData;
+import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -68,10 +70,12 @@ public class OsmNetworkReaderData {
    * @param settings to use
    * @param geoUtils to use
    */
-  protected void initialiseLayerParsers(PlanitOsmNetwork network, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
+  public void initialiseLayerParsers(
+      PlanitOsmNetwork network, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
     /* for each layer initialise a handler */
     for(MacroscopicNetworkLayer macroNetworkLayer : network.getTransportLayers()) {
-      OsmNetworkLayerParser layerHandler = new OsmNetworkLayerParser(macroNetworkLayer, this, settings, geoUtils);
+      OsmNetworkLayerParser layerHandler =
+          new OsmNetworkLayerParser(macroNetworkLayer, this, settings, geoUtils);
       osmLayerParsers.put(macroNetworkLayer, layerHandler);
     }
   }

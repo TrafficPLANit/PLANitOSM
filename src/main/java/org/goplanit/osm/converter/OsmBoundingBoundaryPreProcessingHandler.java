@@ -4,7 +4,7 @@ import de.topobyte.osm4j.core.access.OsmReader;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
-import org.goplanit.osm.converter.network.OsmNetworkBaseHandler;
+import org.goplanit.osm.converter.network.handler.OsmNetworkBaseHandler;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmHandlerUtils;
 

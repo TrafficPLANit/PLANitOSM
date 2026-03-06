@@ -1,7 +1,6 @@
 package org.goplanit.osm.converter.zoning.handler.helper;
 
-import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.PlanitNetworkLayerUtils;
@@ -12,7 +11,6 @@ import org.locationtech.jts.geom.Point;
 
 import java.util.Collection;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 /**
  * Base class for all parser classes targeting support for parsing a specific PLANit zoning related entity (connectoid, transfer zone etc.)

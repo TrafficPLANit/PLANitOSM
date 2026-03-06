@@ -3,7 +3,7 @@ package org.goplanit.osm.converter.zoning.handler;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.*;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.helper.OsmConnectoidHelper;
@@ -16,8 +16,10 @@ import org.goplanit.osm.tags.OsmRelationTypeTags;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.functionalinterface.TriConsumer;
+import org.goplanit.utils.geo.PlanitGeometryOperationUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.zoning.Zoning;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -76,6 +78,9 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
   private final OsmConnectoidHelper connectoidHelper;
+
+  /** spatially indexed version of bounding polygon if any for quick comparisons */
+  private final PreparedPolygon preppedBoundingPolygon;
       
   /** Skip OSM pt entity when marked for exclusion in settings
    * 
@@ -131,6 +136,10 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
 
   protected PlanitOsmNetwork getReferenceNetwork(){
     return referenceNetwork;
+  }
+
+  protected PreparedPolygon getPreparedBoundingPolygon(){
+    return preppedBoundingPolygon;
   }
   
   /** Skip SOM relation member when marked for exclusion in settings
@@ -189,7 +198,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when one or more layers are found, false otherwise
    */
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getReferenceNetwork(), getNetworkToZoningData());
+    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
+        osmNodeId, getReferenceNetwork(), getNetworkToZoningData());
   }   
                                                              
   /** Verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
@@ -210,7 +220,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param osmWay to parse
    * @param osmWayConsumer to apply to eligible OSM way
    */
-  protected void wrapHandleSpatialAndPtCompatibleOsmWay(OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
+  protected void wrapHandleSpatialAndPtCompatibleOsmWay(
+      OsmWay osmWay, TriConsumer<OsmWay, OsmPtVersionScheme, Map<String, String>> osmWayConsumer) {
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(osmWay);  
     
     try {       
@@ -429,13 +440,21 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     this.referenceNetwork = referenceNetwork;
     this.zoning = zoningToPopulate;       
     this.transferSettings = transferSettings;
+
     this.zoningReaderData = zoningReaderData;
+    if(getZoningReaderData().hasBoundingArea()){
+      // prepare polygon for faster boundary checks on OSM geometries
+      this.preppedBoundingPolygon = PlanitGeometryOperationUtils.extractPreparedPolygonForQuickSpatialComparisons(
+          getZoningReaderData().getBoundingArea().getBoundingPolygon());
+    }else{
+      this.preppedBoundingPolygon = null;
+    }
 
     this.network2ZoningData = network2ZoningData;
     
     /* gis initialisation */
     this.geoUtils = new PlanitJtsCrsUtils(getReferenceNetwork().getCoordinateReferenceSystem());
-    
+
     /* parser for creating PLANit transfer zones */
     this.transferZoneHelper = new TransferZoneHelper(
         getReferenceNetwork(), zoningToPopulate, zoningReaderData, network2ZoningData, transferSettings, profiler);

@@ -35,7 +35,7 @@ public class OsmBoundaryManager {
   /** original boundary with only description present, possibly without polygon (input) */
   private final OsmBoundary originalBoundary;
 
-  /** final boundary including result polygon for boungin (final result) */
+  /** final boundary including result polygon for bounding (final result) */
   private OsmBoundary finalBoundaryWithPolygon;
 
   /**

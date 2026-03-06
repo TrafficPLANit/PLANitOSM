@@ -403,11 +403,11 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
    * @param settings to access mapping from osm mdoes to planit modes
    * @return the included planit modes supported by the parser in the designated direction
    */
-  public Set<Mode> getExplicitlyIncludedModes(Map<String, String> tags, boolean isForwardDirection, OsmNetworkReaderSettings settings) {          
-    Set<Mode> includedModes = new HashSet<>();
-    
+  public Set<Mode> getExplicitlyIncludedModes(
+      Map<String, String> tags, boolean isForwardDirection, OsmNetworkReaderSettings settings) {
+
     /* 1) generic mode inclusions INDEPENDENT of ONEWAY tags being present or not*/
-    includedModes.addAll(getExplicitlyIncludedModesOneWayAgnostic(tags, isForwardDirection));
+    Set<Mode> includedModes = new HashSet<>(getExplicitlyIncludedModesOneWayAgnostic(tags, isForwardDirection));
                           
     boolean exploreOneWayOppositeDirection = false;
     if(tags.containsKey(OsmOneWayTags.ONEWAY)){      
@@ -439,9 +439,14 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
     /* 3) mode inclusions for explored direction that is NOT ONE WAY OPPOSITE DIRECTION */
     if(!exploreOneWayOppositeDirection) {      
       /* ...all modes --> general inclusions in main or both directions <mode>= */
-      includedModes.addAll(getActivatedPlanitModes(OsmModeUtils.getOsmRoadModesWithValueTag(tags, OsmAccessTags.getPositiveAccessValueTags())));
+      includedModes.addAll(
+          getActivatedPlanitModes(
+              OsmModeUtils.getOsmRoadModesWithValueTag(tags, OsmAccessTags.getPositiveAccessValueTags())));
       /* ...all modes --> general inclusions in main or both directions access:<mode>= */
-      includedModes.addAll(getActivatedPlanitModes(OsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmAccessTags.ACCESS, tags, OsmAccessTags.getPositiveAccessValueTags())));
+      includedModes.addAll(
+          getActivatedPlanitModes(
+              OsmModeUtils.getPrefixedOsmRoadModesWithValueTag(
+                  OsmAccessTags.ACCESS, tags, OsmAccessTags.getPositiveAccessValueTags())));
     }
            
     return includedModes;                  

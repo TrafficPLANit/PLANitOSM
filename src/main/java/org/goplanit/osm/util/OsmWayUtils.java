@@ -2,14 +2,12 @@ package org.goplanit.osm.util;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
-import org.goplanit.osm.converter.network.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
@@ -22,7 +20,6 @@ import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.zoning.Zone;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;

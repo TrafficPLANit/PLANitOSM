@@ -1,4 +1,4 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.handler;
 
 import java.io.IOException;
 import java.util.*;
@@ -7,6 +7,10 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
+import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
@@ -58,7 +62,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     return networkData.getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
             &&
             ( noBoundingPolygon || getSettings().isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId()) ||
-              OsmNodeUtils.createPoint(osmNode).within(networkData.getBoundingArea().getBoundingPolygon())
+              getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(osmNode))
             );
   }
        
@@ -424,7 +428,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param networkData the data used for populating the network
    * @param settings for the handler
    */
-  public OsmNetworkMainProcessingHandler(final PlanitOsmNetwork networkToPopulate, final OsmNetworkReaderData networkData, final OsmNetworkReaderSettings settings) {
+  public OsmNetworkMainProcessingHandler(
+      final PlanitOsmNetwork networkToPopulate,
+      final OsmNetworkReaderData networkData,
+      final OsmNetworkReaderSettings settings) {
     super(networkToPopulate, networkData, settings);
   }
    
@@ -465,18 +472,22 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
 
-  /** extract the correct link segment type based on the configuration of supported modes, the defaults for the given osm way and any 
+  /** extract the correct link segment type based on the configuration of supported modes, the defaults for the given
+   * OSM way and any
    * modifications to the mode access based on the passed in tags of the OSM way
    * 
    * @param osmWay the way this type extraction is executed for 
    * @param tags tags belonging to the OSM way
-   * @return appropriate link segment types for forward and backward direction per network layer. If no modes are allowed in a direction, the link segment type will be null
+   * @return appropriate link segment types for forward and backward direction per network layer. If no modes are
+   * allowed in a direction, the link segment type will be null
    */
-  protected Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> extractLinkSegmentTypes(OsmWay osmWay, Map<String, String> tags){
+  protected Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>>
+  extractLinkSegmentTypes(OsmWay osmWay, Map<String, String> tags){
     Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayerByDirection = new TreeMap<>();
 
     /* a default link segment type should be available as starting point*/
-    Map<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer = getDefaultLinkSegmentTypeByOsmWayType(osmWay, tags);
+    Map<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer =
+        getDefaultLinkSegmentTypeByOsmWayType(osmWay, tags);
     if(linkSegmentTypesByLayer != null) {      
       
       /* per layer identify the directional link segment types based on additional access changes from OSM tags */

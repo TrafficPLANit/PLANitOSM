@@ -1,13 +1,9 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.handler;
 
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-import org.goplanit.osm.tags.OsmTags;
-import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
-import org.goplanit.utils.network.layer.physical.Link;
 
 /**
  * Helper class for the OSM network handlers, providing static helper methods that reflect common code across various

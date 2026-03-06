@@ -1,12 +1,12 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.handler;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.OsmNodeUtils;
-import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
-import org.locationtech.jts.geom.prep.PreparedPolygon;
 
 import java.io.IOException;
 import java.util.Map;
@@ -50,8 +50,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   private final LongAdder osmNodeCounter;
   private final LongAdder osmWayCounter;
 
-  private final PreparedPolygon preppedBoundingPolygon;
-
   /** Mark all nodes of eligible OSM ways (e.g., road, rail, etc.) to be parsed during the main processing phase
    * 
    * @param osmWay to handle
@@ -59,6 +57,10 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    */
   protected void handleEligibleOsmWay(OsmWay osmWay, Map<String,String> tags) {
     var settings = getSettings();
+
+    if(osmWay.getId() == 7978957L){
+      int bla = 4;
+    }
      
     if(settings.isKeepOsmWayOutsideBoundingPolygon(osmWay.getId())) {
 
@@ -79,13 +81,14 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     }
 
     // filter based on required presence of at least one pre-registered OSM node within bounding area given it is set
-    boolean osmWayEligible = getNetworkData().getOsmSpatialEligibilityData().markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(osmWay);
+    boolean osmWayEligible =
+        getNetworkData().getOsmSpatialEligibilityData().markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(osmWay);
     if(osmWayEligible) {
       getNetworkData().registerSpatialInfraEligibleOsmWayId(osmWay.getId());
       /* mark all nodes as potentially eligible for keeping, since they reside on an OSM way that is deemed eligible (road, rail, or boundary) */
       getNetworkData().getOsmNodeData().preregisterOsmWayNodes(osmWay);
 
-      if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays() % 10000 == 0 ){
+      if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays() % 100000 == 0 ){
         LOGGER.info(String.format("Ways preprocessing part 1 has identified %d (out of %d) spatially eligible OSM ways",
             getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays(), osmWayCounter.sum()));
       }
@@ -109,14 +112,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     this.osmNodeCounter = new LongAdder();
     this.osmWayCounter = new LongAdder();
     this.stage = preProcessStage;
-
-    if(getNetworkData().hasBoundingArea()){
-      // prepare polygon for faster checks
-      this.preppedBoundingPolygon = (PreparedPolygon) PreparedGeometryFactory.prepare(
-          getNetworkData().getBoundingArea().getBoundingPolygon());
-    }else{
-      this.preppedBoundingPolygon = null;
-    }
   }
 
   /**
@@ -126,16 +121,20 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmNode node) {
 
+    if(node.getId() == 264155966L){
+      int bla = 4;
+    }
+
     if(stage.equals(Stage.ONE_REGULAR_PREPROCESSING_WAYS)){
 
       // mark as spatially eligible if bounding area is present and it falls within this area, or
       // if no bounding area all are eligible. Only OSM ways with at least one spatially eligible nodes will be considered
       // for parsing
-      if(!getNetworkData().hasBoundingArea() || preppedBoundingPolygon.contains(OsmNodeUtils.createPoint(node))){
+      if(!getNetworkData().hasBoundingArea() || getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node))){
 
         getNetworkData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
 
-        if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes() % 10000 == 0 ){
+        if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes() % 1000000 == 0 ){
           LOGGER.info(String.format("Node preprocessing part 1 has identified %d (out of %d) spatially eligible OSM nodes",
               getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes(), osmNodeCounter.sum()));
         }
@@ -143,15 +142,15 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
     }else if(stage.equals(Stage.TWO_REGULAR_PREPROCESSING_NODES)){
 
+      if(osmNodeCounter.sum() % 10000000 == 0 ){
+        LOGGER.info(String.format("Node preprocessing part 2 has processed %d OSM nodes",
+            osmNodeCounter.sum(), osmNodeCounter.sum()));
+      }
+
       // register all OSM nodes that are deemed eligible and have been pre-registered based on identified OSM ways' nodes
       var osmNodeData = getNetworkData().getOsmNodeData();
       if(osmNodeData.containsPreregisteredOsmNode(node.getId())){
         osmNodeData.registerEligibleOsmNode(node);
-
-        if(osmNodeCounter.sum() % 100000 == 0 ){
-          LOGGER.info(String.format("Node preprocessing part 2 has processed %d OSM nodes",
-              osmNodeCounter.sum(), osmNodeCounter.sum()));
-        }
       }
     }
 

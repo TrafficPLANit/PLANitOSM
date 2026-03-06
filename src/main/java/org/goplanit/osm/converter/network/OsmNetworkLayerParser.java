@@ -6,6 +6,9 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
 import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
 import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
@@ -49,7 +52,7 @@ public class OsmNetworkLayerParser {
   // local members only
          
   /** track all data that maps OSM entities to PLANit entities here */
-  private final OsmNetworkReaderLayerData layerData; 
+  private final OsmNetworkReaderLayerData layerData;
     
   /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of the PLANit link segment types while parsing */
   private final ModifiedLinkSegmentTypes modifiedLinkSegmentTypes = new ModifiedLinkSegmentTypes();  
@@ -57,7 +60,7 @@ public class OsmNetworkLayerParser {
   // references
   
   /** reference to network wide tracked network reader data */
-  private final OsmNetworkReaderData networkData;    
+  private final OsmNetworkReaderData networkData;
     
   /** settings relevant to this parser */
   private final OsmNetworkReaderSettings settings;
@@ -711,21 +714,28 @@ public class OsmNetworkLayerParser {
     return link;
   }  
   
-  /** given the OSM way tags and settings we construct or find the appropriate link segment types for both directions, if no better alternative could be found
-   * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way.
-   * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag is available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
+  /** given the OSM way tags and settings we construct or find the appropriate link segment types for both directions,
+   * if no better alternative could be found than the one that is passed in is used, which is assumed to be the default
+   * link segment type for the OSM way.
+   * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag
+   * is available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
    *  
    * @param osmWay the tags belong to
    * @param tags of the OSM way to extract the link segment type for
    * @param linkSegmentType use thus far for this way
-   * @return the link segment types for the forward direction and backward direction as per OSM specification of forward and backward. When no allowed modes exist in a direction the link segment type is set to null
+   * @return the link segment types for the forward direction and backward direction as per OSM specification of
+   * forward and backward. When no allowed modes exist in a direction the link segment type is set to null
    */
-  protected Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> updatedLinkSegmentTypeBasedOnOsmWay(final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType){
+  public Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> updatedLinkSegmentTypeBasedOnOsmWay(
+      final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType){
     
-    /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry, and backward, i.e., the opposite of the geometry)*/
+    /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry,
+    and backward, i.e., the opposite of the geometry)*/
     boolean forwardDirection = true;
-    var  forwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, forwardDirection);
-    var  backwardDirectionLinkSegmentType = extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
+    var  forwardDirectionLinkSegmentType =
+        extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, forwardDirection);
+    var  backwardDirectionLinkSegmentType =
+        extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
 
     return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
   }    
@@ -737,7 +747,11 @@ public class OsmNetworkLayerParser {
    * @param settings used for this parser
    * @param geoUtils geometric utility class instance based on network wide crs
    */
-  protected OsmNetworkLayerParser(MacroscopicNetworkLayer networkLayer, OsmNetworkReaderData networkData, OsmNetworkReaderSettings settings, PlanitJtsCrsUtils geoUtils) {
+  public OsmNetworkLayerParser(
+      MacroscopicNetworkLayer networkLayer,
+      OsmNetworkReaderData networkData,
+      OsmNetworkReaderSettings settings,
+      PlanitJtsCrsUtils geoUtils) {
     this.networkLayer = networkLayer;           
     this.networkData = networkData;
     this.geoUtils = geoUtils;
@@ -751,10 +765,12 @@ public class OsmNetworkLayerParser {
 
 
   /**
-   * extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being a (partial) section of a circular way, then
-   * we only allow the presumed one way direction applicable when creating directional link segments. The result is a newly registered link, its nodes, and linksegment(s) on
-   * the network layer. The parser will try to infer missing/default data by using defaults set by the user. The provided link segment types are based on the osmWay data
-   * and are assumed to be readily available and provided by the PlanitOsmHandler when identifying the correct layer (this layer)
+   * extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being a
+   * (partial) section of a circular way, then we only allow the presumed one way direction applicable when creating
+   * directional link segments. The result is a newly registered link, its nodes, and link segment(s) on
+   * the network layer. The parser will try to infer missing/default data by using defaults set by the user.
+   * The provided link segment types are based on the osmWay data and are assumed to be readily available and
+   * provided by the PlanitOsmHandler when identifying the correct layer (this layer)
    * 
    * @param osmWay to parse
    * @param tags related to the OSM way
@@ -775,7 +791,8 @@ public class OsmNetworkLayerParser {
     MacroscopicLink link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
 
-      /* a link only consists of start and end node, no direction and has no model information, we allow truncation near bounding box but only if it is not a circular way */
+      /* a link only consists of start and end node, no direction and has no model information, we allow
+      truncation near bounding box but only if it is not a circular way */
       boolean allowGeometryTruncation = !isPartOfCircularWay;
       link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);
       if(link != null) {
@@ -784,10 +801,11 @@ public class OsmNetworkLayerParser {
             OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT) ||
                 OsmOneWayTags.isOneWay(tags))) {
 
-          /* when circular and one-way, i.e. tagged as roundabout or explicitly so, we only accept one direction as accessible regardless of what has been identified so far;
+          /* when circular and one-way, i.e. tagged as roundabout or explicitly so, we only accept one direction
+          as accessible regardless of what has been identified so far;
            * clockwise equates to forward direction while anti-clockwise equates to backward direction
-           * TODO: ideally we do better and allow for active modes/access modifiers to overrule --> this should therefore eventually
-           *  be dealt with directly when we extract the link segment types instead */
+           * TODO: ideally we do better and allow for active modes/access modifiers to overrule --> this should
+              therefore eventually be dealt with directly when we extract the link segment types instead */
           if (OsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
             linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
           } else {
@@ -877,7 +895,8 @@ public class OsmNetworkLayerParser {
       }
     });
 
-    LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE", getLayerData().getNumberOfOsmWaysWithMultiplePlanitLinks()));
+    LOGGER.info(String.format("Broke %d OSM ways into multiple links...DONE",
+        getLayerData().getNumberOfOsmWaysWithMultiplePlanitLinks()));
   }
   
   /**

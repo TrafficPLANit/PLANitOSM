@@ -1,16 +1,10 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.handler;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 

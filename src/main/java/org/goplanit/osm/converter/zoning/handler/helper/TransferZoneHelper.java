@@ -6,9 +6,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.goplanit.converter.zoning.ZoningConverterUtils;
-import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
-import org.goplanit.osm.converter.network.OsmNetworkReaderLayerData;
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
