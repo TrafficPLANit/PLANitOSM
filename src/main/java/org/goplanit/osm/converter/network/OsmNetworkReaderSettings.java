@@ -100,6 +100,12 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * not adhere to the criteria of {@code discardSubNetworkBelowSize} and/or {@code discardSubNetworkAbovesize} 
    */
   protected boolean alwaysKeepLargestSubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
+
+  /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
+   * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
+   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within the specified
+   * distance outside the bounding polygon and still be included. */
+  private double maximumDistanceFerryOutsideBoundingPolygonInMeters = DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
       
   /**
    * Conduct general initialisation for any instance of this class
@@ -134,6 +140,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
   public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
+
+  /** default distance outside a bounding polygon for which we still include ferry routes */
+  public static double DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M = 2_000;
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
@@ -522,7 +531,23 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public void setAlwaysKeepLargestSubnetwork(boolean alwaysKeepLargestSubnetwork) {
     this.alwaysKeepLargestSubNetwork = alwaysKeepLargestSubnetwork;
-  }  
+  }
+
+  /** Get the maximum distance outside the bounding area PLANit will still include ferry routes
+   *
+   * @return distance set
+   */
+  public double getMaximumDistanceFerryOutsideBoundingPolygonInMeters() {
+    return maximumDistanceFerryOutsideBoundingPolygonInMeters;
+  }
+
+  /** Set the maximum distance outside the bounding area PLANit will still include ferry routes
+   *
+   * @param distanceMeters distance to use
+   */
+  public void setMaximumDistanceFerryOutsideBoundingPolygonInMeters(double distanceMeters) {
+    this.maximumDistanceFerryOutsideBoundingPolygonInMeters = distanceMeters;
+  }
 
   /**
    * deactivate all types for both rail and highway
@@ -544,22 +569,26 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   
   /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
    * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
-   * across both railways and highways. If you want to do this within highways only, use the same method under highway settings.
+   * across railways, waterways, and highways. If you want to do this within highways only, use similar method
+   * provided under highway/railway/waterway settings.
    * 
-   * @param osmWaytypes to mark as activated
+   * @param osmWayTypes to mark as activated
    */
-  public void deactivateAllOsmWayTypesExcept(List<String> osmWaytypes) {
+  public void deactivateAllOsmWayTypesExcept(List<String> osmWayTypes) {
     deactivateAllOsmWayTypes();
-    for(String osmWayType : osmWaytypes) {
+    for(String osmWayType : osmWayTypes) {
       if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
         osmHighwaySettings.activateOsmHighwayTypes(osmWayType);
       }else if(OsmRailwayTags.isRailBasedRailway(osmWayType)) {
         osmRailwaySettings.activateOsmRailwayType(osmWayType);
+      }else if(OsmWaterwayTags.isWaterWayBasedValueTag(osmWayType)){
+        osmWaterwaySettings.activateOsmWaterwayType(osmWayType);
       }
     }
   }
 
-  /** register a custom new way key value tag with defaults to parse in addition to the default supported.configured tags.
+  /** register a custom new way key value tag with defaults to parse in addition to the default supported.configured
+   * tags.
    *
    * @param osmWayKey to use
    * @param osmWayTypeValue to use

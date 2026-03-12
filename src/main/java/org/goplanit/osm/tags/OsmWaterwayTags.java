@@ -78,9 +78,7 @@ public class OsmWaterwayTags {
    * @return true when valid tag, otherwise false
    */
   public static boolean isWaterBasedWay(String waterwayKey, String waterWayTagValue) {
-    return isAnyWaterwayKeyTag(waterwayKey) &&
-        (DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS.contains(waterWayTagValue) ||
-        DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.contains(waterWayTagValue));
+    return isAnyWaterwayKeyTag(waterwayKey) && isWaterWayBasedValueTag(waterWayTagValue);
   }
 
   /**
@@ -104,6 +102,17 @@ public class OsmWaterwayTags {
    */
   public static boolean hasAnyWaterwayKeyTag(Map<String, String> tags) {
     return tags.containsKey(ROUTE) || tags.containsKey(FERRY);
+  }
+
+  /** Verify if passed in tag is indeed a waterway value tag that may represent a waterway like piece of infrastructure
+   * or route
+   *
+   * @param waterWayTagValue to verify
+   * @return true when valid tag, otherwise false
+   */
+  public static boolean isWaterWayBasedValueTag(String waterWayTagValue) {
+    return  (DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS.contains(waterWayTagValue) ||
+        DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.contains(waterWayTagValue));
   }
 
   /**

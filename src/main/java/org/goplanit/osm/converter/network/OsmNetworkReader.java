@@ -171,13 +171,24 @@ public class OsmNetworkReader implements NetworkReader {
     /* STAGE 1 -
      * identify OSM ways that are eligible from a network perspective (are they roads etc.). If a bounding area is specified then
      * they should at least have one node within the bounding area to be considered */
-    LOGGER.info("Pre-processing: Identifying eligible network OSM entities");
-    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_REGULAR_PREPROCESSING_WAYS);
+    LOGGER.info("Pre-processing: Identifying spatially eligible network OSM entities");
+    createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS);
 
-    /* STAGE 2 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */
+    /* STAGE 2 - Identify any OSM ways/nodes that are considered special cases even if they fall outside bounding polygon
+    * e.g., ferries. */
+    if(getSettings().hasBoundingBoundary())
     {
-      LOGGER.info("Preprocessing: reducing memory footprint, identifying remaining OSM nodes required for network building");
-      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.TWO_REGULAR_PREPROCESSING_NODES);
+      LOGGER.info("Preprocessing: Identifying special cases to keep outside bounding area (if any)");
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS);
+    }else{
+      LOGGER.info("Preprocessing: Skip stage 2 no bounding area defined");
+    }
+
+    /* STAGE 3 - add nodes that are part of OSM ways that were deemed eligible for parsing in STAGE 1 */
+    {
+      LOGGER.info("Preprocessing: reducing memory footprint, finalising OSM nodes and ways required for " +
+          "network building");
+      createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.THREE_FINALISE_PREPROCESSING_NODES_WAYS);
     }
 
   }

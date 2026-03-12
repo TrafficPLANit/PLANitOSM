@@ -23,6 +23,16 @@ public class OsmSpatialEligibilityData {
   /* temporary storage of tracking eligible osmRelations by id based on whether they fall partially within boundary*/
   private final Set<Long> spatiallyEligibleOsmRelations = new HashSet<>();
 
+  /* temporary storage of tracking eligible osmWays by instance for special cases that do not qualify directly spatially
+   * but for good reason should still be auto-included if meeting certain criteria. This takes multiple rounds of parsing
+   * before we can decide, hence this tracker. If deemed eligible they will be removed from here and included in the
+   * #spatiallyEligibleOsmWays and #spatiallyEligibleOsmNodes once verified
+   */
+  private final Set<Long> potentiallySpatiallyEligibleOsmWaysSpecialCases = new HashSet<>();
+
+  private final Set<Long> potentiallySpatiallyEligibleOsmNodesSpecialCases = new HashSet<>();
+
+
   public boolean isOsmWaySpatiallyEligible(long osmWayId){
     return spatiallyEligibleOsmWays.contains(osmWayId);
   }
@@ -75,10 +85,26 @@ public class OsmSpatialEligibilityData {
     return false;
   }
 
+  public void markOsmWayAndNodesPotentiallySpatiallyEligibleAsSpecialCase(OsmWay osmWay) {
+    potentiallySpatiallyEligibleOsmWaysSpecialCases.add(osmWay.getId());
+    for(int i=0; i<osmWay.getNumberOfNodes();i++) {
+      potentiallySpatiallyEligibleOsmNodesSpecialCases.add(osmWay.getNodeId(i));
+    }
+  }
+
+  public boolean isOsmWayPotentiallySpatiallyEligibleAsSpecialCase(long osmWayId){
+    return potentiallySpatiallyEligibleOsmWaysSpecialCases.contains(osmWayId);
+  }
+
+  public boolean isOsmNodePartOfPotentiallySpatiallyEligibleWayAsSpecialCase(long osmNodeId){
+    return potentiallySpatiallyEligibleOsmNodesSpecialCases.contains(osmNodeId);
+  }
+
   public void reset(){
     spatiallyEligibleOsmWays.clear();
     spatiallyEligibleOsmNodes.clear();
     spatiallyEligibleOsmRelations.clear();
+    potentiallySpatiallyEligibleOsmWaysSpecialCases.clear();
   }
 
 }

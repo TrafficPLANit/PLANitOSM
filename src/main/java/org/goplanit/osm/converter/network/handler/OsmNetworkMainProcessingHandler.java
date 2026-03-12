@@ -463,7 +463,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmWay osmWay) throws IOException {
 
     /* filter out OSMWays that have been spatially deemed ineligible */
-    if(!getNetworkData().isSpatialInfraEligibleOsmWay(osmWay.getId())){
+    if(!getNetworkData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
       return;
     }
 
