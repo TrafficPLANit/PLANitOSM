@@ -462,6 +462,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
 
+    if(osmWay.getId() == 151911703L){
+      int bla = 4;
+    }
+
     /* filter out OSMWays that have been spatially deemed ineligible */
     if(!getNetworkData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
       return;

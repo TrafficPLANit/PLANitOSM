@@ -196,14 +196,16 @@ public class OsmNetworkLayerParser {
       if(osmnode != null) {
         layerData.registerOsmNodeAsInternalToPlanitLink(osmnode,link);
       }else {
-        LOGGER.fine(String.format("OSM node %d not available although internal to parseable OSM way %d, possibly outside bounding box",osmWay.getNodeId(internalLocationIndex), osmWay.getId()));
+        LOGGER.fine(String.format("OSM node %d not available although internal to parseable OSM way %d, possibly " +
+            "outside bounding box",osmWay.getNodeId(internalLocationIndex), osmWay.getId()));
       }
     }   
   }   
   
-  /** create and populate link if it does not already exists for the given two PLANit nodes based on the passed in osmWay information. 
-   * In case a new link is to be created but internal nodes of the geometry are missing due to the meandering road falling outside the boundaing box that is being parsed, null is returned 
-   * and the link is not created
+  /** create and populate link if it does not already exists for the given two PLANit nodes based on the passed in
+   * osmWay information. In case a new link is to be created but internal nodes of the geometry are missing due to
+   * the meandering road falling outside the bounding box that is being parsed, null is returned and the link is
+   * not created
    * 
    * @param osmWay to populate link data with
    * @param tags to populate link data with

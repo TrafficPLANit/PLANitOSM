@@ -127,8 +127,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       getNetworkData().getOsmNodeData().preregisterOsmWayNodes(osmWay);
 
       if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays() % 100000 == 0 ){
-        LOGGER.info(String.format("Ways preprocessing part 1 has identified %d (out of %d) spatially eligible OSM ways",
-            getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays(), osmWayCounter.sum()));
+        LOGGER.info(String.format("Ways preprocessing has identified %d (out of %d) spatially eligible OSM ways (%s)",
+            getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleWays(), osmWayCounter.sum(), stage));
       }
     }
     // SPECIAL CASES
@@ -182,10 +182,13 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmNode node) {
 
-    var nodeAsPoint = OsmNodeUtils.createPoint(node);
-    boolean spatiallyEligible =
-        !getNetworkData().hasBoundingArea() || getPreparedBoundingPolygon().contains(nodeAsPoint);
+    if(node.getId() == 5833764763L){
+      int bla = 4;
+    }
+
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)){
+      boolean spatiallyEligible =
+          !getNetworkData().hasBoundingArea() || getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node));
 
       // mark as spatially eligible if bounding area is present and it falls within this area, or
       // if no bounding area all are eligible. Only OSM ways with at least one spatially eligible nodes will be considered
@@ -194,19 +197,20 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
         getNetworkData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
         if(getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes() % 1000000 == 0 ){
-          LOGGER.info(String.format("Node preprocessing part 1 has identified %d (out of %d) spatially eligible OSM nodes",
-              getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes(), osmNodeCounter.sum()));
+          LOGGER.info(String.format("Node preprocessing has identified %d (out of %d) spatially eligible OSM nodes (%s)",
+              getNetworkData().getOsmSpatialEligibilityData().countSpatiallyEligibleNodes(), osmNodeCounter.sum(), stage));
         }
       }
 
     }else if(stage.equals(Stage.TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS)){
 
       // SPECIAL CASES
-      // Check remaining non-spatially eligible nodes for special cases to include
-      // if valid special case is found, pre-register so it can be processed as usual from here on forward
-      if(!spatiallyEligible && getNetworkData().getOsmSpatialEligibilityData().
+      // Check marked special case non-spatially eligible nodes to include if they fall within distance to bounding area
+      // if valid special case is found, pre-register, so it can be processed as usual from here on forward
+      if(getNetworkData().getOsmSpatialEligibilityData().
           isOsmNodePartOfPotentiallySpatiallyEligibleWayAsSpecialCase(node.getId())){
-        double projectedDistance = calculateProjectedDistanceToBoundingPolygon(nodeAsPoint, true);
+        double projectedDistance = calculateProjectedDistanceToBoundingPolygon(
+            OsmNodeUtils.createPoint(node), true);
         // NOTE: currently the only special case is for waterways, if we get more types make our check aware of the
         // type and less implicitly baked in as there is no specific check on waterways here currently (as not needed)
         if(projectedDistance < getSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters()){

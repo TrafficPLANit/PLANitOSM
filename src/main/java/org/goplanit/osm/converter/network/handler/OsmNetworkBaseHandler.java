@@ -116,7 +116,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   }
 
 
-  /** Wrap the handling of OSM way by checking if it is eligible and catch any run time PLANit exceptions, if eligible delegate to consumer.
+  /** Wrap the handling of OSM way by checking if it is eligible and catch any run time PLANit exceptions, if eligible
+   * delegate to consumer.
    * 
    * @param osmWay to parse
    * @param osmWayConsumer to apply to eligible OSM way
