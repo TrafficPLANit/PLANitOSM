@@ -251,6 +251,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       osmWayCounter.increment();
     }else if(stage.equals(Stage.TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS)){
       wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWaySpecialCasesStageTwo);
+      osmWayCounter.increment();
     }
   }
 
