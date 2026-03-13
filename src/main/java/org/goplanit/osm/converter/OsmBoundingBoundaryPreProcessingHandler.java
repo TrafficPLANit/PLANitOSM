@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter;
 
+import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.access.OsmReader;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
@@ -28,7 +29,7 @@ import java.util.logging.Logger;
  * </p>
  * @author markr
  */
-public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandler {
+public class OsmBoundingBoundaryPreProcessingHandler extends DefaultOsmHandler {
 
   /**
    * The logger for this class
@@ -88,7 +89,6 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
   public OsmBoundingBoundaryPreProcessingHandler(
       Stage preProcessStage,
       final OsmBoundaryManager boundaryManager) {
-    super(null, null, null);
     this.boundaryManager = boundaryManager;
     this.stage = preProcessStage;
   }
@@ -172,8 +172,6 @@ public class OsmBoundingBoundaryPreProcessingHandler extends OsmNetworkBaseHandl
    * reset the contents, mainly to free up unused resources 
    */
   public void reset() {
-    super.reset();
-
     /* data and settings are to be kept for main parsing loop */
   }  
   

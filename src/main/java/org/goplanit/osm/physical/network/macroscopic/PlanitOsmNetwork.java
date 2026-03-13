@@ -1112,7 +1112,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
 
   /**
    * Create the link segment types that are marked in the passed in settings. As long as they have defaults that
-   * are supported, these will be created as indicated. If not available a warning is issued and a link segment type is created based on the default chosen in settings
+   * are supported, these will be created as indicated. If not available a warning is issued and a link segment type
+   * is created based on the default chosen in settings
    * 
    * @param settings to use
    */

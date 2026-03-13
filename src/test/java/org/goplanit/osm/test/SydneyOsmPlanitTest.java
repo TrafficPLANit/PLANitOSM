@@ -131,7 +131,8 @@ public class SydneyOsmPlanitTest {
       NetworkConverter theConverter = NetworkConverterFactory.create(osmReader, planitWriter);
       theConverter.convert();
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -168,8 +169,10 @@ public class SydneyOsmPlanitTest {
       /* execute */
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertZoningFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
       e.printStackTrace();

@@ -19,6 +19,7 @@ import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
@@ -120,11 +121,15 @@ public class OsmNetworkLayerParser {
    * @param toBeRemovedModes modes to remove
    * @param tags to extract speed limit information from
    * @param linkSegmentType existing link segment type deemed appropriate
-   * @return updated link segment type, which if different is not a modification of the existing one but a unique copy with the required changes that is considered a modification of the original, 
+   * @return updated link segment type, which, if different, is not a modification of the existing one but a unique
+   * copy with the required changes that is considered a modification of the original,
    * yet its own unique new type
    */
   private MacroscopicLinkSegmentType updateExistingLinkSegmentType(
-      final Set<Mode> toBeAddedModes, final Set<Mode> toBeRemovedModes, Map<String, String> tags, MacroscopicLinkSegmentType linkSegmentType){
+      final Set<Mode> toBeAddedModes,
+      final Set<Mode> toBeRemovedModes,
+      Map<String, String> tags,
+      MacroscopicLinkSegmentType linkSegmentType){
     
     if(toBeAddedModes.isEmpty() && toBeRemovedModes.isEmpty()) {
       return linkSegmentType;
@@ -138,21 +143,22 @@ public class OsmNetworkLayerParser {
             linkSegmentType, toBeAddedModes, toBeRemovedModes);
     if(finalLinkSegmentType==null) {
 
-      /* even though the segment type is modified, the modified version does not yet exist on the PLANit network, so create it */
+      /* even though the segment type is modified, the modified version does not yet exist on the PLANit network,
+      so create it */
       finalLinkSegmentType = networkLayer.getLinkSegmentTypes().getFactory().createUniqueDeepCopyOf(linkSegmentType);
       networkLayer.getLinkSegmentTypes().register(finalLinkSegmentType);
       /* XML id */
       finalLinkSegmentType.setXmlId(Long.toString(finalLinkSegmentType.getId()));
 
-      final String MODIFIED = "_modified";
+      final String MODIFIED = String.format("MODIFIED[%d]:", finalLinkSegmentType.getId());
       /* External id */
       if(finalLinkSegmentType.hasExternalId()) {
-        finalLinkSegmentType.setExternalId(finalLinkSegmentType.getExternalId() + MODIFIED);
+        finalLinkSegmentType.setExternalId(MODIFIED + finalLinkSegmentType.getExternalId());
       }
 
       /* name */
       if(finalLinkSegmentType.hasName()) {
-        finalLinkSegmentType.setExternalId(finalLinkSegmentType.getName() + MODIFIED);
+        finalLinkSegmentType.setName( MODIFIED + finalLinkSegmentType.getName());
       }
 
       /* update mode properties */
@@ -176,7 +182,8 @@ public class OsmNetworkLayerParser {
       }
 
       /* register modification */
-      modifiedLinkSegmentTypes.addModifiedLinkSegmentType(linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
+      modifiedLinkSegmentTypes.addModifiedLinkSegmentType(
+          linkSegmentType, finalLinkSegmentType, toBeAddedModes, toBeRemovedModes);
     }
     
     return finalLinkSegmentType;
@@ -258,10 +265,8 @@ public class OsmNetworkLayerParser {
     Node nodeLast = nodeLastResult.first();
 
     /* parse geometry */
-    LineString lineString;
-    try {
-      lineString = extractPartialLinkGeometry(osmWay, nodeFirstResult.second(), nodeLastResult.second());
-    }catch (PlanItException e) {
+    LineString lineString = extractPartialLinkGeometry(osmWay, nodeFirstResult.second(), nodeLastResult.second());
+    if(lineString == null){
       LOGGER.fine(String.format("OSM way %s internal geometry incomplete, one or more internal nodes could not be " +
               "created, likely outside bounding box",osmWay.getId()));
       return null;
@@ -310,9 +315,10 @@ public class OsmNetworkLayerParser {
    *  <li>yes</li>
    *  </ul>
    *  
-   *  If other access values are found it is assumed all modes are excluded unless specific inclusions are provided. Note that it is very well possible
-   *  that due to the configuration chosen a modified link segment type is created that has no modes that are supported. In which case
-   *  the link segment type is still created, but it is left to the user to identify the absence of supported planit modes and take appropriate action.
+   *  If other access values are found it is assumed all modes are excluded unless specific inclusions are provided.
+   *  Note that it is very well possible  that due to the configuration chosen a modified link segment type is created
+   *  that has no modes that are supported. In which case  the link segment type is still created, but it is left to
+   *  the user to identify the absence of supported planit modes and take appropriate action.
    *  
    * @param osmWay the tags belong to
    * @param tags of the OSM way to extract the link segment type for
@@ -329,8 +335,10 @@ public class OsmNetworkLayerParser {
     if(settings.isModeAccessOverwrittenByOsmWayId(osmWay.getId())) {
       
       /* use OSM modes given to identify to be added and removed modes */
-      var allowedPlanitModes = modeParser.getActivatedPlanitModes(settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
-      /* reduce included modes to only the predefined modes supported by the layer the link segment type resides on, expensive, but overwrites are rare so ok */
+      var allowedPlanitModes = modeParser.getActivatedPlanitModes(
+          settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
+      /* reduce included modes to only the predefined modes supported by the layer the link segment type resides on,
+      expensive, but overwrites are rare so ok */
       if(!allowedPlanitModes.isEmpty()) {
         allowedPlanitModes.retainAll(networkLayer.getSupportedModes().stream().filter(
             Mode::isPredefinedModeType).collect(Collectors.toList()));
@@ -342,14 +350,17 @@ public class OsmNetworkLayerParser {
     }else {
       /*regular approach based on available tags */
       
-      /* identify explicitly excluded and included modes with anything related to mode and direction specific key tags <?:>mode<:?>=<?> */
+      /* identify explicitly excluded and included modes with anything related to mode and direction specific key
+      tags <?:>mode<:?>=<?> */
       Set<Mode> excludedModes = modeParser.getExplicitlyExcludedModes(tags, forwardDirection, settings);
       Set<Mode> includedModes = modeParser.getExplicitlyIncludedModes(tags, forwardDirection, settings);
 
-      /* global access is defined for both ways, or explored direction coincides with the main direction of the one way */
+      /* global access is defined for both ways, or explored direction coincides with the main direction of the
+      one way */
       boolean isOneWay = OsmOneWayTags.isOneWay(tags);
-      /*                                              two way || oneway->forward    || oneway->backward and reversed oneway */  
-      boolean accessTagAppliesToExploredDirection =  !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
+      boolean accessTagAppliesToExploredDirection =
+          /*two way || oneway->forward    || oneway->backward and reversed oneway */
+          !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
       
       /* access=<?> related mode access */
       if(accessTagAppliesToExploredDirection && tags.containsKey(OsmAccessTags.ACCESS)) {
@@ -373,20 +384,19 @@ public class OsmNetworkLayerParser {
     return finalLinkSegmentType;
   }  
       
-  /** extract geometry from the OSM way based on the start and end node index, only the portion of geometry in between the two indices will be collected.
-   * Note that it is possible to have a smaller end node index than start node index in which case, the geometry is constructed such that it overflows from the
-   * end and starting back at the beginning.
+  /** extract geometry from the OSM way based on the start and end node index, only the portion of geometry in between
+   * the two indices will be collected. Note that it is possible to have a smaller end node index than start node index
+   * in which case, the geometry is constructed such that it overflows from the end and starting back at the beginning.
    *  
    * @param osmWay to extract geometry from
    * @param startNodeIndex of geometry
    * @param endNodeIndex of the geometry
    * @return (partial) geometry
-   * @throws PlanItException throw if error
    */
-  private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) throws PlanItException {
-    LineString lineString = OsmWayUtils.extractLineStringNoThrow(osmWay, startNodeIndex, endNodeIndex, networkData.getOsmNodeData().getRegisteredOsmNodes());
+  private LineString extractPartialLinkGeometry(OsmWay osmWay, int startNodeIndex, int endNodeIndex) {
+    LineString lineString = OsmWayUtils.extractLineStringNoThrow(
+        osmWay, startNodeIndex, endNodeIndex, networkData.getOsmNodeData().getRegisteredOsmNodes());
     lineString = PlanitJtsUtils.createCopyWithoutAdjacentDuplicateCoordinates(lineString);
-    
     return lineString;
   }
     
@@ -555,7 +565,11 @@ public class OsmNetworkLayerParser {
    * @param linkSegmentTypes the link segment types for the forward and backward direction of this way  
    * @return created link segment, or null if already exists
    */
-  private void extractMacroscopicLinkSegments(OsmWay osmWay, Map<String, String> tags, MacroscopicLink link, Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes){
+  private void extractMacroscopicLinkSegments(
+      OsmWay osmWay,
+      Map<String, String> tags,
+      MacroscopicLink link,
+      Pair<MacroscopicLinkSegmentType,MacroscopicLinkSegmentType> linkSegmentTypes){
                 
     /* match A->B of PLANit link to geometric forward/backward direction of OSM paradigm */
     boolean directionAbIsForward = link.isGeometryInAbDirection();
@@ -728,7 +742,8 @@ public class OsmNetworkLayerParser {
    * @return the link segment types for the forward direction and backward direction as per OSM specification of
    * forward and backward. When no allowed modes exist in a direction the link segment type is set to null
    */
-  public Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> updatedLinkSegmentTypeBasedOnOsmWay(
+  public Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>
+  findOrConstructAlternativeLinkSegmentTypeBasedOnOsmWay(
       final OsmWay osmWay, final Map<String, String> tags, final MacroscopicLinkSegmentType linkSegmentType){
     
     /* collect the link segment types for the two possible directions (forward, i.e., in direction of the geometry,

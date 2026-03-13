@@ -7,7 +7,9 @@ import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.graph.EdgeUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
@@ -17,6 +19,7 @@ import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -149,17 +152,20 @@ public class PlanitNetworkLayerUtils {
    * @return created and registered link
    */
   public static MacroscopicLink createPopulateAndRegisterLink(
-      Node nodeA,
-      Node nodeB,
-      LineString geometry,
-      MacroscopicNetworkLayer layer,
+      @Nonnull Node nodeA,
+      @Nonnull Node nodeB,
+      @Nonnull LineString geometry,
+      @Nonnull MacroscopicNetworkLayer layer,
       String externalId,
       String name,
-      PlanitJtsCrsUtils geoUtils){
+      @Nonnull PlanitJtsCrsUtils geoUtils){
 
     /* length and geometry */
     double linkLength = 0;
-    /* update the length based on the geometry */
+    /* update the length based on the geometry or if no internal geometry, its nodes */
+    if(geometry == null || geometry.isEmpty()) {
+      throw new PlanItRunTimeException("no geometry created for PLANit link, this shouldn't happen");
+    }
     linkLength = geoUtils.getDistanceInKilometres(geometry);
 
     /* create link */

@@ -136,29 +136,38 @@ public class OsmNetworkReader implements NetworkReader {
 
       /* STAGE 1 - BOUNDARY RELATION IDENTIFICATION */
       {
-        LOGGER.info(String.format("Boundary identification: Locating bounding boundary \"%s\"", settings.getBoundingArea().getBoundaryName()));
+        LOGGER.info(String.format("Boundary identification: Locating bounding boundary \"%s\"",
+            settings.getBoundingArea().getBoundaryName()));
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
-            settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
+            settings.getInputSource(),
+            OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME,
+            boundaryManager);
       }
 
       /* STAGE 2 - REGULAR PREPROCESSING */
       {
         LOGGER.info("Boundary identification: Locating OSM ways part of network bounding boundary");
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
-            settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
+            settings.getInputSource(),
+            OsmBoundingBoundaryPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY,
+            boundaryManager);
       }
 
       /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
       {
-        LOGGER.info("Boundary identification: Finalising network bounding boundary, constructing polygon from OSM ways' OSM nodes");
+        LOGGER.info("Boundary identification: Finalising network bounding boundary, constructing polygon " +
+            "from OSM ways' OSM nodes");
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
-            settings.getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager);
+            settings.getInputSource(),
+            OsmBoundingBoundaryPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME,
+            boundaryManager);
       }
     }
 
 
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
-      LOGGER.severe("Boundary identification: User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
+      LOGGER.severe("Boundary identification: User configured bounding area, but no valid boundary " +
+          "could be constructed during pre-processing, this shouldn't happen");
     }
 
     networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());

@@ -433,8 +433,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="26" externalid="highway=unclassified_modified">
-                        <name>highway=unclassified</name>
+                    <linksegmenttype id="26" externalid="MODIFIED[26]:highway=unclassified">
+                        <name>MODIFIED[26]:highway=unclassified</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -446,8 +446,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="27" externalid="highway=pedestrian_modified">
-                        <name>highway=pedestrian</name>
+                    <linksegmenttype id="27" externalid="MODIFIED[27]:highway=pedestrian">
+                        <name>MODIFIED[27]:highway=pedestrian</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -459,8 +459,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="28" externalid="highway=footway_modified">
-                        <name>highway=footway</name>
+                    <linksegmenttype id="28" externalid="MODIFIED[28]:highway=footway">
+                        <name>MODIFIED[28]:highway=footway</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -472,8 +472,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="29" externalid="highway=secondary_modified">
-                        <name>highway=secondary</name>
+                    <linksegmenttype id="29" externalid="MODIFIED[29]:highway=secondary">
+                        <name>MODIFIED[29]:highway=secondary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1200.0</capacitylane>
                         <access>
@@ -498,8 +498,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="30" externalid="highway=tertiary_modified">
-                        <name>highway=tertiary</name>
+                    <linksegmenttype id="30" externalid="MODIFIED[30]:highway=tertiary">
+                        <name>MODIFIED[30]:highway=tertiary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1000.0</capacitylane>
                         <access>
@@ -508,8 +508,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="31" externalid="highway=primary_modified">
-                        <name>highway=primary</name>
+                    <linksegmenttype id="31" externalid="MODIFIED[31]:highway=primary">
+                        <name>MODIFIED[31]:highway=primary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1600.0</capacitylane>
                         <access>
@@ -518,8 +518,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="32" externalid="highway=service_modified">
-                        <name>highway=service</name>
+                    <linksegmenttype id="32" externalid="MODIFIED[32]:highway=service">
+                        <name>MODIFIED[32]:highway=service</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -528,8 +528,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="33" externalid="highway=unclassified_modified">
-                        <name>highway=unclassified</name>
+                    <linksegmenttype id="33" externalid="MODIFIED[33]:highway=unclassified">
+                        <name>MODIFIED[33]:highway=unclassified</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -538,8 +538,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="34" externalid="highway=secondary_modified">
-                        <name>highway=secondary</name>
+                    <linksegmenttype id="34" externalid="MODIFIED[34]:highway=secondary">
+                        <name>MODIFIED[34]:highway=secondary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1200.0</capacitylane>
                         <access>
@@ -551,8 +551,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="35" externalid="highway=motorway_link_modified">
-                        <name>highway=motorway_link</name>
+                    <linksegmenttype id="35" externalid="MODIFIED[35]:highway=motorway_link">
+                        <name>MODIFIED[35]:highway=motorway_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1800.0</capacitylane>
                         <access>
@@ -564,8 +564,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="36" externalid="highway=primary_modified">
-                        <name>highway=primary</name>
+                    <linksegmenttype id="36" externalid="MODIFIED[36]:highway=primary">
+                        <name>MODIFIED[36]:highway=primary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1600.0</capacitylane>
                         <access>
@@ -577,8 +577,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="37" externalid="highway=service_modified">
-                        <name>highway=service</name>
+                    <linksegmenttype id="37" externalid="MODIFIED[37]:highway=service">
+                        <name>MODIFIED[37]:highway=service</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -590,8 +590,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="38" externalid="highway=tertiary_modified">
-                        <name>highway=tertiary</name>
+                    <linksegmenttype id="38" externalid="MODIFIED[38]:highway=tertiary">
+                        <name>MODIFIED[38]:highway=tertiary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1000.0</capacitylane>
                         <access>
@@ -603,8 +603,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="39" externalid="highway=residential_modified">
-                        <name>highway=residential</name>
+                    <linksegmenttype id="39" externalid="MODIFIED[39]:highway=residential">
+                        <name>MODIFIED[39]:highway=residential</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -629,8 +629,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="40" externalid="highway=cycleway_modified">
-                        <name>highway=cycleway</name>
+                    <linksegmenttype id="40" externalid="MODIFIED[40]:highway=cycleway">
+                        <name>MODIFIED[40]:highway=cycleway</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -639,8 +639,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="41" externalid="highway=residential_modified">
-                        <name>highway=residential</name>
+                    <linksegmenttype id="41" externalid="MODIFIED[41]:highway=residential">
+                        <name>MODIFIED[41]:highway=residential</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -649,8 +649,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="42" externalid="highway=primary_link_modified">
-                        <name>highway=primary_link</name>
+                    <linksegmenttype id="42" externalid="MODIFIED[42]:highway=primary_link">
+                        <name>MODIFIED[42]:highway=primary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1400.0</capacitylane>
                         <access>
@@ -659,8 +659,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="43" externalid="highway=unclassified_modified">
-                        <name>highway=unclassified</name>
+                    <linksegmenttype id="43" externalid="MODIFIED[43]:highway=unclassified">
+                        <name>MODIFIED[43]:highway=unclassified</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -675,8 +675,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="44" externalid="highway=service_modified">
-                        <name>highway=service</name>
+                    <linksegmenttype id="44" externalid="MODIFIED[44]:highway=service">
+                        <name>MODIFIED[44]:highway=service</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -688,8 +688,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="45" externalid="highway=path_modified">
-                        <name>highway=path</name>
+                    <linksegmenttype id="45" externalid="MODIFIED[45]:highway=path">
+                        <name>MODIFIED[45]:highway=path</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -698,8 +698,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="46" externalid="highway=tertiary_link_modified">
-                        <name>highway=tertiary_link</name>
+                    <linksegmenttype id="46" externalid="MODIFIED[46]:highway=tertiary_link">
+                        <name>MODIFIED[46]:highway=tertiary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>800.0</capacitylane>
                         <access>
@@ -711,8 +711,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="47" externalid="highway=tertiary_link_modified">
-                        <name>highway=tertiary_link</name>
+                    <linksegmenttype id="47" externalid="MODIFIED[47]:highway=tertiary_link">
+                        <name>MODIFIED[47]:highway=tertiary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>800.0</capacitylane>
                         <access>
@@ -721,8 +721,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="48" externalid="highway=primary_link_modified">
-                        <name>highway=primary_link</name>
+                    <linksegmenttype id="48" externalid="MODIFIED[48]:highway=primary_link">
+                        <name>MODIFIED[48]:highway=primary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1400.0</capacitylane>
                         <access>
@@ -734,8 +734,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="49" externalid="highway=tertiary_modified">
-                        <name>highway=tertiary</name>
+                    <linksegmenttype id="49" externalid="MODIFIED[49]:highway=tertiary">
+                        <name>MODIFIED[49]:highway=tertiary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1000.0</capacitylane>
                         <access>
@@ -760,8 +760,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="50" externalid="highway=living_street_modified">
-                        <name>highway=living_street</name>
+                    <linksegmenttype id="50" externalid="MODIFIED[50]:highway=living_street">
+                        <name>MODIFIED[50]:highway=living_street</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -773,8 +773,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="51" externalid="highway=motorway_modified">
-                        <name>highway=motorway</name>
+                    <linksegmenttype id="51" externalid="MODIFIED[51]:highway=motorway">
+                        <name>MODIFIED[51]:highway=motorway</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>2000.0</capacitylane>
                         <access>
@@ -789,8 +789,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="52" externalid="highway=secondary_link_modified">
-                        <name>highway=secondary_link</name>
+                    <linksegmenttype id="52" externalid="MODIFIED[52]:highway=secondary_link">
+                        <name>MODIFIED[52]:highway=secondary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1000.0</capacitylane>
                         <access>
@@ -799,8 +799,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="53" externalid="highway=secondary_link_modified">
-                        <name>highway=secondary_link</name>
+                    <linksegmenttype id="53" externalid="MODIFIED[53]:highway=secondary_link">
+                        <name>MODIFIED[53]:highway=secondary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1000.0</capacitylane>
                         <access>
@@ -812,8 +812,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="54" externalid="highway=steps_modified">
-                        <name>highway=steps</name>
+                    <linksegmenttype id="54" externalid="MODIFIED[54]:highway=steps">
+                        <name>MODIFIED[54]:highway=steps</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -825,8 +825,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="55" externalid="highway=steps_modified">
-                        <name>highway=steps</name>
+                    <linksegmenttype id="55" externalid="MODIFIED[55]:highway=steps">
+                        <name>MODIFIED[55]:highway=steps</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -835,8 +835,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="56" externalid="highway=living_street_modified">
-                        <name>highway=living_street</name>
+                    <linksegmenttype id="56" externalid="MODIFIED[56]:highway=living_street">
+                        <name>MODIFIED[56]:highway=living_street</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -848,8 +848,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="57" externalid="highway=cycleway_modified">
-                        <name>highway=cycleway</name>
+                    <linksegmenttype id="57" externalid="MODIFIED[57]:highway=cycleway">
+                        <name>MODIFIED[57]:highway=cycleway</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -858,8 +858,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="58" externalid="highway=unclassified_modified">
-                        <name>highway=unclassified</name>
+                    <linksegmenttype id="58" externalid="MODIFIED[58]:highway=unclassified">
+                        <name>MODIFIED[58]:highway=unclassified</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>
@@ -868,8 +868,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="59" externalid="highway=secondary_modified">
-                        <name>highway=secondary</name>
+                    <linksegmenttype id="59" externalid="MODIFIED[59]:highway=secondary">
+                        <name>MODIFIED[59]:highway=secondary</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>1200.0</capacitylane>
                         <access>
@@ -894,8 +894,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="60" externalid="highway=living_street_modified">
-                        <name>highway=living_street</name>
+                    <linksegmenttype id="60" externalid="MODIFIED[60]:highway=living_street">
+                        <name>MODIFIED[60]:highway=living_street</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>600.0</capacitylane>
                         <access>

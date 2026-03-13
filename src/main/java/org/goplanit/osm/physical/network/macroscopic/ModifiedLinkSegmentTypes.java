@@ -28,7 +28,8 @@ public class ModifiedLinkSegmentTypes {
   
   /**
    * Track link segment types where only modes are either added or removed compared to their parent link segment type.
-   * To find the actual changes in modes one needs to combine the information on the added modes and removed modes which are stored separately
+   * To find the actual changes in modes one needs to combine the information on the added modes and removed modes
+   * which are stored separately
    * 
    * @author markr
    *
@@ -96,10 +97,12 @@ public class ModifiedLinkSegmentTypes {
       return null;
     } 
     
-    /** Add a modified link segment type based on the changes in mode support. It is assumed the provided added and removed modes are consistent with the mode properties
-     * in the link segment type, as this is not verified by by this method
+    /** Add a modified link segment type based on the changes in mode support. It is assumed the provided added and
+     * removed modes are consistent with the mode properties in the link segment type, as this is not verified by
+     * this method
      * 
-     * @param modifiedLinkSegmentType the link segment type that is a modification of the original based on the passed in added and removed modes
+     * @param modifiedLinkSegmentType the link segment type that is a modification of the original based on the
+     *                                passed in added and removed modes
      * @param addedModes the added modes
      * @param removedModes the removed modes
      * @return true when successfully added, false if not
@@ -158,11 +161,13 @@ public class ModifiedLinkSegmentTypes {
     return null;
   }
   
-  /** Add a modified link segment type based on the changes in mode support. It is assumed the provided added and removed modes are consistent with the mode properties
-   * in the link segment type, as this is not verified by by this method
+  /** Add a modified link segment type based on the changes in mode support. It is assumed the provided added and
+   * removed modes are consistent with the mode properties in the link segment type, as this is not verified by this
+   * method
    * 
    * @param original original link segment type the modified type is a modification of
-   * @param modifiedLinkSegmentType the link segment type that is a modification of the original based on the passed in added and removed modes
+   * @param modifiedLinkSegmentType the link segment type that is a modification of the original based on the passed
+   *                                in added and removed modes
    * @param addedModes the added modes
    * @param removedModes the removed modes
    * @return true when successfully added, false if not

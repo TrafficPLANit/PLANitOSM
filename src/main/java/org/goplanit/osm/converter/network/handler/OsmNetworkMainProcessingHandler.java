@@ -487,7 +487,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   protected Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>>
   extractLinkSegmentTypes(OsmWay osmWay, Map<String, String> tags){
-    Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>> linkSegmentTypesByLayerByDirection = new TreeMap<>();
+
+    Map<MacroscopicNetworkLayerImpl, Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType>>
+        linkSegmentTypesByLayerByDirection = new TreeMap<>();
 
     /* a default link segment type should be available as starting point*/
     Map<NetworkLayer, MacroscopicLinkSegmentType> linkSegmentTypesByLayer =
@@ -501,7 +503,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         
         /* collect possibly modified type (per direction) */
         Pair<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> typesPerDirectionPair =
-            getNetworkData().getLayerParser(networkLayer).updatedLinkSegmentTypeBasedOnOsmWay(osmWay, tags, linkSegmentType);
+            getNetworkData().getLayerParser(networkLayer).findOrConstructAlternativeLinkSegmentTypeBasedOnOsmWay(
+                osmWay, tags, linkSegmentType);
         if(typesPerDirectionPair != null) {
           linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerDirectionPair);
         }

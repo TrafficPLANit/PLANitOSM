@@ -276,18 +276,18 @@ public class OsmWayUtils {
     return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
   }  
   
-  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array for the given range. In case there are missing
-   * nodes we log this but retain as much of the information in the returned coordinate array as possible
+  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array for the given range.
+   * In case there are missing nodes we log this but retain as much of the information in the returned
+   * coordinate array as possible
    * 
    * @param osmWay to extract node coordinates from
    * @param osmNodes to collect nodes from by reference node ids in the way
-   * @param startNodeIndex to use
-   * @param endNodeIndex to use
+   * @param startNodeIndex to use (inclusive)
+   * @param endNodeIndex to use (inclusive)
    * @return coordinate array
-   * @throws PlanItException thrown if error
-   */  
+   */
   public static Coordinate[] createCoordinateArrayNoThrow(
-          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes){
     
     /* log -> no throw */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
@@ -295,8 +295,14 @@ public class OsmWayUtils {
         LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes));
       }
     };
-    
-    return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
+
+    Coordinate[] result = null;
+    try {
+      result = createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
+    }catch(Exception e){
+      // do nothing consumer has taken care of it
+    }
+    return result;
   }  
   
   /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case there are missing
@@ -408,10 +414,9 @@ public class OsmWayUtils {
    * @param endNodeIndex to use
    * @param osmNodes to consider
    * @return line string instance representing the shape of the way
-   * @throws PlanItException thrown if error
-   */  
+   */
   public static LineString extractLineStringNoThrow(
-          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes){
     Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, startNodeIndex, endNodeIndex, osmNodes);
     return  PlanitJtsUtils.createLineString(coordArray);
   }  
