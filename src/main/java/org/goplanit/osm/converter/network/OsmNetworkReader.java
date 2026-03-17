@@ -60,7 +60,7 @@ public class OsmNetworkReader implements NetworkReader {
     PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
     try {
       getOsmNetworkToPopulate().transform(settings.getSourceCRS());
-    }catch(PlanItException e) {
+    }catch(PlanItRunTimeException e) {
       LOGGER.severe(String.format("Unable to update network to CRS %s", settings.getSourceCRS().getName()));
     }
 

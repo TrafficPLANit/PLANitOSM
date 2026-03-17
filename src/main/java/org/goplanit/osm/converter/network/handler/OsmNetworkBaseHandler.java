@@ -9,7 +9,7 @@ import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
-import org.goplanit.utils.epsg.EpsgCodesByCountry;
+import org.goplanit.utils.epsg.ProjectedEpsgCodesByCountry;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -76,7 +76,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
           getNetworkData().getBoundingArea().getBoundingPolygon());
       // prepare indexed distance faced for fast distance to calcs (in projection so it is not in degrees)
       var projectedCrs =
-          PlanitCrsUtils.createCoordinateReferenceSystem(EpsgCodesByCountry.getEpsg(settings.getCountryName()));
+          PlanitCrsUtils.createCoordinateReferenceSystem(ProjectedEpsgCodesByCountry.getEpsg(settings.getCountryName()));
       this.mathTransformSourceToProjection = PlanitJtsUtils.findMathTransform(settings.getSourceCRS(), projectedCrs);
       var projectedBoundingPolygon = PlanitJtsUtils.transformGeometrySafe(
           getNetworkData().getBoundingArea().getBoundingPolygon(),mathTransformSourceToProjection);

@@ -97,7 +97,8 @@ public class BasicOsmReaderTest {
       highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.ROAD);
       
       /* test out setting different defaults for the highway:primary type*/
-      highwaySettings.overwriteCapacityMaxDensityDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
+      highwaySettings.overwriteCapacityMaxDensityDefaults(
+              OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
       highwaySettings.addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
@@ -114,7 +115,8 @@ public class BasicOsmReaderTest {
       assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2123);
       assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 882);
 
-      assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(Edge::hasInputProperty) : "OSM tags not retained on all links";
+      assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(
+              Edge::hasInputProperty) : "OSM tags not retained on all links";
 
       //todo flesh out this assert as not all nodes will have tags...
       //assert network.getTransportLayers().getFirst().getNodes().stream().allMatch(Vertex::hasInputProperty) : "OSM tags not retained on all nodes";

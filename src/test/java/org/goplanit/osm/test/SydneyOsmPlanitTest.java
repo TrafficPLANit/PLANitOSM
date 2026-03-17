@@ -33,10 +33,12 @@ public class SydneyOsmPlanitTest {
 
   public static final Path RESOURCE_PATH = Path.of("src","test","resources");
 
-  public static final Path SYDNEYCBD_2022_OSM = Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd.osm");
+  public static final Path SYDNEYCBD_2022_OSM =
+          Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd.osm");
 
   @SuppressWarnings("unused")
-  public static final Path SYDNEYCBD_2023_PBF = Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd_2023.osm.pbf");
+  public static final Path SYDNEYCBD_2023_PBF =
+          Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd_2023.osm.pbf");
 
   /** the logger */
   private static Logger LOGGER = null;
@@ -94,8 +96,10 @@ public class SydneyOsmPlanitTest {
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
 
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertZoningFilesSimilar(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -110,8 +114,10 @@ public class SydneyOsmPlanitTest {
   @Test
   public void testOsm2PlanitNetworkComprehensive() {
     
-    final Path PLANIT_OUTPUT_DIR =  Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_comprehensive");
-    final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_comprehensive");
+    final Path PLANIT_OUTPUT_DIR =
+            Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_comprehensive");
+    final Path PLANIT_REF_DIR =
+            Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_comprehensive");
 
     try {
       /* OSM reader */
@@ -148,8 +154,10 @@ public class SydneyOsmPlanitTest {
   @Test
   public void testOsm2PlanitIntermodalNoServices() {
 
-    final Path PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services");
-    final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services");
+    final Path PLANIT_OUTPUT_DIR =
+            Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services");
+    final Path PLANIT_REF_DIR =
+            Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services");
     try {
 
       var readerSettings =
