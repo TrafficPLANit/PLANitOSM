@@ -108,6 +108,7 @@ public class OsmBoundingAreaUtils {
    * @param type  entity type
    * @param nodeData registered node information
    * @param osmBoundary to use for verification
+   * @param preparedBoundingPolygon prepared bounding polygon to use
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
    * @return true when within boundary, false otherwise
