@@ -1075,6 +1075,56 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     return predefinedModeTypes.stream().map( mt -> getModes().get(mt)).filter(Objects::nonNull).
             collect(Collectors.toUnmodifiableSet());
   }
+
+
+  /** when we find functionally equivalent link segment types --> aggregate them into a single one by
+   * - identify duplicates in network
+   * - update extern id and name, so we retain original OSM information
+   * - recreate the ids on the container
+   * - replace the key/value mapping in the defaultPlanitLinkSegmentTypesByOsmKeyValue used in parsing
+   * see also https://github.com/TrafficPLANit/PLANitOSM/issues/59.
+   * Ideally this would go through modifier and events instead but did not have time yet
+   */
+  protected void consolidateFunctionallyEquivalentLinkSegmentTypes() {
+    /* identify any functional duplicates, as in identical content, just different names, ids, external ids etc. */
+    for(var layer : getTransportLayers()) {
+      var linkSegmentTypes = layer.getLinkSegmentTypes();
+      int originalNumTypes = linkSegmentTypes.size();
+      var functionalDuplicates = linkSegmentTypes.findFunctionalDuplicates();
+      for (var duplicatesEntry : functionalDuplicates) {
+        String concatenatedExternalId = duplicatesEntry.stream().map(MacroscopicLinkSegmentType::getExternalId).
+            collect(Collectors.joining(","));
+        // update keep entry with extended external id/name
+        var consolidatedKeepEntry = duplicatesEntry.first();
+        consolidatedKeepEntry.setName(concatenatedExternalId);
+        consolidatedKeepEntry.setExternalId(concatenatedExternalId);
+        // remove redundant entries from network container
+        duplicatesEntry.stream().skip(1).forEach(lst -> linkSegmentTypes.remove(lst.getId()));
+      }
+      // fix up ids to be contiguous again
+      linkSegmentTypes.recreateIds();
+      // sync XML ids to avoid duplicates in persisted ids as well
+      linkSegmentTypes.forEach(lt -> lt.setXmlId(lt.getId()));
+
+      // fix up osm key/value mapping based on new consolidated
+      for (var keyEntry : defaultPlanitLinkSegmentTypesByOsmKeyValue.entrySet()) {
+        for (var valueEntry : keyEntry.getValue().entrySet()) {
+          MacroscopicLinkSegmentType lst = valueEntry.getValue().get(layer);
+          // check if it is marked as duplicate (by external id because we can't use contains since id of chucked
+          // types are no longer valid) if so, get the first entry we earmarked previously as the one to keep
+          // (with updated external id/name)
+          var duplicatesForEntry = functionalDuplicates.stream().filter(de -> de.stream().anyMatch(
+              e -> e.getExternalId().equals(lst.getExternalId()))).findFirst().orElse(null);
+          if (!CollectionUtils.nullOrEmpty(duplicatesForEntry)) {
+            MacroscopicLinkSegmentType replacementType = duplicatesForEntry.first();
+            valueEntry.getValue().put(layer, replacementType);
+          }
+        }
+      }
+      LOGGER.info(String.format("%s Consolidated %d link segment types due to functional equivalence",
+          NetworkLayer.createLayerLogPrefix(layer), originalNumTypes - linkSegmentTypes.size()));
+    }
+  }
   
   /**
    * Default Constructor
@@ -1173,51 +1223,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
     }
     /* ------------------ FOR EACH OSM WAY TYPE ----------------------------------------- */
 
-    /* when we find functionally equivalent link segment types --> aggregate them into a single one by
-     * - identify duplicates in network
-     * - update extern id and name, so we retain original OSM information
-     * - recreate the ids on the container
-     * - replace the key/value mapping in the defaultPlanitLinkSegmentTypesByOsmKeyValue used in parsing
-     *
-     * https://github.com/TrafficPLANit/PLANitOSM/issues/59
-     */
     if(settings.isConsolidateLinkSegmentTypes()){
-      /* identify any functional duplicates, as in identical content, just different names, ids, external ids etc. */
-      for(var layer : getTransportLayers()){
-        var linkSegmentTypes = layer.getLinkSegmentTypes();
-        int originalNumTypes = linkSegmentTypes.size();
-        var functionalDuplicates = linkSegmentTypes.findFunctionalDuplicates();
-        for(var duplicatesEntry : functionalDuplicates){
-          String concatenatedExternalId = duplicatesEntry.stream().map(MacroscopicLinkSegmentType::getExternalId).
-                  collect(Collectors.joining(","));
-          // update keep entry with extended external id/name
-          var consolidatedKeepEntry = duplicatesEntry.first();
-          consolidatedKeepEntry.setName(concatenatedExternalId);
-          consolidatedKeepEntry.setExternalId(concatenatedExternalId);
-          // remove redundant entries from network container
-          duplicatesEntry.stream().skip(1).forEach( lst -> linkSegmentTypes.remove( lst.getId()));
-        }
-        // fix up ids to be contiguous again
-        linkSegmentTypes.recreateIds();
-
-        // fix up osm key/value mapping based on new consolidated
-        for(var keyEntry : defaultPlanitLinkSegmentTypesByOsmKeyValue.entrySet()){
-          for(var valueEntry : keyEntry.getValue().entrySet()){
-            MacroscopicLinkSegmentType lst = valueEntry.getValue().get(layer);
-            // check if it is marked as duplicate (by external id because we can't use contains since id of chucked
-            // types are no longer valid) if so, get the first entry we earmarked previously as the one to keep
-            // (with updated external id/name)
-            var duplicatesForEntry = functionalDuplicates.stream().filter( de -> de.stream().anyMatch(
-                e -> e.getExternalId().equals(lst.getExternalId()))).findFirst().orElse(null);
-            if(!CollectionUtils.nullOrEmpty(duplicatesForEntry)){
-              MacroscopicLinkSegmentType replacementType = duplicatesForEntry.first();
-              valueEntry.getValue().put(layer, replacementType);
-            }
-          }
-        }
-        LOGGER.info(String.format("%s Consolidated %d link segment types due to functional equivalence",
-                NetworkLayer.createLayerLogPrefix(layer), originalNumTypes - linkSegmentTypes.size()));
-      }
+      consolidateFunctionallyEquivalentLinkSegmentTypes();
     }
   }
 
