@@ -40,10 +40,10 @@ public class PlanitTransferZoneUtils {
    */
   private static final String TRANSFERZONE_SERVICED_OSM_MODES_INPUT_PROPERTY_KEY = "osmmodes";  
   
-  /** When known, transfer zones are provided with a station name extracted from the osm station entity (if possible). Its name is stored under
-   * this key as input property
+  /** When known, transfer zones are provided with an overarching_name (station) name extracted from the OSM entity
+   * (if possible). Its name is stored under this key as input property
    */
-  private static final String TRANSFERZONE_STATION_INPUT_PROPERTY_KEY = "station";    
+  private static final String TRANSFERZONE_OVERARCHING_NAME_INPUT_PROPERTY_KEY = "overarching_name";
 
   /** Find the zone closest to the passed in OSM Entity
    * 
@@ -75,22 +75,22 @@ public class PlanitTransferZoneUtils {
     return null;
   }
 
-  /** Set the station name for a transfer zone
+  /** Set the overarchingName name for a transfer zone
    * 
    * @param transferZone to use
-   * @param stationName to set
+   * @param overarchingName to set
    */
-  private static void  setTransferZoneStationName(TransferZone transferZone, String stationName) {
-    transferZone.addInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY, stationName);
+  private static void setTransferZoneOverarchingName(TransferZone transferZone, String overarchingName) {
+    transferZone.addInputProperty(TRANSFERZONE_OVERARCHING_NAME_INPUT_PROPERTY_KEY, overarchingName);
   }
 
-  /** Verify if the transfer zone has a station name set
+  /** Verify if the transfer zone has a overarchingName name set
    * 
    * @param transferZone to verify
    * @return true when present, false otherwise
    */  
-  private static boolean hasTransferZoneStationName(TransferZone transferZone) {
-    return getTransferZoneStationName(transferZone) != null;
+  private static boolean hasTransferZoneOverarchingName(TransferZone transferZone) {
+    return getTransferZoneOverarchingName(transferZone) != null;
   }
   
   /** Find the zone (within any of the transfer zone groups) closest to the passed in OSM Entity
@@ -142,14 +142,14 @@ public class PlanitTransferZoneUtils {
     return false;
   }
 
-  /** process an osm entity that is classified as a (train) station. For this to register on the transfer zone, we
+  /** process an osm entity name. For this to register on the transfer zone, we
    * try to utilise its name and use it for the zone name if it is empty. We also record it as an input property for
-   * future reference, e.g. key=station and value the name of the osm station.
+   * future reference, e.g. key=overarchingn_ame and value the name of the osm station.
    *   
    * @param transferZone the osm station relates to 
    * @param tags of the osm entity representation a station
    */  
-  public static void updateTransferZoneStationName(TransferZone transferZone, Map<String, String> tags) {
+  public static void updateTransferZoneOverArchingNameIfAbsent(TransferZone transferZone, Map<String, String> tags) {
     
     String stationName = tags.get(OsmTags.NAME);
     if(!transferZone.hasName()) {      
@@ -159,8 +159,8 @@ public class PlanitTransferZoneUtils {
     }
     // only set when not already set, because when already set it is likely the existing station name is
     // more accurate
-    if(!hasTransferZoneStationName(transferZone)) {
-      setTransferZoneStationName(transferZone, stationName);
+    if(!hasTransferZoneOverarchingName(transferZone)) {
+      setTransferZoneOverarchingName(transferZone, stationName);
     }
   }
 
@@ -200,8 +200,8 @@ public class PlanitTransferZoneUtils {
    * @param transferZone to collect for
    * @return station name
    */
-  public static String getTransferZoneStationName(TransferZone transferZone) {
-    return (String)transferZone.getInputProperty(TRANSFERZONE_STATION_INPUT_PROPERTY_KEY);
+  public static String getTransferZoneOverarchingName(TransferZone transferZone) {
+    return (String)transferZone.getInputProperty(TRANSFERZONE_OVERARCHING_NAME_INPUT_PROPERTY_KEY);
   }
 
   /** Extract the OSM entity type from a PLANit Transfer zone
@@ -222,11 +222,11 @@ public class PlanitTransferZoneUtils {
 
   /** Collect the transfer zone type based on the tags
    * 
-   * @param osmNode node 
+   * @param osmEntity node
    * @param tags tags of the node
    * @return transfer zone type, unknown if not able to map 
    */
-  public static TransferZoneType extractTransferZoneTypeFromPtv1Tags(OsmNode osmNode, Map<String, String> tags) {
+  public static TransferZoneType extractTransferZoneTypeFromPtv1Tags(OsmEntity osmEntity, Map<String, String> tags) {
     if(OsmPtv1Tags.isBusStop(tags)) {
       return TransferZoneType.POLE;
     }else if(OsmPtv1Tags.isTramStop(tags) ) {
@@ -238,7 +238,8 @@ public class PlanitTransferZoneUtils {
     }else if(OsmPtv1Tags.isFerryTerminal(tags)) {
       return TransferZoneType.PLATFORM;
     }else {
-      LOGGER.severe(String.format("Unable to map node %d to Ptv1 transfer zone type", osmNode.getId()));
+      LOGGER.severe(String.format("Unable to map OSM entity %d (%s) to Ptv1 transfer zone type",
+          osmEntity.getId(), Osm4JUtils.getEntityType(osmEntity)));
       return TransferZoneType.UNKNOWN;
     }
   }  

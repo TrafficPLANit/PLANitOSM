@@ -19,8 +19,8 @@ public class OsmPtVersionSchemeUtils {
   static final Logger LOGGER = Logger.getLogger(OsmPtVersionSchemeUtils.class.getCanonicalName());
   
   /**
-   * Check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node that might reflect
-   * a platform, stop, etc.
+   * Check if tags contain entries compatible with the provided Pt scheme given that we are verifying an OSM way/node
+   * that might reflect a platform, stop, etc.
    *  
    * @param scheme to check against
    * @param tags to verify
@@ -60,9 +60,10 @@ public class OsmPtVersionSchemeUtils {
     return OsmPtVersionScheme.NONE;
   }    
   
-  /** Verify if the passed on OSM node that is assumed to be recognised as a Ptv2 stop_location is in fact also a Ptv1 stop, either a highway=tram_stop or
-   * highway=bus_stop. This is effectively wrongly tagged, but does occur due to confusion regarding the tagging schemes. Therefore we
-   * identify this situation allowing the parser to change its behaviour and if it is a Patv1 stop, process it as such if deemed necessary
+  /** Verify if the passed on OSM node that is assumed to be recognised as a Ptv2 stop_location is in fact also a
+   * Ptv1 stop, either a highway=tram_stop or highway=bus_stop. This is effectively wrongly tagged, but does occur
+   * due to confusion regarding the tagging schemes. Therefore we identify this situation allowing the parser to
+   * change its behaviour and if it is a Patv1 stop, process it as such if deemed necessary
    * 
    * @param osmNode that is classified as Ptv2 stop_location
    * @param tags of the stop_location

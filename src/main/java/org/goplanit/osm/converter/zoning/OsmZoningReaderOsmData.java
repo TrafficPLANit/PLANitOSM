@@ -28,7 +28,7 @@ public class OsmZoningReaderOsmData {
   /* UNPROCESSED OSM */
 
   /** track unprocessed but identified ferry terminals */
-  private final SortedMap<Long, OsmNode> unprocessedFerryTerminals = new TreeMap<>();
+  private final SortedMap<EntityType, SortedMap<Long, OsmEntity>> unprocessedFerryTerminals = new TreeMap<>();
 
 
   /** track unprocessed but identified Ptv1 station nodes */
@@ -58,6 +58,13 @@ public class OsmZoningReaderOsmData {
 
   /** track spatial eligibility of OSM entities, for example based on boundary used (if any) */
   private final OsmSpatialEligibilityData osmSpatialEligibilityData = new OsmSpatialEligibilityData();
+
+  private EntityType getWayOrNodeTypeSafe(OsmEntity entity){
+    if(!(entity instanceof OsmNode || entity instanceof OsmWay)) {
+      LOGGER.severe(String.format("Unsupported entity type for OSM id %d, ignored", entity.getId()));
+    }
+    return Osm4JUtils.getEntityType(entity);
+  }
 
 
   /**
@@ -100,20 +107,22 @@ public class OsmZoningReaderOsmData {
 
   /** Collect an unprocessed ferry terminal if it exists
    *
+   * @param entityType to collect for
    * @param osmId id to collect for
    * @return unprocessed ferry terminal found, null otherwise
    */
-  public OsmNode getUnprocessedPtv1FerryTerminal(long osmId) {
-    return getUnprocessedPtv1FerryTerminals().get(osmId);
+  public OsmEntity getUnprocessedFerryTerminal(EntityType entityType, long osmId) {
+    return getUnprocessedFerryTerminals().get(entityType).get(osmId);
   }
 
   /** Verify existence of an unprocessed ferry terminal
    *
+   * @param entityType to collect for
    * @param osmId id to collect for
    * @return true when unprocessed ferry terminal exists, false otherwise
    */
-  public boolean hasUnprocessedPtv1FerryTerminal(long osmId) {
-    return getUnprocessedPtv1FerryTerminal(osmId) != null;
+  public boolean hasUnprocessedFerryTerminal(EntityType entityType, long osmId) {
+    return getUnprocessedFerryTerminals().get(entityType).get(osmId) != null;
   }
  
   /** collect the Ptv1 stations that have been identified but not processed yet (unmodifiable)
@@ -130,7 +139,7 @@ public class OsmZoningReaderOsmData {
    *
    * @return unprocessed ferry terminal
    */
-  public SortedMap<Long, OsmNode> getUnprocessedPtv1FerryTerminals() {
+  public SortedMap<EntityType, SortedMap<Long, OsmEntity>> getUnprocessedFerryTerminals() {
     return Collections.unmodifiableSortedMap(unprocessedFerryTerminals);
   }
   
@@ -138,15 +147,7 @@ public class OsmZoningReaderOsmData {
    * @param osmEntity to add
    */
   public void addUnprocessedPtv1Station(OsmEntity osmEntity) {
-    EntityType type = null;
-    if(osmEntity instanceof OsmNode) {
-      type = EntityType.Node;
-    }else if(osmEntity instanceof OsmWay) {
-      type = EntityType.Way;
-    }else {
-      LOGGER.severe(String.format("Unknown entity type when adding unprocessed Ptv1 station wit OSM id %d, ignored"));
-    }
-       
+    EntityType type = getWayOrNodeTypeSafe(osmEntity);
     unprocessedPtv1Stations.putIfAbsent(type, new TreeMap<>());
     unprocessedPtv1Stations.get(type).put(osmEntity.getId(), osmEntity);
   }
@@ -154,26 +155,17 @@ public class OsmZoningReaderOsmData {
   /** add unprocessed ferry terminal
    * @param osmEntity to add
    */
-  public void addUnprocessedPtv1FerryTerminal(OsmEntity osmEntity) {
-    if(!(osmEntity instanceof OsmNode)) {
-      LOGGER.severe(String.format("Ferry terminal should be node, found otherwise (%d), tagging error, ignored", osmEntity.getId()));
-    }
-    unprocessedFerryTerminals.put(osmEntity.getId(), (OsmNode) osmEntity);
+  public void addUnprocessedFerryTerminal(OsmEntity osmEntity) {
+    EntityType type = getWayOrNodeTypeSafe(osmEntity);
+    unprocessedFerryTerminals.putIfAbsent(type, new TreeMap<>());
+    unprocessedFerryTerminals.get(type).put(osmEntity.getId(), osmEntity);
   }
   
   /** add unprocessed ptv2 station
    * @param osmEntity to add
    */
   public void addUnprocessedPtv2Station(OsmEntity osmEntity) {
-    EntityType type = null;
-    if(osmEntity instanceof OsmNode) {
-      type = EntityType.Node;
-    }else if(osmEntity instanceof OsmWay) {
-      type = EntityType.Way;
-    }else {
-      LOGGER.severe(String.format("Unknown entity type when adding unprocessed Ptv2 station wit OSM id %d, ignored"));
-    }
-       
+    EntityType type = getWayOrNodeTypeSafe(osmEntity);
     unprocessedPtv2Stations.putIfAbsent(type, new TreeMap<Long,OsmEntity>());
     unprocessedPtv2Stations.get(type).put(osmEntity.getId(), osmEntity);
   }   
@@ -203,10 +195,10 @@ public class OsmZoningReaderOsmData {
   }
 
   /** remove unprocessed ferry terminal
-   * @param osmId to remove
+   * @param osmEntity to remove
    */
-  public void removeUnprocessedPtv1FerryTerminal(long osmId) {
-    unprocessedFerryTerminals.remove(osmId);
+  public void removeUnprocessedFerryTerminal(OsmEntity osmEntity) {
+    unprocessedFerryTerminals.get(Osm4JUtils.getEntityType(osmEntity)).remove(osmEntity.getId());
   }
   
   /** add unprocessed stop position
@@ -263,7 +255,7 @@ public class OsmZoningReaderOsmData {
   /** Remove all unprocessed ferry terminals
    *
    */
-  public void removeAllUnprocessedPtv1FerryTerminals() {
+  public void removeAllUnprocessedFerryTerminals() {
     unprocessedFerryTerminals.clear();
   }
   
@@ -411,7 +403,7 @@ public class OsmZoningReaderOsmData {
   public void reset() {
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_1);
     removeAllUnproccessedStations(OsmPtVersionScheme.VERSION_2);
-    removeAllUnprocessedPtv1FerryTerminals();
+    removeAllUnprocessedFerryTerminals();
     unprocessedStopPositions.clear();
     osmOuterRoleOsmWaysToKeep.clear();
     waitingAreaWithoutMappedPlanitMode.clear();    

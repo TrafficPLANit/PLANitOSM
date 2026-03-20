@@ -233,7 +233,8 @@ public class OsmNodeUtils {
   }    
   
 
-  /** find (first) node who's location coincides with the provided coordinate from the collection of eligible nodes passed in
+  /** find (first) node who's location coincides with the provided coordinate from the collection of eligible nodes
+   * passed in
    * @param coordinate to match
    * @param osmNodes to match against
    * @return found node that matches, null if no match found

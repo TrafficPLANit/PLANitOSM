@@ -684,11 +684,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
             planitData.getTransferZoneOsmVerticalLayerIndex(tz) == finalVerticalLayerIndex).collect(Collectors.toSet());
   }
 
-  /** Attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
-   * it is not possible to best determine where they should reside. Find eligible access modes as input properties as well which can be used later
-   * to map stop_positions more easily. Note that one can provide a default osm mode that is deemed eligible in case no tags are provided on the osm entity. In case no mode information
-   * can be extracted a warning is issued but the transfer zone is still created because this is a tagging error and we might be able to salvage later on. If there are osm modes
-   * but none of them are mapped, then we should not create the zone since it will not be of use.
+  /** Attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed
+   * because likely at this point in time it is not possible to best determine where they should reside. Find eligible
+   * access modes as input properties as well which can be used later to map stop_positions more easily. Note that
+   * one can provide a default osm mode that is deemed eligible in case no tags are provided on the osm entity. In case
+   * no mode information can be extracted a warning is issued but the transfer zone is still created because this is a
+   * tagging error and we might be able to salvage later on. If there are osm modes but none of them are mapped, then
+   * we should not create the zone since it will not be of use.
    * 
    * @param osmEntity to extract transfer zone for
    * @param tags to use
@@ -698,7 +700,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @return transfer zone created, null if something happened making it impossible or not useful to create the zone
    */
   public TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-      OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType, String defaultOsmMode, PlanitJtsCrsUtils geoUtils){  
+      OsmEntity osmEntity,
+      Map<String, String> tags, TransferZoneType transferZoneType,
+      String defaultOsmMode,
+      PlanitJtsCrsUtils geoUtils){
     
     TransferZone transferZone = null;
         
@@ -706,18 +711,21 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmEntity, tags, defaultOsmMode);
     if(!OsmModeUtils.hasEligibleOsmMode(modeResult)) {
-      /* no information on modes at all --> tagging issue, transfer zone might still be needed and could be salvaged based on close by stop_positions with additional information
-       * Create transfer zone (without any OSM modes) and hope post-processing can figure it out from context */
-      LOGGER.fine(String.format("SALVAGED: Creating tentative transfer zone %s for OSM entity %d without tagged OSM modes",transferZoneType.name(), osmEntity.getId()));
+      /* no information on modes at all --> tagging issue, transfer zone might still be needed and could be salvaged
+      based on close by stop_positions with additional information. Create transfer zone (without any OSM modes) and
+      hope post-processing can figure it out from context */
+      LOGGER.fine(String.format("SALVAGED: Creating tentative transfer zone %s for OSM entity %d without tagged " +
+          "OSM modes",transferZoneType.name(), osmEntity.getId()));
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
     }else if(OsmModeUtils.hasMappedPlanitMode(modeResult)){  
       /* mapped planit modes are available, we should create the transfer zone*/
       transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, transferZoneType, geoUtils);
       PlanitTransferZoneUtils.registerOsmModesOnTransferZone(transferZone, modeResult.first());
     }else{
-      /* waiting area with valid OSM mode, but not mapped to PLANit mode, mark as such to avoid logging a warning when this transfer zone is part of stop_area 
-       * and it cannot be found when we try to collect it */
-      zoningReaderData.getOsmData().addWaitingAreaWithoutMappedPlanitMode(Osm4JUtils.getEntityType(osmEntity),osmEntity.getId());
+      /* waiting area with valid OSM mode, but not mapped to PLANit mode, mark as such to avoid logging a warning
+      when this transfer zone is part of stop_area and it cannot be found when we try to collect it */
+      zoningReaderData.getOsmData().addWaitingAreaWithoutMappedPlanitMode(
+          Osm4JUtils.getEntityType(osmEntity),osmEntity.getId());
     }
     return transferZone;    
   }
@@ -754,19 +762,25 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @return created transfer zone (if not already in existence)
    */  
   public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
-      OsmNode osmNode, Map<String, String> tags, String defaultOsmMode, TransferZoneType defaultTransferZoneType, PlanitJtsCrsUtils geoUtils){        
+      OsmNode osmNode,
+      Map<String, String> tags,
+      String defaultOsmMode,
+      TransferZoneType defaultTransferZoneType,
+      PlanitJtsCrsUtils geoUtils){
         
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode, tags, defaultOsmMode);
     if(!OsmModeUtils.hasMappedPlanitMode(modeResult)) {    
-      throw new PlanItRunTimeException("Should not attempt to parse OSM node %d when no PLANit modes are activated for it", osmNode.getId());
+      throw new PlanItRunTimeException("Should not attempt to parse OSM node %d when no PLANit modes are activated " +
+          "for it", osmNode.getId());
     }
       
     /* transfer zone */
     TransferZone transferZone = zoningReaderData.getPlanitData().getTransferZoneByOsmId(EntityType.Node,osmNode.getId());
     if(transferZone == null) {
       /* not created for other layer; create and register transfer zone */
-      transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, defaultTransferZoneType, defaultOsmMode, geoUtils);
+      transferZone = createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
+          osmNode, tags, defaultTransferZoneType, defaultOsmMode, geoUtils);
       if(transferZone == null) {
         throw new PlanItRunTimeException("Unable to create transfer zone for osm node %d",osmNode.getId());
       }
@@ -778,15 +792,16 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can service any tram line using the tracks */        
-      connectoidParser.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(transferZone, networkLayer, modeType, geoUtils);
+      connectoidParser.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
+          transferZone, networkLayer, modeType, geoUtils);
     }    
     
     return transferZone;
   }
 
-  /** Find the transfer zone(s) for a given stop_position, either the user overwritten mapping, or conditioned on mode,reference/name/spatially, or 
-   * just the closest one in absence of eligible modes. In the special case the stop_position is in fact also the transfer zone and none is present we
-   * create a new TransferZone
+  /** Find the transfer zone(s) for a given stop_position, either the user overwritten mapping, or conditioned on
+   * mode,reference/name/spatially, or just the closest one in absence of eligible modes. In the special case the
+   * stop_position is in fact also the transfer zone and none is present we create a new TransferZone
    *  
    * @param osmNode representing the stop_location
    * @param tags of the node
@@ -796,7 +811,12 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @return found transfer zone matches, can be multiple if multiple are serviced by the same stop position
    */
   public Collection<TransferZone> findTransferZonesForStopPosition(
-      OsmNode osmNode, Map<String, String> tags, SortedSet<String> eligibleOsmModes, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
+      OsmNode osmNode,
+      Map<String, String> tags,
+      SortedSet<String> eligibleOsmModes,
+      TransferZoneGroup transferZoneGroup,
+      boolean suppressLogging) {
+
     Collection<TransferZone> matchedTransferZones = null;
     
     /* USER OVERWRITE */
@@ -806,9 +826,11 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmNode.getId());
       TransferZone foundZone = zoningReaderData.getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
       if(foundZone==null) {
-        if(!suppressLogging) LOGGER.severe(String.format("User overwritten waiting area (platform, pole %d) for OSM node %d, not available",result.second(), osmNode.getId()));
+        if(!suppressLogging) LOGGER.severe(String.format("User overwritten waiting area (platform, pole %d) for " +
+            "OSM node %d, not available",result.second(), osmNode.getId()));
       }else {
-        if(!suppressLogging) LOGGER.fine(String.format("Mapped stop_position %d to overwritten waiting area %d", osmNode.getId(),  result.second()));
+        if(!suppressLogging) LOGGER.fine(String.format("Mapped stop_position %d to overwritten waiting area %d",
+            osmNode.getId(),  result.second()));
         return Collections.singleton(foundZone);
       }
     }

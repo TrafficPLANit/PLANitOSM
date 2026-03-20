@@ -52,7 +52,8 @@ public class OsmPublicTransportModeConversion extends OsmModeConversionBase {
     if(ptSettings.isOverwriteWaitingAreaModeAccess(osmPtEntityId, osmEntityType)){
       eligibleOsmModes = ptSettings.getOverwrittenWaitingAreaModeAccess(osmPtEntityId, osmEntityType);
     }else {
-      eligibleOsmModes = OsmModeUtils.collectEligibleOsmPublicTransportModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
+      eligibleOsmModes =
+          OsmModeUtils.collectEligibleOsmPublicTransportModesOnPtOsmEntity(osmPtEntityId, tags, defaultMode);
     }
 
     if(eligibleOsmModes==null || eligibleOsmModes.isEmpty()) {

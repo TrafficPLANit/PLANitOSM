@@ -120,7 +120,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       /* stop_area: is only supported/expected type under PT relation */
       if (!ptv2Type.equals(OsmPtv2Tags.STOP_AREA)) {
         /* anything else is not expected */
-        LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported", tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));
+        LOGGER.info(String.format("DISCARD: The public_transport relation type `%s` (%d) not (yet) supported",
+            tags.get(OsmPtv2Tags.PUBLIC_TRANSPORT), osmRelation.getId()));
         isCompatible = false;
       }
     } else if (relationType.equals(OsmRelationTypeTags.MULTIPOLYGON)) {
@@ -200,8 +201,22 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
     return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
         osmNodeId, getReferenceNetwork(), getNetworkToZoningData());
-  }   
-                                                             
+  }
+
+  /** Verify if there exist any layers where any OSM node of the OsmWay is present
+   *
+   * @param osmWay to use
+   * @return OSM node id of first matching one found, -1 otherwise
+   */
+  protected long hasNetworkLayersWithAnyActiveOsmNode(OsmWay osmWay){
+    for(int i=0;i<osmWay.getNumberOfNodes();++i){
+      if(hasNetworkLayersWithActiveOsmNode(osmWay.getNodeId(i))){
+        return osmWay.getNodeId(i);
+      }
+    }
+    return -1;
+  }
+
   /** Verify if tags represent an infrastructure used for transfers between modes, for example PT platforms, stops, etc. 
    * and is also activated for parsing based on the related settings
    * 

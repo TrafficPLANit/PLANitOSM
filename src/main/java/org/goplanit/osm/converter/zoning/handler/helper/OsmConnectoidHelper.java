@@ -585,9 +585,11 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }   
 
 
-  /** Create directed connectoids for transfer zones that reside on OSM ways. For such transfer zones, we simply create connectoids in both directions for all eligible incoming 
-   * link segments. This is a special case because due to residing on the OSM way it is not possible to distinguish what intended direction of the OSM way is serviced (it is neither
-   * left nor right of the way). Therefore, any attempt to extract this information is bypassed here.
+  /** Create directed connectoids for transfer zones that reside on OSM ways. For such transfer zones, we simply
+   * create connectoids in both directions for all eligible incoming link segments. This is a special case because
+   * due to residing on the OSM way it is not possible to distinguish what intended direction of the OSM way is
+   * serviced (it is neither left nor right of the way). Therefore, any attempt to extract this information
+   * is bypassed here.
    * 
    * @param transferZone residing on an osm way
    * @param networkLayer related to the mode
@@ -623,7 +625,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       nominatedLinkSegments = nominatedLink.getEdgeSegments();
       suppressLogging = true;
 
-      /* chose closest access node */
+      /* choose closest access node */
       double nodeADistance = geoUtils.getDistanceInMetres(
               nominatedLink.getVertexA().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(osmNode));
       double nodeBDistance = geoUtils.getDistanceInMetres(
@@ -646,7 +648,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
               transferZone.getExternalId(),
               suppressLogging);
       if(accessNode == null) {
-        LOGGER.warning(String.format("DISCARD: OSM node (%d) could not be converted to access node for transfer zone OSM entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
+        LOGGER.warning(String.format("DISCARD: OSM node (%d) could not be converted to access node for transfer " +
+            "zone OSM entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
         return null;
       }
       
@@ -669,14 +672,21 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }
 
 
-  /** create and/or update directed connectoids for the given mode and layer based on the passed in location where the connectoids access link segments are extracted for.
-   * Each of the connectoids is related to the passed in transfer zone. Generally a single connectoid is created for the most likely link segment identified, i.e., if the transfer
-   * zone is placed on the left of the infrastructure, the closest by incoming link segment to the given location is used. Since the geometry of a link applies to both link segments
-   * we define closest based on the driving position of the country, so a left-hand drive country will use the incoming link segment where the transfer zone is placed on the left, etc. 
+  /** create and/or update directed connectoids for the given mode and layer based on the passed in location where the
+   * connectoids access link segments are extracted for. Each of the connectoids is related to the passed in
+   * transfer zone. Generally a single connectoid is created for the most likely link segment identified, i.e., if
+   * the transfer zone is placed on the left of the infrastructure, the closest by incoming link segment to the
+   * given location is used. Since the geometry of a link applies to both link segments we define closest based on
+   * the driving position of the country, so a left-hand drive country will use the incoming link segment where
+   * the transfer zone is placed on the left, etc.
    * 
-   * @param location to create the access point for as PLANit node (one or more upstream planit link segments will act as access link segment for the created connectoid(s))
-   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not enforce filtering based on criteria that might not have been properly tagged, when false, we
-   *                                     proceed applying as many filter criteria as possible to get best possible match based on available tagging, e.g., vertical layer information
+   * @param location to create the access point for as PLANit node (one or more upstream planit link segments will act
+   *                 as access link segment for the created connectoid(s))
+   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not
+   *                                       enforce filtering based on criteria that might not have been properly tagged,
+   *                                       when false, we proceed applying as many filter criteria as possible to
+   *                                       get best possible match based on available tagging, e.g., vertical layer
+   *                                       information
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
    * @param suppressLogging when true do not log anything, false otherwise
@@ -776,7 +786,13 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     
     /* connectoids for link segments */
     return extractDirectedConnectoidsForModeLinkSegments(
-        transferZone, planitMode, planitAccessNode, accessLinkSegments, ignoreOsmVerticalLayerCompatibility, suppressLogging, geoUtils);
+        transferZone,
+        planitMode,
+        planitAccessNode,
+        accessLinkSegments,
+        ignoreOsmVerticalLayerCompatibility,
+        suppressLogging,
+        geoUtils);
   }
 
 
