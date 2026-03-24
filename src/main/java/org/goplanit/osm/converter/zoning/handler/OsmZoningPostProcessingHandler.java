@@ -705,19 +705,24 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
     // either way we will now need a platform in the form of a transfer zone
     ferryTransferZone = getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
-        osmFerryTerminal,
-        tags,
-        TransferZoneType.PLATFORM,
-        new TreeSet<>(Collections.singleton(defaultMode)),
-        getGeoUtils());
+            osmFerryTerminal,
+            tags,
+            TransferZoneType.PLATFORM,
+            new TreeSet<>(Collections.singleton(defaultMode)),
+            getGeoUtils());
 
     // either this terminal is attached to the network or not. If it is, we treat that location as the stop position
     // as it is most likely no separate stop position for this terminal then exists. If it does (which can happen as
     // tagging is messy), we'll simply have two connectoids when the stop position gets processed and little harm is
     // done. We must do the former here because otherwise the OSM nodes of the way will be lost to back track this.
     // It is also consistent with how we deal with a node based terminal that is on the ferry network
-    long terminalOnNetworkNodeId = hasNetworkLayersWithAnyActiveOsmNode((OsmWay)osmFerryTerminal);
-    if(terminalOnNetworkNodeId > 0) {
+    boolean terminalOnTopOfNetwork = false;
+    if (entityType.equals(EntityType.Node)) {
+      terminalOnTopOfNetwork = hasNetworkLayersWithActiveOsmNode(osmFerryTerminal.getId());
+    } else if (entityType.equals(EntityType.Way)){
+      terminalOnTopOfNetwork = hasNetworkLayersWithAnyActiveOsmNode((OsmWay) osmFerryTerminal) > 0;
+    }
+    if(terminalOnTopOfNetwork) {
       /* transfer zone + connectoid at point of intersection */
       getConnectoidHelper().createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
           ferryTransferZone,
@@ -832,6 +837,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private void processPtv1FerryTerminalsNotPartOfStopArea() {
     OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmData();
+
+    var processedTerminals = new LinkedList<OsmEntity>();
     osmData.getUnprocessedFerryTerminals().forEach( (type, unprocessedFerryTerminals) ->
         unprocessedFerryTerminals.forEach( (osmId, unprocessedFerryTerminal) ->{
 
@@ -865,8 +872,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                   unprocessedFerryTerminal, OsmModelUtil.getTagsAsMap(unprocessedFerryTerminal));
           processStandAlonePtv1FerryTerminal(unprocessedFerryTerminal, ptv1TransferZoneType, suppressWarnings);
           getProfiler().incrementOsmPtv1TagCounter(OsmTags.FERRY_TERMINAL);
-          getZoningReaderData().getOsmData().removeUnprocessedFerryTerminal(unprocessedFerryTerminal);
+          processedTerminals.add(unprocessedFerryTerminal);
         }));
+
+    processedTerminals.forEach( processedFerryTerminal ->
+            getZoningReaderData().getOsmData().removeUnprocessedFerryTerminal(processedFerryTerminal));
   }
 
   /**
@@ -880,6 +890,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private void processPtv2LikeFerryTerminalsNotPartOfStopArea() {
     OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmData();
+
+    var processedTerminals = new LinkedList<OsmEntity>();
     osmData.getUnprocessedFerryTerminals().forEach( (type, unprocessedFerryTerminals) ->
         unprocessedFerryTerminals.forEach( (osmId, unprocessedFerryTerminal) ->{
 
@@ -898,12 +910,15 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
           processStandAlonePtv2LikeFerryTerminal(unprocessedFerryTerminal, tags, suppressWarnings);
           getProfiler().incrementOsmPtv2TagCounter(OsmTags.FERRY_TERMINAL); // not necessarily Ptv2
-          getZoningReaderData().getOsmData().removeUnprocessedFerryTerminal(unprocessedFerryTerminal);
+          processedTerminals.add(unprocessedFerryTerminal);
         }));
+
+    processedTerminals.forEach( processedFerryTerminal ->
+            getZoningReaderData().getOsmData().removeUnprocessedFerryTerminal(processedFerryTerminal));
   }
 
   /**
-   * Process PTv1 and PTv2 standa lone ferry terminals
+   * Process PTv1 and PTv2 standalone ferry terminals
    */
   private void processFerryTerminalsNotPartOfStopArea() {
     // do Ptv1 first as some of them can be interpreted as incomplete Ptv2 version where platform and stop position is
