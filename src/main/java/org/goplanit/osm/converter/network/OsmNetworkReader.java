@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import org.goplanit.converter.network.NetworkReader;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
+import org.goplanit.network.MacroscopicNetworkModifierUtils;
 import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.converter.OsmBoundingBoundaryPreProcessingHandler;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
@@ -225,9 +226,11 @@ public class OsmNetworkReader implements NetworkReader {
   }
   
   /** Remove dangling subnetworks when settings dictate it
+   *
+   * @param recreateManagedIds when true recreate ids, otherwise not
    */
-  protected void removeDanglingSubNetworks() {
-    removeDanglingSubNetworks(null);
+  protected void removeDanglingSubNetworks(boolean recreateManagedIds) {
+    removeDanglingSubNetworks(null, recreateManagedIds);
   }
   
   /**
@@ -236,8 +239,9 @@ public class OsmNetworkReader implements NetworkReader {
    * are removed if affected.
    * 
    * @param zoning to also remove connectoids from when they reference removed road/rail subnetworks
+   * @param recreateManagedIds when true recreate ids, otherwise not
    */  
-  public void removeDanglingSubNetworks(Zoning zoning) {
+  public void removeDanglingSubNetworks(Zoning zoning, boolean recreateManagedIds) {
     if(settings.isRemoveDanglingSubnetworks()) {
 
       Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
@@ -247,14 +251,19 @@ public class OsmNetworkReader implements NetworkReader {
       /* logging stats  - before */
       MacroscopicNetworkLayers layers = getOsmNetworkToPopulate().getTransportLayers();
       {
-        LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices", discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
+        LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices",
+                discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
         if (discardMaxsize != Integer.MAX_VALUE) {
-          LOGGER.info(String.format("Removing dangling subnetworks with more than %d vertices", discardMaxsize));
+          LOGGER.info(String.format("Removing dangling subnetworks with more than %d vertices",
+                  discardMaxsize));
         }        
         if(zoning == null) {
-          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
+          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d",
+                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
         }else {
-          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d, connectoids %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(), zoning.getTransferConnectoids().size()));
+          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d, connectoids %d",
+                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(),
+                  zoning.getTransferConnectoids().size()));
         }
       }      
            
@@ -274,10 +283,12 @@ public class OsmNetworkReader implements NetworkReader {
         layers.getFirst().getLayerModifier().addListener(listener);
       }
       
-      /* remove dangling subnetworks */ 
-      getOsmNetworkToPopulate().removeDanglingSubnetworks(discardMinsize, discardMaxsize, keepLargest);
+      /* remove dangling subnetworks */
+      getOsmNetworkToPopulate().removeDanglingSubnetworks(
+              discardMinsize, discardMaxsize, keepLargest, recreateManagedIds);
       
-      /* remove listener as it is currently meant for local use only due to expensive initialisation which is also not kept up to date */
+      /* remove listener as it is currently meant for local use only due to expensive initialisation which is also
+      not kept up to date */
       if(zoning != null) {
         layers.getFirst().getLayerModifier().removeListener(listener);
       }
@@ -285,9 +296,12 @@ public class OsmNetworkReader implements NetworkReader {
       /* logging stats  - after */
       {
         if(zoning == null) {
-          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
+          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d",
+                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
         }else {
-          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d, connectoids %d", layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(), zoning.getTransferConnectoids().size()));
+          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d, connectoids %d",
+                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(),
+                  zoning.getTransferConnectoids().size()));
         }
       }
             
@@ -371,10 +385,13 @@ public class OsmNetworkReader implements NetworkReader {
     doMainProcessing();    
       
     /* dangling subnetworks */
+    boolean recreateIds = false; // postpone to sync xml ids at same time afterwards
     if(getSettings().isRemoveDanglingSubnetworks()) {
-      removeDanglingSubNetworks();
+      removeDanglingSubNetworks(recreateIds);
     }
 
+    // clean up ids to be contiguous
+    MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(osmNetworkToPopulate);
     LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */

@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.intermodal.IntermodalReader;
 import org.goplanit.network.MacroscopicNetwork;
+import org.goplanit.network.MacroscopicNetworkModifierUtils;
 import org.goplanit.network.ServiceNetwork;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
@@ -15,11 +16,11 @@ import org.goplanit.osm.converter.zoning.OsmZoningReaderFactory;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.PlanitZoningUtils;
 import org.goplanit.service.routed.RoutedServices;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.Quadruple;
 import org.goplanit.zoning.Zoning;
+import org.goplanit.zoning.ZoningModifierUtils;
 
 /**
  * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the transfer zones
@@ -86,28 +87,35 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
        
   }
 
-  /** Based on configuration remove any dangling subnetworks if required
-   * 
+  /**
+   * Based on configuration remove any dangling subnetworks if required
+   *
    * @param osmNetworkReader to use
-   * @param osmZoningReader to use
-   * @param zoning to use
+   * @param network          to use
+   * @param osmZoningReader  to use
+   * @param zoning           to use
    */
-  private void removeDanglingEntities(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) {
-    
+  private void removeDanglingEntities(
+          OsmNetworkReader osmNetworkReader, PlanitOsmNetwork network, OsmZoningReader osmZoningReader, Zoning zoning) {
+
+    boolean recreateIds = false;
     /* subnetworks */
     if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
-      osmNetworkReader.removeDanglingSubNetworks(zoning);
+      osmNetworkReader.removeDanglingSubNetworks(zoning, recreateIds);
     }
-    
+    MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(network);
+
+    recreateIds = false;
     /* (transfer) zones */
     if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
-      PlanitZoningUtils.removeDanglingZones(zoning);
+      PlanitZoningUtils.removeDanglingZones(zoning, recreateIds);
     }     
     
     /* transfer zone groups */
     if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
-      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning);
-    } 
+      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning, recreateIds);
+    }
+    ZoningModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(zoning);
   }
 
   /**
@@ -200,7 +208,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
     osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
     /* ... remove dangling entities if indicated */
-    removeDanglingEntities(osmNetworkReader, osmZoningReader, zoning);
+    removeDanglingEntities(osmNetworkReader, network, osmZoningReader, zoning);
 
     /* return result */
     return Pair.of(network, zoning);

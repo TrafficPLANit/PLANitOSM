@@ -312,7 +312,8 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
 
 
       /* mark as spatially eligible relation if applicable to filter remaining action below */
-      wrapHandlePtCompatibleOsmRelation(osmRelation, this::markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember);
+      wrapHandlePtCompatibleOsmRelation(osmRelation,
+              this::markOsmRelationAndMembersSpatiallyEligibleIfHasSpatiallyEligibleMember);
 
       //todo: bottom two calls can be combined if we create method that calls both in succession
 

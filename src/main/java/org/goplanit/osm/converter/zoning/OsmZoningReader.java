@@ -22,6 +22,7 @@ import org.goplanit.zoning.Zoning;
 
 import de.topobyte.osm4j.core.access.OsmInputException;
 import de.topobyte.osm4j.core.access.OsmReader;
+import org.goplanit.zoning.ZoningModifierUtils;
 import org.locationtech.jts.geom.TopologyException;
 
 /**
@@ -261,7 +262,7 @@ public class OsmZoningReader implements ZoningReader {
         this.network2ZoningData,
         preProcessingStage,
         profiler);
-    read(osmReader, osmHandler);
+    readWithHandler(osmReader, osmHandler);
   }
 
   /**
@@ -284,7 +285,7 @@ public class OsmZoningReader implements ZoningReader {
           getReferenceNetwork(),
           this.zoning, 
           profiler);
-      read(osmReader, osmHandler);
+      readWithHandler(osmReader, osmHandler);
     } 
   }   
   
@@ -308,7 +309,7 @@ public class OsmZoningReader implements ZoningReader {
           getReferenceNetwork(),
           this.zoning,
           profiler);
-      read(osmReader, osmPostProcessingHandler);        
+      readWithHandler(osmReader, osmPostProcessingHandler);
     } 
   }
 
@@ -321,13 +322,14 @@ public class OsmZoningReader implements ZoningReader {
    * @param osmReader to use
    * @param osmHandler to use
    */
-  protected void read(OsmReader osmReader, OsmZoningHandlerBase osmHandler){
+  protected void readWithHandler(OsmReader osmReader, OsmZoningHandlerBase osmHandler){
     try {  
       osmHandler.initialiseBeforeParsing();
       /* register handler */
       osmReader.setHandler(osmHandler);
       /* conduct parsing which will call back the handler*/
-      osmReader.read();  
+      osmReader.read();
+
     }catch (OsmInputException e) {
       LOGGER.severe(e.getMessage());
       throw new PlanItRunTimeException("Error during parsing of OSMfile",e);
@@ -415,16 +417,19 @@ public class OsmZoningReader implements ZoningReader {
     handlerProfiler.logProcessingStats(zoningReaderData, zoning);
     
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
+    boolean recreateIds = false; // do after with XML id syncing
     if(getSettings().isRemoveDanglingZones()) {
-      PlanitZoningUtils.removeDanglingZones(zoning);
+      PlanitZoningUtils.removeDanglingZones(zoning, recreateIds);
     }
     
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
     if(getSettings().isRemoveDanglingTransferZoneGroups()) {    
-      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning);
-    }    
-    
-    LOGGER.info("OSM zoning parsing...DONE");
+      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning, recreateIds);
+    }
+
+    // recreate and sync ids (except virtual network)
+    ZoningModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(zoning);
+    LOGGER.info("OSM (PT infra) zoning parsing...DONE");
     
     /* return parsed zoning */
     return this.zoning;    

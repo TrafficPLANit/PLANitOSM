@@ -2,11 +2,15 @@ package org.goplanit.osm.test;
 
 import org.goplanit.converter.network.NetworkConverter;
 import org.goplanit.converter.network.NetworkConverterFactory;
+import org.goplanit.geoio.converter.intermodal.GeometryIntermodalWriterFactory;
+import org.goplanit.io.converter.intermodal.PlanitIntermodalWriter;
+import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
 import org.goplanit.io.converter.network.PlanitNetworkWriter;
 import org.goplanit.io.converter.network.PlanitNetworkWriterFactory;
 import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
+import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
@@ -93,8 +97,19 @@ public class SydneyOsmPlanitTest {
 
       PlanitIntermodalWriterSettings writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
-      Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
 
+      /* reader */
+      var result = OsmIntermodalReaderFactory.create(readerSettings).read();
+      var network = result.first();
+      var zoning = result.second();
+
+      /* writer */
+      PlanitIntermodalWriterFactory.create(writerSettings).write(network, zoning);
+
+
+      /* Geopackage intermodal writer (for inspection only) */
+      GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
+                write(network, zoning);
 
       PlanitAssertionUtils.assertNetworkFilesSimilar(
               PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());

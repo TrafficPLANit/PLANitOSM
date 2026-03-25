@@ -36,6 +36,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -598,24 +599,24 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @return created connectoids, null if it was not possible to create any due to some reason
    */
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-      TransferZone transferZone,
-      MacroscopicNetworkLayer networkLayer,
-      PredefinedModeType planitModeType,
-      PlanitJtsCrsUtils geoUtils){
-
-    /* collect the osmNode for this transfer zone */
-    OsmNode osmNode = getNetworkToZoningData().getNetworkOsmNodes().get(Long.valueOf(transferZone.getExternalId()));
+      @Nonnull TransferZone transferZone,
+      @Nonnull OsmNode designatedOsmConnectoidNode,
+      @Nonnull MacroscopicNetworkLayer networkLayer,
+      @Nonnull PredefinedModeType planitModeType,
+      @Nonnull PlanitJtsCrsUtils geoUtils){
 
     boolean suppressLogging = false;
     Node accessNode = null;
     Iterable<? extends EdgeSegment> nominatedLinkSegments = null;
 
     /* user overwrite */
-    if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node)) {
+    if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(
+            designatedOsmConnectoidNode.getId(), EntityType.Node)) {
 
-      long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(osmNode.getId(), EntityType.Node);
+      long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(
+              designatedOsmConnectoidNode.getId(), EntityType.Node);
       Link nominatedLink = PlanitLinkOsmUtils.getClosestLinkWithOsmWayIdToGeometry(
-              osmWayId, OsmNodeUtils.createPoint(osmNode), networkLayer, geoUtils);
+              osmWayId, OsmNodeUtils.createPoint(designatedOsmConnectoidNode), networkLayer, geoUtils);
       if(nominatedLink == null) {
         LOGGER.severe(String.format("IGNORE: User nominated OSM way not available for waiting area " +
                 "on road infrastructure %d", osmWayId));
@@ -627,9 +628,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
       /* choose closest access node */
       double nodeADistance = geoUtils.getDistanceInMetres(
-              nominatedLink.getVertexA().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(osmNode));
+              nominatedLink.getVertexA().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(designatedOsmConnectoidNode));
       double nodeBDistance = geoUtils.getDistanceInMetres(
-              nominatedLink.getVertexB().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(osmNode));
+              nominatedLink.getVertexB().getPosition().getCoordinate(), OsmNodeUtils.createCoordinate(designatedOsmConnectoidNode));
       accessNode = nodeADistance < nodeBDistance ? nominatedLink.getNodeA() : nominatedLink.getNodeB();
       
     }else { /* regular approach */
@@ -641,7 +642,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
       boolean locationIsKnownOsmStopPosition = true;
       accessNode = extractConnectoidAccessNodeByOsmNode(
-              osmNode,
+              designatedOsmConnectoidNode,
               locationIsKnownOsmStopPosition,
               networkLayer,
               waitingAreaOsmVerticalLayerIndex,
@@ -649,7 +650,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
               suppressLogging);
       if(accessNode == null) {
         LOGGER.warning(String.format("DISCARD: OSM node (%d) could not be converted to access node for transfer " +
-            "zone OSM entity %s at same location",osmNode.getId(), transferZone.getExternalId()));
+            "zone OSM entity %s at same location",designatedOsmConnectoidNode.getId(), transferZone.getExternalId()));
         return null;
       }
       

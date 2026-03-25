@@ -66,7 +66,8 @@ public class OsmPublicTransportModeConversion extends OsmModeConversionBase {
 
   public Pair<SortedSet<String>, SortedSet<PredefinedModeType>> collectPublicTransportModesFromPtEntity(
       OsmEntity osmEntity, Map<String, String> tags, String defaultMode) {
-    return collectPublicTransportModesFromPtEntity(osmEntity.getId(), Osm4JUtils.getEntityType(osmEntity), tags, defaultMode);
+    return collectPublicTransportModesFromPtEntity(
+            osmEntity.getId(), Osm4JUtils.getEntityType(osmEntity), tags, defaultMode);
   }
 
   /** collect the eligible modes both OSM and mapped PLANit modes for the given OSM entity representing pt infrastructure. If no default mode is found based on the tags, a default mode may be 

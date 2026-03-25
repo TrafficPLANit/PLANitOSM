@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.zoning.handler;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.*;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
@@ -13,6 +14,7 @@ import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneHelper;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmPtv2Tags;
 import org.goplanit.osm.tags.OsmRelationTypeTags;
+import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.functionalinterface.TriConsumer;
@@ -428,7 +430,33 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    */
   protected OsmConnectoidHelper getConnectoidHelper() {
     return this.connectoidHelper;
-  }    
+  }
+
+  /** Original treatment of water modes (ferry).  Currently, this verifies if a ferry terminal is eligible and when
+   * so we verify it resides on a ferry route (way) if it is a node. If so, it is postponed for treatment
+   *  similar to train stations residing on a train track. If not on the ferry route, it is likely a tagging error
+   *  which we will log as such
+   *
+   * @param osmEntity to extract
+   * @param tags all tags of the OSM entity
+   */
+  protected void postponeTransferInfrastructureWaterProcessing(
+          OsmEntity osmEntity, Map<String, String> tags) {
+    OsmNetworkReaderSettings networkSettings = getNetworkToZoningData().getNetworkSettings();
+
+    if(networkSettings.getWaterwaySettings().isOsmModeActivated(OsmWaterModeTags.FERRY)) {
+
+      /* ferry terminals/platforms/stop locations are often part of Ptv2 stop_areas and sometimes even more than one
+      ferry terminal exists within the single stop_area. It might be that the ferry terminal acts as a stop position
+      (on the OSM way) rather than a transfer zone/platform. However,  we can only hope to distinguish between these
+      situations after parsing the stop_area_relations or afterwards if they remain stand-alone if not tagged
+       explicitly.*/
+
+      /* mark for post_processing to create transfer zone and connectoids for it, since it might have a separate
+      waiting platform/stop positions or is combined in one*/
+      getZoningReaderData().getOsmData().addUnprocessedFerryTerminal(osmEntity);
+    }
+  }
     
   /**
    * constructor

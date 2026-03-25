@@ -402,12 +402,11 @@ public class OsmModeUtils {
       }
     }else if(OsmTags.isAmenity(tags) || tags.containsKey(OsmWaterModeTags.FERRY)) {
 
-      if(OsmPtv1Tags.isFerryTerminal(tags)) {
-        /* amenity=ferry_terminal -> ferry */
-        foundMode = OsmWaterModeTags.FERRY;
-      }else if(tags.containsKey(OsmWaterModeTags.FERRY) && OsmTagUtils.keyMatchesAnyValueTag(tags, OsmWaterModeTags.FERRY, OsmTags.YES)){
+      if(OsmPtv1Tags.isFerryTerminal(tags) || OsmWaterModeTags.supportsAnyPtv2WaterModeAccess(tags)) {
+        /* amenity=ferry_terminal -> ferry, and/or ferry=yes */
         foundMode = OsmWaterModeTags.FERRY;
       }
+
     }else if(!suppressWarning){
       LOGGER.warning(String.format("Unable to extract expected OSM mode from OSM entity %d (Ptv1), potential incomplete tagging, tags(%s)",
           osmId, tags));

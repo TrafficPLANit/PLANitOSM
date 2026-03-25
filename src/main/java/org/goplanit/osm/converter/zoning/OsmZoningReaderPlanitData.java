@@ -10,6 +10,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.GeoContainerUtils;
 import org.goplanit.utils.geo.PlanitJtsIntersectZoneVisitor;
 import org.goplanit.utils.geo.PlanitJtsUtils;
+import org.goplanit.utils.graph.GraphEntities;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
@@ -367,12 +368,31 @@ public class OsmZoningReaderPlanitData {
    * @param searchBoundingBox to use
    * @return links found intersecting or within bounding box provided
    */
-  public Collection<MacroscopicLink> findLinksSpatially(MacroscopicNetworkLayer networkLayer, Envelope searchBoundingBox) {
+  public Collection<MacroscopicLink> findLinksSpatially(
+          MacroscopicNetworkLayer networkLayer, Envelope searchBoundingBox) {
     var spatiallyIndexedPlanitLinks = spatiallyIndexedPlanitLinksByLayer.get(networkLayer);
     if(spatiallyIndexedPlanitLinks == null){
       return Collections.emptySet();
     }
     return GeoContainerUtils.queryEdgeQuadtree(spatiallyIndexedPlanitLinks, searchBoundingBox);
+  }
+
+  /**
+   * Add provided link to spatially indexed links in layer. Only use when a new link is created during the Osm parsing
+   * since otherwise it should already be present
+   *
+   * @param networkLayer the link resides on
+   * @param linkToAdd to add
+   * @return true when successful, false otherwise
+   */
+  public boolean addLinkToSpatiallyIndexed(MacroscopicNetworkLayer networkLayer, MacroscopicLink linkToAdd){
+    var spatiallyIndexedPlanitLinks = spatiallyIndexedPlanitLinksByLayer.get(networkLayer);
+    if(spatiallyIndexedPlanitLinks == null){
+      spatiallyIndexedPlanitLinks = GeoContainerUtils.toGeoIndexed(linkToAdd);
+      spatiallyIndexedPlanitLinksByLayer.put(networkLayer, spatiallyIndexedPlanitLinks);
+    }
+    GeoContainerUtils.addToGeoIndexed(spatiallyIndexedPlanitLinks, linkToAdd);
+    return true;
   }
 
   /**
