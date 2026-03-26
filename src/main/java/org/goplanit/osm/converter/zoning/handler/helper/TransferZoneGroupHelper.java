@@ -217,7 +217,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    * @param suppressLogging when true suppress logging
    * @return true when registered on the group, false otherwise
    */
-  public boolean registerTransferZoneOnGroup(long osmId, EntityType type, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
+  public boolean registerTransferZoneOnGroup(
+      long osmId, EntityType type, TransferZoneGroup transferZoneGroup, boolean suppressLogging) {
     return registerTransferZoneOnGroup(osmId, type, null, transferZoneGroup, suppressLogging);
   }
 

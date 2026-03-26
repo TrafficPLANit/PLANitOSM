@@ -27,8 +27,10 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * i.c.w. a network writer to convert one network to the other. It is paramount that the PLANit modes
    * that are mapped here are also mapped by the writer to the output format to ensure a correct I/O mapping of modes
    *
-   * The default mapping is provided below. In contrast to road modes, rail modes do not have specific restrictions. Hence, we can
-   * map more exotic OSM rail modes to more common PLANit rail modes, without imposing its restrictions on this common mode.
+   * The default mapping is provided below. In contrast to road modes, rail modes do not have specific restrictions.
+   * Hence, we can
+   * map more exotic OSM rail modes to more common PLANit rail modes, without imposing its restrictions on this
+   * common mode.
    *
    * <ul>
    * <li>FERRY      to FerryMode       </li>
@@ -54,7 +56,9 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * @param waterwaySpeedLimitDefaults as they are initially provided
    * @param osmModeAccessWaterwayDefaults configuration
    */
-  public OsmWaterwaySettings(OsmSpeedLimitDefaultsCategory waterwaySpeedLimitDefaults, OsmModeAccessDefaultsCategory osmModeAccessWaterwayDefaults) {
+  public OsmWaterwaySettings(
+      OsmSpeedLimitDefaultsCategory waterwaySpeedLimitDefaults,
+      OsmModeAccessDefaultsCategory osmModeAccessWaterwayDefaults) {
     super(new OsmWaterwayTypeConfiguration(), waterwaySpeedLimitDefaults, osmModeAccessWaterwayDefaults);
     activateParser(DEFAULT_WATERWAYS_PARSER_ACTIVE);
   }
@@ -63,7 +67,8 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * Verify if the passed in OSM waterway type is explicitly deactivated. Deactivated route types will be ignored
    * when processing ways.
    *
-   * @param osmWaterWayValue, e.g. ferry (waterways are directly linked to modes) or a highway type (Assuming the key was ferry, e.g. ferry=_a_highway_type_
+   * @param osmWaterWayValue, e.g. ferry (waterways are directly linked to modes) or a highway type (Assuming the
+   *                          key was ferry, e.g. ferry=_a_highway_type_
    * @return true when unSupported, false if not (which means it is either supported, or not registered)
    */
   public boolean isOsmWaterwayTypeDeactivated(final String osmWaterWayValue) {
@@ -74,7 +79,8 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * Verify if the passed in OSM waterway type is explicitly activated. Activated types will be processed
    * and converted into link(segments).
    * 
-   * @param osmWayValue, e.g. ferry (waterways are directly linked to modes) or a highway type (Assuming the key was ferry, e.g. ferry=_a_highway_type_
+   * @param osmWayValue, e.g. ferry (waterways are directly linked to modes) or a highway type (Assuming the key was
+   *                     ferry, e.g. ferry=_a_highway_type_
    * @return true when supported, false if not (which means it is unsupported, or not registered)
    */
   public boolean isOsmWaterwayTypeActivated(String osmWayValue) {
@@ -166,12 +172,15 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    * @param capacityPcuPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPcuPerLane new value pcu/km/lane
    */
-  public void overwriteCapacityMaxDensityDefaults(String osmWaterwayType, Number capacityPcuPerLanePerHour, Number maxDensityPcuPerLane) {
+  public void overwriteCapacityMaxDensityDefaults(
+      String osmWaterwayType, Number capacityPcuPerLanePerHour, Number maxDensityPcuPerLane) {
     String keyForType = OsmWaterwayTags.getKeyForValueType(osmWaterwayType);
     if(keyForType == null){
-      LOGGER.warning(String.format("IGNORE: Unsupported waterway type %s encountered, unable to overwrite capacity.max density", osmWaterwayType));
+      LOGGER.warning(String.format("IGNORE: Unsupported waterway type %s encountered, unable to overwrite " +
+          "capacity.max density", osmWaterwayType));
     }
-    overwriteOsmWayTypeDefaultCapacityMaxDensity(keyForType, osmWaterwayType, capacityPcuPerLanePerHour.doubleValue(), maxDensityPcuPerLane.doubleValue());
+    overwriteOsmWayTypeDefaultCapacityMaxDensity(
+        keyForType, osmWaterwayType, capacityPcuPerLanePerHour.doubleValue(), maxDensityPcuPerLane.doubleValue());
   }    
   
   /**

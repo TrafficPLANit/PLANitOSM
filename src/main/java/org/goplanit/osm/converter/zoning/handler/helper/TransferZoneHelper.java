@@ -219,12 +219,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       /* register on PLANit zoning */
       zoning.getTransferZones().register(transferZone);
 
-      /** OSM waiting areas may have an explicit layer which can be used to identify which rail/road infrastructure is at the same level
-       *  Therefore, we register it here, for when mapping to connectoids later on */
+      /** OSM waiting areas may have an explicit layer which can be used to identify which rail/road infrastructure
+       * is at the same level, Therefore, we register it here, for when mapping to connectoids later on */
       this.zoningReaderData.getPlanitData().registerTransferZoneOsmVerticalLayerIndex(transferZone, osmEntity, tags);
 
       /* ...and register locally */
-      zoningReaderData.getPlanitData().addTransferZoneByOsmId(Osm4JUtils.getEntityType(osmEntity), osmEntity.getId(), transferZone);
+      zoningReaderData.getPlanitData().addTransferZoneByOsmId(
+          Osm4JUtils.getEntityType(osmEntity), osmEntity.getId(), transferZone);
 
     }
     return transferZone;

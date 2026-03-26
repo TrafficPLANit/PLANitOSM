@@ -4,22 +4,15 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
-import org.geotools.api.referencing.operation.MathTransform;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
-import org.goplanit.utils.epsg.ProjectedEpsgCodesByCountry;
+import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
-import org.goplanit.utils.geo.PlanitCrsUtils;
-import org.goplanit.utils.geo.PlanitGeometryOperationUtils;
-import org.goplanit.utils.geo.PlanitJtsUtils;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.prep.PreparedPolygon;
-import org.locationtech.jts.operation.distance.IndexedFacetDistance;
 
 /**
  * Base handler for networks with common functionality. Requires derived hanlder for concrete implementation.
@@ -44,15 +37,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   /** the settings to adhere to */
   private final OsmNetworkReaderSettings settings;
 
-  /** spatially indexed version of bounding polygon if any for quick comparisons */
-  private final PreparedPolygon preppedBoundingPolygonWgs84;
-
-  /** be able to transform from source to projected destination Crs */
-  private final MathTransform mathTransformSourceToProjection;
-
-  /** indexed distance facet for fast calculating of distances to bounding polygon in projected CRS, make sure any calcs
-   * feed in geometries that are also projected so NOT Wgs84 */
-  private final IndexedFacetDistance indexedBoundingPolygonDistProjected;
+  private final OsmProjectedBoundingAreaHelper projectedBoundingAreaHelper;
 
   /**
    * Constructor
@@ -71,20 +56,10 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
     this.networkData = networkData;
 
     if(getNetworkData().hasBoundingArea()){
-      // prepare polygon for faster checks
-      this.preppedBoundingPolygonWgs84 = PlanitGeometryOperationUtils.extractPreparedPolygonForQuickSpatialComparisons(
-          getNetworkData().getBoundingArea().getBoundingPolygon());
-      // prepare indexed distance faced for fast distance to calcs (in projection so it is not in degrees)
-      var projectedCrs =
-          PlanitCrsUtils.createCoordinateReferenceSystem(ProjectedEpsgCodesByCountry.getEpsg(settings.getCountryName()));
-      this.mathTransformSourceToProjection = PlanitJtsUtils.findMathTransform(settings.getSourceCRS(), projectedCrs);
-      var projectedBoundingPolygon = PlanitJtsUtils.transformGeometrySafe(
-          getNetworkData().getBoundingArea().getBoundingPolygon(),mathTransformSourceToProjection);
-      this.indexedBoundingPolygonDistProjected = new IndexedFacetDistance(projectedBoundingPolygon);
+      projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.of(
+          getNetworkData().getBoundingArea(), settings.getSourceCRS(), settings.getCountryName());
     }else{
-      this.preppedBoundingPolygonWgs84 = null;
-      this.indexedBoundingPolygonDistProjected = null;
-      this.mathTransformSourceToProjection = null;
+      projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.empty();
     }
   }
 
@@ -108,13 +83,18 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
     return false;
   }
 
+  /**
+   * Check if this is a water way based "infrastructure"
+   *
+   * @param tags to check
+   * @return true if so, false otherwise
+   */
   protected boolean isActivatedWaterwayBasedInfrastructure(Map<String, String> tags) {
     if(!OsmTags.isArea(tags) && settings.isWaterwayParserActive() && OsmWaterwayTags.isWaterBasedWay(tags)) {
       return settings.getWaterwaySettings().isOsmWaterwayTypeActivated(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
     }
     return false;
   }
-
 
   /** Wrap the handling of OSM way by checking if it is eligible and catch any run time PLANit exceptions, if eligible
    * delegate to consumer.
@@ -154,21 +134,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
     return this.networkToPopulate;
   }
 
-  protected PreparedPolygon getPreparedBoundingPolygon(){
-    return preppedBoundingPolygonWgs84;
-  }
-
-  /**
-   * Calculate distance to bounding polygon (assumes one is present otherwise undefined behaviour) for a
-   * given point
-   * @param point to calculate distance to bounding polygon
-   * @param applyProjection when true transform point to projection (destination Crs of converter assumed to
-   *                        be a projected), when false it is assumed to already be projected and calculated as is
-   * @return distance in destination Crs units (typically meters)
-   */
-  protected double calculateProjectedDistanceToBoundingPolygon(Point point, boolean applyProjection){
-    return indexedBoundingPolygonDistProjected.distance(
-        applyProjection ? PlanitJtsUtils.transformGeometrySafe(point, mathTransformSourceToProjection): point);
+  protected OsmProjectedBoundingAreaHelper getProjectedBoundingAreaHelper(){
+    return this.projectedBoundingAreaHelper;
   }
 
   /**

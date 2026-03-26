@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.*;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
@@ -214,6 +215,19 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
+  /**
+   * For water based pt infra we use more lenient distance because it is often not covered by the bounding polygons if
+   * they represent demand zones. Here we check against that more lenient spatial constraint
+   *
+   * @param node to check
+   * @return true if valid
+   */
+  private boolean isWaterPtInfraNodeSpatiallyEligibleAsSpecialCase(OsmNode node) {
+    double projectedDistance = getProjectedBoundingAreaHelper().calculateProjectedDistanceToBoundingPolygon(
+        OsmNodeUtils.createPoint(node), true);
+    return projectedDistance < getNetworkToZoningData().getNetworkSettings().
+        getMaximumDistanceFerryOutsideBoundingPolygonInMeters();
+  }
 
   /**
    * Constructor
@@ -252,13 +266,35 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
   @Override
   public void handle(OsmNode node) {
 
+    if(node.getId() == 458705435L){
+      int bla = 4;
+    }
+
+    var spatialEligibilityData = getZoningReaderData().getOsmData().getOsmSpatialEligibilityData();
     if(stage == Stage.ONE_IDENTIFY_ZONING_RELATION_MEMBERS) {
 
-      // mark spatially eligible if bounding area is present and it falls within this area, if no bounding area then all are eligible
-      // used to exclude identifying relations that do not have any preregistered nodes available
-      if(!getZoningReaderData().hasBoundingArea() || getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node))){
+      // mark spatially eligible if bounding area is present and it falls within this area, if no bounding area then
+      // all are eligible used to exclude identifying relations that do not have any preregistered nodes available
+      if(!getZoningReaderData().hasBoundingArea() ||
+          getProjectedBoundingAreaHelper().getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node))){
+        spatialEligibilityData.markOsmNodeSpatiallyEligible(node.getId());
+      }else{
+        // SPECIAL CASE - for water based pt infras where we allow such infra even if it falls outside bounding polygon
+        // to certin extent
+        if(isActivatedWaterBasedPtInfrastructure(OsmModelUtil.getTagsAsMap(node)) &&
+          isWaterPtInfraNodeSpatiallyEligibleAsSpecialCase(node)){
+          spatialEligibilityData.markOsmNodeSpatiallyEligible(node.getId());
+        }
+      }
 
-        getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
+    }else if(stage == Stage.TWO_PREREGISTER_ZONING_WAY_NODES) {
+
+      // SPECIAL CASES
+      // Check marked special case non-spatially eligible nodes to include if they fall within distance to bounding area
+      // to support and OSM way Pt infra that does the same, e.g. platform, for which we need the nodes
+      if(spatialEligibilityData.isOsmNodePartOfPotentiallySpatiallyEligibleWayAsSpecialCase(node.getId()) &&
+          isWaterPtInfraNodeSpatiallyEligibleAsSpecialCase(node)) {
+        spatialEligibilityData.markOsmNodeSpatiallyEligible(node.getId());
       }
 
     }else if(stage == Stage.THREE_REGISTER_ZONING_NODES_AND_WAYS){
@@ -288,12 +324,28 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
       if(!getZoningReaderData().hasBoundingArea()){
         spatialEligibilityData.markOsmWaySpatiallyEligible(osmWay.getId());
       }else{
-        spatialEligibilityData.markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(osmWay);
+
+        boolean osmWaySpatiallyEligible =
+            spatialEligibilityData.markOsmWaySpatiallyEligibleIfHasSpatiallyEligibleNode(osmWay);
+
+        // SPECIAL CASES
+        if(!osmWaySpatiallyEligible)
+        {
+          // WATERWAYS
+          // special case for water infra structure, since some ferry temrinals are on the water and outside zoning
+          // polygons, we do not know yet if it is close enough to any bounding area to be eligible, so for now,
+          // just pre-register the osm way and we will verify in stage two.
+          if(isActivatedWaterBasedPtInfrastructure(OsmModelUtil.getTagsAsMap(osmWay))){
+            spatialEligibilityData.markOsmWayAndNodesPotentiallySpatiallyEligibleAsSpecialCase(osmWay);
+          }
+        }
+
       }
 
     }else if(stage == Stage.TWO_PREREGISTER_ZONING_WAY_NODES) {
 
-      /* identify nodes of way that would normally not be considered PT but has been identified as such in preceding pre-processing pass */
+      /* identify nodes of way that would normally not be considered PT but has been identified as such in preceding
+      pre-processing pass */
       identifyPlatformOuterRoleNodes(osmWay);
 
       /* regular OSM way handling of eligible PT identified OSM ways */

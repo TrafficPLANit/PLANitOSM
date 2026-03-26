@@ -182,13 +182,14 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmNode node) {
 
-    if(node.getId() == 5833764763L){
+    if(node.getId() == 458705435L){
       int bla = 4;
     }
 
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)){
       boolean spatiallyEligible =
-          !getNetworkData().hasBoundingArea() || getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node));
+          !getNetworkData().hasBoundingArea() ||
+              getProjectedBoundingAreaHelper().getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node));
 
       // mark as spatially eligible if bounding area is present and it falls within this area, or
       // if no bounding area all are eligible. Only OSM ways with at least one spatially eligible nodes will be considered
@@ -209,10 +210,11 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       // if valid special case is found, pre-register, so it can be processed as usual from here on forward
       if(getNetworkData().getOsmSpatialEligibilityData().
           isOsmNodePartOfPotentiallySpatiallyEligibleWayAsSpecialCase(node.getId())){
-        double projectedDistance = calculateProjectedDistanceToBoundingPolygon(
+        double projectedDistance = getProjectedBoundingAreaHelper().calculateProjectedDistanceToBoundingPolygon(
             OsmNodeUtils.createPoint(node), true);
-        // NOTE: currently the only special case is for waterways, if we get more types make our check aware of the
-        // type and less implicitly baked in as there is no specific check on waterways here currently (as not needed)
+        // NOTE: currently the only special case is for water related entities, if we get more types make our check
+        // aware of the type and less implicitly baked in as there is no specific check on waterways here currently
+        // (as not needed)
         if(projectedDistance < getSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters()){
           getNetworkData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
         }
