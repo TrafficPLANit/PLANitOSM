@@ -252,7 +252,7 @@ public class OsmProjectedBoundingAreaHelper {
   /**
    * Verify if geometry is (partly) within boundary provided.
    *
-   * @param geometry to check
+   * @param point to check
    * @param osmBoundary to use for verification (may be null)
    * @param maxProjectedDistanceToBoundary to allow
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,

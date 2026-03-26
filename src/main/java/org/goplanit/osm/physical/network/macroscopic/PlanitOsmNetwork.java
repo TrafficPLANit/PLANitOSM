@@ -1077,7 +1077,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   }
 
 
-  /** when we find functionally equivalent link segment types --> aggregate them into a single one by
+  /** when we find functionally equivalent link segment types so aggregate them into a single one by
    * - identify duplicates in network
    * - update extern id and name, so we retain original OSM information
    * - recreate the ids on the container

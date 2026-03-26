@@ -593,6 +593,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * is bypassed here.
    * 
    * @param transferZone residing on an osm way
+   * @param designatedOsmConnectoidNode the OSM node that we should use for the connectoid
    * @param networkLayer related to the mode
    * @param planitModeType the connectoid is accessible for
    * @param geoUtils to use
