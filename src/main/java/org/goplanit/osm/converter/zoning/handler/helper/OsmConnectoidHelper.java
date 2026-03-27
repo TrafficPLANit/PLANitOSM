@@ -286,59 +286,6 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     return createdConnectoids;
   }
 
-  private boolean extractDirectedConnectoidsForModeLinkSegments(
-      TransferZone transferZone,
-      Mode planitMode,
-      Node accessNode,
-      Collection<LinkSegment> eligibleLinkSegments,
-      boolean ignoreOsmVerticalLayerCompatibilityCheck,
-      boolean suppressLogging,
-      PlanitJtsCrsUtils geoUtils) {
-
-    MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByMode(planitMode);
-    for(EdgeSegment edgeSegment : eligibleLinkSegments) {
-     
-      /* update accessible link segments of already created connectoids (if any) */      
-      Point proposedConnectoidLocation = accessNode.getPosition();
-      boolean createConnectoidsForLinkSegment = true;
-      
-      if(zoningReaderData.getPlanitData().hasDirectedConnectoidForLocation(networkLayer, proposedConnectoidLocation)) {      
-        /* existing connectoid: update model eligibility */
-        Collection<DirectedConnectoid> connectoidsForNode =
-            zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(proposedConnectoidLocation, networkLayer);
-        for(DirectedConnectoid connectoid : connectoidsForNode) {
-          if(edgeSegment.idEquals(connectoid.getAccessLinkSegment())) {
-            /* update mode eligibility */
-            updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode));
-            createConnectoidsForLinkSegment  = false;
-            break;
-          }
-        }
-      }
-                    
-      /* for remaining access link segments without connectoid -> create them */        
-      if(createConnectoidsForLinkSegment) {
-                
-        /* create and register */
-        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(
-            transferZone,
-            networkLayer,
-            accessNode,
-            Collections.singleton(edgeSegment),
-            Collections.singleton(planitMode),
-            ignoreOsmVerticalLayerCompatibilityCheck || suppressLogging);
-        
-        if(!suppressLogging && (newConnectoids==null || newConnectoids.isEmpty())) {
-          LOGGER.warning(String.format("Found eligible mode %s for stop_location of transfer zone %s, but no " +
-                  "access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
-          return false;
-        }
-      }  
-    }
-    
-    return true;
-  }
-
   /** extract the connectoid access node based on the given location. Either it already exists as a PLANit node, or it is internal to an existing link. In the latter case
    * a new node is created and the existing link is broken. In the former case, we simply collect the PLANit node
    *
@@ -583,8 +530,71 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId,
             getSettings().getCountryName(),
             geoUtils);
-  }   
+  }
 
+  /**
+   * Create a connectoid or expand an existing connectoid with given mode if it exists for given transfer zone
+   * and provided parameters.
+   *
+   * @param transferZone to add connectoid for
+   * @param planitMode mode to support
+   * @param accessNode access node to use
+   * @param eligibleLinkSegments access link segments to create connectoids for
+   * @param ignoreOsmVerticalLayerCompatibilityCheck flag to ignore vertical layer compatibility
+   * @param suppressLogging flag to suppress logging
+   * @return true if success, false otherwise
+   */
+  public boolean extractDirectedConnectoidsForModeLinkSegments(
+      TransferZone transferZone,
+      Mode planitMode,
+      Node accessNode,
+      Collection<LinkSegment> eligibleLinkSegments,
+      boolean ignoreOsmVerticalLayerCompatibilityCheck,
+      boolean suppressLogging) {
+
+    MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByMode(planitMode);
+    for(EdgeSegment edgeSegment : eligibleLinkSegments) {
+
+      /* update accessible link segments of already created connectoids (if any) */
+      Point proposedConnectoidLocation = accessNode.getPosition();
+      boolean createConnectoidsForLinkSegment = true;
+
+      if(zoningReaderData.getPlanitData().hasDirectedConnectoidForLocation(networkLayer, proposedConnectoidLocation)) {
+        /* existing connectoid: update model eligibility */
+        Collection<DirectedConnectoid> connectoidsForNode =
+            zoningReaderData.getPlanitData().getDirectedConnectoidsByLocation(proposedConnectoidLocation, networkLayer);
+        for(DirectedConnectoid connectoid : connectoidsForNode) {
+          if(edgeSegment.idEquals(connectoid.getAccessLinkSegment())) {
+            /* update mode eligibility */
+            updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode));
+            createConnectoidsForLinkSegment  = false;
+            break;
+          }
+        }
+      }
+
+      /* for remaining access link segments without connectoid -> create them */
+      if(createConnectoidsForLinkSegment) {
+
+        /* create and register */
+        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(
+            transferZone,
+            networkLayer,
+            accessNode,
+            Collections.singleton(edgeSegment),
+            Collections.singleton(planitMode),
+            ignoreOsmVerticalLayerCompatibilityCheck || suppressLogging);
+
+        if(!suppressLogging && (newConnectoids==null || newConnectoids.isEmpty())) {
+          LOGGER.warning(String.format("Found eligible mode %s for stop_location of transfer zone %s, but no " +
+              "access link segment supports this mode", planitMode.getExternalId(), transferZone.getExternalId()));
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 
   /** Create directed connectoids for transfer zones that reside on OSM ways. For such transfer zones, we simply
    * create connectoids in both directions for all eligible incoming link segments. This is a special case because
@@ -793,8 +803,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         planitAccessNode,
         accessLinkSegments,
         ignoreOsmVerticalLayerCompatibility,
-        suppressLogging,
-        geoUtils);
+        suppressLogging
+    );
   }
 
 

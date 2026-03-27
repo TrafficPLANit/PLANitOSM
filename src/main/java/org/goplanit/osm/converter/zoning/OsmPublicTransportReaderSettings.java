@@ -92,6 +92,19 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
    */
   private double  searchRadiusFerryStopToFerryRouteMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M;
+
+  /**
+   * When a ferry stop is disconnected from to the land network it cannot be used for transfers, this
+   * option will generate simple link connectoid based on the accessible modes of the ferry to nearby land network
+   */
+  private boolean connectFerryStopToNearbyLandNetwork = DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_LAND_NETWORK;
+
+  /**
+   * When a ferry stop is disconnected from the land network it cannot be used for transfers, the provided distance
+   * is the maximium distance it will use when creating links based on the accessible modes of the ferry
+   * to nearby land network
+   */
+  private double  searchRadiusFerryStopToLandNetworkMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_LAND_NETWORK_M;
     
   /** by default the transfer parser is activated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
@@ -126,11 +139,16 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /** by default we connect dangling ferry stops to the nearest ferry route */
   public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
 
+  /** by default we connect dangling ferry stops to the nearest ferry route */
+  public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_LAND_NETWORK = true;
+
   /**
    * default search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
    * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
    */
   public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
+
+  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_LAND_NETWORK_M = 500;
             
   
   /** Constructor using default (Global) locale
@@ -193,6 +211,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
       LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zones", isRemoveDanglingZones()));
       LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zone groups", isRemoveDanglingTransferZoneGroups()));
       LOGGER.info(String.format("%-60s: %s",    "Connect dangling ferry stops to nearby ferry routes (if present)", connectDanglingFerryStopToNearbyFerryRoute));
+      LOGGER.info(String.format("%-60s: %s",    "Connect ferry stops to nearby land network (if eligible)", connectFerryStopToNearbyLandNetwork));
       LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius", getFerryStopToFerryRouteSearchRadiusMeters()));
     }
   }
@@ -524,7 +543,6 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     return suppressStopAreaLogging.contains(osmStopAreaRelationId.longValue());
   }
 
-
   /**
    * Is flag for connecting dangling ferry stops to nearby ferry route set or not
    * @return true when active, false otherwise
@@ -542,10 +560,18 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     this.connectDanglingFerryStopToNearbyFerryRoute = connectDanglingFerryStopToNearbyFerryRoute;
   }
 
+  /**
+   * Access to search radius for ferry stop to ferry route
+   * @return search radius
+   */
   public double getFerryStopToFerryRouteSearchRadiusMeters() {
     return searchRadiusFerryStopToFerryRouteMeters;
   }
 
+  /**
+   * Access to search radius for ferry stop to ferry route
+   * @param searchRadiusFerryStopToFerryRouteMeters search radius
+   */
   public void setFerryStopToFerryRouteSearchRadiusMeters(Number searchRadiusFerryStopToFerryRouteMeters) {
     if(searchRadiusFerryStopToFerryRouteMeters == null){
       LOGGER.severe("Unable to set ferry stop to ferry route search radius as parameter is null");
@@ -553,6 +579,43 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     }
     this.searchRadiusFerryStopToFerryRouteMeters = searchRadiusFerryStopToFerryRouteMeters.doubleValue();
   }
+
+  /**
+   * flag for connecting ferry stops to nearby land network if not already connected
+   * @return true when active, false otherwise
+   */
+  public boolean isConnectFerryStopToNearbyLandNetwork() {
+    return connectFerryStopToNearbyLandNetwork;
+  }
+
+  /** Decide whether to connect ferry stops to nearby land network if not already connected
+   *
+   * @param connectFerryStopToNearbyLandNetwork when true do this, when false do not
+   */
+  public void setConnectFerryStopToNearbyLandNetwork(boolean connectFerryStopToNearbyLandNetwork) {
+    this.connectFerryStopToNearbyLandNetwork = connectFerryStopToNearbyLandNetwork;
+  }
+
+  /**
+   * Access to search radius for ferry stop to ferry route
+   * @return search radius
+   */
+  public double getFerryStopToNearbyLandNetworkSearchRadiusMeters() {
+    return searchRadiusFerryStopToLandNetworkMeters;
+  }
+
+  /**
+   * Set  search radius for ferry stop to land network
+   * @param searchRadiusFerryStopToLandNetworkMeters  search radius
+   */
+  public void setFerryStopToNearbyLandNetworkSearchRadiusMeters(Number searchRadiusFerryStopToLandNetworkMeters) {
+    if(searchRadiusFerryStopToLandNetworkMeters == null){
+      LOGGER.severe("Unable to set ferry stop to land network search radius as parameter is null");
+      return;
+    }
+    this.searchRadiusFerryStopToLandNetworkMeters = searchRadiusFerryStopToLandNetworkMeters.doubleValue();
+  }
+
 
   /**
    * Overwrite the mode access for a given waiting area

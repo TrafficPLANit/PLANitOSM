@@ -92,8 +92,10 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().setRemoveDanglingSubnetworks(false);
       readerSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
-      OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
+      // ferry only
+      readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(false);
 
+      OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
 
       PlanitIntermodalWriterSettings writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);

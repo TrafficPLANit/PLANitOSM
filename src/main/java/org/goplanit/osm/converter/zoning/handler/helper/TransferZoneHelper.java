@@ -299,20 +299,28 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     
   }
 
-  /** Find out if transfer zone is mode compatible with the passed in reference OSM modes. Mode compatible means at least one overlapping
-   * mode that is mapped to a PLANit mode.If the zone has no known modes, it is by definition not mode compatible. When one allows for pseudo compatibility we relax the restrictions such that any rail/road/water mode
-   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
-   * to filter out definite non-matches.
+  /** Find out if transfer zone is mode compatible with the passed in reference OSM modes. Mode compatible means at
+   * least one overlapping mode that is mapped to a PLANit mode.If the zone has no known modes, it is by definition
+   * not mode compatible. When one allows for pseudo compatibility we relax the restrictions such that any
+   * rail/road/water mode is considered a match with any other rail/road/water mode. This can be useful when
+   * you do not want to make super strict matches but still want to filter out definite non-matches.
    *  
    * @param transferZone to verify
    * @param referenceOsmModes to match against
-   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car, train is compatible with tram, etc., when false only exact matches are accepted
-   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also considered.
+   * @param allowPseudoMatches when true, we consider all road modes compatible, i.e., bus is compatible with car,
+   *                           train is compatible with tram, etc., when false only exact matches are accepted
+   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also
+   *                                          considered.
    * @return matched transfer zones
    */   
   private boolean isTransferZoneModeCompatible(
-      TransferZone transferZone, Collection<String> referenceOsmModes, boolean allowPseudoMatches, boolean allowModelessTransferZoneMatches) {
-    Collection<String> transferZoneSupportedModes = PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone);
+      TransferZone transferZone,
+      Collection<String> referenceOsmModes,
+      boolean allowPseudoMatches,
+      boolean allowModelessTransferZoneMatches) {
+
+    Collection<String> transferZoneSupportedModes =
+        PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone);
     if(transferZoneSupportedModes==null) {       
       /* zone has no known modes, not a trustworthy match unless this is deemed acceptable as a last ditch effort */
       return allowModelessTransferZoneMatches;
@@ -632,7 +640,11 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @return matched transfer zones
    */  
   public Set<TransferZone> filterModeCompatibleTransferZones(
-      Collection<String> eligibleOsmModes, Collection<TransferZone> potentialTransferZones, boolean allowPseudoModeMatches, boolean allowModelessTransferZoneMatches) {
+      Collection<String> eligibleOsmModes,
+      Collection<TransferZone> potentialTransferZones,
+      boolean allowPseudoModeMatches,
+      boolean allowModelessTransferZoneMatches) {
+
     return potentialTransferZones.stream().filter(tz -> isTransferZoneModeCompatible(
         tz, eligibleOsmModes, allowPseudoModeMatches, allowModelessTransferZoneMatches)).collect(Collectors.toSet());
   }
