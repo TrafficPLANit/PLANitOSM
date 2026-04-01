@@ -222,7 +222,8 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    */
   public void activateOsmWaterMode(String osmWaterMode) {
     if(!OsmWaterModeTags.isWaterModeTag(osmWaterMode)) {
-      LOGGER.warning(String.format("OSM water based mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmWaterMode));
+      LOGGER.warning(String.format("OSM water based mode %s is not recognised when adding it to OSM to PLANit mode " +
+              "mapping, ignored", osmWaterMode));
       return;
     }
     activateOsmMode(osmWaterMode);
@@ -235,7 +236,8 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    */
   public void deactivateOsmWaterMode(String osmWaterMode) {
     if(!OsmWaterModeTags.isWaterModeTag(osmWaterMode)) {
-      LOGGER.warning(String.format("OSM water mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmWaterMode));
+      LOGGER.warning(String.format("OSM water mode %s is not recognised when removing it from OSM to PLANit mode " +
+              "mapping, ignored", osmWaterMode));
       return;
     }
     deactivateOsmMode(osmWaterMode);
@@ -320,7 +322,8 @@ public class OsmWaterwaySettings extends OsmWaySettings {
     }
 
     return collectAllowedOsmWayModes(
-        OsmWaterwayTags.getKeyForValueType(osmWaterwayType), osmWaterwayType, OsmWaterModeTags.getSupportedWaterModeTags());
+        OsmWaterwayTags.getKeyForValueType(
+                osmWaterwayType), osmWaterwayType, OsmWaterModeTags.getSupportedWaterModeTags());
   }
 
   /**

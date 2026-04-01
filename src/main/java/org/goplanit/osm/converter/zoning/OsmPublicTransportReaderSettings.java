@@ -205,14 +205,21 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
         LOGGER.info(String.format("%-60s: %s",  "Pt bounding boundary set to", getBoundingArea().toString()));
       }
 
-      LOGGER.info(String.format("%-60s: %.2fm", "Stop location to waiting area search radius", getStopToWaitingAreaSearchRadiusMeters()));
-      LOGGER.info(String.format("%-60s: %.2fm", "Station location to waiting area search radius", getStationToWaitingAreaSearchRadiusMeters()));
-      LOGGER.info(String.format("%-60s: %.2fm", "Station location to parallel tracks search radius", getStationToParallelTracksSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %.2fm", "Stop location to waiting area search radius",
+              getStopToWaitingAreaSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %.2fm", "Station location to waiting area search radius",
+              getStationToWaitingAreaSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %.2fm", "Station location to parallel tracks search radius",
+              getStationToParallelTracksSearchRadiusMeters()));
       LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zones", isRemoveDanglingZones()));
-      LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zone groups", isRemoveDanglingTransferZoneGroups()));
-      LOGGER.info(String.format("%-60s: %s",    "Connect dangling ferry stops to nearby ferry routes (if present)", connectDanglingFerryStopToNearbyFerryRoute));
-      LOGGER.info(String.format("%-60s: %s",    "Connect ferry stops to nearby land network (if eligible)", connectFerryStopToNearbyLandNetwork));
-      LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius", getFerryStopToFerryRouteSearchRadiusMeters()));
+      LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zone groups",
+              isRemoveDanglingTransferZoneGroups()));
+      LOGGER.info(String.format("%-60s: %s",    "Connect dangling ferry stops to nearby ferry routes (if present)",
+              connectDanglingFerryStopToNearbyFerryRoute));
+      LOGGER.info(String.format("%-60s: %s",    "Connect ferry stops to nearby land network (if eligible)",
+              connectFerryStopToNearbyLandNetwork));
+      LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius",
+              getFerryStopToFerryRouteSearchRadiusMeters()));
     }
   }
 
@@ -369,8 +376,10 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType entity type of waiting area to map to
    * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
    */
-  public void overwriteWaitingAreaOfStopLocation(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
-    overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));    
+  public void overwriteWaitingAreaOfStopLocation(
+          final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
+    overwritePtStopLocation2WaitingAreaMapping.put(
+            stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));
   }
 
   /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)}
@@ -408,13 +417,15 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param osmWaitingAreaId to use (int or long)
    * @return true when waiting area is defined for a stop location as designated waiting area, false otherwise
    */
-  public boolean isWaitingAreaOfStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
+  public boolean isWaitingAreaOfStopLocationOverwritten(
+          final EntityType waitingAreaType, final Number osmWaitingAreaId) {
     if(osmWaitingAreaId == null){
       return false;
     }
 
     for( Entry<Long, Pair<EntityType, Long>> entry : overwritePtStopLocation2WaitingAreaMapping.entrySet()) {
-      if(entry.getValue().first().equals(waitingAreaType) && entry.getValue().second().equals(osmWaitingAreaId.longValue())) {
+      if(entry.getValue().first().equals(waitingAreaType) &&
+              entry.getValue().second().equals(osmWaitingAreaId.longValue())) {
         return true;
       }
     }
@@ -434,13 +445,15 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void overwriteWaitingAreaNominatedOsmWayForStopLocation(
       final Number waitingAreaOsmId, final EntityType waitingAreaEntityType, final Number osmWayId) {
     if(osmWayId == null || waitingAreaOsmId == null || waitingAreaEntityType==null){
-      LOGGER.severe("unable to overwrite waiting area nominated OsmWay for stop location as one of the parameters is null");
+      LOGGER.severe("unable to overwrite waiting area nominated OsmWay for stop location as one " +
+              "of the parameters is null");
     }
 
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<>());
     assert waitingAreaOsmId != null;
     assert osmWayId != null;
-    overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId.longValue(), osmWayId.longValue());
+    overwritePtWaitingArea2OsmWayMapping.get(
+            waitingAreaEntityType).put(waitingAreaOsmId.longValue(), osmWayId.longValue());
   }  
   
   /** Verify if waiting area's osm id is marked for overwritten osm way mapping
@@ -449,7 +462,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType type of waiting area
    * @return true when present, false otherwise
    */
-  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType) {
+  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(
+          final Number waitingAreaOsmId, final EntityType waitingAreaEntityType) {
     if(waitingAreaOsmId == null || waitingAreaEntityType == null){
       return false;
     }
@@ -463,7 +477,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType type of waiting area
    * @return osm way id, null if not available
    */
-  public Long getWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, EntityType waitingAreaEntityType) {
+  public Long getWaitingAreaNominatedOsmWayForStopLocation(
+          final Number waitingAreaOsmId, EntityType waitingAreaEntityType) {
     if(waitingAreaOsmId == null || waitingAreaEntityType == null){
       return null;
     }
@@ -627,7 +642,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void overwriteWaitingAreaModeAccess(Number osmId, EntityType osmEntityType, String... osmModes){
     var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
     if(overwritesByType == null){
-      LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes access for waiting areas", osmEntityType.toString()));
+      LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes" +
+              " access for waiting areas", osmEntityType.toString()));
       return;
     }
     overwritesByType.put(osmId.longValue(), new TreeSet<>(Arrays.asList(osmModes)));

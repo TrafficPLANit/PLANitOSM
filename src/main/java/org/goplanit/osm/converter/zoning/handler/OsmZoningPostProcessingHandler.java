@@ -827,10 +827,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     for(var connectoid : directedConnectoids) {
       var ferryAccessSegment = connectoid.getAccessLinkSegment();
       if (!ferryAccessSegment.isModeAllowed(ferryMode)) {
-        LOGGER.warning(String.format("Expected existing connectoid access link segment (%s) to support ferry for ferry " +
-            "transfer zone (%s), but it is not", ferryAccessSegment.getIdsAsString(), transferZone.getIdsAsString()));
+        LOGGER.warning(String.format("Expected existing connectoid access link segment (%s) to support ferry " +
+                "for ferry transfer zone (%s), but it is not",
+                ferryAccessSegment.getIdsAsString(), transferZone.getIdsAsString()));
       }
-      // extract the on-ferry modes that we need to connect to the land network
       onFerryNonFerryModes.addAll(ferryAccessSegment.getAllowedModes().stream().filter(
           m -> !m.getPredefinedModeType().equals(PredefinedModeType.FERRY)).collect(Collectors.toList()));
     }
@@ -842,8 +842,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       return;
     }
 
-    // if we're lucky the transfer zone is already connected to the land network in which case we check if any of the
-    // other segments coming into the current access link segments end vertex (that do not support ferry) are eligible.
+    // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
+    // case we check if any of the other segments coming into the current access link segments end vertex
+    // (that do not support ferry) are eligible.
     // if so, create a connectoid and add the modes that we need and cross them of the onFerryNonFerryModes list
     {
       for(var connectoid : directedConnectoids) {
@@ -907,7 +908,25 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       }
 
       // find closest spatially matched link per nonFerryMode remaining then create and attach
-      // todo: continue here then test
+      for(var currOnFerryNonFerryMode : onFerryNonFerryModes){
+        var modeCompatibleNearbyLinks = spatiallyMatchedLinks.stream().filter(
+                l -> l.isModeAllowedOnAnySegment(currOnFerryNonFerryMode)).collect(Collectors.toList());
+
+        var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+                transferZone.getGeometry(true).getCentroid().getCoordinate(),
+                modeCompatibleNearbyLinks, maxSearchRadius, false, getGeoUtils());
+        assert closestLinkWithDistance != null;
+        var closestNodeWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+                transferZone.getGeometry(true).getCentroid().getCoordinate(),
+                Set.of(closestLinkWithDistance.first().getVertexA(),closestLinkWithDistance.first().getVertexB()),
+                maxSearchRadius, false, getGeoUtils());
+        assert closestNodeWithDistance != null;
+        // we found our result --> create link between ferry stop (using existing access node of Ferry mode connectoid)
+        // and our new found closest onFerryNonFerryMode (if not already created).
+
+        //TODO
+
+      }
     }
 
   }
@@ -1512,8 +1531,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         entry.getValue().stream().anyMatch( transferConnectoid ->
             transferConnectoid.isModeAllowed(entry.getKey(), ferryMode))).map(
                 e -> (TransferZone)e.getKey()).collect(Collectors.toList());
-    // reduce to transfer zones with only FERRY supporting conectoids, in which case it means they are not connected
-    // to the land network andd need an additional added connection
+    // reduce to transfer zones with only FERRY supporting connectoids, in which case it means they are not connected
+    // to the land network and need an additional added connection
     var ferryTransferZonesDisconnectedFromLandNetwork =
         ferryTransferZones.stream().filter( tz -> connectoidsByTransferZoneMapping.get(tz).stream().anyMatch(
             transferConnectoid -> !transferConnectoid.isModeAllowed(tz, ferryMode))).collect(Collectors.toList());
