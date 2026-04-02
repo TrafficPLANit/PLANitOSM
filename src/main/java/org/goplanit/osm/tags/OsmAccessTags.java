@@ -28,13 +28,12 @@ public class OsmAccessTags {
    * <li>customers</li>
    * <li>use_sidepath</li>
    * <li>separate</li>
-   * <li>dismount</li>
    * <li>discouraged</li>
    * </ul>
    */  
   protected static final String[] NEGATIVE_ACCESS_VALUE_TAGS = 
     {OsmAccessTags.NO, OsmAccessTags.NONE, OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY,
-            OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE, OsmAccessTags.DISMOUNT,
+            OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE,
             OsmAccessTags.DISCOURAGED};
   
   /** key: access tag */

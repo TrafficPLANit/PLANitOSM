@@ -38,11 +38,14 @@ public class BasicOsmReaderTest {
   
   private static final String RESOURCE_DIR = Path.of(".","src","test","resources").toString();
 
-  private static final String SYDNEYCBD_2023_OSM = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
+  private static final String SYDNEYCBD_2023_OSM =
+      Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
   
-  private static final String SYDNEYCBD_2023_PBF = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
+  private static final String SYDNEYCBD_2023_PBF =
+      Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
   
-  private static final String EXAMPLE_REMOTE_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
+  private static final String EXAMPLE_REMOTE_URL =
+      "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
 
   /** configure for parsing road and pt infrastructure networks (activate rail and disable walk and cycle infrastructure)
    *
@@ -165,7 +168,7 @@ public class BasicOsmReaderTest {
       assertEquals(104, zoning.getTransferZones().size() );
       assertEquals(8, zoning.getTransferZoneGroups().size());
       assertEquals(0, zoning.getOdConnectoids().size());
-      assertEquals(131, zoning.getTransferConnectoids().size());
+      assertEquals(157, zoning.getTransferConnectoids().size());
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

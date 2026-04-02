@@ -153,8 +153,8 @@ public class OsmWaterwayTags {
   }
 
   /**
-   * Find the key tag for a given waterway type, e.g., when 'ferry' is provided, the key would be 'route', when primary is provided
-   * is would return 'ferry' as key
+   * Find the key tag for a given waterway type, e.g., when 'ferry' is provided, the key would be 'route',
+   * when primary is provided is would return 'ferry' as key
    *
    * @param waterwayType to search
    * @return found key tag, null if no match
@@ -169,8 +169,8 @@ public class OsmWaterwayTags {
   }
 
   /**
-   * Verify if a key tag for a given waterway type exists, e.g., when 'ferry' is provided, a valid key would be 'route', when 'primary' is provided
-   * a valid key would be 'ferry', if no valid key exists, false is returned
+   * Verify if a key tag for a given waterway type exists, e.g., when 'ferry' is provided, a valid key would
+   * be 'route', when 'primary' is provided a valid key would be 'ferry', if no valid key exists, false is returned
    *
    * @param waterwayType to search
    * @return if found true, false otherwise

@@ -33,6 +33,7 @@ import org.goplanit.utils.mode.*;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.DirectedConnectoid;
@@ -74,7 +75,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * we must be able to spatially find those nodes spatially because they are not referenced by the station or PLANit link explicitly, this is what we do here. 
    * It is not placed in the zoning data as it is only utilised in post-processing */
   private Map<MacroscopicNetworkLayer, Quadtree> spatiallyIndexedOsmNodesInternalToPlanitLinks = null;
-  
+
   /** A stand alone station can either support a single platform when it is road based or two stop_locations for rail (on either side). This is 
    * reflected in the returned max matches. The search distance is based on the settings where a road based station utilises the stop to waiting
    * area search distance whereas a rail based one uses the station to waiting area search distance
@@ -809,18 +810,25 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
   /**
    * Connect the provided transfer zone to the nearest land network via a connectoid with the appropriate (inferred)
-   * land modes given it falls within max distance.
+   * land modes given it falls within max distance. Since connectoids are directed and we are not dealing with fixed
+   * routes but access for example pedestrians, we must create a connectoid for each reasonable entry link segment
+   * into the chosen land network access node that supports this mode.
    *
    * @param transferZone        to connect
    * @param directedConnectoids existing connectoids of zone
    * @param ferryMode           PLANit ferry mode
    * @param allAvailableModes   all available modes in the network
+   * @return true when for all non ferry land modes a connectoid is now available, false otherwise
    */
-  private void connectFerryTransferZoneToLandNetwork(
+  private boolean connectFerryTransferZoneToLandNetwork(
       TransferZone transferZone,
       Set<DirectedConnectoid> directedConnectoids,
       PredefinedMode ferryMode,
       Modes allAvailableModes) {
+
+    final boolean suppressSpatialWarnings =
+        !fallsWithinSpatiallyEligibleBoundingArea(transferZone, false);
+    boolean success = true;
 
     /* find all on-ferry modes that should be able to get to the transfer zone as they are allowed on the ferry */
     var onFerryNonFerryModes = new TreeSet<Mode>();
@@ -839,7 +847,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       LOGGER.warning(String.format("Expected at least one on-ferry mode for ferry access link segments for " +
           "transfer zone (%s), but none found, unable to connect to land network without land modes",
           transferZone.getIdsAsString()));
-      return;
+      return !success;
     }
 
     // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
@@ -864,7 +872,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           onFerryModesOnAltEntryLinkSegment.retainAll(altEntryLinkSegment.getAllowedModes());
           // create connectoid and remove these modes from remaining onFerry modes to provide
           onFerryModesOnAltEntryLinkSegment.forEach(onFerryMode -> {
-            boolean success = getConnectoidHelper().extractDirectedConnectoidsForModeLinkSegments(
+            boolean modeSuccess = getConnectoidHelper().extractDirectedConnectoidsForModeLinkSegments(
                 transferZone,
                 onFerryMode,
                 accessNode,
@@ -872,7 +880,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                 true,
                 false
             );
-            if (success) {
+            if (modeSuccess) {
               onFerryNonFerryModes.remove(onFerryMode);
             }
           });
@@ -884,51 +892,78 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       } // end connectoids
     }
 
-    // if any remaining onFerryNonFerryModes exist we are not able to use existing link segments and we will need to
-    // create new physical links in the network to connect and use those as access link segments instead
     if(onFerryNonFerryModes.isEmpty()){
-      if(getReferenceNetwork().getTransportLayers().size() > 1){
-        LOGGER.warning("Code not yet adjusted to support more than one layer, assuming all modes reside on same" +
-            "layer!");
-      }
-      var maxSearchRadius = getSettings().getFerryStopToNearbyLandNetworkSearchRadiusMeters();
-      var networkLayer = this.getReferenceNetwork().getLayerByMode(onFerryNonFerryModes.first());
-      var boundingBox = getGeoUtils().createBoundingBox(
-          transferZone.getGeometry(true).getEnvelopeInternal(), maxSearchRadius);
-
-      Collection<MacroscopicLink> spatiallyMatchedLinks =
-          getZoningReaderData().getPlanitData().findLinksSpatially(networkLayer, boundingBox);
-
-      spatiallyMatchedLinks.removeIf(l -> !l.isAnyModeAllowedOnAnySegment(onFerryNonFerryModes));
-      if(spatiallyMatchedLinks.isEmpty()){
-        LOGGER.warning(String.format("DISCARD: Ferry waiting area %S, no land mode compatible OSM ways within %.2fm " +
-                "found to attached to land network",
-            transferZone.getIdsAsString(), maxSearchRadius));
-        return;
-      }
-
-      // find closest spatially matched link per nonFerryMode remaining then create and attach
-      for(var currOnFerryNonFerryMode : onFerryNonFerryModes){
-        var modeCompatibleNearbyLinks = spatiallyMatchedLinks.stream().filter(
-                l -> l.isModeAllowedOnAnySegment(currOnFerryNonFerryMode)).collect(Collectors.toList());
-
-        var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
-                transferZone.getGeometry(true).getCentroid().getCoordinate(),
-                modeCompatibleNearbyLinks, maxSearchRadius, false, getGeoUtils());
-        assert closestLinkWithDistance != null;
-        var closestNodeWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
-                transferZone.getGeometry(true).getCentroid().getCoordinate(),
-                Set.of(closestLinkWithDistance.first().getVertexA(),closestLinkWithDistance.first().getVertexB()),
-                maxSearchRadius, false, getGeoUtils());
-        assert closestNodeWithDistance != null;
-        // we found our result --> create link between ferry stop (using existing access node of Ferry mode connectoid)
-        // and our new found closest onFerryNonFerryMode (if not already created).
-
-        //TODO
-
-      }
+      return success;
     }
 
+    // if any remaining onFerryNonFerryModes exist we are not able to use existing link segments and we will need to
+    // create new physical links in the network to connect and use those as access link segments instead
+    if(getReferenceNetwork().getTransportLayers().size() > 1){
+      LOGGER.warning("Code not yet adjusted to support more than one layer, assuming all modes reside on same" +
+          "layer!");
+    }
+    var maxSearchRadius = getSettings().getFerryStopToNearbyLandNetworkSearchRadiusMeters();
+    var networkLayer = this.getReferenceNetwork().getLayerByMode(onFerryNonFerryModes.first());
+    var boundingBox = getGeoUtils().createBoundingBox(
+        transferZone.getGeometry(true).getEnvelopeInternal(), maxSearchRadius);
+
+    Collection<MacroscopicLink> spatiallyMatchedLinks =
+        getZoningReaderData().getPlanitData().findLinksSpatially(networkLayer, boundingBox);
+    // reduce to any on-ferry mode supporting links that are not ferry links
+    spatiallyMatchedLinks.removeIf(l -> !l.isAnyModeAllowedOnAnySegment(onFerryNonFerryModes) ||
+        l.isModeAllowedOnAnySegment(ferryMode));
+    if(spatiallyMatchedLinks.isEmpty()){
+      if(!suppressSpatialWarnings) {
+        LOGGER.warning(String.format("DISCARD: Ferry waiting area %s, no land mode compatible OSM ways within %.2fm " +
+                "found (for modes: [%s]) to attached to land network",
+            transferZone.getIdsAsString(), maxSearchRadius,
+            onFerryNonFerryModes.stream().map(Mode::getName).collect(Collectors.joining(","))));
+      }
+      return !success;
+    }
+
+    // find closest spatially matched link per nonFerryMode remaining then create and attach
+    for(var currOnFerryNonFerryMode : onFerryNonFerryModes){
+      // find nearest (single) mode compatible link
+      var modeCompatibleNearbyLinks = spatiallyMatchedLinks.stream().filter(
+              l -> l.isModeAllowedOnAnySegment(currOnFerryNonFerryMode)).collect(Collectors.toList());
+      var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+              transferZone.getGeometry(true).getCentroid().getCoordinate(),
+              modeCompatibleNearbyLinks, maxSearchRadius, suppressSpatialWarnings, getGeoUtils());
+      if(closestLinkWithDistance == null){
+        if(!suppressSpatialWarnings) {
+          LOGGER.warning(String.format("Mode [%s] cannot access ferry waiting area (%s) as no " +
+                  "compatible OSM ways within %.2fm found",
+              currOnFerryNonFerryMode.getName(), transferZone.getIdsAsString(), maxSearchRadius));
+        }
+        success = false;
+        continue;
+      }
+      // determine preferred access node based on closeness
+      var closestCompatibleLandNodeWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+              transferZone.getGeometry(true).getCentroid().getCoordinate(),
+              Set.of(closestLinkWithDistance.first().getVertexA(),closestLinkWithDistance.first().getVertexB()),
+              maxSearchRadius, suppressSpatialWarnings, getGeoUtils());
+      assert closestCompatibleLandNodeWithDistance != null;
+      // determine mode compatible incoming link segments of closest node, need to check mode again as we check all
+      // entries from node not just the closest link attached to it. This way pedestrians can access from either side
+      // if eligible for sensible routing
+      Stream<LinkSegment> entrySegments =
+          (Stream<LinkSegment>) closestCompatibleLandNodeWithDistance.first().streamEntrySegments();
+      Collection<LinkSegment> eligibleEntrySegmentsOfClosestNode =
+          entrySegments.filter(ls -> ls.isModeAllowed(currOnFerryNonFerryMode)).collect(Collectors.toList());
+
+      // we found our result --> create or supplement existing connectoid
+      getConnectoidHelper().extractDirectedConnectoidsForModeLinkSegments(
+          transferZone,
+          currOnFerryNonFerryMode,
+          (Node)closestCompatibleLandNodeWithDistance.first(),
+          eligibleEntrySegmentsOfClosestNode,
+          false,
+          suppressSpatialWarnings);
+    }
+
+    return success;
   }
 
   /**
@@ -1523,6 +1558,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
     // implicitly allowed modes in case no explicit modes are set on connectoid
     var allAvailableModes = getReferenceNetwork().getModes();
+    var nonFerryModes = allAvailableModes.stream().filter(
+        m -> !m.getPredefinedModeType().equals(PredefinedModeType.FERRY)).collect(Collectors.toList());
 
     // create index from transfer zone to transfer connectoid for efficient checking
     var connectoidsByTransferZoneMapping = getZoning().getTransferConnectoids().createIndexByAccessZone();
@@ -1534,18 +1571,25 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // reduce to transfer zones with only FERRY supporting connectoids, in which case it means they are not connected
     // to the land network and need an additional added connection
     var ferryTransferZonesDisconnectedFromLandNetwork =
-        ferryTransferZones.stream().filter( tz -> connectoidsByTransferZoneMapping.get(tz).stream().anyMatch(
-            transferConnectoid -> !transferConnectoid.isModeAllowed(tz, ferryMode))).collect(Collectors.toList());
+        ferryTransferZones.stream().filter( tz -> connectoidsByTransferZoneMapping.get(tz).stream().noneMatch(
+            transferConnectoid -> transferConnectoid.isAnyModeAllowed(tz, nonFerryModes))).collect(Collectors.toList());
+    LOGGER.info(String.format("Identified %d (%.2f%%) disconnected ferry stops from land network",
+        ferryTransferZonesDisconnectedFromLandNetwork.size(),
+        (double)ferryTransferZonesDisconnectedFromLandNetwork.size()*100/ferryTransferZones.size()));
 
     // for each identified connect it to the land network
-    ferryTransferZonesDisconnectedFromLandNetwork.forEach( tz ->
-        connectFerryTransferZoneToLandNetwork(
-            tz, connectoidsByTransferZoneMapping.get(tz), ferryMode, allAvailableModes) );
+    var numSuccess = ferryTransferZonesDisconnectedFromLandNetwork.stream().map( tz ->
+            connectFerryTransferZoneToLandNetwork(
+            tz, connectoidsByTransferZoneMapping.get(tz), ferryMode, allAvailableModes) ).map(b -> b ? 1 : 0).
+        reduce(0, Integer::sum);
+    LOGGER.info(String.format("Connected %d (%.2f%%) disconnected ferry stops to land network",
+        numSuccess, (double)numSuccess*100/ferryTransferZonesDisconnectedFromLandNetwork.size()));
   }
 
   /** extract a regular Ptv2 stop position that is part of a stop_area relation and is registered before as a
    * stop_position in the main processing phase.
-   * Extract based on description in <a href="https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position">OSM wiki</a>
+   * Extract based on description in
+   * <a href="https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position">OSM wiki</a>
    *
    * @param osmNode node that is the stop_position in stop_area relation
    * @param transferZoneGroup the group this stop position is allowed to relate to

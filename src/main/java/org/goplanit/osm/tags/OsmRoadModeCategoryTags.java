@@ -1,11 +1,7 @@
 package org.goplanit.osm.tags;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -136,7 +132,7 @@ public class OsmRoadModeCategoryTags {
   }   
     
   /**
-   * collect all the OSM modes that fit within the given Osm mode category
+   * collect all the OSM modes that fit within the given OSM mode category (unmodifiable)
    * 
    * @param osmModeCategory to collect modes for
    * @return modes within given category, or empty set if not present
@@ -146,7 +142,7 @@ public class OsmRoadModeCategoryTags {
       LOGGER.warning(String.format(
               "OSM mode category %s is not listed among available categories, ignored",osmModeCategory));
     }
-    return osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<>());
+    return Collections.unmodifiableCollection(osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<>()));
   }  
   
   /**

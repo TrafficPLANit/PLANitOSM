@@ -50,10 +50,8 @@ public class OsmWaterwayTypeConfiguration implements OsmInfrastructureConfigurat
 
       /* the waterway types that will be parsed by default, i.e., supported based on ferry=_highway_type_ key. */
       {
-        final var defaultSupported = new HashSet<String>();
-        OsmWaterwayTags.getAllSupportedHighwayTypesAsWaterWayTypes().forEach(defaultSupported::add);
-        final var defaultUnSupported = new HashSet<String>();
-        OsmWaterwayTags.getAllUnsupportedHighwayTypesAsWaterWayTypes().forEach(defaultUnSupported::add);
+        final var defaultSupported = new HashSet<>(OsmWaterwayTags.getAllSupportedHighwayTypesAsWaterWayTypes());
+        final var defaultUnSupported = new HashSet<>(OsmWaterwayTags.getAllUnsupportedHighwayTypesAsWaterWayTypes());
         DEFAULT_FERRYHIGHWAY_CONFIGURATION = new OsmInfrastructureConfigurationImpl(
             OsmWaterwayTags.FERRY, defaultSupported, defaultUnSupported);
       }

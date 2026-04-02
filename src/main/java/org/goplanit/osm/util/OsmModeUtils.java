@@ -123,7 +123,8 @@ public class OsmModeUtils {
     return explicitlyIncludedOsmModes;       
   }  
   
-  /** collect all OSM road going modes with {@code key=<OSM mode name>} value=the access value tags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM road going modes with {@code key=<OSM mode name>} value=the access value tags that are passed in.
+   * Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param tags to find explicitly included/excluded (planit) modes from
@@ -134,18 +135,32 @@ public class OsmModeUtils {
     return getPostfixedOsmRoadModesWithValueTag(null, tags, modeAccessValueTags);
   }
   
-  /** collect all OSM rail modes with {@code key=<OSM mode name> value=the access value tags that are passed in}. Note that the actual value of the tags will be stripped from special characters
+  /** collect all OSM rail modes with {@code key=<OSM mode name> value=the access value tags that are passed in}.
+   * Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
-   * @param tags to find explicitly included/excluded (planit) modes from
+   * @param tags to find explicitly included/excluded (PLANit) modes from
    * @param modeAccessValueTags used to filter the modes by (yes/no)
    * @return modes found with specified value tag
    */
   public static Set<String> getOsmRailModesWithValueTag(Map<String, String> tags, final String... modeAccessValueTags){
     return getOsmModesWithValueTag(tags, OsmRailModeTags.getSupportedRailModeTags(), modeAccessValueTags);        
-  }  
-  
-  /** collect all OSM modes with {@code key=<OSM mode name>:postFix=} any of the modeAccessValueTags that are passed in. Note that the actual value of the tags will be stripped from special characters
+  }
+
+  /** collect all OSM water modes with {@code key=<OSM mode name> value=the access value tags that are passed in}.
+   * Note that the actual value of the tags will be stripped from special characters
+   * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
+   *
+   * @param tags to find explicitly included/excluded (PLANit) modes from
+   * @param modeAccessValueTags used to filter the modes by (yes/no)
+   * @return modes found with specified value tag
+   */
+  public static Set<String> getOsmWaterModesWithValueTag(Map<String, String> tags, final String... modeAccessValueTags){
+    return getOsmModesWithValueTag(tags, OsmWaterModeTags.getSupportedWaterModeTags(), modeAccessValueTags);
+  }
+
+  /** collect all OSM modes with {@code key=<OSM mode name>:postFix=} any of the modeAccessValueTags that are passed in.
+   * Note that the actual value of the tags will be stripped from special characters
    * to make it more universal to match the pre-specified mode access value tags that we expect to be passed in
    * 
    * @param postFix to utilise

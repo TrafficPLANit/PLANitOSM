@@ -215,11 +215,17 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
       LOGGER.info(String.format("%-60s: %s",    "Remove dangling transfer zone groups",
               isRemoveDanglingTransferZoneGroups()));
       LOGGER.info(String.format("%-60s: %s",    "Connect dangling ferry stops to nearby ferry routes (if present)",
-              connectDanglingFerryStopToNearbyFerryRoute));
+              isConnectDanglingFerryStopToNearbyFerryRoute()));
+      if(isConnectDanglingFerryStopToNearbyFerryRoute()) {
+        LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius",
+            getFerryStopToFerryRouteSearchRadiusMeters()));
+      }
       LOGGER.info(String.format("%-60s: %s",    "Connect ferry stops to nearby land network (if eligible)",
-              connectFerryStopToNearbyLandNetwork));
-      LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius",
-              getFerryStopToFerryRouteSearchRadiusMeters()));
+          isConnectFerryStopToNearbyLandNetwork()));
+      if(isConnectFerryStopToNearbyLandNetwork()) {
+        LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to land network search radius",
+            getFerryStopToNearbyLandNetworkSearchRadiusMeters()));
+      }
     }
   }
 

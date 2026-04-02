@@ -160,7 +160,8 @@ public class MelbourneOsm2PlanitTest {
     final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_network_polybb").toAbsolutePath().toString();
     try {
 
-      var inputSettings = new OsmNetworkReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+      var inputSettings =
+          new OsmNetworkReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
       var outputSettings = new PlanitNetworkWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       inputSettings.setConsolidateLinkSegmentTypes(true);

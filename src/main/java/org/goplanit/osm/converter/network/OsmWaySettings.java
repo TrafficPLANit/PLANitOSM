@@ -85,9 +85,9 @@ public abstract class OsmWaySettings {
     } 
   }
 
-  /** Add a new default the speed limit for a currently unregistered key value way tag value, e.g. railway=typeValue. Only to be
-   * used for custom tags that are added on-the-fly by the user, otherwise we should go through the "normal" default initialisation
-   * procedure.
+  /** Add a new default the speed limit for a currently unregistered key value way tag value, e.g. railway=typeValue.
+   * Only to be used for custom tags that are added on-the-fly by the user, otherwise we should go through the
+   * "normal" default initialisation procedure.
    *
    * @param osmWayKey key to use
    * @param osmWayValue way value type to collect default speed limit for
@@ -111,16 +111,18 @@ public abstract class OsmWaySettings {
    * @param speedLimitDefaults to use
    * @param osmModeAccessDefaults to use
    */
-  protected OsmWaySettings(OsmInfrastructureConfiguration infrastructureTypeConfiguration, OsmSpeedLimitDefaultsCategory speedLimitDefaults, OsmModeAccessDefaultsCategory osmModeAccessDefaults) {
+  protected OsmWaySettings(OsmInfrastructureConfiguration infrastructureTypeConfiguration,
+                           OsmSpeedLimitDefaultsCategory speedLimitDefaults,
+                           OsmModeAccessDefaultsCategory osmModeAccessDefaults) {
     this.infrastructureTypeConfiguration = infrastructureTypeConfiguration;
     this.speedLimitDefaults = speedLimitDefaults;
     this.osmModeAccessDefaults = osmModeAccessDefaults;
   }
 
   /**
-   * explicitly exclude all osmWay types that are included but have no more activated modes due to deactivation of their default assigned modes.
-   * Doing so avoids the reader to log warnings that supported way types cannot be injected in the network because they
-   * have no viable modes attached
+   * explicitly exclude all osmWay types that are included but have no more activated modes due to deactivation of
+   * their default assigned modes. Doing so avoids the reader to log warnings that supported way types cannot be
+   * injected in the network because they have no viable modes attached
    * 
    */
   public void excludeOsmWayTypesWithoutActivatedModes() {
@@ -262,7 +264,8 @@ public abstract class OsmWaySettings {
   
   /* speed limits */
     
-  /** Collect the speed limit for a given way tag value, e.g. railway=typeValue, based on the defaults provided (typically set by country)
+  /** Collect the speed limit for a given way tag value, e.g. railway=typeValue, based on the defaults provided
+   * (typically set by country)
    *
    * @param osmWayKey key to use
    * @param osmWayValue way value type to collect default speed limit for
@@ -272,7 +275,8 @@ public abstract class OsmWaySettings {
     return speedLimitDefaults.getSpeedLimit(osmWayKey, osmWayValue);
   }  
   
-  /** Collect the default speed limit for a given way tag value, where we extract the key and value from the passed in tags, if available
+  /** Collect the default speed limit for a given way tag value, where we extract the key and value from the
+   * passed in tags, if available
    * 
    * @param osmWayKey that is considered valid and should be used to collect way type value
    * @param tags to extract way key value pair from (highway,railway keys currently supported)
@@ -282,7 +286,8 @@ public abstract class OsmWaySettings {
     if(tags.containsKey(osmWayKey)){
       return getDefaultSpeedLimitByOsmTypeValue(osmWayKey, tags.get(osmWayKey));
     }else {
-      throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit", osmWayKey);
+      throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit",
+          osmWayKey);
     }    
   }   
   
@@ -304,7 +309,8 @@ public abstract class OsmWaySettings {
     activatedOsmMode2PlanitModeTypeMap.put(osmMode, defaultOsmMode2PlanitPredefinedModeTypeMap.get(osmMode));
   }   
   
-  /** Add/overwrite a mapping from OSM mode to PLANit mode type. This means that the osmMode will be added to the PLANit network once parsing commences
+  /** Add/overwrite a mapping from OSM mode to PLANit mode type. This means that the osmMode will be added to the
+   * PLANit network once parsing commences
    * 
    * @param osmMode to set
    * @param planitModeType to map it to
@@ -347,7 +353,8 @@ public abstract class OsmWaySettings {
    * @param toBeRemovedModes remove all these modes, except...
    * @param remainingOsmRoadModes to explicitly keep from the osmModesToRemove
    */
-  protected void deactivateAllModesExcept(final Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
+  protected void deactivateAllModesExcept(
+      final Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
     Collection<String> remainingRoadModes = remainingOsmRoadModes==null ? new ArrayList<>() : remainingOsmRoadModes;
     Collection<String> finalToBeRemovedModes = new TreeSet<>(toBeRemovedModes);
     finalToBeRemovedModes.removeAll(remainingRoadModes);
@@ -407,7 +414,8 @@ public abstract class OsmWaySettings {
    * @param osmModesToCheck modes to select from
    * @return allowed OsmModes found
    */
-  protected Set<String> collectAllowedOsmWayModes(String osmWayKey, String osmWayValueType, Collection<String> osmModesToCheck) {
+  protected Set<String> collectAllowedOsmWayModes(
+      String osmWayKey, String osmWayValueType, Collection<String> osmModesToCheck) {
     return osmModesToCheck.stream().filter( osmMode ->
         isModeAllowedOnOsmWay(osmWayKey, osmWayValueType, osmMode)).collect(Collectors.toSet());
   }  
@@ -422,9 +430,9 @@ public abstract class OsmWaySettings {
     osmModeAccessDefaults.addAllowedModes(osmWayKey, osmWayTypeValue, osmModes);
   }
 
-  /** register a custom new way key-value pair with defaults to parse outside the default supported tags. It is assumed it has
-   * been verified that this combination does not exist in the regular tagging that is supported beforehand, so it will just be
-   * added without further checking at this point.
+  /** register a custom new way key-value pair with defaults to parse outside the default supported tags. It is
+   * assumed it has been verified that this combination does not exist in the regular tagging that is supported
+   * beforehand, so it will just be added without further checking at this point.
    *
    * @param osmWayKey to use
    * @param osmWayTypeValue to use
@@ -435,12 +443,14 @@ public abstract class OsmWaySettings {
    * @return true when registration was successful, false otherwise
    */
   protected boolean registerNewSupportedOsmWayType(
-          String osmWayKey, String osmWayTypeValue, double speedLimitKmh, double capacityPerLanePcuH, double maxDensityPerLanePcuH, String... allowedOsmModes) {
+          String osmWayKey, String osmWayTypeValue, double speedLimitKmh, double capacityPerLanePcuH,
+          double maxDensityPerLanePcuH, String... allowedOsmModes) {
 
     this.infrastructureTypeConfiguration.activate(osmWayTypeValue);
     boolean success = addDefaultSpeedLimit(osmWayKey, osmWayTypeValue, speedLimitKmh);
     addAllowedOsmWayModes(osmWayKey, osmWayTypeValue, Arrays.asList(allowedOsmModes));
-    overwriteOsmWayTypeDefaultCapacityMaxDensity(osmWayKey, osmWayTypeValue, capacityPerLanePcuH, maxDensityPerLanePcuH);
+    overwriteOsmWayTypeDefaultCapacityMaxDensity(
+        osmWayKey, osmWayTypeValue, capacityPerLanePcuH, maxDensityPerLanePcuH);
     return success;
   }
   

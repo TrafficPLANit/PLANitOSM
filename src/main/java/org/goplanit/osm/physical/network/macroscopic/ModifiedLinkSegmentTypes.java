@@ -15,8 +15,9 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
  * Helper class that tracks all modified, i.e., custom link segment types, that differ from the default link segment types
  * created for open street map road and rail way types.
  * 
- * All custom link segment types are stored by their original link segment type (id) that they are based on. To make it efficient to look them up
- * when verifying if some potentential new custom link segment type already exists (or not)
+ * All custom link segment types are stored by their original link segment type (id) that they are based on.
+ * To make it efficient to look them up when verifying if some potential new custom link segment type already exists
+ * (or not)
  * 
  * @author markr
  *
@@ -131,7 +132,8 @@ public class ModifiedLinkSegmentTypes {
   protected final Map<MacroscopicLinkSegmentType,ModifiedLinkSegmentTypesModes> modifiedLinkSegmentTypeModes =
           new HashedMap<>();
 
-  /** Verify if a modified link segment type with the provided added/removed modes exist for the given original link segment type
+  /** Verify if a modified link segment type with the provided added/removed modes exist for the given original
+   * link segment type
    * 
    * @param original original type
    * @param addedModes the added modes, can be null or empty in case no modes were added

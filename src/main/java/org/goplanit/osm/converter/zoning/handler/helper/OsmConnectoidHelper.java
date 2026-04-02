@@ -703,7 +703,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param planitModeType mode type this connectoid is allowed access for
    * @param suppressLogging when true do not log anything, false otherwise
    * @param geoUtils used when location of transfer zone relative to infrastructure is to be determined
-   * @return true when one or more connectoids have successfully been generated or existing connectoids have bee reused, false otherwise
+   * @return true when one or more connectoids have successfully been generated or existing connectoids have be
+   * reused, false otherwise
    */
   public boolean extractDirectedConnectoidsForMode(
       Point location,
@@ -816,7 +817,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not
    *                                       enforce filtering based on criteria that might not have been properly tagged,
    *                                       when false, we proceed applying as many filter criteria as possible to get
-   *                                       best possible match based on available tagging, e.g., vertical layer information
+   *                                       best possible match based on available tagging, e.g., vertical layer
+   *                                       information
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
    * @param suppressLogging when true do not log anything, false otherwise
@@ -832,7 +834,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean suppressLogging,
       PlanitJtsCrsUtils geoUtils){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
-    return extractDirectedConnectoidsForMode(osmNodeLocation, locationIsKnownOsmStopPosition, transferZone, planitModeType, suppressLogging, geoUtils);
+    return extractDirectedConnectoidsForMode(
+        osmNodeLocation, locationIsKnownOsmStopPosition, transferZone, planitModeType, suppressLogging, geoUtils);
   }
   
   /** create and/or update directed connectoids for the transfer zones and mode combinations when eligible, based on
@@ -867,8 +870,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       if(!getNetworkToZoningData().getNetworkLayerData(networkLayer).isOsmNodePresentInLayer(osmNode)
               && !suppressLogging) {
         LOGGER.warning(
-            String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type deactivated " +
-                "or node dangling)",osmNode.getId(), modeType));
+            String.format("DISCARD: stop_position %d not present in network layer for %s (residing road type " +
+                "deactivated or node dangling)",osmNode.getId(), modeType));
         continue;
       }
       
@@ -894,16 +897,18 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     return success;
   }  
   
-  /** create connectoids not based on OSM node location but based on auto-generated geographic location on the provided link's link segments by
-   * finding either a close enough existing coordinate (OSM node), or if not close enough a newly created coordinate at the appropriate position.
-   * then create connectoids accordingly by breaking the link in these locations
+  /** create connectoids not based on OSM node location but based on auto-generated geographic location on the provided
+   * link's link segments by finding either a close enough existing coordinate (OSM node), or if not close enough a
+   * newly created coordinate at the appropriate position. Then create connectoids accordingly by breaking the link in
+   * these locations
    * 
    * @param osmWaitingAreaId the waiting area pertains to
    * @param waitingAreaGeometry geometry of the waiting area
    * @param accessLink to create connectoids on by breaking it
    * @param transferZone to register connectoids on
    * @param planitAccessModeType eligible mode type for the station
-   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
+   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that
+   *                                                   we allow
    * @param networkLayer the modes relate to
    * @param suppressLogging when true suppress logging, false otherwise
    */

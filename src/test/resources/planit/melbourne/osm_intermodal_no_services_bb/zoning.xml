@@ -9388,7 +9388,34 @@
             <connectoid tzrefs="894" lsref="60334" id="1576" modes="tram">
                 <length>0.0</length>
             </connectoid>
+            <connectoid tzrefs="907" lsref="2795" id="1577" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="908" lsref="6507" id="1578" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="908" lsref="6502" id="1579" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
             <connectoid tzrefs="737" lsref="58822" id="158" modes="tram">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="908" lsref="36816" id="1580" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="909,910" lsref="45297" id="1581" modes="bicycle">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="909,910" lsref="18977" id="1582" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="909,910" lsref="16734" id="1583" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="909,910" lsref="43396" id="1584" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="914" lsref="10015" id="1585" modes="pedestrian">
                 <length>0.0</length>
             </connectoid>
             <connectoid tzrefs="758" lsref="15788" id="159" modes="tram">

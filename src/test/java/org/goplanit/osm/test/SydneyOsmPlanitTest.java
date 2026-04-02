@@ -165,8 +165,8 @@ public class SydneyOsmPlanitTest {
   }
 
   /**
-   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network and zoning (containing stops but no services).
-   * We do so for rail, bus, and ferry.
+   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
+   * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
    */
   @Test
   public void testOsm2PlanitIntermodalNoServices() {
@@ -184,8 +184,60 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().getRailwaySettings().activateParser(true);
       readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
 
+      // tested separately in #testOsm2PlanitIntermodalNoServicesConnectFerryToLand
+      readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(false);
+
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
+
+      var writerSettings =
+          new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+
+
+      /* execute */
+      Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
+
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertZoningFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+
+    } catch (final Exception e) {
+      e.printStackTrace();
+      LOGGER.severe( e.getMessage());
+      fail("testOsm2PlanitIntermodalNoServices");
+    }
+  }
+
+  /**
+   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
+   * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
+   * <p>
+   * In addition, we explicitly create mode compatible connectoids to the land network for ferry stops that otherwise
+   * would only connect to the ferry network but not the land network due to incomplete or incompatible OSM tagging
+   * for such transfers.
+   * </p>
+   */
+  @Test
+  public void testOsm2PlanitIntermodalNoServicesConnectFerryToLand() {
+
+    final Path PLANIT_OUTPUT_DIR =
+        Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services_ferry_land");
+    final Path PLANIT_REF_DIR =
+        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services_ferry_land");
+    try {
+
+      var readerSettings =
+          new OsmIntermodalReaderSettings(SYDNEYCBD_2023_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+
+      /* activate rail and water pt infrastructure parsing */
+      readerSettings.getNetworkSettings().getRailwaySettings().activateParser(true);
+      readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
+
+      /* reduce warnings based on verified situations that are identified as ok to ignore */
+      OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
+
+      readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(true);
 
       var writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);

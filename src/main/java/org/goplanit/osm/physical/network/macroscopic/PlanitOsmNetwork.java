@@ -6,9 +6,7 @@ import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmHighwaySettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.OsmRailwaySettings;
-import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.osm.tags.OsmWaterwayTags;
+import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.OsmConstants;
 import org.goplanit.osm.util.OsmTagUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
@@ -293,7 +291,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    *
    * @param nameKey key component of name (may be null)
    * @param nameValue component of the type
-   * @param capacityPcuPerhour capacity in pcu/h
+   * @param capacityPcuPerHour capacity in pcu/h
    * @param maxSpeedKmh of this type
    * @param modes to identify layers to register link segment types on
    * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single entry, otherwise it might have more
@@ -301,14 +299,14 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createDefaultOsmLinkSegmentType(
       String nameKey,
       String nameValue,
-      double capacityPcuPerhour,
+      double capacityPcuPerHour,
       double maxSpeedKmh,
       Collection<? extends Mode> modes) {
 
     return createOsmLinkSegmentType(
             nameKey,
             nameValue,
-            capacityPcuPerhour,
+            capacityPcuPerHour,
             OsmConstants.DEFAULT_MAX_DENSITY_LANE,
             maxSpeedKmh,
             modes);
@@ -1013,8 +1011,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       var waterwaySettings = settings.getWaterwaySettings();
       boolean isOverwrite = waterwaySettings.isDefaultCapacityOrMaxDensityOverwrittenByOsmWaterwayRouteType(osmWayValue);
 
-      Set<PredefinedMode> activatedPlanitModes = getAvailableModesFromModeTypes(settings.getActivatedPlanitModeTypes(
-          waterwaySettings.collectAllowedOsmWaterwayModes(osmWayValue)));
+      var onWaterModes = waterwaySettings.collectAllowedOsmWaterwayModes(osmWayValue);
+      onWaterModes.add(OsmRoadModeTags.FOOT); // pedestrians can always be on a ferry
+
+      Set<PredefinedMode> activatedPlanitModes = getAvailableModesFromModeTypes(
+          settings.getActivatedPlanitModeTypes(onWaterModes));
       if(!activatedPlanitModes.isEmpty()) {
 
         /* create the PLANit link segment type based on OSM tag and possibly overwritten default values*/

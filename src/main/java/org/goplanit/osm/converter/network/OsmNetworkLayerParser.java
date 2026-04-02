@@ -55,7 +55,8 @@ public class OsmNetworkLayerParser {
   /** track all data that maps OSM entities to PLANit entities here */
   private final OsmNetworkReaderLayerData layerData;
     
-  /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of the PLANit link segment types while parsing */
+  /** track all modified link segment types compared to the original defaults used in OSM, for efficient updates of
+   * the PLANit link segment types while parsing */
   private final ModifiedLinkSegmentTypes modifiedLinkSegmentTypes = new ModifiedLinkSegmentTypes();  
   
   // references
@@ -75,40 +76,51 @@ public class OsmNetworkLayerParser {
   /** geo utility instance based on network wide crs this layer is part of */
   private final PlanitJtsCrsUtils geoUtils;
   
-  /** listener with functionality to sync XML ids to unique internal id upon breaking a link, ensures that when persisting
+  /** listener with functionality to sync XML ids to unique internal id upon breaking a link, ensures that
+   * when persisting
    * OSM network by XML id,  we do not have duplicate ids */
   private final SyncXmlIdToIdBreakEdgeHandler syncXmlIdToIdOnBreakLink = new SyncXmlIdToIdBreakEdgeHandler();
   
-  /** listener with functionality to sync XML ids to unique internal id upon breaking a link segment, ensures that when persisting
+  /** listener with functionality to sync XML ids to unique internal id upon breaking a link segment, ensures
+   * that when persisting
    * OSM network by XML id,  we do not have duplicate ids */
-  private final SyncXmlIdToIdBreakEdgeSegmentHandler syncXmlIdToIdOnBreakLinkSegment = new SyncXmlIdToIdBreakEdgeSegmentHandler();
+  private final SyncXmlIdToIdBreakEdgeSegmentHandler syncXmlIdToIdOnBreakLinkSegment =
+      new SyncXmlIdToIdBreakEdgeSegmentHandler();
 
   /**
-   * Collect the default speed limit for a given highway/railway/waterway tag value, where we extract the key and value from the passed in tags, if available
+   * Collect the default speed limit for a given highway/railway/waterway tag value, where we extract the key and value
+   * from the passed in tags, if available
    *
    * @param settings to use
    * @param tags     to extract way key value pair from (highway,railway keys currently supported)
-   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
+   * @return speedLimit in km/h (for highway types, the outside or inside urban area depending on the setting of the
+   * flag setSpeedLimitDefaultsBasedOnUrbanArea is collected)
    */
   private static Double getDefaultSpeedLimitByOsmWayType(OsmNetworkReaderSettings settings, Map<String, String> tags){
     if(tags.containsKey(OsmHighwayTags.getHighwayKeyTag())) {
-      return settings.getHighwaySettings().getDefaultSpeedLimitByOsmHighwayType(tags.get(OsmHighwayTags.getHighwayKeyTag()));
+      return settings.getHighwaySettings().getDefaultSpeedLimitByOsmHighwayType(
+          tags.get(OsmHighwayTags.getHighwayKeyTag()));
     }else if(tags.containsKey(OsmRailwayTags.getRailwayKeyTag())){
-      return settings.getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(tags.get(OsmRailwayTags.getRailwayKeyTag()));
+      return settings.getRailwaySettings().getDefaultSpeedLimitByOsmRailwayType(
+          tags.get(OsmRailwayTags.getRailwayKeyTag()));
     }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
-      return settings.getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
+      return settings.getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(
+          tags.get(OsmWaterwayTags.getUsedKeyTag(tags)));
     }else {
-      throw new PlanItRunTimeException("No default speed limit available, tags do not contain activated highway, railway, or waterway key (tags: %s", tags);
+      throw new PlanItRunTimeException("No default speed limit available, tags do not contain activated highway, " +
+          "railway, or waterway key (tags: %s", tags);
     }
   }
   
   /**
-   * Initialise the layer specific event listeners, for example when modifications are made to the underlying network and based on user configuration
+   * Initialise the layer specific event listeners, for example when modifications are made to the underlying network
+   * and based on user configuration
    * additional action by this parser is required to maintain a consistent network layer result during parsing or after
    */
   private void initialiseEventListeners() {
     networkLayer.getLayerModifier().removeAllListeners();
-    /* whenever a link(segment) is broken we ensure that its XML id is synced with the internal id to ensure it remains unique */
+    /* whenever a link(segment) is broken we ensure that its XML id is synced with the internal id to ensure it
+    remains unique */
     networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLink);
     networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLinkSegment);
   }
@@ -163,7 +175,8 @@ public class OsmNetworkLayerParser {
 
       /* update mode properties */
       if(!toBeAddedModes.isEmpty()) {
-        // we only consider the defaults for type, not any overwritten link speeds in tags here, that is done on the link itself
+        // we only consider the defaults for type, not any overwritten link speeds in tags here, that is done on the
+        // link itself
         double osmWayTypeMaxSpeed = getDefaultSpeedLimitByOsmWayType(settings, tags);
         for(var newMode: toBeAddedModes) {
           double modeMaxSpeedOnLinkType = Math.min(newMode.getMaximumSpeedKmH(),osmWayTypeMaxSpeed);
@@ -197,7 +210,8 @@ public class OsmNetworkLayerParser {
    * @param osmWay the link corresponds to
    */
   private void registerLinkInternalOsmNodes(MacroscopicLink link, int startIndex, int endIndex, OsmWay osmWay){
-    /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally with other links */
+    /* lay index on internal nodes of link to allow for splitting the link if needed due to intersecting internally
+    with other links */
     for(int internalLocationIndex = startIndex; internalLocationIndex <= endIndex;++internalLocationIndex) {
       OsmNode osmnode = networkData.getOsmNodeData().getRegisteredOsmNode(osmWay.getNodeId(internalLocationIndex));
       if(osmnode != null) {
@@ -218,7 +232,8 @@ public class OsmNetworkLayerParser {
    * @param tags to populate link data with
    * @param startNodeIndex of the OSM way that will represent start node of this link
    * @param endNodeIndex of the OSM way that will represent end node of this link
-   * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that is available, when false, we discard it if not complete 
+   * @param allowTruncationIfGeometryIncomplete when true we try to create the link with the part of the geometry that
+   *                                            is available, when false, we discard it if not complete
    * @return created or fetched link
    */
   private MacroscopicLink createAndPopulateLink(
@@ -253,7 +268,8 @@ public class OsmNetworkLayerParser {
       return null;
     }
 
-    /* If truncated to a single node or not available (because fully/partially outside bounding box), it is not valid and mark as such */
+    /* If truncated to a single node or not available (because fully/partially outside bounding box), it is not valid
+    and mark as such */
     if(nodeLastResult == null || nodeFirstResult == null || nodeLastResult.first().idEquals(nodeFirstResult.first())) {
       LOGGER.fine(String.format("DISCARD: OSM way %d truncated to single node, unable to create PLANit link for it",
               osmWay.getId()));
@@ -290,7 +306,13 @@ public class OsmNetworkLayerParser {
     if(link == null) {
 
       link = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
-          nodeFirst, nodeLast, lineString, networkLayer,String.valueOf(osmWay.getId()), tags.get(OsmTags.NAME), geoUtils);
+          nodeFirst,
+          nodeLast,
+          lineString,
+          networkLayer,
+          String.valueOf(osmWay.getId()),
+          tags.get(OsmTags.NAME),
+          geoUtils);
 
       /* register the links vertical layer index (used in the zoning reader for example) */
       getLayerData().setLinkVerticalLayerIndex(link, tags);
@@ -303,12 +325,14 @@ public class OsmNetworkLayerParser {
     return link;      
   }  
   
-  /** given the OSM way tags we construct or find the appropriate link segment type, if no better alternative could be found
+  /** given the OSM way tags we construct or find the appropriate link segment type, if no better alternative could
+   * be found
    * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way.
-   * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag is available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
+   * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag is
+   * available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
    * 
-   * The following access=X value tags correspond to a situation where all modes will be allowed unless specific exclusions are
-   * provided:
+   * The following access=X value tags correspond to a situation where all modes will be allowed unless specific
+   * exclusions are provided:
    * 
    * access=
    *  <ul>
@@ -421,7 +445,8 @@ public class OsmNetworkLayerParser {
         }
         /* check for backward speed limit per lane */
         if(tags.containsKey(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)) {
-          double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES)); 
+          double[] maxSpeedLimitLanes = PlanitOsmUtils.parseMaxSpeedValueLanesKmPerHour(
+              tags.get(OsmSpeedTags.MAX_SPEED_BACKWARD_LANES));
           speedLimitBackwardKmh = ArrayUtils.getMaximum(maxSpeedLimitLanes);           
         }
       }
@@ -563,7 +588,6 @@ public class OsmNetworkLayerParser {
    * @param tags tags that belong to the way
    * @param link the link corresponding to this way
    * @param linkSegmentTypes the link segment types for the forward and backward direction of this way  
-   * @return created link segment, or null if already exists
    */
   private void extractMacroscopicLinkSegments(
       OsmWay osmWay,
@@ -583,14 +607,16 @@ public class OsmNetworkLayerParser {
     Pair<Integer,Integer> lanes = extractDirectionalLanes(osmWay, tags, linkSegmentTypes);
     
     /* create link segment A->B when eligible */
-    MacroscopicLinkSegmentType linkSegmentTypeAb = directionAbIsForward ? linkSegmentTypes.first() : linkSegmentTypes.second();
+    MacroscopicLinkSegmentType linkSegmentTypeAb =
+        directionAbIsForward ? linkSegmentTypes.first() : linkSegmentTypes.second();
     if(linkSegmentTypeAb!=null) {
       Double speedLimit = directionAbIsForward ? speedLimits.first() : speedLimits.second();
       var numLanes = directionAbIsForward ? lanes.first() : lanes.second();
       createAndRegisterMacroscopicLinkSegment(link, linkSegmentTypeAb, true /* A->B */, speedLimit, numLanes);
     }
     /* create link segment B->A when eligible */
-    MacroscopicLinkSegmentType linkSegmentTypeBa = directionAbIsForward ? linkSegmentTypes.second() : linkSegmentTypes.first();
+    MacroscopicLinkSegmentType linkSegmentTypeBa =
+        directionAbIsForward ? linkSegmentTypes.second() : linkSegmentTypes.first();
     if(linkSegmentTypeBa!=null) {
       Double speedLimit = directionAbIsForward ? speedLimits.second() : speedLimits.first();
       var numLanes = directionAbIsForward ? lanes.second() : lanes.first();

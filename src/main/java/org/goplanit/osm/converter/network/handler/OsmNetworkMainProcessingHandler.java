@@ -387,7 +387,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
         
     Map<NetworkLayer,MacroscopicLink> linksByLayer = null;
-    
+
+    if(osmWay.getId() == 462836536L){
+      int bla = 4;
+    }
+
     var directionalLinkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay,tags);
     for(var entry : directionalLinkSegmentTypesByLayer.entrySet()) {
       MacroscopicNetworkLayerImpl networkLayer = entry.getKey();
