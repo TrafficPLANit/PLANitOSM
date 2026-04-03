@@ -4460,7 +4460,7 @@
                 </centroid>
             </zone>
         </transferzones>
-        <transferzoneaccess>
+        <transferzoneaccess network_ref="1" network_layer_ref="all">
             <connectoid tzrefs="499" lsref="9854" id="0" modes="tram">
                 <length>0.0</length>
             </connectoid>

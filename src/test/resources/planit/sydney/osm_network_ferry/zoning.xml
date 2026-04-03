@@ -243,7 +243,7 @@
                 </centroid>
             </zone>
         </transferzones>
-        <transferzoneaccess>
+        <transferzoneaccess network_ref="1" network_layer_ref="all">
             <connectoid tzrefs="5" lsref="5" id="0" modes="ferry">
                 <length>0.0</length>
             </connectoid>

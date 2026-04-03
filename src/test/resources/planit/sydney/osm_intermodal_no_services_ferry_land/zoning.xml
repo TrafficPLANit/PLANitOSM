@@ -829,7 +829,7 @@
                 </centroid>
             </zone>
         </transferzones>
-        <transferzoneaccess>
+        <transferzoneaccess network_ref="1" network_layer_ref="all">
             <connectoid tzrefs="77" lsref="208" id="0" modes="train">
                 <length>0.0</length>
             </connectoid>
