@@ -440,6 +440,17 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
     return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toCollection(TreeSet::new));
   }
+
+  /**
+   * Check if any walk or cycle modes are activated
+   *
+   * @return true when active false otherwise
+   */
+  public boolean isAnyActivatedPlanitModeActiveMode() {
+    return (isHighwayParserActive() ? getHighwaySettings().getActivatedPlanitModeTypesStream() :
+            Stream.<PredefinedModeType>empty()).anyMatch(
+            m -> m.equals(PredefinedModeType.BICYCLE) || m.equals(PredefinedModeType.PEDESTRIAN));
+  }
     
   /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
    * @param osmMode to verify
@@ -859,4 +870,5 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public void setConsolidateLinkSegmentTypes(boolean flag) {
     this.consolidateLinkSegmentTypes = flag;
   }
+
 }

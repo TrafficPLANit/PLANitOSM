@@ -2,15 +2,24 @@ package org.goplanit.osm.converter.zoning.handler.helper;
 
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
+import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.PlanitNetworkLayerUtils;
+import org.goplanit.utils.geo.PlanitEntityGeoUtils;
+import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.zoning.Zoning;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Base class for all parser classes targeting support for parsing a specific PLANit zoning related entity (connectoid, transfer zone etc.)
@@ -32,7 +41,16 @@ class OsmZoningHelperBase {
 
   /** reference network to use */
   private final PlanitOsmNetwork referenceNetwork;
-  
+
+  /** the zoning to work on */
+  private final Zoning zoning;
+
+  /** zoning reader data used to track created entities */
+  private final OsmZoningReaderData zoningReaderData;
+
+  /** utilities for geographic information */
+  private final PlanitJtsCrsUtils geoUtils;
+
   /** Collect the pt settings
    * 
    * @return public transport settings
@@ -47,6 +65,19 @@ class OsmZoningHelperBase {
    */
   protected PlanitOsmNetwork getReferenceNetwork(){
     return referenceNetwork;
+  }
+
+  protected Zoning getZoning(){
+    return zoning;
+  }
+
+  protected OsmZoningReaderData getZoningReaderData(){
+    return zoningReaderData;
+  }
+
+  /** access to geo utils */
+  protected PlanitJtsCrsUtils getGeoUtils(){
+    return geoUtils;
   }
 
   /**
@@ -101,16 +132,91 @@ class OsmZoningHelperBase {
   /** Constructor 
    *
    * @param referenceNetwork to use
+   * @param zoning to use
+   * @param zoningReaderData to use
    * @param network2ZoningData to use
    * @param transferSettings to use
    */
   protected OsmZoningHelperBase(
       final PlanitOsmNetwork referenceNetwork,
+      final Zoning zoning,
+      final OsmZoningReaderData zoningReaderData,
       final OsmNetworkToZoningReaderData network2ZoningData,
       final OsmPublicTransportReaderSettings transferSettings) {
     this.transferSettings = transferSettings;
     this.network2ZoningData = network2ZoningData;
     this.referenceNetwork = referenceNetwork;
+
+    this.zoning = zoning;
+    this.zoningReaderData = zoningReaderData;
+
+    /* gis initialisation */
+    this.geoUtils = new PlanitJtsCrsUtils(referenceNetwork.getCoordinateReferenceSystem());
+  }
+
+  /**
+   * Find all nearby links within given search radius of geometry that do not have any banned modes but will have at
+   * least one of the supported modes
+   *
+   * @param geometry
+   * @param bannedModes
+   * @param supportedModes
+   * @param maxSearchRadius
+   * @return found links
+   */
+  public Collection<MacroscopicLink> findNearbyModeCompatibleLinks(
+          Geometry geometry,
+          Collection<Mode> bannedModes,
+          Collection<Mode> supportedModes,
+          double maxSearchRadius){
+
+    // assume single layer
+    var networkLayer = this.getReferenceNetwork().getLayerByMode(supportedModes.iterator().next());
+    var boundingBox = getGeoUtils().createBoundingBox(
+            geometry.getEnvelopeInternal(), maxSearchRadius);
+
+    Collection<MacroscopicLink> spatiallyMatchedLinks =
+            getZoningReaderData().getPlanitData().findLinksSpatially(networkLayer, boundingBox);
+    // reduce to any active mode supporting links that are not rail-based links
+    spatiallyMatchedLinks.removeIf(l -> !l.isAnyModeAllowedOnAnySegment(supportedModes) ||
+            l.isAnyModeAllowedOnAnySegment(bannedModes));
+
+    return spatiallyMatchedLinks;
+  }
+
+  /**
+   * Find closest mode compatible node (so any attached link with an entry segment supporting the mode constraints)
+   * of provided links that do not have any banned modes but will have at
+   * least one of the supported modes
+   *
+   * @param geometry reference centroid of geometry used
+   * @param mode to check
+   * @param eligibleLinks links to consider
+   * @param maxSearchRadius only consider if within searchradius
+   * @return pair of closest node and distance (null if not available)
+   */
+  public Pair<DirectedVertex, Double> findClosestModeCompatibleNode(
+          Geometry geometry,
+          Mode mode,
+          Collection<MacroscopicLink> eligibleLinks,
+          double maxSearchRadius,
+          boolean suppressSpatialWarnings){
+
+    var refCoord =  geometry.getCentroid().getCoordinate();
+    var modeCompatibleNearbyLinks = eligibleLinks.stream().filter(
+            l -> l.isModeAllowedOnAnySegment(mode)).collect(Collectors.toList());
+    var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
+            refCoord,
+            modeCompatibleNearbyLinks, maxSearchRadius, suppressSpatialWarnings, getGeoUtils());
+    if(closestLinkWithDistance == null){
+      return null;
+    }
+
+    // determine preferred access node based on closeness
+    return PlanitEntityGeoUtils.findPlanitEntityClosest(
+            refCoord,
+            Set.of(closestLinkWithDistance.first().getVertexA(),closestLinkWithDistance.first().getVertexB()),
+            maxSearchRadius, suppressSpatialWarnings, getGeoUtils());
   }
     
 }

@@ -255,6 +255,12 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
         LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to land network search radius",
             getFerryStopToNearbyLandNetworkSearchRadiusMeters()));
       }
+      LOGGER.info(String.format("%-60s: %s",    "Connect rail-based stops to nearby road network (if eligible)",
+              isConnectRailBasedStopToNearbyRoadNetwork()));
+      if(isConnectRailBasedStopToNearbyRoadNetwork()) {
+        LOGGER.info(String.format("%-60s: %.2fm", "Rail-based stop to road network search radius",
+                getRailBasedStopToNearbyRoadNetworkSearchRadiusMeters()));
+      }
     }
   }
 

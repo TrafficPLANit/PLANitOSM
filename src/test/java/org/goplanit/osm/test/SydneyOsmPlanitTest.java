@@ -3,7 +3,6 @@ package org.goplanit.osm.test;
 import org.goplanit.converter.network.NetworkConverter;
 import org.goplanit.converter.network.NetworkConverterFactory;
 import org.goplanit.geoio.converter.intermodal.GeometryIntermodalWriterFactory;
-import org.goplanit.io.converter.intermodal.PlanitIntermodalWriter;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
 import org.goplanit.io.converter.network.PlanitNetworkWriter;
@@ -14,7 +13,6 @@ import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
-import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;
@@ -186,6 +184,7 @@ public class SydneyOsmPlanitTest {
 
       // tested separately in #testOsm2PlanitIntermodalNoServicesConnectFerryToLand
       readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectRailBasedStopToNearbyRoadNetwork(false);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
@@ -213,18 +212,18 @@ public class SydneyOsmPlanitTest {
    * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
    * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
    * <p>
-   * In addition, we explicitly create mode compatible connectoids to the land network for ferry stops that otherwise
-   * would only connect to the ferry network but not the land network due to incomplete or incompatible OSM tagging
-   * for such transfers.
+   * In addition, we explicitly create mode compatible connectoids to the (road) network for ferry and rail stops
+   * that otherwise would only connect to the water/rail network but not the road network due to incomplete or
+   * incompatible OSM tagging for such transfers.
    * </p>
    */
   @Test
-  public void testOsm2PlanitIntermodalNoServicesConnectFerryToLand() {
+  public void testOsm2PlanitIntermodalNoServicesConnectFerryAndRailToRestOfNetwork() {
 
     final Path PLANIT_OUTPUT_DIR =
-        Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services_ferry_land");
+        Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services_ferry_rail_attach");
     final Path PLANIT_REF_DIR =
-        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services_ferry_land");
+        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services_ferry_rail_attach");
     try {
 
       var readerSettings =
@@ -238,6 +237,7 @@ public class SydneyOsmPlanitTest {
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
 
       readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(true);
+      readerSettings.getPublicTransportSettings().setConnectRailBasedStopToNearbyRoadNetwork(true);
 
       var writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
@@ -254,7 +254,7 @@ public class SydneyOsmPlanitTest {
     } catch (final Exception e) {
       e.printStackTrace();
       LOGGER.severe( e.getMessage());
-      fail("testOsm2PlanitIntermodalNoServices");
+      fail("testOsm2PlanitIntermodalNoServicesConnectFerryAndRailToRestOfNetwork");
     }
   }
 

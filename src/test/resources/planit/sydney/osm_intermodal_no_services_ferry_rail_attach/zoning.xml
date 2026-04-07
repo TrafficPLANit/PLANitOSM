@@ -1037,10 +1037,97 @@
             <connectoid tzrefs="61" lsref="2496" id="16" modes="train">
                 <length>0.0</length>
             </connectoid>
+            <connectoid tzrefs="60,61" lsref="2537" id="160" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="60,61" lsref="721" id="161" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="62" lsref="1710" id="162" modes="bicycle">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="62" lsref="739" id="163" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="62" lsref="1404" id="164" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="62" lsref="2089" id="165" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="68,76" lsref="34" id="166" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="68,76" lsref="2330" id="167" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="68,76" lsref="732" id="168" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="68,76" lsref="2332" id="169" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
             <connectoid tzrefs="62" lsref="1622" id="17" modes="train">
                 <length>0.0</length>
             </connectoid>
+            <connectoid tzrefs="69" lsref="39" id="170" modes="bicycle">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="69" lsref="146" id="171" modes="bicycle">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="69,70" lsref="1982" id="172" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="69,70" lsref="491" id="173" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="69,70" lsref="2451" id="174" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="70" lsref="1131" id="175" modes="bicycle">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="71" lsref="839" id="176" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="71" lsref="1090" id="177" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="72" lsref="1306" id="178" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="72" lsref="707" id="179" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
             <connectoid tzrefs="62" lsref="2498" id="18" modes="train">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="73" lsref="609" id="180" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="73" lsref="1328" id="181" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="73" lsref="2028" id="182" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="74,75" lsref="1772" id="183" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="74,75" lsref="1031" id="184" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="74,75" lsref="1235" id="185" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="77,78" lsref="2307" id="186" modes="bicycle,pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="78" lsref="1246" id="187" modes="pedestrian">
+                <length>0.0</length>
+            </connectoid>
+            <connectoid tzrefs="78" lsref="1249" id="188" modes="pedestrian">
                 <length>0.0</length>
             </connectoid>
             <connectoid tzrefs="62" lsref="1624" id="19" modes="train">

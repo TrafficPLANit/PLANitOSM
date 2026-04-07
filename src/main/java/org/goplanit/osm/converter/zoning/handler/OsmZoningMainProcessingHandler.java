@@ -205,7 +205,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }else if(OsmPtv1Tags.PLATFORM.equals(ptv1ValueTag)){
       
       getProfiler().incrementOsmPtv1TagCounter(ptv1ValueTag);
-      getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.PLATFORM, OsmRoadModeTags.BUS, getGeoUtils());
+      getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
+              osmNode, tags, TransferZoneType.PLATFORM, OsmRoadModeTags.BUS);
       
     }else {
       LOGGER.warning(String.format("Unsupported Ptv1 highway=%s tag encountered, ignored",ptv1ValueTag));
@@ -613,8 +614,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
           osmNode,
           tags,
           TransferZoneType.PLATFORM,
-          identifyPtv1DefaultMode(osmNode.getId(), tags, true),
-          getGeoUtils());
+          identifyPtv1DefaultMode(osmNode.getId(), tags, true));
     }   
   }   
   
@@ -633,7 +633,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(!defaultMode.equals(OsmRailModeTags.TRAIN)) {
       LOGGER.warning(String.format("unexpected osm mode identified for Ptv1 railway platform %s,",defaultMode));
     }
-    getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, defaultMode, geoUtils);
+    getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
+            osmEntity, tags, TransferZoneType.PLATFORM, defaultMode);
   }
 
   /** Extract a halt separate from infrastructure, i.e., not on rail tracks, but next to it. Create transfer zone without connectoids for it
@@ -650,7 +651,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(!defaultMode.equals(expectedDefaultMode)) {
       LOGGER.warning(String.format("Unexpected osm mode identified for Ptv1 halt %s",defaultMode));
     }
-    getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(osmNode, tags, TransferZoneType.SMALL_STATION, defaultMode, geoUtils);      
+    getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
+            osmNode, tags, TransferZoneType.SMALL_STATION, defaultMode);
   }    
 
   /** Classic PT infrastructure based on original OSM public transport scheme, for the part related to the key tag highway=platform on an osmNode (no Ptv2 tags)
@@ -659,7 +661,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param tags all tags of the OSM entity
    * @param geoUtils to use
    */  
-  private void extractTransferInfrastructurePtv1HighwayPlatform(OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils){
+  private void extractTransferInfrastructurePtv1HighwayPlatform(
+          OsmEntity osmEntity, Map<String, String> tags, PlanitJtsCrsUtils geoUtils){
     
     /* create transfer zone when at least one mode is supported */
     String defaultOsmMode = identifyPtv1DefaultMode(osmEntity.getId(), tags);
@@ -671,7 +674,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         getPtModeHelper().collectPublicTransportModesFromPtEntity(osmEntity, tags, defaultOsmMode);
     if(OsmModeUtils.hasMappedPlanitMode(modeResult)) {               
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.PLATFORM);
-      getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first(), geoUtils);
+      getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
+              osmEntity, tags, TransferZoneType.PLATFORM, modeResult.first());
     }
   }
 
@@ -705,7 +709,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       }else {
         
         /* bus_stop not on the road, only create transfer zone (waiting area), postpone creation of stop_location */
-        getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(osmEntity, tags, TransferZoneType.POLE, modeResult.first(), geoUtils);
+        getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
+                osmEntity, tags, TransferZoneType.POLE, modeResult.first());
       }
     }
   }   
@@ -869,7 +874,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         getProfiler().incrementOsmPtv2TagCounter(ptv2ValueTag);
         var defaultOsmMode = identifyPtv1DefaultMode(osmWay.getId(), tags, true);
         getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-            osmWay, tags, TransferZoneType.PLATFORM, defaultOsmMode, getGeoUtils());
+            osmWay, tags, TransferZoneType.PLATFORM, defaultOsmMode);
       }
       
       /* stop position */
@@ -1097,7 +1102,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
             
       /* create transfer zone, use tags of relation that contain the PT information */
       getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
-          unprocessedWay, tags, TransferZoneType.PLATFORM, identifyPtv1DefaultMode(unprocessedWay.getId(), tags), getGeoUtils());
+          unprocessedWay, tags, TransferZoneType.PLATFORM, identifyPtv1DefaultMode(unprocessedWay.getId(), tags));
     }
   }
 
