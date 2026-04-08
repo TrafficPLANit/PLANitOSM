@@ -163,7 +163,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       DirectedConnectoid connectoidToUpdate, TransferZone accessZone, Set<Mode> allowedModes) {
     final Set<Mode> realAllowedModes = connectoidToUpdate.getAccessLinkSegment().getAllowedModesFrom(allowedModes);
     if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      if(!connectoidToUpdate.hasAccessZone(accessZone)) {
+      if(!connectoidToUpdate.hasAccessZoneEntry(accessZone)) {
         connectoidToUpdate.addAccessZone(accessZone);
       }
       connectoidToUpdate.addAllowedModes(accessZone, realAllowedModes);   
