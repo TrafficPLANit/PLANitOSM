@@ -74,10 +74,12 @@ public class MelbourneOsm2PlanitTest {
    * read from disk and then persist the result in the PLANit data format
    */
   @Test
-  public void test1Osm2PlanitIntermodalNoServicesBoundingBox() {
+  public void osm2PlanitIntermodalNoServicesBoundingBoxTest() {
 
-    final String PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
-    final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
+    final String PLANIT_OUTPUT_DIR =
+            Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
+    final String PLANIT_REF_DIR =
+            Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
     try {
 
       var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
@@ -107,17 +109,17 @@ public class MelbourneOsm2PlanitTest {
 
     } catch (Exception e) {
       e.printStackTrace();
-      fail("test1Osm2PlanitIntermodalNoServicesBoundingBox");
+      fail("osm2PlanitIntermodalNoServicesBoundingBoxTest");
     }
   }
 
   /**
-   * Test that is identical to {@link this.test1Osm2PlanitIntermodalNoServicesBoundingBox} only now we use a named
+   * Test that is identical to {@link this.osm2PlanitIntermodalNoServicesBoundingBoxTest} only now we use a named
    * bounding box for the "Melbourne District" which is a political boundary applied both to the network and zoning
    * (pt infrastructure)
    */
   @Test
-  public void test2Osm2PlanitIntermodalNoServicesNamedBoundingBox() {
+  public void osm2PlanitIntermodalNoServicesNamedBoundingBoxTest() {
 
     final String PLANIT_OUTPUT_DIR = Path.of(
         RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_named_bb").toAbsolutePath().toString();
@@ -155,9 +157,12 @@ public class MelbourneOsm2PlanitTest {
    */
   @Test
   public void osm2PlanitNetworkBoundingPolygonTest() {
-    final String BOUNDING_POLY_SHAPES = Path.of(RESOURCE_PATH.toString(),"melb_shape_boundary","municipal-boundary.shp").toAbsolutePath().toString();
-    final String PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_network_polybb").toAbsolutePath().toString();
-    final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_network_polybb").toAbsolutePath().toString();
+    final String BOUNDING_POLY_SHAPES =
+            Path.of(RESOURCE_PATH.toString(),"melb_shape_boundary","municipal-boundary.shp").toAbsolutePath().toString();
+    final String PLANIT_OUTPUT_DIR =
+            Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_network_polybb").toAbsolutePath().toString();
+    final String PLANIT_REF_DIR =
+            Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_network_polybb").toAbsolutePath().toString();
     try {
 
       var inputSettings =
