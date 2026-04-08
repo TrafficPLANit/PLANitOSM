@@ -244,109 +244,109 @@
             </zone>
         </transferzones>
         <transferzoneaccess network_ref="1" network_layer_ref="all">
-            <connectoid tzrefs="5" lsref="5" id="0" modes="ferry">
+            <connectoid tzrefs="5" lsref="5" id="0" externalid="20959049" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="4" lsref="3" id="1" modes="ferry">
+            <connectoid tzrefs="4" lsref="3" id="1" externalid="8590354" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="11" lsref="41" id="10" modes="ferry">
+            <connectoid tzrefs="11" lsref="41" id="10" externalid="5837202912" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="12" lsref="70" id="11" modes="ferry">
+            <connectoid tzrefs="12" lsref="70" id="11" externalid="6804603708" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="12" lsref="72" id="12" modes="ferry">
+            <connectoid tzrefs="12" lsref="72" id="12" externalid="6804603708" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="17" lsref="43" id="13" modes="ferry">
+            <connectoid tzrefs="17" lsref="43" id="13" externalid="9518193591" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="18" lsref="50" id="14" modes="ferry">
+            <connectoid tzrefs="18" lsref="50" id="14" externalid="9518262819" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="19" lsref="52" id="15" modes="ferry">
+            <connectoid tzrefs="19" lsref="52" id="15" externalid="9518262820" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="20" lsref="94" id="16" modes="ferry">
+            <connectoid tzrefs="20" lsref="94" id="16" externalid="8530018" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="21" lsref="32" id="17" modes="ferry">
+            <connectoid tzrefs="21" lsref="32" id="17" externalid="82009167" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="22" lsref="56" id="18" modes="ferry">
+            <connectoid tzrefs="22" lsref="56" id="18" externalid="1838532348" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="23" lsref="65" id="19" modes="ferry">
+            <connectoid tzrefs="23" lsref="65" id="19" externalid="1840889196" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="3" lsref="11" id="2" modes="ferry">
+            <connectoid tzrefs="3" lsref="11" id="2" externalid="8408936" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="24" lsref="27" id="20" modes="ferry">
+            <connectoid tzrefs="24" lsref="27" id="20" externalid="1937009879" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="25" lsref="6" id="21" modes="ferry">
+            <connectoid tzrefs="25" lsref="6" id="21" externalid="3304182832" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="25" lsref="68" id="22" modes="ferry">
+            <connectoid tzrefs="25" lsref="68" id="22" externalid="3304182832" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="26" lsref="9" id="23" modes="ferry">
+            <connectoid tzrefs="26" lsref="9" id="23" externalid="3605016899" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="27" lsref="34" id="24" modes="ferry">
+            <connectoid tzrefs="27" lsref="34" id="24" externalid="5413375060" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="28" lsref="15" id="25" modes="ferry">
+            <connectoid tzrefs="28" lsref="15" id="25" externalid="5425695841" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="29" lsref="17" id="26" modes="ferry">
+            <connectoid tzrefs="29" lsref="17" id="26" externalid="5425711246" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="30" lsref="24" id="27" modes="ferry">
+            <connectoid tzrefs="30" lsref="24" id="27" externalid="5601091629" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="0" lsref="97" id="28" modes="ferry">
+            <connectoid tzrefs="0" lsref="97" id="28" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="7" lsref="99" id="29" modes="ferry">
+            <connectoid tzrefs="7" lsref="99" id="29" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="2" lsref="13" id="3" modes="ferry">
+            <connectoid tzrefs="2" lsref="13" id="3" externalid="8099480" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="8" lsref="101" id="30" modes="ferry">
+            <connectoid tzrefs="8" lsref="101" id="30" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="13" lsref="103" id="31" modes="ferry">
+            <connectoid tzrefs="13" lsref="103" id="31" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="14" lsref="105" id="32" modes="ferry">
+            <connectoid tzrefs="14" lsref="105" id="32" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="15" lsref="107" id="33" modes="ferry">
+            <connectoid tzrefs="15" lsref="107" id="33" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="16" lsref="109" id="34" modes="ferry">
+            <connectoid tzrefs="16" lsref="109" id="34" externalid="osm_inferred" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="1" lsref="30" id="4" modes="ferry">
+            <connectoid tzrefs="1" lsref="30" id="4" externalid="20959048" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="6" lsref="29" id="5" modes="ferry">
+            <connectoid tzrefs="6" lsref="29" id="5" externalid="252058553" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="6" lsref="69" id="6" modes="ferry">
+            <connectoid tzrefs="6" lsref="69" id="6" externalid="252058553" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="9" lsref="66" id="7" modes="ferry">
+            <connectoid tzrefs="9" lsref="66" id="7" externalid="5601069117" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="10" lsref="46" id="8" modes="ferry">
+            <connectoid tzrefs="10" lsref="46" id="8" externalid="5601109475" modes="ferry">
                 <length>0.0</length>
             </connectoid>
-            <connectoid tzrefs="10" lsref="48" id="9" modes="ferry">
+            <connectoid tzrefs="10" lsref="48" id="9" externalid="5601109475" modes="ferry">
                 <length>0.0</length>
             </connectoid>
         </transferzoneaccess>

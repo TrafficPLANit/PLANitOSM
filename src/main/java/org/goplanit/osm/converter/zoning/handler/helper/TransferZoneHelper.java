@@ -401,7 +401,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
             /* inform user of tagging issues in case platform is not fully correctly mode mapped */
             if(PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone)==null) {
               if(!suppressLogging) LOGGER.info(String.format("SALVAGED: Platform/pole (%s) referenced by" +
-                      " stop_position (%s), matched although platform has no known mode support, verify correctness", transferZone.getExternalId(), osmNode.getId()));
+                      " stop_position (%s), matched although platform has no known mode support, verify correctness",
+                      transferZone.getExternalId(), osmNode.getId()));
             }else if(!isTransferZoneModeCompatible(
                     transferZone, referenceOsmModes, false /* no pseudo matches */, false)) {
               continue;
@@ -482,9 +483,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
                 foundTransferZones.stream().map(ExternalIdAble::getExternalId).collect(
                         Collectors.toList()).toString(), osmId));
 
-        /* perhaps transfer zones without any known modes (due to lack of tagging) are now worthwhile considering, notify user if such matches exist to check correctness */
+        /* perhaps transfer zones without any known modes (due to lack of tagging) are now worthwhile considering,
+        notify user if such matches exist to check correctness */
         foundTransferZones = filterModeCompatibleTransferZones(
-                referenceOsmModes, foundTransferZones, false, true /* allow for mode less match on name */);
+                referenceOsmModes,
+                foundTransferZones,
+                false,
+                true /* allow for mode less match on name */);
         if(!suppressLogging && foundTransferZones!=null && foundTransferZones.size()>1){
           LOGGER.info(String.format("SALVAGED: Platform/pole(s) (%s) matched by name to stop_position " +
                   "(%s), although platform has no known mode support, verify correctness",
@@ -821,7 +826,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
           TransferZoneType transferZoneType,
           SortedSet<String> eligibleOsmModes){
 
-    TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(osmEntity, tags, TransferZoneType.PLATFORM);
+    TransferZone transferZone = createAndRegisterTransferZoneWithoutConnectoids(
+            osmEntity, tags, TransferZoneType.PLATFORM);
     if(transferZone != null) {
       PlanitTransferZoneUtils.registerOsmModesOnTransferZone(transferZone, eligibleOsmModes);
     }
@@ -872,7 +878,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can 
       service any tram line using the tracks */
       connectoidHelper.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-          transferZone, osmNode, networkLayer, modeType);
+          String.valueOf(osmNode.getId()), transferZone, osmNode, networkLayer, modeType);
     }    
     
     return transferZone;

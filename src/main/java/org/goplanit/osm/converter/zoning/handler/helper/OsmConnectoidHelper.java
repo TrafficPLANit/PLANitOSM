@@ -36,6 +36,7 @@ import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.linearref.LinearLocation;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -49,7 +50,10 @@ import java.util.stream.Collectors;
  *
  */
 public class OsmConnectoidHelper extends OsmZoningHelperBase {
-  
+
+  /** no direct GTFS external id for connectoid, but signify source */
+  public static final String OSM_CONNECTOID_EXTERNAL_INFERRED_ID = "osm_inferred";
+
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmConnectoidHelper.class.getCanonicalName());
 
@@ -227,7 +231,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
   /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with access modes provided. connectoids are only created
    * when the access link segment has at least one of the allowed modes as an eligible mode
-   * 
+   *
+   * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone to relate connectoids to
    * @param networkLayer of the modes and link segments used
    * @param accessNode of the connectoids
@@ -237,6 +242,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @return created connectoids
    */
   private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(
+      @Nullable String connectoidExternalId,
       final TransferZone transferZone,
       final MacroscopicNetworkLayer networkLayer,
       final Node accessNode,
@@ -263,7 +269,12 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }
 
     Collection<DirectedConnectoid> createdConnectoids = ZoningConverterUtils.createAndRegisterDirectedConnectoids(
-        getZoning(), transferZone, accessNode, (Iterable<MacroscopicLinkSegment>) linkSegments, allowedModes);
+            connectoidExternalId,
+            getZoning(),
+            transferZone,
+            accessNode,
+            (Iterable<MacroscopicLinkSegment>) linkSegments,
+            allowedModes);
     for(var newConnectoid : createdConnectoids) {
       /* update PLANit data tracking information */
       /* 1) index by access link segment's downstream node location */
@@ -530,13 +541,15 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * (by registering the mode as supported by the connectoid with a new entry link to the same access node).
    * We stop when at least one connectoids for each of the modes to add has been identified
    *
+   * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone transferZone
    * @param directedConnectoids to check if ok to add any of the provided modes to
    * @param bannedModes the candidate entry link segments are not allowed to support any of the banned modes
    * @param modesToAdd the modes to add
    * @return modes added to one or more connectoids
    */
-  public Set<Mode> addOrExpandConnectoidsWhenModeCompatibleEntryLinkToAccessNodeExists(
+  public Set<Mode> addOrExpandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
+          @Nullable String connectoidExternalId,
           TransferZone transferZone,
           Set<DirectedConnectoid> directedConnectoids,
           Collection<Mode> bannedModes,
@@ -561,6 +574,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         // create connectoid and remove these modes from remaining onFerry modes to provide
         modesForAltEntryLinkSegment.forEach(onFerryMode -> {
           boolean modeSuccess = extractDirectedConnectoidsForModeLinkSegments(
+                  connectoidExternalId,
                   transferZone,
                   onFerryMode,
                   accessNode,
@@ -585,6 +599,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * Create a connectoid or expand an existing connectoid with given mode if it exists for given transfer zone
    * and provided parameters.
    *
+   * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone to add connectoid for
    * @param planitMode mode to support
    * @param accessNode access node to use
@@ -594,6 +609,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @return true if success, false otherwise
    */
   public boolean extractDirectedConnectoidsForModeLinkSegments(
+      @Nullable String connectoidExternalId,
       TransferZone transferZone,
       Mode planitMode,
       Node accessNode,
@@ -629,6 +645,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
         /* create and register */
         Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(
+            connectoidExternalId,
             transferZone,
             networkLayer,
             accessNode,
@@ -652,15 +669,16 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * due to residing on the OSM way it is not possible to distinguish what intended direction of the OSM way is
    * serviced (it is neither left nor right of the way). Therefore, any attempt to extract this information
    * is bypassed here.
-   * 
+   *
+   * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone residing on an osm way
    * @param designatedOsmConnectoidNode the OSM node that we should use for the connectoid
    * @param networkLayer related to the mode
    * @param planitModeType the connectoid is accessible for
-   * @param geoUtils to use
    * @return created connectoids, null if it was not possible to create any due to some reason
    */
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
+      @Nullable String connectoidExternalId,
       @Nonnull TransferZone transferZone,
       @Nonnull OsmNode designatedOsmConnectoidNode,
       @Nonnull MacroscopicNetworkLayer networkLayer,
@@ -727,6 +745,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     directions (if present), so we can service any line using the way */
     boolean ignoreOsmVerticalLayerCompatibility = suppressLogging;
     return createAndRegisterDirectedConnectoids(
+        connectoidExternalId,
         transferZone,
         networkLayer,
         accessNode,
@@ -743,7 +762,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * given location is used. Since the geometry of a link applies to both link segments we define closest based on
    * the driving position of the country, so a left-hand drive country will use the incoming link segment where
    * the transfer zone is placed on the left, etc.
-   * 
+   *
+   * @param connectoidExternalId external id (allowed to be null)
    * @param location to create the access point for as PLANit node (one or more upstream planit link segments will act
    *                 as access link segment for the created connectoid(s))
    * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not
@@ -754,11 +774,11 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
    * @param suppressLogging when true do not log anything, false otherwise
-   * @param geoUtils used when location of transfer zone relative to infrastructure is to be determined
    * @return true when one or more connectoids have successfully been generated or existing connectoids have be
    * reused, false otherwise
    */
   public boolean extractDirectedConnectoidsForMode(
+      @Nullable String connectoidExternalId,
       Point location,
       boolean locationIsKnownOsmStopPosition,
       TransferZone transferZone,
@@ -849,6 +869,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     
     /* connectoids for link segments */
     return extractDirectedConnectoidsForModeLinkSegments(
+        connectoidExternalId,
         transferZone,
         planitMode,
         planitAccessNode,
@@ -859,7 +880,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }
 
 
-  /** see {@link #extractDirectedConnectoidsForMode(Point, boolean, TransferZone, PredefinedModeType, boolean)}
+  /** see {@link #extractDirectedConnectoidsForMode(String, Point, boolean, TransferZone, PredefinedModeType, boolean)}
    *  converting node to point
    *
    * @param osmNode to create the access point for as PLANit node (one or more upstream planit link segments will act
@@ -883,7 +904,12 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean suppressLogging){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     return extractDirectedConnectoidsForMode(
-        osmNodeLocation, locationIsKnownOsmStopPosition, transferZone, planitModeType, suppressLogging);
+        String.valueOf(osmNode.getId()),
+        osmNodeLocation,
+        locationIsKnownOsmStopPosition,
+        transferZone,
+        planitModeType,
+        suppressLogging);
   }
   
   /** create and/or update directed connectoids for the transfer zones and mode combinations when eligible, based on
@@ -1004,7 +1030,10 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     /* create connectoids at identified location for mode and restricted to the accessLink identified (or update
     existing connectoid with mode access if valid) */
     boolean locationIsKnownOsmStopPosition = false;
+    String ConnectoidExternalId = osmStopLocationNode!= null ?
+            String.valueOf(osmStopLocationNode.getId()) : OSM_CONNECTOID_EXTERNAL_INFERRED_ID;
     extractDirectedConnectoidsForMode(
+            ConnectoidExternalId,
             connectoidLocation,
             locationIsKnownOsmStopPosition,
             transferZone,

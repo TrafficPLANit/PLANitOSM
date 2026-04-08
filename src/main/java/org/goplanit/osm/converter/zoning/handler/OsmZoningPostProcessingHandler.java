@@ -15,6 +15,7 @@ import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderOsmData;
+import org.goplanit.osm.converter.zoning.handler.helper.OsmConnectoidHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
@@ -705,15 +706,16 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // tagged as stop locations separately in which case they will be processed later and converted to
     // stop locations which will try and connect to this platform themselves. If not, then this remains incomplete
     // and we will revisit after stop locations have been processed.
-    if (entityType.equals(EntityType.Node) && hasNetworkLayersWithActiveOsmNode(osmFerryTerminal.getId())) {
+    if (EntityType.Node.equals(entityType) && hasNetworkLayersWithActiveOsmNode(osmFerryTerminal.getId())) {
       /* transfer zone + connectoid at point of intersection */
       getConnectoidHelper().createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
+              String.valueOf(osmFerryTerminal.getId()),
               ferryTransferZone,
               (OsmNode) osmFerryTerminal,
               getReferenceNetwork().getLayerByPredefinedModeType(PredefinedModeType.FERRY),
               PredefinedModeType.FERRY);
-    } else if (entityType.equals(EntityType.Way)){
-      // postpone connectoid creation further, either it has stop positinos and if not it remains incomplete and we
+    } else if (EntityType.Way.equals(entityType)){
+      // postpone connectoid creation further, either it has stop positions and if not it remains incomplete and we
       //deal with it last
     }
     return ferryTransferZone;
@@ -745,9 +747,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         getZoningReaderData().getPlanitData().findLinksSpatially(networkLayer, boundingBox);
     spatiallyMatchedLinks.removeIf(l -> !l.isModeAllowedOnAnySegment(planitWaterMode));
     if(spatiallyMatchedLinks.isEmpty()){
-      LOGGER.warning(String.format("DISCARD: Dangling ferry stop %d, no mode compatible OSM ways within %.2fm " +
-              "found",
-          osmEntityId, maxSearchRadius));
+      if(!suppressLogging) {
+        LOGGER.warning(String.format("DISCARD: Dangling ferry stop %d, no mode compatible OSM ways within %.2fm " +
+                        "found",
+                osmEntityId, maxSearchRadius));
+      }
       return false;
     }
 
@@ -844,8 +848,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
     // case we check if any of the other segments coming into the access nodes (that do not support ferry) are eligible.
     // if so, create a connectoid and add the modes that we need and cross them of the onFerryNonFerryModes list
-    var addedModes = getConnectoidHelper().addOrExpandConnectoidsWhenModeCompatibleEntryLinkToAccessNodeExists(
-            transferZone, directedConnectoids, Collections.singleton(ferryMode), onFerryNonFerryModes);
+    var addedModes = getConnectoidHelper().addOrExpandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
+            OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
+            transferZone,
+            directedConnectoids,
+            Collections.singleton(ferryMode),
+            onFerryNonFerryModes);
     onFerryNonFerryModes.removeAll(addedModes);
     if(onFerryNonFerryModes.isEmpty()){
       return success;
@@ -884,7 +892,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         success = false;
         continue;
       }
-      assert closestNodeWithDistance != null;
       // determine mode compatible incoming link segments of closest node, need to check mode again as we check all
       // entries from node not just the closest link attached to it. This way pedestrians can access from either side
       // if eligible for sensible routing
@@ -895,6 +902,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
       // we found our result --> create or supplement existing connectoid
       getConnectoidHelper().extractDirectedConnectoidsForModeLinkSegments(
+          OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
           transferZone,
           currOnFerryNonFerryMode,
           (Node)closestNodeWithDistance.first(),
@@ -930,8 +938,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // rail based modes) are eligible. if so, create a connectoid and add the modes that we need and cross
     // them of the list
     var modesToAdd = new TreeSet<>(allSupportedActiveModes);
-    var addedModes = getConnectoidHelper().addOrExpandConnectoidsWhenModeCompatibleEntryLinkToAccessNodeExists(
-            transferZone, directedConnectoids,railBasedModes, modesToAdd);
+    var addedModes = getConnectoidHelper().addOrExpandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
+            OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
+            transferZone,
+            directedConnectoids,
+            railBasedModes,
+            modesToAdd);
     modesToAdd.removeAll(addedModes);
     if(modesToAdd.isEmpty()){
       return success;
@@ -971,7 +983,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         success = false;
         continue;
       }
-      assert closestNodeWithDistance != null;
       // determine mode compatible incoming link segments of closest node, need to check mode again as we check all
       // entries from node not just the closest link attached to it. This way pedestrians can access from either side
       // if eligible for sensible routing
@@ -982,6 +993,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
       // we found our result --> create or supplement existing connectoid
       getConnectoidHelper().extractDirectedConnectoidsForModeLinkSegments(
+              OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
               transferZone,
               currActiveMode,
               (Node)closestNodeWithDistance.first(),
@@ -1430,7 +1442,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         nearest osm node might be to far away and we must break the link and insert a planit node without an osm
         node counterpart present, this is what the below method does */
        getConnectoidHelper(). extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
-            osmStation.getId(),
+           osmStation.getId(),
            stationTransferZone.getGeometry() ,
            accessLink,
            stationTransferZone,

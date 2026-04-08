@@ -242,9 +242,14 @@ public class SydneyOsmPlanitTest {
       var writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
 
+      /* reader */
+      var result = OsmIntermodalReaderFactory.create(readerSettings).read();
+      var network = result.first();
+      var zoning = result.second();
 
-      /* execute */
-      Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
+      /* Geopackage intermodal writer (for inspection only) */
+      GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
+              write(network, zoning);
 
       PlanitAssertionUtils.assertNetworkFilesSimilar(
           PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
