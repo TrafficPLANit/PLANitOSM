@@ -205,9 +205,10 @@ public class OsmZoningReaderPlanitData {
    * @param networkLayer to extract from
    * @return found connectoids (if any), otherwise null or empty set
    */
-  public List<DirectedConnectoid> getDirectedConnectoidsByLocation(Point nodeLocation, MacroscopicNetworkLayer networkLayer) {
+  public List<DirectedConnectoid> getDirectedConnectoidsByLocation(
+      Point nodeLocation, MacroscopicNetworkLayer networkLayer) {
     return getDirectedConnectoidsByLocation(networkLayer).get(nodeLocation);
-  }  
+  }
   
   /** Add a connectoid to the registered connectoids indexed by their OSM id
    * 

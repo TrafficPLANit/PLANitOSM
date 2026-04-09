@@ -64,7 +64,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   private final OsmZoningHandlerProfiler profiler;
 
 
-  /** Verify if the waiting area for a stop_position for the given mode must be on the logical relative location (left hand side for left hand drive) or not
+  /** Verify if the waiting area for a stop_position for the given mode must be on the logical relative location
+   *  (left hand side for left hand drive) or not
    * 
    * @param accessMode to check
    * @param transferZone required in case of user overwrite
@@ -151,27 +152,40 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             getGeoUtils());
   }
 
-  /** update an existing directed connectoid with new access zone and allowed modes. In case the link segment does not
-   * have any of the passed in modes listed as allowed, the connectoid is not updated with these modes for the given
-   * access zone as it would not be possible to utilise it.
-   * 
+  /**
+   * update an existing directed connectoid with new access zone, segment and allowed modes. In case the link segment
+   * does not have any of the passed in modes listed as allowed, the connectoid is not updated with these modes
+   * for the given access zone as it would not be possible to utilise it.
+   *
    * @param connectoidToUpdate to connectoid to update
-   * @param accessZone to relate connectoids to
-   * @param allowedModes to add to the connectoid for the given access zone
+   * @param accessZone         to relate connectoids to
+   * @param accessSegment      to allow
+   * @param allowedModes       to add to the connectoid for the given access zone
    */  
   private void updateDirectedConnectoid(
-      DirectedConnectoid connectoidToUpdate, TransferZone accessZone, Set<Mode> allowedModes) {
-    final Set<Mode> realAllowedModes = connectoidToUpdate.getAccessLinkSegment().getAllowedModesFrom(allowedModes);
-    if(realAllowedModes!= null && !realAllowedModes.isEmpty()) {  
-      if(!connectoidToUpdate.hasAccessZoneEntry(accessZone)) {
-        connectoidToUpdate.addAccessZone(accessZone);
+      DirectedConnectoid connectoidToUpdate,
+      TransferZone accessZone,
+      EdgeSegment accessSegment,
+      Collection<Mode> allowedModes) {
+
+    if(!connectoidToUpdate.hasAccessZoneEntry(accessZone)){
+      var entry = connectoidToUpdate.createAccessZoneEntry(accessZone);
+      entry.addAccessLinkSegment(accessSegment);
+      entry.addAllowedModes(allowedModes);
+    }else{
+      var entry = connectoidToUpdate.getAccessZoneEntry(accessZone);
+      if(!entry.hasAccessLinkSegment(accessSegment)){
+        entry.addAccessLinkSegment(accessSegment);
       }
-      connectoidToUpdate.addAllowedModes(accessZone, realAllowedModes);   
+      var availableModes = ((MacroscopicLinkSegment)accessSegment).getAllowedModesFrom(allowedModes);
+      if(availableModes!= null && !availableModes.isEmpty()) {
+        entry.addAllowedModes(availableModes);
+      }
     }
   }
 
-  /** break a PLANit link at the PLANit node location while also updating all OSM related tracking indices and/or PLANit network link and link segment reference 
-   * that might be affected by this process:
+  /** break a PLANit link at the PLANit node location while also updating all OSM related tracking indices and/or
+   * PLANit network link and link segment reference that might be affected by this process:
    * <ul>
    * <li>tracking of OSM ways with multiple PLANit links</li>
    * <li>connectoid access link segments affected by breaking of link (if any)</li>
@@ -191,7 +205,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links
     we're about to break link (segments) if after breaking links this relation is modified, restore it by updating the
     connectoid to the correct access link segment directly upstream of the original downstream vertex identified */
-    Map<Point, DirectedConnectoid> connectoidsAccessNodeLocationBeforeBreakLink =
+    Map<Point, Set<DirectedConnectoid>> connectoidsAccessNodeLocationBeforeBreakLink =
         ConnectoidUtils.findDirectedConnectoidsReferencingLinks(
                 linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
     
@@ -229,7 +243,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     networkLayer.getLayerModifier().removeListener(listener);          
   }
 
-  /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with access modes provided. connectoids are only created
+  /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with
+   * access modes provided. connectoids are only created
    * when the access link segment has at least one of the allowed modes as an eligible mode
    *
    * @param connectoidExternalId external id (allowed to be null)
@@ -238,7 +253,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param accessNode of the connectoids
    * @param linkSegments to create connectoids for (one per segment)
    * @param allowedModes used for each connectoid
-   * @param verifyOsmVerticalLayerCompatibility when true we do not report back if the link segments match the transfer zone's OSM layer index, when false we do
+   * @param verifyOsmVerticalLayerCompatibility when true we do not report back if the link segments match the
+   *                                            transfer zone's OSM layer index, when false we do
    * @return created connectoids
    */
   private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(
@@ -279,7 +295,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* update PLANit data tracking information */
       /* 1) index by access link segment's downstream node location */
       getZoningReaderData().getPlanitData().addDirectedConnectoidByLocation(
-              networkLayer, newConnectoid.getAccessLinkSegment().getDownstreamVertex().getPosition() ,newConnectoid);
+              networkLayer, newConnectoid.getAccessVertex().getPosition() ,newConnectoid);
       /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
       getZoningReaderData().getPlanitData().addConnectoidByTransferZone(transferZone, newConnectoid);
     }         
@@ -287,14 +303,20 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     return createdConnectoids;
   }
 
-  /** extract the connectoid access node based on the given location. Either it already exists as a PLANit node, or it is internal to an existing link. In the latter case
+  /** extract the connectoid access node based on the given location. Either it already exists as a PLANit node, or it
+   * is internal to an existing link. In the latter case
    * a new node is created and the existing link is broken. In the former case, we simply collect the PLANit node
    *
    * @param osmNodeLocation to collect/create PLANit node for
-   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not enforce filtering based on criteria that might not have been properly tagged, when false, we
-   *                                     proceed applying as many filter criteria as possible to get the best possible match based on available tagging, e.g., vertical layer information
+   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not
+   *                                       enforce filtering based on criteria that might not have been properly
+   *                                       tagged, when false, we
+   *                                     proceed applying as many filter criteria as possible to get the best
+   *                                       possible match based on available tagging, e.g., vertical layer information
    * @param networkLayer to extract node on
-   * @param osmWaitingAreaVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on, may be null indicating it is not explicitly tagged
+   * @param osmWaitingAreaVerticalLayerIndex the vertical layer index indicating the vertical plane the
+   *                                         connectoid is expected to reside on, may be null indicating
+   *                                         it is not explicitly tagged
    * @param osmWaitingAreaId reference id of OSM waiting area to be used in case user feedback is to be provided
    * @param suppressLogging when true suppress logging, false otherwise
    * @return PLANit node collected/created
@@ -366,14 +388,19 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     return planitNode;
   }
 
-  /** extract the connectoid access node. either it already exists as a PLANit node, or it is internal to an existing link. In the latter case
+  /** extract the connectoid access node. either it already exists as a PLANit node, or it is internal to an existing
+   * link. In the latter case
    * a new node is created and the existing link is broken. In the former case, we simply collect the PLANit node
    * 
    * @param osmNode to collect PLANit node version for
-   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not enforce filtering based on criteria that might not have been properly tagged, when false, we
-   *                                     proceed applying as many filter criteria as possible to get the best possible match based on available tagging, e.g., vertical layer information
+   * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not
+   *                                       enforce filtering based on criteria that might not have been properly
+   *                                       tagged, when false, we
+   *                                     proceed applying as many filter criteria as possible to get the best
+   *                                       possible match based on available tagging, e.g., vertical layer information
    * @param networkLayer to extract node on
-   * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is expected to reside on (may be null)
+   * @param osmVerticalLayerIndex the vertical layer index indicating the vertical plane the connectoid is
+   *                              expected to reside on (may be null)
    * @param osmWaitingAreaId reference id of OSM waiting area to be used in case user feedback is to be provided
    * @param suppressLogging when true suppress logging, false otherwise
    * @return PLANit node collected/created
@@ -396,14 +423,17 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             suppressLogging);
   }
 
-  /** extract a connectoid location within the link based on an existing coordinate (osm node) or by inserting an additional coordinate in the location closest to the provided
-   * waiting area geometry. A new location is only inserted into the link's geometry when all existing coordinates on the link's geometry fall outside the user specified distance between
+  /** extract a connectoid location within the link based on an existing coordinate (osm node) or by inserting an
+   * additional coordinate in the location closest to the provided
+   * waiting area geometry. A new location is only inserted into the link's geometry when all existing coordinates
+   * on the link's geometry fall outside the user specified distance between
    * waiting area and stop location.
    * 
    * @param transferZone transfer zone to use
    * @param accessLink to create connectoid location on on either one of its extreme or internal coordinates
    * @param planitAccessModeType to consider
-   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that we allow
+   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area
+   *                                                   that we allow
    * @param networkLayer the link is registered on
    * @return connectoid location to use, may or may not be an existing osm node location, or not
    */
@@ -617,6 +647,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean ignoreOsmVerticalLayerCompatibilityCheck,
       boolean suppressLogging) {
 
+    boolean accessNodeIsSink = eligibleLinkSegments.stream().map(LinkSegment::getDownstreamVertex).allMatch(
+        n -> n.equals(accessNode));
+
     MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByMode(planitMode);
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
 
@@ -631,12 +664,15 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
                 getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(
                         proposedConnectoidLocation, networkLayer);
         for(DirectedConnectoid connectoid : connectoidsForNode) {
-          if(edgeSegment.idEquals(connectoid.getAccessLinkSegment())) {
-            /* update mode eligibility */
-            updateDirectedConnectoid(connectoid, transferZone, Collections.singleton(planitMode));
-            createConnectoidsForLinkSegment  = false;
-            break;
+          if(connectoid.isAccessNodeAlwaysDownstream() != accessNodeIsSink){
+            // not directionally compatible
+            continue;
           }
+
+          /* update zone-segment-mode eligibility */
+          updateDirectedConnectoid(connectoid, transferZone, edgeSegment, Collections.singleton(planitMode));
+          createConnectoidsForLinkSegment  = false;
+          break;
         }
       }
 
