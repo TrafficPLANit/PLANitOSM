@@ -11,6 +11,7 @@ import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
+import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
 import org.goplanit.utils.id.ExternalIdAble;
@@ -261,7 +262,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       @Nullable String connectoidExternalId,
       final TransferZone transferZone,
       final MacroscopicNetworkLayer networkLayer,
-      final Node accessNode,
+      final DirectedVertex accessNode,
       final Iterable<? extends EdgeSegment> linkSegments,
       final Set<Mode> allowedModes,
       boolean verifyOsmVerticalLayerCompatibility){
@@ -587,8 +588,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     var addedModes = new TreeSet<Mode>();
 
     for(var connectoid : directedConnectoids) {
-      var accessNode = connectoid.getAccessLinkSegment().getDownstreamNode();
-      var alternativeEntrySegmentsIter = accessNode.getEntryLinkSegments();
+      var accessNode = connectoid.getAccessVertex();
+      var alternativeEntrySegmentsIter = accessNode.getEntryEdgeSegments();
       for (var altEntryEdgeSegment : alternativeEntrySegmentsIter) {
         if (!(altEntryEdgeSegment instanceof LinkSegment) ||
                 ((LinkSegment) altEntryEdgeSegment).isAnyModeAllowed(bannedModes)) {
@@ -632,7 +633,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone to add connectoid for
    * @param planitMode mode to support
-   * @param accessNode access node to use
+   * @param accessVertex access node to use
    * @param eligibleLinkSegments access link segments to create connectoids for
    * @param ignoreOsmVerticalLayerCompatibilityCheck flag to ignore vertical layer compatibility
    * @param suppressLogging flag to suppress logging
@@ -642,19 +643,19 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       @Nullable String connectoidExternalId,
       TransferZone transferZone,
       Mode planitMode,
-      Node accessNode,
+      DirectedVertex accessVertex,
       Collection<LinkSegment> eligibleLinkSegments,
       boolean ignoreOsmVerticalLayerCompatibilityCheck,
       boolean suppressLogging) {
 
     boolean accessNodeIsSink = eligibleLinkSegments.stream().map(LinkSegment::getDownstreamVertex).allMatch(
-        n -> n.equals(accessNode));
+        n -> n.equals(accessVertex));
 
     MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByMode(planitMode);
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
 
       /* update accessible link segments of already created connectoids (if any) */
-      Point proposedConnectoidLocation = accessNode.getPosition();
+      Point proposedConnectoidLocation = accessVertex.getPosition();
       boolean createConnectoidsForLinkSegment = true;
 
       if(getZoningReaderData().getPlanitData().hasDirectedConnectoidForLocation(
@@ -684,7 +685,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             connectoidExternalId,
             transferZone,
             networkLayer,
-            accessNode,
+            accessVertex,
             Collections.singleton(edgeSegment),
             Collections.singleton(planitMode),
             ignoreOsmVerticalLayerCompatibilityCheck || suppressLogging);

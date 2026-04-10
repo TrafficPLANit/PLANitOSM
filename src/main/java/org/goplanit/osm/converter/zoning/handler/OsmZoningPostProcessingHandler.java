@@ -823,26 +823,28 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
     final boolean suppressSpatialWarnings =
         !fallsWithinSpatiallyEligibleBoundingArea(transferZone, false);
-    boolean success = true;
 
     /* find all on-ferry modes that should be able to get to the transfer zone as they are allowed on the ferry */
     var onFerryNonFerryModes = new TreeSet<Mode>();
     for(var connectoid : directedConnectoids) {
-      var ferryAccessSegment = connectoid.getAccessLinkSegment();
-      if (!ferryAccessSegment.isModeAllowed(ferryMode)) {
-        LOGGER.warning(String.format("Expected existing connectoid access link segment (%s) to support ferry " +
-                "for ferry transfer zone (%s), but it is not",
-                ferryAccessSegment.getIdsAsString(), transferZone.getIdsAsString()));
-      }
-      onFerryNonFerryModes.addAll(ferryAccessSegment.getAllowedModes().stream().filter(
-          m -> !m.getPredefinedModeType().equals(PredefinedModeType.FERRY)).collect(Collectors.toList()));
+      connectoid.getAccessLinkSegmentsStream().forEach(
+          ls ->{
+            var mls = (MacroscopicLinkSegment) ls;
+            if (!mls.isModeAllowed(ferryMode)) {
+              LOGGER.warning(String.format("Expected existing connectoid access link segment (%s) to support ferry " +
+                      "for ferry transfer zone (%s), but it is not",
+                  mls.getIdsAsString(), transferZone.getIdsAsString()));
+            }
+            onFerryNonFerryModes.addAll(mls.getAllowedModes().stream().filter(
+                m -> !m.getPredefinedModeType().equals(PredefinedModeType.FERRY)).collect(Collectors.toList()));
+          });
     }
 
     if(onFerryNonFerryModes.isEmpty()){
       LOGGER.warning(String.format("Expected at least one on-ferry mode for ferry access link segments for " +
           "transfer zone (%s), but none found, unable to connect to land network without land modes",
           transferZone.getIdsAsString()));
-      return !success;
+      return false;
     }
 
     // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
@@ -856,7 +858,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             onFerryNonFerryModes);
     onFerryNonFerryModes.removeAll(addedModes);
     if(onFerryNonFerryModes.isEmpty()){
-      return success;
+      return true;
     }
 
     double maxSearchRadius = getSettings().getFerryStopToNearbyLandNetworkSearchRadiusMeters();
@@ -872,10 +874,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             transferZone.getIdsAsString(), maxSearchRadius,
             onFerryNonFerryModes.stream().map(Mode::getName).collect(Collectors.joining(","))));
       }
-      return !success;
+      return false;
     }
 
     // find closest spatially matched link per nonFerryMode remaining then create and attach
+    boolean success = true;
     for(var currOnFerryNonFerryMode : onFerryNonFerryModes){
       // find nearest (single) mode compatible node
       var closestNodeWithDistance = getTransferZoneHelper().findClosestModeCompatibleNode(
