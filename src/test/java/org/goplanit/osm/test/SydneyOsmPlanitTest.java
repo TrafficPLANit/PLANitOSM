@@ -106,7 +106,6 @@ public class SydneyOsmPlanitTest {
       /* writer */
       PlanitIntermodalWriterFactory.create(writerSettings).write(network, zoning);
 
-
       /* Geopackage intermodal writer (for inspection only) */
       GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
                 write(network, zoning);
@@ -246,6 +245,9 @@ public class SydneyOsmPlanitTest {
       var result = OsmIntermodalReaderFactory.create(readerSettings).read();
       var network = result.first();
       var zoning = result.second();
+
+      // PLANit writer
+      PlanitIntermodalWriterFactory.create(writerSettings).write(network, zoning);
 
       /* Geopackage intermodal writer (for inspection only) */
       GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).

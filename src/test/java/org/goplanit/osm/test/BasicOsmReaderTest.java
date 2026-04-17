@@ -14,6 +14,8 @@ import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.zoning.DirectedConnectoid;
+import org.goplanit.utils.zoning.ZoneConnectoidType;
 import org.goplanit.zoning.Zoning;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -168,7 +170,25 @@ public class BasicOsmReaderTest {
       assertEquals(104, zoning.getTransferZones().size() );
       assertEquals(8, zoning.getTransferZoneGroups().size());
       assertEquals(0, zoning.getOdConnectoids().size());
-      assertEquals(178, zoning.getTransferConnectoids().size());
+
+      var noneTypeAccessEntriesStream = zoning.getTransferConnectoids().stream().flatMap(
+          c-> c.getAccessZoneEntries().values().stream()).filter(
+          e -> e.getType().equals(ZoneConnectoidType.NONE));
+      var unknownTypeAccessEntriesStream = zoning.getTransferConnectoids().stream().flatMap(
+          c-> c.getAccessZoneEntries().values().stream()).filter(
+          e -> e.getType().equals(ZoneConnectoidType.UNKNOWN));
+      var ptVehicleStopAccessEntriesStream = zoning.getTransferConnectoids().stream().flatMap(
+          c-> c.getAccessZoneEntries().values().stream()).filter(
+          e -> e.getType().equals(ZoneConnectoidType.PT_VEHICLE_STOP));
+      var travellerAccessAccessEntriesStream = zoning.getTransferConnectoids().stream().flatMap(
+          c-> c.getAccessZoneEntries().values().stream()).filter(
+          e -> e.getType().equals(ZoneConnectoidType.TRAVELLER_ACCESS));
+
+      // todo: clearly this should all be either stop or traveller access and unknown/none should never happen anymore
+      assertEquals(215, noneTypeAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
+      assertEquals(0, unknownTypeAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
+      assertEquals(0, ptVehicleStopAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
+      assertEquals(0, travellerAccessAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

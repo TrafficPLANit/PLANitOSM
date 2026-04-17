@@ -214,9 +214,11 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
      * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly
      *  than now
      */
-    GraphModifierListener listener =
-            new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsAccessNodeLocationBeforeBreakLink);
-    networkLayer.getLayerModifier().addListener(listener);
+    GraphModifierListener listener = null;
+    if(!connectoidsAccessNodeLocationBeforeBreakLink.isEmpty()) {
+      listener = new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsAccessNodeLocationBeforeBreakLink);
+      networkLayer.getLayerModifier().addListener(listener);
+    }
         
     /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
     {      
@@ -240,8 +242,10 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       be able to find the correct planit links for (internal) osm nodes */
       layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);                            
     }
-    
-    networkLayer.getLayerModifier().removeListener(listener);          
+
+    if(listener != null) {
+      networkLayer.getLayerModifier().removeListener(listener);
+    }
   }
 
   /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with
@@ -665,7 +669,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
                 getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(
                         proposedConnectoidLocation, networkLayer);
         for(DirectedConnectoid connectoid : connectoidsForNode) {
-          if(connectoid.isAccessNodeAlwaysDownstream() != accessNodeIsSink){
+          if(connectoid.isAccessNodeDownstreamOfSegments() != accessNodeIsSink){
             // not directionally compatible
             continue;
           }
