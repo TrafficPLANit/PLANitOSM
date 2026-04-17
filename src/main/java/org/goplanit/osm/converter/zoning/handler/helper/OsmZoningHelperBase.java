@@ -75,7 +75,10 @@ class OsmZoningHelperBase {
     return zoningReaderData;
   }
 
-  /** access to geo utils */
+  /** access to geo utils
+   *
+   * @return the utils
+   */
   protected PlanitJtsCrsUtils getGeoUtils(){
     return geoUtils;
   }
@@ -158,10 +161,10 @@ class OsmZoningHelperBase {
    * Find all nearby links within given search radius of geometry that do not have any banned modes but will have at
    * least one of the supported modes
    *
-   * @param geometry
-   * @param bannedModes
-   * @param supportedModes
-   * @param maxSearchRadius
+   * @param geometry geometry to use
+   * @param bannedModes to consider
+   * @param supportedModes to consider
+   * @param maxSearchRadius to constrain by
    * @return found links
    */
   public Collection<MacroscopicLink> findNearbyModeCompatibleLinks(
@@ -192,7 +195,8 @@ class OsmZoningHelperBase {
    * @param geometry reference centroid of geometry used
    * @param mode to check
    * @param eligibleLinks links to consider
-   * @param maxSearchRadius only consider if within searchradius
+   * @param maxSearchRadius only consider if within search radius
+   * @param suppressSpatialWarnings flag for logging
    * @return pair of closest node and distance (null if not available)
    */
   public Pair<DirectedVertex, Double> findClosestModeCompatibleNode(

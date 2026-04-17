@@ -60,7 +60,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   private final OsmConnectoidHelper connectoidHelper;
 
     
-  /** Find links that can access the stop_location by the given mode. if location is on extreme node, we provide all links attached, otherwise only the
+  /** Find links that can access the stop_location by the given mode. if location is on extreme node, we provide
+   * all links attached, otherwise only the
    * link on which the location resides
    * 
    * @param location stop_location
@@ -98,8 +99,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return planitLinksToCheck;
   }
 
-  /** Verify if the provided transfer zone supports more than a single stop_position. Transfer zones that reside next to the road
-   * do, but point based transfer zones that reside on the road do not, because they are a stop_position and therefore only support that
+  /** Verify if the provided transfer zone supports more than a single stop_position. Transfer zones that reside
+   * next to the road
+   * do, but point based transfer zones that reside on the road do not, because they are a stop_position and
+   * therefore only support that
    * stop_position.
    * 
    * @param transferZone to verify if supports multiple stop positions
@@ -126,7 +129,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;
   }
 
-  /** create a transfer zone based on the passed in osm entity, tags for feature extraction and access. Note that we attempt to also
+  /** create a transfer zone based on the passed in osm entity, tags for feature extraction and access.
+   * Note that we attempt to also
    * parse its reference tags. Currently we look for keys:
    * <ul>
    * <li>ref</li>
@@ -202,7 +206,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;
   }
 
-  /** create a new transfer zone and register it, do not yet create connectoids for it. This is postponed because likely at this point in time
+  /** create a new transfer zone and register it, do not yet create connectoids for it. This is postponed
+   * because likely at this point in time
    * it is not possible to best determine where they should reside
    * 
    * @param osmEntity to extract transfer zone for
@@ -342,7 +347,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     } 
     
     /* check mode compatibility on extracted transfer zone supported modes*/
-    return publicTransportModeParser.isModeCompatible(transferZoneSupportedModes, referenceOsmModes, allowPseudoMatches);    
+    return publicTransportModeParser.isModeCompatible(
+        transferZoneSupportedModes, referenceOsmModes, allowPseudoMatches);
   }
 
   /**Attempt to find the transfer zones by the use of the passed in tags containing references via key tag:
@@ -353,20 +359,28 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * <li>local_ref</li>
    * </ul>
    * <p>
-   * In case multiple zones are found with the exact same reference, we select the zone that is closest by. In case multiple zones are found with unique references 
-   * (when the reference value contains multiple reference, e.g. 1;2), then we keep all zones, since each one represents the closest by unique reference
+   * In case multiple zones are found with the exact same reference, we select the zone that is closest by. In case
+   * multiple zones are found with unique references
+   * (when the reference value contains multiple reference, e.g. 1;2), then we keep all zones, since each one
+   * represents the closest by unique reference
    * <p>
-   * Further the zone should be mode compatible with the referenceOsmModes. Compatible here implies that there is direct overlap between modes. If not, then we attempt to salvage
-   * accounting for likely tagging errors, e.g. a train platform is created for tram, this will be allowed because it often happens and both are of type rail, given their is a reference
-   * match this is likely still correct. However, if a rail mode and road mode is found across the two without overlap then we must assume there is an error in the reference used and we do
-   * not allow the mapping and inform the user. If the zone lacks any mode information, we also allow the mapping because we rather have too many matches than missing them. 
+   * Further the zone should be mode compatible with the referenceOsmModes. Compatible here implies that there is
+   * direct overlap between modes. If not, then we attempt to salvage
+   * accounting for likely tagging errors, e.g. a train platform is created for tram, this will be allowed because
+   * it often happens and both are of type rail, given their is a reference
+   * match this is likely still correct. However, if a rail mode and road mode is found across the two without
+   * overlap then we must assume there is an error in the reference used and we do
+   * not allow the mapping and inform the user. If the zone lacks any mode information, we also allow the mapping
+   * because we rather have too many matches than missing them.
    * 
    * 
    * @param osmNode referring to zero or more transfer zones via its tags
    * @param tags to search for reference keys in
    * @param availableTransferZones to choose from
-   * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode to be deemed accessible, if not user is informed
-   * @param onlySelectClosestMatch when true only select closest match (per tag reference), when false, collect all matches of al references
+   * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode
+   *                          to be deemed accessible, if not user is informed
+   * @param onlySelectClosestMatch when true only select closest match (per tag reference), when false,
+   *                               collect all matches of al references
    * @param suppressLogging when true suppress logging, false otherwise
    * @return found transfer zones that have been parsed before, null if no match is found
    */
@@ -404,7 +418,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
                       " stop_position (%s), matched although platform has no known mode support, verify correctness",
                       transferZone.getExternalId(), osmNode.getId()));
             }else if(!isTransferZoneModeCompatible(
-                    transferZone, referenceOsmModes, false /* no pseudo matches */, false)) {
+                transferZone, referenceOsmModes, false /* no pseudo matches */, false)) {
               continue;
             }
 
@@ -440,13 +454,15 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
                 Collectors.toCollection(TreeSet::new)) : null;
   }
 
-  /**Attempt to find the transfer zones by the use of the passed in name where the transfer zone (representing an osm platform) must have the exact same name to match as well
+  /**Attempt to find the transfer zones by the use of the passed in name where the transfer zone (representing
+   * an OSM platform) must have the exact same name to match as well
    * as being at least pseudo mode compatible, i.e., they have modes of the same type road/rail/water.
    * 
    * @param osmId of the entity we are attempting to find a match for
    * @param nameToMatch to check for within eligible transfer zones
    * @param availableTransferZones to choose from
-   * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode to be deemed accessible, if not user is informed
+   * @param referenceOsmModes the osm modes a transfer zone should ideally contain one overlapping mapped mode to be
+   *                          deemed accessible, if not user is informed
    * @param suppressLogging when true suppress logging, false otherwise
    * @return matches transfer zones, null if no match is found
    */  
@@ -476,7 +492,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     
       Collection<TransferZone> nameAndModecompatibleZones =
           filterModeCompatibleTransferZones(
-                  referenceOsmModes, foundTransferZones, allowPseudoModeCompatibility, false);
+                  referenceOsmModes,
+              foundTransferZones,
+              allowPseudoModeCompatibility,
+              false);
       if(nameAndModecompatibleZones==null || nameAndModecompatibleZones.isEmpty()) {        
         if(!suppressLogging) LOGGER.fine(String.format("Platform/pole(s) (%s) matched by name to stop_position " +
                 "(%s), but none are even pseudo mode compatible with stop",
@@ -507,16 +526,17 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return foundTransferZones;
   }
 
-  /** find the transfer zones that are accessible to the stop_position on the given node and given the pool of eligible transfer zones provided.
+  /** find the transfer zones that are accessible to the stop_position on the given node and given the pool of
+   * eligible transfer zones provided.
    * We match based on tag references, names, and or proximity in descending order of precedence.
    * 
    * @param osmNode node representing the stop_position
    * @param tags of the node
    * @param stopAreaTransferZones the transfer zones of the stop_area this stop_position belongs to
-   * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
+   * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from
+   *                          to be deemed accessible
    * @param onlySelectClosestMatch when true only select closest match, when false, collect all matches
    * @param suppressLogging when true suppress logging, false otherwise
-   * @param geoUtils to use
    */
   private Collection<TransferZone> findAccessibleTransferZonesByReferenceOrName(
       OsmNode osmNode, Map<String, String> tags,
@@ -567,16 +587,20 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return matchedTransferZones;
   }
 
-  /** Find the closest and/or most likely transfer zone for the given osm node and its tags (with or without a reference
-   * for additional information for mapping). Use the search radius from the settings to identify eligible transfer zones and then
+  /** Find the closest and/or most likely transfer zone for the given osm node and its tags (with or without a
+   * reference
+   * for additional information for mapping). Use the search radius from the settings to identify eligible transfer
+   * zones and then
    * use information on modes, references and spatial proximity to choose the most likely option. 
    * 
    * @param osmNode representing a stop position
    * @param tags of the node
-   * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from to be deemed accessible
+   * @param referenceOsmModes the OSM modes a transfer zone must at least contain one overlapping mapped mode from
+   *                          to be deemed accessible
    * @param onlySelectClosestMatch when true only select closest match, when false, collect all matches
    * @param suppressLogging when true suppress logging, false otherwise*
-   * @return most likely transfer zone(s). Multiple matches only in case the node has multiple references to eligible transfer zones tagged
+   * @return most likely transfer zone(s). Multiple matches only in case the node has multiple references to
+   * eligible transfer zones tagged
    */
   private Collection<TransferZone> findTransferZonesForStopPositionCompatibleSpatiallyModeVerticalLayer(
       OsmNode osmNode,
@@ -621,7 +645,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     var layerMatchedTransferZones = filterVerticalLayerIndexCompatibleTransferZones(
         osmNode, tags, matchedTransferZones, suppressLogging);
     if(CollectionUtils.nullOrEmpty(layerMatchedTransferZones) && !CollectionUtils.nullOrEmpty(matchedTransferZones)){
-      /* when layer filtering causes all matches to disappear, it is likely a tagging error and we should not consider it */
+      /* when layer filtering causes all matches to disappear, it is likely a tagging error and we should
+      not consider it */
       layerMismatch = true;
     }else{
       matchedTransferZones = layerMatchedTransferZones;
@@ -683,13 +708,17 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         referenceNetwork, zoning, zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
   }
 
-  /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in reference osm modes
-   * In case no eligible modes are provided (null), we allow any transfer zone with at least one valid mapped mode
+  /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in
+   * reference osm modes In case no eligible modes are provided (null), we allow any transfer zone with at least one
+   * valid mapped mode
    *  
    * @param eligibleOsmModes to map against (may be null)
    * @param potentialTransferZones to extract mode compatible transfer zones
-   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
-   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also considered. If such a match is found, user is requested to verify correctness
+   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water
+   *                                mode, when false only exact matches are allowed
+   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also
+   *                                          considered. If such a match is found, user is requested to
+   *                                          verify correctness
    * @return matched transfer zones
    */  
   public Set<TransferZone> filterModeCompatibleTransferZones(
@@ -703,8 +732,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * Find all transfer zones with an identical vertical layer index as the provided tags contains. If the tags do no contain an explicit layer, then
-   * the default layer index of 0 is assumed.
+   * Find all transfer zones with an identical vertical layer index as the provided tags contains. If the tags do not
+   * contain an explicit layer, then the default layer index of 0 is assumed.
    *
    * @param stopPositionOsmNode                 This osmNode is expected to represent a stop position
    * @param osmNodeTags                    to verify against
@@ -733,7 +762,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         var planitLayerOsmVerticalLayerIndexPair = findOsmVerticalLayerIndexByStopPositionPlanitLinks(
                 stopPositionLocation, layer);
         if(planitLayerOsmVerticalLayerIndexPair != null && planitLayerOsmVerticalLayerIndexPair.second()){
-          if(osmVerticalLayerIndex != null && !osmVerticalLayerIndex.equals(planitLayerOsmVerticalLayerIndexPair.first())){
+          if(osmVerticalLayerIndex != null &&
+              !osmVerticalLayerIndex.equals(planitLayerOsmVerticalLayerIndexPair.first())){
             if(!suppressLogging) LOGGER.warning(String.format("Links connected to OSM stop position %d are" +
                     " not all on the expected vertical layer plane (layer=%d), verify correctness",
                     stopPositionOsmNode.getId(), osmVerticalLayerIndex));
@@ -810,14 +840,14 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;    
   }
 
-  /** Attempt to create a new transfer zone and register it, do not create connectoids for it. Register the provided access modes as eligible by setting them on the input properties 
+  /** Attempt to create a new transfer zone and register it, do not create connectoids for it. Register the provided
+   * access modes as eligible by setting them on the input properties
    * which can be used later to map stop_positions more easily.
    * 
    * @param osmEntity to extract transfer zone for
    * @param tags to use
    * @param transferZoneType to apply
    * @param eligibleOsmModes the eligible osm modes considered
-   * @param geoUtils to use
    * @return transfer zone created, null if something happened making it impossible to create the zone
    */
   public TransferZone createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
@@ -834,15 +864,15 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;
   }
 
-  /** Method that will attempt to create both a transfer zone and its connectoids at the location of the OSM node. This is only relevant for very specific types
-   * of OSM pt nodes, such as tram_stop, some bus_stops that are tagged on the road, and potentially halts and/or stations. In case no existing transfer zone in this
-   * location exists, we create one first using the default transfer zone type provided, otherwise we utilise the existing transfer zone
+  /** Method that will attempt to create both a transfer zone and its connectoids at the location of the OSM node.
+   * This is only relevant for very specific types of OSM pt nodes, such as tram_stop, some bus_stops that are tagged
+   * on the road, and potentially halts and/or stations. In case no existing transfer zone in this location exists,
+   * we create one first using the default transfer zone type provided, otherwise we utilise the existing transfer zone
    * 
    * @param osmNode for the location to create both a transfer zone and connectoid(s)
    * @param tags of the node
    * @param defaultOsmMode that is to be expected here
    * @param defaultTransferZoneType in case a transfer zone needs to be created in this location
-   * @param geoUtils to use
    * @return created transfer zone (if not already in existence)
    */  
   public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
@@ -929,7 +959,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       if(transferZoneGroup != null) {
         /* when transfer zone group available, first search among those zones as they are more likely to be matching */
         matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(
-            osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, onlySelectClosestMatch, suppressLogging);
+            osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes,
+            onlySelectClosestMatch, suppressLogging);
       }
 
       /* separately identify context related matches based on mode, vertical layer, and spatial proximity */
@@ -949,7 +980,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         if(matchedTransferZones.isEmpty()){
           onlySelectClosestMatch = true;
           matchedTransferZones = findAccessibleTransferZonesByReferenceOrName(
-              osmNode, tags, transferZoneGroup.getTransferZones(), eligibleOsmModes, onlySelectClosestMatch, suppressLogging);
+              osmNode, tags, transferZoneGroup.getTransferZones(),
+              eligibleOsmModes, onlySelectClosestMatch, suppressLogging);
           LOGGER.warning(String.format(
               "Mismatch between spatially/mode/layer eligible waiting area(s) identified (%s) and name/ref" +
                       " compatible waiting area(s) for stop location %d, choosing closest name/ref based" +
@@ -1008,7 +1040,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return matchedTransferZones;
   }
 
-  /** Identical to the one with transfer zone group parameter, only here no stop_position is not part of transfer zone group and therefore we only can find matches spatially
+  /** Identical to the one with transfer zone group parameter, only here no stop_position is not part of
+   * transfer zone group and therefore we only can find matches spatially
    *  
    * @param osmNode representing the stop_location
    * @param tags of the node
@@ -1023,8 +1056,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * Filter (retain) only the links that are vertical layer index compatible, i.e., have the same vertical layer index (or both adopt the default).
-   * In case the transfer zone has no explicit layer specified, it depends on the user whether we would assume the default layer or we assume the layer is in fact unknown
+   * Filter (retain) only the links that are vertical layer index compatible, i.e., have the same vertical
+   * layer index (or both adopt the default).
+   * In case the transfer zone has no explicit layer specified, it depends on the user whether we would assume
+   * the default layer or we assume the layer is in fact unknown
    *
    * @param transferZone to match against
    * @param linksByLayerToFilter the links to filter
