@@ -807,7 +807,6 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param tags to use
    * @param transferZoneType to apply
    * @param defaultOsmMode to apply (may be null)
-   * @param geoUtils to use
    * @return transfer zone created, null if something happened making it impossible or not useful to create the zone
    */
   public TransferZone createAndRegisterTransferZoneWithoutConnectoidsFindAccessModes(
