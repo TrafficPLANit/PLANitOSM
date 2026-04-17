@@ -36,10 +36,7 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
-import org.goplanit.utils.zoning.DirectedConnectoid;
-import org.goplanit.utils.zoning.TransferZone;
-import org.goplanit.utils.zoning.TransferZoneGroup;
-import org.goplanit.utils.zoning.TransferZoneType;
+import org.goplanit.utils.zoning.*;
 import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
@@ -636,6 +633,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             true /* terminal is stop position*/,
             ferryTransferZone,
             getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(defaultMode),
+            ZoneConnectoidType.PT_VEHICLE_STOP,
             suppressWarnings);
       }else{
         /* not overwritten, or not properly overwritten, proceed */
@@ -650,7 +648,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         if(terminalOnNetworkNode) {
           /* transfer zone + connectoid */
           ferryTransferZone = getTransferZoneHelper().createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
-              (OsmNode) osmFerryTerminal, tags, defaultMode, transferZoneType);
+              (OsmNode) osmFerryTerminal, tags, defaultMode, transferZoneType, ZoneConnectoidType.PT_VEHICLE_STOP);
         }else /*if(!suppressWarnings)*/ {
           /* transfer zone without connectoid as it may be nearby tagged separately, postpone */
           ferryTransferZone = getTransferZoneHelper().createAndRegisterTransferZoneWithoutConnectoidsSetAccessModes(
@@ -709,11 +707,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if (EntityType.Node.equals(entityType) && hasNetworkLayersWithActiveOsmNode(osmFerryTerminal.getId())) {
       /* transfer zone + connectoid at point of intersection */
       getConnectoidHelper().createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-              String.valueOf(osmFerryTerminal.getId()),
-              ferryTransferZone,
-              (OsmNode) osmFerryTerminal,
-              getReferenceNetwork().getLayerByPredefinedModeType(PredefinedModeType.FERRY),
-              PredefinedModeType.FERRY);
+          String.valueOf(osmFerryTerminal.getId()),
+          ferryTransferZone,
+          (OsmNode) osmFerryTerminal,
+          getReferenceNetwork().getLayerByPredefinedModeType(PredefinedModeType.FERRY),
+          PredefinedModeType.FERRY,
+          ZoneConnectoidType.PT_VEHICLE_STOP);
     } else if (EntityType.Way.equals(entityType)){
       // postpone connectoid creation further, either it has stop positions and if not it remains incomplete and we
       //deal with it last
@@ -850,12 +849,13 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
     // case we check if any of the other segments coming into the access nodes (that do not support ferry) are eligible.
     // if so, create a connectoid and add the modes that we need and cross them of the onFerryNonFerryModes list
-    var addedModes = getConnectoidHelper().addOrExpandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
-            OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
-            transferZone,
-            directedConnectoids,
-            Collections.singleton(ferryMode),
-            onFerryNonFerryModes);
+    var addedModes = getConnectoidHelper().expandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
+          OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
+          transferZone,
+          directedConnectoids,
+          Collections.singleton(ferryMode),
+          onFerryNonFerryModes,
+          ZoneConnectoidType.TRAVELLER_ACCESS);
     onFerryNonFerryModes.removeAll(addedModes);
     if(onFerryNonFerryModes.isEmpty()){
       return true;
@@ -910,6 +910,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           currOnFerryNonFerryMode,
           (Node)closestNodeWithDistance.first(),
           eligibleEntrySegmentsOfClosestNode,
+          ZoneConnectoidType.TRAVELLER_ACCESS, // traveller access to terminal, not the ferry vehicle stop access
           false,
           suppressSpatialWarnings);
     }
@@ -941,12 +942,13 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // rail based modes) are eligible. if so, create a connectoid and add the modes that we need and cross
     // them of the list
     var modesToAdd = new TreeSet<>(allSupportedActiveModes);
-    var addedModes = getConnectoidHelper().addOrExpandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
-            OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
-            transferZone,
-            directedConnectoids,
-            railBasedModes,
-            modesToAdd);
+    var addedModes = getConnectoidHelper().expandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
+        OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
+        transferZone,
+        directedConnectoids,
+        railBasedModes,
+        modesToAdd,
+        ZoneConnectoidType.TRAVELLER_ACCESS);
     modesToAdd.removeAll(addedModes);
     if(modesToAdd.isEmpty()){
       return success;
@@ -1001,6 +1003,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
               currActiveMode,
               (Node)closestNodeWithDistance.first(),
               eligibleEntrySegmentsOfClosestNode,
+              ZoneConnectoidType.TRAVELLER_ACCESS, // not where train/tram stops, but where travellers access stop
               false,
               suppressSpatialWarnings);
     }
@@ -1142,7 +1145,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       var singletonSet = new TreeSet<String>();
       singletonSet.add(osmMode);
       Collection<TransferZone> matchedTransferZones =
-          getTransferZoneHelper().findOrCreateTransferZonesForStopPosition(osmNode, tags, singletonSet, false);
+          getTransferZoneHelper().findOrCreateTransferZonesForStopPosition(
+              osmNode, tags, singletonSet, false);
       boolean proceedBecauseIsOverwritten = getSettings().isOverwriteWaitingAreaOfStopLocation(osmNode.getId());
 
       /* special cases - try to salvage */
@@ -1151,8 +1155,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         * to be safe we create one as if this stop position is the terminal as it is likely a tagging error */
         if (this.getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive() &&
             OsmWaterModeTags.isWaterModeTag(osmMode)) {
+          // treat as platform
           var transferZone =
-              processStandAlonePtv1FerryTerminal(osmNode, TransferZoneType.PLATFORM, suppressWarnings); // treat as platform
+              processStandAlonePtv1FerryTerminal(osmNode, TransferZoneType.PLATFORM, suppressWarnings);
           LOGGER.warning(String.format("SALVAGED: ferry stop_position %d has no waiting area close-by," +
               " created one in same location to be safe (tags %s)", osmNode.getId(), tags));
           return; // <-- ugly but connectoids already created as we treat it like a combined Ptv1 terminal in call
@@ -1171,6 +1176,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             locationIsKnownOsmStopPosition,
             transferZone,
             accessModeType,
+            ZoneConnectoidType.PT_VEHICLE_STOP,
             proceedBecauseIsOverwritten || suppressWarnings);
       }           
     }
@@ -1190,12 +1196,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     unprocessedStopPositions.values().forEach(osmNode -> {
 
       if(osmNode == null){
-        LOGGER.severe("OSM node representing stop position not available in memory, unable to extract stop position");
+        LOGGER.severe("OSM node representing stop position not available in memory, " +
+            "unable to extract stop position");
         return;
       }
 
       /* suppress warnings in case we cannot create a terminal that lies outside the bounding area */
-      boolean suppressWarnings = !fallsWithinSpatiallyEligibleBoundingArea(osmNode, OsmModelUtil.getTagsAsMap(osmNode));
+      boolean suppressWarnings = !fallsWithinSpatiallyEligibleBoundingArea(
+          osmNode, OsmModelUtil.getTagsAsMap(osmNode));
       processStopPositionNotPartOfStopArea(osmNode, OsmModelUtil.getTagsAsMap(osmNode), suppressWarnings);
 
     });
@@ -1272,7 +1280,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         if(OsmWaterModeTags.isWaterModeTag(osmAccessMode) &&
             getSettings().isConnectDanglingFerryStopToNearbyFerryRoute()){
           // salvage by creating a new link to attach to ferry network and place terminal on a network node */
-          // entity may be a node or way: use first location of transfer zone geometry as we do not have OsmWay available
+          // entity may be a node or way: use first location of transfer zone geometry as we do not have
+          // OsmWay available
           var connectoinPoint = PlanitJtsUtils.createPoint(
               transferZone.getGeometry(true).getCoordinates()[0]);
           boolean success =connectDanglingFerryStopToNearbyFerryRoute(
@@ -1497,7 +1506,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       TransferZoneType ptv1TransferZoneType =
           PlanitTransferZoneUtils.extractTransferZoneTypeFromPtv1Tags(osmStationNode, tags);
       getTransferZoneHelper().createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
-          osmStationNode, tags, defaultMode, ptv1TransferZoneType);
+          osmStationNode, tags, defaultMode, ptv1TransferZoneType, ZoneConnectoidType.PT_VEHICLE_STOP);
       
     }else{
       /* either station is not on track, or it is, but a different transfer zone is user mandated, either way,

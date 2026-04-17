@@ -185,10 +185,10 @@ public class BasicOsmReaderTest {
           e -> e.getType().equals(ZoneConnectoidType.TRAVELLER_ACCESS));
 
       // todo: clearly this should all be either stop or traveller access and unknown/none should never happen anymore
-      assertEquals(215, noneTypeAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
+      assertEquals(37, noneTypeAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
       assertEquals(0, unknownTypeAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
-      assertEquals(0, ptVehicleStopAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
-      assertEquals(0, travellerAccessAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
+      assertEquals(130, ptVehicleStopAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
+      assertEquals(48, travellerAccessAccessEntriesStream.flatMap(e -> e.getAccessLinkSegments().stream()).count());
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

@@ -25,10 +25,7 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
-import org.goplanit.utils.zoning.ConnectoidUtils;
-import org.goplanit.utils.zoning.DirectedConnectoid;
-import org.goplanit.utils.zoning.TransferZone;
-import org.goplanit.utils.zoning.TransferZoneGroup;
+import org.goplanit.utils.zoning.*;
 import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.modifier.event.handler.UpdateDirectedConnectoidsOnBreakLinkSegmentHandler;
 import org.locationtech.jts.geom.Coordinate;
@@ -258,6 +255,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param accessNode of the connectoids
    * @param linkSegments to create connectoids for (one per segment)
    * @param allowedModes used for each connectoid
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @param verifyOsmVerticalLayerCompatibility when true we do not report back if the link segments match the
    *                                            transfer zone's OSM layer index, when false we do
    * @return created connectoids
@@ -269,6 +267,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       final DirectedVertex accessNode,
       final Iterable<? extends EdgeSegment> linkSegments,
       final Set<Mode> allowedModes,
+      ZoneConnectoidType type,
       boolean verifyOsmVerticalLayerCompatibility){
 
     if(!verifyOsmVerticalLayerCompatibility) {
@@ -290,12 +289,13 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }
 
     Collection<DirectedConnectoid> createdConnectoids = ZoningConverterUtils.createAndRegisterDirectedConnectoids(
-            connectoidExternalId,
-            getZoning(),
-            transferZone,
-            accessNode,
-            (Iterable<MacroscopicLinkSegment>) linkSegments,
-            allowedModes);
+        connectoidExternalId,
+        getZoning(),
+        transferZone,
+        accessNode,
+        (Iterable<MacroscopicLinkSegment>) linkSegments,
+        allowedModes,
+        type);
     for(var newConnectoid : createdConnectoids) {
       /* update PLANit data tracking information */
       /* 1) index by access link segment's downstream node location */
@@ -572,57 +572,73 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
   /**
    * For given connectoids, check if any of its access node entry link segments support any of the
-   * provided modes, if so, expand the connectoid (if it is the same entry link), or create a new connectoid
-   * (by registering the mode as supported by the connectoid with a new entry link to the same access node).
-   * We stop when at least one connectoids for each of the modes to add has been identified
+   * provided modes, if so, expand the connectoid entry either by adding a new alternative entry segment
+   * that has a compatible mode, or create a new entry with a new mode and segment as long as it has the
+   * same diretionality as the existing connectoid and we find a matching (alt) entry segment we can expadnd
+   * We stop when at least one connectoid for each of the modes to add has been expanded, or no more can be
+   * found.
    *
    * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone transferZone
    * @param directedConnectoids to check if ok to add any of the provided modes to
    * @param bannedModes the candidate entry link segments are not allowed to support any of the banned modes
    * @param modesToAdd the modes to add
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @return modes added to one or more connectoids
    */
-  public Set<Mode> addOrExpandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
+  public Set<Mode> expandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
           @Nullable String connectoidExternalId,
           TransferZone transferZone,
           Set<DirectedConnectoid> directedConnectoids,
           Collection<Mode> bannedModes,
-          Collection<Mode> modesToAdd) {
+          Collection<Mode> modesToAdd,
+          ZoneConnectoidType type) {
     var addedModes = new TreeSet<Mode>();
 
     for(var connectoid : directedConnectoids) {
       var accessNode = connectoid.getAccessVertex();
-      var alternativeEntrySegmentsIter = accessNode.getEntryEdgeSegments();
-      for (var altEntryEdgeSegment : alternativeEntrySegmentsIter) {
+      var zoneConnectoidEntry = connectoid.getAccessZoneEntry(transferZone);
+      if(!zoneConnectoidEntry.getType().equals(type)){
+        // we cannot mix types as each entry only supports a single type
+        continue;
+      }
+
+      // for this one we only allow entry link (segments), so if connectoid is not compatible
+      // we cannot expand it
+      if(connectoid.isAccessNodeUpstreamOfSegments()){
+        continue;
+      }
+      var altAccessSegments = accessNode.getEntryEdgeSegments();
+      for (var altEntryEdgeSegment : altAccessSegments) {
         if (!(altEntryEdgeSegment instanceof LinkSegment) ||
                 ((LinkSegment) altEntryEdgeSegment).isAnyModeAllowed(bannedModes)) {
           continue;
         }
-        var altEntryLinkSegment = ((LinkSegment) altEntryEdgeSegment);
-        if (Collections.disjoint(altEntryLinkSegment.getAllowedModes(), modesToAdd)) {
+        var altAccessLinkSegment = ((LinkSegment) altEntryEdgeSegment);
+        if (Collections.disjoint(altAccessLinkSegment.getAllowedModes(), modesToAdd)) {
           continue;
         }
 
-        var modesForAltEntryLinkSegment = new HashSet<>(modesToAdd);
-        modesForAltEntryLinkSegment.retainAll(altEntryLinkSegment.getAllowedModes());
-        // create connectoid and remove these modes from remaining onFerry modes to provide
-        modesForAltEntryLinkSegment.forEach(onFerryMode -> {
+        var modesForAltAccessSegment = new HashSet<>(modesToAdd);
+        modesForAltAccessSegment.retainAll(altAccessLinkSegment.getAllowedModes());
+        // create connectoid
+        modesForAltAccessSegment.forEach(mode -> {
           boolean modeSuccess = extractDirectedConnectoidsForModeLinkSegments(
-                  connectoidExternalId,
-                  transferZone,
-                  onFerryMode,
-                  accessNode,
-                  Collections.singleton(altEntryLinkSegment),
-                  true,
-                  false
+              connectoidExternalId,
+              transferZone,
+              mode,
+              accessNode,
+              Collections.singleton(altAccessLinkSegment),
+              type,
+              true,
+              false
           );
           if (modeSuccess) {
-            addedModes.add(onFerryMode);
+            addedModes.add(mode);
           }
         });
 
-        if (addedModes.size() == modesForAltEntryLinkSegment.size()) {
+        if (addedModes.size() == modesForAltAccessSegment.size()) {
           break;
         }
       } // end segments
@@ -639,6 +655,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param planitMode mode to support
    * @param accessVertex access node to use
    * @param eligibleLinkSegments access link segments to create connectoids for
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @param ignoreOsmVerticalLayerCompatibilityCheck flag to ignore vertical layer compatibility
    * @param suppressLogging flag to suppress logging
    * @return true if success, false otherwise
@@ -649,6 +666,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       Mode planitMode,
       DirectedVertex accessVertex,
       Collection<LinkSegment> eligibleLinkSegments,
+      ZoneConnectoidType type,
       boolean ignoreOsmVerticalLayerCompatibilityCheck,
       boolean suppressLogging) {
 
@@ -692,6 +710,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             accessVertex,
             Collections.singleton(edgeSegment),
             Collections.singleton(planitMode),
+            type,
             ignoreOsmVerticalLayerCompatibilityCheck || suppressLogging);
 
         if(!suppressLogging && (newConnectoids==null || newConnectoids.isEmpty())) {
@@ -716,6 +735,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param designatedOsmConnectoidNode the OSM node that we should use for the connectoid
    * @param networkLayer related to the mode
    * @param planitModeType the connectoid is accessible for
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @return created connectoids, null if it was not possible to create any due to some reason
    */
   public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
@@ -723,7 +743,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       @Nonnull TransferZone transferZone,
       @Nonnull OsmNode designatedOsmConnectoidNode,
       @Nonnull MacroscopicNetworkLayer networkLayer,
-      @Nonnull PredefinedModeType planitModeType){
+      @Nonnull PredefinedModeType planitModeType,
+      @Nonnull ZoneConnectoidType type){
 
     boolean suppressLogging = false;
     Node accessNode = null;
@@ -792,6 +813,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         accessNode,
         nominatedLinkSegments,
         Collections.singleton(getReferenceNetwork().getModes().get(planitModeType)),
+        type,
         ignoreOsmVerticalLayerCompatibility);
   }
 
@@ -814,6 +836,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    *                                       information
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @param suppressLogging when true do not log anything, false otherwise
    * @return true when one or more connectoids have successfully been generated or existing connectoids have be
    * reused, false otherwise
@@ -824,6 +847,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean locationIsKnownOsmStopPosition,
       TransferZone transferZone,
       PredefinedModeType planitModeType,
+      ZoneConnectoidType type,
       boolean suppressLogging) {
     if(location == null || transferZone == null || planitModeType == null) {
       return false;
@@ -915,24 +939,26 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         planitMode,
         planitAccessNode,
         accessLinkSegments,
+        type,
         ignoreOsmVerticalLayerCompatibility,
         suppressLogging
     );
   }
 
 
-  /** see {@link #extractDirectedConnectoidsForMode(String, Point, boolean, TransferZone, PredefinedModeType, boolean)}
-   *  converting node to point
+  /** see {@link #extractDirectedConnectoidsForMode(String, Point, boolean, TransferZone, PredefinedModeType,
+   * ZoneConnectoidType, boolean)} converting node to point
    *
    * @param osmNode to create the access point for as PLANit node (one or more upstream planit link segments will act
    *                as access link segment for the created connectoid(s))
    * @param locationIsKnownOsmStopPosition when true the location provided is tagged explicitly, meaning we do not
    *                                       enforce filtering based on criteria that might not have been properly tagged,
    *                                       when false, we proceed applying as many filter criteria as possible to get
-   *                                       best possible match based on available tagging, e.g., vertical layer
+   *                                       the best possible match based on available tagging, e.g., vertical layer
    *                                       information
    * @param transferZone this connectoid is assumed to provide access to
    * @param planitModeType mode type this connectoid is allowed access for
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @param suppressLogging when true do not log anything, false otherwise
    * @return true when one or more connectoids have successfully been generated or existing connectoids have been
    *  reused, false otherwise
@@ -942,6 +968,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean locationIsKnownOsmStopPosition,
       TransferZone transferZone,
       PredefinedModeType planitModeType,
+      ZoneConnectoidType type,
       boolean suppressLogging){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
     return extractDirectedConnectoidsForMode(
@@ -950,6 +977,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         locationIsKnownOsmStopPosition,
         transferZone,
         planitModeType,
+        type,
         suppressLogging);
   }
   
@@ -977,6 +1005,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       TransferZoneGroup transferZoneGroup,
       boolean suppressLogging){
     boolean success = false; 
+
     /* for the given layer/mode combination, extract connectoids by linking them to the provided transfer zones */
     for(var modeType : planitModeTypes) {
       
@@ -993,9 +1022,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       /* transfer zone */
       for(TransferZone transferZone : transferZones) {
         
-        /* connectoid(s) */
+        /* connectoid(s) of type PT STOP*/
         success = extractDirectedConnectoidsForMode(
-            osmNode, locationIsKnownOsmStopPosition, transferZone, modeType, suppressLogging) || success;
+            osmNode,
+            locationIsKnownOsmStopPosition,
+            transferZone,
+            modeType,
+            ZoneConnectoidType.PT_VEHICLE_STOP,
+            suppressLogging) || success;
         if(success && transferZoneGroup != null && !transferZone.isInTransferZoneGroup(transferZoneGroup)) {
           /* in some rare cases only the stop locations are part of the stop_area, but not the platforms next to
           the road/rail, only then this situation is triggered and we salvage the situation */
@@ -1015,7 +1049,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   /** create connectoids not based on OSM node location but based on auto-generated geographic location on the provided
    * link's link segments by finding either a close enough existing coordinate (OSM node), or if not close enough a
    * newly created coordinate at the appropriate position. Then create connectoids accordingly by breaking the link in
-   * these locations
+   * these locations. This is assumed to become connectoids for a vehicle stop location of some sort.
    * 
    * @param osmWaitingAreaId the waiting area pertains to
    * @param waitingAreaGeometry geometry of the waiting area
@@ -1079,6 +1113,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             locationIsKnownOsmStopPosition,
             transferZone,
             planitAccessModeType,
+            ZoneConnectoidType.PT_VEHICLE_STOP,
             suppressLogging);
   }
 

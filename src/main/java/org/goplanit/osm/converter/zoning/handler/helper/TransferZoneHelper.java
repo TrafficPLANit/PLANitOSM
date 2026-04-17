@@ -28,6 +28,7 @@ import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.utils.zoning.TransferZoneGroup;
 import org.goplanit.utils.zoning.TransferZoneType;
+import org.goplanit.utils.zoning.ZoneConnectoidType;
 import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -872,13 +873,15 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @param tags of the node
    * @param defaultOsmMode that is to be expected here
    * @param defaultTransferZoneType in case a transfer zone needs to be created in this location
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @return created transfer zone (if not already in existence)
    */  
   public TransferZone createAndRegisterTransferZoneWithConnectoidsAtOsmNode(
       OsmNode osmNode,
       Map<String, String> tags,
       String defaultOsmMode,
-      TransferZoneType defaultTransferZoneType){
+      TransferZoneType defaultTransferZoneType,
+      ZoneConnectoidType type){
         
     Pair<SortedSet<String>, SortedSet<PredefinedModeType>> modeResult =
         publicTransportModeParser.collectPublicTransportModesFromPtEntity(osmNode, tags, defaultOsmMode);
@@ -907,7 +910,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can 
       service any tram line using the tracks */
       connectoidHelper.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
-          String.valueOf(osmNode.getId()), transferZone, osmNode, networkLayer, modeType);
+          String.valueOf(osmNode.getId()), transferZone, osmNode, networkLayer, modeType, type);
     }    
     
     return transferZone;

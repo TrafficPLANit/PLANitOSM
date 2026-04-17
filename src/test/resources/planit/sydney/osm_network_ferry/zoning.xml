@@ -245,109 +245,109 @@
         </transferzones>
         <transferzoneaccess network_ref="1" network_layer_ref="all">
             <connectoid id="0" externalid="20959049" noderef="4">
-                <accesszone ref="5" lengthkm="0.0" lsrefs="5" modes="ferry"/>
+                <accesszone ref="5" lengthkm="0.0" lsrefs="5" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="1" externalid="8590354" noderef="2">
-                <accesszone ref="4" lengthkm="0.0" lsrefs="3" modes="ferry"/>
+                <accesszone ref="4" lengthkm="0.0" lsrefs="3" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="10" externalid="5837202912" noderef="24">
-                <accesszone ref="11" lengthkm="0.0" lsrefs="41" modes="ferry"/>
+                <accesszone ref="11" lengthkm="0.0" lsrefs="41" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="11" externalid="6804603708" noderef="40">
-                <accesszone ref="12" lengthkm="0.0" lsrefs="70" modes="ferry"/>
+                <accesszone ref="12" lengthkm="0.0" lsrefs="70" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="12" externalid="6804603708" noderef="40">
-                <accesszone ref="12" lengthkm="0.0" lsrefs="72" modes="ferry"/>
+                <accesszone ref="12" lengthkm="0.0" lsrefs="72" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="13" externalid="9518193591" noderef="25">
-                <accesszone ref="17" lengthkm="0.0" lsrefs="43" modes="ferry"/>
+                <accesszone ref="17" lengthkm="0.0" lsrefs="43" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="14" externalid="9518262819" noderef="28">
-                <accesszone ref="18" lengthkm="0.0" lsrefs="50" modes="ferry"/>
+                <accesszone ref="18" lengthkm="0.0" lsrefs="50" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="15" externalid="9518262820" noderef="30">
-                <accesszone ref="19" lengthkm="0.0" lsrefs="52" modes="ferry"/>
+                <accesszone ref="19" lengthkm="0.0" lsrefs="52" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="16" externalid="8530018" noderef="22">
-                <accesszone ref="20" lengthkm="0.0" lsrefs="94" modes="ferry"/>
+                <accesszone ref="20" lengthkm="0.0" lsrefs="94" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="17" externalid="82009167" noderef="20">
-                <accesszone ref="21" lengthkm="0.0" lsrefs="32" modes="ferry"/>
+                <accesszone ref="21" lengthkm="0.0" lsrefs="32" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="18" externalid="1838532348" noderef="33">
-                <accesszone ref="22" lengthkm="0.0" lsrefs="56" modes="ferry"/>
+                <accesszone ref="22" lengthkm="0.0" lsrefs="56" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="19" externalid="1840889196" noderef="37">
-                <accesszone ref="23" lengthkm="0.0" lsrefs="65" modes="ferry"/>
+                <accesszone ref="23" lengthkm="0.0" lsrefs="65" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="2" externalid="8408936" noderef="8">
-                <accesszone ref="3" lengthkm="0.0" lsrefs="11" modes="ferry"/>
+                <accesszone ref="3" lengthkm="0.0" lsrefs="11" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="20" externalid="1937009879" noderef="17">
-                <accesszone ref="24" lengthkm="0.0" lsrefs="27" modes="ferry"/>
+                <accesszone ref="24" lengthkm="0.0" lsrefs="27" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="21" externalid="3304182832" noderef="6">
-                <accesszone ref="25" lengthkm="0.0" lsrefs="6" modes="ferry"/>
+                <accesszone ref="25" lengthkm="0.0" lsrefs="6" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="22" externalid="3304182832" noderef="6">
-                <accesszone ref="25" lengthkm="0.0" lsrefs="68" modes="ferry"/>
+                <accesszone ref="25" lengthkm="0.0" lsrefs="68" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="23" externalid="3605016899" noderef="7">
-                <accesszone ref="26" lengthkm="0.0" lsrefs="9" modes="ferry"/>
+                <accesszone ref="26" lengthkm="0.0" lsrefs="9" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="24" externalid="5413375060" noderef="21">
-                <accesszone ref="27" lengthkm="0.0" lsrefs="34" modes="ferry"/>
+                <accesszone ref="27" lengthkm="0.0" lsrefs="34" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="25" externalid="5425695841" noderef="10">
-                <accesszone ref="28" lengthkm="0.0" lsrefs="15" modes="ferry"/>
+                <accesszone ref="28" lengthkm="0.0" lsrefs="15" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="26" externalid="5425711246" noderef="12">
-                <accesszone ref="29" lengthkm="0.0" lsrefs="17" modes="ferry"/>
+                <accesszone ref="29" lengthkm="0.0" lsrefs="17" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="27" externalid="5601091629" noderef="16">
-                <accesszone ref="30" lengthkm="0.0" lsrefs="24" modes="ferry"/>
+                <accesszone ref="30" lengthkm="0.0" lsrefs="24" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="28" externalid="osm_inferred" noderef="44">
-                <accesszone ref="0" lengthkm="0.0" lsrefs="97" modes="ferry"/>
+                <accesszone ref="0" lengthkm="0.0" lsrefs="97" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="29" externalid="osm_inferred" noderef="45">
-                <accesszone ref="7" lengthkm="0.0" lsrefs="99" modes="ferry"/>
+                <accesszone ref="7" lengthkm="0.0" lsrefs="99" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="3" externalid="8099480" noderef="9">
-                <accesszone ref="2" lengthkm="0.0" lsrefs="13" modes="ferry"/>
+                <accesszone ref="2" lengthkm="0.0" lsrefs="13" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="30" externalid="osm_inferred" noderef="46">
-                <accesszone ref="8" lengthkm="0.0" lsrefs="101" modes="ferry"/>
+                <accesszone ref="8" lengthkm="0.0" lsrefs="101" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="31" externalid="osm_inferred" noderef="47">
-                <accesszone ref="13" lengthkm="0.0" lsrefs="103" modes="ferry"/>
+                <accesszone ref="13" lengthkm="0.0" lsrefs="103" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="32" externalid="osm_inferred" noderef="48">
-                <accesszone ref="14" lengthkm="0.0" lsrefs="105" modes="ferry"/>
+                <accesszone ref="14" lengthkm="0.0" lsrefs="105" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="33" externalid="osm_inferred" noderef="49">
-                <accesszone ref="15" lengthkm="0.0" lsrefs="107" modes="ferry"/>
+                <accesszone ref="15" lengthkm="0.0" lsrefs="107" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="34" externalid="osm_inferred" noderef="50">
-                <accesszone ref="16" lengthkm="0.0" lsrefs="109" modes="ferry"/>
+                <accesszone ref="16" lengthkm="0.0" lsrefs="109" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="4" externalid="20959048" noderef="19">
-                <accesszone ref="1" lengthkm="0.0" lsrefs="30" modes="ferry"/>
+                <accesszone ref="1" lengthkm="0.0" lsrefs="30" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="5" externalid="252058553" noderef="18">
-                <accesszone ref="6" lengthkm="0.0" lsrefs="29" modes="ferry"/>
+                <accesszone ref="6" lengthkm="0.0" lsrefs="29" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="6" externalid="252058553" noderef="18">
-                <accesszone ref="6" lengthkm="0.0" lsrefs="69" modes="ferry"/>
+                <accesszone ref="6" lengthkm="0.0" lsrefs="69" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="7" externalid="5601069117" noderef="38">
-                <accesszone ref="9" lengthkm="0.0" lsrefs="66" modes="ferry"/>
+                <accesszone ref="9" lengthkm="0.0" lsrefs="66" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="8" externalid="5601109475" noderef="27">
-                <accesszone ref="10" lengthkm="0.0" lsrefs="46" modes="ferry"/>
+                <accesszone ref="10" lengthkm="0.0" lsrefs="46" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="9" externalid="5601109475" noderef="27">
-                <accesszone ref="10" lengthkm="0.0" lsrefs="48" modes="ferry"/>
+                <accesszone ref="10" lengthkm="0.0" lsrefs="48" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
         </transferzoneaccess>
         <transferzonegroups>
