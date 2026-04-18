@@ -151,36 +151,51 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * update an existing directed connectoid with new access zone, segment and allowed modes. In case the link segment
-   * does not have any of the passed in modes listed as allowed, the connectoid is not updated with these modes
-   * for the given access zone as it would not be possible to utilise it.
+   * update an existing directed connectoid with new access zone, segment and allowed modes (for given type). In case
+   * the link segment does not have any of the passed in modes listed as allowed, the connectoid is not updated
+   * with these modes for the given access zone as it would not be possible to utilise it.
    *
    * @param connectoidToUpdate to connectoid to update
    * @param accessZone         to relate connectoids to
    * @param accessSegment      to allow
    * @param allowedModes       to add to the connectoid for the given access zone
+   * @param type type to use
+   * @param forceAllowModes when true force allowed modes to be allowed on connectoid if it already exists but has not
+   *                        all modes listed as allowed, when false, ignore and log warning if not compatible
    */  
   private void updateDirectedConnectoid(
-      DirectedConnectoid connectoidToUpdate,
-      TransferZone accessZone,
-      EdgeSegment accessSegment,
-      Collection<Mode> allowedModes) {
+      @Nonnull DirectedConnectoid connectoidToUpdate,
+      @Nonnull TransferZone accessZone,
+      @Nonnull EdgeSegment accessSegment,
+      @Nonnull Collection<Mode> allowedModes,
+      ZoneConnectoidType type,
+      boolean forceAllowModes) {
 
-    if(!connectoidToUpdate.hasAccessZoneEntry(accessZone)){
-      var entry = connectoidToUpdate.createAccessZoneEntry(accessZone);
-      entry.addAccessLinkSegment(accessSegment);
-      entry.addAllowedModes(allowedModes);
-    }else{
-      var entry = connectoidToUpdate.getAccessZoneEntry(accessZone);
-      if(!entry.hasAccessLinkSegment(accessSegment)){
-        entry.addAccessLinkSegment(accessSegment);
-      }
-      var availableModes = ((MacroscopicLinkSegment)accessSegment).getAllowedModesFrom(allowedModes);
-      if(availableModes!= null && !availableModes.isEmpty()) {
-        entry.addAllowedModes(availableModes);
-      }
+    // check mode compatibility first
+    var availableModes = ((MacroscopicLinkSegment)accessSegment).getAllowedModesFrom(allowedModes);
+    if(availableModes.isEmpty()) {
+      return;
     }
+
+    if(!connectoidToUpdate.hasAccessZoneEntry(accessZone, type)){
+      connectoidToUpdate.createAccessZoneEntry(accessZone, type);
+    }
+    var entry = connectoidToUpdate.getAccessZoneEntry(accessZone, type);
+    if(!entry.isAllModesAllowedFrom(availableModes) && !forceAllowModes){
+      LOGGER.warning(String.format("Unable to update connectoid for access zone (%s) type (%s) and access " +
+          "segment (%s), as modes are incompatible (now: %s, suggested: %s)", accessZone.getIdsAsString(),
+          type, entry.getAllowedModesFrom(availableModes).stream().map(
+              m -> m.getPredefinedModeType().toString()).collect(Collectors.joining(",")),
+          availableModes.stream().map(
+                  m -> m.getPredefinedModeType().toString()).collect(Collectors.joining(","))));
+      return;
+    }
+    if(!entry.hasAccessLinkSegment(accessSegment)){
+      entry.addAccessLinkSegment(accessSegment);
+    }
+    entry.addAllowedModes(availableModes);
   }
+
 
   /** break a PLANit link at the PLANit node location while also updating all OSM related tracking indices and/or
    * PLANit network link and link segment reference that might be affected by this process:
@@ -205,7 +220,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     connectoid to the correct access link segment directly upstream of the original downstream vertex identified */
     Map<Point, Set<DirectedConnectoid>> connectoidsAccessNodeLocationBeforeBreakLink =
         ConnectoidUtils.findDirectedConnectoidsReferencingLinks(
-                linksToBreak, getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer));
+            linksToBreak,
+            getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer).
+                values().stream().flatMap(Collection::stream));
     
     /* register additional actions on breaking link via listener for connectoid update (see above)
      * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly
@@ -571,82 +588,6 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * For given connectoids, check if any of its access node entry link segments support any of the
-   * provided modes, if so, expand the connectoid entry either by adding a new alternative entry segment
-   * that has a compatible mode, or create a new entry with a new mode and segment as long as it has the
-   * same diretionality as the existing connectoid and we find a matching (alt) entry segment we can expadnd
-   * We stop when at least one connectoid for each of the modes to add has been expanded, or no more can be
-   * found.
-   *
-   * @param connectoidExternalId external id (allowed to be null)
-   * @param transferZone transferZone
-   * @param directedConnectoids to check if ok to add any of the provided modes to
-   * @param bannedModes the candidate entry link segments are not allowed to support any of the banned modes
-   * @param modesToAdd the modes to add
-   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
-   * @return modes added to one or more connectoids
-   */
-  public Set<Mode> expandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
-          @Nullable String connectoidExternalId,
-          TransferZone transferZone,
-          Set<DirectedConnectoid> directedConnectoids,
-          Collection<Mode> bannedModes,
-          Collection<Mode> modesToAdd,
-          ZoneConnectoidType type) {
-    var addedModes = new TreeSet<Mode>();
-
-    for(var connectoid : directedConnectoids) {
-      var accessNode = connectoid.getAccessVertex();
-      var zoneConnectoidEntry = connectoid.getAccessZoneEntry(transferZone);
-      if(!zoneConnectoidEntry.getType().equals(type)){
-        // we cannot mix types as each entry only supports a single type
-        continue;
-      }
-
-      // for this one we only allow entry link (segments), so if connectoid is not compatible
-      // we cannot expand it
-      if(connectoid.isAccessNodeUpstreamOfSegments()){
-        continue;
-      }
-      var altAccessSegments = accessNode.getEntryEdgeSegments();
-      for (var altEntryEdgeSegment : altAccessSegments) {
-        if (!(altEntryEdgeSegment instanceof LinkSegment) ||
-                ((LinkSegment) altEntryEdgeSegment).isAnyModeAllowed(bannedModes)) {
-          continue;
-        }
-        var altAccessLinkSegment = ((LinkSegment) altEntryEdgeSegment);
-        if (Collections.disjoint(altAccessLinkSegment.getAllowedModes(), modesToAdd)) {
-          continue;
-        }
-
-        var modesForAltAccessSegment = new HashSet<>(modesToAdd);
-        modesForAltAccessSegment.retainAll(altAccessLinkSegment.getAllowedModes());
-        // create connectoid
-        modesForAltAccessSegment.forEach(mode -> {
-          boolean modeSuccess = extractDirectedConnectoidsForModeLinkSegments(
-              connectoidExternalId,
-              transferZone,
-              mode,
-              accessNode,
-              Collections.singleton(altAccessLinkSegment),
-              type,
-              true,
-              false
-          );
-          if (modeSuccess) {
-            addedModes.add(mode);
-          }
-        });
-
-        if (addedModes.size() == modesForAltAccessSegment.size()) {
-          break;
-        }
-      } // end segments
-    } // end connectoids
-    return addedModes;
-  }
-
-  /**
    * Create a connectoid or expand an existing connectoid with given mode if it exists for given transfer zone
    * and provided parameters.
    *
@@ -693,7 +634,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
           }
 
           /* update zone-segment-mode eligibility */
-          updateDirectedConnectoid(connectoid, transferZone, edgeSegment, Collections.singleton(planitMode));
+          boolean forceAllowMode = true; // assumed we have verified this beforehand to be desirable
+          updateDirectedConnectoid(
+              connectoid, transferZone, edgeSegment, Collections.singleton(planitMode), type, forceAllowMode);
           createConnectoidsForLinkSegment  = false;
           break;
         }

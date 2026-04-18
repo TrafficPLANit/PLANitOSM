@@ -848,10 +848,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
     // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
     // case we check if any of the other segments coming into the access nodes (that do not support ferry) are eligible.
-    // if so, create a connectoid and add the modes that we need and cross them of the onFerryNonFerryModes list
-    var addedModes = getConnectoidHelper().expandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
-          OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
-          transferZone,
+    // if so, expand the connectoid and add the modes that we need and cross them of the onFerryNonFerryModes list
+    var addedModes = ZoningConverterUtils.expandConnectoidsWithModeCompatibleAltEntrySegmentsToAccessNode(
+        transferZone,
           directedConnectoids,
           Collections.singleton(ferryMode),
           onFerryNonFerryModes,
@@ -942,8 +941,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // rail based modes) are eligible. if so, create a connectoid and add the modes that we need and cross
     // them of the list
     var modesToAdd = new TreeSet<>(allSupportedActiveModes);
-    var addedModes = getConnectoidHelper().expandConnectoidsWithModeCompatibleEntryLinkToAccessNode(
-        OsmConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
+    var addedModes = ZoningConverterUtils.expandConnectoidsWithModeCompatibleAltEntrySegmentsToAccessNode(
         transferZone,
         directedConnectoids,
         railBasedModes,
@@ -1614,7 +1612,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // create index from transfer zone to transfer connectoid for efficient checking
     var connectoidsByTransferZoneMapping = getZoning().getTransferConnectoids().createIndexByAccessZone();
 
-    var result = ZoningConverterUtils.findTransferZonesForModesWithoutConnectoidsSupportingAltModesProvided(
+    var result = ZoningConverterUtils.findPtStopModeTransferZonesWithoutTravellerAccessModeConnectoids(
                     connectoidsByTransferZoneMapping, Collections.singleton(ferryMode), nonFerryModes);
     var ferryTransferZones = result.first();
     var ferryTransferZonesDisconnectedFromLandNetwork = result.second();
@@ -1659,7 +1657,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     // create index from transfer zone to transfer connectoid for efficient checking
     var connectoidsByTransferZoneMapping = getZoning().getTransferConnectoids().createIndexByAccessZone();
 
-    var result = ZoningConverterUtils.findTransferZonesForModesWithoutConnectoidsSupportingAltModesProvided(
+    var result = ZoningConverterUtils.findPtStopModeTransferZonesWithoutTravellerAccessModeConnectoids(
             connectoidsByTransferZoneMapping, railBasedModes, allsupportedActiveModes);
     var railBasedTransferZones = result.first();
     var railBasedTransferZonesDisconnectedFromActiveModesNetwork = result.second();
