@@ -4677,7 +4677,7 @@
                 <accesszone ref="387" lengthkm="0.0" lsrefs="3686,36276" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="162" externalid="3947038090" noderef="13236">
-                <accesszone ref="386" lengthkm="0.0" lsrefs="5576,36278" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="386" lengthkm="0.0" lsrefs="36278,36419" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="163" externalid="3947038093" noderef="13237">
                 <accesszone ref="388" lengthkm="0.0" lsrefs="33533,36280" modes="tram" type="pt_veh_stop"/>
@@ -4756,7 +4756,7 @@
                 <accesszone ref="380" lengthkm="0.0" lsrefs="32273,36324" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="186" externalid="4069715680" noderef="13260">
-                <accesszone ref="54" lengthkm="0.0" lsrefs="6826" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="54" lengthkm="0.0" lsrefs="36327" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="187" externalid="7252659667" noderef="13261">
                 <accesszone ref="298" lengthkm="0.0" lsrefs="6826" modes="bus" type="pt_veh_stop"/>
@@ -4864,10 +4864,10 @@
                 <accesszone ref="429" lengthkm="0.0" lsrefs="13734,36382" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="218" externalid="3967630092" noderef="7778">
-                <accesszone ref="429" lengthkm="0.0" lsrefs="9920,9924,25868" modes="train" type="pt_veh_stop"/>
+                <accesszone ref="429" lengthkm="0.0" lsrefs="9920,25868,36679" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="219" externalid="579489285" noderef="7782">
-                <accesszone ref="429" lengthkm="0.0" lsrefs="13729,25867" modes="train" type="pt_veh_stop"/>
+                <accesszone ref="429" lengthkm="0.0" lsrefs="13729,36677" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="22" externalid="1492169276" noderef="6278">
                 <accesszone ref="418" lengthkm="0.0" lsrefs="7671,24243" modes="tram" type="pt_veh_stop"/>
@@ -4981,16 +4981,16 @@
                 <accesszone ref="151" lengthkm="0.0" lsrefs="7894" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="253" externalid="2203994168" noderef="13322">
-                <accesszone ref="156" lengthkm="0.0" lsrefs="33739,36450" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="156" lengthkm="0.0" lsrefs="36450,36769" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="254" externalid="2199382854" noderef="13323">
-                <accesszone ref="155" lengthkm="0.0" lsrefs="33743,36452" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="155" lengthkm="0.0" lsrefs="36452,36767" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="255" externalid="4294470720" noderef="13324">
                 <accesszone ref="150" lengthkm="0.0" lsrefs="12766" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="256" externalid="2203994749" noderef="13325">
-                <accesszone ref="159" lengthkm="0.0" lsrefs="36449,36456" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="159" lengthkm="0.0" lsrefs="36456,36771" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="257" externalid="4294470716" noderef="13326">
                 <accesszone ref="148" lengthkm="0.0" lsrefs="36458" modes="bus" type="pt_veh_stop"/>
@@ -4999,13 +4999,13 @@
                 <accesszone ref="149" lengthkm="0.0" lsrefs="36457" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="259" externalid="2203993230" noderef="13328">
-                <accesszone ref="152" lengthkm="0.0" lsrefs="33755,36462" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="152" lengthkm="0.0" lsrefs="36462,36765" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="26" externalid="3924765040" noderef="13111">
                 <accesszone ref="421" lengthkm="0.0" lsrefs="32161,36028" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="260" externalid="2203995317" noderef="13329">
-                <accesszone ref="160" lengthkm="0.0" lsrefs="34613,36464" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="160" lengthkm="0.0" lsrefs="36464,36773" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="261" externalid="2209383511" noderef="13330">
                 <accesszone ref="164" lengthkm="0.0" lsrefs="33823,36466" modes="tram" type="pt_veh_stop"/>
@@ -5098,7 +5098,7 @@
                 <accesszone ref="190" lengthkm="0.0" lsrefs="32441,36520" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="289" externalid="2227503570" noderef="13358">
-                <accesszone ref="53" lengthkm="0.0" lsrefs="33021,36522" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="53" lengthkm="0.0" lsrefs="36522,36785" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="29" externalid="3924911392" noderef="13114">
                 <accesszone ref="438" lengthkm="0.0" lsrefs="32581,36034" modes="tram" type="pt_veh_stop"/>
@@ -5113,7 +5113,7 @@
                 <accesszone ref="513" lengthkm="0.0" lsrefs="34815,36528" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="293" externalid="2228443062" noderef="13362">
-                <accesszone ref="200" lengthkm="0.0" lsrefs="29147,36530" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="200" lengthkm="0.0" lsrefs="36530,36787" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="294" externalid="2227497016" noderef="13363">
                 <accesszone ref="196" lengthkm="0.0" lsrefs="33025,36532" modes="tram" type="pt_veh_stop"/>
@@ -5122,7 +5122,7 @@
                 <accesszone ref="203" lengthkm="0.0" lsrefs="34125,36534" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="296" externalid="4457663139" noderef="13365">
-                <accesszone ref="204" lengthkm="0.0" lsrefs="34121,36536" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="204" lengthkm="0.0" lsrefs="36536,36791" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="297" externalid="2227499567" noderef="13366">
                 <accesszone ref="198" lengthkm="0.0" lsrefs="33041,36538" modes="tram" type="pt_veh_stop"/>
@@ -5239,7 +5239,7 @@
                 <accesszone ref="431" lengthkm="0.0" lsrefs="34081,36042" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="330" externalid="4520380561" noderef="13398">
-                <accesszone ref="400" lengthkm="0.0" lsrefs="30325,36602" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="400" lengthkm="0.0" lsrefs="36602,36605" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="331" externalid="4520380562" noderef="13399">
                 <accesszone ref="401" lengthkm="0.0" lsrefs="31435,36604" modes="tram" type="pt_veh_stop"/>
@@ -5251,7 +5251,7 @@
                 <accesszone ref="399" lengthkm="0.0" lsrefs="36603,36608" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="334" externalid="4520380565" noderef="13402">
-                <accesszone ref="396" lengthkm="0.0" lsrefs="31429,36610" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="396" lengthkm="0.0" lsrefs="36610,36615" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="335" externalid="4520380566" noderef="13403">
                 <accesszone ref="397" lengthkm="0.0" lsrefs="31443,36612" modes="tram" type="pt_veh_stop"/>
@@ -5266,7 +5266,8 @@
                 <accesszone ref="538" lengthkm="0.0" lsrefs="36611,36618" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="339" externalid="4520380570" noderef="13407">
-                <accesszone ref="218" lengthkm="0.0" lsrefs="6770" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="218" lengthkm="0.0" lsrefs="36621" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="537" lengthkm="0.0" lsrefs="36620,36621" modes="pedestrian" type="traveller_access"/>
             </connectoid>
             <connectoid id="34" externalid="3924931348" noderef="13119">
                 <accesszone ref="432" lengthkm="0.0" lsrefs="32565,36044" modes="tram" type="pt_veh_stop"/>
@@ -5389,7 +5390,7 @@
                 <accesszone ref="210" lengthkm="0.0" lsrefs="32873,36660" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="374" externalid="2227494896" noderef="13428">
-                <accesszone ref="194" lengthkm="0.0" lsrefs="34133,36662" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="194" lengthkm="0.0" lsrefs="36662,36779" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="375" externalid="2244704580" noderef="13429">
                 <accesszone ref="143" lengthkm="0.0" lsrefs="31795,36664" modes="tram" type="pt_veh_stop"/>
@@ -5547,10 +5548,10 @@
                 <accesszone ref="406" lengthkm="0.0" lsrefs="2282,36060" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="420" externalid="583182427" noderef="13468">
-                <accesszone ref="50" lengthkm="0.0" lsrefs="19251" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="50" lengthkm="0.0" lsrefs="36947" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="421" externalid="828185108" noderef="359">
-                <accesszone ref="51" lengthkm="0.0" lsrefs="19227" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="51" lengthkm="0.0" lsrefs="36825" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="422" externalid="osm_inferred" noderef="13469">
                 <accesszone ref="52" lengthkm="0.0" lsrefs="28545" modes="bus" type="pt_veh_stop"/>
@@ -5757,7 +5758,7 @@
                 <accesszone ref="257" lengthkm="0.0" lsrefs="36836" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="483" externalid="7246306291" noderef="13516">
-                <accesszone ref="258" lengthkm="0.0" lsrefs="12572" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="258" lengthkm="0.0" lsrefs="36885" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="484" externalid="223100437" noderef="1282">
                 <accesszone ref="259" lengthkm="0.0" lsrefs="1377,1393" modes="bus" type="pt_veh_stop"/>
@@ -5898,7 +5899,7 @@
                 <accesszone ref="304" lengthkm="0.0" lsrefs="36900" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="523" externalid="osm_inferred" noderef="13548">
-                <accesszone ref="305" lengthkm="0.0" lsrefs="7030" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="305" lengthkm="0.0" lsrefs="36903" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="524" externalid="osm_inferred" noderef="13549">
                 <accesszone ref="306" lengthkm="0.0" lsrefs="36904" modes="bus" type="pt_veh_stop"/>
@@ -6086,7 +6087,7 @@
                 <accesszone ref="547" lengthkm="0.0" lsrefs="26205" modes="pedestrian" type="traveller_access"/>
             </connectoid>
             <connectoid id="58" externalid="3937113675" noderef="13143">
-                <accesszone ref="459" lengthkm="0.0" lsrefs="33685,36092" modes="tram" type="pt_veh_stop"/>
+                <accesszone ref="459" lengthkm="0.0" lsrefs="36092,36437" modes="tram" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="580" externalid="osm_inferred" noderef="12640">
                 <accesszone ref="0" lengthkm="0.0" lsrefs="34186" modes="bicycle" type="traveller_access"/>
@@ -6837,7 +6838,7 @@
                 <accesszone ref="366" lengthkm="0.0" lsrefs="4817,5018" modes="pedestrian" type="traveller_access"/>
             </connectoid>
             <connectoid id="79" externalid="3937113660" noderef="13161">
-                <accesszone ref="79" lengthkm="0.0" lsrefs="12142" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="79" lengthkm="0.0" lsrefs="36909" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="790" externalid="osm_inferred" noderef="6910">
                 <accesszone ref="367" lengthkm="0.0" lsrefs="8589,11438" modes="pedestrian" type="traveller_access"/>
@@ -7539,16 +7540,13 @@
             <connectoid id="978" externalid="osm_inferred" noderef="3313">
                 <accesszone ref="537" lengthkm="0.0" lsrefs="3698,3701,22104" modes="bicycle" type="traveller_access"/>
             </connectoid>
-            <connectoid id="979" externalid="osm_inferred" noderef="13407">
-                <accesszone ref="537" lengthkm="0.0" lsrefs="36620,36621" modes="pedestrian" type="traveller_access"/>
+            <connectoid id="979" externalid="osm_inferred" noderef="3312">
+                <accesszone ref="538" lengthkm="0.0" lsrefs="22103" modes="bicycle" type="traveller_access"/>
             </connectoid>
             <connectoid id="98" externalid="2269261034" noderef="13173">
                 <accesszone ref="501" lengthkm="0.0" lsrefs="31989,36152" modes="tram" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="980" externalid="osm_inferred" noderef="3312">
-                <accesszone ref="538" lengthkm="0.0" lsrefs="22103" modes="bicycle" type="traveller_access"/>
-            </connectoid>
-            <connectoid id="981" externalid="osm_inferred" noderef="11689">
+            <connectoid id="980" externalid="osm_inferred" noderef="11689">
                 <accesszone ref="538" lengthkm="0.0" lsrefs="30376,36619" modes="pedestrian" type="traveller_access"/>
             </connectoid>
             <connectoid id="99" externalid="3945796038" noderef="6408">

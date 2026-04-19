@@ -839,34 +839,31 @@
             <connectoid id="10" externalid="6553012226" noderef="1039">
                 <accesszone ref="61" lengthkm="0.0" lsrefs="1000,2496" modes="train" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="100" externalid="osm_inferred" noderef="1094">
-                <accesszone ref="56" lengthkm="0.0" lsrefs="1913" modes="bus" type="pt_veh_stop"/>
-            </connectoid>
-            <connectoid id="101" externalid="10245932157" noderef="1095">
+            <connectoid id="100" externalid="10245932157" noderef="1095">
                 <accesszone ref="57" lengthkm="0.0" lsrefs="2608" modes="bus" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="102" externalid="osm_inferred" noderef="1096">
+            <connectoid id="101" externalid="osm_inferred" noderef="1096">
                 <accesszone ref="58" lengthkm="0.0" lsrefs="2610" modes="bus" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="103" externalid="3593631034" noderef="1097">
+            <connectoid id="102" externalid="3593631034" noderef="1097">
                 <accesszone ref="59" lengthkm="0.0" lsrefs="2612" modes="bus" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="104" externalid="osm_inferred" noderef="1098">
+            <connectoid id="103" externalid="osm_inferred" noderef="1098">
                 <accesszone ref="80" lengthkm="0.0" lsrefs="2614" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="105" externalid="osm_inferred" noderef="1099">
+            <connectoid id="104" externalid="osm_inferred" noderef="1099">
                 <accesszone ref="81" lengthkm="0.0" lsrefs="2616" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="106" externalid="osm_inferred" noderef="1100">
+            <connectoid id="105" externalid="osm_inferred" noderef="1100">
                 <accesszone ref="86" lengthkm="0.0" lsrefs="2618" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="107" externalid="osm_inferred" noderef="1101">
+            <connectoid id="106" externalid="osm_inferred" noderef="1101">
                 <accesszone ref="87" lengthkm="0.0" lsrefs="2620" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="108" externalid="osm_inferred" noderef="1102">
+            <connectoid id="107" externalid="osm_inferred" noderef="1102">
                 <accesszone ref="88" lengthkm="0.0" lsrefs="2622" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="109" externalid="osm_inferred" noderef="1103">
+            <connectoid id="108" externalid="osm_inferred" noderef="1103">
                 <accesszone ref="89" lengthkm="0.0" lsrefs="2624" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="11" externalid="9780863959" noderef="1040">
@@ -985,29 +982,29 @@
                 <accesszone ref="103" lengthkm="0.0" lsrefs="1150" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="46" externalid="3814715782" noderef="355">
-                <accesszone ref="0" lengthkm="0.0" lsrefs="450" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="0" lengthkm="0.0" lsrefs="2521" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="47" externalid="3910190219" noderef="1052">
                 <accesszone ref="1" lengthkm="0.0" lsrefs="2522" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="48" externalid="10188047867" noderef="1053">
-                <accesszone ref="2" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="2" lengthkm="0.0" lsrefs="2525" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="49" externalid="osm_inferred" noderef="1054">
-                <accesszone ref="3" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="3" lengthkm="0.0" lsrefs="2527" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="5" externalid="8099480" noderef="674">
                 <accesszone ref="64" lengthkm="0.0" lsrefs="1035" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="50" externalid="2281643758" noderef="1055">
-                <accesszone ref="4" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="4" lengthkm="0.0" lsrefs="2529" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="51" externalid="2999125565" noderef="1056">
-                <accesszone ref="5" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="5" lengthkm="0.0" lsrefs="2531" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="52" externalid="2999125456" noderef="1057">
-                <accesszone ref="6" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
-                <accesszone ref="7" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="6" lengthkm="0.0" lsrefs="2533" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="7" lengthkm="0.0" lsrefs="2533" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="53" externalid="osm_inferred" noderef="1058">
                 <accesszone ref="8" lengthkm="0.0" lsrefs="350" modes="bus" type="pt_veh_stop"/>
@@ -1080,7 +1077,7 @@
                 <accesszone ref="28" lengthkm="0.0" lsrefs="1050" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="74" externalid="2200727996" noderef="439">
-                <accesszone ref="29" lengthkm="0.0" lsrefs="1202" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="29" lengthkm="0.0" lsrefs="2569" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="75" externalid="1427601759" noderef="1073">
                 <accesszone ref="30" lengthkm="0.0" lsrefs="1744" modes="bus" type="pt_veh_stop"/>
@@ -1101,7 +1098,7 @@
                 <accesszone ref="60" lengthkm="0.0" lsrefs="2179,2492" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="80" externalid="osm_inferred" noderef="1078">
-                <accesszone ref="35" lengthkm="0.0" lsrefs="1913" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="35" lengthkm="0.0" lsrefs="2605" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="81" externalid="10197152381" noderef="1079">
                 <accesszone ref="36" lengthkm="0.0" lsrefs="764" modes="bus" type="pt_veh_stop"/>
@@ -1149,19 +1146,20 @@
                 <accesszone ref="50" lengthkm="0.0" lsrefs="2600" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="95" externalid="1802422531" noderef="1092">
-                <accesszone ref="51" lengthkm="0.0" lsrefs="856" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="51" lengthkm="0.0" lsrefs="2603" modes="bus" type="pt_veh_stop"/>
+                <accesszone ref="53" lengthkm="0.0" lsrefs="2602" modes="bus" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="96" externalid="osm_inferred" noderef="1093">
                 <accesszone ref="52" lengthkm="0.0" lsrefs="856" modes="bus" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="97" externalid="1802422531" noderef="1092">
-                <accesszone ref="53" lengthkm="0.0" lsrefs="2602" modes="bus" type="pt_veh_stop"/>
-            </connectoid>
-            <connectoid id="98" externalid="356199769" noderef="151">
+            <connectoid id="97" externalid="356199769" noderef="151">
                 <accesszone ref="54" lengthkm="0.0" lsrefs="2575" modes="bus" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="99" externalid="1632174670" noderef="324">
+            <connectoid id="98" externalid="1632174670" noderef="324">
                 <accesszone ref="55" lengthkm="0.0" lsrefs="1954" modes="bus" type="pt_veh_stop"/>
+            </connectoid>
+            <connectoid id="99" externalid="osm_inferred" noderef="1094">
+                <accesszone ref="56" lengthkm="0.0" lsrefs="1913" modes="bus" type="pt_veh_stop"/>
             </connectoid>
         </transferzoneaccess>
         <transferzonegroups>

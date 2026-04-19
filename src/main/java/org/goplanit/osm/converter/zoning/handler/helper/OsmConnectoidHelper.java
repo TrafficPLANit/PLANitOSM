@@ -218,7 +218,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links
     we're about to break link (segments) if after breaking links this relation is modified, restore it by updating the
     connectoid to the correct access link segment directly upstream of the original downstream vertex identified */
-    Map<Point, Set<DirectedConnectoid>> connectoidsAccessNodeLocationBeforeBreakLink =
+    Set<DirectedConnectoid> connectoidsOverlappingWithBreakLinks =
         ConnectoidUtils.findDirectedConnectoidsReferencingLinks(
             linksToBreak,
             getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer).
@@ -229,8 +229,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
      *  than now
      */
     GraphModifierListener listener = null;
-    if(!connectoidsAccessNodeLocationBeforeBreakLink.isEmpty()) {
-      listener = new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsAccessNodeLocationBeforeBreakLink);
+    if(!connectoidsOverlappingWithBreakLinks.isEmpty()) {
+      listener = new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsOverlappingWithBreakLinks);
       networkLayer.getLayerModifier().addListener(listener);
     }
         

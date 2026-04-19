@@ -189,7 +189,7 @@ public class BasicOsmReaderTest {
       // todo: clearly this should all be either stop or traveller access and unknown/none should never happen anymore
       assertEquals(0, noneTypeAccessLinkSegments.count());
       assertEquals(0, unknownTypeAccessLinkSegments.count());
-      assertEquals(123, ptStopTypeAccessLinkSegments.count());
+      assertEquals(131, ptStopTypeAccessLinkSegments.count());
       assertEquals(48, travellerAccessTypeAccessLinkSegments.count());
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
