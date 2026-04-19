@@ -173,23 +173,23 @@ public class BasicOsmReaderTest {
 
       var tConnectoids = zoning.getTransferConnectoids();
 
-      var noneTypeAccessLinkSegments = tConnectoids.stream().map(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE).flatMap(
-          e -> e.getAccessLinkSegments().stream()).distinct().count());
-      var unknownTypeAccessLinkSegments = tConnectoids.stream().map(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN).flatMap(
-              e -> e.getAccessLinkSegments().stream()).distinct().count());
-      var ptStopTypeAccessLinkSegments = tConnectoids.stream().map(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.PT_VEHICLE_STOP).flatMap(
-              e -> e.getAccessLinkSegments().stream()).distinct().count());
-      var travellerAccessTypeAccessLinkSegments = tConnectoids.stream().map(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.TRAVELLER_ACCESS).flatMap(
-              e -> e.getAccessLinkSegments().stream()).distinct().count());
+      var noneTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE)).flatMap(
+          e -> e.getAccessLinkSegments().stream()).distinct();
+      var unknownTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN)).flatMap(
+              e -> e.getAccessLinkSegments().stream()).distinct();
+      var ptStopTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.PT_VEHICLE_STOP)).flatMap(
+              e -> e.getAccessLinkSegments().stream()).distinct();
+      var travellerAccessTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.TRAVELLER_ACCESS)).flatMap(
+              e -> e.getAccessLinkSegments().stream()).distinct();
 
       // todo: clearly this should all be either stop or traveller access and unknown/none should never happen anymore
-      assertEquals(37, noneTypeAccessLinkSegments.count());
+      assertEquals(0, noneTypeAccessLinkSegments.count());
       assertEquals(0, unknownTypeAccessLinkSegments.count());
-      assertEquals(130, ptStopTypeAccessLinkSegments.count());
+      assertEquals(123, ptStopTypeAccessLinkSegments.count());
       assertEquals(48, travellerAccessTypeAccessLinkSegments.count());
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
