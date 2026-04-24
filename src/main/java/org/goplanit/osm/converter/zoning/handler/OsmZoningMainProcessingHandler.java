@@ -51,7 +51,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmZoningMainProcessingHandler.class.getCanonicalName());
 
-  /** When an OSM node has been identified in pre-processing as used by pt/zoning infrastructure, finalise registration by adding the actual OSM node instance
+  /** When an OSM node has been identified in pre-processing as used by pt/zoning infrastructure, finalise registration
+   * by adding the actual OSM node instance
    *  otherwise ignore
    *
    * @param osmNode to check

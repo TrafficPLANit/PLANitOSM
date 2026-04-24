@@ -76,7 +76,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   private final OsmPublicTransportModeConversion publicTransportModeHelper;
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
-  private final OsmConnectoidHelper connectoidHelper;
+  private final OsmTransferConnectoidHelper connectoidHelper;
 
   private final OsmProjectedBoundingAreaHelper projectedBoundingAreaHelper;
       
@@ -523,7 +523,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * 
    * @return connectoidParser parser 
    */
-  protected OsmConnectoidHelper getConnectoidHelper() {
+  protected OsmTransferConnectoidHelper getTransferConnectoidHelper() {
     return this.connectoidHelper;
   }
 
@@ -608,7 +608,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
             getNetworkToZoningData().getNetworkSettings(), getSettings(), getReferenceNetwork().getModes());
     
     /* parser for creating PLANit connectoids */
-    this.connectoidHelper = new OsmConnectoidHelper(
+    this.connectoidHelper = new OsmTransferConnectoidHelper(
         referenceNetwork, zoningToPopulate, zoningReaderData, network2ZoningData, transferSettings, profiler);
   }
   

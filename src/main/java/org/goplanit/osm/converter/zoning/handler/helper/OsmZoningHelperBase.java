@@ -12,6 +12,7 @@ import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
@@ -20,6 +21,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Base class for all parser classes targeting support for parsing a specific PLANit zoning related entity (connectoid, transfer zone etc.)
@@ -170,7 +172,7 @@ class OsmZoningHelperBase {
   public Collection<MacroscopicLink> findNearbyModeCompatibleLinks(
           Geometry geometry,
           Collection<Mode> bannedModes,
-          Collection<Mode> supportedModes,
+          Set<Mode> supportedModes,
           double maxSearchRadius){
 
     // assume single layer
@@ -194,7 +196,7 @@ class OsmZoningHelperBase {
    *
    * @param geometry reference centroid of geometry used
    * @param mode to check
-   * @param eligibleLinks links to consider
+   * @param eligibleLinkSegments link segments to consider
    * @param maxSearchRadius only consider if within search radius
    * @param suppressSpatialWarnings flag for logging
    * @return pair of closest node and distance (null if not available)
@@ -202,25 +204,20 @@ class OsmZoningHelperBase {
   public Pair<DirectedVertex, Double> findClosestModeCompatibleNode(
           Geometry geometry,
           Mode mode,
-          Collection<MacroscopicLink> eligibleLinks,
+          Stream<MacroscopicLinkSegment> eligibleLinkSegments,
+          boolean selectUpstreamNode,
           double maxSearchRadius,
-          boolean suppressSpatialWarnings){
+          boolean suppressSpatialWarnings) {
 
-    var refCoord =  geometry.getCentroid().getCoordinate();
-    var modeCompatibleNearbyLinks = eligibleLinks.stream().filter(
-            l -> l.isModeAllowedOnAnySegment(mode)).collect(Collectors.toList());
-    var closestLinkWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
-            refCoord,
-            modeCompatibleNearbyLinks, maxSearchRadius, suppressSpatialWarnings, getGeoUtils());
-    if(closestLinkWithDistance == null){
-      return null;
-    }
-
-    // determine preferred access node based on closeness
+    var refCoord = geometry.getCentroid().getCoordinate();
+    var modeCompatibleNearbyNodes = eligibleLinkSegments.filter(
+        ls -> ls.isModeAllowed(mode)).map(
+        ls -> selectUpstreamNode ? ls.getUpstreamNode() : ls.getDownstreamNode()).collect(Collectors.toList());
     return PlanitEntityGeoUtils.findPlanitEntityClosest(
-            refCoord,
-            Set.of(closestLinkWithDistance.first().getVertexA(),closestLinkWithDistance.first().getVertexB()),
-            maxSearchRadius, suppressSpatialWarnings, getGeoUtils());
+        refCoord,
+        modeCompatibleNearbyNodes,
+        maxSearchRadius,
+        suppressSpatialWarnings,
+        getGeoUtils());
   }
-    
 }

@@ -58,7 +58,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   private final OsmPublicTransportModeConversion publicTransportModeParser;
   
   /** parser functionality regarding the creation of PLANit connectoids from OSM entities */
-  private final OsmConnectoidHelper connectoidHelper;
+  private final OsmTransferConnectoidHelper connectoidHelper;
 
     
   /** Find links that can access the stop_location by the given mode. if location is on extreme node, we provide
@@ -705,7 +705,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         getNetworkToZoningData().getNetworkSettings(), transferSettings, referenceNetwork.getModes());
     
     /* parser for identifying pt PLANit modes from OSM entities */
-    this.connectoidHelper = new OsmConnectoidHelper(
+    this.connectoidHelper = new OsmTransferConnectoidHelper(
         referenceNetwork, zoning, zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
   }
 
@@ -909,7 +909,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can 
       service any tram line using the tracks */
-      connectoidHelper.createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
+      connectoidHelper.createAndRegisterTransferConnectoidsOnTopOfTransferZone(
           String.valueOf(osmNode.getId()), transferZone, osmNode, networkLayer, modeType, type);
     }    
     

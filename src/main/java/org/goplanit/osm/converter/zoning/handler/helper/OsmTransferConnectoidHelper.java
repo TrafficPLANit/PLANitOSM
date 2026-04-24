@@ -10,6 +10,7 @@ import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.*;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.graph.directed.EdgeSegment;
@@ -42,18 +43,18 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Class to provide functionality for parsing PLANit connectoids from OSM entities
+ * Class to provide functionality for parsing PLANit transfer connectoids from OSM entities
  * 
  * @author markr
  *
  */
-public class OsmConnectoidHelper extends OsmZoningHelperBase {
+public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
 
   /** no direct GTFS external id for connectoid, but signify source */
   public static final String OSM_CONNECTOID_EXTERNAL_INFERRED_ID = "osm_inferred";
 
   /** logger to use */
-  private static final Logger LOGGER = Logger.getLogger(OsmConnectoidHelper.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(OsmTransferConnectoidHelper.class.getCanonicalName());
 
   /** function used to identify overwritten mappings within generic PLANit core functionality */
   private final Function<Node,String> getOverwrittenWaitingAreaSourceIdForNode;
@@ -86,7 +87,23 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
               settings.getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNodeId).second());
     } 
     return mustAvoidCrossingTraffic;   
-  }   
+  }
+
+  /**
+   * Helper for tracking update
+   *
+   * @param createdConnectoid to track
+   * @param transferZone additional index
+   * @param networkLayer additional index
+   */
+  private void registerNewConnectoidOnPlanitTrackingData(
+      TransferConnectoid createdConnectoid, TransferZone transferZone, MacroscopicNetworkLayer networkLayer) {
+    /* 1) index by access vertex node location */
+    getZoningReaderData().getPlanitData().addTransferConnectoidByLocation(
+        networkLayer, createdConnectoid.getReferenceVertex().getPosition() ,createdConnectoid);
+    /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
+    getZoningReaderData().getPlanitData().addConnectoidByTransferZone(transferZone, createdConnectoid);
+  }
 
   /**
    * Find the link segments that are accessible for the given access link, node, mode combination taking into account
@@ -163,8 +180,8 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param forceAllowModes when true force allowed modes to be allowed on connectoid if it already exists but has not
    *                        all modes listed as allowed, when false, ignore and log warning if not compatible
    */  
-  private void updateDirectedConnectoid(
-      @Nonnull DirectedConnectoid connectoidToUpdate,
+  private void updateTransferConnectoidWithDirectedAccess(
+      @Nonnull TransferConnectoid connectoidToUpdate,
       @Nonnull TransferZone accessZone,
       @Nonnull EdgeSegment accessSegment,
       @Nonnull Collection<Mode> allowedModes,
@@ -178,7 +195,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }
 
     if(!connectoidToUpdate.hasAccessZoneEntry(accessZone, type)){
-      connectoidToUpdate.createAccessZoneEntry(accessZone, type);
+      connectoidToUpdate.createDirectedAccessZoneEntry(accessZone, type);
     }
     var entry = connectoidToUpdate.getAccessZoneEntry(accessZone, type);
     if(!entry.isAllModesAllowedFrom(availableModes) && !forceAllowModes){
@@ -190,10 +207,45 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
                   m -> m.getPredefinedModeType().toString()).collect(Collectors.joining(","))));
       return;
     }
-    if(!entry.hasAccessLinkSegment(accessSegment)){
-      entry.addAccessLinkSegment(accessSegment);
+    if(entry instanceof DirectedConnectoidAccessZoneEntry){
+      // add if missing, if not directed already allowed
+      var directedEntry = ((DirectedConnectoidAccessZoneEntry)entry);
+      if(!directedEntry.hasAccessLinkSegment(accessSegment)){
+        directedEntry.addAccessLinkSegment(accessSegment);
+      }
+    }else {
+      LOGGER.severe("Cannot add access segment to connectoid entry that is not directed, this should not happen");
     }
     entry.addAllowedModes(availableModes);
+  }
+
+  /**
+   * update an existing directed connectoid with new access zone, segment and allowed modes (for given type). In case
+   * the link segment does not have any of the passed in modes listed as allowed, the connectoid is not updated
+   * with these modes for the given access zone as it would not be possible to utilise it.
+   *
+   * @param connectoidToUpdate to connectoid to update
+   * @param accessZone         to relate connectoids to
+   * @param allowedModes       to add to the connectoid for the given access zone
+   * @param type type to use
+   */
+  private void updateTransferConnectoidWithUndirectedAccess(
+      @Nonnull TransferConnectoid connectoidToUpdate,
+      @Nonnull TransferZone accessZone,
+      @Nonnull Collection<Mode> allowedModes,
+      ZoneConnectoidType type) {
+
+    if(!connectoidToUpdate.hasAccessZoneEntry(accessZone, type)){
+      connectoidToUpdate.createUndirectedAccessZoneEntry(accessZone, type);
+    }
+    var entry = connectoidToUpdate.getAccessZoneEntry(accessZone, type);
+    if(entry instanceof DirectedConnectoidAccessZoneEntry){
+      LOGGER.severe("Cannot add modes to connectoid entry that was expected to be undirected, " +
+          "this should not happen");
+      return;
+    }
+    // add if missing, if not directed already allowed
+    entry.addAllowedModes(allowedModes);
   }
 
 
@@ -218,10 +270,10 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links
     we're about to break link (segments) if after breaking links this relation is modified, restore it by updating the
     connectoid to the correct access link segment directly upstream of the original downstream vertex identified */
-    Set<DirectedConnectoid> connectoidsOverlappingWithBreakLinks =
+    Set<TransferConnectoid> connectoidsOverlappingWithBreakLinks =
         ConnectoidUtils.findDirectedConnectoidsReferencingLinks(
             linksToBreak,
-            getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(networkLayer).
+            getZoningReaderData().getPlanitData().getTransferConnectoidsByLocation(networkLayer).
                 values().stream().flatMap(Collection::stream));
     
     /* register additional actions on breaking link via listener for connectoid update (see above)
@@ -277,7 +329,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    *                                            transfer zone's OSM layer index, when false we do
    * @return created connectoids
    */
-  private Collection<DirectedConnectoid> createAndRegisterDirectedConnectoids(
+  private Collection<TransferConnectoid> createAndRegisterTransferConnectoids(
       @Nullable String connectoidExternalId,
       final TransferZone transferZone,
       final MacroscopicNetworkLayer networkLayer,
@@ -287,7 +339,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       ZoneConnectoidType type,
       boolean verifyOsmVerticalLayerCompatibility){
 
-    if(!verifyOsmVerticalLayerCompatibility) {
+    if(verifyOsmVerticalLayerCompatibility) {
       var osmZoningPlanitData = getZoningReaderData().getPlanitData();
       var osmNetworkLayerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
 
@@ -305,7 +357,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       }
     }
 
-    Collection<DirectedConnectoid> createdConnectoids = ZoningConverterUtils.createAndRegisterDirectedConnectoids(
+    Collection<TransferConnectoid> createdConnectoids = ZoningConverterUtils.createAndRegisterTransferConnectoids(
         connectoidExternalId,
         getZoning(),
         transferZone,
@@ -313,15 +365,9 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
         (Iterable<MacroscopicLinkSegment>) linkSegments,
         allowedModes,
         type);
-    for(var newConnectoid : createdConnectoids) {
-      /* update PLANit data tracking information */
-      /* 1) index by access link segment's downstream node location */
-      getZoningReaderData().getPlanitData().addDirectedConnectoidByLocation(
-              networkLayer, newConnectoid.getAccessVertex().getPosition() ,newConnectoid);
-      /* 2) index connectoids on transfer zone, so we can collect it by transfer zone as well */
-      getZoningReaderData().getPlanitData().addConnectoidByTransferZone(transferZone, newConnectoid);
-    }         
-    
+
+    /* update PLANit data tracking information */
+    createdConnectoids.forEach(c -> registerNewConnectoidOnPlanitTrackingData(c, transferZone, networkLayer));
     return createdConnectoids;
   }
 
@@ -343,7 +389,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param suppressLogging when true suppress logging, false otherwise
    * @return PLANit node collected/created
    */  
-  private Node extractConnectoidAccessNodeByLocation(
+  private Node extractTransferConnectoidAccessNodeByLocation(
       Point osmNodeLocation,
       boolean locationIsKnownOsmStopPosition,
       MacroscopicNetworkLayer networkLayer,
@@ -427,7 +473,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param suppressLogging when true suppress logging, false otherwise
    * @return PLANit node collected/created
    */
-  private Node extractConnectoidAccessNodeByOsmNode(
+  private Node extractTransferConnectoidAccessNodeByOsmNode(
       OsmNode osmNode,
       boolean locationIsKnownOsmStopPosition,
       MacroscopicNetworkLayer networkLayer,
@@ -436,7 +482,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean suppressLogging){
 
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
-    return extractConnectoidAccessNodeByLocation(
+    return extractTransferConnectoidAccessNodeByLocation(
         osmNodeLocation,
             locationIsKnownOsmStopPosition,
             networkLayer,
@@ -459,7 +505,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param networkLayer the link is registered on
    * @return connectoid location to use, may or may not be an existing osm node location, or not
    */
-  private Point extractConnectoidLocationForstandAloneTransferZoneOnLink(
+  private Point extractTransferConnectoidLocationStandAloneTransferZoneOnLink(
       TransferZone transferZone,
       MacroscopicLink accessLink,
       PredefinedModeType planitAccessModeType,
@@ -468,7 +514,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     
     /* determine distance to closest OSM node on existing planit link to create stop location (connectoid) for*/
     Point connectoidLocation =
-        findConnectoidLocationForStandAloneTransferZoneOnLink(
+        findTransferConnectoidLocationForStandAloneTransferZoneOnLink(
                 transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters);
     
     if(connectoidLocation !=null) {
@@ -504,7 +550,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param transferSettings to use
    * @param profiler to use
    */
-  public OsmConnectoidHelper(
+  public OsmTransferConnectoidHelper(
       PlanitOsmNetwork referenceNetwork,
       Zoning zoning, 
       final OsmZoningReaderData zoningReaderData,
@@ -526,7 +572,34 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       };
     }
   }
-  
+
+  /** create transfer connectoids with a single undirected zone entry for explicit access modes provided.
+   *
+   * @param connectoidExternalId external id (allowed to be null)
+   * @param transferZone to relate connectoids to
+   * @param accessNode of the connectoids
+   * @param allowedModes used for each connectoid
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
+   * @return created connectoid
+   */
+  public TransferConnectoid createAndRegisterTransferConnectoidWithUndirectedZoneEntry(
+      @Nullable String connectoidExternalId,
+      final TransferZone transferZone,
+      final MacroscopicNetworkLayer networkLayer,
+      final DirectedVertex accessNode,
+      final Set<Mode> allowedModes,
+      ZoneConnectoidType type){
+
+    var createdConnectoid = ZoningConverterUtils.createAndRegisterTransferConnectoidWithUndirectedAccessEntry(
+        connectoidExternalId, getZoning(), transferZone, accessNode, allowedModes, type);
+
+    /* update PLANit data tracking information */
+    registerNewConnectoidOnPlanitTrackingData(createdConnectoid, transferZone, networkLayer);
+
+    return createdConnectoid;
+  }
+
+
   /** find a suitable connectoid location on the given link based on the constraints that it must be able to reside
    * on a link segment that is in the correct relative position
    * to the transfer zone and supports the access mode on at least one of the designated link segment(s) that is
@@ -539,7 +612,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @return found location either existing node or projected location that is nearest and does not exist as a
    * shape point on the link yet, or null if no valid position could be found
    */
-  public Point findConnectoidLocationForStandAloneTransferZoneOnLink(
+  public Point findTransferConnectoidLocationForStandAloneTransferZoneOnLink(
           final TransferZone transferZone,
           final MacroscopicLink accessLink,
           final PredefinedModeType planitModeType,
@@ -573,7 +646,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }
 
     /* call PLANit connectoid location finder method with appropriate parameters */
-    return ZoningConverterUtils.findConnectoidLocationForWaitingAreaOnLink(
+    return ZoningConverterUtils.findTransferConnectoidLocationForWaitingAreaOnLink(
             transferZone.getExternalId(),
             transferZone.getGeometry(true),
             accessLink,
@@ -601,7 +674,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param suppressLogging flag to suppress logging
    * @return true if success, false otherwise
    */
-  public boolean extractDirectedConnectoidsForModeLinkSegments(
+  public boolean extractTransferConnectoidsForModeLinkSegments(
       @Nullable String connectoidExternalId,
       TransferZone transferZone,
       Mode planitMode,
@@ -611,31 +684,22 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       boolean ignoreOsmVerticalLayerCompatibilityCheck,
       boolean suppressLogging) {
 
-    boolean accessNodeIsSink = eligibleLinkSegments.stream().map(LinkSegment::getDownstreamVertex).allMatch(
-        n -> n.equals(accessVertex));
-
     MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByMode(planitMode);
     for(EdgeSegment edgeSegment : eligibleLinkSegments) {
 
       /* update accessible link segments of already created connectoids (if any) */
-      Point proposedConnectoidLocation = accessVertex.getPosition();
+      Point proposedLocation = accessVertex.getPosition();
       boolean createConnectoidsForLinkSegment = true;
 
-      if(getZoningReaderData().getPlanitData().hasDirectedConnectoidForLocation(
-              networkLayer, proposedConnectoidLocation)) {
+      if(getZoningReaderData().getPlanitData().hasTransferConnectoidForLocation(
+              networkLayer, proposedLocation)) {
         /* existing connectoid: update model eligibility */
-        Collection<DirectedConnectoid> connectoidsForNode =
-                getZoningReaderData().getPlanitData().getDirectedConnectoidsByLocation(
-                        proposedConnectoidLocation, networkLayer);
-        for(DirectedConnectoid connectoid : connectoidsForNode) {
-          if(connectoid.isAccessNodeDownstreamOfSegments() != accessNodeIsSink){
-            // not directionally compatible
-            continue;
-          }
-
+        Collection<TransferConnectoid> connectoidsForNode =
+            getZoningReaderData().getPlanitData().getTransferConnectoidsByLocation(proposedLocation, networkLayer);
+        for(TransferConnectoid connectoid : connectoidsForNode) {
           /* update zone-segment-mode eligibility */
           boolean forceAllowMode = true; // assumed we have verified this beforehand to be desirable
-          updateDirectedConnectoid(
+          updateTransferConnectoidWithDirectedAccess(
               connectoid, transferZone, edgeSegment, Collections.singleton(planitMode), type, forceAllowMode);
           createConnectoidsForLinkSegment  = false;
           break;
@@ -646,7 +710,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       if(createConnectoidsForLinkSegment) {
 
         /* create and register */
-        Collection<DirectedConnectoid> newConnectoids = createAndRegisterDirectedConnectoids(
+        Collection<TransferConnectoid> newConnectoids = createAndRegisterTransferConnectoids(
             connectoidExternalId,
             transferZone,
             networkLayer,
@@ -667,6 +731,47 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     return true;
   }
 
+  /**
+   * Create a connectoid or expand an existing connectoid with given modes if it exists for given transfer zone
+   * and provided parameters.
+   *
+   * @param connectoidExternalId external id (allowed to be null)
+   * @param transferZone to add connectoid for
+   * @param undirectedModeAccess modes to support
+   * @param accessVertex access node to use
+   * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
+   * @return true if success, false otherwise
+   */
+  public boolean extractTransferConnectoidForUndirectedModeAccess(
+      @Nullable String connectoidExternalId,
+      TransferZone transferZone,
+      DirectedVertex accessVertex,
+      final Set<Mode> undirectedModeAccess,
+      ZoneConnectoidType type) {
+
+    if((getReferenceNetwork().getTransportLayers().size()>1)) {
+      throw new PlanItRunTimeException("Multiple layers in network not supported yet by " +
+          "`extractTransferConnectoidForUndirectedModeAccess`");
+    }
+    var networkLayer = getReferenceNetwork().getLayerByMode(undirectedModeAccess.stream().findFirst().get());
+
+    Point proposedLocation = accessVertex.getPosition();
+    if(getZoningReaderData().getPlanitData().hasTransferConnectoidForLocation(networkLayer, proposedLocation)) {
+      /* existing connectoid: update model eligibility */
+      Collection<TransferConnectoid> connectoidsForNode =
+          getZoningReaderData().getPlanitData().getTransferConnectoidsByLocation(proposedLocation, networkLayer);
+      for(TransferConnectoid connectoid : connectoidsForNode) {
+        /* update type-mode eligibility */
+        updateTransferConnectoidWithUndirectedAccess(connectoid, transferZone, undirectedModeAccess, type);
+        return true;
+      }
+    }
+
+    var result = this.createAndRegisterTransferConnectoidWithUndirectedZoneEntry(
+        connectoidExternalId, transferZone, networkLayer, accessVertex, undirectedModeAccess, type);
+    return result !=null;
+  }
+
   /** Create directed connectoids for transfer zones that reside on OSM ways. For such transfer zones, we simply
    * create connectoids in both directions for all eligible incoming link segments. This is a special case because
    * due to residing on the OSM way it is not possible to distinguish what intended direction of the OSM way is
@@ -681,7 +786,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param type         the type of the zone connectoid combination reflecting how it is envisaged to be used
    * @return created connectoids, null if it was not possible to create any due to some reason
    */
-  public Collection<DirectedConnectoid> createAndRegisterDirectedConnectoidsOnTopOfTransferZone(
+  public Collection<TransferConnectoid> createAndRegisterTransferConnectoidsOnTopOfTransferZone(
       @Nullable String connectoidExternalId,
       @Nonnull TransferZone transferZone,
       @Nonnull OsmNode designatedOsmConnectoidNode,
@@ -727,7 +832,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
               getZoningReaderData().getPlanitData().getTransferZoneOsmVerticalLayerIndex(transferZone);
 
       boolean locationIsKnownOsmStopPosition = true;
-      accessNode = extractConnectoidAccessNodeByOsmNode(
+      accessNode = extractTransferConnectoidAccessNodeByOsmNode(
               designatedOsmConnectoidNode,
               locationIsKnownOsmStopPosition,
               networkLayer,
@@ -749,7 +854,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     /* since located on OSM way we cannot deduce direction of the stop, so create connectoid for both incoming
     directions (if present), so we can service any line using the way */
     boolean ignoreOsmVerticalLayerCompatibility = suppressLogging;
-    return createAndRegisterDirectedConnectoids(
+    return createAndRegisterTransferConnectoids(
         connectoidExternalId,
         transferZone,
         networkLayer,
@@ -784,7 +889,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @return true when one or more connectoids have successfully been generated or existing connectoids have be
    * reused, false otherwise
    */
-  public boolean extractDirectedConnectoidsForMode(
+  public boolean extractTransferConnectoidsForMode(
       @Nullable String connectoidExternalId,
       Point location,
       boolean locationIsKnownOsmStopPosition,
@@ -815,7 +920,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }
 
     /* planit access node */
-    Node planitAccessNode = extractConnectoidAccessNodeByLocation(
+    Node planitAccessNode = extractTransferConnectoidAccessNodeByLocation(
             location,
             locationIsKnownOsmStopPosition,
             networkLayer,
@@ -876,7 +981,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     }                           
     
     /* connectoids for link segments */
-    return extractDirectedConnectoidsForModeLinkSegments(
+    return extractTransferConnectoidsForModeLinkSegments(
         connectoidExternalId,
         transferZone,
         planitMode,
@@ -889,7 +994,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
   }
 
 
-  /** see {@link #extractDirectedConnectoidsForMode(String, Point, boolean, TransferZone, PredefinedModeType,
+  /** see {@link #extractTransferConnectoidsForMode(String, Point, boolean, TransferZone, PredefinedModeType,
    * ZoneConnectoidType, boolean)} converting node to point
    *
    * @param osmNode to create the access point for as PLANit node (one or more upstream planit link segments will act
@@ -906,7 +1011,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @return true when one or more connectoids have successfully been generated or existing connectoids have been
    *  reused, false otherwise
    */
-   public boolean extractDirectedConnectoidsForMode(
+   public boolean extractTransferConnectoidsForMode(
       OsmNode osmNode,
       boolean locationIsKnownOsmStopPosition,
       TransferZone transferZone,
@@ -914,7 +1019,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       ZoneConnectoidType type,
       boolean suppressLogging){
     Point osmNodeLocation = OsmNodeUtils.createPoint(osmNode);
-    return extractDirectedConnectoidsForMode(
+    return extractTransferConnectoidsForMode(
         String.valueOf(osmNode.getId()),
         osmNodeLocation,
         locationIsKnownOsmStopPosition,
@@ -940,7 +1045,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param suppressLogging when true, suppress logging, otherwise do not
    * @return true when at least connectoids where created for one of the transfer zones identified
    */
-  public boolean extractDirectedConnectoids(
+  public boolean extractTransferConnectoids(
       OsmNode osmNode,
       boolean locationIsKnownOsmStopPosition,
       Collection<TransferZone> transferZones,
@@ -966,7 +1071,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
       for(TransferZone transferZone : transferZones) {
         
         /* connectoid(s) of type PT STOP*/
-        success = extractDirectedConnectoidsForMode(
+        success = extractTransferConnectoidsForMode(
             osmNode,
             locationIsKnownOsmStopPosition,
             transferZone,
@@ -1004,7 +1109,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
    * @param networkLayer the modes relate to
    * @param suppressLogging when true suppress logging, false otherwise
    */
-  public void extractDirectedConnectoidsForStandAloneTransferZoneByPlanitLink(
+  public void extractTransferConnectoidsForStandAloneTransferZoneByPlanitLink(
       long osmWaitingAreaId,
       Geometry waitingAreaGeometry ,
       MacroscopicLink accessLink,
@@ -1016,7 +1121,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
 
     /* geolocation on planit link, possibly inserted for this purpose by this method if no viable osm node/existing
     coordinate is present */
-    Point connectoidLocation = extractConnectoidLocationForstandAloneTransferZoneOnLink(
+    Point connectoidLocation = extractTransferConnectoidLocationStandAloneTransferZoneOnLink(
         transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     if(!suppressLogging && connectoidLocation == null) {
       LOGGER.warning(
@@ -1050,7 +1155,7 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
     boolean locationIsKnownOsmStopPosition = false;
     String ConnectoidExternalId = osmStopLocationNode!= null ?
             String.valueOf(osmStopLocationNode.getId()) : OSM_CONNECTOID_EXTERNAL_INFERRED_ID;
-    extractDirectedConnectoidsForMode(
+    extractTransferConnectoidsForMode(
             ConnectoidExternalId,
             connectoidLocation,
             locationIsKnownOsmStopPosition,
@@ -1060,4 +1165,14 @@ public class OsmConnectoidHelper extends OsmZoningHelperBase {
             suppressLogging);
   }
 
+  /**
+   * Obtain explicit allowed modes across all connectoids all directed access segments that are explicitly
+   * registered
+   *
+   * @param connectoids to collect from
+   */
+  public Set<Mode> extractExplicitAllowedModesFromDirectedAccessEntries(Set<TransferConnectoid> connectoids) {
+    return connectoids.stream().flatMap(TransferConnectoid::getExplicitAccessLinkSegmentsStream).flatMap(
+        ls -> ((MacroscopicLinkSegment)ls).getAllowedModes().stream()).collect(Collectors.toSet());
+  }
 }

@@ -164,9 +164,10 @@ public class PlanitTransferZoneUtils {
     }
   }
 
-  /** While PLANit does not require access modes on transfer zones because it is handled by connectoids, OSM stop_positions (connectoids) might lack the required
-   * tagging to identify their mode access in which case we revert to the related transfer zone to deduce it. Therefore, we store OSM mode information on a transfer zone
-   * via the generic input properties to be able to retrieve it if needed later
+  /** While PLANit does not require access modes on transfer zones because it is handled by connectoids,
+   * OSM stop_positions (connectoids) might lack the required tagging to identify their mode access in
+   * which case we revert to the related transfer zone to deduce it. Therefore, we store OSM mode information
+   * on a transfer zone via the generic input properties to be able to retrieve it if needed later
    * 
    * @param transferZone to use
    * @param eligibleOsmModes to add

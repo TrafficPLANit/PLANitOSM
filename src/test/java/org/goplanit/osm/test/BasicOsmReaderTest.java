@@ -14,6 +14,7 @@ import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.zoning.DirectedConnectoidAccessZoneEntry;
 import org.goplanit.utils.zoning.ZoneConnectoidType;
 import org.goplanit.zoning.Zoning;
 import org.junit.jupiter.api.AfterAll;
@@ -24,7 +25,6 @@ import org.junit.jupiter.api.Test;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -174,23 +174,37 @@ public class BasicOsmReaderTest {
       var tConnectoids = zoning.getTransferConnectoids();
 
       var noneTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE)).flatMap(
-          e -> e.getAccessLinkSegments().stream()).distinct();
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE)).
+          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
       var unknownTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN)).flatMap(
-              e -> e.getAccessLinkSegments().stream()).distinct();
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN)).
+          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
       var ptStopTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.PT_VEHICLE_STOP)).flatMap(
-              e -> e.getAccessLinkSegments().stream()).distinct();
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.PT_VEHICLE_STOP)).
+          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
       var travellerAccessTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.TRAVELLER_ACCESS)).flatMap(
-              e -> e.getAccessLinkSegments().stream()).distinct();
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS)).
+          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
+      var travellerEgressTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+              c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_EGRESS)).
+          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
+      var travellerAccessEgressTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+              c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS_EGRESS)).
+          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
 
-      // todo: clearly this should all be either stop or traveller access and unknown/none should never happen anymore
+      // todo: access/egress is new, not checked will fail --> update
       assertEquals(0, noneTypeAccessLinkSegments.count());
       assertEquals(0, unknownTypeAccessLinkSegments.count());
       assertEquals(131, ptStopTypeAccessLinkSegments.count());
       assertEquals(48, travellerAccessTypeAccessLinkSegments.count());
+      assertEquals(48, travellerEgressTypeAccessLinkSegments.count());
+      assertEquals(48, travellerAccessEgressTypeAccessLinkSegments.count());
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

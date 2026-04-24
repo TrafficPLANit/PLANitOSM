@@ -29,8 +29,8 @@ import org.goplanit.zoning.Zoning;
  *     where we start with IDENTIFY_PLATFORM_AS_RELATIONS, only spatially eligible platform relations are considered
  *     by marking nodes and ways spatially eligible based on the bounding polygon (if any), then run again
  *     with PREREGISTER_ZONING_WAY_NODES which will pre-register all nodes for the ways that were identified as platform
- *     AND will pre-register all remaining unregistered OSM nodes part of relations that are not part of the physical network,
- *     such as station nodes. In the last stage we register the full node instances themselves
+ *     AND will pre-register all remaining unregistered OSM nodes part of relations that are not part of the physical
+ *     network,     such as station nodes. In the last stage we register the full node instances themselves
  * </p>
  *
  * @author markr
