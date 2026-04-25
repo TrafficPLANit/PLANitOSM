@@ -173,38 +173,27 @@ public class BasicOsmReaderTest {
 
       var tConnectoids = zoning.getTransferConnectoids();
 
-      var noneTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE)).
-          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
-          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
-      var unknownTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN)).
-          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
-          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
+      var noneTypeAccessEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE)).count();
+      var unknownTypeAccessEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN)).count();
       var ptStopTypeAccessLinkSegments = tConnectoids.stream().flatMap(
           c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.PT_VEHICLE_STOP)).
-          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
-          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
-      var travellerAccessTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS)).
-          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
-          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
-      var travellerEgressTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-              c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_EGRESS)).
-          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
-          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
-      var travellerAccessEgressTypeAccessLinkSegments = tConnectoids.stream().flatMap(
-              c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS_EGRESS)).
-          filter(e -> e instanceof DirectedConnectoidAccessZoneEntry).map( e -> (DirectedConnectoidAccessZoneEntry)e).
-          flatMap(e -> e.getAccessLinkSegments().stream()).distinct();
+          map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          mapToLong(e -> e.getAccessLinkSegments().size()).sum();
+      var accessZoneEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS)).count();
+      var egressZoneEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_EGRESS)).count();
+      var accessEgressZoneEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS_EGRESS)).count();
 
-      // todo: access/egress is new, not checked will fail --> update
-      assertEquals(0, noneTypeAccessLinkSegments.count());
-      assertEquals(0, unknownTypeAccessLinkSegments.count());
-      assertEquals(131, ptStopTypeAccessLinkSegments.count());
-      assertEquals(48, travellerAccessTypeAccessLinkSegments.count());
-      assertEquals(48, travellerEgressTypeAccessLinkSegments.count());
-      assertEquals(48, travellerAccessEgressTypeAccessLinkSegments.count());
+      assertEquals(0, noneTypeAccessEntries);
+      assertEquals(0, unknownTypeAccessEntries);
+      assertEquals(134, ptStopTypeAccessLinkSegments);
+      assertEquals(3, accessZoneEntries);
+      assertEquals(3, egressZoneEntries);
+      assertEquals(35, accessEgressZoneEntries);
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

@@ -864,7 +864,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * @param osmEntityId id of Osm entity used for this location (may not be a node)
    * @param osmMode mode to apply
    * @param suppressLogging when true suppress logging, false otherwise
-   * @return ture when success, false otherwise
+   * @return true when success, false otherwise
    */
   private boolean connectDanglingFerryStopToNearbyFerryRoute(
       Point osmFerryStopLocation, long osmEntityId, String osmMode, boolean suppressLogging) {
@@ -1265,7 +1265,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         }
       }else {
 
-        /* Special case: water based mode, i.e. ferry dangling platform without stop position and verified to be not be
+        /* Special case: water based mode, i.e. ferry dangling platform without stop position and verified to be not
         on infrastructure, in which case we may have to connect it based on user settings. We do so because ferries are
          * often not tagged very explicitly, so we are extra lenient here */
         if(OsmWaterModeTags.isWaterModeTag(osmAccessMode) &&
