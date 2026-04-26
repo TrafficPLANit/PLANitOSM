@@ -38,7 +38,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
   /** profiler to collect stats for */
   private final OsmZoningHandlerProfiler profiler;
   
-  /** transfer zone parser to access functionality related to transfer zones required fro transfer zone group parser functionality */
+  /** transfer zone parser to access functionality related to transfer zones required for transfer zone group
+   * parser functionality */
   private final TransferZoneHelper transferZoneParser;  
   
   /** parser functionality regarding the extraction of pt modes zones from OSM entities */  
@@ -62,7 +63,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
           boolean suppressLogging) {
 
     /* Should be parsed (with or without connectoids), connect to group and let stop_positions create connectoids */
-    TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(type, osmId);
+    TransferZone transferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(type, osmId);
     if( transferZone==null) {
       
       /* we do not issue warning when we have a bounding area, as it is possible this is the reason it is not available,
@@ -78,7 +79,7 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
             /* not parsed due to problems), discard */
             logWithDiscardWarning = true;
           }
-        }else if(!getZoningReaderData().getOsmData().isWaitingAreaWithoutMappedPlanitMode(type, osmId)){
+        }else if(!getZoningReaderData().getOsmConverterData().isWaitingAreaWithoutMappedPlanitMode(type, osmId)){
           /* tags not available (because it is a way), it might have been discarded for valid reasons still, if so,
            * it should be registered as a waiting area without mapped modes, if not issue warning */
           logWithDiscardWarning = true;
@@ -97,8 +98,9 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
     return true;
   }  
   
-  /** Process an OSM entity that is classified as a (train) station. For this to register on the group, we only see if we can utilise its name and use it for the group, but only
-   * if the group does not already have a name
+  /** Process an OSM entity that is classified as a (train) station. For this to register on the group,
+   * we only see if we can utilise its name and use it for the group, but only if the group does not already
+   * have a name
    *   
    * @param transferZoneGroup the osm station relates to 
    * @param osmEntityStation of the relation to process
@@ -117,29 +119,26 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
 
   /** Constructor 
    *
-   * @param referenceNetwork to use
-   * @param zoning to register transfer zone groups on
    * @param zoningReaderData to use
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param transferSettings to use 
    * @param profiler to track stats
    */
   public TransferZoneGroupHelper(
-      PlanitOsmNetwork referenceNetwork,
-      Zoning zoning, 
       OsmZoningReaderData zoningReaderData,
       OsmNetworkToZoningReaderData network2ZoningData,
       OsmPublicTransportReaderSettings transferSettings, 
       OsmZoningHandlerProfiler profiler) {
     
-    super(referenceNetwork, zoning, zoningReaderData, network2ZoningData, transferSettings);
+    super(zoningReaderData, network2ZoningData, transferSettings);
     
     this.profiler = profiler;
 
-    transferZoneParser = new TransferZoneHelper(
-        referenceNetwork, zoning, getZoningReaderData(), network2ZoningData, transferSettings, profiler);
+    transferZoneParser = new TransferZoneHelper(getZoningReaderData(), network2ZoningData, transferSettings, profiler);
     ptModeParser = new OsmPublicTransportModeConversion(
-        getNetworkToZoningData().getNetworkSettings(), transferSettings, referenceNetwork.getModes());
+        getNetworkToZoningData().getNetworkSettings(),
+        transferSettings,
+        getZoningReaderData().getPlanitConverterData().getReferenceNetwork().getModes());
   }
 
   /** Create a transfer zone group based on the passed in OSM entity, tags for feature extraction and access
@@ -150,7 +149,9 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
    */  
   public TransferZoneGroup createAndPopulateTransferZoneGroup(OsmRelation osmRelation, Map<String, String> tags) {
       /* create */
-      TransferZoneGroup transferZoneGroup = getZoning().getTransferZoneGroups().getFactory().createNew();
+      TransferZoneGroup transferZoneGroup =
+          getZoningReaderData().getPlanitConverterData().getReferenceZoning().getTransferZoneGroups().
+              getFactory().createNew();
             
       /* XML id = internal id*/
       transferZoneGroup.setXmlId(String.valueOf(transferZoneGroup.getId()));
@@ -165,7 +166,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
       return transferZoneGroup;
   }  
   
-  /** Create a transfer zone group based on the passed in OSM entity, tags for feature extraction and access and register it
+  /** Create a transfer zone group based on the passed in OSM entity, tags for feature extraction and access and
+   * register it
    * 
    * @param osmRelation the stop_area is based on 
    * @param tags tags to extract features from 
@@ -175,21 +177,22 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
           OsmRelation osmRelation, Map<String, String> tags) {
       /* create */
       TransferZoneGroup transferZoneGroup = createAndPopulateTransferZoneGroup(osmRelation, tags);
-            
+      var zoning = getZoningReaderData().getPlanitConverterData().getReferenceZoning();
       /* register */
-      getZoning().getTransferZoneGroups().register(transferZoneGroup);
-      getZoningReaderData().getPlanitData().addTransferZoneGroupByOsmId(osmRelation.getId(), transferZoneGroup);     
+      zoning.getTransferZoneGroups().register(transferZoneGroup);
+      getZoningReaderData().getPlanitConverterData().addTransferZoneGroupByOsmId(osmRelation.getId(), transferZoneGroup);
       
-      profiler.logTransferZoneGroupStatus(getZoning().getTransferZoneGroups().size());
+      profiler.logTransferZoneGroupStatus(zoning.getTransferZoneGroups().size());
       return transferZoneGroup;
   }   
   
-  /** Find all transfer zone groups with at least one transfer zone that is mode compatible (and planit mode mapped)  with the passed in osm modes
-   * In case no eligible modes are provided (null).
+  /** Find all transfer zone groups with at least one transfer zone that is mode compatible (and planit mode mapped)
+   * with the passed in osm modes In case no eligible modes are provided (null).
    *  
    * @param referenceOsmModes to map against (may be null)
    * @param potentialTransferZones to extract transfer zone groups from
-   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water mode, when false only exact matches are allowed
+   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water
+   *                                mode, when false only exact matches are allowed
    * @return matched transfer zone groups
    */
   public Set<TransferZoneGroup> findModeCompatibleTransferZoneGroups(
@@ -214,8 +217,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
     return potentialTransferZoneGroups;
   }
   
-  /** Register a transfer zone on a group by providing the OSM id of the transfer zone and its type, if no transfer zone is available
-   * for this combination, false is returned and it is not registered.
+  /** Register a transfer zone on a group by providing the OSM id of the transfer zone and its type, if no transfer
+   * zone is available for this combination, false is returned and it is not registered.
    *  
    * @param type of the OSM entity
    * @param osmId OSM id of the transfer zone
@@ -228,8 +231,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
     return registerTransferZoneOnGroup(osmId, type, null, transferZoneGroup, suppressLogging);
   }
 
-  /** Register a transfer zone on a group by providing the OSM entity, if no transfer zone is available for this combination, 
-   * false is returned and it is not registered.
+  /** Register a transfer zone on a group by providing the OSM entity, if no transfer zone is available for this
+   * combination, false is returned and it is not registered.
    *  
    * @param osmEntity to collect transfer zone for and register
    * @param transferZoneGroup to register on
@@ -246,8 +249,8 @@ public class TransferZoneGroupHelper extends OsmZoningHelperBase {
             suppressLogging);
   }  
   
-  /** Register a transfer zone on a group by providing the OSM node, if no transfer zone is available for this combination, 
-   * false is returned and it is not registered.
+  /** Register a transfer zone on a group by providing the OSM node, if no transfer zone is available for
+   * this combination, false is returned and it is not registered.
    *  
    * @param osmNode to collect transfer zone for and register
    * @param tags to use

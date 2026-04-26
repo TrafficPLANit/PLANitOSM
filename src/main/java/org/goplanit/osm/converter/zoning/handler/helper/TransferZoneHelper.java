@@ -74,7 +74,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     we identify if the eligible link segments
      * lie on the wrong side of the road, i.e., would require passengers to cross the road to get to the
      stop position */
-    MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByMode(accessMode);
+    var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
+    MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByMode(accessMode);
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
     OsmNode osmNode =  layerData.getOsmNodeByLocation(location);
     
@@ -124,9 +125,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * @return created transfer zone
    */
   private TransferZone createEmptyTransferZone(TransferZoneType transferZoneType) {
-    TransferZone transferZone = getZoning().getTransferZones().getFactory().createNew(
+    var referenceZoning = getZoningReaderData().getPlanitConverterData().getReferenceZoning();
+    TransferZone transferZone = referenceZoning.getTransferZones().getFactory().createNew(
             transferZoneType, true);
-    profiler.logTransferZoneStatus(getZoning().getTransferZones().size());
+    profiler.logTransferZoneStatus(referenceZoning.getTransferZones().size());
     return transferZone;
   }
 
@@ -149,7 +151,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
           OsmEntity osmEntity, Map<String, String> tags, TransferZoneType transferZoneType){
     TransferZone transferZone = null;
 
-    var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
+    var osmNodeData = getZoningReaderData().getOsmConverterData().getOsmNodeData();
 
     /* Verify if there are nodes missing before extracting geometry, if so and we are near bounding box log this
     information to user, but avoid logging the regular feedback when nodes are missing, because it lacks context
@@ -221,15 +223,16 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
 
     TransferZone transferZone = createAndPopulateTransferZone(osmEntity, tags, transferZoneType);
     if(transferZone != null) {
+      var referenceZoning = getZoningReaderData().getPlanitConverterData().getReferenceZoning();
       /* register on PLANit zoning */
-      getZoning().getTransferZones().register(transferZone);
+      referenceZoning.getTransferZones().register(transferZone);
 
       /* OSM waiting areas may have an explicit layer which can be used to identify which rail/road infrastructure
        * is at the same level, Therefore, we register it here, for when mapping to connectoids later on */
-      getZoningReaderData().getPlanitData().registerTransferZoneOsmVerticalLayerIndex(transferZone, osmEntity, tags);
+      getZoningReaderData().getPlanitConverterData().registerTransferZoneOsmVerticalLayerIndex(transferZone, osmEntity, tags);
 
       /* ...and register locally */
-      getZoningReaderData().getPlanitData().addTransferZoneByOsmId(
+      getZoningReaderData().getPlanitConverterData().addTransferZoneByOsmId(
           Osm4JUtils.getEntityType(osmEntity), osmEntity.getId(), transferZone);
 
     }
@@ -565,7 +568,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         
         /* filter based on distance */
         Collection<TransferZone> potentialTransferZones =
-                getZoningReaderData().getPlanitData().getTransferZonesSpatially(
+                getZoningReaderData().getPlanitConverterData().getTransferZonesSpatially(
                         OsmBoundingAreaUtils.createBoundingBox(
                                 osmNode, getSettings().getStopToWaitingAreaSearchRadiusMeters(), getGeoUtils()));
         matchedTransferZones.retainAll(potentialTransferZones);
@@ -615,7 +618,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     double searchRadiusMeters = getSettings().getStopToWaitingAreaSearchRadiusMeters();    
     Envelope searchArea = OsmBoundingAreaUtils.createBoundingBox(osmNode, searchRadiusMeters, getGeoUtils());
     Collection<TransferZone> potentialTransferZones =
-            getZoningReaderData().getPlanitData().getTransferZonesSpatially(searchArea);
+            getZoningReaderData().getPlanitConverterData().getTransferZonesSpatially(searchArea);
     
     if(potentialTransferZones==null || potentialTransferZones.isEmpty()) {
       if(!suppressLogging) LOGGER.fine(String.format("Unable to locate nearby transfer zone " +
@@ -625,7 +628,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     }
     
     /* filter transfer zones that cannot be valid for additional stop_positions (if they have any already) */
-    potentialTransferZones.removeIf(tz -> getZoningReaderData().getPlanitData().hasConnectoids(tz) &&
+    potentialTransferZones.removeIf(tz ->
+        getZoningReaderData().getPlanitConverterData().getConnectoidData().hasConnectoids(tz) &&
             !supportsMultipleStopPositions(tz));
 
     /* no explicit reference or name match is found, we collect the closest mode and vertical layer index
@@ -681,32 +685,29 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
 
   /** Constructor 
    *
-   * @param referenceNetwork to use
-   * @param zoning to use
    * @param zoningReaderData to use
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
    * @param transferSettings to use
    * @param profiler to use
    */
   public TransferZoneHelper(
-      PlanitOsmNetwork referenceNetwork,
-      Zoning zoning, 
       OsmZoningReaderData zoningReaderData,
       final OsmNetworkToZoningReaderData network2ZoningData,
       OsmPublicTransportReaderSettings transferSettings,  
       OsmZoningHandlerProfiler profiler) {
-    
-    super(referenceNetwork, zoning, zoningReaderData, network2ZoningData, transferSettings);
+    super(zoningReaderData, network2ZoningData, transferSettings);
     this.profiler = profiler;
 
     /* parser for identifying, filtering etc. of PT PLANit modes from OSM entities -
     for all available PLANit modes on network*/
     this.publicTransportModeParser = new OsmPublicTransportModeConversion(
-        getNetworkToZoningData().getNetworkSettings(), transferSettings, referenceNetwork.getModes());
+        getNetworkToZoningData().getNetworkSettings(),
+        transferSettings,
+        zoningReaderData.getPlanitConverterData().getReferenceNetwork().getModes());
     
     /* parser for identifying pt PLANit modes from OSM entities */
     this.connectoidHelper = new OsmTransferConnectoidHelper(
-        referenceNetwork, zoning, zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
+        zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
   }
 
   /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in
@@ -750,12 +751,13 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
 
     /* obtain the vertical layer index from stop position node itself or from the PLANit links it resides
     within or on the fringes */
+    var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
     Integer osmVerticalLayerIndex = null;
     if(!osmNodeTags.containsKey(OsmTags.LAYER)){
       /* collect from PLANit link(s) the stop position is connected to */
       var eligibleNetworkLayers =
           PlanitNetworkLayerUtils.getNetworkLayersWithActiveOsmNode(
-                  stopPositionOsmNode.getId(), getReferenceNetwork(), getNetworkToZoningData());
+                  stopPositionOsmNode.getId(), referenceNetwork, getNetworkToZoningData());
 
       var stopPositionLocation = OsmNodeUtils.createPoint(stopPositionOsmNode);
       for(var layer : eligibleNetworkLayers){
@@ -789,7 +791,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
      * (which means they should also be on the default layer) */
     final var isDefaultVerticalLayer = osmVerticalLayerIndex==0;
     final var finalVerticalLayerIndex = osmVerticalLayerIndex;
-    final var planitData = getZoningReaderData().getPlanitData();
+    final var planitData = getZoningReaderData().getPlanitConverterData();
     return potentialTransferZones.stream().filter(
         tz ->  (isDefaultVerticalLayer && planitData.getTransferZoneOsmVerticalLayerIndex(tz) == null)  ||
                 Objects.equals(planitData.getTransferZoneOsmVerticalLayerIndex(tz),
@@ -834,7 +836,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     }else{
       /* waiting area with valid OSM mode, but not mapped to PLANit mode, mark as such to avoid logging a warning
       when this transfer zone is part of stop_area and it cannot be found when we try to collect it */
-      getZoningReaderData().getOsmData().addWaitingAreaWithoutMappedPlanitMode(
+      getZoningReaderData().getOsmConverterData().addWaitingAreaWithoutMappedPlanitMode(
           Osm4JUtils.getEntityType(osmEntity),osmEntity.getId());
     }
     return transferZone;    
@@ -891,7 +893,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     }
       
     /* transfer zone */
-    TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(
+    TransferZone transferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(
             EntityType.Node,osmNode.getId());
     if(transferZone == null) {
       /* not created for other layer; create and register transfer zone */
@@ -903,8 +905,9 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     }
     
     /* connectoid(s) */
+    var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
     for(PredefinedModeType modeType : modeResult.second()) {
-      MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByPredefinedModeType(modeType);
+      MacroscopicNetworkLayer networkLayer = referenceNetwork.getLayerByPredefinedModeType(modeType);
       
       /* we can immediately create connectoids since Ptv1 tram stop is placed on tracks and no Ptv2 tag is present */
       /* railway generally has no direction, so create connectoid for both incoming directions (if present), so we can 
@@ -941,7 +944,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       
       /* do not search simply use provided waiting area (transfer zone) */
       Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmNode.getId());
-      TransferZone foundZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(
+      TransferZone foundZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(
               result.first(), result.second());
       if(foundZone==null) {
         if(!suppressLogging) LOGGER.severe(String.format("User overwritten waiting area (platform, pole %d) for " +
@@ -1076,7 +1079,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
       boolean assumeDefaultLayerForZoneIfAbsent) {
 
     Integer transferZoneOsmLayerIndex =
-        getZoningReaderData().getPlanitData().getTransferZoneOsmVerticalLayerIndex(transferZone);
+        getZoningReaderData().getPlanitConverterData().getTransferZoneOsmVerticalLayerIndex(transferZone);
     var iter = linksByLayerToFilter.entrySet().iterator();
     while(iter.hasNext()){
       var entry = iter.next();

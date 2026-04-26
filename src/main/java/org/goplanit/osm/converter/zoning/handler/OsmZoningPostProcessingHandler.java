@@ -2,7 +2,6 @@ package org.goplanit.osm.converter.zoning.handler;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,20 +15,16 @@ import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderOsmData;
-import org.goplanit.osm.converter.zoning.handler.helper.OsmTransferConnectoidHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
-import org.goplanit.utils.containers.MapUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
-import org.goplanit.utils.graph.directed.DirectedEdge;
-import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.id.ExternalIdAble;
 import org.goplanit.utils.math.Precision;
 import org.goplanit.utils.misc.CollectionUtils;
@@ -51,8 +46,6 @@ import org.locationtech.jts.index.quadtree.Quadtree;
 import org.locationtech.jts.linearref.LinearLocation;
 
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
-
-import javax.annotation.Nonnull;
 
 /**
  * Handler that conducts final parsing round where all stop_positions in relations are mapped to the now parsed
@@ -277,7 +270,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     Collection<String> eligibleOsmModes = Collections.singleton(eligibleOsmMode);
     /* match links spatially */
     Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> spatiallyMatchedLinksByLayer =
-        getZoningReaderData().getPlanitData().findLinksSpatially(searchBoundingBox);
+        getZoningReaderData().getPlanitConverterData().findLinksSpatially(searchBoundingBox);
     if(spatiallyMatchedLinksByLayer == null || spatiallyMatchedLinksByLayer.isEmpty()) {
       return null;
     }    
@@ -365,7 +358,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         }else if(Osm4JUtils.getEntityType(stationEntity) == EntityType.Way) {
           stationToClosestPointOnClosestLinkSegment = OsmWayUtils.findMinimumLineSegmentBetween(
                   (OsmWay)stationEntity, idealAccessLink.getGeometry(),
-              getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
+              getZoningReaderData().getOsmConverterData().getOsmNodeData().getRegisteredOsmNodes(), getGeoUtils());
         }else {
           throw new PlanItRunTimeException("Unknown entity type %s for osm station encountered, this should " +
               "not happen", Osm4JUtils.getEntityType(stationEntity));
@@ -414,125 +407,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * Connect the provided transfer zone to the nearest network point via a connectoid with the appropriate
-   * modes given it falls within max distance. Since transfer connectoids can be directed and we are not dealing
-   * with fixed routes but access for let's say pedestrians, we must create a connectoid/entry for each
-   * access/egress mode supported at the chosen network access node.
-   *
-   * @param transferZone        to connect
-   * @param tzConnectoids existing connectoids of zone
-   * @param existingPtModes     existing modes of the transfer connectoid we are NOT expanding for
-   * @param modesToAdd          the modes to add access/egress entries for
-   * @param maxSearchRadius to apply
-   * @param suppressSpatialWarnings when true suppress warnings
-   * @return true when for all non ferry land modes a connectoid is now available, false otherwise
-   */
-  private boolean connectPtStopTransferZoneToNetworkWithAccessEgressModes(
-      TransferZone transferZone,
-      Set<TransferConnectoid> tzConnectoids,
-      Set<Mode> existingPtModes,
-      Set<Mode> modesToAdd,
-      double maxSearchRadius,
-      boolean suppressSpatialWarnings) {
-
-    var accessModesToAdd = new TreeSet<>(modesToAdd);
-    var egressModesToAdd = new TreeSet<>(modesToAdd);
-
-    // if we're lucky the transfer zone's existing connectoids are already connected to the land network in which
-    // case we check if any of the other segments coming into the access nodes (that do not support ferry) are eligible.
-    // if so, expand the connectoid and add the modes that we need and cross them of the onFerryNonFerryModes list
-    var addedModesResult = ZoningConverterUtils.expandTransferConnectoidsWithEligibleUndirectedAccessEgressEntries(
-        transferZone,
-        tzConnectoids,
-        existingPtModes,
-        modesToAdd);
-    // remainder to deal with
-    accessModesToAdd.removeAll(addedModesResult.first());
-    egressModesToAdd.removeAll(addedModesResult.second());
-    if(accessModesToAdd.isEmpty() && egressModesToAdd.isEmpty()){
-      return true;
-    }
-
-    var combinedRemainingModesToAdd =
-        Stream.concat(accessModesToAdd.stream(), egressModesToAdd.stream()).collect(Collectors.toSet());
-    var spatiallyMatchedLinks = getTransferZoneHelper().findNearbyModeCompatibleLinks(
-        transferZone.getGeometry(true),
-        existingPtModes,
-        combinedRemainingModesToAdd,
-        maxSearchRadius);
-    if(spatiallyMatchedLinks.isEmpty()){
-      if(!suppressSpatialWarnings) {
-        LOGGER.warning(String.format("DISCARD: waiting area %s, no mode compatible OSM ways within %.2fm " +
-                "found (for modes: [%s]) to attach to network",
-            transferZone.getIdsAsString(), maxSearchRadius,
-            modesToAdd.stream().map(Mode::getName).collect(Collectors.joining(","))));
-      }
-      return false;
-    }
-
-    // attach closest node to each mode provided given options for link segments when function is applied below
-    BiFunction<Mode, Boolean, Map.Entry<Mode, DirectedVertex>> findClosestModeCompatibleNodeFunction =
-        (mode, isNodeUpstreamOfSegments) -> {
-          var closest =getTransferZoneHelper().findClosestModeCompatibleNode(
-              transferZone.getGeometry(true),
-              mode,
-              (Stream<MacroscopicLinkSegment>) spatiallyMatchedLinks.stream().flatMap(DirectedEdge::streamEdgeSegments),
-              isNodeUpstreamOfSegments,
-              maxSearchRadius,
-              suppressSpatialWarnings);
-          if(closest == null) {
-            if (!suppressSpatialWarnings) {
-              LOGGER.warning(String.format("Mode [%s] for waiting area (%s) no compatible OSM ways within %.2fm found",
-                  mode.getName(), transferZone.getIdsAsString(), maxSearchRadius));
-            }
-            return null;
-          }
-          return Map.entry(mode, closest.first());
-        };
-
-    // access modes nodes
-    var modesWithClosestAccessNode = accessModesToAdd.stream().map( accessMode ->
-        findClosestModeCompatibleNodeFunction.apply(accessMode, false)).filter(Objects::nonNull).collect(
-        Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    // egress modes nodes
-    var modesWithClosestEgressNode = egressModesToAdd.stream().map( egressMode ->
-        findClosestModeCompatibleNodeFunction.apply(egressMode, true)).filter(Objects::nonNull).collect(
-        Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-    // combined access/egress + remove combined from access/egress only
-    Map<Mode, DirectedVertex> modesWithClosestAccessEgressNode = modesWithClosestAccessNode.entrySet().stream()
-        .filter(entry -> modesWithClosestEgressNode.containsKey(entry.getKey()) &&
-            Objects.equals(entry.getValue(), modesWithClosestEgressNode.get(entry.getKey())))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    modesWithClosestAccessEgressNode.forEach( (k,v) -> {
-      modesWithClosestAccessNode.remove(k); modesWithClosestEgressNode.remove(k);});
-
-    // access egress combined
-    MapUtils.invertMap(modesWithClosestAccessEgressNode).forEach( (node, modes) ->{
-      // now create/update transfer connectoids for each one
-      getTransferConnectoidHelper().extractTransferConnectoidForUndirectedModeAccess(
-          OsmTransferConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
-          transferZone, node, modes, ZoneConnectoidType.ZONE_ACCESS_EGRESS);
-    });
-
-    // access only
-    MapUtils.invertMap(modesWithClosestAccessNode).forEach( (node, modes) ->{
-      getTransferConnectoidHelper().extractTransferConnectoidForUndirectedModeAccess(
-          OsmTransferConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
-          transferZone, node, modes, ZoneConnectoidType.ZONE_ACCESS);
-    });
-
-    // egress only
-    MapUtils.invertMap(modesWithClosestEgressNode).forEach( (node, modes) ->{
-      // now create new transfer connectoids for each
-      getTransferConnectoidHelper().extractTransferConnectoidForUndirectedModeAccess(
-          OsmTransferConnectoidHelper.OSM_CONNECTOID_EXTERNAL_INFERRED_ID,
-          transferZone, node, modes, ZoneConnectoidType.ZONE_EGRESS);
-    });
-    return true;
-  }
-
-  /**
    * Try to extract a station from the entity. In case no existing platforms/stop_positions can be found nearby we
    * create them fro this station because the station
    * represents both platform(s), station, and potentially stop_positions. In case existing platforms/stop_positions
@@ -560,7 +434,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* eligible modes for station, must at least support one or more mapped modes */
     Set<TransferZone> matchedTransferZones = new HashSet<>();
     Collection<TransferZone> potentialTransferZones =
-        getZoningReaderData().getPlanitData().getTransferZonesSpatially(eligibleSearchBoundingBox);
+        getZoningReaderData().getPlanitConverterData().getTransferZonesSpatially(eligibleSearchBoundingBox);
     if(potentialTransferZones != null && !potentialTransferZones.isEmpty()) {          
             
       /* find potential matched transfer zones based on mode compatibility while tracking group memberships,
@@ -579,7 +453,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         TransferZone closestZone = PlanitTransferZoneUtils.findTransferZoneClosestByTransferGroup(
             osmStation,
             potentialTransferZoneGroups,
-            getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
+            getZoningReaderData().getOsmConverterData().getOsmNodeData().getRegisteredOsmNodes(),
             suppressWarnings,
             getGeoUtils());
         Set<TransferZoneGroup> groups = closestZone.getTransferZoneGroups();
@@ -645,8 +519,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         var tags = OsmModelUtil.getTagsAsMap(osmStation);
 
         /* suppress warnings in case we cannot create a station that lies outside the bounding area */
-        boolean outsideBoundingArea = !fallsWithinSpatiallyEligibleBoundingArea(
-            osmStation, type, tags);
+        boolean outsideBoundingArea = !getProjectedBoundingAreaHelper().fallsWithinSpatiallyEligibleBoundingArea(
+            osmStation, type, tags, getZoningReaderData().getOsmConverterData().getOsmNodeData());
         boolean suppressWarnings = outsideBoundingArea;
 
         /* mode compatibility check */
@@ -669,7 +543,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           Envelope boundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmEntity(
               osmStation,
               getSettings().getStationToWaitingAreaSearchRadiusMeters(),
-              getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
+              getZoningReaderData().getOsmConverterData().getOsmNodeData().getRegisteredOsmNodes(),
               getGeoUtils());
           if (boundingBox != null) {
 
@@ -692,7 +566,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
           }
         }
-        getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);
+        getZoningReaderData().getOsmConverterData().removeUnproccessedStation(ptVersion, osmStation);
 
       });
     }
@@ -704,7 +578,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    *
    */
   private void processStationsNotPartOfStopArea() {
-    OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmData();
+    OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmConverterData();
 
     /* Ptv1 node station */
     if(!osmData.getUnprocessedPtv1Stations(EntityType.Node).isEmpty()) {
@@ -739,7 +613,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(getSettings().isOverwriteWaitingAreaOfStopLocation(osmFerryTerminal.getId())) {
       /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
       Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmFerryTerminal.getId());
-      var ferryTerminalTransferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(
+      var ferryTerminalTransferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(
           result.first(), result.second());
       LOGGER.fine(String.format("Mapped ferry stop %d to overwritten waiting area %d",
           osmFerryTerminal.getId(), result.second()));
@@ -877,7 +751,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var networkLayer = this.getReferenceNetwork().getLayerByMode(planitWaterMode);
     var boundingBox = getGeoUtils().createBoundingBox(osmFerryStopLocation.getEnvelopeInternal(), maxSearchRadius);
     Collection<MacroscopicLink> spatiallyMatchedLinks =
-        getZoningReaderData().getPlanitData().findLinksSpatially(networkLayer, boundingBox);
+        getZoningReaderData().getPlanitConverterData().findLinksSpatially(networkLayer, boundingBox);
     spatiallyMatchedLinks.removeIf(l -> !l.isModeAllowedOnAnySegment(planitWaterMode));
     if(spatiallyMatchedLinks.isEmpty()){
       if(!suppressLogging) {
@@ -916,7 +790,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         "dummy-ferry-link",
         getGeoUtils());
     // make sure it is findable from now on in OSM parsing context
-    getZoningReaderData().getPlanitData().addLinkToSpatiallyIndexed(networkLayer, ferryLink);
+    getZoningReaderData().getPlanitConverterData().addLinkToSpatiallyIndexed(networkLayer, ferryLink);
 
     /* create new ferry link segments */
     String waterWayKey = OsmWaterwayTags.ROUTE;
@@ -939,70 +813,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * Connect the provided transfer zone to the nearest land network via a connectoid with the appropriate (inferred)
-   * land modes given it falls within max distance. Since transfer connectoids can be directed and we are not dealing
-   * with fixed routes but access for example pedestrians, we must create a connectoid/entry for each
-   * access/egress mode supported  into the chosen land network access node.
-   *
-   * @param transferZone        to connect
-   * @param connectoids existing connectoids of zone
-   * @param ferryMode           PLANit ferry mode
-   * @return true when for all non ferry land modes a connectoid is now available, false otherwise
-   */
-  private boolean connectFerryTransferZoneToLandNetwork(
-      TransferZone transferZone,
-      Set<TransferConnectoid> connectoids,
-      PredefinedMode ferryMode) {
-
-    final boolean suppressSpatialWarnings =
-        !fallsWithinSpatiallyEligibleBoundingArea(transferZone, false);
-
-    var onFerryNonFerryModes =
-        getTransferConnectoidHelper().extractExplicitAllowedModesFromDirectedAccessEntries(connectoids);
-    boolean removed = onFerryNonFerryModes.remove(ferryMode);
-    if(!removed){
-      LOGGER.warning(String.format("Expected support for ferry on for ferry transfer zone (%s), but it is not",
-        transferZone.getIdsAsString()));
-    }
-    if(onFerryNonFerryModes.isEmpty()){
-      LOGGER.warning(String.format("Expected at least one on-ferry mode for ferry access link segments for " +
-          "transfer zone (%s), but none found, unable to connect to land network without land modes",
-          transferZone.getIdsAsString()));
-      return false;
-    }
-
-    // with on ferry modes identified create the access egress connectoids
-    connectPtStopTransferZoneToNetworkWithAccessEgressModes(
-        transferZone, connectoids, Collections.singleton(ferryMode) , onFerryNonFerryModes,
-        getSettings().getFerryStopToNearbyLandNetworkSearchRadiusMeters(), suppressSpatialWarnings);
-
-    return true;
-  }
-
-  /**
-   * Nearly identical to connectFerryTransferZoneToLandNetwork except this now deals with rail-based modes and
-   * active modes only (as we do not allow cars on trains, not car as access/egress mode yet)
-   *
-   * @param transferZone to connected
-   * @param transferConnectoids of the transfer zone
-   * @param railBasedModes accepted rail based modes
-   * @param allSupportedActiveModes supported active modes to supplement
-   * @return true when success, false otherwise
-   */
-  private boolean connectRailBasedTransferZoneToRoadNetwork(
-          @Nonnull TransferZone transferZone,
-          @Nonnull Set<TransferConnectoid> transferConnectoids,
-          @Nonnull Set<Mode> railBasedModes,
-          @Nonnull Set<Mode> allSupportedActiveModes) {
-    final boolean suppressSpatialWarnings =
-            !fallsWithinSpatiallyEligibleBoundingArea(transferZone, false);
-    // with rail access egress modes known create the access egress connectoids
-    return connectPtStopTransferZoneToNetworkWithAccessEgressModes(
-        transferZone, transferConnectoids, railBasedModes , allSupportedActiveModes,
-        getSettings().getRailBasedStopToNearbyRoadNetworkSearchRadiusMeters(), suppressSpatialWarnings);
-  }
-
-  /**
    * process any remaining unprocessed Ptv1 ferry terminals that are not part of any stop_area.
    * This generally means the ferry terminal reflects both the transfer zone and stop position in a single node.
    * It lacks the public_transport=x key. Hence, we aim for fully constructing both stop position and transfer zone
@@ -1010,11 +820,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * tagged ferry terminal later when dealing with Ptv2 version of this
    */
   private void processPtv1FerryTerminalsNotPartOfStopArea() {
-    OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmData();
+    OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmConverterData();
 
     var processedTerminals = new LinkedList<OsmEntity>();
-    osmData.getUnprocessedFerryTerminals().forEach( (type, unprocessedFerryTerminals) ->
-        unprocessedFerryTerminals.forEach( (osmId, unprocessedFerryTerminal) ->{
+    osmData.getUnprocessedFerryTerminals().forEach(
+        (type, unprocessedFerryTerminals) ->
+            unprocessedFerryTerminals.forEach( (osmId, unprocessedFerryTerminal) ->{
 
           if(type.equals(EntityType.Way)){
             // PTV2, or PTV1 with explicit geometry that will be treated as incomplete PTV2 as it
@@ -1031,7 +842,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           }
 
           /* suppress warnings in case we cannot create a terminal that lies outside the bounding area */
-          boolean outsideBoundingArea = !fallsWithinSpatiallyEligibleBoundingArea(unprocessedFerryTerminal, type, tags);
+          boolean outsideBoundingArea = !getProjectedBoundingAreaHelper().fallsWithinSpatiallyEligibleBoundingArea(
+              unprocessedFerryTerminal, type, tags, getZoningReaderData().getOsmConverterData().getOsmNodeData());
           boolean suppressWarnings = outsideBoundingArea;
 
           TransferZoneType ptv1TransferZoneType =
@@ -1043,7 +855,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         }));
 
     processedTerminals.forEach( processedFerryTerminal ->
-            getZoningReaderData().getOsmData().removeUnprocessedFerryTerminal(processedFerryTerminal));
+            getZoningReaderData().getOsmConverterData().removeUnprocessedFerryTerminal(processedFerryTerminal));
   }
 
   /**
@@ -1056,16 +868,18 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * </p>
    */
   private void processPtv2LikeFerryTerminalsNotPartOfStopArea() {
-    OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmData();
+    OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmConverterData();
 
     var processedTerminals = new LinkedList<OsmEntity>();
-    osmData.getUnprocessedFerryTerminals().forEach( (type, unprocessedFerryTerminals) ->
-        unprocessedFerryTerminals.forEach( (osmId, unprocessedFerryTerminal) ->{
+    osmData.getUnprocessedFerryTerminals().forEach(
+        (type, unprocessedFerryTerminals) ->
+            unprocessedFerryTerminals.forEach( (osmId, unprocessedFerryTerminal) ->{
 
           var tags = OsmModelUtil.getTagsAsMap(unprocessedFerryTerminal);
 
           /* suppress warnings in case we cannot create a terminal that lies outside the bounding area */
-          boolean outsideBoundingArea = !fallsWithinSpatiallyEligibleBoundingArea(unprocessedFerryTerminal, type, tags);
+          boolean outsideBoundingArea = !getProjectedBoundingAreaHelper().fallsWithinSpatiallyEligibleBoundingArea(
+              unprocessedFerryTerminal, type, tags, getZoningReaderData().getOsmConverterData().getOsmNodeData());
           boolean suppressWarnings = outsideBoundingArea;
 
           processStandAlonePtv2LikeFerryTerminal(unprocessedFerryTerminal, tags, suppressWarnings);
@@ -1074,7 +888,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         }));
 
     processedTerminals.forEach( processedFerryTerminal ->
-            getZoningReaderData().getOsmData().removeUnprocessedFerryTerminal(processedFerryTerminal));
+            getZoningReaderData().getOsmConverterData().removeUnprocessedFerryTerminal(processedFerryTerminal));
   }
 
   /**
@@ -1086,7 +900,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     processPtv1FerryTerminalsNotPartOfStopArea();
     processPtv2LikeFerryTerminalsNotPartOfStopArea();
 
-    var remainingTerminals = this.getZoningReaderData().getOsmData().getUnprocessedFerryTerminals();
+    var remainingTerminals = this.getZoningReaderData().getOsmConverterData().getUnprocessedFerryTerminals();
     if(!remainingTerminals.values().stream().allMatch(Map::isEmpty) ){
       LOGGER.warning(String.format(
           "Not all ferry terminals could be processed (%s)",
@@ -1106,7 +920,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private void processStopPositionNotPartOfStopArea(
       OsmNode osmNode, Map<String, String> tags, boolean suppressWarnings) {
-    getZoningReaderData().getOsmData().removeUnprocessedStopPosition(osmNode.getId());
+    getZoningReaderData().getOsmConverterData().removeUnprocessedStopPosition(osmNode.getId());
         
     /* modes for stop_position */
     String defaultOsmMode = OsmModeUtils.identifyPtv1DefaultMode(osmNode.getId(), tags, true);
@@ -1179,7 +993,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    *  
    */
   private void processStopPositionsNotPartOfStopArea() {
-    var unprocessedStopPositions = new TreeMap<>(getZoningReaderData().getOsmData().getUnprocessedStopPositions());
+    var unprocessedStopPositions = new TreeMap<>(getZoningReaderData().getOsmConverterData().getUnprocessedStopPositions());
     if(unprocessedStopPositions.isEmpty()) {
       return;
     }
@@ -1217,7 +1031,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var knownOsmModes = PlanitTransferZoneUtils.getRegisteredOsmModesForTransferZone(transferZone);
     boolean useWaterLeniency = knownOsmModes != null && knownOsmModes.stream().anyMatch(
         m -> OsmWaterModeTags.getSupportedWaterModeTags().contains(m));
-    boolean suppressWarning = !fallsWithinSpatiallyEligibleBoundingArea(transferZone,useWaterLeniency);
+    boolean suppressWarning = !getProjectedBoundingAreaHelper().fallsWithinSpatiallyEligibleBoundingArea(
+        transferZone,useWaterLeniency);
 
     /* validate mode support */
     Collection<String> accessOsmModes = OsmModeUtils.extractPublicTransportModesFrom(knownOsmModes);
@@ -1340,7 +1155,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     Set<TransferZone> unprocessedTransferZones = new TreeSet<>(transferZones);
     for(TransferZone transferZone : unprocessedTransferZones) {
       /* only process incomplete zones (without connectoids) */
-      if(!getZoningReaderData().getPlanitData().hasConnectoids(transferZone)) {
+      if(!getZoningReaderData().getPlanitConverterData().getConnectoidData().hasConnectoids(transferZone)) {
         processIncompleteTransferZone(transferZone);
       }
     }                
@@ -1353,8 +1168,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    *
    */
   private void processIncompleteTransferZones() {
-    processIncompleteTransferZones(getZoningReaderData().getPlanitData().getTransferZonesByOsmId(EntityType.Node)); 
-    processIncompleteTransferZones(getZoningReaderData().getPlanitData().getTransferZonesByOsmId(EntityType.Way));    
+    processIncompleteTransferZones(
+        getZoningReaderData().getPlanitConverterData().getTransferZonesByOsmId(EntityType.Node));
+    processIncompleteTransferZones(
+        getZoningReaderData().getPlanitConverterData().getTransferZonesByOsmId(EntityType.Way));
   }
   
 
@@ -1423,7 +1240,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBoxForOsmEntity(
             osmStation,
             maxSearchDistance ,
-            getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
+            getZoningReaderData().getOsmConverterData().getOsmNodeData().getRegisteredOsmNodes(),
             geoUtils);
         accessLinks = findStopLocationLinksForStation(
             osmStation, stationTransferZone, osmAccessMode, searchBoundingBox, maxStopLocations);
@@ -1510,7 +1327,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
           Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmStation.getId());
           stationTransferZone =
-              getZoningReaderData().getPlanitData().getTransferZoneByOsmId(result.first(), result.second());
+              getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(result.first(), result.second());
           LOGGER.fine(String.format("Mapped station stop_position %d to overwritten waiting area %d",
               osmStation.getId(), result.second()));
           
@@ -1577,105 +1394,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     create connectoids for remaining transfer zones without connectoids*/
     processIncompleteTransferZones();                  
     
-  }
-
-  /**
-   * If configured as such connect all ferries to land network if not connected yet based on search radius and eligible
-   * modes for ferry as it is assumed they can access those stops with those modes from the land network but may not
-   * be tagged as such in OSM
-   */
-  private void connectFerriesToLandNetwork() {
-    if(!getSettings().isConnectFerryStopToNearbyLandNetwork() ||
-        !(getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive())){
-      return;
-    }
-    LOGGER.info("Connecting ferry stops to land network");
-
-    var ferryMode = getReferenceNetwork().getModes().get(PredefinedModeType.FERRY);
-    if(ferryMode == null){
-      LOGGER.warning("Ferry as a mode not available in PLANit network even though ferry parser is active, " +
-          "this is unexpected, aborting connecting ferry stops to land network");
-      return;
-    }
-    // implicitly allowed modes in case no explicit modes are set on connectoid
-    var allAvailableModes = getReferenceNetwork().getModes();
-    var nonFerryModes = allAvailableModes.stream().filter(
-        m -> !m.getPredefinedModeType().equals(PredefinedModeType.FERRY)).collect(Collectors.toSet());
-
-    // create index from transfer zone to transfer connectoid for efficient checking
-    var connectoidsByTransferZoneMapping = getZoning().getTransferConnectoids().createIndexByAccessZone();
-
-    // todo: if one or more nonFerry modes are connected but others are not, t is still classified as diconnected
-    //  technically we should run this per mode and supplement per missing mode
-    var result = ZoningConverterUtils.findPtStopModeTransferZonesWithoutAccessEgressModeSupport(
-        connectoidsByTransferZoneMapping,
-        Collections.singleton(ferryMode),
-        nonFerryModes);
-
-    var ferryTransferZones = result.first();
-    var ferryTransferZonesDisconnectedFromLandNetwork = result.second();
-    LOGGER.info(String.format("Identified %d (%.2f%%) disconnected ferry stops from land network",
-      ferryTransferZonesDisconnectedFromLandNetwork.size(),
-      (double)ferryTransferZonesDisconnectedFromLandNetwork.size()*100/ferryTransferZones.size()));
-
-    // for each identified connect it to the land network
-    var numSuccess = ferryTransferZonesDisconnectedFromLandNetwork.stream().map( tz ->
-            connectFerryTransferZoneToLandNetwork(
-            tz, connectoidsByTransferZoneMapping.get(tz), ferryMode) ).map(b -> b ? 1 : 0).
-        reduce(0, Integer::sum);
-    LOGGER.info(String.format("Connected %d (%.2f%%) disconnected ferry stops to land network",
-        numSuccess, (double)numSuccess*100/ferryTransferZonesDisconnectedFromLandNetwork.size()));
-  }
-
-  /**
-   * If configured as such connect all rail based stops to land network if not connected yet based on search
-   * radius and eligible modes as it is assumed they can access those stops with those modes from the active mode
-   * network but may not be tagged as such in OSM
-   */
-  private void connectRailBasedStopsToActiveModeNetwork() {
-    if(!getSettings().isConnectRailBasedStopToNearbyRoadNetwork() ||
-            !(getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isRailwayParserActive())
-            ||
-            !(getSettings().isParserActive() &&
-                    getNetworkToZoningData().getNetworkSettings().isAnyActivatedPlanitModeActiveMode())){
-      return;
-    }
-    LOGGER.info("Connecting rail-based waiting areas to active transport network");
-
-    var railBasedModes = getReferenceNetwork().getModes().stream().filter(
-            m -> m.getPhysicalFeatures().getTrackType().equals(TrackModeType.RAIL)).collect(Collectors.toSet());
-    if(railBasedModes.isEmpty()){
-      LOGGER.warning("No rail based modes available in PLANit network even though rail parser is active, " +
-              "this is unexpected, aborting connecting rail based stops to land network");
-      return;
-    }
-
-    // access/egress modes we'll support
-    var allSupportedActiveModes = getReferenceNetwork().getModes().stream().filter(
-            m -> m.getPredefinedModeType().isActiveModeType()).collect(Collectors.toSet());
-    var connectoidsByTransferZoneMapping = getZoning().getTransferConnectoids().createIndexByAccessZone();
-
-    // disconnected rail stops without access egress modes
-    // todo: if one or more nonFerry modes are connected but others are not, t is still classified as diconnected
-    //  technically we should run this per mode and supplement per missing mode
-    var result = ZoningConverterUtils.findPtStopModeTransferZonesWithoutAccessEgressModeSupport(
-        connectoidsByTransferZoneMapping, railBasedModes, allSupportedActiveModes);
-    var railBasedTransferZones = result.first();
-    var railBasedTransferZonesDisconnectedFromActiveModesNetwork = result.second();
-    LOGGER.info(String.format("Identified %d (%.2f%%) disconnected rail-based stops/stations from active road network",
-            railBasedTransferZonesDisconnectedFromActiveModesNetwork.size(),
-            (double)railBasedTransferZonesDisconnectedFromActiveModesNetwork.size()*100/railBasedTransferZones.size()));
-
-    // connect those to the road network
-    var numSuccess = railBasedTransferZonesDisconnectedFromActiveModesNetwork.stream().map( tz ->
-                    connectRailBasedTransferZoneToRoadNetwork(
-                            tz,
-                            connectoidsByTransferZoneMapping.get(tz),
-                            railBasedModes,
-                            allSupportedActiveModes) ).map(b -> b ? 1 : 0).
-            reduce(0, Integer::sum);
-    LOGGER.info(String.format("Connected %d (%.2f%%) disconnected rail-based stops/stations to land network",
-            numSuccess, (double)numSuccess*100/railBasedTransferZonesDisconnectedFromActiveModesNetwork.size()));
   }
 
   /** extract a regular Ptv2 stop position that is part of a stop_area relation and is registered before as a
@@ -1798,7 +1516,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void extractPtv2StopAreaStopPosition(
       final OsmRelationMember member, final TransferZoneGroup transferZoneGroup, boolean suppressLogging){
     PlanItRunTimeException.throwIfNull(member, "Stop_area stop role member null");
-    var osmData = getZoningReaderData().getOsmData();
+    var osmData = getZoningReaderData().getOsmConverterData();
     
     /* only proceed when not marked as invalid earlier */
     if(osmData.isIgnoreStopAreaStopPosition(member.getType(), member.getId())) {
@@ -1829,7 +1547,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* when available but outside of bounding area, we suppress logging since this is likely the main reason for
     any failure downstream  and this it is generally expected to fail, so no point in logging */
     suppressLogging = suppressLogging || !getProjectedBoundingAreaHelper().isPartlyOrWhollyWithinBoundaryArea(
-        stopPositionNode, getZoningReaderData().getBoundingArea(), true);
+        stopPositionNode, true);
 
     /* regular Ptv2 stop_position or special cases due to tagging errors */
     Map<String, String> tags = OsmModelUtil.getTagsAsMap(stopPositionNode);
@@ -1861,8 +1579,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* check if connectoids already exist, if not (due to being part of multiple stop_areas or because it is a
       Ptv1 stop that has already been processed) */
       boolean isPtv2NodeOnly = !OsmPtVersionSchemeUtils.isPtv2StopPositionPtv1Stop(stopPositionNode, tags);
-      boolean alreadyProcessed = getZoningReaderData().getPlanitData().hasAnyTransferConnectoidsForLocation(
-          OsmNodeUtils.createPoint(stopPositionNode));
+      boolean alreadyProcessed =
+          getZoningReaderData().getPlanitConverterData().getConnectoidData().hasAnyTransferConnectoidsForLocation(
+            OsmNodeUtils.createPoint(stopPositionNode));
       if(isPtv2NodeOnly && alreadyProcessed && !suppressLogging) {
         /* stop_position resides in multiple stop_areas, this is strongly discouraged by OSM, but does occur
         still, so we identify and skip (no need to process twice anyway)*/
@@ -1897,7 +1616,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   
     /* transfer zone group */
     TransferZoneGroup transferZoneGroup =
-        getZoningReaderData().getPlanitData().getTransferZoneGroupByOsmId(osmRelation.getId());
+        getZoningReaderData().getPlanitConverterData().getTransferZoneGroupByOsmId(osmRelation.getId());
     if(transferZoneGroup == null) {
       LOGGER.severe(String.format("Found stop_area %d in post-processing for which no PLANit transfer zone group " +
           "has been created, this should not happen",osmRelation.getId()));
@@ -1917,8 +1636,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         /* suppress any warnings when we identified the member or area should be ignored for generating user warnings */
         boolean suppressLogging =
             getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId()) ||
-            getZoningReaderData().getOsmData().isWaitingAreaWithoutMappedPlanitMode(member.getType(), member.getId()) ||
-            getZoningReaderData().getOsmData().isIgnoreStopAreaStopPosition(member.getType(), member.getId());
+            getZoningReaderData().getOsmConverterData().isWaitingAreaWithoutMappedPlanitMode(member.getType(), member.getId()) ||
+            getZoningReaderData().getOsmConverterData().isIgnoreStopAreaStopPosition(member.getType(), member.getId());
 
         extractPtv2StopAreaStopPosition(member, transferZoneGroup, suppressLogging);
         
@@ -1965,18 +1684,14 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    * @param transferSettings for the handler
    * @param handlerData the handler data gathered by preceding handlers for zoning parsing
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
-   * @param referenceNetwork to use
-   * @param zoningToPopulate to populate
    * @param profiler to use 
    */
   public OsmZoningPostProcessingHandler(
       final OsmPublicTransportReaderSettings transferSettings,
       final OsmZoningReaderData handlerData,
       final OsmNetworkToZoningReaderData network2ZoningData,
-      final PlanitOsmNetwork referenceNetwork,
-      final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, handlerData, network2ZoningData, referenceNetwork, zoningToPopulate, profiler);
+    super(transferSettings, handlerData, network2ZoningData, profiler);
   }
   
   /**
@@ -2021,11 +1736,21 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                 "layer!");
       }
 
-      // if configured connect all ferry stops to land network
-      connectFerriesToLandNetwork();
+      boolean connectedAccessEgressFerries =
+          getSettings().isConnectFerryStopToNearbyLandNetwork() &&
+          getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive();
+      boolean connectedAccessEgressRailBased =
+          getSettings().isConnectRailBasedStopToNearbyRoadNetwork() &&
+              getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isRailwayParserActive();
+      boolean connectedAccessEgressRoadBased =
+          getSettings().isConnectBusBasedStopToNearbyRoadNetwork() &&
+              getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isHighwayParserActive();
 
-      // if configured connect all rail stops to active mode network
-      connectRailBasedStopsToActiveModeNetwork();
+      var accessEgressExecutor = new OsmZoningInjectAccessEgressExecutor(
+          getProjectedBoundingAreaHelper(),
+          getZoningReaderData().getPlanitConverterData());
+      accessEgressExecutor.execute(
+          connectedAccessEgressFerries, connectedAccessEgressRailBased, connectedAccessEgressRoadBased);
 
     }catch(PlanItException e) {
       LOGGER.severe(e.getMessage());

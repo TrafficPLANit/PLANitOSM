@@ -8,11 +8,15 @@ import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 import org.geotools.api.referencing.operation.MathTransform;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.OsmNodeData;
+import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
+import org.goplanit.osm.tags.OsmPtv1Tags;
+import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.utils.epsg.ProjectedEpsgCodesByCountry;
 import org.goplanit.utils.geo.PlanitCrsUtils;
 import org.goplanit.utils.geo.PlanitGeometryOperationUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
+import org.goplanit.utils.zoning.TransferZone;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
@@ -20,7 +24,10 @@ import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.operation.distance.IndexedFacetDistance;
 
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.logging.Logger;
+
+import static org.goplanit.osm.converter.network.OsmNetworkReaderSettings.DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
 
 /**
  * Utilities for projected bounding area instances for fast checks shared between network and zoning
@@ -40,14 +47,29 @@ public class OsmProjectedBoundingAreaHelper {
    * feed in geometries that are also projected so NOT Wgs84 */
   private final IndexedFacetDistance indexedBoundingPolygonDistProjected;
 
+  /** leniency to apply for water based checks */
+  private final double maximumDistanceFerryOutsideBoundingPolygonInMeters;
+
   public OsmProjectedBoundingAreaHelper(){
     preppedBoundingPolygonWgs84 = null;
     mathTransformSourceToProjection = null;
     indexedBoundingPolygonDistProjected = null;
+    maximumDistanceFerryOutsideBoundingPolygonInMeters = DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
   }
 
+  /**
+   * Constructor
+   *
+   * @param boundingArea to consider
+   * @param originalCrs to consider
+   * @param destinationCountryName to consider
+   * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to use for water leniency
+   */
   public OsmProjectedBoundingAreaHelper(
-      OsmBoundary boundingArea, CoordinateReferenceSystem originalCrs, String destinationCountryName){
+      OsmBoundary boundingArea,
+      CoordinateReferenceSystem originalCrs,
+      String destinationCountryName,
+      double maximumDistanceFerryOutsideBoundingPolygonInMeters ){
     // prepare polygon for faster checks
     this.preppedBoundingPolygonWgs84 = PlanitGeometryOperationUtils.extractPreparedPolygonForQuickSpatialComparisons(
         boundingArea.getBoundingPolygon());
@@ -58,13 +80,31 @@ public class OsmProjectedBoundingAreaHelper {
     var projectedBoundingPolygon = PlanitJtsUtils.transformGeometrySafe(
         boundingArea.getBoundingPolygon(),mathTransformSourceToProjection);
     this.indexedBoundingPolygonDistProjected = new IndexedFacetDistance(projectedBoundingPolygon);
+
+    this.maximumDistanceFerryOutsideBoundingPolygonInMeters = maximumDistanceFerryOutsideBoundingPolygonInMeters;
   }
 
+  /**
+   * Factory method
+   * @param boundingArea to consider
+   * @param originalCrs to consider
+   * @param destinationCountryName to consider
+   * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to consider
+   * @return helper created
+   */
   public static OsmProjectedBoundingAreaHelper of(
-      OsmBoundary boundingArea, CoordinateReferenceSystem originalCrs, String destinationCountryName) {
-    return new OsmProjectedBoundingAreaHelper(boundingArea, originalCrs, destinationCountryName);
+      OsmBoundary boundingArea,
+      CoordinateReferenceSystem originalCrs,
+      String destinationCountryName,
+      double maximumDistanceFerryOutsideBoundingPolygonInMeters) {
+    return new OsmProjectedBoundingAreaHelper(
+        boundingArea, originalCrs, destinationCountryName, maximumDistanceFerryOutsideBoundingPolygonInMeters);
   }
 
+  /**
+   * Factory method for empty instance
+   * @return empty instance
+   */
   public static OsmProjectedBoundingAreaHelper empty() {
     return new OsmProjectedBoundingAreaHelper();
   }
@@ -91,12 +131,55 @@ public class OsmProjectedBoundingAreaHelper {
   }
 
   /**
+   * Check if within bounding area if specified and use lenience for water based infra if so configured
+   *
+   * @param transferZone            to check
+   * @param useWaterLeniency flag to use water lenience in absence of OSM tags
+   * @return true when eligible, false otherwise
+   */
+  public boolean fallsWithinSpatiallyEligibleBoundingArea(TransferZone transferZone, boolean useWaterLeniency) {
+    var geometry = transferZone.getGeometry(true);
+    if(!useWaterLeniency){
+      return isPartlyOrWhollyWithinBoundaryArea(
+          geometry, true);
+    }else{
+      if(geometry instanceof Point){
+        return isNearPartlyOrWhollyWithinBoundaryArea(
+            (Point) geometry, maximumDistanceFerryOutsideBoundingPolygonInMeters,true);
+      }else if(geometry instanceof LineString){
+        return isNearPartlyOrWhollyWithinBoundaryArea(
+            (LineString) geometry,maximumDistanceFerryOutsideBoundingPolygonInMeters,true);
+      }else{
+        LOGGER.warning("Unsupported geometry type for transfer zone found, should not happen");
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Check if within bounding area if specified and use lenience for water based infra if so configured
+   *
+   * @param osmEntity to check
+   * @param type of entity
+   * @param tags of node
+   * @return true when eligible, false otherwise
+   */
+  public boolean fallsWithinSpatiallyEligibleBoundingArea(
+      OsmEntity osmEntity, EntityType type, Map<String, String> tags, OsmNodeData osmNodeData) {
+    boolean useWaterLeniency =
+        OsmPtv1Tags.isFerryTerminal(tags) || OsmWaterModeTags.supportsAnyPtv2WaterModeAccess(tags);
+    return (!useWaterLeniency && isPartlyOrWhollyWithinBoundaryArea(
+        osmEntity, type, osmNodeData, true)) ||
+        isNearPartlyOrWhollyWithinBoundaryArea(
+            osmEntity, type, osmNodeData,maximumDistanceFerryOutsideBoundingPolygonInMeters,true);
+  }
+
+  /**
    * Verify if OSM entity (node or way) is within boundary provided.
    *
    * @param entity to check
    * @param type  entity type
    * @param nodeData registered node information
-   * @param osmBoundary to use for verification
    * @param maxProjectedDistanceToBoundary to allow
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
@@ -106,16 +189,15 @@ public class OsmProjectedBoundingAreaHelper {
       OsmEntity entity,
       EntityType type,
       OsmNodeData nodeData,
-      @Nullable OsmBoundary osmBoundary,
       double maxProjectedDistanceToBoundary,
       boolean isWithinWhenNoBoundary){
 
     if(type ==  EntityType.Node){
       return isNearPartlyOrWhollyWithinBoundaryArea(
-          (OsmNode) entity, osmBoundary, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary);
+          (OsmNode) entity, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary);
     }else if(type == EntityType.Way){
       return isNearPartlyOrWhollyWithinBoundaryArea(
-          (OsmWay) entity, nodeData, osmBoundary, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary);
+          (OsmWay) entity, nodeData, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary);
     }
     LOGGER.severe(String.format("Unsupported OSM entity type for OSM entity(%d) when determining if entity falls " +
         "within %2f of boundary", entity.getId(), maxProjectedDistanceToBoundary));
@@ -128,7 +210,6 @@ public class OsmProjectedBoundingAreaHelper {
    * @param entity to check
    * @param type  entity type
    * @param nodeData registered node information
-   * @param osmBoundary to use for verification
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
    * @return true when within boundary, false otherwise
@@ -137,17 +218,15 @@ public class OsmProjectedBoundingAreaHelper {
       OsmEntity entity,
       EntityType type,
       OsmNodeData nodeData,
-      @Nullable OsmBoundary osmBoundary,
       boolean isWithinWhenNoBoundary){
     return isNearPartlyOrWhollyWithinBoundaryArea(
-        entity, type, nodeData, osmBoundary, 0.0, isWithinWhenNoBoundary);
+        entity, type, nodeData, 0.0, isWithinWhenNoBoundary);
   }
 
   /**
    * Verify if node is within boundary provided.
    *
    * @param osmNode to check
-   * @param osmBoundary to use for verification
    * @param maxProjectedDistanceToBoundary to allow
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
@@ -155,28 +234,25 @@ public class OsmProjectedBoundingAreaHelper {
    */
   public boolean isNearPartlyOrWhollyWithinBoundaryArea(
       OsmNode osmNode,
-      OsmBoundary osmBoundary,
       double maxProjectedDistanceToBoundary,
       boolean isWithinWhenNoBoundary){
     return isNearPartlyOrWhollyWithinBoundaryArea(
-        OsmNodeUtils.createPoint(osmNode), osmBoundary, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary);
+        OsmNodeUtils.createPoint(osmNode), maxProjectedDistanceToBoundary, isWithinWhenNoBoundary);
   }
 
   /**
    * Verify if node is within boundary provided.
    *
    * @param osmNode to check
-   * @param osmBoundary to use for verification
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
    * @return true when within boundary, false otherwise
    */
   public boolean isPartlyOrWhollyWithinBoundaryArea(
       OsmNode osmNode,
-      OsmBoundary osmBoundary,
       boolean isWithinWhenNoBoundary){
     return isNearPartlyOrWhollyWithinBoundaryArea(
-        osmNode, osmBoundary, 0.0, isWithinWhenNoBoundary);
+        osmNode, 0.0, isWithinWhenNoBoundary);
   }
 
   /**
@@ -184,7 +260,6 @@ public class OsmProjectedBoundingAreaHelper {
    *
    * @param osmWay to check
    * @param nodeData registered node information
-   * @param osmBoundary to use for verification
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
    * @return true when within boundary, false otherwise
@@ -192,10 +267,9 @@ public class OsmProjectedBoundingAreaHelper {
   public boolean isPartlyOrWhollyWithinBoundaryArea(
       OsmWay osmWay,
       OsmNodeData nodeData,
-      OsmBoundary osmBoundary,
       boolean isWithinWhenNoBoundary){
     return isNearPartlyOrWhollyWithinBoundaryArea(
-        osmWay, nodeData, osmBoundary, 0.0, isWithinWhenNoBoundary);
+        osmWay, nodeData, 0.0, isWithinWhenNoBoundary);
   }
 
   /**
@@ -203,7 +277,6 @@ public class OsmProjectedBoundingAreaHelper {
    *
    * @param osmWay to check
    * @param nodeData registered node information
-   * @param osmBoundary to use for verification
    * @param maxProjectedDistanceToBoundary to allow
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
@@ -212,7 +285,6 @@ public class OsmProjectedBoundingAreaHelper {
   public boolean isNearPartlyOrWhollyWithinBoundaryArea(
       OsmWay osmWay,
       OsmNodeData nodeData,
-      OsmBoundary osmBoundary,
       double maxProjectedDistanceToBoundary,
       boolean isWithinWhenNoBoundary){
 
@@ -221,7 +293,7 @@ public class OsmProjectedBoundingAreaHelper {
       var osmNode = nodeData.getRegisteredOsmNode(osmWay.getNodeId(index));
       if(osmNode != null &&
           isNearPartlyOrWhollyWithinBoundaryArea(
-              osmNode, osmBoundary, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary)){
+              osmNode, maxProjectedDistanceToBoundary, isWithinWhenNoBoundary)){
         anyWithinBoundary = true;
         break;
       }
@@ -233,16 +305,14 @@ public class OsmProjectedBoundingAreaHelper {
    * Verify if geometry is (partly) within boundary provided.
    *
    * @param geometry to check
-   * @param osmBoundary to use for verification (may be null)
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
    * @return true when within boundary, false otherwise
    */
   public boolean isPartlyOrWhollyWithinBoundaryArea(
       Geometry geometry,
-      @Nullable OsmBoundary osmBoundary,
       boolean isWithinWhenNoBoundary){
-    if(osmBoundary == null || !osmBoundary.hasBoundingPolygon()){
+    if(preppedBoundingPolygonWgs84 == null){
       return isWithinWhenNoBoundary;
     }
 
@@ -253,7 +323,6 @@ public class OsmProjectedBoundingAreaHelper {
    * Verify if geometry is (partly) within boundary provided.
    *
    * @param point to check
-   * @param osmBoundary to use for verification (may be null)
    * @param maxProjectedDistanceToBoundary to allow
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
@@ -261,14 +330,13 @@ public class OsmProjectedBoundingAreaHelper {
    */
   public boolean isNearPartlyOrWhollyWithinBoundaryArea(
       Point point,
-      @Nullable OsmBoundary osmBoundary,
       double maxProjectedDistanceToBoundary,
       boolean isWithinWhenNoBoundary){
-    if(osmBoundary == null || !osmBoundary.hasBoundingPolygon()){
+    if(preppedBoundingPolygonWgs84 == null){
       return isWithinWhenNoBoundary;
     }
 
-    boolean success = isPartlyOrWhollyWithinBoundaryArea(point, osmBoundary, isWithinWhenNoBoundary);
+    boolean success = isPartlyOrWhollyWithinBoundaryArea(point, isWithinWhenNoBoundary);
     if(!success && maxProjectedDistanceToBoundary > 0){
       success = maxProjectedDistanceToBoundary <
           this.calculateProjectedDistanceToBoundingPolygon(point, false);
@@ -280,22 +348,19 @@ public class OsmProjectedBoundingAreaHelper {
    * Verify if geometry is (partly) within boundary provided.
    *
    * @param lineString to check
-   * @param osmBoundary to use for verification (may be null)
    * @param maxProjectedDistanceToBoundary to allow
    * @param isWithinWhenNoBoundary when true, true is returned if provided boundary has no polygon defined,
    *                               false otherwise
    * @return true when within boundary, false otherwise
    */
   public boolean isNearPartlyOrWhollyWithinBoundaryArea(
-      LineString lineString,
-      @Nullable OsmBoundary osmBoundary,
-      double maxProjectedDistanceToBoundary,
-      boolean isWithinWhenNoBoundary){
-    if(osmBoundary == null || !osmBoundary.hasBoundingPolygon()){
+      LineString lineString, double maxProjectedDistanceToBoundary, boolean isWithinWhenNoBoundary){
+
+    if(preppedBoundingPolygonWgs84 == null){
       return isWithinWhenNoBoundary;
     }
 
-    boolean success = isPartlyOrWhollyWithinBoundaryArea(lineString, osmBoundary, isWithinWhenNoBoundary);
+    boolean success = isPartlyOrWhollyWithinBoundaryArea(lineString, isWithinWhenNoBoundary);
     if(!success && maxProjectedDistanceToBoundary > 0){
       for(int index=0; index < lineString.getNumPoints();++index){
         var currPoint = lineString.getPointN(index);

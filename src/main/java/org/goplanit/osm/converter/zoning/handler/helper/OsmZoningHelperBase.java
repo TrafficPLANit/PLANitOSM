@@ -24,82 +24,76 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Base class for all parser classes targeting support for parsing a specific PLANit zoning related entity (connectoid, transfer zone etc.)
- * This base class provides common funcionality to be made available to all parsers deriving from it
+ * Base class for all parser classes targeting support for parsing a specific PLANit zoning related entity
+ * (connectoid, transfer zone etc.) This base class provides common functionality to be made available to all
+ * parsers deriving from it
  *    
  * @author markr
  *
  */
 class OsmZoningHelperBase {
 
-  /** the logger  to use */
+  /**
+   * the logger  to use
+   */
   private static final Logger LOGGER = Logger.getLogger(OsmZoningHelperBase.class.getCanonicalName());
-  
-  /** settings to adhere to */
+
+  /**
+   * settings to adhere to
+   */
   private final OsmPublicTransportReaderSettings transferSettings;
 
-  /** network data used by zoning reader/handler/helper */
+  /**
+   * network data used by zoning reader/handler/helper
+   */
   private final OsmNetworkToZoningReaderData network2ZoningData;
 
-  /** reference network to use */
-  private final PlanitOsmNetwork referenceNetwork;
-
-  /** the zoning to work on */
-  private final Zoning zoning;
-
-  /** zoning reader data used to track created entities */
+  /**
+   * zoning reader data used to track created entities
+   */
   private final OsmZoningReaderData zoningReaderData;
 
-  /** utilities for geographic information */
-  private final PlanitJtsCrsUtils geoUtils;
-
-  /** Collect the pt settings
-   * 
+  /**
+   * Collect the pt settings
+   *
    * @return public transport settings
    */
   protected OsmPublicTransportReaderSettings getSettings() {
     return this.transferSettings;
   }
 
-  /**
-   * Get reference network at hand
-   * @return network
-   */
-  protected PlanitOsmNetwork getReferenceNetwork(){
-    return referenceNetwork;
-  }
 
-  protected Zoning getZoning(){
-    return zoning;
-  }
-
-  protected OsmZoningReaderData getZoningReaderData(){
+  protected OsmZoningReaderData getZoningReaderData() {
     return zoningReaderData;
   }
 
-  /** access to geo utils
+  /**
+   * access to geo utils
    *
    * @return the utils
    */
-  protected PlanitJtsCrsUtils getGeoUtils(){
-    return geoUtils;
+  protected PlanitJtsCrsUtils getGeoUtils() {
+    return getZoningReaderData().getPlanitConverterData().getGeoUtils();
   }
 
   /**
    * Collect network to zoning data ported over to be made available
+   *
    * @return instance of OsmNetworkToZoningReaderData
    */
-  protected OsmNetworkToZoningReaderData getNetworkToZoningData(){
+  protected OsmNetworkToZoningReaderData getNetworkToZoningData() {
     return network2ZoningData;
   }
 
-  /** Verify if there exist any layers where the node is active either as an extreme node or internal to a PLANit link
-   * 
+  /**
+   * Verify if there exist any layers where the node is active either as an extreme node or internal to a PLANit link
+   *
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
    */
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) {
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId , referenceNetwork, network2ZoningData);
+    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
+        osmNodeId, getZoningReaderData().getPlanitConverterData().getReferenceNetwork(), network2ZoningData);
   }
 
   /**
@@ -107,117 +101,47 @@ class OsmZoningHelperBase {
    * reside in a particular layer. If so, the OSM vertical layer index is retrieved and provided. If inconsistent
    * indices are found across the links the user is warned, if no matching links are known on the layer null is returned.
    *
-   * @param stopPositionLocation  to find layer index for
-   * @param layer to check
+   * @param stopPositionLocation to find layer index for
+   * @param layer                to check
    * @return OSM vertical layer index found, and boolean indicating if the found layer index was the same across
-   *  all eligible links (true), false otherwise
+   * all eligible links (true), false otherwise
    */
-  protected Pair<Integer,Boolean> findOsmVerticalLayerIndexByStopPositionPlanitLinks(
+  protected Pair<Integer, Boolean> findOsmVerticalLayerIndexByStopPositionPlanitLinks(
       Point stopPositionLocation, NetworkLayer layer) {
     var layerData = getNetworkToZoningData().getNetworkLayerData(layer);
 
     Collection<MacroscopicLink> planitLinks = layerData.findPlanitLinksWithInternalLocation(stopPositionLocation);
-    if(planitLinks==null || planitLinks.isEmpty()) {
+    if (planitLinks == null || planitLinks.isEmpty()) {
       var planitNode = layerData.getPlanitNodeByLocation(stopPositionLocation);
       if (planitNode != null && planitNode.hasLinks()) {
         planitLinks = planitNode.getLinks();
       }
     }
 
-    if(planitLinks!=null && !planitLinks.isEmpty()) {
+    if (planitLinks != null && !planitLinks.isEmpty()) {
       final int verticalLayerIndex = layerData.getMostFrequentVerticalLayerIndex(planitLinks);
       final boolean consistent = planitLinks.stream().allMatch(
           l -> layerData.getLinkVerticalLayerIndex(l) == verticalLayerIndex);
       return Pair.of(verticalLayerIndex, consistent);
     }
 
-    return  null;
+    return null;
   }
 
-  /** Constructor 
+  /**
+   * Constructor
    *
-   * @param referenceNetwork to use
-   * @param zoning to use
-   * @param zoningReaderData to use
+   * @param zoningReaderData   to use
    * @param network2ZoningData to use
-   * @param transferSettings to use
+   * @param transferSettings   to use
    */
   protected OsmZoningHelperBase(
-      final PlanitOsmNetwork referenceNetwork,
-      final Zoning zoning,
       final OsmZoningReaderData zoningReaderData,
       final OsmNetworkToZoningReaderData network2ZoningData,
       final OsmPublicTransportReaderSettings transferSettings) {
     this.transferSettings = transferSettings;
     this.network2ZoningData = network2ZoningData;
-    this.referenceNetwork = referenceNetwork;
-
-    this.zoning = zoning;
     this.zoningReaderData = zoningReaderData;
-
-    /* gis initialisation */
-    this.geoUtils = new PlanitJtsCrsUtils(referenceNetwork.getCoordinateReferenceSystem());
-  }
-
-  /**
-   * Find all nearby links within given search radius of geometry that do not have any banned modes but will have at
-   * least one of the supported modes
-   *
-   * @param geometry geometry to use
-   * @param bannedModes to consider
-   * @param supportedModes to consider
-   * @param maxSearchRadius to constrain by
-   * @return found links
-   */
-  public Collection<MacroscopicLink> findNearbyModeCompatibleLinks(
-          Geometry geometry,
-          Collection<Mode> bannedModes,
-          Set<Mode> supportedModes,
-          double maxSearchRadius){
-
-    // assume single layer
-    var networkLayer = this.getReferenceNetwork().getLayerByMode(supportedModes.iterator().next());
-    var boundingBox = getGeoUtils().createBoundingBox(
-            geometry.getEnvelopeInternal(), maxSearchRadius);
-
-    Collection<MacroscopicLink> spatiallyMatchedLinks =
-            getZoningReaderData().getPlanitData().findLinksSpatially(networkLayer, boundingBox);
-    // reduce to any active mode supporting links that are not rail-based links
-    spatiallyMatchedLinks.removeIf(l -> !l.isAnyModeAllowedOnAnySegment(supportedModes) ||
-            l.isAnyModeAllowedOnAnySegment(bannedModes));
-
-    return spatiallyMatchedLinks;
-  }
-
-  /**
-   * Find closest mode compatible node (so any attached link with an entry segment supporting the mode constraints)
-   * of provided links that do not have any banned modes but will have at
-   * least one of the supported modes
-   *
-   * @param geometry reference centroid of geometry used
-   * @param mode to check
-   * @param eligibleLinkSegments link segments to consider
-   * @param maxSearchRadius only consider if within search radius
-   * @param suppressSpatialWarnings flag for logging
-   * @return pair of closest node and distance (null if not available)
-   */
-  public Pair<DirectedVertex, Double> findClosestModeCompatibleNode(
-          Geometry geometry,
-          Mode mode,
-          Stream<MacroscopicLinkSegment> eligibleLinkSegments,
-          boolean selectUpstreamNode,
-          double maxSearchRadius,
-          boolean suppressSpatialWarnings) {
-
-    var refCoord = geometry.getCentroid().getCoordinate();
-    var modeCompatibleNearbyNodes = eligibleLinkSegments.filter(
-        ls -> ls.isModeAllowed(mode)).map(
-        ls -> selectUpstreamNode ? ls.getUpstreamNode() : ls.getDownstreamNode()).collect(Collectors.toList());
-    return PlanitEntityGeoUtils.findPlanitEntityClosest(
-        refCoord,
-        modeCompatibleNearbyNodes,
-        maxSearchRadius,
-        suppressSpatialWarnings,
-        getGeoUtils());
   }
 }
+

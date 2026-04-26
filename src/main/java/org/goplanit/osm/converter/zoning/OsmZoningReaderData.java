@@ -1,11 +1,11 @@
 package org.goplanit.osm.converter.zoning;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Logger;
 
+import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.zoning.Zoning;
 
 /**
  * Data specifically required in the zoning reader while parsing OSM data
@@ -25,27 +25,34 @@ public class OsmZoningReaderData {
   /* UNPROCESSED OSM */
   
   /* PLANit entity related tracking during parsing */
-  OsmZoningReaderPlanitData planitData = new OsmZoningReaderPlanitData();
+  protected final OsmZoningReaderPlanitConverterData planitData;
   
   /* OSM entity related tracking during parsing */
-  OsmZoningReaderOsmData osmData = new OsmZoningReaderOsmData();
+  protected final OsmZoningReaderOsmData osmConverterData = new OsmZoningReaderOsmData();
 
   /** the osmBoundary used during parsing.
    */
   private OsmBoundary osmBoundingArea = null;
 
   /**
-   * Default constructor using country set to GLOBAL (right hand drive)
+   * Constructor using country set to GLOBAL (right hand drive)
+   *
+   * @param network to use
+   * @param zoning to use
    */
-  public OsmZoningReaderData() {
-    this(CountryNames.GLOBAL);
+  public OsmZoningReaderData(MacroscopicNetwork network, Zoning zoning) {
+    this(network, zoning, CountryNames.GLOBAL);
   }  
   
-  /** Constructor 
+  /** Constructor
+   *
+   * @param network to use
+   * @param zoning to use
    * @param countryName for this zoning
    */
-  public OsmZoningReaderData(String countryName) {
+  public OsmZoningReaderData(MacroscopicNetwork network, Zoning zoning, String countryName) {
     this.countryName = countryName;
+    this.planitData = new OsmZoningReaderPlanitConverterData(network, zoning);
   }
   
   /** Collect the country name
@@ -61,7 +68,7 @@ public class OsmZoningReaderData {
    */
   public void reset() {
     planitData.reset();
-    osmData.reset();
+    osmConverterData.reset();
     osmBoundingArea = null;
   }
 
@@ -69,7 +76,7 @@ public class OsmZoningReaderData {
    * 
    * @return planit data
    */
-  public OsmZoningReaderPlanitData getPlanitData() {
+  public OsmZoningReaderPlanitConverterData getPlanitConverterData() {
     return planitData;
   }
   
@@ -77,8 +84,8 @@ public class OsmZoningReaderData {
    * 
    * @return osm data
    */
-  public OsmZoningReaderOsmData getOsmData() {
-    return osmData;
+  public OsmZoningReaderOsmData getOsmConverterData() {
+    return osmConverterData;
   }
 
   /** get the bounding area

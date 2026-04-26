@@ -138,9 +138,9 @@ public class OsmZoningReader implements ZoningReader {
     }
     
     /* make country name available in zoning reader data during parsing */
-    this.zoningReaderData = new OsmZoningReaderData(getSettings().getCountryName());    
+    this.zoningReaderData = new OsmZoningReaderData(getReferenceNetwork(), getSettings().getCountryName());
     /* spatially index all links to register on data trackers for use in handlers */
-    zoningReaderData.getPlanitData().initialiseSpatiallyIndexedLinks(getReferenceNetwork());
+    zoningReaderData.getPlanitConverterData().recreateSpatiallyIndexedLinks();
     
     /* make sure that if a network bounding boundary has been set, the zoning bounding area is synced when relevant and validated
     * it is not inconsistent */
@@ -152,7 +152,7 @@ public class OsmZoningReader implements ZoningReader {
    * the index exists, but not the actual value. this method is to be called after the processing of all OSM nodes but before we do OSM ways
    */
   private void pruneUnavailablePreregisteredOsmNodes() {
-    this.zoningReaderData.getOsmData().getOsmNodeData().removeRegisteredOsmNodesIf(e -> e.getValue()==null);
+    this.zoningReaderData.getOsmConverterData().getOsmNodeData().removeRegisteredOsmNodesIf(e -> e.getValue()==null);
   }
 
   /**
@@ -170,8 +170,8 @@ public class OsmZoningReader implements ZoningReader {
        * and mark their ways to be kept, which then in the next pass ensures these ways' nodes are pre-registered to be kept as well */
       createPreProcessingHandlerAndRead(Stage.ONE_IDENTIFY_ZONING_RELATION_MEMBERS, profiler);
       LOGGER.info("Pre-processing: Identifying eligible public transport infrastructure compatible relations");
-      if (zoningReaderData.getOsmData().hasOsmRelationOuterRoleOsmWays()) {
-        LOGGER.info(String.format("Pre-processing: Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms", zoningReaderData.getOsmData().getNumberOfOuterRoleOsmWays()));
+      if (zoningReaderData.getOsmConverterData().hasOsmRelationOuterRoleOsmWays()) {
+        LOGGER.info(String.format("Pre-processing: Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms", zoningReaderData.getOsmConverterData().getNumberOfOuterRoleOsmWays()));
       }
     }
 
@@ -255,8 +255,6 @@ public class OsmZoningReader implements ZoningReader {
       return;
     }
     var osmHandler = new OsmZoningPreProcessingHandler(
-        this.getReferenceNetwork(),
-        this.zoning,
         this.transferSettings,
         this.zoningReaderData,
         this.network2ZoningData,
@@ -282,8 +280,6 @@ public class OsmZoningReader implements ZoningReader {
           this.transferSettings, 
           this.zoningReaderData,
           this.network2ZoningData,
-          getReferenceNetwork(),
-          this.zoning, 
           profiler);
       readWithHandler(osmReader, osmHandler);
     } 
@@ -306,8 +302,6 @@ public class OsmZoningReader implements ZoningReader {
           this.transferSettings, 
           this.zoningReaderData,
           this.network2ZoningData,
-          getReferenceNetwork(),
-          this.zoning,
           profiler);
       readWithHandler(osmReader, osmPostProcessingHandler);
     } 

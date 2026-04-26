@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
@@ -58,7 +57,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param osmNode to check
    */
   private void registerIfPreregistered(OsmNode osmNode) {
-    var osmNodeData = getZoningReaderData().getOsmData().getOsmNodeData();
+    var osmNodeData = getZoningReaderData().getOsmConverterData().getOsmNodeData();
     if(osmNodeData.containsPreregisteredOsmNode(osmNode.getId()) && !osmNodeData.containsOsmNode(osmNode.getId())){
       osmNodeData.registerEligibleOsmNode(osmNode);
     }
@@ -83,8 +82,8 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       OsmRelationMember internalMember = 
           OsmRelationUtils.findFirstOsmRelationMemberWithRole(osmRelation ,OsmMultiPolygonTags.OUTER_ROLE);
       if(internalMember!=null) {
-        if(getZoningReaderData().getOsmData().hasOuterRoleOsmWay(internalMember.getId())) {
-          OsmWay osmWay = getZoningReaderData().getOsmData().getOuterRoleOsmWay(internalMember.getId());
+        if(getZoningReaderData().getOsmConverterData().hasOuterRoleOsmWay(internalMember.getId())) {
+          OsmWay osmWay = getZoningReaderData().getOsmConverterData().getOuterRoleOsmWay(internalMember.getId());
           type = EntityType.Way;
           osmId = osmWay.getId();
         }else if(!suppressLogging){
@@ -108,7 +107,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     
     boolean wronglyTaggedRole = false;
     if(member.getType() == EntityType.Node) {
-      OsmNode osmNode = getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNode(member.getId());
+      OsmNode osmNode = getZoningReaderData().getOsmConverterData().getOsmNodeData().getRegisteredOsmNode(member.getId());
       if(osmNode == null) {
         /* node not available, likely outside bounding box, since unknown we cannot claim it is wrongly tagged */
         return false;
@@ -139,7 +138,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     boolean suppressLogging = getSettings().isSuppressOsmRelationStopAreaLogging(osmRelation.getId());
 
     if(member.getType()==EntityType.Node &&
-        getZoningReaderData().getOsmData().getUnprocessedFerryTerminal(member.getType(), member.getId())!=null){
+        getZoningReaderData().getOsmConverterData().getUnprocessedFerryTerminal(member.getType(), member.getId())!=null){
       /* while somehow wrongly tagged as a PTV2 entity, the indication it is a ferry terminal, might indicate it
       indeed is a stop (position) hence, still consider as a stop role and do not flag to be removed */
       return false;
@@ -147,7 +146,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
     /* station? -> then tag the groups name while retaining it for post-processing */
     Pair<OsmPtVersionScheme, OsmEntity> unprocessedStationPair =
-        getZoningReaderData().getOsmData().getUnprocessedStation(member.getType(), member.getId());
+        getZoningReaderData().getOsmConverterData().getUnprocessedStation(member.getType(), member.getId());
     if(unprocessedStationPair != null) {
       /* station -> update name and indicate salvaged as it will be processed as a separate station and then
       potentially be re-attached*/
@@ -159,7 +158,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
 
     /* platform? --> then we should already have a transfer zone for it*/
-    if(getZoningReaderData().getPlanitData().getTransferZoneByOsmId(member.getType(), member.getId())!=null) {
+    if(getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(member.getType(), member.getId())!=null) {
       if(!suppressLogging) {
         LOGGER.info(String.format("SALVAGED: stop_area %s member %d incorrectly given stop role...identified as " +
             "platform", transferZoneGroup.getExternalId(), member.getId()));
@@ -368,13 +367,13 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* on each transfer zone on the group (we must use relation because not all transfer zones might be registered on the group yet */
     for(int index=0;index<osmRelation.getNumberOfMembers();++index) {
       OsmRelationMember transferZoneMember = osmRelation.getMember(index);
-      TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(transferZoneMember.getType(), osmStation.getId());
+      TransferZone transferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(transferZoneMember.getType(), osmStation.getId());
       if(transferZone!=null) {
         PlanitTransferZoneUtils.updateTransferZoneOverArchingNameIfAbsent(transferZone, tags);
       }
     }
     OsmPtVersionScheme ptVersion = isActivatedPublicTransportInfrastructure(tags);
-    getZoningReaderData().getOsmData().removeUnproccessedStation(ptVersion, osmStation);    
+    getZoningReaderData().getOsmConverterData().removeUnproccessedStation(ptVersion, osmStation);
     getProfiler().incrementOsmTagCounter(ptVersion, OsmPtv1Tags.STATION);    
   }
   
@@ -398,7 +397,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
      *  - (processed)   platforms (as transfer zones) -> register transfer zone on group */
           
     /* station */
-    Pair<OsmPtVersionScheme, OsmEntity> osmWayPair = getZoningReaderData().getOsmData().getUnprocessedStation(EntityType.Way, osmWayMember.getId());                  
+    Pair<OsmPtVersionScheme, OsmEntity> osmWayPair = getZoningReaderData().getOsmConverterData().getUnprocessedStation(EntityType.Way, osmWayMember.getId());
     if(osmWayPair != null) {
       processPtv2StopAreaMemberStation(transferZoneGroup, osmRelation, osmWayPair.second());
       unidentified = false;        
@@ -406,7 +405,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     
     /* platform */
     if(unidentified) {
-      TransferZone transferZone = getZoningReaderData().getPlanitData().getTransferZoneByOsmId(EntityType.Way, osmWayMember.getId());
+      TransferZone transferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(EntityType.Way, osmWayMember.getId());
       if(transferZone != null) { 
         /* process as platform */
         registerPtv2StopAreaPlatformOnGroup(transferZoneGroup, osmRelation, osmWayMember, suppressLogging);
@@ -432,7 +431,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(member.getType() == EntityType.Node) {
             
       /* collect OSM node */
-      OsmNode osmNode = getZoningReaderData().getOsmData().getOsmNodeData().getRegisteredOsmNode(member.getId());
+      OsmNode osmNode = getZoningReaderData().getOsmConverterData().getOsmNodeData().getRegisteredOsmNode(member.getId());
       if(osmNode == null) {
         if(!getSettings().hasBoundingBoundary() && !suppressLogging) {
           LOGGER.warning(String.format(
@@ -472,7 +471,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     if(hasNetworkLayersWithActiveOsmNode(osmNode.getId())){
       /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer
       zone and connectoids for it */
-      readerData.getOsmData().addUnprocessedStopPosition(osmNode);
+      readerData.getOsmConverterData().addUnprocessedStopPosition(osmNode);
       return !DISCARD; // not discarded
     }    
     
@@ -500,7 +499,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     /* ensure nearby mode compatible links exist to match the potentially salvaged Ptv1 entry to spatially */
     Envelope searchBoundingBox = OsmBoundingAreaUtils.createBoundingBox(osmNode, searchRadius, getGeoUtils());
     Map<MacroscopicNetworkLayer, Collection<MacroscopicLink>> spatiallyMatchedLinks =
-        readerData.getPlanitData().findLinksSpatially(searchBoundingBox);
+        readerData.getPlanitConverterData().findLinksSpatially(searchBoundingBox);
     spatiallyMatchedLinks = getPtModeHelper().filterModeCompatibleLinks(
         getNetworkToZoningData().getNetworkSettings().getMappedOsmModes(planitModeTypes), spatiallyMatchedLinks, false /*only exact matches allowed */);
 
@@ -564,11 +563,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* stop positions relates to connectoids that provide access to transfer zones. The transfer zones are based
       on platforms, but these are processed separately. So, postpone parsing of all Ptv2 stop positions, and
       simply track them for delayed processing after all platforms/transfer zones have been identified */
-      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
+      getZoningReaderData().getOsmConverterData().addUnprocessedStopPosition(osmNode);
     }
 
     if(discarded){
-      getZoningReaderData().getOsmData().addIgnoreStopAreaStopPosition(EntityType.Node, osmNode.getId());
+      getZoningReaderData().getOsmConverterData().addIgnoreStopAreaStopPosition(EntityType.Node, osmNode.getId());
     }
   }
 
@@ -582,7 +581,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
     /* ...otherwise stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
      * ignore them altogether. Therefore, postpone parsing them until after we have parsed the relations */
-    getZoningReaderData().getOsmData().addUnprocessedPtv2Station(osmNode);
+    getZoningReaderData().getOsmConverterData().addUnprocessedPtv2Station(osmNode);
 
   }
   
@@ -600,7 +599,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* platform is situated on (or could be attached in future) road/rail/water network.
       This may happen when it is not (only) a platform but a stop_position,
        * is dealt with by marking it as a stop position rather than a separate platform */
-      getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
+      getZoningReaderData().getOsmConverterData().addUnprocessedStopPosition(osmNode);
 
     }else {
 
@@ -705,7 +704,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         
         /* bus_stop on the road and NO Ptv2 tags (or Ptv2 tags assessed and decided they should be ignored), treat it as
          * a stop_location (connectoid) rather than a waiting area (transfer zone), mark for post_processing as such */
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition((OsmNode) osmEntity);
+        getZoningReaderData().getOsmConverterData().addUnprocessedStopPosition((OsmNode) osmEntity);
         
       }else {
         
@@ -790,7 +789,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
        * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
        * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
-      getZoningReaderData().getOsmData().addUnprocessedPtv1Station(osmWay);
+      getZoningReaderData().getOsmConverterData().addUnprocessedPtv1Station(osmWay);
       getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.STATION);
     }     
   }
@@ -818,7 +817,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it,
          * since it might have a separate waiting platform */
         getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.TRAM_STOP);
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
+        getZoningReaderData().getOsmConverterData().addUnprocessedStopPosition(osmNode);
       }
       
     }
@@ -843,7 +842,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         /* mark as stop position as it resides on infrastructure, mark for post_processing to create transfer zone and connectoids for it
          * since it might have a separate waiting platform */
         getProfiler().incrementOsmPtv1TagCounter(OsmPtv1Tags.HALT);
-        getZoningReaderData().getOsmData().addUnprocessedStopPosition(osmNode);
+        getZoningReaderData().getOsmConverterData().addUnprocessedStopPosition(osmNode);
       }      
       
     }
@@ -854,7 +853,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       /* stations of the Ptv1 variety are often part of Ptv2 stop_areas and sometimes even more than one Ptv1 station exists within the single stop_area
        * therefore, we can only distinguish between these situations after parsing the stop_area_relations. If after parsing stop_areas, stations identified here remain, i.e.,
        * are not part of a stop_area, then we can parse them as Ptv1 stations. So for now, we track them and postpone the parsing */
-      getZoningReaderData().getOsmData().addUnprocessedPtv1Station(osmNode);
+      getZoningReaderData().getOsmConverterData().addUnprocessedPtv1Station(osmNode);
     }    
   }
 
@@ -889,7 +888,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
       if(OsmPtv2Tags.STATION.equals(ptv2ValueTag)) {
         /* stations of the Ptv2 variety are sometimes part of Ptv2 stop_areas which means they represent a transfer zone group, or they are stand-alone, in which case we can
          * ignore them altogether. Therefore, postpone parsing them until after we have parsed the relations */
-        getZoningReaderData().getOsmData().addUnprocessedPtv2Station(osmWay);
+        getZoningReaderData().getOsmConverterData().addUnprocessedPtv2Station(osmWay);
       }     
       
       /* stop area */
@@ -1054,7 +1053,7 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
           if(ignoreAfterSalvage) {
             /* flag to not process as stop_position in post-processing since it is not a stop_position and invalidly tagged as such */
-            getZoningReaderData().getOsmData().addIgnoreStopAreaStopPosition(member.getType(), member.getId());
+            getZoningReaderData().getOsmConverterData().addIgnoreStopAreaStopPosition(member.getType(), member.getId());
           }
         }
       }
@@ -1092,10 +1091,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
   private void extractPtv2OuterRolePlatformRelation(
       OsmRelation osmRelation, OsmRelationMember member, Map<String, String> tags) {
     /* try if it has been parsed, not if it has no tags (likely), yes if it has PTv2 tags (unlikely for multipolygon member)) */
-    TransferZone transferZone = getZoningReaderData().getPlanitData().getIncompleteTransferZoneByOsmId(EntityType.Way, member.getId());
-    if(transferZone == null && getZoningReaderData().getOsmData().hasOuterRoleOsmWay(member.getId())) {
+    TransferZone transferZone = getZoningReaderData().getPlanitConverterData().getIncompleteTransferZoneByOsmId(EntityType.Way, member.getId());
+    if(transferZone == null && getZoningReaderData().getOsmConverterData().hasOuterRoleOsmWay(member.getId())) {
       /* collect from unprocessed ways, should be present */
-      OsmWay unprocessedWay = getZoningReaderData().getOsmData().getOuterRoleOsmWay(member.getId());
+      OsmWay unprocessedWay = getZoningReaderData().getOsmConverterData().getOuterRoleOsmWay(member.getId());
       if(unprocessedWay == null) {
         LOGGER.severe(String.format("OSM way %d referenced by Ptv2 multipolygon %d not available in parser, this should not happen, relation ignored",member.getId(),osmRelation.getId()));
         return;
@@ -1176,11 +1175,11 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
          * so we keep it. This occurs when way is part of relation (multipolygon) where its shape represents for
          * example the outline of a platform, but all pt tags reside on the relation and not on the way itself. 
          * Processing of the way is postponed until we parse relations */
-        getZoningReaderData().getOsmData().addOsmRelationOuterRoleOsmWay(osmWay);
+        getZoningReaderData().getOsmConverterData().addOsmRelationOuterRoleOsmWay(osmWay);
       }else{
         /* the osm relation's outer role multi-polygon way is marked to keep, but we now know it falls outside the
          * zoning bounding box, therefore, it can safely be removed as being flagged. It should in fact be ignored */
-        getZoningReaderData().getOsmData().removeOsmRelationOuterRoleOsmWay(osmWay.getId());
+        getZoningReaderData().getOsmConverterData().removeOsmRelationOuterRoleOsmWay(osmWay.getId());
       }
     }
   }
@@ -1215,18 +1214,14 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
    * @param transferSettings for the handler
    * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
-   * @param referenceNetwork  to use
-   * @param zoningToPopulate to populate
    * @param profiler to use
    */
   public OsmZoningMainProcessingHandler(
       final OsmPublicTransportReaderSettings transferSettings,
       final OsmZoningReaderData zoningReaderData,
       final OsmNetworkToZoningReaderData network2ZoningData,
-      final PlanitOsmNetwork referenceNetwork,
-      final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
-    super(transferSettings, zoningReaderData, network2ZoningData, referenceNetwork, zoningToPopulate, profiler);
+    super(transferSettings, zoningReaderData, network2ZoningData, profiler);
   }
   
   /**

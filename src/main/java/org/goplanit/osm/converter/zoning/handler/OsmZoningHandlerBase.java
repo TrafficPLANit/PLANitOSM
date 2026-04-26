@@ -15,10 +15,8 @@ import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.functionalinterface.TriConsumer;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
-import org.goplanit.utils.zoning.TransferZone;
 import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
 
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -39,15 +37,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   private static final Logger LOGGER = Logger.getLogger(OsmZoningHandlerBase.class.getCanonicalName());
           
   // references
-  
-  /**
-   * the zoning to populate
-   */
-  private final Zoning zoning;
 
-  /** the reference network to use */
-  private final PlanitOsmNetwork referenceNetwork;
-  
   /** the settings to adhere to regarding the parsing of PLAnit transfer infrastructure from OSM */
   private final OsmPublicTransportReaderSettings transferSettings;   
     
@@ -134,32 +124,11 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
   }
 
   protected PlanitOsmNetwork getReferenceNetwork(){
-    return referenceNetwork;
+    return (PlanitOsmNetwork) getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
   }
 
   protected OsmProjectedBoundingAreaHelper getProjectedBoundingAreaHelper(){
     return projectedBoundingAreaHelper;
-  }
-
-  /**
-   * Check if within bounding area if specified and use lenience for water based infra if so configured
-   *
-   * @param osmEntity to check
-   * @param type of entity
-   * @param tags of node
-   * @return true when eligible, false otherwise
-   */
-  protected boolean fallsWithinSpatiallyEligibleBoundingArea(
-      OsmEntity osmEntity, EntityType type, Map<String, String> tags) {
-    var nodeData = getZoningReaderData().getOsmData().getOsmNodeData();
-    boolean useWaterLeniency =
-        OsmPtv1Tags.isFerryTerminal(tags) || OsmWaterModeTags.supportsAnyPtv2WaterModeAccess(tags);
-    return (!useWaterLeniency && getProjectedBoundingAreaHelper().isPartlyOrWhollyWithinBoundaryArea(
-        osmEntity, type, nodeData, getZoningReaderData().getBoundingArea(), true)) ||
-        getProjectedBoundingAreaHelper().isNearPartlyOrWhollyWithinBoundaryArea(
-            osmEntity, type, nodeData, getZoningReaderData().getBoundingArea(),
-            getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters(),
-            true);
   }
 
   /**
@@ -170,62 +139,10 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when eligible, false otherwise
    */
   protected boolean fallsWithinSpatiallyEligibleBoundingArea(OsmNode osmNode, Map<String, String> tags) {
-    boolean useWaterLeniency =
-        OsmPtv1Tags.isFerryTerminal(tags) || OsmWaterModeTags.supportsAnyPtv2WaterModeAccess(tags);
-    return (!useWaterLeniency && getProjectedBoundingAreaHelper().isPartlyOrWhollyWithinBoundaryArea(
-        osmNode, getZoningReaderData().getBoundingArea(), true)) ||
-        getProjectedBoundingAreaHelper().isNearPartlyOrWhollyWithinBoundaryArea(
-            osmNode, getZoningReaderData().getBoundingArea(),
-            getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters(),
-            true);
+    return getProjectedBoundingAreaHelper().fallsWithinSpatiallyEligibleBoundingArea(
+        osmNode, EntityType.Node, tags, getZoningReaderData().getOsmConverterData().getOsmNodeData());
   }
 
-  /**
-   * Check if within bounding area if specified and use lenience for water based infra if so configured
-   *
-   * @param transferZone            to check
-   * @param useWaterLeniency flag to use water lenience in absence of OSM tags
-   * @return true when eligible, false otherwise
-   */
-  protected boolean fallsWithinSpatiallyEligibleBoundingArea(TransferZone transferZone, boolean useWaterLeniency) {
-    var geometry = transferZone.getGeometry(true);
-    if(!useWaterLeniency){
-      return getProjectedBoundingAreaHelper().isPartlyOrWhollyWithinBoundaryArea(
-          geometry, getZoningReaderData().getBoundingArea(), true);
-    }else{
-      if(geometry instanceof Point){
-        return getProjectedBoundingAreaHelper().isNearPartlyOrWhollyWithinBoundaryArea(
-            (Point) geometry, getZoningReaderData().getBoundingArea(),
-            getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters(),
-            true);
-      }else if(geometry instanceof LineString){
-        return getProjectedBoundingAreaHelper().isNearPartlyOrWhollyWithinBoundaryArea(
-            (LineString) geometry, getZoningReaderData().getBoundingArea(),
-            getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters(),
-            true);
-      }else{
-        LOGGER.warning("Unsupported geometry type for transfer zone found, should not happen");
-        return false;
-      }
-    }
-  }
-
-  /**
-   * Check if within bounding area if specified and use lenience for water based infra if so configured
-   *
-   * @param lineString            to check
-   * @param useWaterLeniency flag to use water lenience in absence of OSM tags
-   * @return true when eligible, false otherwise
-   */
-  protected boolean fallsWithinSpatiallyEligibleBoundingArea(LineString lineString, boolean useWaterLeniency) {
-    return (!useWaterLeniency && getProjectedBoundingAreaHelper().isPartlyOrWhollyWithinBoundaryArea(
-        lineString, getZoningReaderData().getBoundingArea(), true)) ||
-        getProjectedBoundingAreaHelper().isNearPartlyOrWhollyWithinBoundaryArea(
-            lineString, getZoningReaderData().getBoundingArea(),
-            getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters(),
-            true);
-  }
-  
   /** Skip SOM relation member when marked for exclusion in settings
    * 
    * @param member to verify
@@ -271,7 +188,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
 
     return OsmBoundingAreaUtils.isCoveredByZoningBoundingPolygon(
             osmWay,
-            zoningReaderData.getOsmData().getOsmNodeData().getRegisteredOsmNodes(),
+            zoningReaderData.getOsmConverterData().getOsmNodeData().getRegisteredOsmNodes(),
             boundingArea.getBoundingPolygon());
   }  
   
@@ -340,7 +257,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       
       /* only parse ways that are potentially used for (PT) transfers*/
       OsmPtVersionScheme ptVersion = isActivatedPublicTransportInfrastructure(tags);
-      if(ptVersion != OsmPtVersionScheme.NONE || getZoningReaderData().getOsmData().shouldOsmRelationOuterRoleOsmWayBeKept(osmWay)) {
+      if(ptVersion != OsmPtVersionScheme.NONE || getZoningReaderData().getOsmConverterData().shouldOsmRelationOuterRoleOsmWayBeKept(osmWay)) {
         
         if(skipOsmWay(osmWay)) {
           LOGGER.fine(String.format("Skipped OSM way %d, marked for exclusion", osmWay.getId()));
@@ -348,7 +265,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         }
 
         /* lastly check if OSM way is spatially eligible */
-        if(!getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
+        if(!getZoningReaderData().getOsmConverterData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
           return;
         }
         
@@ -377,7 +294,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
 
       boolean ptCompatible = isPtCompatibleRelation(osmRelation, tags);
       boolean spatialCompatible =
-          getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmRelationSpatiallyEligible(
+          getZoningReaderData().getOsmConverterData().getOsmSpatialEligibilityData().isOsmRelationSpatiallyEligible(
               osmRelation.getId());
 
       /* lastly check if spatially eligible */
@@ -434,7 +351,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         }
 
         /* verify if identified as spatially acceptable */
-        if(!getZoningReaderData().getOsmData().getOsmSpatialEligibilityData().isOsmNodeSpatiallyEligible(osmNode.getId())) {
+        if(!getZoningReaderData().getOsmConverterData().getOsmSpatialEligibilityData().isOsmNodeSpatiallyEligible(osmNode.getId())) {
           return;
         }
 
@@ -476,7 +393,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return zoning;
    */
   protected final Zoning getZoning() {
-    return this.zoning;
+    return this.getZoningReaderData().getPlanitConverterData().getReferenceZoning();
   }
   
   /** Get network to zoning data
@@ -549,7 +466,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
 
       /* mark for post_processing to create transfer zone and connectoids for it, since it might have a separate
       waiting platform/stop positions or is combined in one*/
-      getZoningReaderData().getOsmData().addUnprocessedFerryTerminal(osmEntity);
+      getZoningReaderData().getOsmConverterData().addUnprocessedFerryTerminal(osmEntity);
     }
   }
     
@@ -559,24 +476,18 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @param transferSettings for the handler
    * @param zoningReaderData gather data during parsing and utilise available data from pre-processing
    * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
-   * @param referenceNetwork to use
-   * @param zoningToPopulate to populate
    * @param profiler to keep track of created/parsed entities across zone handlers
    */
   public OsmZoningHandlerBase(
       final OsmPublicTransportReaderSettings transferSettings,
       OsmZoningReaderData zoningReaderData,
       OsmNetworkToZoningReaderData network2ZoningData,
-      final PlanitOsmNetwork referenceNetwork,
-      final Zoning zoningToPopulate,
       final OsmZoningHandlerProfiler profiler) {
 
     /* profiler */
     this.profiler = profiler;       
     
     /* references */
-    this.referenceNetwork = referenceNetwork;
-    this.zoning = zoningToPopulate;       
     this.transferSettings = transferSettings;
 
     this.zoningReaderData = zoningReaderData;
@@ -584,7 +495,8 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.of(
           getZoningReaderData().getBoundingArea(),
           network2ZoningData.getNetworkSettings().getSourceCRS(),
-          transferSettings.getCountryName());
+          transferSettings.getCountryName(),
+          getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
     }else{
       projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.empty();
     }
@@ -595,12 +507,11 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     this.geoUtils = new PlanitJtsCrsUtils(getReferenceNetwork().getCoordinateReferenceSystem());
 
     /* parser for creating PLANit transfer zones */
-    this.transferZoneHelper = new TransferZoneHelper(
-        getReferenceNetwork(), zoningToPopulate, zoningReaderData, network2ZoningData, transferSettings, profiler);
+    this.transferZoneHelper = new TransferZoneHelper(zoningReaderData, network2ZoningData, transferSettings, profiler);
     
     /* parser for creating PLANit transfer zone groups */
     this.transferZoneGroupHelper = new TransferZoneGroupHelper(
-        getReferenceNetwork(), zoningToPopulate, zoningReaderData, network2ZoningData, transferSettings, profiler);
+        zoningReaderData, network2ZoningData, transferSettings, profiler);
     
     /* parser for identifying pt PLANit modes from OSM entities */
     this.publicTransportModeHelper =
@@ -609,7 +520,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     
     /* parser for creating PLANit connectoids */
     this.connectoidHelper = new OsmTransferConnectoidHelper(
-        referenceNetwork, zoningToPopulate, zoningReaderData, network2ZoningData, transferSettings, profiler);
+        zoningReaderData, network2ZoningData, transferSettings, profiler);
   }
   
   /** Call this BEFORE we parse the OSM network to initialise the handler properly

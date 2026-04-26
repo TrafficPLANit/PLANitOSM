@@ -7,6 +7,7 @@ import org.goplanit.osm.converter.OsmSpatialEligibilityData;
 import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmPtVersionScheme;
+import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
