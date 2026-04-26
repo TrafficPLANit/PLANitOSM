@@ -91,7 +91,7 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
       // ferry only
-      readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
 
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
 
@@ -182,8 +182,8 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
 
       // tested separately in #testOsm2PlanitIntermodalNoServicesConnectFerryToLand
-      readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(false);
-      readerSettings.getPublicTransportSettings().setConnectRailBasedStopToNearbyRoadNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectRailBasedStopsToPassengerNetwork(false);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
@@ -235,8 +235,8 @@ public class SydneyOsmPlanitTest {
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
 
-      readerSettings.getPublicTransportSettings().setConnectFerryStopToNearbyLandNetwork(true);
-      readerSettings.getPublicTransportSettings().setConnectRailBasedStopToNearbyRoadNetwork(true);
+      readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(true);
+      readerSettings.getPublicTransportSettings().setConnectRailBasedStopsToPassengerNetwork(true);
 
       var writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);

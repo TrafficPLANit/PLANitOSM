@@ -97,7 +97,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * When a ferry stop is disconnected from to the land network it cannot be used for transfers, this
    * option will generate simple link connectoid based on the accessible modes of the ferry to nearby land network
    */
-  private boolean connectFerryStopToNearbyLandNetwork = DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_LAND_NETWORK;
+  private boolean connectFerryStopToNearbyLandNetwork = DEFAULT_CONNECT_FERRY_STOP_TO_PASSENGER_LAND_NETWORK;
 
   /**
    * When a ferry stop is disconnected from the land network it cannot be used for transfers, the provided distance
@@ -107,18 +107,25 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   private double  searchRadiusFerryStopToLandNetworkMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_LAND_NETWORK_M;
 
   /**
-   * When a rail based stop is disconnected from to the road network it cannot be used for transfers, this
-   * option will generate connectoids based on the accessible modes of the rail (e.g., pedestrian) to nearby
+   * When a rail based stop is disconnected from the road network it cannot be used for transfers, this
+   * option will generate connectoids based on the accessible modes of the rail (e.g., pedestrian, bicycle) to nearby
    * road network
    */
-  private boolean connectRailBasedStopToNearbyRoadNetwork = DEFAULT_CONNECT_DANGLING_RAIL_STOP_TO_ROAD_NETWORK;
+  private boolean connectRailBasedStopToPassengerNetwork = DEFAULT_CONNECT_RAIL_STOP_TO_PASSENGER_NETWORK;
+
+  /**
+   * When a bus based stop is disconnected from the road network it cannot be used for transfers, this
+   * option will generate connectoids based on the accessible modes of the bus (e.g., pedestrian) to nearby
+   * road network
+   */
+  private boolean connectBusBasedStopToPassengerNetwork = DEFAULT_CONNECT_BUS_STOP_TO_PASSENGER_NETWORK;
 
   /**
    * When a rail based stop is disconnected from the land network it cannot be used for transfers, the provided distance
    * is the maximum distance it will use when creating links based on the accessible modes of the rail
    * to nearby road network
    */
-  private double  searchRadiusRailBasedStopToNearbyRoadNetworkMeters = DEFAULT_SEARCH_RADIUS_RAIL_STOP_TO_ROAD_NETWORK_M;
+  private double searchRadiusRailBasedStopToPassengerNetworkMeters = DEFAULT_SEARCH_RADIUS_RAIL_STOP_TO_ROAD_NETWORK_M;
     
   /** by default the transfer parser is activated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
@@ -154,10 +161,13 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
 
   /** by default we connect dangling ferry stops to the nearest ferry route */
-  public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_LAND_NETWORK = true;
+  public static boolean DEFAULT_CONNECT_FERRY_STOP_TO_PASSENGER_LAND_NETWORK = true;
 
   /** by default we connect dangling rail based stops to the nearest road network link with eligible access modes */
-  public static boolean DEFAULT_CONNECT_DANGLING_RAIL_STOP_TO_ROAD_NETWORK = true;
+  public static boolean DEFAULT_CONNECT_RAIL_STOP_TO_PASSENGER_NETWORK = true;
+
+  /** by default we connect bus based stops to the nearest road network link with eligible access modes */
+  public static boolean DEFAULT_CONNECT_BUS_STOP_TO_PASSENGER_NETWORK;
 
   /**
    * default search radius in meters for mapping ferry stops to ferry routes. When found and
@@ -168,14 +178,14 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
 
   /**
    * default search radius in meters for mapping ferry stops to land network. When found and
-   * {@link #isConnectFerryStopToNearbyLandNetwork()} is true then a new connectoid to the nearest road
+   * {@link #isConnectFerryStopsToNearbyLandNetwork()} is true then a new connectoid to the nearest road
    * supporting non-ferry modes is created to avoid the ferry stop to be dangling
    */
   public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_LAND_NETWORK_M = 500;
 
   /**
    * default search radius in meters for mapping rail based stops to road network. When found and
-   * {@link #isConnectRailBasedStopToNearbyRoadNetwork()} is true then a new connectoid to the nearest road
+   * {@link #isConnectRailBasedStopsToPassengerNetwork()} is true then a new connectoid to the nearest road
    * supporting non-rail access mode is created to avoid the stop to be dangling
    */
   public static double DEFAULT_SEARCH_RADIUS_RAIL_STOP_TO_ROAD_NETWORK_M = 200;
@@ -249,17 +259,23 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
         LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to ferry route search radius",
             getFerryStopToFerryRouteSearchRadiusMeters()));
       }
-      LOGGER.info(String.format("%-60s: %s",    "Connect ferry stops to nearby land network (if eligible)",
-          isConnectFerryStopToNearbyLandNetwork()));
-      if(isConnectFerryStopToNearbyLandNetwork()) {
+      LOGGER.info(String.format("%-60s: %s",    "Connect ferry stops to nearby passenger land network (if eligible)",
+          isConnectFerryStopsToNearbyLandNetwork()));
+      if(isConnectFerryStopsToNearbyLandNetwork()) {
         LOGGER.info(String.format("%-60s: %.2fm", "Ferry stop to land network search radius",
             getFerryStopToNearbyLandNetworkSearchRadiusMeters()));
       }
-      LOGGER.info(String.format("%-60s: %s",    "Connect rail-based stops to nearby road network (if eligible)",
-              isConnectRailBasedStopToNearbyRoadNetwork()));
-      if(isConnectRailBasedStopToNearbyRoadNetwork()) {
+      LOGGER.info(String.format("%-60s: %s",    "Connect rail-based stops to nearby passenger network (if eligible)",
+              isConnectRailBasedStopsToPassengerNetwork()));
+      if(isConnectRailBasedStopsToPassengerNetwork()) {
         LOGGER.info(String.format("%-60s: %.2fm", "Rail-based stop to road network search radius",
-                getRailBasedStopToNearbyRoadNetworkSearchRadiusMeters()));
+                getRailBasedStopToPassengerNetworkSearchRadiusMeters()));
+      }
+      LOGGER.info(String.format("%-60s: %s",    "Connect bus-based stops to nearby passenger network (if eligible)",
+          isConnectBusBasedStopsToPassengerNetwork()));
+      if(isConnectRailBasedStopsToPassengerNetwork()) {
+        LOGGER.info(String.format("%-60s: %.2fm", "bus-based stop to passenger network search radius is",
+            getStopToWaitingAreaSearchRadiusMeters())); // sync to standard search
       }
     }
   }
@@ -640,7 +656,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * flag for connecting ferry stops to nearby land network if not already connected
    * @return true when active, false otherwise
    */
-  public boolean isConnectFerryStopToNearbyLandNetwork() {
+  public boolean isConnectFerryStopsToNearbyLandNetwork() {
     return connectFerryStopToNearbyLandNetwork;
   }
 
@@ -648,7 +664,7 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    *
    * @param connectFerryStopToNearbyLandNetwork when true do this, when false do not
    */
-  public void setConnectFerryStopToNearbyLandNetwork(boolean connectFerryStopToNearbyLandNetwork) {
+  public void setConnectFerryStopsToNearbyLandNetwork(boolean connectFerryStopToNearbyLandNetwork) {
     this.connectFerryStopToNearbyLandNetwork = connectFerryStopToNearbyLandNetwork;
   }
 
@@ -664,36 +680,52 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * flag for connecting rail based stops to nearby road network if not already connected
    * @return true when active, false otherwise
    */
-  public boolean isConnectRailBasedStopToNearbyRoadNetwork() {
-    return connectRailBasedStopToNearbyRoadNetwork;
+  public boolean isConnectRailBasedStopsToPassengerNetwork() {
+    return connectRailBasedStopToPassengerNetwork;
   }
 
   /** Decide whether to connect ferry stops to nearby land network if not already connected
    *
-   * @param connectRailBasedStopToNearbyRoadNetwork when true do this, when false do not
+   * @param connectRailBasedStopToPassengerNetwork when true do this, when false do not
    */
-  public void setConnectRailBasedStopToNearbyRoadNetwork(boolean connectRailBasedStopToNearbyRoadNetwork) {
-    this.connectRailBasedStopToNearbyRoadNetwork = connectRailBasedStopToNearbyRoadNetwork;
+  public void setConnectRailBasedStopsToPassengerNetwork(boolean connectRailBasedStopToPassengerNetwork) {
+    this.connectRailBasedStopToPassengerNetwork = connectRailBasedStopToPassengerNetwork;
   }
 
   /**
    * Access to search radius for rail based stop to road network
    * @return search radius
    */
-  public double getRailBasedStopToNearbyRoadNetworkSearchRadiusMeters() {
-    return searchRadiusRailBasedStopToNearbyRoadNetworkMeters;
+  public double getRailBasedStopToPassengerNetworkSearchRadiusMeters() {
+    return searchRadiusRailBasedStopToPassengerNetworkMeters;
   }
 
   /**
    * Set  search radius for ferry stop to land network
    * @param searchRadiusFerryStopToLandNetworkMeters  search radius
    */
-  public void setFerryStopToNearbyLandNetworkSearchRadiusMeters(Number searchRadiusFerryStopToLandNetworkMeters) {
+  public void setFerryStopToLandNetworkSearchRadiusMeters(Number searchRadiusFerryStopToLandNetworkMeters) {
     if(searchRadiusFerryStopToLandNetworkMeters == null){
       LOGGER.severe("Unable to set ferry stop to land network search radius as parameter is null");
       return;
     }
     this.searchRadiusFerryStopToLandNetworkMeters = searchRadiusFerryStopToLandNetworkMeters.doubleValue();
+  }
+
+  /**
+   * flag for connecting bus based stops to nearby passenger network if not already connected
+   * @return true when active, false otherwise
+   */
+  public boolean isConnectBusBasedStopsToPassengerNetwork() {
+    return connectBusBasedStopToPassengerNetwork;
+  }
+
+  /** Decide whether to connect bus based stops to nearby road network if not already connected for access egress modes
+   *
+   * @param connectBusBasedStopToPassengerNetwork when true do this, when false do not
+   */
+  public void setConnectBusBasedStopsToPassengerNetwork(boolean connectBusBasedStopToPassengerNetwork) {
+    this.connectBusBasedStopToPassengerNetwork = connectBusBasedStopToPassengerNetwork;
   }
 
 

@@ -16,7 +16,6 @@ import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderOsmData;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -36,7 +35,6 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.*;
-import org.goplanit.zoning.Zoning;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -1736,21 +1734,26 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                 "layer!");
       }
 
+      // inject access/egress connectoids for all transfer zones and their eligible access/egress modes when configured
+      // to be included
       boolean connectedAccessEgressFerries =
-          getSettings().isConnectFerryStopToNearbyLandNetwork() &&
+          getSettings().isConnectFerryStopsToNearbyLandNetwork() &&
           getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive();
       boolean connectedAccessEgressRailBased =
-          getSettings().isConnectRailBasedStopToNearbyRoadNetwork() &&
+          getSettings().isConnectRailBasedStopsToPassengerNetwork() &&
               getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isRailwayParserActive();
       boolean connectedAccessEgressRoadBased =
-          getSettings().isConnectBusBasedStopToNearbyRoadNetwork() &&
+          getSettings().isConnectBusBasedStopsToPassengerNetwork() &&
               getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isHighwayParserActive();
 
       var accessEgressExecutor = new OsmZoningInjectAccessEgressExecutor(
           getProjectedBoundingAreaHelper(),
           getZoningReaderData().getPlanitConverterData());
       accessEgressExecutor.execute(
-          connectedAccessEgressFerries, connectedAccessEgressRailBased, connectedAccessEgressRoadBased);
+          connectedAccessEgressFerries,
+          connectedAccessEgressRailBased,
+          connectedAccessEgressRoadBased,
+          getSettings());
 
     }catch(PlanItException e) {
       LOGGER.severe(e.getMessage());

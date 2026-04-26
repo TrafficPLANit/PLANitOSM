@@ -334,7 +334,12 @@ public class OsmZoningInjectAccessEgressExecutor {
         numSuccess, (double)numSuccess*100/railBasedTransferZonesDisconnectedFromActiveModesNetwork.size()));
   }
 
-  private void connectBusStopsToPedestrianNetwork() {
+  /**
+   * Connect all bus stops to nearby network supporting pedestrian access/egress if not already present
+   *
+   * @param busBasedStopToNearbyRoadNetworkSearchRadiusMeters max search radius acceptable between stop and road network
+   */
+  private void connectBusStopsToPedestrianNetwork(double busBasedStopToNearbyRoadNetworkSearchRadiusMeters) {
     //todo
   }
 
@@ -352,6 +357,10 @@ public class OsmZoningInjectAccessEgressExecutor {
 
   /**
    * Execute
+   *
+   * @param connectWaterBased connect ferries to access/egress modes listed on each ferry stop
+   * @param connectedRailBased connect rail stops to active access/egress modes (pedestrian/bicycle)
+   * @param connectRoadBased connect bus stops to access/egress modes (pedestrian)
    */
   public void execute(
       boolean connectWaterBased,
@@ -366,12 +375,12 @@ public class OsmZoningInjectAccessEgressExecutor {
 
     // if configured connect all rail stops to active mode (pedestrian, bicycle) network
     if(connectedRailBased) {
-      connectRailBasedStopsToActiveModeNetwork(ptSettings.getRailBasedStopToNearbyRoadNetworkSearchRadiusMeters());
+      connectRailBasedStopsToActiveModeNetwork(ptSettings.getRailBasedStopToPassengerNetworkSearchRadiusMeters());
     }
 
     // if configured connect all bus stops to pedestrian network
     if(connectRoadBased) {
-      connectBusStopsToPedestrianNetwork();
+      connectBusStopsToPedestrianNetwork(ptSettings.getStopToWaitingAreaSearchRadiusMeters());
     }
 
   }
