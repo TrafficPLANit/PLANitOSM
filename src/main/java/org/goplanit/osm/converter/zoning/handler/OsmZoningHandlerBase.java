@@ -489,6 +489,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     
     /* references */
     this.transferSettings = transferSettings;
+    this.network2ZoningData = network2ZoningData;
 
     this.zoningReaderData = zoningReaderData;
     if(getZoningReaderData().hasBoundingArea()){
@@ -501,8 +502,6 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
       projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.empty();
     }
 
-    this.network2ZoningData = network2ZoningData;
-    
     /* gis initialisation */
     this.geoUtils = new PlanitJtsCrsUtils(getReferenceNetwork().getCoordinateReferenceSystem());
 
