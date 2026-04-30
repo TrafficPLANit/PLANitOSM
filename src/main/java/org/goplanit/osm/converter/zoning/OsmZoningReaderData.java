@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.zoning;
 
 import java.util.logging.Logger;
 
+import org.goplanit.converter.zoning.AccessEgressInjectionSettings;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.locale.CountryNames;
@@ -114,4 +115,13 @@ public class OsmZoningReaderData {
     return getBoundingArea() != null;
   }
 
+  /** ugly way to get to internal settings based on OSMPtSettings
+   *
+   * @param ptSettings to get access to
+   * @return access to internal accessEgressSettings
+   */
+  public static AccessEgressInjectionSettings getAccessEgressInjectionSettingsFrom(
+      OsmPublicTransportReaderSettings ptSettings) {
+    return ptSettings.accessEgressInjectionSettings;
+  }
 }

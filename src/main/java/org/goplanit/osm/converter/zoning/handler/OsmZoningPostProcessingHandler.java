@@ -1734,28 +1734,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
                 "layer!");
       }
 
-      // inject access/egress connectoids for all transfer zones and their eligible access/egress modes when configured
-      // to be included
-      boolean connectedAccessEgressFerries =
-          getSettings().isConnectFerryStopsToNearbyLandNetwork() &&
-          getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isWaterwayParserActive();
-      boolean connectedAccessEgressRailBased =
-          getSettings().isConnectRailBasedStopsToPassengerNetwork() &&
-              getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isRailwayParserActive();
-      boolean connectedAccessEgressRoadBased =
-          getSettings().isConnectBusBasedStopsToPassengerNetwork() &&
-              getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isHighwayParserActive();
-
+      // add access/egress access to the pt modes via dedicated general executor provided by PLANit core
       var accessEgressExecutor = new TransferZoningInjectAccessEgressExecutor(
           getProjectedBoundingAreaHelper(),
           getZoningReaderData().getPlanitConverterData());
-      accessEgressExecutor.execute(
-          connectedAccessEgressFerries,
-          connectedAccessEgressRailBased,
-          connectedAccessEgressRoadBased,
-          getSettings().getFerryStopToNearbyLandNetworkSearchRadiusMeters(),
-          getSettings().getRailBasedStopToPassengerNetworkSearchRadiusMeters(),
-          getSettings().getStopToWaitingAreaSearchRadiusMeters());
+      accessEgressExecutor.execute(OsmZoningReaderData.getAccessEgressInjectionSettingsFrom(getSettings()));
 
     }catch(PlanItException e) {
       LOGGER.severe(e.getMessage());
