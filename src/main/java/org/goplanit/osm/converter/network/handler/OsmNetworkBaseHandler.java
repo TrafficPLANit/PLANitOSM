@@ -57,14 +57,18 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
 
     if(getNetworkData().hasBoundingArea()){
       projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.of(
-          getNetworkData().getBoundingArea(), settings.getSourceCRS(), settings.getCountryName());
+          getNetworkData().getBoundingArea(),
+          settings.getSourceCRS(),
+          settings.getCountryName(),
+          settings.getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
     }else{
       projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.empty();
     }
   }
 
-  /** verify if tags represent a highway or railway that is specifically aimed at road based or rail based infrastructure, e.g.,
-   * asphalt or tracks and NOT an area, platform, stops, etc. and is also activated for parsing based on the settings
+  /** verify if tags represent a highway or railway that is specifically aimed at road-based or rail based
+   * infrastructure, e.g., asphalt or tracks and NOT an area, platform, stops, etc. and is also activated
+   * for parsing based on the settings
    * 
    * @param tags to verify
    * @return true when activated and highway or railway (not an area), false otherwise

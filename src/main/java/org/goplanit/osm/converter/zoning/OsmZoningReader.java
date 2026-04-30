@@ -138,18 +138,19 @@ public class OsmZoningReader implements ZoningReader {
     }
     
     /* make country name available in zoning reader data during parsing */
-    this.zoningReaderData = new OsmZoningReaderData(getReferenceNetwork(), getSettings().getCountryName());
+    this.zoningReaderData = new OsmZoningReaderData(getReferenceNetwork(), zoning, getSettings().getCountryName());
     /* spatially index all links to register on data trackers for use in handlers */
     zoningReaderData.getPlanitConverterData().recreateSpatiallyIndexedLinks();
     
-    /* make sure that if a network bounding boundary has been set, the zoning bounding area is synced when relevant and validated
-    * it is not inconsistent */
+    /* make sure that if a network bounding boundary has been set, the zoning bounding area is synced when relevant
+    and validated it is not inconsistent */
     syncAndValidateZoningBoundingArea(boundaryManager);
   }
 
-  /** it is possible some preregistered OSM nodes part of ways are not available, for example when the way crosses the bounding box and
-   * is only partly present. In those cases we want to prune those nodes from the pre-registered nodes to avoid issues later on where
-   * the index exists, but not the actual value. this method is to be called after the processing of all OSM nodes but before we do OSM ways
+  /** it is possible some preregistered OSM nodes part of ways are not available, for example when the way crosses
+   *  the bounding box and is only partly present. In those cases we want to prune those nodes from the pre-registered
+   *  nodes to avoid issues later on where the index exists, but not the actual value. This method is to be
+   *  called after the processing of all OSM nodes but before we do OSM ways
    */
   private void pruneUnavailablePreregisteredOsmNodes() {
     this.zoningReaderData.getOsmConverterData().getOsmNodeData().removeRegisteredOsmNodesIf(e -> e.getValue()==null);
@@ -167,11 +168,14 @@ public class OsmZoningReader implements ZoningReader {
     // STAGE 4: PROCESS RELATIONS WITH MEMBERS THAT NEED TRACKING
     {
       /* identify all relations that represent a (single) platform either as a single polygon, or multi-polygon
-       * and mark their ways to be kept, which then in the next pass ensures these ways' nodes are pre-registered to be kept as well */
+       * and mark their ways to be kept, which then in the next pass ensures these ways' nodes are pre-registered
+       * to be kept as well */
       createPreProcessingHandlerAndRead(Stage.ONE_IDENTIFY_ZONING_RELATION_MEMBERS, profiler);
       LOGGER.info("Pre-processing: Identifying eligible public transport infrastructure compatible relations");
       if (zoningReaderData.getOsmConverterData().hasOsmRelationOuterRoleOsmWays()) {
-        LOGGER.info(String.format("Pre-processing: Identified %d OSM ways that are outer roles of osm relations and eligible to be converted to platforms", zoningReaderData.getOsmConverterData().getNumberOfOuterRoleOsmWays()));
+        LOGGER.info(String.format("Pre-processing: Identified %d OSM ways that are outer roles of osm relations " +
+            "and eligible to be converted to platforms",
+            zoningReaderData.getOsmConverterData().getNumberOfOuterRoleOsmWays()));
       }
     }
 
@@ -183,7 +187,8 @@ public class OsmZoningReader implements ZoningReader {
 
     // STAGE 5: FINALISE REGISTRATION OF IDENTIFIED NODES AND WAYS
     {
-      LOGGER.info("Pre-processing: registering eligible OSM nodes of identified OSM ways for public transport processing");
+      LOGGER.info("Pre-processing: registering eligible OSM nodes of identified OSM ways for public " +
+          "transport processing");
       createPreProcessingHandlerAndRead(Stage.THREE_REGISTER_ZONING_NODES_AND_WAYS, profiler);
     }
 
@@ -208,30 +213,40 @@ public class OsmZoningReader implements ZoningReader {
       /* STAGE 1 - BOUNDARY IDENTIFICATION */
       {
         LOGGER.info(String.format(
-            "Boundary identification: Identifying zoning bounding boundary for %s", getSettings().getBoundingArea().getBoundaryName()));
+            "Boundary identification: Identifying zoning bounding boundary for %s",
+            getSettings().getBoundingArea().getBoundaryName()));
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
-            getSettings().getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME, boundaryManager);
+            getSettings().getInputSource(),
+            OsmBoundingBoundaryPreProcessingHandler.Stage.ONE_IDENTIFY_BOUNDARY_BY_NAME,
+            boundaryManager);
       }
 
       /* STAGE 2 - REGULAR PREPROCESSING */
       {
         LOGGER.info("Boundary identification: Locating OSM ways part of zoning bounding boundary");
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
-            getSettings().getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY, boundaryManager);
+            getSettings().getInputSource(),
+            OsmBoundingBoundaryPreProcessingHandler.Stage.TWO_IDENTIFY_WAYS_FOR_BOUNDARY,
+            boundaryManager);
       }
 
       /* STAGE 3 - FINALISE BOUNDING BOUNDARY */
       {
-        LOGGER.info("Preprocessing: Finalising network bounding boundary, constructing polygon from OSM ways' OSM nodes");
+        LOGGER.info("Preprocessing: Finalising network bounding boundary, " +
+            "constructing polygon from OSM ways' OSM nodes");
         OsmBoundingBoundaryPreProcessingHandler.createHandlerAndRead(
-            getSettings().getInputSource(), OsmBoundingBoundaryPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME, boundaryManager);
+            getSettings().getInputSource(),
+            OsmBoundingBoundaryPreProcessingHandler.Stage.THREE_FINALISE_BOUNDARY_BY_NAME,
+            boundaryManager);
       }
     }else{
-      LOGGER.info("Skip pre-processing boundary identification stages, zoning bounding boundary directly defined");
+      LOGGER.info("Skip pre-processing boundary identification stages," +
+          " zoning bounding boundary directly defined");
     }
 
     if(boundaryManager.isConfigured() && !boundaryManager.isComplete()){
-      LOGGER.severe("User configured bounding area, but no valid boundary could be constructed during pre-processing, this shouldn't happen");
+      LOGGER.severe("User configured bounding area, but no valid boundary could be constructed " +
+          "during pre-processing, this shouldn't happen");
       return;
     }
 
@@ -376,15 +391,22 @@ public class OsmZoningReader implements ZoningReader {
    */
   @Override
   public Zoning read() {
-    PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()), "Country not set for OSM zoning reader, unable to proceed");
-    PlanItRunTimeException.throwIfNull(getSettings().getInputSource(), "Input source not set for OSM zoning reader, unable to proceed");
-    PlanItRunTimeException.throwIfNull(getReferenceNetwork(),"Reference network not available when parsing OSM zoning, unable to proceed");
-    PlanItRunTimeException.throwIfNull(getReferenceNetwork().isEmpty(),"Reference network empty, unable to attach OSM zoning results");
-    PlanItRunTimeException.throwIfNull(network2ZoningData,"Reference network data (network to zoning data) not available when parsing OSM zoning, unable to proceed until provided via zoning settings");
+    PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),
+        "Country not set for OSM zoning reader, unable to proceed");
+    PlanItRunTimeException.throwIfNull(getSettings().getInputSource(),
+        "Input source not set for OSM zoning reader, unable to proceed");
+    PlanItRunTimeException.throwIfNull(getReferenceNetwork(),
+        "Reference network not available when parsing OSM zoning, unable to proceed");
+    PlanItRunTimeException.throwIfNull(getReferenceNetwork().isEmpty(),
+        "Reference network empty, unable to attach OSM zoning results");
+    PlanItRunTimeException.throwIfNull(network2ZoningData,
+        "Reference network data (network to zoning data) not available when parsing OSM zoning," +
+            " unable to proceed until provided via zoning settings");
 
     var userConfiguredBoundingArea = getSettings().getBoundingArea();
     if(userConfiguredBoundingArea == null && network2ZoningData.getNetworkBoundingBoundary() != null){
-      LOGGER.warning("Network is based on bounding area, but zoning is not, adopting network bounding area to match");
+      LOGGER.warning("Network is based on bounding area, " +
+          "but zoning is not, adopting network bounding area to match");
       userConfiguredBoundingArea = network2ZoningData.getNetworkBoundingBoundary();
     }
     var boundaryManager = new OsmBoundaryManager(userConfiguredBoundingArea);
