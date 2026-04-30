@@ -157,17 +157,17 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
 
-  /** by default we connect dangling ferry stops to the nearest ferry route */
+  /** by default, we connect dangling ferry stops to the nearest ferry route */
   public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
 
-  /** by default we connect dangling ferry stops to the nearest ferry route */
+  /** by default, we connect dangling ferry stops to the nearest ferry route */
   public static boolean DEFAULT_CONNECT_FERRY_STOP_TO_PASSENGER_LAND_NETWORK = true;
 
-  /** by default we connect dangling rail based stops to the nearest road network link with eligible access modes */
+  /** by default, we connect dangling rail based stops to the nearest road network link with eligible access modes */
   public static boolean DEFAULT_CONNECT_RAIL_STOP_TO_PASSENGER_NETWORK = true;
 
-  /** by default we connect bus based stops to the nearest road network link with eligible access modes */
-  public static boolean DEFAULT_CONNECT_BUS_STOP_TO_PASSENGER_NETWORK;
+  /** by default, we connect bus based stops to the nearest road network link with eligible access modes */
+  public static boolean DEFAULT_CONNECT_BUS_STOP_TO_PASSENGER_NETWORK = true;
 
   /**
    * default search radius in meters for mapping ferry stops to ferry routes. When found and

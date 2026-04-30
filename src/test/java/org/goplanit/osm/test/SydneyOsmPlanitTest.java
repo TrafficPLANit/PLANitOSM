@@ -69,14 +69,16 @@ public class SydneyOsmPlanitTest {
   }
 
   /**
-   * Test case which parses an OSM file, loads it into PLANit memory model and persists only the ferry network and stops as
-   * a PLANit network/zoning result
+   * Test case which parses an OSM file, loads it into PLANit memory model and persists only the ferry network
+   * and stops as a PLANit network/zoning result
    */
   @Test
   public void testOsm2PlanitFerryNetwork() {
 
-    final Path PLANIT_OUTPUT_DIR =  Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_ferry");
-    final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_ferry");
+    final Path PLANIT_OUTPUT_DIR =
+        Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_ferry");
+    final Path PLANIT_REF_DIR =
+        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_ferry");
 
     try {
 
@@ -181,9 +183,10 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().getRailwaySettings().activateParser(true);
       readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
 
-      // tested separately in #testOsm2PlanitIntermodalNoServicesConnectFerryToLand
+      // tested separately in #testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
       readerSettings.getPublicTransportSettings().setConnectRailBasedStopsToPassengerNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectBusBasedStopsToPassengerNetwork(false);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
@@ -211,18 +214,17 @@ public class SydneyOsmPlanitTest {
    * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
    * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
    * <p>
-   * In addition, we explicitly create mode compatible connectoids to the (road) network for ferry and rail stops
-   * that otherwise would only connect to the water/rail network but not the road network due to incomplete or
-   * incompatible OSM tagging for such transfers.
+   * In addition, we explicitly create mode compatible connectoids to their access/egress modes
+   * for ferry, rail, and bus stops
    * </p>
    */
   @Test
-  public void testOsm2PlanitIntermodalNoServicesConnectFerryAndRailToRestOfNetwork() {
+  public void testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus() {
 
-    final Path PLANIT_OUTPUT_DIR =
-        Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services_ferry_rail_attach");
+    final Path PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney",
+            "osm_intermodal_no_services_access_egress_attach");
     final Path PLANIT_REF_DIR =
-        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services_ferry_rail_attach");
+        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services_access_egress_attach");
     try {
 
       var readerSettings =
@@ -237,6 +239,7 @@ public class SydneyOsmPlanitTest {
 
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(true);
       readerSettings.getPublicTransportSettings().setConnectRailBasedStopsToPassengerNetwork(true);
+      readerSettings.getPublicTransportSettings().setConnectBusBasedStopsToPassengerNetwork(true);
 
       var writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
@@ -261,7 +264,7 @@ public class SydneyOsmPlanitTest {
     } catch (final Exception e) {
       e.printStackTrace();
       LOGGER.severe( e.getMessage());
-      fail("testOsm2PlanitIntermodalNoServicesConnectFerryAndRailToRestOfNetwork");
+      fail("testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus");
     }
   }
 

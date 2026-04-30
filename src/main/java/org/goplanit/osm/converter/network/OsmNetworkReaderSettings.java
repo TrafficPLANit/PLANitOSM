@@ -20,6 +20,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.goplanit.converter.utils.ProjectedBoundingAreaHelper.DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
+
 /**
  * All general settings (and sub-settings classes) for the OSM reader pertaining to parsing  network infrastructure.
  * contains additional settings for highway and railway (e.g., highway settings and railway settings members,
@@ -103,9 +105,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
    * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
-   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within the specified
-   * distance outside the bounding polygon and still be included. */
-  private double maximumDistanceFerryOutsideBoundingPolygonInMeters = DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
+   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
+   * the specified distance outside the bounding polygon and still be included. */
+  private double maximumDistanceFerryOutsideBoundingPolygonInMeters =
+      DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
       
   /**
    * Conduct general initialisation for any instance of this class
@@ -132,7 +135,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** Default whether we are removing dangling subnetworks after parsing: true */
   public static boolean DEFAULT_REMOVE_DANGLING_SUBNETWORK = true;
   
-  /** Default minimum size of subnetwork for it not to be removed when dangling subnetworks are removed, size indicates number of vertices: 20 */
+  /** Default minimum size of subnetwork for it not to be removed when dangling subnetworks are removed,
+   * size indicates number of vertices: 20 */
   public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE= 20;  
   
   /** by default we always keep the largest subnetwork */
@@ -141,12 +145,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
   public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
 
-  /** default distance outside a bounding polygon for which we still include ferry routes */
-  public static double DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M = 2_000;
-
   /**
-   * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings. This is especially relevant for
-   * speed limits and mdoe access restrictions (unless manually adjusted by the user)
+   * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings.
+   * This is especially relevant for speed limits and mode access restrictions (unless manually adjusted by the user)
    *
    */
   public OsmNetworkReaderSettings() {
@@ -157,7 +158,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * Constructor with country to base (i) default speed limits and (ii) mode access on, 
    * for various OSM highway types in case maximum speed limit information is missing
    * 
-   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   * @param countryName the full country name to use speed limit data for, see also the
+   *                    OsmSpeedLimitDefaultsByCountry class
    */
   public OsmNetworkReaderSettings(String countryName) {
     this((URL) null, countryName);
@@ -168,7 +170,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * for various OSM highway types in case maximum speed limit information is missing
    *
    * @param inputSource to use, expected local file location
-   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   * @param countryName the full country name to use speed limit data for, see also
+   *                    the OsmSpeedLimitDefaultsByCountry class
    */
   public OsmNetworkReaderSettings(String inputSource, String countryName) {
     this(UrlUtils.createFromLocalAbsoluteOrRelativePath(Path.of(inputSource)), countryName);
@@ -179,7 +182,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * for various OSM highway types in case maximum speed limit information is missing
    * 
    * @param inputSource to use
-   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   * @param countryName the full country name to use speed limit data for, see also
+   *                    the OsmSpeedLimitDefaultsByCountry class
    */
   public OsmNetworkReaderSettings(URL inputSource, String countryName) {
     super(inputSource, countryName);
@@ -224,7 +228,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
       LOGGER.info(String.format("%-40s %s","Network bounding boundary", StringUtils.truncateToWithMessage(
           getBoundingArea().toString(),500)));
     }
-    LOGGER.info(String.format("%-40s: %s","Consolidating functionally equivalent OSM link types", isConsolidateLinkSegmentTypes()));
+    LOGGER.info(String.format("%-40s: %s","Consolidating functionally equivalent OSM link types",
+        isConsolidateLinkSegmentTypes()));
     LOGGER.info(String.format("%-40s: %s","Always keep largest parsed sub-network", isAlwaysKeepLargestSubnetwork()));
 
     getHighwaySettings().logSettings();
@@ -302,9 +307,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
     
   /**
-   * explicitly exclude all osmWay types that are included but have no more activated modes due to deactivation of their default assigned modes.
-   * Doing so avoids the reader to log warnings that supported way types cannot be injected in the network because they
-   * have no viable modes attached
+   * explicitly exclude all osmWay types that are included but have no more activated modes due to
+   * deactivation of their default assigned modes. Doing so avoids the reader to log warnings that supported
+   * way types cannot be injected in the network because they have no viable modes attached
    * 
    * :TODO move somewhere else, not used from perspective of user
    */
@@ -332,7 +337,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }  
        
   
-  /** collect the current configuration setup for applying number of lanes in case the lanes tag is not available on the parsed osmway
+  /** collect the current configuration setup for applying number of lanes in case the lanes tag is not
+   * available on the parsed osmway
    * @return lane configuration containing all defaults for various osm highway types
    */
   public OsmLaneDefaults getLaneConfiguration() {
@@ -438,7 +444,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     Stream<PredefinedModeType> waterwayModes =
         isWaterwayParserActive() ? getWaterwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
 
-    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(Collectors.toCollection(TreeSet::new));
+    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(
+        Collectors.toCollection(TreeSet::new));
   }
 
   /**
@@ -452,7 +459,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
             m -> m.equals(PredefinedModeType.BICYCLE) || m.equals(PredefinedModeType.PEDESTRIAN));
   }
     
-  /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e., if it is actively included when reading the network
+  /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e.,
+   * if it is actively included when reading the network
    * @param osmMode to verify
    * @return true if mapped, false otherwise
    */
@@ -497,7 +505,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return false;
   }  
 
-  /** the minimum size an identified dangling network must have for it to NOT be removed when dangling networks are removed
+  /** the minimum size an identified dangling network must have for it to NOT be removed when dangling
+   * networks are removed
    * 
    * @param discardBelow this number of vertices
    */
@@ -513,7 +522,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     this.discardSubNetworkAboveSize = discardAbove;
   }  
   
-  /** collect the size above which dangling networks are kept even if they are smaller than the largest connected network
+  /** collect the size above which dangling networks are kept even if they are smaller than the largest
+   * connected network
    * @return dangling network size
    */
   public Integer getDiscardDanglingNetworkBelowSize() {
@@ -570,7 +580,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
    * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
-   * across both railways and highways. If you want to do this within highways only, use the same method under highway settings.
+   * across both railways and highways. If you want to do this within highways only, use the same method
+   * under highway settings.
    * 
    * @param osmWaytypes to mark as activated
    */
@@ -610,7 +621,14 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param allowedOsmModes default allowed mode(s) to use
    */
   public void registerNewOsmWayType(
-          String osmWayKey, String osmWayTypeValue, int numLanes, double speedLimitKmh, double capacityPerLanePcuH, double maxDensityPerLanePcuH, String... allowedOsmModes) {
+          String osmWayKey,
+          String osmWayTypeValue,
+          int numLanes,
+          double speedLimitKmh,
+          double capacityPerLanePcuH,
+          double maxDensityPerLanePcuH,
+          String... allowedOsmModes) {
+
     boolean success = true;
     OsmWaySettings settings = null;
 
@@ -618,29 +636,34 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       settings = this.osmHighwaySettings;
       if(laneConfiguration.containsDefaultDirectionalLanes(osmWayKey,osmWayTypeValue)){
-        LOGGER.warning(String.format("Not allowed to add an OSM type that already exists, ignored %s=%s", osmWayKey, osmWayTypeValue));
+        LOGGER.warning(String.format("Not allowed to add an OSM type that already exists, ignored %s=%s",
+            osmWayKey, osmWayTypeValue));
         return;
       }
       success = laneConfiguration.setDefaultDirectionalLanesByHighwayType(osmWayTypeValue, numLanes) == null;
     }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)){
       settings = this.osmRailwaySettings;
       if(laneConfiguration.getDefaultDirectionalRailwayTracks() != numLanes){
-        LOGGER.warning(String.format("Custom railway=%s number of tracks set to %d (instead of %d), this is a global setting, overwrite globally to change it",
+        LOGGER.warning(String.format("Custom railway=%s number of tracks set to %d (instead of %d), " +
+                "this is a global setting, overwrite globally to change it",
                 osmWayTypeValue, laneConfiguration.getDefaultDirectionalRailwayTracks(), numLanes));
       }
     }else if(OsmWaterwayTags.isAnyWaterwayKeyTag(osmWayKey)) {
       settings = this.osmWaterwaySettings;
       if (laneConfiguration.getDefaultDirectionalWaterwayLanes() != numLanes) {
-        LOGGER.warning(String.format("Custom waterway [%s=%s] waterway lanes set to %d (instead of %d), this is a global setting, overwrite globally to change it",
+        LOGGER.warning(String.format("Custom waterway [%s=%s] waterway lanes set to %d (instead of %d)," +
+                " this is a global setting, overwrite globally to change it",
                 osmWayKey, osmWayTypeValue, laneConfiguration.getDefaultDirectionalRailwayTracks(), numLanes));
       }
     }else{
-      LOGGER.warning(String.format("Custom way type for %s=%s is not allowed due to key not being a known or supported OSM way type", osmWayKey, osmWayTypeValue));
+      LOGGER.warning(String.format("Custom way type for %s=%s is not allowed due to key not being a known" +
+          " or supported OSM way type", osmWayKey, osmWayTypeValue));
       return;
     }
 
     if(!success){
-      LOGGER.warning(String.format("Unable to register new OsmWay type %s=%s due to issue regarding lane configuration", osmWayKey, osmWayTypeValue));
+      LOGGER.warning(String.format("Unable to register new OsmWay type %s=%s due to issue regarding lane " +
+          "configuration", osmWayKey, osmWayTypeValue));
       return;
     }
 
@@ -648,7 +671,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     success = settings.registerNewSupportedOsmWayType(
             osmWayKey, osmWayTypeValue, speedLimitKmh, capacityPerLanePcuH, maxDensityPerLanePcuH, allowedOsmModes);
     if(!success){
-      LOGGER.warning(String.format("Unable to register new OsmWaytype %s=%s due to issue regarding way type configuration", osmWayKey, osmWayTypeValue));
+      LOGGER.warning(String.format("Unable to register new OsmWaytype %s=%s due to issue regarding way " +
+          "type configuration", osmWayKey, osmWayTypeValue));
     }
   }
   
@@ -772,9 +796,12 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return osmWaterwaySettings;
   }
 
-  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such OSM ways
-   * the complete geometry is available, but this is not known to the parser since it only considers nodes within the bounding box (from which
-   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it is truncated for the portions
+  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such
+   * OSM ways
+   * the complete geometry is available, but this is not known to the parser since it only considers nodes within
+   * the bounding box (from which
+   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it
+   * is truncated for the portions
    * outside the bounding box. This method allows the user to explicitly state the full geometry needs to be retained.
    * 
    * @param osmWays to keep geometry even if it falls (partially) outside the bounding polygon (int or long)
@@ -783,9 +810,12 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     setKeepOsmWaysOutsideBoundingPolygon(Arrays.asList(osmWays));
   }
   
-  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such OSM ways
-   * the complete geometry is available, but this is not known to the parser since it only considers nodes within the bounding box (from which
-   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it is truncated for the portions
+  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such
+   * OSM ways
+   * the complete geometry is available, but this is not known to the parser since it only considers nodes within
+   * the bounding box (from which
+   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it
+   * is truncated for the portions
    * outside the bounding box. This method allows the user to explicitly state the full geometry needs to be retained.
    * 
    * @param osmWays to keep geometry even if it falls (partially) outside the bounding polygon (int or long)
@@ -811,8 +841,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return includedOutsideBoundingPolygonOsmWays.contains(osmWayId.longValue());
   }
   
-  /** When a bounding polygon is set, some nodes might reside outside this bounding box but you want to make them available anyway for some reason. 
-   * For such OSM nodes this method allows the user to explicitly include the OSM node even if it falls outside the bounding polygon
+  /** When a bounding polygon is set, some nodes might reside outside this bounding box but you want to make
+   * them available anyway for some reason.
+   * For such OSM nodes this method allows the user to explicitly include the OSM node even if it falls outside
+   * the bounding polygon
    * 
    * @param osmNodeId to keep
    */

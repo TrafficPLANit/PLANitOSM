@@ -193,7 +193,7 @@ public class BasicOsmReaderTest {
       assertEquals(134, ptStopTypeAccessLinkSegments);
       assertEquals(3, accessZoneEntries);
       assertEquals(3, egressZoneEntries);
-      assertEquals(35, accessEgressZoneEntries);
+      assertEquals(94, accessEgressZoneEntries);
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

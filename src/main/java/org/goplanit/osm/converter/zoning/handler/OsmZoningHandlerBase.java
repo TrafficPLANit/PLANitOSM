@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.zoning.handler;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.*;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import org.goplanit.converter.utils.ProjectedBoundingAreaHelper;
 import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
@@ -16,7 +17,6 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.functionalinterface.TriConsumer;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.zoning.Zoning;
-import org.locationtech.jts.geom.LineString;
 
 import java.util.Map;
 import java.util.function.BiConsumer;

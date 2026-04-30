@@ -76,14 +76,16 @@ public class MelbourneOsm2PlanitTest {
   @Test
   public void osm2PlanitIntermodalNoServicesBoundingBoxTest() {
 
-    final String PLANIT_OUTPUT_DIR =
-            Path.of(RESOURCE_PATH.toString(),"testcases","planit","melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
-    final String PLANIT_REF_DIR =
-            Path.of(RESOURCE_PATH.toString(),"planit", "melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
+    final String PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),
+        "testcases","planit","melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
+    final String PLANIT_REF_DIR = Path.of(RESOURCE_PATH.toString(),
+        "planit", "melbourne","osm_intermodal_no_services_bb").toAbsolutePath().toString();
     try {
 
-      var inputSettings = new OsmIntermodalReaderSettings(MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
-      var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
+      var inputSettings = new OsmIntermodalReaderSettings(
+          MELBOURNE_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+      var outputSettings = new PlanitIntermodalWriterSettings(
+          PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
@@ -91,11 +93,14 @@ public class MelbourneOsm2PlanitTest {
       inputSettings.getNetworkSettings().setBoundingArea(
               OsmBoundary.of(144.995842, 144.921341, -37.855068,-37.786996));
 
-      // example of explicitly registering (unsupported or deactivated) types and providing defaults, so they can be parsed directly
+      // example of explicitly registering (unsupported or deactivated) types and providing defaults,
+      // so they can be parsed directly
       inputSettings.getNetworkSettings().registerNewOsmWayType(
-              "highway","proposed", 1, 30, 500, 180, OsmRoadModeTags.MOTOR_CAR);
+              "highway","proposed", 1, 30, 500,
+          180, OsmRoadModeTags.MOTOR_CAR);
       inputSettings.getNetworkSettings().registerNewOsmWayType(
-              "railway", "disused", 1, 30, 500, 180, OsmRailModeTags.TRAIN);
+              "railway", "disused", 1, 30, 500,
+          180, OsmRailModeTags.TRAIN);
 
       /* minimise warnings Melbourne v2 */
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());
@@ -103,7 +108,8 @@ public class MelbourneOsm2PlanitTest {
 
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
 
-      //todo: Error for differences is 99% certain due to layers exactly on top of each other. Fix https://github.com/TrafficPLANit/PLANitOSM/issues/40
+      //todo: Error for differences is 99% certain due to layers exactly on top of each other.
+      // Fix https://github.com/TrafficPLANit/PLANitOSM/issues/40
       PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
       PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
 

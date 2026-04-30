@@ -4,11 +4,12 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
+import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
-import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
+import org.goplanit.converter.utils.ProjectedBoundingAreaHelper;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import de.topobyte.osm4j.core.access.DefaultOsmHandler;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
@@ -138,7 +139,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
     return this.networkToPopulate;
   }
 
-  protected OsmProjectedBoundingAreaHelper getProjectedBoundingAreaHelper(){
+  protected ProjectedBoundingAreaHelper getProjectedBoundingAreaHelper(){
     return this.projectedBoundingAreaHelper;
   }
 

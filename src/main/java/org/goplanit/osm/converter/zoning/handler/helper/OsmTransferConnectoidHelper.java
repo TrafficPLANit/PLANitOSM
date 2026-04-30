@@ -8,9 +8,7 @@ import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.*;
-import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.graph.directed.EdgeSegment;
@@ -27,7 +25,6 @@ import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.*;
-import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.modifier.event.handler.UpdateDirectedConnectoidsOnBreakLinkSegmentHandler;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -49,9 +46,6 @@ import java.util.stream.Collectors;
  *
  */
 public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
-
-  /** no direct GTFS external id for connectoid, but signify source */
-  public static final String OSM_CONNECTOID_EXTERNAL_INFERRED_ID = "osm_inferred";
 
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmTransferConnectoidHelper.class.getCanonicalName());
@@ -1046,8 +1040,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     /* create connectoids at identified location for mode and restricted to the accessLink identified (or update
     existing connectoid with mode access if valid) */
     boolean locationIsKnownOsmStopPosition = false;
-    String ConnectoidExternalId = osmStopLocationNode!= null ?
-            String.valueOf(osmStopLocationNode.getId()) : OSM_CONNECTOID_EXTERNAL_INFERRED_ID;
+    String ConnectoidExternalId = osmStopLocationNode!= null ? String.valueOf(osmStopLocationNode.getId()) : null;
     extractTransferConnectoidsForMode(
             ConnectoidExternalId,
             connectoidLocation,

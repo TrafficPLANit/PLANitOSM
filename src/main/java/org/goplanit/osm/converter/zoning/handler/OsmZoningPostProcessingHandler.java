@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import de.topobyte.osm4j.core.model.iface.*;
+import org.goplanit.converter.zoning.TransferZoningInjectAccessEgressExecutor;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
@@ -388,7 +389,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
             }
           }
         }
-      }else if(maxMatches < 1) {
+      }else {
         LOGGER.severe(String.format("Invalid number of maximum matches %d provided when finding stop location links " +
             "for station %d",maxMatches, stationEntity.getId()));
         return null;
@@ -513,7 +514,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     if(unprocessedStations != null) {
       unprocessedStations.stream().sorted(Comparator.comparing(OsmEntity::getId)).forEach( osmStation ->{
 
-        var networkSettings = getNetworkToZoningData().getNetworkSettings();
         var tags = OsmModelUtil.getTagsAsMap(osmStation);
 
         /* suppress warnings in case we cannot create a station that lies outside the bounding area */
@@ -1746,14 +1746,16 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
           getSettings().isConnectBusBasedStopsToPassengerNetwork() &&
               getSettings().isParserActive() && getNetworkToZoningData().getNetworkSettings().isHighwayParserActive();
 
-      var accessEgressExecutor = new OsmZoningInjectAccessEgressExecutor(
+      var accessEgressExecutor = new TransferZoningInjectAccessEgressExecutor(
           getProjectedBoundingAreaHelper(),
           getZoningReaderData().getPlanitConverterData());
       accessEgressExecutor.execute(
           connectedAccessEgressFerries,
           connectedAccessEgressRailBased,
           connectedAccessEgressRoadBased,
-          getSettings());
+          getSettings().getFerryStopToNearbyLandNetworkSearchRadiusMeters(),
+          getSettings().getRailBasedStopToPassengerNetworkSearchRadiusMeters(),
+          getSettings().getStopToWaitingAreaSearchRadiusMeters());
 
     }catch(PlanItException e) {
       LOGGER.severe(e.getMessage());
