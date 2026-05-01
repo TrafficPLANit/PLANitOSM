@@ -9,13 +9,11 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
-import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmPtVersionScheme;
 import org.goplanit.utils.misc.StringUtils;
-import org.goplanit.zoning.Zoning;
 
 /**
  * Handler that is applied before we conduct the actual handling of the zones by exploring the OSM relations
@@ -279,7 +277,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
       // mark spatially eligible if bounding area is present and it falls within this area, if no bounding area then
       // all are eligible used to exclude identifying relations that do not have any preregistered nodes available
       if(!getZoningReaderData().hasBoundingArea() ||
-          getProjectedBoundingAreaHelper().getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node))){
+          getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(OsmNodeUtils.createPoint(node))){
         spatialEligibilityData.markOsmNodeSpatiallyEligible(node.getId());
       }else{
         // SPECIAL CASE - for water based pt infras where we allow such infra even if it falls outside bounding polygon

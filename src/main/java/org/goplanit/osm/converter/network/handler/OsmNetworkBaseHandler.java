@@ -16,7 +16,7 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
- * Base handler for networks with common functionality. Requires derived hanlder for concrete implementation.
+ * Base handler for networks with common functionality. Requires derived handler for concrete implementation.
  * 
  * @author markr
  * 

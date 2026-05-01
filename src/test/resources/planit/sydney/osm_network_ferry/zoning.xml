@@ -307,28 +307,28 @@
             <connectoid id="27" externalid="5601091629" noderef="16">
                 <accesszone ref="30" lengthkm="0.0" lsrefs="24" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="28" externalid="osm_inferred" noderef="44">
+            <connectoid id="28" noderef="44">
                 <accesszone ref="0" lengthkm="0.0" lsrefs="97" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="29" externalid="osm_inferred" noderef="45">
+            <connectoid id="29" noderef="45">
                 <accesszone ref="7" lengthkm="0.0" lsrefs="99" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="3" externalid="8099480" noderef="9">
                 <accesszone ref="2" lengthkm="0.0" lsrefs="13" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="30" externalid="osm_inferred" noderef="46">
+            <connectoid id="30" noderef="46">
                 <accesszone ref="8" lengthkm="0.0" lsrefs="101" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="31" externalid="osm_inferred" noderef="47">
+            <connectoid id="31" noderef="47">
                 <accesszone ref="13" lengthkm="0.0" lsrefs="103" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="32" externalid="osm_inferred" noderef="48">
+            <connectoid id="32" noderef="48">
                 <accesszone ref="14" lengthkm="0.0" lsrefs="105" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="33" externalid="osm_inferred" noderef="49">
+            <connectoid id="33" noderef="49">
                 <accesszone ref="15" lengthkm="0.0" lsrefs="107" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
-            <connectoid id="34" externalid="osm_inferred" noderef="50">
+            <connectoid id="34" noderef="50">
                 <accesszone ref="16" lengthkm="0.0" lsrefs="109" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="4" externalid="20959048" noderef="19">

@@ -11,6 +11,9 @@ import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.tags.OsmPtv1Tags;
 import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.osm.util.OsmNodeUtils;
+import org.goplanit.utils.epsg.ProjectedEpsgCodesByCountry;
+import org.goplanit.utils.geo.PlanitCrsUtils;
+import org.locationtech.jts.geom.Polygon;
 
 import java.util.Map;
 import java.util.logging.Logger;
@@ -36,20 +39,37 @@ public class OsmProjectedBoundingAreaHelper extends ProjectedBoundingAreaHelper 
    *
    * @param osmBoundary to consider
    * @param originalCrs to consider
-   * @param destinationCountryName to consider
+   * @param destinationCrs to consider
    * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to use for water leniency
    */
-   protected OsmProjectedBoundingAreaHelper(
+  protected OsmProjectedBoundingAreaHelper(
       OsmBoundary osmBoundary,
       CoordinateReferenceSystem originalCrs,
-      String destinationCountryName,
+      CoordinateReferenceSystem destinationCrs,
       double maximumDistanceFerryOutsideBoundingPolygonInMeters ){
-    super(osmBoundary.getBoundingPolygon(), originalCrs, destinationCountryName,
+    super(osmBoundary.getBoundingPolygon(), originalCrs, destinationCrs,
         maximumDistanceFerryOutsideBoundingPolygonInMeters);
   }
 
   /**
    * Factory method
+   * @param originalCrs to consider
+   * @param destinationCrs to consider
+   * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to consider
+   * @return helper created
+   */
+  public static OsmProjectedBoundingAreaHelper of(
+      OsmBoundary osmBoundary,
+      CoordinateReferenceSystem originalCrs,
+      CoordinateReferenceSystem destinationCrs,
+      double maximumDistanceFerryOutsideBoundingPolygonInMeters) {
+    return new OsmProjectedBoundingAreaHelper(
+        osmBoundary, originalCrs, destinationCrs, maximumDistanceFerryOutsideBoundingPolygonInMeters);
+  }
+
+  /**
+   * Factory method
+   * @param osmBoundary to consider
    * @param originalCrs to consider
    * @param destinationCountryName to consider
    * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to consider
@@ -60,8 +80,11 @@ public class OsmProjectedBoundingAreaHelper extends ProjectedBoundingAreaHelper 
       CoordinateReferenceSystem originalCrs,
       String destinationCountryName,
       double maximumDistanceFerryOutsideBoundingPolygonInMeters) {
-    return new OsmProjectedBoundingAreaHelper(
-        osmBoundary, originalCrs, destinationCountryName, maximumDistanceFerryOutsideBoundingPolygonInMeters);
+    return OsmProjectedBoundingAreaHelper.of(
+        osmBoundary,
+        originalCrs,
+        PlanitCrsUtils.createCoordinateReferenceSystem(ProjectedEpsgCodesByCountry.getEpsg(destinationCountryName)),
+        maximumDistanceFerryOutsideBoundingPolygonInMeters);
   }
 
   /**

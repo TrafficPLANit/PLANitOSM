@@ -189,7 +189,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)){
       boolean spatiallyEligible =
           !getNetworkData().hasBoundingArea() ||
-              getProjectedBoundingAreaHelper().getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(node));
+              getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(OsmNodeUtils.createPoint(node));
 
       // mark as spatially eligible if bounding area is present and it falls within this area, or
       // if no bounding area all are eligible. Only OSM ways with at least one spatially eligible nodes will be considered

@@ -62,7 +62,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     return networkData.getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
             &&
             ( noBoundingPolygon || getSettings().isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId()) ||
-                getProjectedBoundingAreaHelper().getPreparedBoundingPolygon().contains(OsmNodeUtils.createPoint(osmNode))
+                getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(OsmNodeUtils.createPoint(osmNode))
             );
   }
        

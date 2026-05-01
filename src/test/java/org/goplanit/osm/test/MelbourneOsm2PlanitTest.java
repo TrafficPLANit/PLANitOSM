@@ -18,6 +18,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.geotools.api.filter.Filter;
 import org.geotools.api.filter.FilterFactory;
@@ -40,6 +41,10 @@ public class MelbourneOsm2PlanitTest {
 
   public static final Path MELBOURNE_PBF = Path.of(
       RESOURCE_PATH.toString(), "osm", "melbourne", "3_2023_melbourne.osm.pbf");
+
+  /** bounding area to apply */
+  public static final Envelope MELBOURNE_SIMPLE_BOUNDING_BOX =
+      new Envelope(144.995842, 144.921341, -37.855068,-37.786996);
 
   /** the logger */
   private static Logger LOGGER = null;
@@ -68,9 +73,9 @@ public class MelbourneOsm2PlanitTest {
   }
 
   /**
-   * Test that attempts to extract PLANit network and PT infrastructure from OSM. Limited to smaller bounding box as this tests output
-   * is also used as input to other tests that ingest Melbourne PLANit network and export it in a different format. Hence, results
-   * are to be small enough to be in repo resources.
+   * Test that attempts to extract PLANit network and PT infrastructure from OSM. Limited to smaller bounding box as
+   * this tests output is also used as input to other tests that ingest Melbourne PLANit network and export it
+   * in a different format. Hence, results are to be small enough to be in repo resources.
    * read from disk and then persist the result in the PLANit data format
    */
   @Test
@@ -90,8 +95,7 @@ public class MelbourneOsm2PlanitTest {
       inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
       // apply simple bounding box
-      inputSettings.getNetworkSettings().setBoundingArea(
-              OsmBoundary.of(144.995842, 144.921341, -37.855068,-37.786996));
+      inputSettings.getNetworkSettings().setBoundingArea(OsmBoundary.of(MELBOURNE_SIMPLE_BOUNDING_BOX));
 
       // example of explicitly registering (unsupported or deactivated) types and providing defaults,
       // so they can be parsed directly
