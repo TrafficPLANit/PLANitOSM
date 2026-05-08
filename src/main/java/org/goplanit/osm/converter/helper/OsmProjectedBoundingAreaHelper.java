@@ -53,6 +53,7 @@ public class OsmProjectedBoundingAreaHelper extends ProjectedBoundingAreaHelper 
 
   /**
    * Factory method
+   * @param osmBoundary to consider
    * @param originalCrs to consider
    * @param destinationCrs to consider
    * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to consider
@@ -101,6 +102,7 @@ public class OsmProjectedBoundingAreaHelper extends ProjectedBoundingAreaHelper 
    * @param osmEntity to check
    * @param type of entity
    * @param tags of node
+   * @param osmNodeData to use
    * @return true when eligible, false otherwise
    */
   public boolean fallsWithinSpatiallyEligibleBoundingArea(

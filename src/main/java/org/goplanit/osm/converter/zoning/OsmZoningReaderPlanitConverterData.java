@@ -50,6 +50,7 @@ public class OsmZoningReaderPlanitConverterData extends ZoningConverterCommonDat
   /**
    * Constructor
    * @param network to use
+   * @param zoning to use
    */
   public OsmZoningReaderPlanitConverterData(MacroscopicNetwork network, Zoning zoning){
     super(network, zoning);
