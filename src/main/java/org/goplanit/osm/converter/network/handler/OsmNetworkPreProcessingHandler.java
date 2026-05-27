@@ -16,8 +16,8 @@ import java.util.logging.Logger;
 /**
  * Preprocessing Handler that has two stages:
  * <p>
- * REGULAR_PREPROCESSING_WAYS: identify ways (and their nodes) that are eligible since they form the network. Only do so for ways that
- * fall within the bounding area for at least one node (if a bounding area is especified)
+ * REGULAR_PREPROCESSING_WAYS: identify ways (and their nodes) that are eligible since they form the network.
+ * Only do so for ways that fall within the bounding area for at least one node (if a bounding area is specified)
  * </p>
  * <p>
  * REGULAR_PREPROCESSING_NODES: identify and register nodes that are part of the ways that make
@@ -63,7 +63,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       }
 
       /* mark all nodes for keeping, since we determine availability based on the tracked OSM nodes */
-      for(int index=0;index<osmWay.getNumberOfNodes();++index) {
+      for(int index=0; index<osmWay.getNumberOfNodes(); ++index) {
         //todo ugly since we are modifying user settings, this should be tracked in network internal data structure
         settings.setKeepOsmNodeOutsideBoundingPolygon(osmWay.getNodeId(index));
       }
@@ -106,10 +106,6 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    */
   protected void handleEligibleOsmWayStageOne(OsmWay osmWay, Map<String,String> tags) {
     var settings = getSettings();
-
-    if(osmWay.getId() == 151911703L){
-      int bla = 4;
-    }
 
     // MANUAL OVERRIDES
     boolean isManualOverride = handleEligibleOsmWayManualOverrides(osmWay, tags);
@@ -182,14 +178,11 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmNode node) {
 
-    if(node.getId() == 458705435L){
-      int bla = 4;
-    }
-
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)){
       boolean spatiallyEligible =
           !getNetworkData().hasBoundingArea() ||
-              getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(OsmNodeUtils.createPoint(node));
+              getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(
+                  OsmNodeUtils.createPoint(node));
 
       // mark as spatially eligible if bounding area is present and it falls within this area, or
       // if no bounding area all are eligible. Only OSM ways with at least one spatially eligible nodes will be considered
@@ -241,8 +234,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
 
   /**
-   * for all OSM ways that are explicitly marked for inclusion despite falling outside the bounding polygon or otherwise
-   * we extract their nodes and mark them for inclusion as exceptions to the bounding polygon filter that is
+   * for all OSM ways that are explicitly marked for inclusion despite falling outside the bounding polygon, or
+   * otherwise we extract their nodes and mark them for inclusion as exceptions to the bounding polygon filter that is
    * applied during the main parsing pass in the regular PlanitOsmNetworkHandler
    */
   @Override

@@ -6,6 +6,9 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
+import de.topobyte.osm4j.core.model.iface.OsmRelation;
+import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
+import de.topobyte.osm4j.core.model.impl.RelationMember;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
@@ -16,6 +19,7 @@ import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.misc.Triple;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
@@ -25,8 +29,9 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
- * Handler that handles, i.e., converts, nodes, ways, and relations. We parse these entities in distinct order, first all nodes, then all ways, and then all relations. this allows
- * us to incrementally construct the network without backtracking or requiring the entire file to be in memory in addition to the memory model we're creating.
+ * Handler that handles, i.e., converts, nodes, ways, and relations. We parse these entities in distinct order,
+ * first all nodes, then all ways, and then all relations. this allows us to incrementally construct the network
+ * without backtracking or requiring the entire file to be in memory in addition to the memory model we're creating.
  * 
  * @author markr
  * 
@@ -38,9 +43,42 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkMainProcessingHandler.class.getCanonicalName());
-  
+
+  /**  Extract roles that define the relation restriction
+   *
+   * @param osmRelation to extract from
+   * @return from, via, to triple
+   */
+  private static Triple<OsmRelationMember, List<OsmRelationMember>, OsmRelationMember> extractTurnRoles(
+      OsmRelation osmRelation){
+    OsmRelationMember fromMember = null;
+    OsmRelationMember toMember = null;
+    List<OsmRelationMember> viaMembers = new ArrayList<>();
+
+    for(int i = 0 ; i< osmRelation.getNumberOfMembers() ; i++){
+      var member = osmRelation.getMember(i);
+      String role = member.getRole();
+      if (role == null) {
+        continue;
+      }
+      switch (role) {
+        case OsmRelationMemberRoleTags.FROM:
+          fromMember = member;
+          break;
+        case OsmRelationMemberRoleTags.TO:
+          toMember = member;
+          break;
+        case OsmRelationMemberRoleTags.VIA:
+          viaMembers.add(member);
+        default:
+          break; // ignore
+      }
+    }
+    return Triple.of(fromMember, viaMembers, toMember);
+  }
+
        
-  /** Verify if there exist any layers where the node is active either as an extreme node or internal to a planit link
+  /** Verify if there exist any layers where the node is active either as an extreme node or internal to a PLANit link
    * @param osmNodeId to use
    * @return true when one or more layers are found, false otherwise
    */
@@ -62,7 +100,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     return networkData.getOsmNodeData().containsPreregisteredOsmNode(osmNode.getId())
             &&
             ( noBoundingPolygon || getSettings().isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId()) ||
-                getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(OsmNodeUtils.createPoint(osmNode))
+                getProjectedBoundingAreaHelper().getPreparedBoundingPolygonInOriginalCrs().contains(
+                    OsmNodeUtils.createPoint(osmNode))
             );
   }
        
@@ -108,7 +147,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param circularOsmWay to process
    * @param osmWayTags tags of the way
    * @param initialNodeIndex offset for starting point, part of the recursion
-   * @return set of created links per layer for this circular way if any, empty set if none
+   * @return created links per layer map for this circular way if any, empty set if none
    */
   private Map<NetworkLayer, Set<MacroscopicLink>> handleRawCircularWay(
       final OsmWay circularOsmWay, final Map<String, String> osmWayTags, int initialNodeIndex) {
@@ -176,7 +215,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param osmWayTags tags of the way
    * @param initialNodeIndex where the circular section starts
    * @param finalNodeIndex where the circular section ends (at the start)
-   * @return set of created links per layer with supported modes for this circular way if any, empty set if none
+   * @return created links per layer map with supported modes for this circular way if any, empty set if none
    */
   private Map<NetworkLayer,Set<MacroscopicLink>> handlePerfectCircularWay(
       OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) {
@@ -225,9 +264,12 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           linkSegmentTypesByLayer = extractLinkSegmentTypes(circularOsmWay, osmWayTags);
       if(linkSegmentTypesByLayer!=null && !linkSegmentTypesByLayer.isEmpty() &&
           linkSegmentTypesByLayer.values().stream().findAny().get().anyIsNotNull()) {
-        /* yet circular way is of a viable type, i.e., it has mapped link segment type(s), but not a single connection to currently parsed network exists, this may indicate a problem */
-        LOGGER.fine(String.format("circular way %d appears to have no connections to activated OSM way types ", circularOsmWay.getId()));
-        /* still we continue parsing it by simply creating a new planit node, marked by setting partialLinkStartNodeIndex to 0  and continue */ 
+        /* yet circular way is of a viable type, i.e., it has mapped link segment type(s), but not a single
+         connection to currently parsed network exists, this may indicate a problem */
+        LOGGER.fine(String.format("circular way %d appears to have no connections to activated OSM way types ",
+            circularOsmWay.getId()));
+        /* still we continue parsing it by simply creating a new planit node, marked by setting
+        partialLinkStartNodeIndex to 0  and continue */
         partialLinkStartNodeIndex = 0;
       }
     }
@@ -236,15 +278,22 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     if (partialLinkStartNodeIndex>= 0) {
       if (partialLinkEndNodeIndex < 0){        
         /* first partial link is not created either, only single connection point exists, so:
-         * 1) when partialLinkStartNodeIndex = initial node -> take the halfway point as the dummy node, and the final node as the end point, if not then...
-         * 2) reset partialLinkStartNodeIndex to initial node and the earlier found partialLinkStartNodeIndex as the midway point and then the final node as the end point */
+         * 1) when partialLinkStartNodeIndex = initial node -> take the halfway point as the dummy node, and the
+         * final node as the end point, if not then...
+         * 2) reset partialLinkStartNodeIndex to initial node and the earlier found partialLinkStartNodeIndex as
+         * the midway point and then the final node as the end point */
         if(partialLinkStartNodeIndex == initialNodeIndex) {
           partialLinkEndNodeIndex = partialLinkStartNodeIndex + (numberOfConsideredNodes/2);  
         }else {
           partialLinkEndNodeIndex = partialLinkStartNodeIndex; 
           partialLinkStartNodeIndex = initialNodeIndex;
         }
-        createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
+        createdLinkByLayer = extractPartialOsmWay(
+            circularOsmWay,
+            osmWayTags,
+            partialLinkStartNodeIndex,
+            partialLinkEndNodeIndex,
+            partialLinksPartOfCircularWay);
         if(createdLinkByLayer != null) {
           createdLinkByLayer.forEach( (layer, link) -> {
             createdLinksByLayer.putIfAbsent(layer, new HashSet<>());
@@ -253,15 +302,26 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         
         partialLinkStartNodeIndex = partialLinkEndNodeIndex;
         partialLinkEndNodeIndex = finalNodeIndex;
-        createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
+        createdLinkByLayer = extractPartialOsmWay(
+            circularOsmWay,
+            osmWayTags,
+            partialLinkStartNodeIndex,
+            partialLinkEndNodeIndex,
+            partialLinksPartOfCircularWay);
       }else if(partialLinkEndNodeIndex != finalNodeIndex){            
-        /* last partial link did not end at end of circular way but later, i.e., first partial link did not start at node zero.
-         * finalise by creating the final partial link to the first partial links start node*/
+        /* last partial link did not end at end of circular way but later, i.e., first partial link did not
+        start at node zero. finalise by creating the final partial link to the first partial links start node*/
         partialLinkEndNodeIndex = firstPartialLinkStartNodeIndex;       
-        createdLinkByLayer = extractPartialOsmWay(circularOsmWay, osmWayTags, partialLinkStartNodeIndex, partialLinkEndNodeIndex, partialLinksPartOfCircularWay);
+        createdLinkByLayer = extractPartialOsmWay(
+            circularOsmWay,
+            osmWayTags,
+            partialLinkStartNodeIndex,
+            partialLinkEndNodeIndex,
+            partialLinksPartOfCircularWay);
       }    
       
-      /* possibly no links created, for example when circular way is not of a viable type, or access is private, or some other valid reason*/
+      /* possibly no links created, for example when circular way is not of a viable type, or access is private,
+      or some other valid reason*/
       if(createdLinkByLayer != null) {
         createdLinkByLayer.forEach( (layer, link) -> createdLinksByLayer.get(layer).add(link));
       }
@@ -294,16 +354,20 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     Function<String, Boolean> isTypeConfigurationMissingLambda = osmTypeValueToUse -> false;
     if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
       osmTypeKeyToUse = OsmHighwayTags.getHighwayKeyTag();
-      isWayActivatedLambda = osmTypeValueToUse -> settings.getHighwaySettings().isOsmHighwayTypeDeactivated(osmTypeValueToUse);
+      isWayActivatedLambda = osmTypeValueToUse ->
+          settings.getHighwaySettings().isOsmHighwayTypeDeactivated(osmTypeValueToUse);
       isTypeConfigurationMissingLambda = OsmHighwayTags::isNonRoadBasedHighwayValueTag;
     }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
       osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
-      isWayActivatedLambda = osmTypeValueToUse -> settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
+      isWayActivatedLambda = osmTypeValueToUse ->
+          settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
       isTypeConfigurationMissingLambda = OsmRailwayTags::isNonRailBasedRailway;
     }else if(OsmWaterwayTags.isWaterBasedWay(tags) && settings.isWaterwayParserActive()) {
       osmTypeKeyToUse = OsmWaterwayTags.getUsedKeyTag(tags);
-      isWayActivatedLambda = osmTypeValueToUse -> settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // not yet aware of situations for waterways where this happens
+      isWayActivatedLambda = osmTypeValueToUse ->
+          settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // not yet aware of situations for waterways
+      // where this happens
     }
     
     /* without mapping no type */
@@ -319,22 +383,28 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         var layer = (MacroscopicNetworkLayerImpl) entry.getKey();
         var linkSegmentType = entry.getValue();
         if(linkSegmentType != null) {
-            getNetworkData().getLayerParser(layer).getLayerData().getProfiler().incrementOsmTagCounter(osmTypeKeyToUse, osmTypeValueToUse);
+            getNetworkData().getLayerParser(layer).getLayerData().getProfiler().incrementOsmTagCounter(
+                osmTypeKeyToUse, osmTypeValueToUse);
           }
       }
     }
-    /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate because we do not want or it cannot be mapped in the first place*/
-    /*... not available even though it is not marked as deactivated AND it appears to be a type that can be converted into a link, so something is not properly configured*/
+    /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate
+    because we do not want or it cannot be mapped in the first place*/
+    /*... not available even though it is not marked as deactivated AND it appears to be a type that can be converted
+     into a link, so something is not properly configured*/
     else if(isWayActivatedLambda.apply(osmTypeValueToUse) && isTypeConfigurationMissingLambda.apply(osmTypeValueToUse)){
       LOGGER.warning(String.format(
-          "No link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
+          "No link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or " +
+              "unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
     }
         
     return linkSegmentTypes;
   }  
   
-  /** process all registered circular ways after parsing of basic nodes and ways is complete. Because circular ways are transformed into multiple
-   * links, they in effect yield multiple links per original OSM way (id). In case such an OSMway is referenced later it no longer maps to a single 
+  /** process all registered circular ways after parsing of basic nodes and ways is complete. Because circular
+   * ways are transformed into multiple
+   * links, they in effect yield multiple links per original OSM way (id). In case such an OSMway is referenced
+   * later it no longer maps to a single
    * PLANit link, hence we return how each OSMway is mapped to the set of links created for the circular way
    *   
    */
@@ -342,8 +412,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     
     LOGGER.info("Converting OSM circular ways into multiple link topologies...");
     
-    /* process circular ways in order of original OSM way ids, so it is a deterministic process and results are reproducible in
-    * terms of generated PLANit link/segment ids */
+    /* process circular ways in order of original OSM way ids, so it is a deterministic process and results are
+    reproducible in terms of generated PLANit link/segment ids */
     getNetworkData().getOsmCircularWays().entrySet().stream().sorted(Entry.comparingByKey()).forEach(entry -> {
       try {        
         
@@ -368,12 +438,15 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   protected void extractOsmWay(OsmWay osmWay, Map<String, String> tags){
     /* parse entire OSM way (0-endNodeIndex), and not part of a circular piece of infrastructure */
-    extractPartialOsmWay(osmWay, tags, 0, osmWay.getNumberOfNodes()-1, false /*not part of circular infrastructure */);    
+    extractPartialOsmWay(osmWay, tags, 0,
+        osmWay.getNumberOfNodes()-1, false /*not part of circular infrastructure */);
   }
 
   /**
-   * Extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being a (partial) section of a circular way, then
-   * we only allow the presumed one way direction applicable when creating directional link segments. The result is a newly registered link, its nodes, and linksegment(s) on
+   * Extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being
+   * a (partial) section of a circular way, then
+   * we only allow the presumed one way direction applicable when creating directional link segments. The result is
+   * a newly registered link, its nodes, and link segment(s) on
    * the network. The parser will try to infer missing/default data by using defaults set by the user.
    * 
    * @param osmWay to parse
@@ -387,12 +460,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
         
     Map<NetworkLayer,MacroscopicLink> linksByLayer = null;
-
-    if(osmWay.getId() == 462836536L){
-      int bla = 4;
-    }
-
-    var directionalLinkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay,tags);
+    var directionalLinkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay, tags);
     for(var entry : directionalLinkSegmentTypesByLayer.entrySet()) {
       MacroscopicNetworkLayerImpl networkLayer = entry.getKey();
       var linkSegmentTypesPair = entry.getValue();
@@ -400,7 +468,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       if(linkSegmentTypesPair != null && linkSegmentTypesPair.anyIsNotNull()) {
         OsmNetworkLayerParser layerHandler = getNetworkData().getLayerParser(networkLayer);
         if(layerHandler == null) {
-          throw new PlanItRunTimeException("Layer handler not available, should have been instantiated in PlanitOsmHandler constructor");
+          throw new PlanItRunTimeException("Layer handler not available, should have been instantiated in " +
+              "PlanitOsmHandler constructor");
         }
         /* delegate to layer handler */
         MacroscopicLink link = layerHandler.extractPartialOsmWay(
@@ -415,8 +484,59 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }    
     
     return linksByLayer;
-  }  
-    
+  }
+
+  /**
+   * Extract PLANit turn restriction from the given OSM relation
+   *
+   * @param osmRelation to extract from (which is assumed to reflect a turn restriction of some kind)
+   * @param tags of the relation
+   */
+  private void extractOsmTurnRestriction(OsmRelation osmRelation, Map<String, String> tags) {
+    String restrictionType = tags.get(OsmRelationRestrictionTags.RESTRICTION);
+    if (restrictionType != null) {
+      switch (restrictionType) {
+        case OsmRelationRestrictionTags.NO_LEFT_TURN:
+        case OsmRelationRestrictionTags.NO_RIGHT_TURN:
+        case OsmRelationRestrictionTags.NO_U_TURN:
+        case OsmRelationRestrictionTags.NO_STRAIGHT_ON:
+          extractOsmProhibitiveTurnBan(osmRelation, tags, restrictionType);
+          break;
+
+        case OsmRelationRestrictionTags.ONLY_LEFT_TURN:
+        case OsmRelationRestrictionTags.ONLY_RIGHT_TURN:
+        case OsmRelationRestrictionTags.ONLY_STRAIGHT_ON:
+          extractLimitedMandatoryTurnMovement(osmRelation, tags, restrictionType);
+          break;
+
+        case OsmRelationRestrictionTags.NO_EXIT:
+        case OsmRelationRestrictionTags.NO_ENTRY:
+        default:
+          // Unknown or unsupported restriction type
+          break;
+      }
+    }
+  }
+
+  /**
+   * Extract the restricted movement based on the prohibited turn restriction in OSM
+   *
+   * @param osmRelation relation with the information to extract
+   * @param tags tags of the osm entity
+   * @param restrictionType type of prohibitive restriction
+   */
+  private void extractOsmProhibitiveTurnBan(OsmRelation osmRelation, Map<String, String> tags, String restrictionType) {
+    var fromViaToTriple = extractTurnRoles(osmRelation);
+    //todo: initially identify if via relation is a way or multiple nodes/ways. If so we track how many we ditch for
+    //  logging but we ignore them as our movements do not support this yet. Analyse what percentage of total this is
+    //  to flag if we should try and parse/support this
+  }
+
+  private void extractLimitedMandatoryTurnMovement(
+      OsmRelation osmRelation, Map<String, String> tags, String restrictionType) {
+    // todo
+  }
+
   /** actual handling of OSM way assuming it is eligible for processing
    * 
    * @param osmWay to parse
@@ -427,8 +547,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     /* circular ways special case filter */
     if(OsmWayUtils.isCircularOsmWay(osmWay, tags, false)) {          
       
-      /* postpone creation of link(s) for activated OSM highways that have a circular component and are not areas (areas cannot become roads) */
-      /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting exists and entries to the roundabout */
+      /* postpone creation of link(s) for activated OSM highways that have a circular component and are not
+      areas (areas cannot become roads) */
+      /* Note: in OSM roundabouts are a circular way, in PLANit, they comprise several one-way link connecting
+      exists and entries to the roundabout */
       getNetworkData().addOsmCircularWay(osmWay);
       
     }else{
@@ -464,7 +586,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     var settings = getSettings();
 
      /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are
-     * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside the bounding polygon */
+     * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside
+     * the bounding polygon */
     boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());
     if(isNodeSpatiallyEligible(osmNode) || keepOutsideBoundingPolygon){
 
@@ -480,10 +603,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   @Override
   public void handle(OsmWay osmWay) throws IOException {
 
-    if(osmWay.getId() == 151911703L){
-      int bla = 4;
-    }
-
     /* filter out OSMWays that have been spatially deemed ineligible */
     if(!getNetworkData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
       return;
@@ -491,6 +610,23 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
     wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWay);
             
+  }
+
+  /**
+   * parse network relations, i.e., banned turn movements
+   */
+  @Override
+  public void handle(OsmRelation osmRelation) throws IOException {
+    var tags = OsmModelUtil.getTagsAsMap(osmRelation);
+    if(!tags.containsKey(OsmTags.TYPE)){
+      return;
+    }
+
+    // process explicitly tagged (turn) restrictions
+    if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmTags.TYPE, OsmRelationTypeTags.RESTRICTION) &&
+        tags.containsKey(OsmRelationRestrictionTags.RESTRICTION)){
+      extractOsmTurnRestriction(osmRelation, tags);
+    }
   }
 
 
@@ -540,7 +676,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     /* process circular ways */
     processCircularWays();    
             
-    /* delegate to each layer handler present, do this in deterministic order to ensure any created PLANit links/segments
+    /* delegate to each layer handler present, do this in deterministic order to ensure any created
+    PLANit links/segments
     * will obtain the same ids when running the same parser multiple times*/
     getNetworkData().getLayerParsers().entrySet().stream().sorted().forEach( entry -> {
       OsmNetworkLayerParser networkLayerHandler = entry.getValue();
