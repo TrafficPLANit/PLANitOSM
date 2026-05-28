@@ -24583,6 +24583,36 @@
                     </linksegment>
                 </link>
             </links>
+            <turns>
+                <ban id="0" fromref="871" toref="870"/>
+                <ban id="1" fromref="1456" toref="1457"/>
+                <ban id="10" fromref="1272" toref="1273"/>
+                <ban id="11" fromref="1696" toref="1697"/>
+                <ban id="12" fromref="718" toref="719"/>
+                <ban id="13" fromref="744" toref="745"/>
+                <ban id="14" fromref="980" toref="981"/>
+                <ban id="15" fromref="540" toref="541"/>
+                <ban id="16" fromref="1286" toref="1287"/>
+                <ban id="17" fromref="1328" toref="1329"/>
+                <ban id="18" fromref="174" toref="175"/>
+                <ban id="19" fromref="1378" toref="1379"/>
+                <ban id="2" fromref="752" toref="753"/>
+                <ban id="20" fromref="1448" toref="1449"/>
+                <ban id="21" fromref="682" toref="683"/>
+                <ban id="22" fromref="1070" toref="1071"/>
+                <ban id="23" fromref="730" toref="731"/>
+                <ban id="24" fromref="1508" toref="1509"/>
+                <ban id="25" fromref="628" toref="629"/>
+                <ban id="26" fromref="1550" toref="1551"/>
+                <ban id="27" fromref="488" toref="489"/>
+                <ban id="3" fromref="882" toref="883"/>
+                <ban id="4" fromref="870" toref="871"/>
+                <ban id="5" fromref="608" toref="609"/>
+                <ban id="6" fromref="474" toref="475"/>
+                <ban id="7" fromref="107" toref="106"/>
+                <ban id="8" fromref="432" toref="433"/>
+                <ban id="9" fromref="446" toref="447"/>
+            </turns>
         </layer>
     </infrastructurelayers>
 </macroscopicnetwork>

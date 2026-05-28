@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter.network.data;
 
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.OsmBoundary;
@@ -11,6 +12,8 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.utils.network.layer.physical.Node;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -186,6 +189,36 @@ public class OsmNetworkReaderData {
    */
   public final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> getLayerParsers() {
     return this.osmLayerParsers;
+  }
+
+  /**
+   * Find across layer parsers
+   * <p>
+   *   Note that some OSM ways (circular) may not have been converted yet and are not findable through until after
+   *   completion of main processing
+   * </p>
+   * @param osmWayId to find
+   * @return PLANit link if available
+   */
+  public MacroscopicLink findPlanitLinkByOsmWayId(long osmWayId){
+    return getLayerParsers().values().stream()
+        .map(parser -> parser.getLayerData().findPlanitLinkByOsmWayId(osmWayId))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /**
+   * Find across layer parsers
+   * @param osmNodeId to find
+   * @return PLANit node if available
+   */
+  public Node findPlanitNodeByOsmNode(OsmNode osmNodeId) {
+    return getLayerParsers().values().stream()
+        .map(parser -> parser.getLayerData().getPlanitNodeByOsmNode(osmNodeId))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 
   /** check if bounding area is available

@@ -6,9 +6,7 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
-import de.topobyte.osm4j.core.model.iface.OsmRelation;
-import de.topobyte.osm4j.core.model.iface.OsmRelationMember;
-import de.topobyte.osm4j.core.model.impl.RelationMember;
+import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
@@ -22,10 +20,9 @@ import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.Triple;
 import org.goplanit.utils.network.layer.NetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 
-import de.topobyte.osm4j.core.model.iface.OsmNode;
-import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
@@ -530,6 +527,59 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     //todo: initially identify if via relation is a way or multiple nodes/ways. If so we track how many we ditch for
     //  logging but we ignore them as our movements do not support this yet. Analyse what percentage of total this is
     //  to flag if we should try and parse/support this
+
+    // check spatial eligibility
+    var spatialEligibility = getNetworkData().getOsmSpatialEligibilityData();
+    OsmRelationMember osmFromMember = fromViaToTriple.first();
+    OsmRelationMember osmToMember = fromViaToTriple.third();
+    // check for faulty tagging
+    if(osmFromMember == null || osmToMember == null){
+      return;
+    }
+
+    // check for spatial eligibility
+    if(!spatialEligibility.isOsmWaySpatiallyEligible(osmToMember.getId()) ||
+        !spatialEligibility.isOsmWaySpatiallyEligible(osmFromMember.getId())){
+      return;
+    }
+
+    // check via support - currently we only support a single node as via point // todo: expand to support?
+    if(fromViaToTriple.second() == null || fromViaToTriple.second().isEmpty() || fromViaToTriple.second().size() > 1){
+      return;
+    }
+    OsmRelationMember osmViaMember = fromViaToTriple.second().get(0);
+
+    // check via type - currently we only support the via to be a node and not a way // todo: expand to support?
+    if(osmViaMember.getType().equals(EntityType.Way)){
+      return;
+    }
+
+    // obtain PLANit parsed equivalents of banned turn elements
+    var planitFromLink = getNetworkData().findPlanitLinkByOsmWayId(osmFromMember.getId());
+    var planitToLink = getNetworkData().findPlanitLinkByOsmWayId(osmFromMember.getId());
+    var planitViaNode = getNetworkData().findPlanitNodeByOsmNode(
+        getNetworkData().getOsmNodeData().getRegisteredOsmNode(osmViaMember.getId()));
+    if(planitViaNode == null){
+      LOGGER.warning(String.format(
+          "OSM turn restriction via node (%d) not available in parser, this shouldn't happen", osmViaMember.getId()));
+      return;
+    }
+
+    if(planitFromLink == null || planitToLink == null){
+      // can happen if part of circular way and either is not yet processed
+      //todo:
+      LOGGER.severe(String.format("OSM turn restriction from (%d) or to (%d) link not available in parser " +
+          "this shouldn't happen", osmFromMember.getId(), osmToMember.getId()));
+      return;
+    }
+
+    // obtain PLANit directional segments from link/node info
+    var planitFromSegment = planitFromLink.getSegmentUpstreamOf(planitViaNode);
+    var planitToSegment = planitFromLink.getSegmentDownstreamFrom(planitViaNode);
+
+    // construct PLANit (banned) movement
+    var layer = getNetwork().getLayerByMode(((MacroscopicLinkSegment) planitFromSegment).getAnyAllowedMode());
+    layer.getBannedMovements().getFactory().registerNew(planitFromSegment, planitToSegment);
   }
 
   private void extractLimitedMandatoryTurnMovement(

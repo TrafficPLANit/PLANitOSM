@@ -33,28 +33,39 @@ public class OsmNetworkReaderLayerData {
   /** profiler for the network layer */
   private final OsmNetworkHandlerProfiler profiler = new OsmNetworkHandlerProfiler();
   
-  /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only track globally when
-   * part of intermodal reader where follow up components require this information, otherwise it is locally discarded after use */
+  /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only
+   * track globally when
+   * part of intermodal reader where follow up components require this information, otherwise it is locally discarded
+   * after use */
   protected Map<Long, Set<MacroscopicLink>> osmWaysWithMultiplePlanitLinks = new HashMap<>();
   
-  /** Identify which links truly have the passed in node as an internal node. whenever we have started with breaking links, or processing cirular ways
+  /** Identify which links truly have the passed in node as an internal node. whenever we have started with breaking
+   * links, or processing cirular ways
    * we can no longer rely on the original internal node mapping. Instead, we must use a two step process:
    * 1) identify the original osmWayId the node was internal to
-   * 2) use the known broken links by osmWayId, track the planit link that represents part of the original osmway and mark that as a link with the node as internal.
+   * 2) use the known broken links by osmWayId, track the planit link that represents part of the original osmway
+   * and mark that as a link with the node as internal.
    * 
-   * That is what this method does by updating the linksWithNodeInternallyToUpdate list based on the osmWaysWithMultiplePlanitLinks given the reference node
+   * That is what this method does by updating the linksWithNodeInternallyToUpdate list based on the
+   * osmWaysWithMultiplePlanitLinks given the reference node
    * 
    * @param location the point to break at
    * @param osmWaysWithMultiplePlanitLinks known osm ways with multiple planit links due to earlier breaking of links
-   * @param linksWithLocationInternally list of links the point is internal to not taken into account breaking of links that has occurred since (to be updated)
+   * @param linksWithLocationInternally list of links the point is internal to not taken into account breaking of
+   *                                    links that has occurred since (to be updated)
    * @return the link to break, null if none could be found
    */
-  private void updateLinksForInternalLocation(Point location, Map<Long, Set<MacroscopicLink>> osmWaysWithMultiplePlanitLinks, List<MacroscopicLink> linksWithLocationInternally) {
+  private void updateLinksForInternalLocation(
+      Point location,
+      Map<Long, Set<MacroscopicLink>> osmWaysWithMultiplePlanitLinks,
+      List<MacroscopicLink> linksWithLocationInternally) {
+
     if(location != null && linksWithLocationInternally!= null && !linksWithLocationInternally.isEmpty()) {
       
-      /* find replacement links for the original link to break in case the original already has been broken and we should use 
-       * one of the split off broken links instead of the original for the correct breaking for the given node (since it now resides on one of the broken
-       * links rather than the original full link that no longer exists in that form */
+      /* find replacement links for the original link to break in case the original already has been broken
+      and we should use one of the split off broken links instead of the original for the correct breaking for
+      the given node (since it now resides on one of the broken links rather than the original full link that no
+       longer exists in that form */
       Set<MacroscopicLink> replacementLinks = new HashSet<>();
       Iterator<MacroscopicLink> linksWithLocationInternal = linksWithLocationInternally.iterator();
       final double coordinateTolerance = 0;
@@ -69,7 +80,8 @@ public class OsmNetworkReaderLayerData {
           MacroscopicLink matchingEarlierBrokenLink = null;
           boolean locationInternal = true;
           for(var link : earlierBrokenLinks) {
-            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(location.getCoordinate(),link.getGeometry(), coordinateTolerance);
+            Optional<Integer> coordinatePosition = PlanitJtsUtils.findFirstCoordinatePosition(
+                location.getCoordinate(),link.getGeometry(), coordinateTolerance);
             if(coordinatePosition.isPresent()) {
               matchingEarlierBrokenLink = link;
               
@@ -87,8 +99,9 @@ public class OsmNetworkReaderLayerData {
           
           /* verify if match is valid (which it should be) */
           if(matchingEarlierBrokenLink==null) {
-            LOGGER.warning(String.format("Unable to locate broken sublink of OSM way %s (id:%d), likely malformed way encountered, ignored",
-                orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));            
+            LOGGER.warning(String.format("Unable to locate broken sublink of OSM way %s (id:%d), " +
+                "likely malformed way encountered, ignored",
+                orginalLinkToBreak.getExternalId(), orginalLinkToBreak.getId()));
           }else if(locationInternal){
             replacementLinks.add(matchingEarlierBrokenLink);
           }
@@ -118,9 +131,13 @@ public class OsmNetworkReaderLayerData {
    */
   protected Map<Point, Pair<List<MacroscopicLink>,OsmNode>> originalLinkInternalAvailableLocations = new HashMap<>();
 
+  /** track mapping from osm way id to PLANit link for reverse look up */
+  protected Map<Long, MacroscopicLink> osmWayIdToPlanitLink = new HashMap<>();
+
   protected Map<String, Integer> osmVerticalLayerIndicesByOsmWayId = new HashMap<>();
 
-  /** Collect the OSM vertical layer index for the link. Requires the link to have registered its external id (OSM way id)
+  /** Collect the OSM vertical layer index for the link. Requires the link to have registered
+   * its external id (OSM way id)
    * @param link to collect from
    * @return vertical layer index, defaults to 0 if not explicitly registered
    */
@@ -428,4 +445,21 @@ public class OsmNetworkReaderLayerData {
   }
 
 
+  /**
+   * track by OSM way id
+   * @param link to track
+   * @param osmWayId id to use
+   */
+  public void registerPlanitLinkByOsmWayId(MacroscopicLink link, long osmWayId) {
+    osmWayIdToPlanitLink.put(osmWayId, link);
+  }
+
+  /**
+   * Obtain by OSM way id
+   * @param osmWayId to use
+   * @return found link if any, if not null
+   */
+  public MacroscopicLink findPlanitLinkByOsmWayId(long osmWayId) {
+    return osmWayIdToPlanitLink.get(osmWayId);
+  }
 }

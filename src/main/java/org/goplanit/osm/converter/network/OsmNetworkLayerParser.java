@@ -579,7 +579,7 @@ public class OsmNetworkLayerParser {
     var linkSegment =
         PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
             link, directionAb, linkSegmentType, speedLimit, numLanes, networkLayer);
-    layerData.getProfiler().logLinkSegmentStatus(networkLayer.getNumberOfLinkSegments());      
+    layerData.getProfiler().logLinkSegmentStatus(networkLayer.getNumberOfLinkSegments());
     return linkSegment;
   }  
   
@@ -750,6 +750,7 @@ public class OsmNetworkLayerParser {
 
       /* register internal nodes for breaking links later on during parsing */
       registerLinkInternalOsmNodes(link,startNodeIndex+1,endNodeIndex-1, osmWay);
+      layerData.registerPlanitLinkByOsmWayId(link, osmWay.getId());
 
       layerData.getProfiler().logLinkStatus(networkLayer.getNumberOfLinks());
     }

@@ -93087,6 +93087,41 @@
                     </linksegment>
                 </link>
             </links>
+            <turns>
+                <ban id="0" fromref="3930" toref="3931"/>
+                <ban id="1" fromref="2268" toref="2269"/>
+                <ban id="10" fromref="3933" toref="3932"/>
+                <ban id="11" fromref="678" toref="679"/>
+                <ban id="12" fromref="2269" toref="2268"/>
+                <ban id="13" fromref="814" toref="815"/>
+                <ban id="14" fromref="846" toref="847"/>
+                <ban id="15" fromref="2972" toref="2973"/>
+                <ban id="16" fromref="4470" toref="4471"/>
+                <ban id="17" fromref="1402" toref="1403"/>
+                <ban id="18" fromref="1428" toref="1429"/>
+                <ban id="19" fromref="2028" toref="2029"/>
+                <ban id="2" fromref="1773" toref="1772"/>
+                <ban id="20" fromref="1066" toref="1067"/>
+                <ban id="21" fromref="2986" toref="2987"/>
+                <ban id="22" fromref="3036" toref="3037"/>
+                <ban id="23" fromref="296" toref="297"/>
+                <ban id="24" fromref="3236" toref="3237"/>
+                <ban id="25" fromref="3462" toref="3463"/>
+                <ban id="26" fromref="1348" toref="1349"/>
+                <ban id="27" fromref="2288" toref="2289"/>
+                <ban id="28" fromref="1414" toref="1415"/>
+                <ban id="29" fromref="3668" toref="3669"/>
+                <ban id="3" fromref="3470" toref="3471"/>
+                <ban id="30" fromref="1198" toref="1199"/>
+                <ban id="31" fromref="3838" toref="3839"/>
+                <ban id="32" fromref="992" toref="993"/>
+                <ban id="4" fromref="1468" toref="1469"/>
+                <ban id="5" fromref="1786" toref="1787"/>
+                <ban id="6" fromref="1772" toref="1773"/>
+                <ban id="7" fromref="1156" toref="1157"/>
+                <ban id="8" fromref="962" toref="963"/>
+                <ban id="9" fromref="183" toref="182"/>
+            </turns>
         </layer>
     </infrastructurelayers>
 </macroscopicnetwork>
