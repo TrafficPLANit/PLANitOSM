@@ -23,10 +23,11 @@ import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.ZoningModifierUtils;
 
 /**
- * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the transfer zones
- * of a zoning instance. By default an intermodal reader will activate parsing transfer infrastructure as well as the network infrastructure (including rail which for a 
- * "regular" network reader is turned off by default, since we assume that more often than not, once desires to include rail when parsing pt networks.
- * One can manually change these defaults via the various settings made available.
+ * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the
+ * transfer zones of a zoning instance. By default an intermodal reader will activate parsing transfer
+ * infrastructure as well as the network infrastructure (including rail which for a "regular" network reader is
+ * turned off by default, since we assume that more often than not, once desires to include rail when parsing
+ * pt networks. One can manually change these defaults via the various settings made available.
  * 
  * @author markr
  *
@@ -55,30 +56,39 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     
     /* both source countries must be the same */
-    if( !networkSettings.getCountryName().equals(ptSettings.getCountryName())){
+    if( networkSettings.getCountryName() == null ||
+        !networkSettings.getCountryName().equals(ptSettings.getCountryName())){
         LOGGER.severe(String.format(
-            "OSM intermodal reader requires both the network and zoning (pt) to utilise the same source country upon parsing, found %s and %s respctively instead",networkSettings.getCountryName(), ptSettings.getCountryName()));
+            "OSM intermodal reader requires both the network and zoning (pt) to utilise the same source country " +
+                "upon parsing, found %s and %s respectively instead",
+            networkSettings.getCountryName(), ptSettings.getCountryName()));
       return false;
     }
     
     /* both input files must be the same */
-    if(!networkSettings.getInputSource().equals(ptSettings.getInputSource())) {
+    if(networkSettings.getInputSource() == null ||
+        !networkSettings.getInputSource().equals(ptSettings.getInputSource())) {
       LOGGER.warning(
-          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same osm input file upon parsing, found %s and %s respctively instead",networkSettings.getInputSource(), ptSettings.getInputSource()));
+          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same " +
+              "OSM input file upon parsing, found %s and %s respectively instead",
+              networkSettings.getInputSource(), ptSettings.getInputSource()));
       if(networkSettings.getInputSource()!=null) {
         LOGGER.warning(
-            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,networkSettings.getInputSource()));
+            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,
+                networkSettings.getInputSource()));
         ptSettings.setInputSource(networkSettings.getInputSource());
       }else if(ptSettings.getInputSource()!=null) {
         LOGGER.warning(
-            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,ptSettings.getInputSource()));
+            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,
+                ptSettings.getInputSource()));
         networkSettings.setInputSource(ptSettings.getInputSource());
       }else {
         return false;
       }
     }
 
-    if(!(networkSettings.isHighwayParserActive() || networkSettings.isRailwayParserActive() || networkSettings.isWaterwayParserActive())){
+    if(!(networkSettings.isHighwayParserActive() || networkSettings.isRailwayParserActive() ||
+        networkSettings.isWaterwayParserActive())){
       LOGGER.warning("Not a single type of network is activated nor road, rail, or water");
       return false;
     }
@@ -193,7 +203,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
-    boolean originalRemoveDanglingTransferZoneGroups = osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups();
+    boolean originalRemoveDanglingTransferZoneGroups =
+        osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups();
     {
       /* default activate the parser because otherwise there is no point in using an intermodal reader anyway */
       osmZoningReader.getSettings().activateParser(true);    
@@ -231,8 +242,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   }
 
   /**
-   * Currently no support for this yet on the OSM side. To be implemented in the future. For now services are to be sourced
-   * from GTFS and spliced into the OSM network
+   * Currently no support for this yet on the OSM side. To be implemented in the future. For now services
+   * are to be sourced from GTFS and spliced into the OSM network
    *
    * @return false
    */
@@ -254,6 +265,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
       return null;
     }
 
-    throw new PlanItRunTimeException("Support for service reader as part of Intermodal reader not yet supported in OSMIntermodalReader");
+    throw new PlanItRunTimeException("Support for service reader as part of Intermodal reader not yet supported" +
+        " in OSMIntermodalReader");
   }
 }
