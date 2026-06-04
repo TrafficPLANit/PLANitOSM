@@ -54,7 +54,8 @@ public class OsmNetworkReader implements NetworkReader {
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
    */
   public void initialiseBeforeParsing() {
-    PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null && getOsmNetworkToPopulate().getTransportLayers().size()>0,
+    PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null &&
+            getOsmNetworkToPopulate().getTransportLayers().size()>0,
         "Network is expected to be empty at start of parsing OSM network, but it has layers already");
     
     /* gis initialisation */
@@ -179,12 +180,14 @@ public class OsmNetworkReader implements NetworkReader {
   private void doPreprocessing(){
 
     /* STAGE 1 -
-     * identify OSM ways that are eligible from a network perspective (are they roads etc.). If a bounding area is specified then
+     * identify OSM ways that are eligible from a network perspective (are they roads etc.). If a bounding area
+     * is specified then
      * they should at least have one node within the bounding area to be considered */
     LOGGER.info("Pre-processing: Identifying spatially eligible network OSM entities");
     createHandlerAndRead(OsmNetworkPreProcessingHandler.Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS);
 
-    /* STAGE 2 - Identify any OSM ways/nodes that are considered special cases even if they fall outside bounding polygon
+    /* STAGE 2 - Identify any OSM ways/nodes that are considered special cases even if they fall outside
+    bounding polygon
     * e.g., ferries. */
     if(getSettings().hasBoundingBoundary())
     {
@@ -213,7 +216,8 @@ public class OsmNetworkReader implements NetworkReader {
       LOGGER.severe("Unable to create OSM reader for network, aborting");
       return;
     }   
-    OsmNetworkMainProcessingHandler osmHandler = new OsmNetworkMainProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
+    OsmNetworkMainProcessingHandler osmHandler =
+        new OsmNetworkMainProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
     OsmHandlerUtils.readWithHandler(osmReader, osmHandler);
   }
   
@@ -234,8 +238,10 @@ public class OsmNetworkReader implements NetworkReader {
   }
   
   /**
-   * remove dangling subnetworks when settings dictate it. In case the removal of subnetworks causes zones to become dangling
-   * the user is required to remove those afterwards themselves, by providing the zoning, only the directly impacted connectoids
+   * remove dangling subnetworks when settings dictate it. In case the removal of subnetworks causes zones to
+   * become dangling
+   * the user is required to remove those afterwards themselves, by providing the zoning, only the directly
+   * impacted connectoids
    * are removed if affected.
    * 
    * @param zoning to also remove connectoids from when they reference removed road/rail subnetworks
@@ -272,10 +278,13 @@ public class OsmNetworkReader implements NetworkReader {
       }
       
       /* account for the connectoids that are to be removed as well in case they reside on a dangling network 
-       * TODO: refactor this listener and instead make sure it is automatically dealt with by the zoning as an internal listener in some way
+       * TODO: refactor this listener and instead make sure it is automatically dealt with by the zoning as an
+       *  internal listener in some way
        * as this always needs to happen not only in OSM 
-       * TODO: this listener and zoning in general does not properly support layers since vertices across layers might have the same id whereas 
-       * zone connectoids are now globally stored on the zoning and not per layer. This should be changed to avoid this problem possibly easier when this functionality
+       * TODO: this listener and zoning in general does not properly support layers since vertices across layers
+       *  might have the same id whereas
+       * zone connectoids are now globally stored on the zoning and not per layer. This should be changed to
+       *  avoid this problem possibly easier when this functionality
        * is not separate but dealt with within the zoning */
       DirectedGraphModifierListener listener = null;
       if(zoning != null) {
@@ -342,7 +351,8 @@ public class OsmNetworkReader implements NetworkReader {
    * @param countryName to use
    * @param osmNetworkToPopulate network to populate
    */
-  protected OsmNetworkReader(final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate){
+  protected OsmNetworkReader(
+      final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate){
     this(new OsmNetworkReaderSettings(inputSource, countryName), osmNetworkToPopulate);
   }    
     
@@ -366,9 +376,12 @@ public class OsmNetworkReader implements NetworkReader {
    */
   @Override
   public MacroscopicNetwork read() {
-    PlanItRunTimeException.throwIfNull(getSettings().getInputSource(),"Input source not set for OSM network to parse");
-    PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),"Country name not set for OSM network to parse");
-    PlanItRunTimeException.throwIfNull(getOsmNetworkToPopulate(),"PLANit network to populate not set for OSM network to parse");
+    PlanItRunTimeException.throwIfNull(getSettings().getInputSource(),
+        "Input source not set for OSM network to parse");
+    PlanItRunTimeException.throwIf(StringUtils.isNullOrBlank(getSettings().getCountryName()),
+        "Country name not set for OSM network to parse");
+    PlanItRunTimeException.throwIfNull(getOsmNetworkToPopulate(),
+        "PLANit network to populate not set for OSM network to parse");
 
     logInfo();
     
@@ -421,8 +434,10 @@ public class OsmNetworkReader implements NetworkReader {
    * @return created network to zoning reader data to use
    */
   public OsmNetworkToZoningReaderData createNetworkToZoningReaderData() {
-    if(getOsmNetworkToPopulate().getTransportLayers().size()==0 || getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
-      LOGGER.warning("Can only perform network->zoning data transfer when network has been populated by OSM network reader, i.e., first invoke the read() method before this call");
+    if(getOsmNetworkToPopulate().getTransportLayers().size()==0 ||
+        getOsmNetworkToPopulate().getTransportLayers().getFirst().isEmpty()) {
+      LOGGER.warning("Can only perform network->zoning data transfer when network has been " +
+          "populated by OSM network reader, i.e., first invoke the read() method before this call");
       return null;
     }
 

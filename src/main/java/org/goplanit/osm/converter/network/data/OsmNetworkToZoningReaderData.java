@@ -12,8 +12,8 @@ import java.util.logging.Logger;
 
 /**
  * Class that hosts all the data gathered (e.g., references, mappings, etc.) during the parsing of the OSM network
- * that is also of use to the OSM zoning reader. It is used by the intermodal OSM reader to pass this information along in 
- * an elegant fashion.
+ * that is also of use to the OSM zoning reader. It is used by the intermodal OSM reader to pass this
+ * information along in an elegant fashion.
  * 
  * @author markr
  *

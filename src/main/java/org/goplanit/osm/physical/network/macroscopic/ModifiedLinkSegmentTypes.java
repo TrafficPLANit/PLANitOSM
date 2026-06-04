@@ -12,8 +12,8 @@ import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 
 /**
- * Helper class that tracks all modified, i.e., custom link segment types, that differ from the default link segment types
- * created for open street map road and rail way types.
+ * Helper class that tracks all modified, i.e., custom link segment types, that differ from the default link
+ * segment types created for open street map road and railway types.
  * 
  * All custom link segment types are stored by their original link segment type (id) that they are based on.
  * To make it efficient to look them up when verifying if some potential new custom link segment type already exists
@@ -26,6 +26,11 @@ public class ModifiedLinkSegmentTypes {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(ModifiedLinkSegmentTypes.class.getCanonicalName());
+
+  /**
+   * Dummy constructor
+   */
+  public ModifiedLinkSegmentTypes(){}
   
   /**
    * Track link segment types where only modes are either added or removed compared to their parent link segment type.
@@ -35,7 +40,7 @@ public class ModifiedLinkSegmentTypes {
    * @author markr
    *
    */
-  public class ModifiedLinkSegmentTypesModes{
+  public static class ModifiedLinkSegmentTypesModes{
 
     /** original link segment type */
     protected final MacroscopicLinkSegmentType original;

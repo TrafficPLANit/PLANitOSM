@@ -36,6 +36,11 @@ public class Osm2PlanitConversionTemplates {
   private static final Logger LOGGER = Logger.getLogger(Osm2PlanitConversionTemplates.class.getCanonicalName());
 
   /**
+   * Dummy constructor
+   */
+  private Osm2PlanitConversionTemplates(){}
+
+  /**
    * Template for simple car centric conversion of OSM network to PLANit network, with only the main road types active
    *
    * @param osmSettings the input settings

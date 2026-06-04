@@ -7,6 +7,8 @@ package org.goplanit.osm.tags;
  *
  */
 public class OsmAccessTags {
+
+  private OsmAccessTags(){}
   
   /**
    * <ul>

@@ -14,6 +14,11 @@ public class OsmHandlerUtils {
 
   private static final Logger LOGGER = Logger.getLogger(OsmHandlerUtils.class.getCanonicalName());
 
+  /**
+   * Dummy constructor
+   */
+  private OsmHandlerUtils(){}
+
   /** Read based on reader and handler where the reader performs a callback to the handler provided
    *
    * @param osmReader to use

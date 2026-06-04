@@ -16,6 +16,8 @@ import org.goplanit.osm.util.OsmTagUtils;
  *
  */
 public class OsmBicycleTags {
+
+  private OsmBicycleTags(){}
   
   /**
    * <ul>

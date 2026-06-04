@@ -33,22 +33,28 @@ public class OsmNetworkHandlerProfiler {
   private LongAdder missingLaneCounter = new LongAdder();  
     
   /**
-   * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
+   * for logging we log each x number of entities parsed, this is done smartly to minimize number of lines
    * while still providing information, hence the modulo use is dynamic
    */
   private long moduloLoggingCounterLinks = 500;
 
   /**
-   * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
+   * for logging we log each x number of entities parsed, this is done smartly to minimize number of lines
    * while still providing information, hence the modulo use is dynamic
    */  
   private long moduloLoggingCounterLinkSegments = 500;
+
+  /**
+   * for logging we log each x number of entities parsed, this is done smartly to minimize number of lines
+   * while still providing information, hence the modulo use is dynamic
+   */
+  private long moduloLoggingCounterNodes = 500;
   
   /**
-   * for logging we log each x number of entities parsed, this is done smartly to minimise number of lines
+   * for logging we log each x number of entities parsed, this is done smartly to minimize number of lines
    * while still providing information, hence the modulo use is dynamic
    */  
-  private long moduloLoggingCounterNodes = 500;
+  private long moduloLoggingCounterMovements = 500;
 
   /**
    * Increment counter for passed in osm tag 
@@ -81,8 +87,12 @@ public class OsmNetworkHandlerProfiler {
 
     double percentageDefaultspeedLimits = 100*((double) missingSpeedLimitCounter.longValue() /totalCount);
     double percentageDefaultLanes = 100*((double) missingLaneCounter.longValue() /totalCount);
-    LOGGER.info(String.format("%s [STATS] Applied default speed limits to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
-    LOGGER.info(String.format("%s [STATS] Applied default lane numbers to %.1f%% of link(segments) -  %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer), percentageDefaultLanes, 100-percentageDefaultLanes));
+    LOGGER.info(String.format("%s [STATS] Applied default speed limits to %.1f%% of link(segments) - " +
+        " %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer),
+        percentageDefaultspeedLimits, 100-percentageDefaultspeedLimits));
+    LOGGER.info(String.format("%s [STATS] Applied default lane numbers to %.1f%% of link(segments) - " +
+        " %.1f%% explicitly set", NetworkLayer.createLayerLogPrefix(networkLayer),
+        percentageDefaultLanes, 100-percentageDefaultLanes));
   }
 
   /**
@@ -92,9 +102,14 @@ public class OsmNetworkHandlerProfiler {
    */
   public void logPlanitStats(MacroscopicNetworkLayer networkLayer) {
     /* stats on exact number of created PLANit network objects */
-    LOGGER.info(String.format("%s [STATS] created %d PLANit nodes",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
-    LOGGER.info(String.format("%s [STATS] created %d PLANit links",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
-    LOGGER.info(String.format("%s [STATS] created %d PLANit links segments ",NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit nodes",
+        NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfNodes()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit links",
+        NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit links segments ",
+        NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit banned movements ",
+        NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfBannedMovements()));
   }
 
   /**
@@ -131,6 +146,18 @@ public class OsmNetworkHandlerProfiler {
       LOGGER.info(String.format("Created %d nodes out of OSM nodes",numberOfNodes));
       moduloLoggingCounterNodes *=2;
     }  
+  }
+
+  /**
+   * log user information based on currently number of registered banned movements
+   *
+   * @param numberOfBannedMovements registered number of banned movements so far
+   */
+  public void logBannedMovementStatus(long numberOfBannedMovements) {
+    if(numberOfBannedMovements >= moduloLoggingCounterMovements) {
+      LOGGER.info(String.format("Created %d banned movements out of OSM relations",numberOfBannedMovements));
+      moduloLoggingCounterMovements *=2;
+    }
   }
 
   /**

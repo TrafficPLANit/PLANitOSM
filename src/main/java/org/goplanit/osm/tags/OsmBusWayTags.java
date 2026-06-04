@@ -19,6 +19,8 @@ import org.goplanit.osm.util.OsmTagUtils;
  *
  */
 public class OsmBusWayTags {
+
+  private OsmBusWayTags(){}
   
   /* busway scheme */
   

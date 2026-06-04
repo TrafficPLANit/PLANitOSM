@@ -16,6 +16,7 @@ import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.Triple;
 import org.goplanit.utils.network.layer.NetworkLayer;
@@ -24,6 +25,7 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import org.goplanit.utils.network.layer.physical.Node;
 
 /**
  * Handler that handles, i.e., converts, nodes, ways, and relations. We parse these entities in distinct order,
@@ -125,7 +127,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       
       createdLinksByLayer = handleRawCircularWay(circularOsmWay, tags, 0 /* start at initial index */);
       if(createdLinksByLayer!=null) {
-        /* register that OSM way has multiple planit links mapped (needed in case of subsequent break link actions
+        /* register that OSM way has multiple PLANit links mapped (needed in case of subsequent break link actions
         on nodes of the osm way */
         createdLinksByLayer.forEach((key, value) -> {
           OsmNetworkReaderLayerData layerData = getNetworkData().getLayerParsers().get(key).getLayerData();
@@ -217,7 +219,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   private Map<NetworkLayer,Set<MacroscopicLink>> handlePerfectCircularWay(
       OsmWay circularOsmWay, Map<String, String> osmWayTags, int initialNodeIndex, int finalNodeIndex) {
 
-    
     Map<NetworkLayer,Set<MacroscopicLink>> createdLinksByLayer = new HashMap<>();
     int firstPartialLinkStartNodeIndex = -1;
     int partialLinkStartNodeIndex = -1;
@@ -490,6 +491,74 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param tags of the relation
    */
   private void extractOsmTurnRestriction(OsmRelation osmRelation, Map<String, String> tags) {
+    var fromViaToTriple = extractTurnRoles(osmRelation);
+    OsmRelationMember osmFromMember = fromViaToTriple.first();
+    OsmRelationMember osmToMember = fromViaToTriple.third();
+    // check for faulty/unsupported tagging
+    if(osmFromMember == null || osmToMember == null){
+      return;
+    }
+
+    // check for spatial eligibility
+    var spatialEligibility = getNetworkData().getOsmSpatialEligibilityData();
+    if(!spatialEligibility.isOsmWaySpatiallyEligible(osmToMember.getId()) ||
+        !spatialEligibility.isOsmWaySpatiallyEligible(osmFromMember.getId())){
+      return;
+    }
+
+    //todo: initially identify if via relation is a way or multiple nodes/ways. If so we track how many we ditch for
+    //  logging but we ignore them as our movements do not support this yet. Analyse what percentage of total this is
+    //  to flag if we should try and parse/support this
+
+    // check via support - currently we only support a single node as via point // todo: expand to support?
+    if(fromViaToTriple.second() == null || fromViaToTriple.second().isEmpty() || fromViaToTriple.second().size() > 1){
+      return;
+    }
+    OsmRelationMember osmViaMember = fromViaToTriple.second().get(0);
+
+    // check via type - currently we only support the via to be a node and not a way // todo: expand to support?
+    if(osmViaMember.getType().equals(EntityType.Way)){
+      return;
+    }
+    // obtain PLANit parsed equivalents of banned turn elements
+    var planitFromLink = getNetworkData().findPlanitLinkByOsmWayId(osmFromMember.getId());
+    var planitToLink = getNetworkData().findPlanitLinkByOsmWayId(osmToMember.getId());
+    var planitViaNode = getNetworkData().findPlanitNodeByOsmNode(
+        getNetworkData().getOsmNodeData().getRegisteredOsmNode(osmViaMember.getId()));
+
+    if(planitViaNode == null){
+      LOGGER.warning(String.format(
+          "OSM turn restriction via node (%d) not available in parser, this shouldn't happen", osmViaMember.getId()));
+      return;
+    }
+    if(planitFromLink == null || planitToLink == null){
+      LOGGER.severe(String.format("OSM turn restriction from (%d) or to (%d) link not available in parser " +
+          "this shouldn't happen", osmFromMember.getId(), osmToMember.getId()));
+      return;
+    }
+
+    boolean fromViaNodeIsInternal = !planitFromLink.hasVertex(planitViaNode);
+    boolean toViaNodeIsInternal = !planitToLink.hasVertex(planitViaNode);
+    if(fromViaNodeIsInternal && toViaNodeIsInternal){
+      LOGGER.warning(String.format("OSM banned turn (%d) defined on two intersecting OSM ways, via node " +
+          "internal on both, ambiguous, skip", osmRelation.getId()));
+      return;
+    }
+
+    // obtain PLANit directional segments from link/node info
+    var planitFromSegment = planitFromLink.getSegmentUpstreamOf(planitViaNode);
+    if(fromViaNodeIsInternal || toViaNodeIsInternal){
+      //        ^               |
+      //        |               V
+      //  ------------>  or ------------>
+      //
+      // todo: ambiguous unless we look at geometry --> support time permitting
+      LOGGER.warning(String.format("OSM banned turn (%d) defined on non-terminating node of OSM way, " +
+          "not yet supported, skip", osmRelation.getId()));
+      return;
+    }
+    var planitToSegment = planitToLink.getSegmentDownstreamFrom(planitViaNode);
+
     String restrictionType = tags.get(OsmRelationRestrictionTags.RESTRICTION);
     if (restrictionType != null) {
       switch (restrictionType) {
@@ -497,13 +566,14 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         case OsmRelationRestrictionTags.NO_RIGHT_TURN:
         case OsmRelationRestrictionTags.NO_U_TURN:
         case OsmRelationRestrictionTags.NO_STRAIGHT_ON:
-          extractOsmProhibitiveTurnBan(osmRelation, tags, restrictionType);
+          extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, planitToSegment, restrictionType);
           break;
 
         case OsmRelationRestrictionTags.ONLY_LEFT_TURN:
         case OsmRelationRestrictionTags.ONLY_RIGHT_TURN:
         case OsmRelationRestrictionTags.ONLY_STRAIGHT_ON:
-          extractLimitedMandatoryTurnMovement(osmRelation, tags, restrictionType);
+          extractLimitedMandatoryTurnMovement(
+              osmRelation, tags, planitFromSegment, planitViaNode, planitToSegment, restrictionType);
           break;
 
         case OsmRelationRestrictionTags.NO_EXIT:
@@ -516,75 +586,61 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
-   * Extract the restricted movement based on the prohibited turn restriction in OSM
+   * Extract the restricted movement based on the prohibited turn restriction in OSM, i.e., when a single turn is
+   * restricted but other turns remain viable.
    *
-   * @param osmRelation relation with the information to extract
-   * @param tags tags of the osm entity
+   * @param osmRelation     relation with the information to extract
+   * @param tags            tags of the osm entity
+   * @param planitFromSegment        the PLANit from link
+   * @param planitViaNode        the PLANit via node
+   * @param planitToSegment        the PLANit to link
    * @param restrictionType type of prohibitive restriction
    */
-  private void extractOsmProhibitiveTurnBan(OsmRelation osmRelation, Map<String, String> tags, String restrictionType) {
-    var fromViaToTriple = extractTurnRoles(osmRelation);
-    //todo: initially identify if via relation is a way or multiple nodes/ways. If so we track how many we ditch for
-    //  logging but we ignore them as our movements do not support this yet. Analyse what percentage of total this is
-    //  to flag if we should try and parse/support this
-
-    // check spatial eligibility
-    var spatialEligibility = getNetworkData().getOsmSpatialEligibilityData();
-    OsmRelationMember osmFromMember = fromViaToTriple.first();
-    OsmRelationMember osmToMember = fromViaToTriple.third();
-    // check for faulty tagging
-    if(osmFromMember == null || osmToMember == null){
-      return;
-    }
-
-    // check for spatial eligibility
-    if(!spatialEligibility.isOsmWaySpatiallyEligible(osmToMember.getId()) ||
-        !spatialEligibility.isOsmWaySpatiallyEligible(osmFromMember.getId())){
-      return;
-    }
-
-    // check via support - currently we only support a single node as via point // todo: expand to support?
-    if(fromViaToTriple.second() == null || fromViaToTriple.second().isEmpty() || fromViaToTriple.second().size() > 1){
-      return;
-    }
-    OsmRelationMember osmViaMember = fromViaToTriple.second().get(0);
-
-    // check via type - currently we only support the via to be a node and not a way // todo: expand to support?
-    if(osmViaMember.getType().equals(EntityType.Way)){
-      return;
-    }
-
-    // obtain PLANit parsed equivalents of banned turn elements
-    var planitFromLink = getNetworkData().findPlanitLinkByOsmWayId(osmFromMember.getId());
-    var planitToLink = getNetworkData().findPlanitLinkByOsmWayId(osmFromMember.getId());
-    var planitViaNode = getNetworkData().findPlanitNodeByOsmNode(
-        getNetworkData().getOsmNodeData().getRegisteredOsmNode(osmViaMember.getId()));
-    if(planitViaNode == null){
-      LOGGER.warning(String.format(
-          "OSM turn restriction via node (%d) not available in parser, this shouldn't happen", osmViaMember.getId()));
-      return;
-    }
-
-    if(planitFromLink == null || planitToLink == null){
-      // can happen if part of circular way and either is not yet processed
-      //todo:
-      LOGGER.severe(String.format("OSM turn restriction from (%d) or to (%d) link not available in parser " +
-          "this shouldn't happen", osmFromMember.getId(), osmToMember.getId()));
-      return;
-    }
-
-    // obtain PLANit directional segments from link/node info
-    var planitFromSegment = planitFromLink.getSegmentUpstreamOf(planitViaNode);
-    var planitToSegment = planitFromLink.getSegmentDownstreamFrom(planitViaNode);
+  private void extractOsmProhibitiveTurnBan(
+      OsmRelation osmRelation,
+      Map<String, String> tags,
+      EdgeSegment planitFromSegment,
+      Node planitViaNode,
+      EdgeSegment planitToSegment,
+      String restrictionType) {
 
     // construct PLANit (banned) movement
     var layer = getNetwork().getLayerByMode(((MacroscopicLinkSegment) planitFromSegment).getAnyAllowedMode());
-    layer.getBannedMovements().getFactory().registerNew(planitFromSegment, planitToSegment);
+    var newBannedMovement = layer.getBannedMovements().getFactory().registerNew(planitFromSegment, planitToSegment);
+    newBannedMovement.setExternalId(String.valueOf(osmRelation.getId()));
+
+    // log
+    getNetworkData().getLayerParsers().get(layer).getLayerData().getProfiler().logBannedMovementStatus(
+        layer.getNumberOfBannedMovements());
   }
 
+  /**
+   * Extract the only allowed movement based on the OSM tagging, i.e., when only single turn remains viable but all
+   * other turns are restricted.
+   *
+   * @param osmRelation     relation with the information to extract
+   * @param tags            tags of the osm entity
+   * @param planitFromSegment        the PLANit from link
+   * @param planitViaNode        the PLANit via node
+   * @param planitToSegment        the PLANit to link
+   * @param restrictionType type of prohibitive restriction
+   */
   private void extractLimitedMandatoryTurnMovement(
-      OsmRelation osmRelation, Map<String, String> tags, String restrictionType) {
-    // todo
+      OsmRelation osmRelation,
+      Map<String, String> tags,
+      EdgeSegment planitFromSegment,
+      Node planitViaNode,
+      EdgeSegment planitToSegment,
+      String restrictionType) {
+
+    // instead of marking this particular turn prohibited, we mark all other turns from this incoming segment as
+    // prohibited
+    for(var exitSegment : planitViaNode.getExitLinkSegments()){
+      if(exitSegment.equals(planitToSegment)){
+        continue;
+      }
+      extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, exitSegment, restrictionType);
+    }
   }
 
   /** actual handling of OSM way assuming it is eligible for processing
@@ -722,9 +778,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void complete() throws IOException {
-    
+
     /* process circular ways */
-    processCircularWays();    
+    processCircularWays();
             
     /* delegate to each layer handler present, do this in deterministic order to ensure any created
     PLANit links/segments

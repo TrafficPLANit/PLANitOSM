@@ -10,6 +10,11 @@ import org.goplanit.utils.macroscopic.MacroscopicConstants;
  */
 public class OsmConstants {
 
+  /**
+   * Dummy constructor
+   */
+  private OsmConstants(){}
+
   // MODELLING
 
   /** pcu/km/lane */

@@ -3,12 +3,18 @@ package org.goplanit.osm.tags;
 import java.util.Map;
 
 /**
- * Tags related to directions, e.g. {@code direction=<option>}, or mode specific direction subtags, e.g. vehicle:backward=yes
+ * Tags related to directions, e.g. {@code direction=<option>}, or mode specific direction subtags,
+ * e.g. vehicle:backward=yes
  * 
  * @author markr
  *
  */
 public class OsmDirectionTags {
+
+  /**
+   * Dummy constructor
+   */
+  private OsmDirectionTags(){}
   
   /** key */
   public static final String DIRECTION = "direction";

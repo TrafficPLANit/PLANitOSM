@@ -404,7 +404,7 @@ public class OsmNetworkReaderLayerData {
     return null;
   }
   
-  /** We identify which current planit links have the given location registered as internal to them
+  /** We identify which current PLANit links have the given location registered as internal to them
    * 
    * @param location to use
    * @return found planit links, null if input is null
@@ -414,16 +414,21 @@ public class OsmNetworkReaderLayerData {
       return null;
     }
     
-    /* collect original mapping from a known internal location (osm node, auto-generated location) to planit link (however due to breaking links, the referenced link may now we repurposed as part of the original link it represented) */
+    /* collect original mapping from a known internal location (osm node, auto-generated location) to
+    PLANit link (however due to breaking links, the referenced link may now we repurposed as part of the original
+    link it represented) */
     Pair<List<MacroscopicLink>,OsmNode> result = originalLinkInternalAvailableLocations.get(location);
     if(result==null || result.first() == null) {
-      LOGGER.fine(String.format("DISCARD: OSM pt stop_position %s not available on network layer within planit link or as extreme node", location.toString()));
+      LOGGER.fine(String.format("DISCARD: OSM location [%s] not available on network layer within" +
+          " PLANit link or as extreme node", location.toString()));
       return null;
     }  
     
     List<MacroscopicLink> linksWithLocationInternally = result.first();
-    /* update the references to which link the location is internal to based on latest information regarding layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
-    updateLinksForInternalLocation(location, osmWaysWithMultiplePlanitLinks, linksWithLocationInternally /* <-- updated */);
+    /* update the references to which link the location is internal based on latest information regarding
+    layerData.getOsmWaysWithMultiplePlanitLinks() so we break the correct links */
+    updateLinksForInternalLocation(
+        location, osmWaysWithMultiplePlanitLinks, linksWithLocationInternally /* <-- updated */);
     return linksWithLocationInternally;
   }
        

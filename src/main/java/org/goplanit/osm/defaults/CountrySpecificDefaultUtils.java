@@ -33,6 +33,7 @@ public class CountrySpecificDefaultUtils {
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(CountrySpecificDefaultUtils.class.getCanonicalName());
 
+  private CountrySpecificDefaultUtils(){}
   
   /** Call consumer for each country specific file in resource dir
    * 

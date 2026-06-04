@@ -889,7 +889,7 @@
                 <accesszone ref="71" lengthkm="0.0" lsrefs="1270,2510" modes="light_rail" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="18" externalid="6585559394" noderef="1047">
-                <accesszone ref="72" lengthkm="0.0" lsrefs="2423,2512" modes="light_rail" type="pt_veh_stop"/>
+                <accesszone ref="72" lengthkm="0.0" lsrefs="2421,2512" modes="light_rail" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="19" externalid="6581009151" noderef="1048">
                 <accesszone ref="69" lengthkm="0.0" lsrefs="2191,2514" modes="light_rail" type="pt_veh_stop"/>
@@ -898,7 +898,7 @@
                 <accesszone ref="67" lengthkm="0.0" lsrefs="811" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="20" externalid="6581009117" noderef="1049">
-                <accesszone ref="70" lengthkm="0.0" lsrefs="2397,2516" modes="light_rail" type="pt_veh_stop"/>
+                <accesszone ref="70" lengthkm="0.0" lsrefs="2399,2516" modes="light_rail" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="21" externalid="6694044633" noderef="1050">
                 <accesszone ref="73" lengthkm="0.0" lsrefs="1354,2518" modes="light_rail" type="pt_veh_stop"/>

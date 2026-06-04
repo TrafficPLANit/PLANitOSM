@@ -21,6 +21,7 @@ import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.goplanit.utils.network.layer.physical.BannedMovement;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
@@ -211,12 +212,12 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
    * 
    * @param planitNode to break link at
    * @param networkLayer the node and link(s) reside on
-   * @param linksToBreak the links to break 
+   * @param linksToBreak the links to break
    */
   private void breakLinksAtPlanitNode(
-          Node planitNode,
-          MacroscopicNetworkLayer networkLayer,
-          List<MacroscopicLink> linksToBreak){
+      Node planitNode,
+      MacroscopicNetworkLayer networkLayer,
+      List<MacroscopicLink> linksToBreak){
 
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
   
@@ -248,9 +249,13 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
           
     /* break links and group resulting new links by original link's OSM id*/
     var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
-    Map<Long, Set<MacroscopicLink>> newlyBrokenLinks = networkLayer.getLayerModifier().breakAt(
-        linksToBreak, planitNode,  referenceNetwork.getCoordinateReferenceSystem(),
-            l -> Long.parseLong(l.getExternalId()));
+
+    var movementsByCentreVertex =
+        getZoningReaderData().getPlanitConverterData().getBannedMovementsIndexedByCentreVertex();
+    var newlyBrokenLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
+        networkLayer.getLayerModifier().breakAt(
+            linksToBreak, planitNode, movementsByCentreVertex, referenceNetwork.getCoordinateReferenceSystem()),
+        l -> Long.parseLong(l.getExternalId()));
   
     /* TRACKING DATA CONSISTENCY - AFTER */
     {
@@ -407,7 +412,10 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
                              
         // now perform the breaking of links at the given node and update related tracking/reference information to
         // broken link(segment)(s) where needed
-        breakLinksAtPlanitNode(planitNode, networkLayer, linksToBreak);
+        breakLinksAtPlanitNode(
+            planitNode,
+            networkLayer,
+            linksToBreak);
       }
     }
     return planitNode;

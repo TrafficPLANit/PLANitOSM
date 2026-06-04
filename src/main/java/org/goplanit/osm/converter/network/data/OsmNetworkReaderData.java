@@ -179,7 +179,7 @@ public class OsmNetworkReaderData {
    * @param networkLayer to collect parser for
    * @return layerParser, null if not present
    */
-  public final OsmNetworkLayerParser getLayerParser(MacroscopicNetworkLayerImpl networkLayer) {
+  public final OsmNetworkLayerParser getLayerParser(MacroscopicNetworkLayer networkLayer) {
     return this.osmLayerParsers.get(networkLayer);
   }   
   

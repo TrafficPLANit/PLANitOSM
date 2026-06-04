@@ -30,6 +30,11 @@ public class OsmBoundingAreaUtils {
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmBoundingAreaUtils.class.getCanonicalName());
 
+  /**
+   * Dummy constructor
+   */
+  private OsmBoundingAreaUtils(){}
+
   /** Create a (Rectangular) bounding box around the OSM ways geometry based on the provided offset
    * 
    * @param osmWay to collect bounding box for

@@ -12,6 +12,11 @@ import java.util.Set;
  */
 public class OsmBoundaryTags {
 
+  /**
+   * Dummy constructor
+   */
+  private OsmBoundaryTags(){}
+
   /* key */
 
   /** BOUNDARY tag */
