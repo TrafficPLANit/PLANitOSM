@@ -93,7 +93,9 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @param railwaySpeedLimitDefaults as they are initially provided
    * @param osmModeAccessRailwayDefaults configuration
    */
-  public OsmRailwaySettings(OsmSpeedLimitDefaultsCategory railwaySpeedLimitDefaults, OsmModeAccessDefaultsCategory osmModeAccessRailwayDefaults) {
+  public OsmRailwaySettings(
+      OsmSpeedLimitDefaultsCategory railwaySpeedLimitDefaults,
+      OsmModeAccessDefaultsCategory osmModeAccessRailwayDefaults) {
     super(new OsmRailwayTypeConfiguration(), railwaySpeedLimitDefaults, osmModeAccessRailwayDefaults);
     activateParser(DEFAULT_RAILWAYS_PARSER_ACTIVE);
   }
@@ -203,8 +205,10 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
    */
-  public void overwriteCapacityMaxDensityDefaults(String osmRailwayType, Number capacityPerLanePerHour, Number maxDensityPerLane) {
-    overwriteOsmWayTypeDefaultCapacityMaxDensity(OsmRailwayTags.RAILWAY, osmRailwayType, capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue());
+  public void overwriteCapacityMaxDensityDefaults(
+      String osmRailwayType, Number capacityPerLanePerHour, Number maxDensityPerLane) {
+    overwriteOsmWayTypeDefaultCapacityMaxDensity(
+        OsmRailwayTags.RAILWAY, osmRailwayType, capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue());
   }    
   
   /**
@@ -229,7 +233,8 @@ public class OsmRailwaySettings extends OsmWaySettings {
     
   /* speed limit */
   
-  /** Collect the speed limit for a given railway tag value, e.g. railway=typeValue, based on the defaults provided (typically set by country)
+  /** Collect the speed limit for a given railway tag value, e.g. railway=typeValue, based on the defaults
+   *  provided (typically set by country)
    * 
    * @param osmWayValue way value type to collect default speed limit for
    * @return speedLimit in km/h
@@ -240,20 +245,23 @@ public class OsmRailwaySettings extends OsmWaySettings {
 
   /* mode */
   
-  /** activate an OSM rail mode based on its (default) mapping to a PLANit mode. This means that the osmMode will be added to the PLANit network
+  /** activate an OSM rail mode based on its (default) mapping to a PLANit mode. This means that the osmMode
+   *  will be added to the PLANit network
    * 
    * @param osmRailMode to activate
    */
   public void activateOsmRailMode(String osmRailMode) {
     String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);
     if(!OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
-      LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit mode mapping, ignored", osmRailMode));
+      LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit" +
+          " mode mapping, ignored", osmRailMode));
       return;
     }
     activateOsmMode(osmRailMode);
   }   
   
-  /** Remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to the PLANit network
+  /** Remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to
+   *  the PLANit network
    * You can only remove a mode when it is already added, either manually or through the default mapping
    * 
    * @param osmRailMode to remove
@@ -261,13 +269,15 @@ public class OsmRailwaySettings extends OsmWaySettings {
   public void deactivateOsmRailMode(String osmRailMode) {
     String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);
     if(!OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
-      LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit mode mapping, ignored", osmRailMode));
+      LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit" +
+          " mode mapping, ignored", osmRailMode));
       return;
     }
     deactivateOsmMode(osmRailMode);
   }
   
-  /** remove a mapping from OSM rail modes to PLANit modes. This means that the osmModes will not be added to the PLANit network
+  /** remove a mapping from OSM rail modes to PLANit modes. This means that the osmModes will not be added to
+   * the PLANit network
    * You can only remove modes when they are already added, either manually or through the default mapping
    * 
    * @param osmRailModes to remove
@@ -328,7 +338,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @param planitModeType to collect mapped mode for (if any)
    * @return mapped osm modes, if not available empty collection is returned
    */  
-  public final TreeSet<String> getMappedOsmRailModes(final PredefinedModeType planitModeType) {
+  public final Set<String> getMappedOsmRailModes(final PredefinedModeType planitModeType) {
     return getAcivatedOsmModes(planitModeType);
   }   
     

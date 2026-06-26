@@ -21,12 +21,12 @@ public class OsmRoadModeCategoryTags {
   /**
    * track all modes by category
    */
-  private static final Map<String, Set<String> > osmCategory2Modes = new HashMap<String, Set<String> >();
+  private static final Map<String, Set<String> > osmCategory2Modes = new HashMap<>();
   
   /**
    * track all categories by modes
    */
-  private static final Map<String, Set<String> > osmMode2Categories = new HashMap<String, Set<String> >();  
+  private static final Map<String, Set<String> > osmMode2Categories = new HashMap<>();
   
   /* initialise the grouping of modes to categories as it is currently outlined on
    * https://wiki.openstreetmap.org/wiki/Key:access */
