@@ -73,9 +73,12 @@ public class OsmZoningReader implements ZoningReader {
    * outside the network's geographically parsed area. If it does exceed, log a warning and replace it with the network
    * bounding area instead.
    * <p>
-   *   In case the bounding area for the zoning is based on a name rather than a polygon, we cannot yet detect such a mismatch
-   *   as the polygon for the zoning is yet to be extracted from the OSM data. In such a case this check is ignored. Instead
-   *   we see if we can copy the polygon from the network to the zoning if the two bounding areas are identically defined in
+   *   In case the bounding area for the zoning is based on a name rather than a polygon, we cannot yet detect such
+   *   a mismatch
+   *   as the polygon for the zoning is yet to be extracted from the OSM data. In such a case this check is ignored.
+   *   Instead
+   *   we see if we can copy the polygon from the network to the zoning if the two bounding areas are identically
+   *   defined in
    *   the settings
    * </p>
    *
@@ -99,10 +102,12 @@ public class OsmZoningReader implements ZoningReader {
       // able to compare, attempt to perform comparison (this may go wrong if any of the two polygons is malformed)
       boolean sameBoundingArea = true;
       try {
-        sameBoundingArea = !networkBoundingPolygon.equalsTopo(boundaryManager.getCompleteBoundingArea().getBoundingPolygon());
+        sameBoundingArea = !networkBoundingPolygon.equalsTopo(
+            boundaryManager.getCompleteBoundingArea().getBoundingPolygon());
       }catch(TopologyException e){
         LOGGER.warning(e.getMessage());
-        LOGGER.warning("Comparing network and zoning Bounding polygons caused unexpected exception, comparison skipped");
+        LOGGER.warning("Comparing network and zoning Bounding polygons caused unexpected exception, " +
+            "comparison skipped");
       }
 
       if(!sameBoundingArea &&
@@ -153,7 +158,8 @@ public class OsmZoningReader implements ZoningReader {
    *  called after the processing of all OSM nodes but before we do OSM ways
    */
   private void pruneUnavailablePreregisteredOsmNodes() {
-    this.zoningReaderData.getOsmConverterData().getOsmNodeData().removeRegisteredOsmNodesIf(e -> e.getValue()==null);
+    this.zoningReaderData.getOsmConverterData().getOsmNodeData().removeRegisteredOsmNodesIf(
+        e -> e.getValue()==null);
   }
 
   /**

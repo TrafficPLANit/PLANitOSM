@@ -11,6 +11,7 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.misc.CollectionUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 
@@ -464,7 +465,9 @@ public class OsmHighwaySettings extends OsmWaySettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("%-40s: %s","Highway (road) parser activated", isParserActive()));
+    LOGGER.info(LoggingUtils.settingsValue("Highway (road) parser activated", isParserActive(), 1));
+    LOGGER.info(LoggingUtils.settingsValue("Speed limit defaults based on urban area", isSpeedLimitDefaultsBasedOnUrbanArea(), 1));
   }
 
 }
+

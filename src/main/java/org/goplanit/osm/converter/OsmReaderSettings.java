@@ -7,6 +7,7 @@ import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
 
 /**
@@ -79,7 +80,10 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("%-40s: %s", "Retain original OSM tags", isRetainOsmTags()));
+    LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Bounding area", hasBoundingBoundary() ? getBoundingArea() : null, 0));
+    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), 0));
   }
   
   /** The input source used 
@@ -178,3 +182,4 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
     this.retainOsmTags = retainOsmTags;
   }
 }
+

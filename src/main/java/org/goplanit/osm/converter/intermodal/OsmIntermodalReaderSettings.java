@@ -5,9 +5,11 @@ import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
 
 import java.net.URL;
+import java.util.logging.Logger;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -17,6 +19,9 @@ import java.net.URL;
  *
  */
 public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
+  
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReaderSettings.class.getCanonicalName());
   
   /** the network settings to use */
   protected final OsmNetworkReaderSettings networkSettings;
@@ -66,7 +71,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param networkSettings to use
    * @param zoningPtSettings to use
    */
-  public OsmIntermodalReaderSettings(final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
+  public OsmIntermodalReaderSettings(
+      final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
     this.networkSettings = networkSettings;
     this.zoningPtSettings = zoningPtSettings;
   } 
@@ -86,6 +92,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    */
   @Override
   public void logSettings() {
+    LOGGER.info(LoggingUtils.settingsHeader("OSM Intermodal Reader Settings"));
     networkSettings.logSettings();
     zoningPtSettings.logSettings();
   }
@@ -108,7 +115,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
     return zoningPtSettings;
   }  
   
-  /** Set the inputSource  to use including for both the network and public transport settings (both should use the same source)
+  /** Set the inputSource  to use including for both the network and public transport settings
+   * (both should use the same source)
    * 
    * @param inputSource to use
    */

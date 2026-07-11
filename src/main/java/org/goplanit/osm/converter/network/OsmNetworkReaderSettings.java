@@ -8,6 +8,7 @@ import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.CollectionUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -220,22 +221,21 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   @Override
   public void logSettings() {
+    LOGGER.info(LoggingUtils.settingsHeader("OSM Network Reader Settings"));
     super.logSettings();
-    LOGGER.info(String.format("%-40s: %s","OSM network input source", getInputSource()));
-    LOGGER.info(String.format("%-40s: %s","Country to base defaults on",getCountryName()));
-    LOGGER.info(String.format("%-40s: %s","Setting Coordinate Reference System",getSourceCRS().getName()));
-    if(hasBoundingBoundary()) {
-      LOGGER.info(String.format("%-40s %s","Network bounding boundary", StringUtils.truncateToWithMessage(
-          getBoundingArea().toString(),500)));
-    }
-    LOGGER.info(String.format("%-40s: %s","Consolidating functionally equivalent OSM link types",
-        isConsolidateLinkSegmentTypes()));
-    LOGGER.info(String.format("%-40s: %s","Always keep largest parsed sub-network", isAlwaysKeepLargestSubnetwork()));
-
+    LOGGER.info(LoggingUtils.settingsValue("Source CRS", getSourceCRS().getName(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types", isConsolidateLinkSegmentTypes(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks", isRemoveDanglingSubnetworks(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks below size", getDiscardDanglingNetworkBelowSize(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks above size", getDiscardDanglingNetworkAboveSize(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork", isAlwaysKeepLargestSubnetwork(), 0));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)", getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), 0));
+    LOGGER.info(LoggingUtils.settingsSection("Highway", 1));
     getHighwaySettings().logSettings();
+    LOGGER.info(LoggingUtils.settingsSection("Railway", 1));
     getRailwaySettings().logSettings();
+    LOGGER.info(LoggingUtils.settingsSection("Waterway", 1));
     getWaterwaySettings().logSettings();
-
   }
 
   /** activate the parsing of railways
@@ -904,3 +904,4 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
 
 }
+

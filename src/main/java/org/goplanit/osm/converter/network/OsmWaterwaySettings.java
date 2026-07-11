@@ -5,6 +5,7 @@ import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.defaults.OsmWaterwayTypeConfiguration;
 import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 
@@ -331,6 +332,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("%-40s: %s","Waterway parser activated", isParserActive()));
+    LOGGER.info(LoggingUtils.settingsValue("Waterway parser activated", isParserActive(), 1));
   }
 }
+

@@ -8,6 +8,7 @@ import org.goplanit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 
@@ -286,7 +287,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
     if(osmRailModes == null) {
       return;
     }
-    osmRailModes.forEach( osmRailMode -> deactivateOsmRailMode(osmRailMode));
+    osmRailModes.forEach(this::deactivateOsmRailMode);
   }   
   
   /** deactivate provided rail modes
@@ -357,6 +358,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    */
   @Override
   public void logSettings() {
-    LOGGER.info(String.format("%-40s: %s","Railway parser activated", isParserActive()));
+    LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), 1));
   }
 }
+
