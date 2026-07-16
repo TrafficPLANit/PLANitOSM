@@ -82,7 +82,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
   public void logSettings() {
     LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), 0));
     LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Bounding area", hasBoundingBoundary() ? getBoundingArea() : null, 0));
+    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), 0));
     LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), 0));
   }
   

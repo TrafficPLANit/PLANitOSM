@@ -493,7 +493,7 @@ public class OsmWayUtils {
       if(coordArray!= null && coordArray.length>=2) {
         if(coordArray.length < osmWay.getNumberOfNodes() ) {
           /* create closed ring in case nodes are missing but we still have a viable polygon shape */
-          coordArray = PlanitJtsUtils.makeClosed2D(coordArray); 
+          coordArray = PlanitJtsUtils.makeClosed2D(coordArray);
           salvaged = true;
         }
         polygon = PlanitJtsUtils.createPolygon(coordArray);
