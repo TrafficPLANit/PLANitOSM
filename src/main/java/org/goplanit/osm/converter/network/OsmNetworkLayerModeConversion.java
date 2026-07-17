@@ -34,38 +34,47 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
   /** helper class to deal with parsing tags under the modeLanes tagging scheme for eligible modes */
   private OsmModeLanesTaggingSchemeHelper modeLanesSchemeHelper = null;  
 
-  /** All modes that are explicitly made (un)available in a particular direction (without any further details are identified via this method, e.g. bus:forward=yes
+  /** All modes that are explicitly made (un)available in a particular direction (without any further details are
+   * identified via this method, e.g. bus:forward=yes
+   *
    * @param tags to verify
    * @param isForwardDirection forward when true, backward otherwise
    * @param included when true included modes are identified, otherwise excluded modes
    * @return the mapped PLANitModes found
    */
-  private Collection<? extends Mode> getModesForDirection(Map<String, String> tags, boolean isForwardDirection, boolean included) {
+  private Collection<? extends Mode> getModesForDirection(
+      Map<String, String> tags, boolean isForwardDirection, boolean included) {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
-    String[] accessValueTags = included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
+    String[] accessValueTags =
+        included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
     /* found modes with given access value tags in explored direction */
-    Set<Mode> foundModes = getActivatedPlanitModes(OsmModeUtils.getPostfixedOsmRoadModesWithValueTag(osmDirectionCondition, tags, accessValueTags));
+    Set<Mode> foundModes =
+        getActivatedPlanitModes(
+            OsmModeUtils.getPostfixedOsmRoadModesWithValueTag(osmDirectionCondition, tags, accessValueTags));
     return foundModes;
   }
 
   /** see {@link #getModesForDirection(Map, boolean, boolean) */
-  private Collection<? extends Mode> getExplicitlyIncludedModesForDirection(Map<String, String> tags, boolean isForwardDirection) {
+  private Collection<? extends Mode> getExplicitlyIncludedModesForDirection(
+      Map<String, String> tags, boolean isForwardDirection) {
     return getModesForDirection(tags, isForwardDirection, true /*included*/);
   }
 
   /** see {@link #getModesForDirection(Map, boolean, boolean) */
-  private Collection<? extends Mode> getExplicitlyExcludedModesForDirection(Map<String, String> tags, boolean isForwardDirection) {
+  private Collection<? extends Mode> getExplicitlyExcludedModesForDirection(
+      Map<String, String> tags, boolean isForwardDirection) {
     return getModesForDirection(tags, isForwardDirection, false /*excluded*/);
   }
 
-  /** Whenever a mode is tagged as a /<mode/>:oneway=no it implies it is available in both directions. This is what is checked here. Typically used in conjunction with a oneway=yes
-   * tag but not necessarily
+  /** Whenever a mode is tagged as a /<mode/>:oneway=no it implies it is available in both directions.
+   * This is what is checked here. Typically used in conjunction with a oneway=yes tag but not necessarily
    * 
    * @param tags to verify
    * @return the mapped PLANitModes found
    */
   private Set<Mode> getExplicitlyIncludedModesNonOneWay(Map<String, String> tags) {
-    return getActivatedPlanitModes(OsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
+    return getActivatedPlanitModes(
+        OsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
   }
 
   /** Collect explicitly included modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
@@ -78,10 +87,12 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
    * </ul>
    * 
    * @param tags to find explicitly included (planit) modes from
-   * @param isDrivingDirectionLocationLeft  flag indicating if driving location that is explored corresponds to the left hand side of the way
-   * @return the included planit modes supported by the parser in the designated direction
+   * @param isDrivingDirectionLocationLeft  flag indicating if driving location that is explored corresponds to the
+   *                                       left hand side of the way
+   * @return the included PLANit modes supported by the parser in the designated direction
    */  
-  private Set<Mode> getExplicitlyIncludedModesTwoWayForLocation(Map<String, String> tags, boolean isDrivingDirectionLocationLeft) {
+  private Set<Mode> getExplicitlyIncludedModesTwoWayForLocation(
+      Map<String, String> tags, boolean isDrivingDirectionLocationLeft) {
     Set<Mode> includedModes = new HashSet<Mode>();
     
     /* TAGGING SCHEMES - BUSWAY/CYCLEWAY */

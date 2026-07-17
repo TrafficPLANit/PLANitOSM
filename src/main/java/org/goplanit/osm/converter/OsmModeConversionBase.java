@@ -35,7 +35,7 @@ public class OsmModeConversionBase {
   private final Consumer<Mode> addMappedOsmLinkModesByPlanitMode;
 
   /** track mapping between predefined mode type and its instance */
-  private Map<PredefinedModeType, Mode> predefinedModeTypeToModeMap;
+  private final Map<PredefinedModeType, Mode> predefinedModeTypeToModeMap;
 
   /** Collect the settings containing the mapping between PLANit and OSM modes
    * 
@@ -62,12 +62,12 @@ public class OsmModeConversionBase {
       }
     };
 
-    /** create mode mapping */
+    /* create mode mapping */
     for(var mode : layerModes){
       if(mode.isPredefinedModeType()){
         var old = predefinedModeTypeToModeMap.put(mode.getPredefinedModeType(),mode);
         if(old != null){
-          LOGGER.severe(String.format("found multiple modes with same predifined mode type %s, shouldn't happen",
+          LOGGER.severe(String.format("Found multiple modes with same predefined mode type %s, shouldn't happen",
               old.getPredefinedModeType()));
         }
       }
@@ -171,12 +171,12 @@ public class OsmModeConversionBase {
     if(link.hasEdgeSegmentAb()) {
       Collection<Mode> planitModes =
           ((MacroscopicLinkSegment)link.getEdgeSegmentAb()).getLinkSegmentType().getAllowedModes();
-      planitModes.forEach(addMappedOsmLinkModesByPlanitMode::accept);
+      planitModes.forEach(addMappedOsmLinkModesByPlanitMode);
     }
     if(link.hasEdgeSegmentBa()) {      
       Collection<Mode> planitModes =
           ((MacroscopicLinkSegment)link.getEdgeSegmentBa()).getLinkSegmentType().getAllowedModes();
-      planitModes.forEach(addMappedOsmLinkModesByPlanitMode::accept);
+      planitModes.forEach(addMappedOsmLinkModesByPlanitMode);
     }
 
     if(osmLinkModes==null || osmLinkModes.isEmpty()) {

@@ -46,10 +46,10 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetwork.class.getCanonicalName());
 
   /** Create a link segment type on the network based on the passed in OSM highway value tags. In case PLANit modes
-   * on different network layers exist, then we must register multiple link segment types, differentiated by their modes. For example
-   * an OSM link that supports pedestrians and cars, could require mapping to an active network layer and an on-street layer requiring
-   * a active layer link segment type version and one for on-street, the former supporting the active modes on that layer and the latter
-   * the on-street modes.
+   * on different network layers exist, then we must register multiple link segment types, differentiated by their
+   * modes. For example an OSM link that supports pedestrians and cars, could require mapping to an active network
+   * layer and an on-street layer requiring a active layer link segment type version and one for on-street, the
+   * former supporting the active modes on that layer and the latter the on-street modes.
    * 
    * @param highwayTypeValue of OSM way key
    * @param maxSpeed to utilise for this OSM highway type
@@ -229,8 +229,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   }
 
   /**
-   *  Create OSM default link segment types with mode properties where we create multiple types if modes reside on different layers
-   *  in which case only the modes on that layer will be added to the layer specific type
+   *  Create OSM default link segment types with mode properties where we create multiple types if modes reside on
+   *  different layers  in which case only the modes on that layer will be added to the layer specific type
    *  
    * @param osmKeyTag of the type
    * @param osmValueTag of the type
@@ -238,7 +238,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param maxDensityPcuPerKm max density
    * @param maxSpeed the max speed (km/h)
    * @param modes to identify layers to register link segment types on
-   * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single entry, otherwise it might have more
+   * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single
+   * entry, otherwise it might have more
    */
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createOsmLinkSegmentType(
       String osmKeyTag,
@@ -294,7 +295,8 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * @param capacityPcuPerHour capacity in pcu/h
    * @param maxSpeedKmh of this type
    * @param modes to identify layers to register link segment types on
-   * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single entry, otherwise it might have more
+   * @return link segment types per layer, if all modes are mapped to a single layer than the map only has a single
+   * entry, otherwise it might have more
    */
   protected SortedMap<NetworkLayer, MacroscopicLinkSegmentType> createDefaultOsmLinkSegmentType(
       String nameKey,

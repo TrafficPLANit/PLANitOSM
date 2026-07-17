@@ -288,12 +288,14 @@ public abstract class OsmWaySettings {
   
   /* modes */
   
-  /** add mapping from osm mode to PLANit mode (only predefined modes supported for now)
+  /** set mapping from OSM mode to PLANit mode (only predefined modes supported for now), these are not automatically
+   * activated, that is done separately
+   *
    * @param osmMode to map from
    * @param planitModeType mode to map to
    */
-  protected void addDefaultOsmMode2PlanitPredefinedModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
-    osmModeMapping.addDefaultMapping(osmMode, planitModeType);
+  protected void setOsmMode2PlanitPredefinedModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
+    osmModeMapping.setDefaultMapping(osmMode, planitModeType);
   } 
   
   /** Activate an OSM mode based on its default mapping to a PLANit mode
@@ -460,6 +462,18 @@ public abstract class OsmWaySettings {
   public boolean isParserActive() {
     return this.isParserActive;
   }
+
+  /**
+   * Overrides or registers a mapping from an OSM road mode tag to a PLANit predefined mode.
+   * This allows external configuration of mode conversions.
+   *
+   * @param osmRoadMode The OSM mode tag string (e.g., OsmRoadModeTags.MOTOR_CAR or custom "moped")
+   * @param planitMode  The target PLANit predefined mode type
+   */
+  public void overrideAndActivateOsmRoadModeMapping(String osmRoadMode, PredefinedModeType planitMode) {
+    setOsmMode2PlanitPredefinedModeTypeMapping(osmRoadMode, planitMode);
+    activateOsmMode(osmRoadMode);
+  }
   
   /** Verify if the passed in osmMode is mapped to a mode, i.e., if it is actively included when
    * reading the network. When the parser is not active false is returned in all cases
@@ -504,4 +518,5 @@ public abstract class OsmWaySettings {
   public Stream<PredefinedModeType> getActivatedPlanitModeTypesStream() {
     return osmModeMapping.getActivePlanitModesStream();
   }
+
 }

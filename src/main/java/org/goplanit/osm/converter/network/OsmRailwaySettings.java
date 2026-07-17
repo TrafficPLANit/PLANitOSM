@@ -48,13 +48,13 @@ public class OsmRailwaySettings extends OsmWaySettings {
 
     /* add default mapping */
     {
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.FUNICULAR, PredefinedModeType.TRAM);
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.LIGHT_RAIL, PredefinedModeType.LIGHTRAIL);
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.MONO_RAIL, PredefinedModeType.TRAM);
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.NARROW_GAUGE, PredefinedModeType.TRAIN);
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.TRAIN, PredefinedModeType.TRAIN);
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.SUBWAY, PredefinedModeType.SUBWAY);
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.TRAM, PredefinedModeType.TRAM);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.FUNICULAR, PredefinedModeType.TRAM);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.LIGHT_RAIL, PredefinedModeType.LIGHTRAIL);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.MONO_RAIL, PredefinedModeType.TRAM);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.NARROW_GAUGE, PredefinedModeType.TRAIN);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.TRAIN, PredefinedModeType.TRAIN);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.SUBWAY, PredefinedModeType.SUBWAY);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmRailModeTags.TRAM, PredefinedModeType.TRAM);
       
       /* activate all defaults */
       activateOsmMode(OsmRailModeTags.FUNICULAR);

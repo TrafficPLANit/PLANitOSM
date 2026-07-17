@@ -41,7 +41,7 @@ public class OsmWaterwaySettings extends OsmWaySettings {
 
     /* add default mapping */
     {
-      addDefaultOsmMode2PlanitPredefinedModeTypeMapping(OsmWaterModeTags.FERRY, PredefinedModeType.FERRY);
+      setOsmMode2PlanitPredefinedModeTypeMapping(OsmWaterModeTags.FERRY, PredefinedModeType.FERRY);
 
       /* activate all defaults */
       activateOsmMode(OsmWaterModeTags.FERRY);
