@@ -117,25 +117,6 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   private double maximumDistanceFerryOutsideBoundingPolygonInMeters =
       DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
       
-  /**
-   * Conduct general initialisation for any instance of this class
-   */
-  protected void initialise() {
-    /* the default mapping from OSM modes to PLANit modes */
-    initialiseDefaultMappingFromOsmModes2PlanitModes();
-  }
-    
-    
-  /**
-   * Map both road and rail modes from OSM modes to PLANit modes
-   * 
-   */
-  protected void initialiseDefaultMappingFromOsmModes2PlanitModes() {
-    osmHighwaySettings.initialiseDefaultMappingFromOsmRoadModes2PlanitModes();
-    osmRailwaySettings.initialiseDefaultMappingFromOsmRailModes2PlanitModes();
-    osmWaterwaySettings.initialiseDefaultMappingFromOsmWaterModes2PlanitModes();
-  }
-
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
 
@@ -210,8 +191,6 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     this.osmWaterwaySettings = new OsmWaterwaySettings(
         this.speedLimitConfiguration.getWaterwayDefaults(),
         this.modeAccessConfiguration.getWaterwayModeAccessDefaults());
-    
-    initialise();
   }   
         
   /**

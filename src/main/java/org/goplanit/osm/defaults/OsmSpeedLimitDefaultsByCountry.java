@@ -148,7 +148,7 @@ public class OsmSpeedLimitDefaultsByCountry {
        * at all then register them, and hereby also registering the railway defaults within them */
       if(!updatedSpeedLimits.isEmpty()) {
         OsmSpeedLimitDefaultsCategory countryRailwayDefaults = countryDefaults.getRailwayDefaults();
-        updatedSpeedLimits.entrySet().stream().forEach(entry -> countryRailwayDefaults.setSpeedLimitDefault(
+        updatedSpeedLimits.entrySet().forEach(entry -> countryRailwayDefaults.setSpeedLimitDefault(
             OsmRailwayTags.getRailwayKeyTag(), entry.getKey(), entry.getValue()));
         
         if(defaultsNotYetRegistered) {
@@ -236,9 +236,12 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param urbanSpeedLimit urban limit
    * @param nonUrbanSpeedLimit non-urban limit
    */
-  protected static void setGlobalHighwaySpeedLimitDefaults(String type, double urbanSpeedLimit, double nonUrbanSpeedLimit) {
-    GLOBAL_SPEED_LIMIT_DEFAULTS.getUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.getHighwayKeyTag(), type, urbanSpeedLimit);
-    GLOBAL_SPEED_LIMIT_DEFAULTS.getNonUrbanHighwayDefaults().setSpeedLimitDefault(OsmHighwayTags.getHighwayKeyTag(), type, nonUrbanSpeedLimit);
+  protected static void setGlobalHighwaySpeedLimitDefaults(
+      String type, double urbanSpeedLimit, double nonUrbanSpeedLimit) {
+    GLOBAL_SPEED_LIMIT_DEFAULTS.getUrbanHighwayDefaults().setSpeedLimitDefault(
+        OsmHighwayTags.getHighwayKeyTag(), type, urbanSpeedLimit);
+    GLOBAL_SPEED_LIMIT_DEFAULTS.getNonUrbanHighwayDefaults().setSpeedLimitDefault(
+        OsmHighwayTags.getHighwayKeyTag(), type, nonUrbanSpeedLimit);
   }
   
   /** Set global defaults for railways
@@ -247,11 +250,13 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param speedLimit to use
    */
   protected static void setGlobalRailwaySpeedLimitDefaults(String type, double speedLimit) {
-    GLOBAL_SPEED_LIMIT_DEFAULTS.getRailwayDefaults().setSpeedLimitDefault(OsmRailwayTags.getRailwayKeyTag(), type, speedLimit);
+    GLOBAL_SPEED_LIMIT_DEFAULTS.getRailwayDefaults().setSpeedLimitDefault(
+        OsmRailwayTags.getRailwayKeyTag(), type, speedLimit);
   }  
              
   /**
-   * Populate the global defaults for highway types in case the country is not available, or in case the road type for that country is not available
+   * Populate the global defaults for highway types in case the country is not available, or in case the road type
+   * for that country is not available
    */
   protected static void populateGlobalDefaultHighwaySpeedLimits(){
     /* note that these are physical speed limits for the most unrestricted mode on the highway type, when a mode has a lower
@@ -312,19 +317,24 @@ public class OsmSpeedLimitDefaultsByCountry {
   protected static void populateDefaultWaterwaySpeedLimits(OsmSpeedLimitDefaultsCategory speedLimitsToPopulate) {
     /* key1: route=ferry */
     speedLimitsToPopulate.setSpeedLimitDefault(
-        OsmWaterwayTags.getKeyForValueType(OsmWaterwayTags.FERRY), OsmWaterwayTags.FERRY, OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH);
+        OsmWaterwayTags.getKeyForValueType(
+            OsmWaterwayTags.FERRY), OsmWaterwayTags.FERRY, OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH);
 
     /* key2: ferry = _highway_type_ */
     OsmWaterwayTags.getAllSupportedHighwayTypesAsWaterWayTypes().forEach( osmHighwayTypeAsWaterWay ->
         speedLimitsToPopulate.setSpeedLimitDefault(
-            OsmWaterwayTags.getKeyForValueType(osmHighwayTypeAsWaterWay), osmHighwayTypeAsWaterWay, OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH)
+            OsmWaterwayTags.getKeyForValueType(osmHighwayTypeAsWaterWay),
+            osmHighwayTypeAsWaterWay,
+            OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH)
         );
   }
   
   /**
-   * populate the global defaults for railway types in case the country is not available, or in case the railway type for that country is not available.
+   * populate the global defaults for railway types in case the country is not available, or in case the railway type
+   * for that country is not available.
    * 
-   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for all modes.
+   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for
+   * all modes.
    * This can overwritten by the user if required
    */
   protected static void populateGlobalDefaultRailwaySpeedLimits(){
@@ -336,7 +346,8 @@ public class OsmSpeedLimitDefaultsByCountry {
    * populate the global defaults for waterway types in case the country is not available, or in case the waterway type
    * for that country is not available.
    *
-   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH} as the default for all modes.
+   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH} as the default
+   * for all modes.
    * This can overwritten by the user if required
    *
    */
@@ -350,7 +361,8 @@ public class OsmSpeedLimitDefaultsByCountry {
    *
    */
   protected static void populateAustralianSpeedLimits() {
-    OsmSpeedLimitDefaults ausSpeedLimits = new OsmSpeedLimitDefaults(CountryNames.AUSTRALIA, GLOBAL_SPEED_LIMIT_DEFAULTS);
+    OsmSpeedLimitDefaults ausSpeedLimits =
+        new OsmSpeedLimitDefaults(CountryNames.AUSTRALIA, GLOBAL_SPEED_LIMIT_DEFAULTS);
     
     /* TODO: To be replaced by defaults from file (already added, just parsing not -> 
      * base on parsing for mode access defaults), where if one of the two exists (highway/railway) both need configuring
@@ -400,7 +412,8 @@ public class OsmSpeedLimitDefaultsByCountry {
     }
   }
   
-  /** Collect the speed limit based on the highway type, e.g. highway=type, inside an urban area. Speed limit is collected based on the chosen country. If either the country
+  /** Collect the speed limit based on the highway type, e.g. highway=type, inside an urban area.
+   * Speed limit is collected based on the chosen country. If either the country
    * is not defined or the highway type is not available on the country's defaults, the global defaults will be used
    * 
    * @param countryDefaults to use
@@ -408,19 +421,23 @@ public class OsmSpeedLimitDefaultsByCountry {
    * @param type highway type value
    * @return speed limit inside urban area for this type
    */
-  protected static double getSpeedLimitByHighwayType(OsmSpeedLimitDefaults countryDefaults, boolean outside, String type){
+  protected static double getSpeedLimitByHighwayType(
+      OsmSpeedLimitDefaults countryDefaults, boolean outside, String type){
     var key = OsmHighwayTags.getHighwayKeyTag();
     /* country limit */
     Double speedLimit = outside ?
-        countryDefaults.getNonUrbanHighwayDefaults().getSpeedLimit(key, type) : countryDefaults.getUrbanHighwayDefaults().getSpeedLimit(key, type);
+        countryDefaults.getNonUrbanHighwayDefaults().getSpeedLimit(key, type) :
+        countryDefaults.getUrbanHighwayDefaults().getSpeedLimit(key, type);
     if(speedLimit == null) {
       /* global limit */
       speedLimit = outside ?
-          GLOBAL_SPEED_LIMIT_DEFAULTS.getNonUrbanHighwayDefaults().getSpeedLimit(key, type) : GLOBAL_SPEED_LIMIT_DEFAULTS.getUrbanHighwayDefaults().getSpeedLimit(key, type);
+          GLOBAL_SPEED_LIMIT_DEFAULTS.getNonUrbanHighwayDefaults().getSpeedLimit(key, type) :
+          GLOBAL_SPEED_LIMIT_DEFAULTS.getUrbanHighwayDefaults().getSpeedLimit(key, type);
     }
     
     if(speedLimit==null) {
-      throw new PlanItRunTimeException("Unable to find speed limit for highway=%s (urban area=%s)",type, Boolean.toString(outside));
+      throw new PlanItRunTimeException("Unable to find speed limit for highway=%s (urban area=%s)",
+          type, Boolean.toString(outside));
     }
     
     return  speedLimit;
@@ -469,7 +486,8 @@ public class OsmSpeedLimitDefaultsByCountry {
   }  
   
   /**
-   * Factory method to create speed limits for a particular country. It will utilise this country's defaults. If not available, or particular road type's are not available
+   * Factory method to create speed limits for a particular country. It will utilise this country's defaults.
+   * If not available, or particular road type's are not available
    * it will revert to the globally set defaults 
    * 
    * @param countryName to use
@@ -482,7 +500,8 @@ public class OsmSpeedLimitDefaultsByCountry {
     }
     if(createdDefaults==null) {
       createdDefaults = create(); 
-      LOGGER.warning(String.format("No OSM speed limit defaults available for %s, reverting to global defaults",countryName));
+      LOGGER.warning(String.format("No OSM speed limit defaults available for %s, reverting to global defaults",
+          countryName));
     }else {
       /* make a copy so true defaults are not changed if user makes changes for project */
       createdDefaults = createdDefaults.deepClone();

@@ -22,30 +22,33 @@ public class OsmWaterwaySettings extends OsmWaySettings {
 
   private static final Logger LOGGER = Logger.getLogger(OsmWaterwaySettings.class.getCanonicalName());
 
+  /** immutable default water mode mappings used to initialise each instance */
+  private static final Map<String, PredefinedModeType> DEFAULT_OSM_WATER_MODE_MAPPINGS =
+      Collections.unmodifiableMap(createDefaultOsmWaterModeMappings());
+
   /**
-   * each OSM water based mode is mapped (or not) to a PLANit mode by default so that the memory model's modes
-   * are user configurable yet linked to the original format. Note that when the reader is used
-   * i.c.w. a network writer to convert one network to the other. It is paramount that the PLANit modes
-   * that are mapped here are also mapped by the writer to the output format to ensure a correct I/O mapping of modes
+   * Create the immutable default OSM water mode mappings used to initialise each instance.
    *
-   * The default mapping is provided below. In contrast to road modes, rail modes do not have specific restrictions.
-   * Hence, we can
-   * map more exotic OSM rail modes to more common PLANit rail modes, without imposing its restrictions on this
-   * common mode.
-   *
-   * <ul>
-   * <li>FERRY      to FerryMode       </li>
-   * </ul>
+   * @return immutable default mapping catalogue
    */
-  protected void initialiseDefaultMappingFromOsmWaterModes2PlanitModes(){
+  private static Map<String, PredefinedModeType> createDefaultOsmWaterModeMappings() {
+    Map<String, PredefinedModeType> defaultMappings = new LinkedHashMap<>();
+    defaultMappings.put(OsmWaterModeTags.FERRY, PredefinedModeType.FERRY);
+    return defaultMappings;
+  }
 
-    /* add default mapping */
-    {
-      setOsmMode2PlanitPredefinedModeTypeMapping(OsmWaterModeTags.FERRY, PredefinedModeType.FERRY);
+  /**
+   * Initialise this instance with the default OSM water mode mappings.
+   */
+  protected void initialiseOsmWaterModeMappings() {
+    setOsmMode2PlanitPredefinedModeTypeMappings(DEFAULT_OSM_WATER_MODE_MAPPINGS);
+  }
 
-      /* activate all defaults */
-      activateOsmMode(OsmWaterModeTags.FERRY);
-    }
+  /**
+   * Initialise the water modes that are activated by default on this instance.
+   */
+  protected void initialiseActivatedOsmWaterModes() {
+    activateOsmModes(DEFAULT_OSM_WATER_MODE_MAPPINGS.keySet());
   }
 
   /** by default the ferry parser is deactivated */
@@ -61,6 +64,8 @@ public class OsmWaterwaySettings extends OsmWaySettings {
       OsmSpeedLimitDefaultsCategory waterwaySpeedLimitDefaults,
       OsmModeAccessDefaultsCategory osmModeAccessWaterwayDefaults) {
     super(new OsmWaterwayTypeConfiguration(), waterwaySpeedLimitDefaults, osmModeAccessWaterwayDefaults);
+    initialiseOsmWaterModeMappings();
+    initialiseActivatedOsmWaterModes();
     activateParser(DEFAULT_WATERWAYS_PARSER_ACTIVE);
   }
 

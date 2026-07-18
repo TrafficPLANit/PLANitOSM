@@ -297,6 +297,15 @@ public abstract class OsmWaySettings {
   protected void setOsmMode2PlanitPredefinedModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
     osmModeMapping.setDefaultMapping(osmMode, planitModeType);
   } 
+
+  /**
+   * Set mappings from OSM modes to PLANit predefined mode types in bulk.
+   *
+   * @param osmModeMappings mappings to set
+   */
+  protected void setOsmMode2PlanitPredefinedModeTypeMappings(Map<String, PredefinedModeType> osmModeMappings) {
+    osmModeMappings.forEach(this::setOsmMode2PlanitPredefinedModeTypeMapping);
+  }
   
   /** Activate an OSM mode based on its default mapping to a PLANit mode
    * 
@@ -305,6 +314,15 @@ public abstract class OsmWaySettings {
   protected void activateOsmMode(String osmMode) {
     osmModeMapping.activate(osmMode);
   }   
+
+  /**
+   * Activate the provided OSM modes.
+   *
+   * @param osmModes to activate
+   */
+  protected void activateOsmModes(Collection<String> osmModes) {
+    osmModes.forEach(this::activateOsmMode);
+  }
   
   /** Add/overwrite a mapping from OSM mode to PLANit mode type. This means that the osmMode will be added to the
    * PLANit network once parsing commences
