@@ -330,7 +330,6 @@ public abstract class OsmWaySettings {
       LOGGER.warning("OSM mode is null, cannot deactivate, ignored");
       return;
     }
-    LOGGER.fine(String.format("OSM mode %s is deactivated", osmMode));
     osmModeMapping.deactivate(osmMode);
   }
   
@@ -368,7 +367,7 @@ public abstract class OsmWaySettings {
     return osmModeMapping.getMappedMode(osmMode);
   }
   
-  /** convenience method that collects the currently mapped OSM modes for the given PLANit mode
+  /** Convenience method that collects the currently mapped OSM modes for the given PLANit mode
    * 
    * @param planitModeType to collect mapped OSM modes for this type (if any)
    * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
@@ -377,7 +376,7 @@ public abstract class OsmWaySettings {
     return osmModeMapping.getActiveExternalModes(planitModeType);
   }
 
-  /** verify if a particular osm mode is allowed on the provided osm way type
+  /** Verify if a particular osm mode is allowed on the provided osm way type
    *  e.g., is train allowed on rail?
    *
    * @param osmWayKey to use
@@ -440,9 +439,20 @@ public abstract class OsmWaySettings {
   /* public */
 
   /**
-   * log way specific settings for derived classes
+   * Log the active mode mappings for this way category.
+   *
+   * @param level indentation level to apply
    */
-  public abstract void logSettings();
+  protected void logModeMappings(int level) {
+    osmModeMapping.logActiveMapping("Mode mappings", level);
+  }
+
+  /**
+   * Log way specific settings for derived classes.
+   *
+   * @param level indentation level to apply
+   */
+  public abstract void logSettings(int level);
 
   /** Determine whether the ways represented by these settings should be parsed or not. It has no impact
    * on the settings themselves, except that all queries related to whether or not modes or types are activated

@@ -18,10 +18,11 @@ import java.util.logging.Logger;
  * <p>
  * REGULAR_PREPROCESSING_WAYS: identify ways (and their nodes) that are eligible since they form the network.
  * Only do so for ways that fall within the bounding area for at least one node (if a bounding area is specified)
+ * and manual overrides to keep.
  * </p>
  * <p>
- * REGULAR_PREPROCESSING_NODES: identify and register nodes that are part of the ways that make
- * up the network.
+ * REGULAR_PREPROCESSING_NODES: identify and register all nodes that are part of the identified ways instage one
+ * that make up the network.
  * </p>
  *
  * @author markr
@@ -63,10 +64,8 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
       }
 
       /* mark all nodes for keeping, since we determine availability based on the tracked OSM nodes */
-      for(int index=0; index<osmWay.getNumberOfNodes(); ++index) {
-        //todo ugly since we are modifying user settings, this should be tracked in network internal data structure
-        settings.setKeepOsmNodeOutsideBoundingPolygon(osmWay.getNodeId(index));
-      }
+      getNetworkData().getOsmSpatialEligibilityData().markOsmWaySpatiallyEligible(osmWay.getId());
+      getNetworkData().getOsmNodeData().preregisterOsmWayNodes(osmWay);
       return true;
     }
     return false;
@@ -86,7 +85,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         getNetworkData().getOsmSpatialEligibilityData().isOsmWayPotentiallySpatiallyEligibleAsSpecialCase(
             osmWay.getId())){
       // at this point if any node was found to be within acceptable distance of the bounding polygon, it would have
-      // been marked as spatially eligible in handlnig of nodes in stage two, despite not being spatially eligible
+      // been marked as spatially eligible in handling of nodes in stage two, despite not being spatially eligible
       // given the bounding area. So we can now follow the same procedure as we do for any node to see if the way
       // is eligible
       boolean osmWaySpatiallyEligible =

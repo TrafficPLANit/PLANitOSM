@@ -5,6 +5,7 @@ import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmHighwaySettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.OsmNetworkReaderSettingsResolved;
 import org.goplanit.osm.converter.network.OsmRailwaySettings;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.OsmConstants;
@@ -1169,22 +1170,13 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * is created based on the default chosen in settings
    * 
    * @param settings to use
+   * @param resolvedSettings resolved active OSM way types to use
    */
-  public void createAndRegisterOsmCompatibleLinkSegmentTypes(OsmNetworkReaderSettings settings) {
+  public void createAndRegisterOsmCompatibleLinkSegmentTypes(
+      OsmNetworkReaderSettings settings, OsmNetworkReaderSettingsResolved resolvedSettings) {
     
     /* combine rail, highway, and waterway */
-    SortedMap<String,SortedSet<String>> combinedWayLikeTypeMap = new TreeMap<>();
-    if(settings.isHighwayParserActive()) {
-      combinedWayLikeTypeMap = settings.getHighwaySettings().getSetOfActivatedOsmWayLikeTypes();
-    }
-    if(settings.isRailwayParserActive()) {
-      var keyValueMap = settings.getRailwaySettings().getSetOfActivatedOsmWayLikeTypes();
-      combinedWayLikeTypeMap.putAll(keyValueMap);
-    }
-    if(settings.isWaterwayParserActive()) {
-      var keyValueMap = settings.getWaterwaySettings().getSetOfActivatedOsmWayLikeTypes();
-      combinedWayLikeTypeMap.putAll(keyValueMap);
-    }
+    SortedMap<String,SortedSet<String>> combinedWayLikeTypeMap = resolvedSettings.getActivatedOsmWayTypesByKey();
     
     /* ------------------ FOR EACH SUPPORTED OSM WAY TYPE ----------------------------------------- */   
     for(Entry<String,SortedSet<String>> entry : combinedWayLikeTypeMap.entrySet()) {

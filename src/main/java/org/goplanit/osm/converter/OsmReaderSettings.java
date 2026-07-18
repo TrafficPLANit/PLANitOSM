@@ -79,11 +79,11 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
-    LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), 0));
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), level));
   }
   
   /** The input source used 

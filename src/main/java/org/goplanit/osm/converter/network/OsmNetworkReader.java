@@ -57,6 +57,8 @@ public class OsmNetworkReader implements NetworkReader {
     PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null &&
             getOsmNetworkToPopulate().getTransportLayers().size()>0,
         "Network is expected to be empty at start of parsing OSM network, but it has layers already");
+    var resolvedSettings = new OsmNetworkReaderSettingsResolved(settings);
+    resolvedSettings.logExcludedOsmWayTypes();
     
     /* gis initialisation */
     PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
@@ -82,12 +84,8 @@ public class OsmNetworkReader implements NetworkReader {
 
     /* (default) link segment types (on the network) */
     getOsmNetworkToPopulate().createAndRegisterLayers(planitInfrastructureLayerConfiguration);
-    getOsmNetworkToPopulate().createAndRegisterOsmCompatibleLinkSegmentTypes(getSettings());
-    // when modes are deactivated causing supported OSM way types to have no active modes, add them to unsupported
-    // way types to avoid warnings during parsing
-    settings.excludeOsmWayTypesWithoutActivatedModes();
-    settings.logUnsupportedOsmWayTypes();
-        
+    getOsmNetworkToPopulate().createAndRegisterOsmCompatibleLinkSegmentTypes(getSettings(), resolvedSettings);
+
     /* initialise layer specific parsers and bounding area*/
     networkData.initialiseLayerParsers(getOsmNetworkToPopulate(), settings, geoUtils);
   }

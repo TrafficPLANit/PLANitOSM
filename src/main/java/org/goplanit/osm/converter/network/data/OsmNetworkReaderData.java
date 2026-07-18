@@ -30,7 +30,8 @@ public class OsmNetworkReaderData {
   /** the logger  */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderData.class.getCanonicalName());
 
-  /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the roundabout/circular road */
+  /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the
+   * roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays =new HashMap<>();
 
   /** the osmBoundary used during parsing.
@@ -38,8 +39,8 @@ public class OsmNetworkReaderData {
   private OsmBoundary osmBoundingArea = null;
 
   /**
-   * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used to construct links
-   * or other entities
+   * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used
+   * to construct links or other entities
    */
   private final OsmNodeData osmNodeData = new OsmNodeData();
 

@@ -50,26 +50,31 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** the default speed limits used in case no explicit information is available on the OSM way's tags */
   protected final OsmSpeedLimitDefaults speedLimitConfiguration;
   
-  /** the default mode access configuration used in case no explicit access information is available on the OSM way's tags */
+  /** the default mode access configuration used in case no explicit access information is available on the
+   * OSM way's tags */
   protected final OsmModeAccessDefaults modeAccessConfiguration;  
   
   /** the default number of lanes used in case no explicit information is available on the OSM way's tags */
   protected final OsmLaneDefaults laneConfiguration = new OsmLaneDefaults();  
       
-  /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original coding or tagging is problematic */
+  /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original
+   * coding or tagging is problematic */
   protected final Set<Long>  excludedOsmWays = new HashSet<>();
   
-  /** Allow users to provide OSM way ids for ways that we are to keep even if they fall (partially) outside a bounding polygon, 
-   * for example when we know the OSM way meanders in and outside the polygon and we want to have a connected network and proper lengths for this way */
+  /** Allow users to provide OSM way ids for ways that we are to keep even if they fall (partially) outside a
+   * bounding polygon, for example when we know the OSM way meanders in and outside the polygon, and we want to
+   * have a connected network and proper lengths for this way */
   protected final Set<Long>  includedOutsideBoundingPolygonOsmWays = new HashSet<>();
   
-  /** Allow users to provide OSM node ids for nodes that we are not to keep even if they fall outside a bounding polygon */
+  /** Allow users to provide OSM node ids for nodes that we are not to keep even if they fall outside
+   * a bounding polygon */
   protected final Set<Long>  includedOutsideBoundingPolygonOsmNodes = new HashSet<>();
  
     
   /**
-   * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file is incorrectly tagged which causes problems
-   * in the memory model. Here one can be manually overwrite the allowable modes for this particular way.
+   * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file
+   * is incorrectly tagged which causes problems in the memory model. Here one can be manually
+   * overwrite the allowable modes for this particular way.
    */
   protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<>();
 
@@ -87,14 +92,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected boolean removeDanglingSubNetworks = DEFAULT_REMOVE_DANGLING_SUBNETWORK;
   
   /**
-   * When dangling subnetworks are marked for removal, this threshold determines the minimum subnetwork size for it NOT to be removed.
-   * In other words, all subnetworks below this number will be removed
+   * When dangling subnetworks are marked for removal, this threshold determines the minimum subnetwork size
+   * for it NOT to be removed. In other words, all subnetworks below this number will be removed
    */
   protected int discardSubNetworkBelowSize = DEFAULT_MINIMUM_SUBNETWORK_SIZE;
   
   /**
-   * When dangling subnetworks are marked for removal, this threshold determines the maximum subnetwork size for it NOT to be removed.
-   * In other words, all subnetworks above this number will be removed, including the largest one if it does not match the value
+   * When dangling subnetworks are marked for removal, this threshold determines the maximum subnetwork size for
+   * it NOT to be removed. In other words, all subnetworks above this number will be removed, including the largest
+   * one if it does not match the value
    */  
   protected int discardSubNetworkAboveSize = Integer.MAX_VALUE;
   
@@ -220,22 +226,29 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
+  public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsHeader("OSM Network Reader Settings"));
-    super.logSettings();
-    LOGGER.info(LoggingUtils.settingsValue("Source CRS", getSourceCRS().getName(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types", isConsolidateLinkSegmentTypes(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks", isRemoveDanglingSubnetworks(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks below size", getDiscardDanglingNetworkBelowSize(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks above size", getDiscardDanglingNetworkAboveSize(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork", isAlwaysKeepLargestSubnetwork(), 0));
-    LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)", getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), 0));
-    LOGGER.info(LoggingUtils.settingsSection("Highway", 1));
-    getHighwaySettings().logSettings();
-    LOGGER.info(LoggingUtils.settingsSection("Railway", 1));
-    getRailwaySettings().logSettings();
-    LOGGER.info(LoggingUtils.settingsSection("Waterway", 1));
-    getWaterwaySettings().logSettings();
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Source CRS",
+        getSourceCRS().getName(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types",
+        isConsolidateLinkSegmentTypes(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks",
+        isRemoveDanglingSubnetworks(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks below size",
+        getDiscardDanglingNetworkBelowSize(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks above size",
+        getDiscardDanglingNetworkAboveSize(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork",
+        isAlwaysKeepLargestSubnetwork(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
+        getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), level));
+    LOGGER.info(LoggingUtils.settingsSection("Highway", level + 1));
+    getHighwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Railway", level + 1));
+    getRailwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Waterway", level + 1));
+    getWaterwaySettings().logSettings(level + 1);
   }
 
   /** activate the parsing of railways

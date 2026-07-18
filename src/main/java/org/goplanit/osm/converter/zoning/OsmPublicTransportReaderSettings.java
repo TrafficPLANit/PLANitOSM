@@ -195,32 +195,45 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
+  public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsHeader("OSM Public Transport Reader Settings"));
-    super.logSettings();
-    LOGGER.info(LoggingUtils.settingsValue("Public transport infrastructure parser activated", isParserActive(), 0));
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Public transport infrastructure parser activated", isParserActive(), level));
 
     if(isParserActive()) {
-      LOGGER.info(LoggingUtils.settingsValue("Stop location to waiting area search radius (m)", String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), 0));
-      LOGGER.info(LoggingUtils.settingsValue("Station location to waiting area search radius (m)", String.format("%.2f", getStationToWaitingAreaSearchRadiusMeters()), 0));
-      LOGGER.info(LoggingUtils.settingsValue("Station location to parallel tracks search radius (m)", String.format("%.2f", getStationToParallelTracksSearchRadiusMeters()), 0));
-      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zones", isRemoveDanglingZones(), 0));
-      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zone groups", isRemoveDanglingTransferZoneGroups(), 0));
-      LOGGER.info(LoggingUtils.settingsValue("Connect dangling ferry stops to nearby ferry routes (if present)", isConnectDanglingFerryStopToNearbyFerryRoute(), 0));
+      LOGGER.info(LoggingUtils.settingsValue("Stop location to waiting area search radius (m)",
+          String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Station location to waiting area search radius (m)",
+          String.format("%.2f", getStationToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Station location to parallel tracks search radius (m)",
+          String.format("%.2f", getStationToParallelTracksSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zones",
+          isRemoveDanglingZones(), 0));
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zone groups",
+          isRemoveDanglingTransferZoneGroups(), level));
+      LOGGER.info(LoggingUtils.settingsValue("Connect dangling ferry stops to nearby ferry routes (if present)",
+          isConnectDanglingFerryStopToNearbyFerryRoute(), level));
       if(isConnectDanglingFerryStopToNearbyFerryRoute()) {
-        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to ferry route search radius (m)", String.format("%.2f", getFerryStopToFerryRouteSearchRadiusMeters()), 0));
+        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to ferry route search radius (m)",
+            String.format("%.2f", getFerryStopToFerryRouteSearchRadiusMeters()), level));
       }
-      LOGGER.info(LoggingUtils.settingsValue("Connect ferry stops to nearby passenger land network (if eligible)", isConnectFerryStopsToNearbyLandNetwork(), 0));
+      LOGGER.info(LoggingUtils.settingsValue("Connect ferry stops to nearby passenger land network (if eligible)",
+          isConnectFerryStopsToNearbyLandNetwork(), level));
       if(isConnectFerryStopsToNearbyLandNetwork()) {
-        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to land network search radius (m)", String.format("%.2f", getFerryStopToNearbyLandNetworkSearchRadiusMeters()), 0));
+        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to land network search radius (m)",
+            String.format("%.2f", getFerryStopToNearbyLandNetworkSearchRadiusMeters()), level));
       }
-      LOGGER.info(LoggingUtils.settingsValue("Connect rail-based stops to nearby passenger network (if eligible)", isConnectRailBasedStopsToPassengerNetwork(), 0));
+      LOGGER.info(LoggingUtils.settingsValue("Connect rail-based stops to nearby passenger network (if eligible)",
+          isConnectRailBasedStopsToPassengerNetwork(), 0));
       if(isConnectRailBasedStopsToPassengerNetwork()) {
-        LOGGER.info(LoggingUtils.settingsValue("Rail-based stop to road network search radius (m)", String.format("%.2f", getRailBasedStopToPassengerNetworkSearchRadiusMeters()), 0));
+        LOGGER.info(LoggingUtils.settingsValue("Rail-based stop to road network search radius (m)",
+            String.format("%.2f", getRailBasedStopToPassengerNetworkSearchRadiusMeters()), level));
       }
-      LOGGER.info(LoggingUtils.settingsValue("Connect bus-based stops to nearby passenger network (if eligible)", isConnectBusBasedStopsToPassengerNetwork(), 0));
+      LOGGER.info(LoggingUtils.settingsValue("Connect bus-based stops to nearby passenger network (if eligible)",
+          isConnectBusBasedStopsToPassengerNetwork(), level));
       if(isConnectRailBasedStopsToPassengerNetwork()) {
-        LOGGER.info(LoggingUtils.settingsValue("Bus-based stop to passenger network search radius (m)", String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), 0)); // sync to standard search
+        LOGGER.info(LoggingUtils.settingsValue("Bus-based stop to passenger network search radius (m)",
+            String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), level)); // sync to standard search
       }
     }
   }

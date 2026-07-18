@@ -357,8 +357,9 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
-    LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), 1));
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), level));
+    logModeMappings(level + 1);
   }
 }
 

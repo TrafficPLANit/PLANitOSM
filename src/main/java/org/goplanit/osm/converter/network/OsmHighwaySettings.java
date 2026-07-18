@@ -474,10 +474,11 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
-    LOGGER.info(LoggingUtils.settingsValue("Highway (road) parser activated", isParserActive(), 1));
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Highway (road) parser activated", isParserActive(), level));
     LOGGER.info(LoggingUtils.settingsValue(
-        "Speed limit defaults based on urban area", isSpeedLimitDefaultsBasedOnUrbanArea(), 1));
+        "Speed limit defaults based on urban area", isSpeedLimitDefaultsBasedOnUrbanArea(), level));
+    logModeMappings(level + 1);
   }
 
 }

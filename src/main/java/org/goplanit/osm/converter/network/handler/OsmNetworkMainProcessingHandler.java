@@ -689,17 +689,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   @Override
   public void handle(OsmNode osmNode) {
-    var settings = getSettings();
-
-     /* only track nodes when they are pre-registered (i.e. from features deemed relevant for this parser AND they are
-     * within bounding polygon (if any is defined), or alternatively marked to keep even if falling outside
-     * the bounding polygon */
-    boolean keepOutsideBoundingPolygon = settings.isKeepOsmNodeOutsideBoundingPolygon(osmNode.getId());
-    if(isNodeSpatiallyEligible(osmNode) || keepOutsideBoundingPolygon){
-
-      /* store actual OSM node for later processing in memory */
-      getNetworkData().getOsmNodeData().registerEligibleOsmNode(osmNode);
-    }
+    // no longer needed, pre-processing has dealt with full eligibility already (refactored 18/7/26)
   }
 
   /**
