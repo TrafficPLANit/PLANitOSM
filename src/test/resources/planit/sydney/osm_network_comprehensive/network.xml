@@ -667,9 +667,6 @@
                             <accessgroup moderefs="bicycle">
 <maxspeed>15.0</maxspeed>
                             </accessgroup>
-                            <accessgroup moderefs="bus">
-<maxspeed>50.0</maxspeed>
-                            </accessgroup>
                             <accessgroup moderefs="pedestrian">
 <maxspeed>5.0</maxspeed>
                             </accessgroup>
@@ -734,16 +731,13 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="49" externalid="MODIFIED[49]:highway=tertiary">
-                        <name>MODIFIED[49]:highway=tertiary</name>
+                    <linksegmenttype id="49" externalid="MODIFIED[49]:highway=living_street">
+                        <name>MODIFIED[49]:highway=living_street</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1000.0</capacitylane>
+                        <capacitylane>600.0</capacitylane>
                         <access>
-                            <accessgroup moderefs="bicycle">
-<maxspeed>15.0</maxspeed>
-                            </accessgroup>
-                            <accessgroup moderefs="bus,motor_bike">
-<maxspeed>50.0</maxspeed>
+                            <accessgroup moderefs="bus,car,goods,hgv,lhgv,motor_bike">
+<maxspeed>20.0</maxspeed>
                             </accessgroup>
                             <accessgroup moderefs="pedestrian">
 <maxspeed>5.0</maxspeed>
@@ -760,21 +754,8 @@
                             </accessgroup>
                         </access>
                     </linksegmenttype>
-                    <linksegmenttype id="50" externalid="MODIFIED[50]:highway=living_street">
-                        <name>MODIFIED[50]:highway=living_street</name>
-                        <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>600.0</capacitylane>
-                        <access>
-                            <accessgroup moderefs="bus,car,goods,hgv,lhgv,motor_bike">
-<maxspeed>20.0</maxspeed>
-                            </accessgroup>
-                            <accessgroup moderefs="pedestrian">
-<maxspeed>5.0</maxspeed>
-                            </accessgroup>
-                        </access>
-                    </linksegmenttype>
-                    <linksegmenttype id="51" externalid="MODIFIED[51]:highway=motorway">
-                        <name>MODIFIED[51]:highway=motorway</name>
+                    <linksegmenttype id="50" externalid="MODIFIED[50]:highway=motorway">
+                        <name>MODIFIED[50]:highway=motorway</name>
                         <maxdensitylane>180.0</maxdensitylane>
                         <capacitylane>2000.0</capacitylane>
                         <access>
@@ -786,6 +767,19 @@
                             </accessgroup>
                             <accessgroup moderefs="hgv,lhgv">
 <maxspeed>90.0</maxspeed>
+                            </accessgroup>
+                        </access>
+                    </linksegmenttype>
+                    <linksegmenttype id="51" externalid="MODIFIED[51]:highway=unclassified">
+                        <name>MODIFIED[51]:highway=unclassified</name>
+                        <maxdensitylane>180.0</maxdensitylane>
+                        <capacitylane>600.0</capacitylane>
+                        <access>
+                            <accessgroup moderefs="bicycle">
+<maxspeed>15.0</maxspeed>
+                            </accessgroup>
+                            <accessgroup moderefs="bus,car,goods,hgv,lhgv,motor_bike">
+<maxspeed>50.0</maxspeed>
                             </accessgroup>
                         </access>
                     </linksegmenttype>
@@ -23013,7 +23007,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578645.73953868 -3922473.01724966 1578646.19407476 -3922464.65971122</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2240" dir="a_b" typeref="49">
+                    <linksegment id="2240" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -25619,7 +25613,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578639.01327378 -3922645.46154239 1578643.27826968 -3922529.324934 1578644.28119135 -3922503.76822909</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2596" dir="a_b" typeref="49">
+                    <linksegment id="2596" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -40380,11 +40374,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579217.1301365 -3922326.01934644 1579215.96594586 -3922327.05064954</gml:posList>
                     </gml:LineString>
-                    <linksegment id="4602" dir="a_b" typeref="50">
+                    <linksegment id="4602" dir="a_b" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="4603" dir="b_a" typeref="50">
+                    <linksegment id="4603" dir="b_a" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -40553,7 +40547,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578629.016011 -3922871.38538211 1578629.3875543 -3922862.21441177</gml:posList>
                     </gml:LineString>
-                    <linksegment id="4626" dir="a_b" typeref="49">
+                    <linksegment id="4626" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -53727,7 +53721,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578623.33929476 -3923039.70993016 1578624.71102586 -3922981.60311261 1578628.58604933 -3922882.4640205 1578628.71408498 -3922879.10688381</gml:posList>
                     </gml:LineString>
-                    <linksegment id="6420" dir="a_b" typeref="49">
+                    <linksegment id="6420" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -55345,7 +55339,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578633.60260152 -3922759.32441379 1578633.92005033 -3922753.10867943</gml:posList>
                     </gml:LineString>
-                    <linksegment id="6638" dir="a_b" typeref="49">
+                    <linksegment id="6638" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -55986,7 +55980,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578644.28119135 -3922503.76822909 1578645.3338537 -3922481.55972405</gml:posList>
                     </gml:LineString>
-                    <linksegment id="6724" dir="a_b" typeref="49">
+                    <linksegment id="6724" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -62063,7 +62057,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578633.92005033 -3922753.10867943 1578634.87023821 -3922732.72368107 1578639.01327378 -3922645.46154239</gml:posList>
                     </gml:LineString>
-                    <linksegment id="7536" dir="a_b" typeref="49">
+                    <linksegment id="7536" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -68399,11 +68393,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579215.96594586 -3922327.05064954 1579214.50302043 -3922329.84510628 1579213.30695644 -3922330.90543048 1579211.41599384 -3922331.54699253 1579209.42519187 -3922331.29490973 1579189.60545587 -3922326.38050385</gml:posList>
                     </gml:LineString>
-                    <linksegment id="8390" dir="a_b" typeref="50">
+                    <linksegment id="8390" dir="a_b" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="8391" dir="b_a" typeref="50">
+                    <linksegment id="8391" dir="b_a" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -81573,11 +81567,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579189.60545587 -3922326.38050385 1579181.63675916 -3922324.60292622</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10166" dir="a_b" typeref="50">
+                    <linksegment id="10166" dir="a_b" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="10167" dir="b_a" typeref="50">
+                    <linksegment id="10167" dir="b_a" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -81655,11 +81649,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579237.1181782 -3922329.37542788 1579234.26232261 -3922328.72567824 1579220.18364397 -3922325.50458653 1579218.60792458 -3922325.47677333 1579217.1301365 -3922326.01934644</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10174" dir="a_b" typeref="50">
+                    <linksegment id="10174" dir="a_b" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="10175" dir="b_a" typeref="50">
+                    <linksegment id="10175" dir="b_a" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -83527,7 +83521,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578649.50447104 -3922402.12056215 1578649.77312008 -3922393.35874396</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10426" dir="a_b" typeref="49">
+                    <linksegment id="10426" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -83730,7 +83724,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578646.19407476 -3922464.65971122 1578649.41386155 -3922405.00389671 1578649.50447104 -3922402.12056215</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10452" dir="a_b" typeref="49">
+                    <linksegment id="10452" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -83784,7 +83778,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578645.3338537 -3922481.55972405 1578645.73953868 -3922473.01724966</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10460" dir="a_b" typeref="49">
+                    <linksegment id="10460" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -84349,7 +84343,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578621.65078077 -3923098.49714301 1578623.33929476 -3923039.70993016</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10536" dir="a_b" typeref="49">
+                    <linksegment id="10536" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -85424,7 +85418,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578629.3875543 -3922862.21441177 1578633.11638291 -3922769.12556038 1578633.60260152 -3922759.32441379</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10680" dir="a_b" typeref="49">
+                    <linksegment id="10680" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -85451,7 +85445,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578628.71408498 -3922879.10688381 1578629.016011 -3922871.38538211</gml:posList>
                     </gml:LineString>
-                    <linksegment id="10684" dir="a_b" typeref="49">
+                    <linksegment id="10684" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -89260,7 +89254,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578621.20407139 -3923112.05728692 1578621.65078077 -3923098.49714301</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1482" dir="a_b" typeref="49">
+                    <linksegment id="1482" dir="a_b" typeref="16">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -89568,11 +89562,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579246.13563314 -3922331.43123432 1579237.1181782 -3922329.37542788</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1524" dir="a_b" typeref="50">
+                    <linksegment id="1524" dir="a_b" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1525" dir="b_a" typeref="50">
+                    <linksegment id="1525" dir="b_a" typeref="49">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -90939,7 +90933,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579640.09409987 -3922793.4794916 1579653.84283568 -3922802.3249317</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1712" dir="a_b" typeref="51">
+                    <linksegment id="1712" dir="a_b" typeref="50">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>80.0</maxspeed>
                     </linksegment>
@@ -91103,7 +91097,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578687.16721831 -3923240.18774391 1578681.35610725 -3923318.84543633 1578680.69686003 -3923327.67613523</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1734" dir="a_b" typeref="43">
+                    <linksegment id="1734" dir="a_b" typeref="51">
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>

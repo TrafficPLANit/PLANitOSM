@@ -48,7 +48,8 @@ public class OsmLaneUtils {
   }
 
   /**
-   * parse the number of lanes on the road-based on provided tags in forward and backward direction (if explicitly set), when not available defaults are used
+   * parse the number of lanes on the road-based on provided tags in forward and backward direction
+   * (if explicitly set), when not available defaults are used
    *
    * @param osmWay to parse
    * @param tags containing lane information
@@ -88,7 +89,8 @@ public class OsmLaneUtils {
   }
 
   /**
-   * parse the number of lanes on the rail based on provided tags in forward and backward direction (if explicitly set), when not available defaults are used
+   * parse the number of lanes on the rail based on provided tags in forward and backward direction
+   * (if explicitly set), when not available defaults are used
    *
    * @param osmWay to parse
    * @param tags containing lane information

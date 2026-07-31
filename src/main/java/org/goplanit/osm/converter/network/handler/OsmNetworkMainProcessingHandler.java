@@ -456,7 +456,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */  
   protected Map<NetworkLayer,MacroscopicLink> extractPartialOsmWay(
           OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
-        
+
     Map<NetworkLayer,MacroscopicLink> linksByLayer = null;
     var directionalLinkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay, tags);
     for(var entry : directionalLinkSegmentTypesByLayer.entrySet()) {

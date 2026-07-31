@@ -373,6 +373,65 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
     return includedModes;
   }
 
+  /**
+   * Updates mode restrictions based on a specific access key and its raw value.
+   *
+   *
+   * @param rawAccessValue             the raw access value string for that key
+   * @param tags                  the OSM tags map for the current way
+   * @param includedModesToUpdate set of modes to include/allow
+   * @param excludedModesToUpdate set of modes to exclude/disallow
+   */
+  private void updateAccessValueBasedModeRestrictions(
+      final String rawAccessValue, final Map<String, String> tags,
+      final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
+
+    if (rawAccessValue == null || rawAccessValue.isBlank()) {
+      return;
+    }
+
+    String accessValue = rawAccessValue.replaceAll(
+        OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
+
+    /* access=<positive>*/
+    if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
+
+      Collection<String> osmAllowedModesForWayType = null;
+      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
+        osmAllowedModesForWayType = getSettings().getHighwaySettings().collectAllowedOsmHighwayModes(
+            tags.get(OsmHighwayTags.getHighwayKeyTag()));
+      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
+        osmAllowedModesForWayType = getSettings().getRailwaySettings().collectAllowedOsmRailwayModes(
+            tags.get(OsmRailwayTags.getRailwayKeyTag()));
+      }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
+        String waterKey = OsmWaterwayTags.getUsedKeyTag(tags);
+        osmAllowedModesForWayType = getSettings().getWaterwaySettings().collectAllowedOsmWaterwayModes(
+            tags.get(waterKey));
+      }else {
+        /* no other major types yet supported */
+      }
+
+      if(!CollectionUtils.nullOrEmpty(osmAllowedModesForWayType)) {
+        Set<Mode> allowedModes = getActivatedPlanitModes(osmAllowedModesForWayType);
+        allowedModes.retainAll(networkLayer.getSupportedModes());
+        includedModesToUpdate.addAll(allowedModes);
+      }
+      includedModesToUpdate.removeAll(excludedModesToUpdate);
+    }
+    /* access=<mode>*/
+    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmRoadModeTags.getSupportedRoadModeTagsAsArray()) ||
+        OsmTagUtils.matchesAnyValueTag(accessValue, OsmRailModeTags.getSupportedRailModeTagsAsArray())){
+      includedModesToUpdate.add(getActivatedPlanitMode(accessValue));
+      excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
+      excludedModesToUpdate.removeAll(includedModesToUpdate);
+    }
+    /* access=<negative>*/
+    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getNegativeAccessValueTags())){
+      excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
+      excludedModesToUpdate.removeAll(includedModesToUpdate);
+    }
+  }
+
   /** Collect explicitly excluded modes from the passed in tags but only for tags that have the same meaning regardless
    *  if the way is tagged as one way or not
    * 
@@ -604,60 +663,82 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
   
   /** Update the included and excluded mode sets passed in based on the key/value information available in the
    * access=? tag.
-   * 
-   * @param tags where we extract the access information from
+   *
+   * <p>
+   *   Note that provided included/excluded modes are assumed to be more important than newly found access restrictions/
+   *   relaxations. so we check against those when updating
+   * </p>
+   *
+   * @param accessKeyToUse        the specific OSM tag key to retrieve (e.g., ACCESS or access:lanes if value
+   *                              is not lane specific)
+   * @param tags           the OSM tags map for the current way
    * @param includedModesToUpdate the set to supplement with found access information of allowed modes,
    *                              e.g. access=yes, access=bus, etc.
    * @param excludedModesToUpdate the set to supplement with found access information of disallowed modes,
    *                              e.g. access=no, etc.
    */
-  public void updateAccessKeyBasedModeRestrictions(
-          final Map<String, String> tags, final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
-    
-    String accessValue = tags.get(OsmAccessTags.ACCESS).replaceAll(
-        OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
-    
-    /* access=<positive>*/
-    if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
-      
-      /* collect all modes the type of road supports and are allowed upon...*/
-      Collection<String> osmAllowedModesForWayType = null;
-      if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
-        osmAllowedModesForWayType = getSettings().getHighwaySettings().collectAllowedOsmHighwayModes(
-            tags.get(OsmHighwayTags.getHighwayKeyTag()));
-      }else if(OsmRailwayTags.hasRailwayKeyTag(tags)) {
-        osmAllowedModesForWayType = getSettings().getRailwaySettings().collectAllowedOsmRailwayModes(
-            tags.get(OsmRailwayTags.getRailwayKeyTag()));
-      }else if(OsmWaterwayTags.isWaterBasedWay(tags)) {
-        String waterKey = OsmWaterwayTags.getUsedKeyTag(tags);
-        osmAllowedModesForWayType = getSettings().getWaterwaySettings().collectAllowedOsmWaterwayModes(
-            tags.get(waterKey));
-      }else {
-        /* no other major types yet supported */
+  public void updateNonLaneBasedAccessKeyBasedModeRestrictions(
+      String accessKeyToUse, final Map<String, String> tags,
+      final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
+
+    // directly pass one as we only have a single access value for our key
+    String rawAccess = tags.get(accessKeyToUse);
+    updateAccessValueBasedModeRestrictions(rawAccess, tags, includedModesToUpdate, excludedModesToUpdate);
+  }
+
+  /**
+   * Updates mode restrictions based on lane-specific access values containing pipes (e.g., destination|yes|no),
+   * evaluating each lane individually using the access key value helper and combining them via
+   * a union of inclusions and intersection of exclusions.
+   * <p>
+   *   Note that provided included/excluded modes are assumed to be more important than newly found access restrictions/
+   *   relaxations. so we check against those when updating
+   * </p>
+   *
+   * @param accessKeyToUse        the specific OSM tag key being evaluated (e.g., access or access:lanes)
+   * @param tags                  the OSM tags map for the current way
+   * @param includedModesToUpdate set of modes to include/allow
+   * @param excludedModesToUpdate set of modes to exclude/disallow
+   */
+  public void updateLaneBasedAccessKeyRestrictions(
+      final String accessKeyToUse, final Map<String, String> tags,
+      final Set<Mode> includedModesToUpdate, final Set<Mode> excludedModesToUpdate) {
+
+    String laneAccessValue = tags.get(accessKeyToUse);
+    if (laneAccessValue == null || !laneAccessValue.contains("|")) {
+      return;
+    }
+
+    String[] lanes = laneAccessValue.split("\\|", -1);
+
+    Set<Mode> accumulatedInclusions = new HashSet<>();
+    Set<Mode> commonExclusions = null;
+
+    // process per lane and take union/intersection of included/excluded modes found
+    for (String singleLaneRawAccessValue : lanes) {
+      String cleanLane = singleLaneRawAccessValue.replaceAll(
+          OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "").trim();
+      Set<Mode> laneInclusions = new HashSet<>();
+      Set<Mode> laneExclusions = new HashSet<>();
+
+      updateAccessValueBasedModeRestrictions(cleanLane, tags, laneInclusions, laneExclusions);
+      accumulatedInclusions.addAll(laneInclusions);
+      if (commonExclusions == null) {
+        commonExclusions = new HashSet<>(laneExclusions);
+      } else {
+        commonExclusions.retainAll(laneExclusions);
       }
-      
-      /*... retain all that are supported by the layer */
-      if(!CollectionUtils.nullOrEmpty(osmAllowedModesForWayType)) {
-        Set<Mode> allowedModes =getActivatedPlanitModes(osmAllowedModesForWayType);
-        allowedModes.retainAll(networkLayer.getSupportedModes());
-        includedModesToUpdate.addAll(allowedModes);
-      }
-      includedModesToUpdate.removeAll(excludedModesToUpdate);       
     }
-    /* access=<mode>*/
-    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmRoadModeTags.getSupportedRoadModeTagsAsArray()) ||
-        OsmTagUtils.matchesAnyValueTag(accessValue, OsmRailModeTags.getSupportedRailModeTagsAsArray())){
-      /* access limited to a particular road/rail mode */
-      includedModesToUpdate.add(getActivatedPlanitMode(accessValue));
-      excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
-      excludedModesToUpdate.removeAll(includedModesToUpdate);
+
+    // Precedence rule: Mode-specific tags (already in the target sets) trump lane/general access.
+    // Lane inclusions cannot add a mode if it was already explicitly excluded
+    accumulatedInclusions.removeAll(excludedModesToUpdate);
+    includedModesToUpdate.addAll(accumulatedInclusions);
+
+    // finalize
+    includedModesToUpdate.addAll(accumulatedInclusions);
+    if (commonExclusions != null) {
+      excludedModesToUpdate.addAll(commonExclusions);
     }
-    /* access=<negative>*/
-    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getNegativeAccessValueTags())){
-      excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
-      excludedModesToUpdate.removeAll(includedModesToUpdate);
-    }
-    
-  }      
-  
+  }
 }

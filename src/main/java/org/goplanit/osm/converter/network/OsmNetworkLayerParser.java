@@ -387,9 +387,19 @@ public class OsmNetworkLayerParser {
           !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
       
       /* access=<?> related mode access */
-      if(accessTagAppliesToExploredDirection && tags.containsKey(OsmAccessTags.ACCESS)) {
-        
-        modeParser.updateAccessKeyBasedModeRestrictions(tags, includedModes, excludedModes);
+      boolean globalAccessKey = tags.containsKey(OsmAccessTags.ACCESS);
+      boolean laneAccessKey = tags.containsKey(OsmTagUtils.createCompositeOsmKey(OsmAccessTags.ACCESS, OsmLaneTags.LANES));
+      if(accessTagAppliesToExploredDirection && (globalAccessKey || laneAccessKey)){
+        String accessKey = laneAccessKey ?
+            OsmTagUtils.createCompositeOsmKey(OsmAccessTags.ACCESS, OsmLaneTags.LANES) : OsmAccessTags.ACCESS;
+        String accessValue = tags.get(accessKey);
+        boolean hasPipes = (accessValue != null && accessValue.contains("|"));
+
+        if (hasPipes) {
+          modeParser.updateLaneBasedAccessKeyRestrictions(accessKey, tags, includedModes, excludedModes);
+        } else {
+          modeParser.updateNonLaneBasedAccessKeyBasedModeRestrictions(accessKey, tags, includedModes, excludedModes);
+        }
       }
       
       /* reduce included modes to only the modes supported by the layer the link segment type resides on*/

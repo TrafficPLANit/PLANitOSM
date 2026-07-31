@@ -25,16 +25,16 @@ public class OsmAccessTags {
    * <li>no</li>
    * <li>none</li>
    * <li>private</li>
-   * <li>destination</li>
    * <li>delivery</li>
    * <li>customers</li>
    * <li>use_sidepath</li>
    * <li>separate</li>
    * <li>discouraged</li>
    * </ul>
+   * Note: removed destination as a negative access value as it does not forbid traffic (31/7/2026)
    */  
   protected static final String[] NEGATIVE_ACCESS_VALUE_TAGS = 
-    {OsmAccessTags.NO, OsmAccessTags.NONE, OsmAccessTags.PRIVATE, OsmAccessTags.DESTINATION, OsmAccessTags.DELIVERY,
+    {OsmAccessTags.NO, OsmAccessTags.NONE, OsmAccessTags.PRIVATE, OsmAccessTags.DELIVERY,
             OsmAccessTags.CUSTOMERS, OsmAccessTags.USE_SIDEPATH, OsmAccessTags.SEPARATE,
             OsmAccessTags.DISCOURAGED};
   
