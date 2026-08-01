@@ -9,6 +9,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 /**
@@ -45,7 +46,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(final String inputSource, final String countryName) {
-    this(UrlUtils.createFrom(inputSource), countryName);
+    this(UrlUtils.createFromLocalAbsoluteOrRelativePath(Path.of(inputSource)), countryName);
   }
 
   /**
