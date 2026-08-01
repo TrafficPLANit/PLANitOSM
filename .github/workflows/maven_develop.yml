@@ -2,9 +2,13 @@ name: Maven build branch:develop
 
 on:
   push:
-    branches: [ develop ]
+    branches:
+      - develop
+      - 'release_prep/**'
   pull_request:
-    branches: [ develop ]
+    branches:
+      - develop
+      - 'release_prep/**'
 
 jobs:
   build:

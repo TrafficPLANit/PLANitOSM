@@ -1,13 +1,10 @@
 package org.goplanit.osm.test;
 
-import org.goplanit.converter.intermodal.IntermodalConverter;
 import org.goplanit.converter.intermodal.IntermodalConverterFactory;
-import org.goplanit.converter.network.NetworkConverter;
 import org.goplanit.converter.network.NetworkConverterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriter;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
-import org.goplanit.io.converter.network.PlanitNetworkReaderSettings;
 import org.goplanit.io.converter.network.PlanitNetworkWriter;
 import org.goplanit.io.converter.network.PlanitNetworkWriterFactory;
 import org.goplanit.io.converter.network.PlanitNetworkWriterSettings;

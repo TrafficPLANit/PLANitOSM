@@ -198,7 +198,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsHeader("OSM Public Transport Reader Settings"));
     super.logSettings(level);
-    LOGGER.info(LoggingUtils.settingsValue("Public transport infrastructure parser activated", isParserActive(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Public transport infrastructure parser activated",
+        isParserActive(), level));
 
     if(isParserActive()) {
       LOGGER.info(LoggingUtils.settingsValue("Stop location to waiting area search radius (m)",
