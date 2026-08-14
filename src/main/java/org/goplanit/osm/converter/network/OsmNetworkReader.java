@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.network;
 
 import java.net.URL;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import org.goplanit.converter.network.NetworkReader;
@@ -24,6 +25,7 @@ import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnVertexRemovalHandler;
@@ -289,7 +291,7 @@ public class OsmNetworkReader implements NetworkReader {
         listener = new UpdateConnectoidsOnVertexRemovalHandler(zoning);
         layers.getFirst().getLayerModifier().addListener(listener);
       }
-      
+
       /* remove dangling subnetworks */
       getOsmNetworkToPopulate().removeDanglingSubnetworks(
               discardMinsize, discardMaxsize, keepLargest, recreateManagedIds);
