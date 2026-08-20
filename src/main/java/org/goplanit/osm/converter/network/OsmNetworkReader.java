@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.goplanit.converter.network.NetworkReader;
 import org.goplanit.network.MacroscopicNetwork;
@@ -25,6 +26,7 @@ import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentUtils;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
@@ -51,6 +53,9 @@ public class OsmNetworkReader implements NetworkReader {
   
   /** settings to use */
   private final OsmNetworkReaderSettings settings;
+
+  /** when set, this reader does not log its own settings, see {@link #suppressSettingsLogging()} */
+  private boolean suppressSettingsLogging = false;
   
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
@@ -113,10 +118,23 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
+   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
+   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
+   * private so only the factory can apply it at creation time.
+   */
+  void suppressSettingsLogging() {
+    this.suppressSettingsLogging = true;
+  }
+
+  /**
    * Log some information about this reader's configuration
    */
   private void logInfo() {
 
+    if(suppressSettingsLogging){
+      /* a composing reader reports the configuration on our behalf */
+      return;
+    }
     getSettings().logSettings();
 
   }
@@ -238,11 +256,9 @@ public class OsmNetworkReader implements NetworkReader {
   }
   
   /**
-   * remove dangling subnetworks when settings dictate it. In case the removal of subnetworks causes zones to
-   * become dangling
-   * the user is required to remove those afterwards themselves, by providing the zoning, only the directly
-   * impacted connectoids
-   * are removed if affected.
+   * Remove dangling subnetworks when settings dictate it. In case the removal of subnetworks causes zones to
+   * become dangling the user is required to remove those afterwards themselves, by providing the zoning, only
+   * the directly impacted connectoids are removed if affected.
    * 
    * @param zoning to also remove connectoids from when they reference removed road/rail subnetworks
    * @param recreateManagedIds when true recreate ids, otherwise not
@@ -292,9 +308,16 @@ public class OsmNetworkReader implements NetworkReader {
         layers.getFirst().getLayerModifier().addListener(listener);
       }
 
-      /* remove dangling subnetworks */
-      getOsmNetworkToPopulate().removeDanglingSubnetworks(
-              discardMinsize, discardMaxsize, keepLargest, recreateManagedIds);
+      /* remove dangling subnetworks, one pass per activated track type. Road, rail and water infrastructure share
+       * a single layer while forming separate networks, so each is judged on its own connectivity. Segments open
+       * to modes of more than one track type belong to neither pass and are left in place */
+      for(var trackType : settings.getRemoveDanglingSubnetworkTrackTypes()) {
+        LOGGER.info(String.format(
+            "Removing dangling %s subnetworks", trackType.name().toLowerCase()));
+        getOsmNetworkToPopulate().removeDanglingSubnetworks(
+                discardMinsize, discardMaxsize, keepLargest, recreateManagedIds,
+                MacroscopicLinkSegmentUtils.exclusivelyOfTrackType(trackType));
+      }
       
       /* remove listener as it is currently meant for local use only due to expensive initialisation which is also
       not kept up to date */

@@ -60,13 +60,29 @@ public class OsmZoningReader implements ZoningReader {
       
   /** zoning to populate */
   private Zoning zoning;
+
+  /** when set, this reader does not log its own settings, see {@link #suppressSettingsLogging()} */
+  private boolean suppressSettingsLogging = false;
        
   /**
-   * Log some information about this reader's configuration 
+   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
+   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
+   * private so only the factory can apply it at creation time.
+   */
+  void suppressSettingsLogging() {
+    this.suppressSettingsLogging = true;
+  }
+
+  /**
+   * Log some information about this reader's configuration
    */
   private void logInfo() {
+    if(suppressSettingsLogging){
+      /* a composing reader reports the configuration on our behalf */
+      return;
+    }
     getSettings().logSettings();
-  }       
+  }
   
   /** Make sure that if a bounding area is available on the network, any explicitly defined zoning bounding polygon
    * should ideally not exceed the network bounding area since it makes little sense to try and parse pt infrastructure

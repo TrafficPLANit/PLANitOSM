@@ -20,6 +20,7 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.mode.TrackModeType;
 
 import java.util.logging.Logger;
 
@@ -76,7 +77,7 @@ public class Osm2PlanitConversionTemplates {
     osmReader.getSettings().excludeOsmWaysFromParsing(excludedOsmWays);
     
     osmReader.getSettings().getHighwaySettings().deactivateAllOsmRoadModesExcept(OsmRoadModeTags.MOTOR_CAR);
-    osmReader.getSettings().setRemoveDanglingSubnetworks(true);
+    osmReader.getSettings().setRemoveDanglingSubnetworks(TrackModeType.ROAD, true);
     osmReader.getSettings().setDiscardDanglingNetworksBelow(20);
     osmReader.getSettings().deactivateAllOsmWayTypesExcept(
         OsmHighwayTags.MOTORWAY, OsmHighwayTags.MOTORWAY_LINK,

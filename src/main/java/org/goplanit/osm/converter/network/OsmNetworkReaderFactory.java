@@ -106,6 +106,24 @@ public class OsmNetworkReaderFactory {
    */
   public static OsmNetworkReader create(OsmNetworkReaderSettings settings) {
     return new OsmNetworkReader(settings, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));
-  }   
-  
+  }
+
+  /** Identical to {@link #create(OsmNetworkReaderSettings)} except that the reader will not log its own settings.
+   * <p>
+   * For use by a composing reader that reports the configuration itself, so the user is presented with a single
+   * settings block covering the whole parse rather than one per sub-reader. A composing reader may also alter
+   * these settings for the duration of the parse, in which case logging them here would show values that do not
+   * reflect what the user configured.
+   * </p>
+   *
+   * @param settings to use, make sure they are consistent with the network and country provided here otherwise
+   *                 an exception will be thrown
+   * @return created osm reader
+   */
+  public static OsmNetworkReader createWithoutSettingsLogging(OsmNetworkReaderSettings settings) {
+    var osmNetworkReader = create(settings);
+    osmNetworkReader.suppressSettingsLogging();
+    return osmNetworkReader;
+  }
+
 }

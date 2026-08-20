@@ -89,7 +89,7 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateRailwayParser(false);
       readerSettings.getNetworkSettings().activateWaterwayParser(true);
 
-      readerSettings.getNetworkSettings().setRemoveDanglingSubnetworks(false);
+      readerSettings.getNetworkSettings().deactivateRemoveDanglingSubnetworks();
       readerSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
 
       // ferry only

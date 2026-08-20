@@ -93,8 +93,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   @Override
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsHeader("OSM Intermodal Reader Settings"));
-    networkSettings.logSettings(level);
-    zoningPtSettings.logSettings(level);
+    networkSettings.logSettings(level+1);
+    zoningPtSettings.logSettings(level+1);
   }
 
   // GETTERS/SETTERS

@@ -115,10 +115,10 @@ public class BasicOsmReaderTest {
 
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
-      assertEquals(network.getTransportLayers().size(), 1);
-      assertEquals(network.getTransportLayers().getFirst().getLinks().size(), 1075);
-      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2123);
-      assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 882);
+      assertEquals(1, network.getTransportLayers().size());
+      assertEquals(1055, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2083, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(857, network.getTransportLayers().getFirst().getNodes().size());
 
       assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(
               Edge::hasInputProperty) : "OSM tags not retained on all links";
@@ -162,9 +162,11 @@ public class BasicOsmReaderTest {
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
 
-      assertEquals(1234, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2441, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(1030, network.getTransportLayers().getFirst().getNodes().size());
+      /* counts reflect dangling subnetwork removal being active for road only, which is the default. Without any
+       * removal the layer holds 1234 links, 2441 link segments and 1030 nodes */
+      assertEquals(1224, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2421, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(1020, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
       assertEquals(104, zoning.getTransferZones().size() );
@@ -193,7 +195,7 @@ public class BasicOsmReaderTest {
       assertEquals(134, ptStopTypeAccessLinkSegments);
       assertEquals(3, accessZoneEntries);
       assertEquals(3, egressZoneEntries);
-      assertEquals(94, accessEgressZoneEntries);
+      assertEquals(92, accessEgressZoneEntries);
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));

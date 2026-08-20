@@ -12,6 +12,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.mode.TrackModeType;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import java.net.URL;
@@ -85,11 +86,17 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   private boolean consolidateLinkSegmentTypes = DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES;
 
-  /** flag indicating if dangling subnetworks should be removed after parsing the network
-   * OSM network often have small roads that appear to be connected to larger roads, but in fact are not. 
-   * All subnetworks that are not part of the largest subnetwork that is parsed will be removed by default. 
+  /** flag per track type indicating if dangling subnetworks of that track type should be removed after parsing
+   * the network. OSM networks often have small roads that appear to be connected to larger roads, but in fact are
+   * not. All subnetworks that are not part of the largest subnetwork of their track type will be removed.
+   * <p>
+   * Pruning is per track type because road, rail and water infrastructure share a single PLANit layer while being
+   * separate networks in practice. A rail line is not dangling merely because it is unreachable by car, so judging
+   * connectivity across all track types at once would discard legitimate infrastructure.
+   * </p>
    * */
-  protected boolean removeDanglingSubNetworks = DEFAULT_REMOVE_DANGLING_SUBNETWORK;
+  protected final Map<TrackModeType, Boolean> removeDanglingSubNetworkByTrackType =
+      createDefaultRemoveDanglingSubNetworkFlags();
   
   /**
    * When dangling subnetworks are marked for removal, this threshold determines the minimum subnetwork size
@@ -120,8 +127,14 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
 
-  /** Default whether we are removing dangling subnetworks after parsing: true */
-  public static boolean DEFAULT_REMOVE_DANGLING_SUBNETWORK = true;
+  /** Default track types for which dangling subnetworks are removed after parsing: road only.
+   * <p>
+   * Rail and water networks are routinely disconnected from each other in an extract - a branch line leaving the
+   * bounding area, a ferry route with no other ferry route to connect to - without that indicating a parsing
+   * artefact. Road networks are where the spurious disconnected fragments typically occur, so that is the only
+   * track type pruned unless the user opts in to more.
+   * </p> */
+  public static Set<TrackModeType> DEFAULT_REMOVE_DANGLING_SUBNETWORK_TRACK_TYPES = Set.of(TrackModeType.ROAD);
   
   /** Default minimum size of subnetwork for it not to be removed when dangling subnetworks are removed,
    * size indicates number of vertices: 20 */
@@ -212,12 +225,19 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         getSourceCRS().getName(), level));
     LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types",
         isConsolidateLinkSegmentTypes(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks",
-        isRemoveDanglingSubnetworks(), level));
+    for(var trackType : TrackModeType.values()){
+      LOGGER.info(LoggingUtils.settingsValue(
+          String.format("Remove dangling subnetworks (%s)", trackType.name().toLowerCase()),
+          isRemoveDanglingSubnetworks(trackType), level));
+    }
+    /* thresholds are logged unconditionally: they govern what a pruning pass does and are easily overlooked, and
+     * the activation flags above can be temporarily off at the time of logging while pruning still takes place
+     * later on, e.g. when an intermodal parse postpones removal until after the zoning is read */
     LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks below size",
         getDiscardDanglingNetworkBelowSize(), level));
     LOGGER.info(LoggingUtils.settingsValue("Discard dangling subnetworks above size",
-        getDiscardDanglingNetworkAboveSize(), level));
+        getDiscardDanglingNetworkAboveSize() != Integer.MAX_VALUE ?
+            String.valueOf(getDiscardDanglingNetworkAboveSize()) : "infinite", level));
     LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork",
         isAlwaysKeepLargestSubnetwork(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
@@ -312,21 +332,79 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
      
   /**
-   * Indicate whether to remove dangling subnetworks or not
-   * 
+   * Construct the per track type defaults for removing dangling subnetworks
+   *
+   * @return flags for every track type, set according to {@code DEFAULT_REMOVE_DANGLING_SUBNETWORK_TRACK_TYPES}
+   */
+  private static Map<TrackModeType, Boolean> createDefaultRemoveDanglingSubNetworkFlags(){
+    var flagsByTrackType = new EnumMap<TrackModeType, Boolean>(TrackModeType.class);
+    for(var trackType : TrackModeType.values()){
+      flagsByTrackType.put(trackType, DEFAULT_REMOVE_DANGLING_SUBNETWORK_TRACK_TYPES.contains(trackType));
+    }
+    return flagsByTrackType;
+  }
+
+  /**
+   * Indicate whether to remove dangling subnetworks for a single track type. Each track type is pruned
+   * independently, so deactivating road leaves any activated rail or water pruning untouched.
+   *
+   * @param trackType to configure
    * @param removeDanglingSubnetworks yes or no
    */
-  public void setRemoveDanglingSubnetworks(boolean removeDanglingSubnetworks) {
-    this.removeDanglingSubNetworks = removeDanglingSubnetworks;
+  public void setRemoveDanglingSubnetworks(TrackModeType trackType, boolean removeDanglingSubnetworks) {
+    this.removeDanglingSubNetworkByTrackType.put(trackType, removeDanglingSubnetworks);
   }
-  
-  /** Verify if dangling subnetworks are removed from the final network
-   * 
-   * @return flag if dangling networks are removed
+
+  /** Verify if dangling subnetworks of the given track type are removed from the final network
+   *
+   * @param trackType to verify
+   * @return flag if dangling networks of this track type are removed
+   */
+  public boolean isRemoveDanglingSubnetworks(TrackModeType trackType) {
+    return this.removeDanglingSubNetworkByTrackType.getOrDefault(trackType, false);
+  }
+
+  /**
+   * Deactivate the removal of dangling subnetworks for all track types.
+   * <p>
+   * There is deliberately no blanket counterpart that activates every track type at once. Water in particular
+   * must be opted into explicitly: a ferry network legitimately consists of many small, mutually disconnected
+   * crossings, so pruning all but the largest of them discards valid infrastructure rather than parsing artefacts.
+   * </p>
+   */
+  public void deactivateRemoveDanglingSubnetworks() {
+    for(var trackType : TrackModeType.values()){
+      setRemoveDanglingSubnetworks(trackType, false);
+    }
+  }
+
+  /** Verify if dangling subnetworks are removed from the final network for at least one track type
+   *
+   * @return true when any track type is configured for removal, false otherwise
    */
   public boolean isRemoveDanglingSubnetworks() {
-    return this.removeDanglingSubNetworks;
-  }  
+    return this.removeDanglingSubNetworkByTrackType.values().stream().anyMatch(Boolean::booleanValue);
+  }
+
+  /** Collect the track types for which dangling subnetworks are to be removed
+   *
+   * @return activated track types, empty when none are activated
+   */
+  public Set<TrackModeType> getRemoveDanglingSubnetworkTrackTypes() {
+    return this.removeDanglingSubNetworkByTrackType.entrySet().stream()
+        .filter(Map.Entry::getValue).map(Map.Entry::getKey)
+        .collect(Collectors.toCollection(() -> EnumSet.noneOf(TrackModeType.class)));
+  }
+
+  /** Replace the track types for which dangling subnetworks are to be removed, any type not listed is deactivated
+   *
+   * @param trackTypes to activate removal for
+   */
+  public void setRemoveDanglingSubnetworkTrackTypes(Set<TrackModeType> trackTypes) {
+    for(var trackType : TrackModeType.values()){
+      setRemoveDanglingSubnetworks(trackType, trackTypes.contains(trackType));
+    }
+  }
        
   
   /** collect the current configuration setup for applying number of lanes in case the lanes tag is not
@@ -506,7 +584,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     this.discardSubNetworkBelowSize = discardBelow;
   }
   
-  /** allows you to set a maximum size for dangling subnetwork. Practically only useful for debugging purposes
+  /** Allows you to set a maximum size for dangling subnetwork. Practically only useful for debugging purposes
    * 
    * @param discardAbove this number of vertices
    */
