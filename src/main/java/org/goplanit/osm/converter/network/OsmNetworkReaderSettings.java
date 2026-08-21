@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.network;
 
 import org.goplanit.osm.converter.OsmReaderSettings;
 import org.goplanit.osm.defaults.*;
+import org.goplanit.osm.tags.OsmAccessTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
@@ -79,8 +80,28 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<>();
 
+  /**
+   * How an OSM access value tag is to be interpreted during parsing
+   */
+  public enum AccessValueClassification {
+    /** the value grants access */
+    POSITIVE,
+    /** the value denies access */
+    NEGATIVE
+  }
+
+  /** user supplied classification of OSM access value tags, overriding the defaults. Kept as a single map keyed by
+   * the access value so that a value can never end up classified both positively and negatively at once */
+  protected final Map<String, AccessValueClassification> overriddenAccessValueTags = new TreeMap<>();
+
+  /** compiled positive access value tags, defaults combined with user overrides. Null when it needs recompiling */
+  private String[] compiledPositiveAccessValueTags = null;
+
+  /** compiled negative access value tags, defaults combined with user overrides. Null when it needs recompiling */
+  private String[] compiledNegativeAccessValueTags = null;
+
   /* SETTINGS */
-  
+
   /** the crs of the OSM source */
   protected CoordinateReferenceSystem sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
 
@@ -242,6 +263,19 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         isAlwaysKeepLargestSubnetwork(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
         getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), level));
+
+    /* the effective classification is logged in full, defaults and user overrides combined, so that what is
+     * reported is what parsing applies rather than requiring the reader to merge the two in their head */
+    LOGGER.info(LoggingUtils.settingsValue("Access value tags granting access",
+        String.join(", ", getPositiveAccessValueTags()), level));
+    LOGGER.info(LoggingUtils.settingsValue("Access value tags denying access",
+        String.join(", ", getNegativeAccessValueTags()), level));
+    if(!overriddenAccessValueTags.isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Access value tags reclassified by user",
+          overriddenAccessValueTags.entrySet().stream().map(
+              e -> String.format("%s=%s", e.getKey(), e.getValue().name().toLowerCase())).collect(
+                  Collectors.joining(", ")), level));
+    }
     LOGGER.info(LoggingUtils.settingsSection("Highway", level + 1));
     getHighwaySettings().logSettings(level + 1);
     LOGGER.info(LoggingUtils.settingsSection("Railway", level + 1));
@@ -331,6 +365,115 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     osmWaterwaySettings.excludeOsmWayTypesWithoutActivatedModes();
   }
      
+  /**
+   * Compile the effective access value classification by starting from the defaults and applying the user's
+   * overrides on top. Cached because it is consulted for every parsed OSM way carrying an access tag.
+   *
+   * @param classification to compile the value tags for
+   * @return effective access value tags for that classification
+   */
+  private String[] compileAccessValueTags(AccessValueClassification classification) {
+    var defaults = classification == AccessValueClassification.POSITIVE ?
+        OsmAccessTags.getDefaultPositiveAccessValueTags() : OsmAccessTags.getDefaultNegativeAccessValueTags();
+
+    var effective = new TreeSet<>(Arrays.asList(defaults));
+    for(var entry : overriddenAccessValueTags.entrySet()){
+      /* a value classified the other way by the user must no longer appear here, hence the removal irrespective
+       * of whether it is subsequently added */
+      effective.remove(entry.getKey());
+      if(entry.getValue() == classification){
+        effective.add(entry.getKey());
+      }
+    }
+    return effective.toArray(new String[0]);
+  }
+
+  /** discard the compiled access value classification so it is rebuilt on next use */
+  private void invalidateCompiledAccessValueTags(){
+    this.compiledPositiveAccessValueTags = null;
+    this.compiledNegativeAccessValueTags = null;
+  }
+
+  /**
+   * Classify an OSM access value tag, overriding how it would be treated by default. For example classifying
+   * {@code private} as positive causes ways tagged {@code access=private} to retain their mode access rather than
+   * having every mode stripped, which is often desirable since such ways are generally still traversable in
+   * practice even though they are formally restricted.
+   * <p>
+   * A value can only carry one classification, so classifying it replaces any earlier choice for that value.
+   * Values that are not recognised OSM access values are accepted, but a warning is logged since their effect
+   * cannot be verified.
+   * </p>
+   *
+   * @param osmAccessValueTag to classify, e.g. {@code private}
+   * @param classification to apply
+   */
+  public void classifyAccessValueTag(final String osmAccessValueTag, final AccessValueClassification classification) {
+    if(StringUtils.isNullOrBlank(osmAccessValueTag)){
+      LOGGER.warning("IGNORE: null or blank OSM access value tag provided for classification");
+      return;
+    }
+    if(!OsmAccessTags.getAllKnownAccessValueTags().contains(osmAccessValueTag)){
+      LOGGER.warning(String.format(
+          "OSM access value tag '%s' is not a recognised access value, classifying it as %s regardless, at the " +
+              "user's own risk", osmAccessValueTag, classification));
+    }
+    overriddenAccessValueTags.put(osmAccessValueTag, classification);
+    invalidateCompiledAccessValueTags();
+  }
+
+  /** Classify an OSM access value tag as granting access, see
+   * {@link #classifyAccessValueTag(String, AccessValueClassification)}
+   *
+   * @param osmAccessValueTag to treat as granting access
+   */
+  public void classifyAccessValueTagAsPositive(final String osmAccessValueTag) {
+    classifyAccessValueTag(osmAccessValueTag, AccessValueClassification.POSITIVE);
+  }
+
+  /** Classify an OSM access value tag as denying access, see
+   * {@link #classifyAccessValueTag(String, AccessValueClassification)}
+   *
+   * @param osmAccessValueTag to treat as denying access
+   */
+  public void classifyAccessValueTagAsNegative(final String osmAccessValueTag) {
+    classifyAccessValueTag(osmAccessValueTag, AccessValueClassification.NEGATIVE);
+  }
+
+  /** Remove any user classification for the given access value tag, restoring default behaviour for it
+   *
+   * @param osmAccessValueTag to restore to its default treatment
+   */
+  public void resetAccessValueTagClassification(final String osmAccessValueTag) {
+    if(overriddenAccessValueTags.remove(osmAccessValueTag) != null){
+      invalidateCompiledAccessValueTags();
+    }
+  }
+
+  /** The access value tags that grant access during parsing, defaults combined with any user classification.
+   * This is what parsing applies, as opposed to the defaults on {@code OsmAccessTags}
+   *
+   * @return effective positive access value tags
+   */
+  public String[] getPositiveAccessValueTags() {
+    if(compiledPositiveAccessValueTags == null){
+      compiledPositiveAccessValueTags = compileAccessValueTags(AccessValueClassification.POSITIVE);
+    }
+    return compiledPositiveAccessValueTags;
+  }
+
+  /** The access value tags that deny access during parsing, defaults combined with any user classification.
+   * This is what parsing applies, as opposed to the defaults on {@code OsmAccessTags}
+   *
+   * @return effective negative access value tags
+   */
+  public String[] getNegativeAccessValueTags() {
+    if(compiledNegativeAccessValueTags == null){
+      compiledNegativeAccessValueTags = compileAccessValueTags(AccessValueClassification.NEGATIVE);
+    }
+    return compiledNegativeAccessValueTags;
+  }
+
   /**
    * Construct the per track type defaults for removing dangling subnetworks
    *

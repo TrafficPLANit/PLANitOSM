@@ -46,7 +46,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
       Map<String, String> tags, boolean isForwardDirection, boolean included) {
     String osmDirectionCondition= isForwardDirection ? OsmDirectionTags.FORWARD : OsmDirectionTags.BACKWARD;
     String[] accessValueTags =
-        included ?  OsmAccessTags.getPositiveAccessValueTags() : OsmAccessTags.getNegativeAccessValueTags();
+        included ?  getSettings().getPositiveAccessValueTags() : getSettings().getNegativeAccessValueTags();
     /* found modes with given access value tags in explored direction */
     Set<Mode> foundModes =
         getActivatedPlanitModes(
@@ -394,7 +394,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
         OsmTagUtils.VALUETAG_SPECIALCHAR_STRIP_REGEX, "");
 
     /* access=<positive>*/
-    if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getPositiveAccessValueTags())) {
+    if(OsmTagUtils.matchesAnyValueTag(accessValue, getSettings().getPositiveAccessValueTags())) {
 
       Collection<String> osmAllowedModesForWayType = null;
       if(OsmHighwayTags.hasHighwayKeyTag(tags)) {
@@ -426,7 +426,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
       excludedModesToUpdate.removeAll(includedModesToUpdate);
     }
     /* access=<negative>*/
-    else if(OsmTagUtils.matchesAnyValueTag(accessValue, OsmAccessTags.getNegativeAccessValueTags())){
+    else if(OsmTagUtils.matchesAnyValueTag(accessValue, getSettings().getNegativeAccessValueTags())){
       excludedModesToUpdate.addAll(networkLayer.getSupportedModes());
       excludedModesToUpdate.removeAll(includedModesToUpdate);
     }
@@ -463,7 +463,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
   
       /* ... all modes --> general exclusion of modes */
       excludedModes =  getActivatedPlanitModes(
-          OsmModeUtils.getOsmRoadModesWithValueTag(tags, OsmAccessTags.getNegativeAccessValueTags()));
+          OsmModeUtils.getOsmRoadModesWithValueTag(tags, getSettings().getNegativeAccessValueTags()));
       
       /* ...all modes --> exclusions in explicit directions matching our explored direction, e.g. bicycle:forward=no,
        FORWARD/BACKWARD/BOTH based*/
@@ -574,17 +574,17 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
       if(settings.isHighwayParserActive()) {
         includedModes.addAll(
             getActivatedPlanitModes(
-                OsmModeUtils.getOsmRoadModesWithValueTag(tags, OsmAccessTags.getPositiveAccessValueTags())));
+                OsmModeUtils.getOsmRoadModesWithValueTag(tags, getSettings().getPositiveAccessValueTags())));
       }
       if(settings.isRailwayParserActive()) {
         includedModes.addAll(
             getActivatedPlanitModes(
-                OsmModeUtils.getOsmRailModesWithValueTag(tags, OsmAccessTags.getPositiveAccessValueTags())));
+                OsmModeUtils.getOsmRailModesWithValueTag(tags, getSettings().getPositiveAccessValueTags())));
       }
       if(settings.isWaterwayParserActive()) {
         includedModes.addAll(
             getActivatedPlanitModes(
-                OsmModeUtils.getOsmWaterModesWithValueTag(tags, OsmAccessTags.getPositiveAccessValueTags())));
+                OsmModeUtils.getOsmWaterModesWithValueTag(tags, getSettings().getPositiveAccessValueTags())));
       }
 
       /* ...all modes --> general inclusions in main or both directions access:<mode>= */
@@ -592,7 +592,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
         includedModes.addAll(
             getActivatedPlanitModes(
                 OsmModeUtils.getPrefixedOsmRoadModesWithValueTag(
-                    OsmAccessTags.ACCESS, tags, OsmAccessTags.getPositiveAccessValueTags())));
+                    OsmAccessTags.ACCESS, tags, getSettings().getPositiveAccessValueTags())));
       }
 
       /* route=ferry is also saying explicitly we allow ferry explicitly (even if for example access=NO)*/

@@ -147,8 +147,17 @@ public class OsmNetworkLayerParser {
       return linkSegmentType;
     }
 
-    if(linkSegmentType.getAllowedModes().size() + toBeAddedModes.size() - toBeRemovedModes.size() <= 0){
-      return linkSegmentType;
+    /* when nothing remains accessible in this direction there is no access at all, which we signal with a null
+     * type so that no link segment is created for the direction. This is what makes a one-way way result in a
+     * single directional segment, since the reverse direction is expressed internally as excluding every mode.
+     * When neither direction retains a mode the caller creates no link for the way at all, as a way no mode may
+     * use is not part of the network. Returning the unmodified type here instead would invert the outcome,
+     * turning the strongest possible restriction into unrestricted access */
+    var remainingModes = new HashSet<>(linkSegmentType.getAllowedModes());
+    remainingModes.addAll(toBeAddedModes);
+    remainingModes.removeAll(toBeRemovedModes);
+    if(remainingModes.isEmpty()){
+      return null;
     }
 
     MacroscopicLinkSegmentType finalLinkSegmentType = modifiedLinkSegmentTypes.getModifiedLinkSegmentType(
@@ -845,32 +854,37 @@ public class OsmNetworkLayerParser {
     MacroscopicLink link  = null;
     if(linkSegmentTypes!=null && linkSegmentTypes.anyIsNotNull() ) {
 
-      /* a link only consists of start and end node, no direction and has no model information, we allow
-      truncation near bounding box but only if it is not a circular way */
-      boolean allowGeometryTruncation = !isPartOfCircularWay;
-      link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);
-      if(link != null) {
-        
-        if(isPartOfCircularWay && (
-            OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT) ||
-                OsmOneWayTags.isOneWay(tags))) {
+      if(isPartOfCircularWay && (
+          OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT) ||
+              OsmOneWayTags.isOneWay(tags))) {
 
-          /* when circular and one-way, i.e. tagged as roundabout or explicitly so, we only accept one direction
-          as accessible regardless of what has been identified so far;
-           * clockwise equates to forward direction while anti-clockwise equates to backward direction
-           * TODO: ideally we do better and allow for active modes/access modifiers to overrule --> this should
-              therefore eventually be dealt with directly when we extract the link segment types instead */
-          if (OsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
-            linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
-          } else {
-            linkSegmentTypes = Pair.of(null, linkSegmentTypes.second());
-          }
+        /* when circular and one-way, i.e. tagged as roundabout or explicitly so, we only accept one direction
+        as accessible regardless of what has been identified so far;
+         * clockwise equates to forward direction while anti-clockwise equates to backward direction
+         * TODO: ideally we do better and allow for active modes/access modifiers to overrule --> this should
+            therefore eventually be dealt with directly when we extract the link segment types instead */
+        if (OsmWayUtils.isCircularWayDefaultDirectionClockwise(settings.getCountryName())) {
+          linkSegmentTypes = Pair.of(linkSegmentTypes.first(), null);
+        } else {
+          linkSegmentTypes = Pair.of(null, linkSegmentTypes.second());
         }
-        
-        /* a macroscopic link segment is directional and can have a shape, it also has model information */
-        extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentTypes);
-      }                          
-    }    
+      }
+
+      /* the circular direction enforcement above can discard the only direction that retained any mode access, in
+       * which case nothing accessible remains and no link should be created for this section at all. Hence this is
+       * verified after applying it rather than before */
+      if(linkSegmentTypes.anyIsNotNull()) {
+
+        /* a link only consists of start and end node, no direction and has no model information, we allow
+        truncation near bounding box but only if it is not a circular way */
+        boolean allowGeometryTruncation = !isPartOfCircularWay;
+        link = extractLink(osmWay, tags, startNodeIndex, endNodeIndex, allowGeometryTruncation);
+        if(link != null) {
+          /* a macroscopic link segment is directional and can have a shape, it also has model information */
+          extractMacroscopicLinkSegments(osmWay, tags, link, linkSegmentTypes);
+        }
+      }
+    }
     return link;
   }
     

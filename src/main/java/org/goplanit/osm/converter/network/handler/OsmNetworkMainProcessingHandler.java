@@ -559,6 +559,15 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
     var planitToSegment = planitToLink.getSegmentDownstreamFrom(planitViaNode);
 
+    if(planitFromSegment == null || planitToSegment == null){
+      /* a link only carries a segment for a direction that permits at least one mode, so a one-way way yields a
+       * single directional segment. When the restriction applies to a direction that has no segment, the movement it
+       * bans is impossible regardless and there is nothing to register */
+      LOGGER.fine(String.format("OSM turn restriction (%d) applies to a direction without a link segment, " +
+          "movement is impossible regardless, skip", osmRelation.getId()));
+      return;
+    }
+
     String restrictionType = tags.get(OsmRelationRestrictionTags.RESTRICTION);
     if (restrictionType != null) {
       switch (restrictionType) {
