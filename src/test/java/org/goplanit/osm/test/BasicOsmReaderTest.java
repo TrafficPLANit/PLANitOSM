@@ -10,6 +10,7 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.graph.Edge;
+import org.goplanit.utils.graph.directed.Connectivity;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
@@ -109,6 +110,10 @@ public class BasicOsmReaderTest {
       highwaySettings.addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
+      /* weak connectivity on purpose, so that both notions stay covered by the suite. The Melbourne cases exercise
+       * the strong default. On an extract this small the two differ markedly, since the clip truncates one way
+       * streets into pockets that the strong notion then treats as subnetworks of their own */
+      osmReader.getSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
 
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
@@ -145,6 +150,8 @@ public class BasicOsmReaderTest {
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getNetworkSettings());
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getPublicTransportSettings());
+      /* weak connectivity on purpose, see the note in #osmReaderRoadInfrastructureTest */
+      osmReader.getSettings().getNetworkSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
 
       Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = resultPair.first();
@@ -218,6 +225,10 @@ public class BasicOsmReaderTest {
     try {
       OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_PBF, CountryNames.AUSTRALIA);
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
+      /* weak connectivity on purpose, so that both notions stay covered by the suite. The Melbourne cases exercise
+       * the strong default. On an extract this small the two differ markedly, since the clip truncates one way
+       * streets into pockets that the strong notion then treats as subnetworks of their own */
+      osmReader.getSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {

@@ -171,15 +171,21 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** by default we always keep the largest subnetwork */
   public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
 
-  /** Default notion of connectivity applied when removing dangling subnetworks: weak.
+  /** Default notion of connectivity applied when removing dangling subnetworks: strong.
    * <p>
-   * Weak connectivity asks only whether infrastructure is attached to the network, which is what identifies the
-   * disconnected fragments an extract produces. Strong connectivity additionally treats anything that cannot be
-   * both entered and left as its own subnetwork, e.g. a car park served by a single one way road pointing
-   * outwards. Removing those yields a network every part of which can serve as both origin and destination, but
-   * it discards infrastructure that is genuinely present, so it is opted into rather than assumed.
+   * Weak connectivity asks only whether infrastructure is attached to the network, and so retains anything that
+   * cannot be both entered and left, e.g. a car park served by a single one way road pointing outwards. Such
+   * infrastructure cannot carry a route in either direction and is of no more use than a disconnected fragment,
+   * which is why the stricter notion is the default.
+   * </p>
+   * <p>
+   * Note that this does not by itself yield a network every part of which can serve as both origin and
+   * destination. Being able to enter and leave is a per mode property, whereas pruning is per track type: a
+   * pocket entered by a bus only segment and left by a car segment is strongly connected as road infrastructure
+   * while remaining unusable for car. Measured on a metropolitan extract the stricter notion removes on the order
+   * of a few hundred nodes, while an order of magnitude more remain unusable for an individual mode.
    * </p> */
-  public static Connectivity DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY = Connectivity.WEAK;
+  public static Connectivity DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY = Connectivity.STRONG;
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
   public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
