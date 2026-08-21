@@ -1089,7 +1089,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    * see also https://github.com/TrafficPLANit/PLANitOSM/issues/59.
    * Ideally this would go through modifier and events instead but did not have time yet
    */
-  protected void consolidateFunctionallyEquivalentLinkSegmentTypes() {
+  public void consolidateFunctionallyEquivalentLinkSegmentTypes() {
     /* identify any functional duplicates, as in identical content, just different names, ids, external ids etc. */
     for(var layer : getTransportLayers()) {
       var linkSegmentTypes = layer.getLinkSegmentTypes();

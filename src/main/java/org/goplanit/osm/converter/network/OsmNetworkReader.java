@@ -309,9 +309,11 @@ public class OsmNetworkReader implements NetworkReader {
       for(var entry : settings.getRemoveDanglingSubnetworkModes().entrySet()) {
         var mode = getOsmNetworkToPopulate().getModes().get(entry.getKey());
         if(mode == null) {
-          /* configured for a mode this parse never activated, so there is nothing to judge */
-          LOGGER.info(String.format(
-              "Dangling subnetwork removal configured for mode %s which is not part of the network, ignored",
+          /* the defaults cover modes a given parse may not have activated at all, which is not worth reporting:
+           * there is simply no network of that mode to judge. Logged at fine for anyone chasing why a mode they
+           * did configure explicitly appears to have been skipped */
+          LOGGER.fine(String.format(
+              "Dangling subnetworks configured for mode %s which is not part of this network, skipped",
               entry.getKey().value()));
           continue;
         }
@@ -320,12 +322,24 @@ public class OsmNetworkReader implements NetworkReader {
             layer, mode, config.getBelowSize(), config.getAboveSize(), keepLargest,
             config.getConnectivity(), null);
         LOGGER.info(String.format("Dangling subnetworks (%s): %s", config, result));
+        if(!result.isEmpty()) {
+          /* the size distribution rather than the totals alone, since it is what makes a size threshold choosable
+           * from a single run instead of requiring one run per candidate value */
+          LOGGER.info(String.format("Dangling subnetworks (%s) discarded by size: %s",
+              mode.getName(), result.getSizeBinSummary()));
+        }
       }
 
       /* only once every mode has been dealt with is it settled what nothing can use any more */
       var cleanup = MacroscopicNetworkLayerUtils.removeInfrastructureWithoutModeAccess(layer);
       if(!cleanup.isEmpty()) {
         LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
+      }
+      /* withdrawing access creates a link segment type variant per original type and mode withdrawn, and many of
+       * those end up identical to each other or to a type already present. Consolidation only runs on the default
+       * types at initialisation, so without repeating it here every variant persists into the written network */
+      if(settings.isConsolidateLinkSegmentTypes()) {
+        getOsmNetworkToPopulate().consolidateFunctionallyEquivalentLinkSegmentTypes();
       }
       if(recreateManagedIds) {
         layer.getLayerModifier().recreateManagedIdEntities();
