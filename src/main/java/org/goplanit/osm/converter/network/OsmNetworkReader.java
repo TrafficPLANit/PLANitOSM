@@ -313,10 +313,13 @@ public class OsmNetworkReader implements NetworkReader {
        * to modes of more than one track type belong to neither pass and are left in place */
       for(var trackType : settings.getRemoveDanglingSubnetworkTrackTypes()) {
         LOGGER.info(String.format(
-            "Removing dangling %s subnetworks", trackType.name().toLowerCase()));
+            "Removing dangling %s subnetworks (%s connectivity)",
+            trackType.name().toLowerCase(),
+            settings.getDanglingSubnetworkConnectivity().name().toLowerCase()));
         getOsmNetworkToPopulate().removeDanglingSubnetworks(
                 discardMinsize, discardMaxsize, keepLargest, recreateManagedIds,
-                MacroscopicLinkSegmentUtils.exclusivelyOfTrackType(trackType));
+                MacroscopicLinkSegmentUtils.exclusivelyOfTrackType(trackType),
+                settings.getDanglingSubnetworkConnectivity());
       }
       
       /* remove listener as it is currently meant for local use only due to expensive initialisation which is also

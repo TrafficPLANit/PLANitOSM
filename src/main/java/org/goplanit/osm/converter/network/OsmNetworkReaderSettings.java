@@ -7,6 +7,7 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.graph.directed.Connectivity;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.LoggingUtils;
@@ -138,6 +139,12 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   protected boolean alwaysKeepLargestSubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
 
+  /**
+   * What counts as belonging to the same subnetwork when dangling subnetworks are removed, applied to every
+   * activated track type alike
+   */
+  protected Connectivity danglingSubNetworkConnectivity = DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY;
+
   /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
    * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
    * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
@@ -163,6 +170,16 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   
   /** by default we always keep the largest subnetwork */
   public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
+
+  /** Default notion of connectivity applied when removing dangling subnetworks: weak.
+   * <p>
+   * Weak connectivity asks only whether infrastructure is attached to the network, which is what identifies the
+   * disconnected fragments an extract produces. Strong connectivity additionally treats anything that cannot be
+   * both entered and left as its own subnetwork, e.g. a car park served by a single one way road pointing
+   * outwards. Removing those yields a network every part of which can serve as both origin and destination, but
+   * it discards infrastructure that is genuinely present, so it is opted into rather than assumed.
+   * </p> */
+  public static Connectivity DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY = Connectivity.WEAK;
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
   public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
@@ -261,6 +278,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
             String.valueOf(getDiscardDanglingNetworkAboveSize()) : "infinite", level));
     LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork",
         isAlwaysKeepLargestSubnetwork(), level));
+    /* logged next to the thresholds because it changes what they are applied to: under strong connectivity the
+     * subnetworks identified are far more numerous and far smaller, so the same threshold prunes very differently */
+    LOGGER.info(LoggingUtils.settingsValue("Dangling subnetwork connectivity",
+        getDanglingSubnetworkConnectivity().name().toLowerCase(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
         getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), level));
 
@@ -505,6 +526,35 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public boolean isRemoveDanglingSubnetworks(TrackModeType trackType) {
     return this.removeDanglingSubNetworkByTrackType.getOrDefault(trackType, false);
+  }
+
+  /**
+   * Set what counts as belonging to the same subnetwork when dangling subnetworks are removed, see
+   * {@link #DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY}.
+   * <p>
+   * Applies to every activated track type alike rather than being configurable per track type. The pathology
+   * strong connectivity addresses is one of one way roads, so it does not arise for rail or water, and a per
+   * track type choice would double the configuration surface without a case that needs it.
+   * </p>
+   * <p>
+   * Be aware that under {@link Connectivity#STRONG} the size thresholds lose most of their meaning, since the
+   * overwhelming majority of the additional subnetworks it identifies consist of a single node and so fall below
+   * any sensible threshold.
+   * </p>
+   *
+   * @param connectivity to apply
+   */
+  public void setDanglingSubnetworkConnectivity(Connectivity connectivity) {
+    this.danglingSubNetworkConnectivity = connectivity;
+  }
+
+  /**
+   * Verify what counts as belonging to the same subnetwork when dangling subnetworks are removed
+   *
+   * @return connectivity applied
+   */
+  public Connectivity getDanglingSubnetworkConnectivity() {
+    return this.danglingSubNetworkConnectivity;
   }
 
   /**
