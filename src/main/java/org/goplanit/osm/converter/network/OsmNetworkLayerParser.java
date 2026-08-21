@@ -9,7 +9,7 @@ import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
-import org.goplanit.osm.physical.network.macroscopic.ModifiedLinkSegmentTypes;
+import org.goplanit.network.layer.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.arrays.ArrayUtils;

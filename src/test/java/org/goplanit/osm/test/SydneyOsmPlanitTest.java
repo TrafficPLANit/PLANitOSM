@@ -14,6 +14,7 @@ import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.utils.graph.directed.Connectivity;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;
@@ -148,7 +149,8 @@ public class SydneyOsmPlanitTest {
       /* the Sydney cases deliberately stay on weak connectivity so that both notions remain covered by the test
        * suite, see the Melbourne cases for the strong counterpart. Note that on a small clipped extract such as
        * this the difference is pronounced, since a boundary that truncates one way streets manufactures pockets */
-      osmReader.getSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
+      osmReader.getSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       /* PLANit writer */
       PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(
@@ -189,7 +191,8 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
 
       /* weak connectivity on purpose, see the note in #testOsm2PlanitNetworkComprehensive */
-      readerSettings.getNetworkSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
+      readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       // tested separately in #testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
@@ -243,7 +246,8 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
 
       /* weak connectivity on purpose, see the note in #testOsm2PlanitNetworkComprehensive */
-      readerSettings.getNetworkSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
+      readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());

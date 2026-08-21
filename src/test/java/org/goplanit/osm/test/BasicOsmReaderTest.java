@@ -113,7 +113,8 @@ public class BasicOsmReaderTest {
       /* weak connectivity on purpose, so that both notions stay covered by the suite. The Melbourne cases exercise
        * the strong default. On an extract this small the two differ markedly, since the clip truncates one way
        * streets into pockets that the strong notion then treats as subnetworks of their own */
-      osmReader.getSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
+      osmReader.getSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
@@ -121,9 +122,11 @@ public class BasicOsmReaderTest {
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
-      assertEquals(994, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(1795, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(804, network.getTransportLayers().getFirst().getNodes().size());
+      /* nothing is removed here: car access is withdrawn on 16 segments, but every link involved is still open to
+       * another mode, so the infrastructure stays. Counts therefore equal the unpruned network */
+      assertEquals(1019, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(1845, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(837, network.getTransportLayers().getFirst().getNodes().size());
 
       assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(
               Edge::hasInputProperty) : "OSM tags not retained on all links";
@@ -151,7 +154,8 @@ public class BasicOsmReaderTest {
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getNetworkSettings());
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getPublicTransportSettings());
       /* weak connectivity on purpose, see the note in #osmReaderRoadInfrastructureTest */
-      osmReader.getSettings().getNetworkSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
+      osmReader.getSettings().getNetworkSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = resultPair.first();
@@ -169,11 +173,11 @@ public class BasicOsmReaderTest {
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
 
-      /* counts reflect dangling subnetwork removal being active for road only, which is the default. Without any
-       * removal the layer holds 1178 links, 2079 link segments and 984 nodes */
-      assertEquals(1165, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2053, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(970, network.getTransportLayers().getFirst().getNodes().size());
+      /* car access is withdrawn on 24 segments while no infrastructure is removed, since each link involved
+       * remains open to another mode. Counts therefore equal the unpruned network */
+      assertEquals(1178, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2079, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(984, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
       assertEquals(104, zoning.getTransferZones().size() );
@@ -202,7 +206,9 @@ public class BasicOsmReaderTest {
       assertEquals(124, ptStopTypeAccessLinkSegments);
       assertEquals(3, accessZoneEntries);
       assertEquals(3, egressZoneEntries);
-      assertEquals(92, accessEgressZoneEntries);
+      /* two more than before: the connectoids that previously sat on removed dangling infrastructure now
+       * survive, since the infrastructure does */
+      assertEquals(94, accessEgressZoneEntries);
 
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));
@@ -228,7 +234,8 @@ public class BasicOsmReaderTest {
       /* weak connectivity on purpose, so that both notions stay covered by the suite. The Melbourne cases exercise
        * the strong default. On an extract this small the two differ markedly, since the clip truncates one way
        * streets into pockets that the strong notion then treats as subnetworks of their own */
-      osmReader.getSettings().setDanglingSubnetworkConnectivity(Connectivity.WEAK);
+      osmReader.getSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {

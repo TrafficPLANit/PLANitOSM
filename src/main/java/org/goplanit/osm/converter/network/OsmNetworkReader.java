@@ -22,6 +22,7 @@ import org.goplanit.osm.util.OsmHandlerUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
 import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
@@ -266,19 +267,11 @@ public class OsmNetworkReader implements NetworkReader {
   public void removeDanglingSubNetworks(Zoning zoning, boolean recreateManagedIds) {
     if(settings.isRemoveDanglingSubnetworks()) {
 
-      Integer discardMinsize = settings.getDiscardDanglingNetworkBelowSize();
-      Integer discardMaxsize = settings.getDiscardDanglingNetworkAboveSize();
       boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
       
       /* logging stats  - before */
       MacroscopicNetworkLayers layers = getOsmNetworkToPopulate().getTransportLayers();
       {
-        LOGGER.info(String.format("Removing dangling subnetworks with less than %s vertices",
-                discardMinsize != Integer.MAX_VALUE ? String.valueOf(discardMinsize) : "infinite"));
-        if (discardMaxsize != Integer.MAX_VALUE) {
-          LOGGER.info(String.format("Removing dangling subnetworks with more than %d vertices",
-                  discardMaxsize));
-        }        
         if(zoning == null) {
           LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d",
                   layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
@@ -308,18 +301,34 @@ public class OsmNetworkReader implements NetworkReader {
         layers.getFirst().getLayerModifier().addListener(listener);
       }
 
-      /* remove dangling subnetworks, one pass per activated track type. Road, rail and water infrastructure share
-       * a single layer while forming separate networks, so each is judged on its own connectivity. Segments open
-       * to modes of more than one track type belong to neither pass and are left in place */
-      for(var trackType : settings.getRemoveDanglingSubnetworkTrackTypes()) {
-        LOGGER.info(String.format(
-            "Removing dangling %s subnetworks (%s connectivity)",
-            trackType.name().toLowerCase(),
-            settings.getDanglingSubnetworkConnectivity().name().toLowerCase()));
-        getOsmNetworkToPopulate().removeDanglingSubnetworks(
-                discardMinsize, discardMaxsize, keepLargest, recreateManagedIds,
-                MacroscopicLinkSegmentUtils.exclusivelyOfTrackType(trackType),
-                settings.getDanglingSubnetworkConnectivity());
+      /* one pass per activated mode, since being able to both reach and leave is a property of a mode rather
+       * than of infrastructure. A one way street usually still permits pedestrians against the flow, so judging
+       * this per track type cannot see a car trap at all. Access is withdrawn rather than infrastructure removed,
+       * because the link a car cannot use is typically carrying another mode perfectly well */
+      var layer = layers.getFirst();
+      for(var entry : settings.getRemoveDanglingSubnetworkModes().entrySet()) {
+        var mode = getOsmNetworkToPopulate().getModes().get(entry.getKey());
+        if(mode == null) {
+          /* configured for a mode this parse never activated, so there is nothing to judge */
+          LOGGER.info(String.format(
+              "Dangling subnetwork removal configured for mode %s which is not part of the network, ignored",
+              entry.getKey().value()));
+          continue;
+        }
+        var config = entry.getValue();
+        var result = MacroscopicNetworkLayerUtils.restrictModeAccessToConnectedSubNetworks(
+            layer, mode, config.getBelowSize(), config.getAboveSize(), keepLargest,
+            config.getConnectivity(), null);
+        LOGGER.info(String.format("Dangling subnetworks (%s): %s", config, result));
+      }
+
+      /* only once every mode has been dealt with is it settled what nothing can use any more */
+      var cleanup = MacroscopicNetworkLayerUtils.removeInfrastructureWithoutModeAccess(layer);
+      if(!cleanup.isEmpty()) {
+        LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
+      }
+      if(recreateManagedIds) {
+        layer.getLayerModifier().recreateManagedIdEntities();
       }
       
       /* remove listener as it is currently meant for local use only due to expensive initialisation which is also

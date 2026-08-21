@@ -197,8 +197,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     /* postpone removing dangling subnetworks until the zoning has been parsed as well, so connectoids on removed
      * infrastructure can be dealt with at the same time. Captured per track type so the user's configuration is
      * restored exactly, rather than collapsed to a single on/off */
-    var originalRemoveDanglingSubNetworkTrackTypes =
-        osmNetworkReader.getSettings().getRemoveDanglingSubnetworkTrackTypes();
+    var originalRemoveDanglingSubNetworkModes =
+        new java.util.LinkedHashMap<>(osmNetworkReader.getSettings().getRemoveDanglingSubnetworkModes());
     osmNetworkReader.getSettings().deactivateRemoveDanglingSubnetworks();
     
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
@@ -227,8 +227,9 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     Zoning zoning = osmZoningReader.read();
 
     /* restore original settings on dangling and ...*/
-    osmNetworkReader.getSettings().setRemoveDanglingSubnetworkTrackTypes(
-        originalRemoveDanglingSubNetworkTrackTypes);
+    originalRemoveDanglingSubNetworkModes.forEach(
+        (modeType, config) -> osmNetworkReader.getSettings().activateRemoveDanglingSubnetworks(
+            modeType, config.getBelowSize(), config.getAboveSize(), config.getConnectivity()));
     osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
     osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
     /* ... remove dangling entities if indicated */
