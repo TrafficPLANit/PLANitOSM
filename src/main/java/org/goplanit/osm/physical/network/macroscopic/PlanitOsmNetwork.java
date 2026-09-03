@@ -1095,6 +1095,26 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
       var linkSegmentTypes = layer.getLinkSegmentTypes();
       int originalNumTypes = linkSegmentTypes.size();
       var functionalDuplicates = linkSegmentTypes.findFunctionalDuplicates();
+
+      /* re-point the link segments before discarding anything: a segment holds a reference to its type object, so a
+       * discarded duplicate remains reachable from the segment while no longer being registered on the layer. That
+       * inconsistency is invisible in memory and only surfaces on persisting, where the segment's type cannot be
+       * resolved against the types written out. Harmless while this only ran on the default types at initialisation,
+       * since no link segments existed yet */
+      Map<MacroscopicLinkSegmentType, MacroscopicLinkSegmentType> replacementByDiscardedType = new HashMap<>();
+      for (var duplicatesEntry : functionalDuplicates) {
+        var keepEntry = duplicatesEntry.first();
+        duplicatesEntry.stream().skip(1).forEach(lst -> replacementByDiscardedType.put(lst, keepEntry));
+      }
+      if (!replacementByDiscardedType.isEmpty()) {
+        for (var linkSegment : layer.getLinkSegments()) {
+          var replacement = replacementByDiscardedType.get(linkSegment.getLinkSegmentType());
+          if (replacement != null) {
+            linkSegment.setLinkSegmentType(replacement);
+          }
+        }
+      }
+
       for (var duplicatesEntry : functionalDuplicates) {
         String concatenatedExternalId = duplicatesEntry.stream().map(MacroscopicLinkSegmentType::getExternalId).
             collect(Collectors.joining(","));

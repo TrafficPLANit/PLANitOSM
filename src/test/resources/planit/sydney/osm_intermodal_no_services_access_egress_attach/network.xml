@@ -6270,7 +6270,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1751" dir="b_a" typeref="34">
+                    <linksegment id="1751" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -6284,7 +6284,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1753" dir="b_a" typeref="34">
+                    <linksegment id="1753" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -6350,7 +6350,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1762" dir="b_a" typeref="33">
+                    <linksegment id="1762" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6378,7 +6378,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1766" dir="b_a" typeref="33">
+                    <linksegment id="1766" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6392,7 +6392,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="170" dir="b_a" typeref="34">
+                    <linksegment id="170" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6448,7 +6448,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1774" dir="b_a" typeref="34">
+                    <linksegment id="1774" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6679,7 +6679,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1806" dir="b_a" typeref="33">
+                    <linksegment id="1806" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6814,7 +6814,7 @@
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1824" dir="b_a" typeref="34">
+                    <linksegment id="1824" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6840,7 +6840,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="174" dir="b_a" typeref="33">
+                    <linksegment id="174" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -6868,7 +6868,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1830" dir="b_a" typeref="34">
+                    <linksegment id="1830" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -6896,7 +6896,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1834" dir="b_a" typeref="33">
+                    <linksegment id="1834" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7008,7 +7008,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1848" dir="b_a" typeref="34">
+                    <linksegment id="1848" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
@@ -7022,7 +7022,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1850" dir="b_a" typeref="34">
+                    <linksegment id="1850" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
@@ -7105,7 +7105,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1862" dir="b_a" typeref="34">
+                    <linksegment id="1862" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7133,7 +7133,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1866" dir="b_a" typeref="34">
+                    <linksegment id="1866" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7160,7 +7160,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1868" dir="b_a" typeref="34">
+                    <linksegment id="1868" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7188,7 +7188,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1872" dir="b_a" typeref="34">
+                    <linksegment id="1872" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7258,7 +7258,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1882" dir="b_a" typeref="34">
+                    <linksegment id="1882" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -7336,7 +7336,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1891" dir="b_a" typeref="34">
+                    <linksegment id="1891" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7412,7 +7412,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1901" dir="b_a" typeref="34">
+                    <linksegment id="1901" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7483,7 +7483,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1908" dir="b_a" typeref="34">
+                    <linksegment id="1908" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7587,7 +7587,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1922" dir="b_a" typeref="34">
+                    <linksegment id="1922" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7601,7 +7601,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1924" dir="b_a" typeref="34">
+                    <linksegment id="1924" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -7699,7 +7699,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1938" dir="b_a" typeref="34">
+                    <linksegment id="1938" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -7713,7 +7713,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1940" dir="b_a" typeref="34">
+                    <linksegment id="1940" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -7751,7 +7751,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1942" dir="b_a" typeref="34">
+                    <linksegment id="1942" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -7765,7 +7765,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1944" dir="b_a" typeref="34">
+                    <linksegment id="1944" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -7779,7 +7779,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1946" dir="b_a" typeref="34">
+                    <linksegment id="1946" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -8037,7 +8037,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="188" dir="b_a" typeref="34">
+                    <linksegment id="188" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -8163,7 +8163,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1996" dir="b_a" typeref="34">
+                    <linksegment id="1996" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -8245,7 +8245,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2006" dir="b_a" typeref="33">
+                    <linksegment id="2006" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -8481,7 +8481,7 @@
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2038" dir="b_a" typeref="34">
+                    <linksegment id="2038" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -8851,7 +8851,7 @@
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2084" dir="b_a" typeref="34">
+                    <linksegment id="2084" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -8889,7 +8889,7 @@
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2089" dir="b_a" typeref="34">
+                    <linksegment id="2089" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -8968,7 +8968,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2099" dir="b_a" typeref="33">
+                    <linksegment id="2099" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -8995,7 +8995,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2103" dir="b_a" typeref="33">
+                    <linksegment id="2103" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -9075,7 +9075,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2113" dir="b_a" typeref="34">
+                    <linksegment id="2113" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9089,7 +9089,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2115" dir="b_a" typeref="49">
+                    <linksegment id="2115" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -9116,7 +9116,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2119" dir="b_a" typeref="49">
+                    <linksegment id="2119" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
@@ -9129,7 +9129,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2121" dir="b_a" typeref="49">
+                    <linksegment id="2121" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
@@ -9402,7 +9402,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2152" dir="b_a" typeref="34">
+                    <linksegment id="2152" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9416,7 +9416,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2154" dir="b_a" typeref="34">
+                    <linksegment id="2154" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9430,7 +9430,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2156" dir="b_a" typeref="34">
+                    <linksegment id="2156" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9444,7 +9444,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2158" dir="b_a" typeref="34">
+                    <linksegment id="2158" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9458,7 +9458,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2160" dir="b_a" typeref="34">
+                    <linksegment id="2160" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9472,7 +9472,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2162" dir="b_a" typeref="34">
+                    <linksegment id="2162" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9650,7 +9650,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2184" dir="b_a" typeref="34">
+                    <linksegment id="2184" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9818,7 +9818,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2206" dir="b_a" typeref="34">
+                    <linksegment id="2206" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -9902,7 +9902,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2218" dir="b_a" typeref="34">
+                    <linksegment id="2218" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -9972,7 +9972,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2226" dir="b_a" typeref="34">
+                    <linksegment id="2226" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -10098,7 +10098,7 @@
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="210" dir="b_a" typeref="34">
+                    <linksegment id="210" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -10215,7 +10215,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="26" dir="b_a" typeref="33">
+                    <linksegment id="26" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -10315,11 +10315,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578690.61345454 -3923113.82354184 1578690.44636223 -3923125.01642556</gml:posList>
                     </gml:LineString>
-                    <linksegment id="227" dir="a_b" typeref="41">
+                    <linksegment id="227" dir="a_b" typeref="29">
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="228" dir="b_a" typeref="34">
+                    <linksegment id="228" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -10562,7 +10562,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="256" dir="b_a" typeref="33">
+                    <linksegment id="256" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -10575,7 +10575,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="258" dir="b_a" typeref="33">
+                    <linksegment id="258" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -10603,7 +10603,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="262" dir="b_a" typeref="34">
+                    <linksegment id="262" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -10655,7 +10655,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="267" dir="b_a" typeref="33">
+                    <linksegment id="267" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -10688,7 +10688,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578766.49627729 -3922146.55562005 1578774.08313734 -3922150.29620536</gml:posList>
                     </gml:LineString>
-                    <linksegment id="271" dir="b_a" typeref="33">
+                    <linksegment id="271" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -10814,7 +10814,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="287" dir="b_a" typeref="34">
+                    <linksegment id="287" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -10828,7 +10828,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="289" dir="b_a" typeref="34">
+                    <linksegment id="289" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -10842,7 +10842,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="291" dir="b_a" typeref="34">
+                    <linksegment id="291" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -10907,7 +10907,7 @@
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="34" dir="b_a" typeref="34">
+                    <linksegment id="34" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -11420,7 +11420,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579537.66221319 -3921897.61036167 1579558.17569771 -3921885.96998019 1579565.6073241 -3921885.6466786</gml:posList>
                     </gml:LineString>
-                    <linksegment id="359" dir="b_a" typeref="33">
+                    <linksegment id="359" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -11503,7 +11503,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
-                    <linksegment id="369" dir="b_a" typeref="34">
+                    <linksegment id="369" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
@@ -11545,7 +11545,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="375" dir="b_a" typeref="34">
+                    <linksegment id="375" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -11649,11 +11649,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578983.75802725 -3921438.08667666 1578985.7102263 -3921441.38507076 1578991.91876978 -3921452.03041573 1578994.87459305 -3921460.79084981</gml:posList>
                     </gml:LineString>
-                    <linksegment id="388" dir="a_b" typeref="43">
+                    <linksegment id="388" dir="a_b" typeref="29">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="389" dir="b_a" typeref="43">
+                    <linksegment id="389" dir="b_a" typeref="29">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -11733,11 +11733,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578916.24357223 -3922516.32330206 1578915.23586775 -3922519.79310265 1578905.41585138 -3922553.43503372</gml:posList>
                     </gml:LineString>
-                    <linksegment id="400" dir="a_b" typeref="43">
+                    <linksegment id="400" dir="a_b" typeref="29">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="401" dir="b_a" typeref="43">
+                    <linksegment id="401" dir="b_a" typeref="29">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -11779,7 +11779,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="405" dir="b_a" typeref="33">
+                    <linksegment id="405" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -11859,7 +11859,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="416" dir="b_a" typeref="34">
+                    <linksegment id="416" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12093,7 +12093,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="445" dir="b_a" typeref="34">
+                    <linksegment id="445" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12107,7 +12107,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="447" dir="b_a" typeref="34">
+                    <linksegment id="447" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12120,7 +12120,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="449" dir="b_a" typeref="33">
+                    <linksegment id="449" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -12215,7 +12215,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="52" dir="b_a" typeref="34">
+                    <linksegment id="52" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12228,7 +12228,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="463" dir="b_a" typeref="33">
+                    <linksegment id="463" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -12242,7 +12242,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="465" dir="b_a" typeref="34">
+                    <linksegment id="465" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -12372,7 +12372,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="479" dir="b_a" typeref="33">
+                    <linksegment id="479" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -12386,7 +12386,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="481" dir="b_a" typeref="33">
+                    <linksegment id="481" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -12555,7 +12555,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="502" dir="b_a" typeref="34">
+                    <linksegment id="502" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -12569,7 +12569,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="504" dir="b_a" typeref="34">
+                    <linksegment id="504" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12583,7 +12583,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="506" dir="b_a" typeref="33">
+                    <linksegment id="506" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12673,7 +12673,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="514" dir="b_a" typeref="34">
+                    <linksegment id="514" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12757,7 +12757,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="526" dir="b_a" typeref="33">
+                    <linksegment id="526" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -12781,7 +12781,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="529" dir="b_a" typeref="34">
+                    <linksegment id="529" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -12795,7 +12795,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="60" dir="b_a" typeref="34">
+                    <linksegment id="60" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -12809,7 +12809,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="531" dir="b_a" typeref="33">
+                    <linksegment id="531" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -13025,7 +13025,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="556" dir="b_a" typeref="33">
+                    <linksegment id="556" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -13039,7 +13039,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="558" dir="b_a" typeref="34">
+                    <linksegment id="558" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -13157,7 +13157,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="572" dir="b_a" typeref="34">
+                    <linksegment id="572" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -13199,7 +13199,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="66" dir="b_a" typeref="33">
+                    <linksegment id="66" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -13254,7 +13254,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="584" dir="b_a" typeref="33">
+                    <linksegment id="584" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -13296,7 +13296,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="590" dir="b_a" typeref="33">
+                    <linksegment id="590" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -13389,7 +13389,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="601" dir="b_a" typeref="34">
+                    <linksegment id="601" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -13473,7 +13473,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="613" dir="b_a" typeref="34">
+                    <linksegment id="613" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -13557,7 +13557,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="623" dir="b_a" typeref="34">
+                    <linksegment id="623" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -13659,11 +13659,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578623.50799454 -3921758.05596907 1578588.37204291 -3921755.72183311</gml:posList>
                     </gml:LineString>
-                    <linksegment id="635" dir="a_b" typeref="43">
+                    <linksegment id="635" dir="a_b" typeref="29">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="636" dir="b_a" typeref="43">
+                    <linksegment id="636" dir="b_a" typeref="29">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -13718,7 +13718,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="644" dir="b_a" typeref="33">
+                    <linksegment id="644" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -13774,7 +13774,7 @@
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="652" dir="b_a" typeref="34">
+                    <linksegment id="652" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -13834,7 +13834,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="658" dir="b_a" typeref="34">
+                    <linksegment id="658" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -13938,7 +13938,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="672" dir="b_a" typeref="34">
+                    <linksegment id="672" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -13952,7 +13952,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="674" dir="b_a" typeref="34">
+                    <linksegment id="674" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -14015,7 +14015,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="683" dir="b_a" typeref="33">
+                    <linksegment id="683" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -14028,7 +14028,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="685" dir="b_a" typeref="33">
+                    <linksegment id="685" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -14505,7 +14505,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="737" dir="b_a" typeref="33">
+                    <linksegment id="737" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -14531,7 +14531,7 @@
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="741" dir="b_a" typeref="49">
+                    <linksegment id="741" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -14544,7 +14544,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="743" dir="b_a" typeref="33">
+                    <linksegment id="743" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -14572,7 +14572,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="747" dir="b_a" typeref="34">
+                    <linksegment id="747" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -14906,7 +14906,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="84" dir="b_a" typeref="34">
+                    <linksegment id="84" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -14996,7 +14996,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="801" dir="b_a" typeref="49">
+                    <linksegment id="801" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -15052,7 +15052,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="86" dir="b_a" typeref="34">
+                    <linksegment id="86" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -15079,7 +15079,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
-                    <linksegment id="811" dir="b_a" typeref="49">
+                    <linksegment id="811" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
@@ -15092,7 +15092,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="813" dir="b_a" typeref="33">
+                    <linksegment id="813" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -15161,7 +15161,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="823" dir="b_a" typeref="33">
+                    <linksegment id="823" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -15175,7 +15175,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="825" dir="b_a" typeref="34">
+                    <linksegment id="825" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -15298,7 +15298,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="841" dir="b_a" typeref="33">
+                    <linksegment id="841" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -15324,7 +15324,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="845" dir="b_a" typeref="33">
+                    <linksegment id="845" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -15465,7 +15465,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="92" dir="b_a" typeref="34">
+                    <linksegment id="92" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -15647,7 +15647,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="879" dir="b_a" typeref="33">
+                    <linksegment id="879" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -15823,7 +15823,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="902" dir="b_a" typeref="34">
+                    <linksegment id="902" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -15952,7 +15952,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="920" dir="b_a" typeref="33">
+                    <linksegment id="920" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -15962,11 +15962,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578690.44636223 -3923125.01642556 1578693.22908304 -3923138.06366244 1578690.21824357 -3923198.08336181 1578687.16721831 -3923240.18774391</gml:posList>
                     </gml:LineString>
-                    <linksegment id="921" dir="a_b" typeref="41">
+                    <linksegment id="921" dir="a_b" typeref="29">
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="922" dir="b_a" typeref="34">
+                    <linksegment id="922" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -15990,11 +15990,11 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578585.90032291 -3921744.18806975 1578555.699582 -3921741.70969014</gml:posList>
                     </gml:LineString>
-                    <linksegment id="925" dir="a_b" typeref="33">
+                    <linksegment id="925" dir="a_b" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="926" dir="b_a" typeref="33">
+                    <linksegment id="926" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -16046,7 +16046,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="932" dir="b_a" typeref="33">
+                    <linksegment id="932" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -16228,7 +16228,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578650.54803412 -3922336.13950224 1578655.61722237 -3922336.37007085 1578691.5685054 -3922337.15742663 1578694.905393 -3922336.06899591 1578697.91821533 -3922333.4211866 1578700.63272251 -3922331.58988611 1578703.669707 -3922331.26205835 1578708.95037564 -3922331.71112718 1578721.09361284 -3922332.7269712</gml:posList>
                     </gml:LineString>
-                    <linksegment id="957" dir="b_a" typeref="33">
+                    <linksegment id="957" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -16298,7 +16298,7 @@
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="967" dir="b_a" typeref="34">
+                    <linksegment id="967" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -16326,7 +16326,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="969" dir="b_a" typeref="34">
+                    <linksegment id="969" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -16340,7 +16340,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="971" dir="b_a" typeref="34">
+                    <linksegment id="971" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -16463,7 +16463,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="102" dir="b_a" typeref="33">
+                    <linksegment id="102" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -16613,7 +16613,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="104" dir="b_a" typeref="33">
+                    <linksegment id="104" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -16626,7 +16626,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1009" dir="b_a" typeref="33">
+                    <linksegment id="1009" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -16704,7 +16704,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1021" dir="b_a" typeref="33">
+                    <linksegment id="1021" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -16717,7 +16717,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1023" dir="b_a" typeref="33">
+                    <linksegment id="1023" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -16731,7 +16731,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1025" dir="b_a" typeref="34">
+                    <linksegment id="1025" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -16745,7 +16745,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1027" dir="b_a" typeref="34">
+                    <linksegment id="1027" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -16917,7 +16917,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="107" dir="b_a" typeref="34">
+                    <linksegment id="107" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -16954,7 +16954,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579565.6073241 -3921885.6466786 1579561.18603135 -3921892.51066699 1579541.61985903 -3921905.97455266</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1051" dir="b_a" typeref="33">
+                    <linksegment id="1051" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -17482,7 +17482,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1122" dir="b_a" typeref="33">
+                    <linksegment id="1122" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -17509,7 +17509,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1124" dir="b_a" typeref="33">
+                    <linksegment id="1124" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -17522,7 +17522,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1126" dir="b_a" typeref="33">
+                    <linksegment id="1126" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -17684,7 +17684,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1147" dir="b_a" typeref="34">
+                    <linksegment id="1147" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -17883,7 +17883,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1171" dir="b_a" typeref="34">
+                    <linksegment id="1171" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18076,7 +18076,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1196" dir="b_a" typeref="34">
+                    <linksegment id="1196" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18385,7 +18385,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1231" dir="b_a" typeref="34">
+                    <linksegment id="1231" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18454,7 +18454,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1241" dir="b_a" typeref="34">
+                    <linksegment id="1241" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18620,7 +18620,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="126" dir="b_a" typeref="33">
+                    <linksegment id="126" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18634,7 +18634,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1262" dir="b_a" typeref="34">
+                    <linksegment id="1262" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18726,7 +18726,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1272" dir="b_a" typeref="34">
+                    <linksegment id="1272" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18839,7 +18839,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1286" dir="b_a" typeref="33">
+                    <linksegment id="1286" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18853,7 +18853,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1288" dir="b_a" typeref="34">
+                    <linksegment id="1288" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18891,7 +18891,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1292" dir="b_a" typeref="34">
+                    <linksegment id="1292" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -18915,7 +18915,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1295" dir="b_a" typeref="34">
+                    <linksegment id="1295" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -19053,7 +19053,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1312" dir="b_a" typeref="34">
+                    <linksegment id="1312" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -19150,7 +19150,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1326" dir="b_a" typeref="33">
+                    <linksegment id="1326" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -19177,7 +19177,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1328" dir="b_a" typeref="33">
+                    <linksegment id="1328" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -19257,7 +19257,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1339" dir="b_a" typeref="34">
+                    <linksegment id="1339" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
@@ -19271,7 +19271,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1341" dir="b_a" typeref="34">
+                    <linksegment id="1341" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
@@ -19425,7 +19425,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1361" dir="b_a" typeref="34">
+                    <linksegment id="1361" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -19439,7 +19439,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1363" dir="b_a" typeref="34">
+                    <linksegment id="1363" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -19604,7 +19604,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="138" dir="b_a" typeref="33">
+                    <linksegment id="138" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -19782,7 +19782,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1402" dir="b_a" typeref="34">
+                    <linksegment id="1402" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -19862,7 +19862,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1413" dir="b_a" typeref="34">
+                    <linksegment id="1413" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -19889,7 +19889,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1415" dir="b_a" typeref="49">
+                    <linksegment id="1415" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
@@ -19902,7 +19902,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1417" dir="b_a" typeref="49">
+                    <linksegment id="1417" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
@@ -19929,7 +19929,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1421" dir="b_a" typeref="33">
+                    <linksegment id="1421" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -19979,7 +19979,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579759.81563071 -3923281.62428086 1579775.03775306 -3923228.96819109 1579779.09862941 -3923212.52023905 1579780.40611876 -3923207.88886023 1579782.32290003 -3923201.93809032 1579799.77479819 -3923149.95708581 1579802.02833262 -3923142.17042276 1579804.40611813 -3923132.74132211 1579805.67871758 -3923125.46542334 1579806.2871699 -3923120.7153988 1579807.53127007 -3923109.73774019 1579808.57356335 -3923096.31530413 1579809.13248465 -3923086.73568039 1579809.0826512 -3923081.63872407 1579809.05699075 -3923073.73831495</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1428" dir="b_a" typeref="33">
+                    <linksegment id="1428" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -20059,7 +20059,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1437" dir="b_a" typeref="49">
+                    <linksegment id="1437" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -20248,7 +20248,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1462" dir="b_a" typeref="34">
+                    <linksegment id="1462" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -20262,7 +20262,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1464" dir="b_a" typeref="34">
+                    <linksegment id="1464" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -20276,7 +20276,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1466" dir="b_a" typeref="34">
+                    <linksegment id="1466" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -20290,7 +20290,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1468" dir="b_a" typeref="34">
+                    <linksegment id="1468" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -20318,7 +20318,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1470" dir="b_a" typeref="34">
+                    <linksegment id="1470" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -20414,7 +20414,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1483" dir="b_a" typeref="33">
+                    <linksegment id="1483" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -20428,7 +20428,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1485" dir="b_a" typeref="33">
+                    <linksegment id="1485" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -20692,7 +20692,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1518" dir="b_a" typeref="33">
+                    <linksegment id="1518" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -20705,7 +20705,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1520" dir="b_a" typeref="33">
+                    <linksegment id="1520" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -20738,7 +20738,7 @@
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578901.71129666 -3922080.77253853 1578899.09346204 -3922079.74358333 1578895.60474892 -3922079.77523355 1578892.83487169 -3922081.13107506 1578873.79691748 -3922103.04436148 1578869.89499755 -3922105.60303485</gml:posList>
                     </gml:LineString>
-                    <linksegment id="1522" dir="b_a" typeref="33">
+                    <linksegment id="1522" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -20751,7 +20751,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1524" dir="b_a" typeref="33">
+                    <linksegment id="1524" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -20764,7 +20764,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1526" dir="b_a" typeref="33">
+                    <linksegment id="1526" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -21115,7 +21115,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="158" dir="b_a" typeref="34">
+                    <linksegment id="158" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -21323,7 +21323,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1590" dir="b_a" typeref="34">
+                    <linksegment id="1590" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -21618,7 +21618,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1629" dir="b_a" typeref="33">
+                    <linksegment id="1629" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -21762,7 +21762,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1648" dir="b_a" typeref="33">
+                    <linksegment id="1648" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
@@ -21776,7 +21776,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1650" dir="b_a" typeref="34">
+                    <linksegment id="1650" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -21800,7 +21800,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1652" dir="b_a" typeref="34">
+                    <linksegment id="1652" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -21842,7 +21842,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1658" dir="b_a" typeref="34">
+                    <linksegment id="1658" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -22023,7 +22023,7 @@
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1682" dir="b_a" typeref="34">
+                    <linksegment id="1682" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -22089,7 +22089,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1690" dir="b_a" typeref="34">
+                    <linksegment id="1690" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -22159,7 +22159,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1700" dir="b_a" typeref="34">
+                    <linksegment id="1700" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -22266,7 +22266,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1714" dir="b_a" typeref="33">
+                    <linksegment id="1714" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -22416,7 +22416,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1734" dir="b_a" typeref="34">
+                    <linksegment id="1734" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>10.0</maxspeed>
                     </linksegment>
@@ -22430,7 +22430,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1736" dir="b_a" typeref="34">
+                    <linksegment id="1736" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -22454,7 +22454,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1739" dir="b_a" typeref="34">
+                    <linksegment id="1739" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -22468,7 +22468,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1741" dir="b_a" typeref="34">
+                    <linksegment id="1741" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
@@ -22482,7 +22482,7 @@
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
-                    <linksegment id="1743" dir="b_a" typeref="33">
+                    <linksegment id="1743" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
