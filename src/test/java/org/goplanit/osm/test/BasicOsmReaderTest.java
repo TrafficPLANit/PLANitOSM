@@ -122,11 +122,12 @@ public class BasicOsmReaderTest {
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
-      /* nothing is removed here: car access is withdrawn on 16 segments, but every link involved is still open to
-       * another mode, so the infrastructure stays. Counts therefore equal the unpruned network */
-      assertEquals(1019, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(1845, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(837, network.getTransportLayers().getFirst().getNodes().size());
+      /* car access is withdrawn on 16 segments without removing anything, since every link involved is still open to
+       * another mode. What is removed are the ways carrying a denying access value, which lose their modes in both
+       * directions and so leave nothing behind */
+      assertEquals(1008, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(1833, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(829, network.getTransportLayers().getFirst().getNodes().size());
 
       assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(
               Edge::hasInputProperty) : "OSM tags not retained on all links";
@@ -173,11 +174,12 @@ public class BasicOsmReaderTest {
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
 
-      /* car access is withdrawn on 24 segments while no infrastructure is removed, since each link involved
-       * remains open to another mode. Counts therefore equal the unpruned network */
-      assertEquals(1178, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2079, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(984, network.getTransportLayers().getFirst().getNodes().size());
+      /* car access is withdrawn on 24 segments without removing anything, since each link involved remains open to
+       * another mode. What is removed are the ways carrying a denying access value, which lose their modes in both
+       * directions and so leave nothing behind */
+      assertEquals(1167, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2067, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(976, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
       assertEquals(104, zoning.getTransferZones().size() );

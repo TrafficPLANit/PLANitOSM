@@ -388,17 +388,13 @@ public class OsmNetworkLayerParser {
       Set<Mode> excludedModes = modeParser.getExplicitlyExcludedModes(tags, forwardDirection, settings);
       Set<Mode> includedModes = modeParser.getExplicitlyIncludedModes(tags, forwardDirection, settings);
 
-      /* global access is defined for both ways, or explored direction coincides with the main direction of the
-      one way */
-      boolean isOneWay = OsmOneWayTags.isOneWay(tags);
-      boolean accessTagAppliesToExploredDirection =
-          /*two way || oneway->forward    || oneway->backward and reversed oneway */
-          !isOneWay || (forwardDirection || OsmOneWayTags.isReversedOneWay(tags));
-      
-      /* access=<?> related mode access */
+      /* access=<?> related mode access, applied in both directions: an access restriction is a property of the road
+       * rather than of a direction of travel, so a private one way street is private against the flow too. Modes
+       * tagged as explicitly included keep their access regardless, since explicit inclusions and exclusions take
+       * precedence over the umbrella access value, see #updateNonLaneBasedAccessKeyBasedModeRestrictions */
       boolean globalAccessKey = tags.containsKey(OsmAccessTags.ACCESS);
       boolean laneAccessKey = tags.containsKey(OsmTagUtils.createCompositeOsmKey(OsmAccessTags.ACCESS, OsmLaneTags.LANES));
-      if(accessTagAppliesToExploredDirection && (globalAccessKey || laneAccessKey)){
+      if(globalAccessKey || laneAccessKey){
         String accessKey = laneAccessKey ?
             OsmTagUtils.createCompositeOsmKey(OsmAccessTags.ACCESS, OsmLaneTags.LANES) : OsmAccessTags.ACCESS;
         String accessValue = tags.get(accessKey);
