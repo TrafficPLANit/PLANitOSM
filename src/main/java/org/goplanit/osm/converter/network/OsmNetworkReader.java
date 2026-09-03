@@ -322,11 +322,12 @@ public class OsmNetworkReader implements NetworkReader {
             layer, mode, config.getBelowSize(), config.getAboveSize(), keepLargest,
             config.getConnectivity(), null);
         LOGGER.info(String.format("Dangling subnetworks (%s): %s", config, result));
-        if(!result.isEmpty()) {
-          /* the size distribution rather than the totals alone, since it is what makes a size threshold choosable
-           * from a single run instead of requiring one run per candidate value */
-          LOGGER.info(String.format("Dangling subnetworks (%s) discarded by size: %s",
-              mode.getName(), result.getSizeBinSummary()));
+        /* the size distribution rather than the totals alone, since it is what makes a size threshold choosable
+         * from a single run instead of requiring one run per candidate value. Indented beneath the line reporting
+         * the pruning itself, a line per bin, rather than run together on one line which becomes unreadable as
+         * soon as more than a couple of bins are populated */
+        for(var binLine : result.getSizeBinSummaryLines()) {
+          LOGGER.info(String.format("  %s", binLine));
         }
       }
 
