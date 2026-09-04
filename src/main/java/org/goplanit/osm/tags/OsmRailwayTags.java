@@ -6,25 +6,25 @@ import java.util.Set;
 
 /**
  * Most OSM rail way tags that could be of value for a network. Based on list found on
- * https://wiki.openstreetmap.org/wiki/Key:railway. Tags specific to the Ptv1 scheme are collected via the OsmPtv1 tags class
- * and integrated in the collections managed by this class. 
- * 
+ * <a href="https://wiki.openstreetmap.org/wiki/Key:railway">OSM key=railway</a>. Tags specific to the Ptv1 scheme are
+ * collected via the OsmPtv1 tags class and integrated in the collections managed by this class.
+ *
  * @author markr
  *
  */
 public class OsmRailwayTags {
   
-  /** all currently available rail way tags that represent tracks accessible to a rail mode*/
-  private static final Set<String> RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();
+  /** all currently available railway tags that represent tracks accessible to a rail mode*/
+  private static final Set<String> RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<>();
     
   /** all currently supported railway tags that represent geographic areas, e.g. stations, or platforms next or alongside tracks, this is a subset of
    * the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS} */
-  private static final Set<String> AREABASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();    
+  private static final Set<String> AREABASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<>();
     
   /**
    * the OSM railway values that are marked as non-rail types, i.e., they can never be activated to be converted into links
    */
-  protected static final Set<String> NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<String>();
+  protected static final Set<String> NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<>();
   
   
   /**
@@ -44,6 +44,10 @@ public class OsmRailwayTags {
    * </ul>
    */
   private static void populateRailBasedOsmRailwayValueTags() {
+    RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(ABANDONED);
+    RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(CONSTRUCTION);
+    RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(PROPOSED);
+    RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(DISUSED);
     RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(FUNICULAR);
     RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(LIGHT_RAIL);
     RAILBASED_OSM_RAILWAY_VALUE_TAGS.add(MONO_RAIL);

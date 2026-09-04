@@ -48,11 +48,13 @@ public class OsmWaterwayTags {
     DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS.add(FERRY);
 
     /* ferry=_highway_type */
-    DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(OsmHighwayTypeConfiguration.DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES);
-    DEFAULT_DEACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(OsmHighwayTypeConfiguration.DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES);
+    DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(
+            OsmHighwayTypeConfiguration.DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES);
+    DEFAULT_DEACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.addAll(
+            OsmHighwayTypeConfiguration.DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES);
   }
 
-  /**
+  /*
    * populate the available railway tags
    */
   static {
@@ -62,10 +64,10 @@ public class OsmWaterwayTags {
   /* key */
   public static final String ROUTE = "route";
 
-  /* ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as used as a
-   * a way to indicate a ferry that replaces a type of highway, in which case it may be ferr=primary, indicating a highway section
-   * that is a ferry. The latter may or may not have the route=ferry tagging, so, we should support it separately as another valid
-   * ferry key
+  /* ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as
+   *used as a way to indicate a ferry that replaces a type of highway, in which case it may be ferry=primary,
+   * indicating a highway section that is a ferry. The latter may or may not have the route=ferry tagging, so, we
+   * should support it separately as another valid ferry key
    */
   public static final String FERRY = OsmWaterModeTags.FERRY;
 
@@ -76,9 +78,7 @@ public class OsmWaterwayTags {
    * @return true when valid tag, otherwise false
    */
   public static boolean isWaterBasedWay(String waterwayKey, String waterWayTagValue) {
-    return isAnyWaterwayKeyTag(waterwayKey) &&
-        (DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS.contains(waterWayTagValue) ||
-        DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.contains(waterWayTagValue));
+    return isAnyWaterwayKeyTag(waterwayKey) && isWaterWayBasedValueTag(waterWayTagValue);
   }
 
   /**
@@ -102,6 +102,17 @@ public class OsmWaterwayTags {
    */
   public static boolean hasAnyWaterwayKeyTag(Map<String, String> tags) {
     return tags.containsKey(ROUTE) || tags.containsKey(FERRY);
+  }
+
+  /** Verify if passed in tag is indeed a waterway value tag that may represent a waterway like piece of infrastructure
+   * or route
+   *
+   * @param waterWayTagValue to verify
+   * @return true when valid tag, otherwise false
+   */
+  public static boolean isWaterWayBasedValueTag(String waterWayTagValue) {
+    return  (DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS.contains(waterWayTagValue) ||
+        DEFAULT_ACTIVATED_WATERWAY_OSM_FERRY_VALUE_TAGS.contains(waterWayTagValue));
   }
 
   /**
@@ -136,13 +147,14 @@ public class OsmWaterwayTags {
     }else if(isWaterWayTaggedAsHighway(tags)){
       return FERRY;
     }
-    LOGGER.severe(String.format("Water way is neither tagged as route=ferry or ferry=<some_highway_tag> for tags: %s",tags));
+    LOGGER.severe(String.format("Water way is neither tagged as route=ferry or ferry=<some_highway_tag> " +
+            "for tags: %s",tags));
     return null;
   }
 
   /**
-   * Find the key tag for a given waterway type, e.g., when 'ferry' is provided, the key would be 'route', when primary is provided
-   * is would return 'ferry' as key
+   * Find the key tag for a given waterway type, e.g., when 'ferry' is provided, the key would be 'route',
+   * when primary is provided is would return 'ferry' as key
    *
    * @param waterwayType to search
    * @return found key tag, null if no match
@@ -157,8 +169,8 @@ public class OsmWaterwayTags {
   }
 
   /**
-   * Verify if a key tag for a given waterway type exists, e.g., when 'ferry' is provided, a valid key would be 'route', when 'primary' is provided
-   * a valid key would be 'ferry', if no valid key exists, false is returned
+   * Verify if a key tag for a given waterway type exists, e.g., when 'ferry' is provided, a valid key would
+   * be 'route', when 'primary' is provided a valid key would be 'ferry', if no valid key exists, false is returned
    *
    * @param waterwayType to search
    * @return if found true, false otherwise

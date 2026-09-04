@@ -80,7 +80,7 @@ public class OsmSpeedLimitDefaultsCategory {
     speedLimitDefaults.get(key).put(type, speedLimitKmH);
   }
   
-  /** Get a speed limit default for a given way type
+  /** Get a speed limit default for a given way type, if not present the global default is returned
    *
    * @param key key for type
    * @param type of way to get speed default for
@@ -106,6 +106,16 @@ public class OsmSpeedLimitDefaultsCategory {
    */
   public boolean containsSpeedLimit(String type) {
     return speedLimitDefaults.values().stream().anyMatch(e -> e.containsKey(type));
+  }
+
+  /** verify if a default speed limit is available for the given key-type combination
+   *
+   * @param key to verify
+   * @param type to verify
+   * @return true when available false otherwise
+   */
+  public boolean containsSpeedLimit(String key, String type) {
+    return speedLimitDefaults.getOrDefault(key, Map.of()).get(type) != null;
   }
   
   /** collect the country name

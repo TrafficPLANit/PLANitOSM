@@ -9,11 +9,17 @@ import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
+import org.goplanit.utils.graph.Edge;
+import org.goplanit.utils.graph.directed.Connectivity;
+import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.zoning.connectoid.DirectedConnectoidAccessZoneEntry;
+import org.goplanit.utils.zoning.connectoid.ZoneConnectoidType;
 import org.goplanit.zoning.Zoning;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -35,21 +41,27 @@ public class BasicOsmReaderTest {
   
   private static final String RESOURCE_DIR = Path.of(".","src","test","resources").toString();
 
-  private static final String SYDNEYCBD_2023_OSM = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
+  private static final String SYDNEYCBD_2023_OSM =
+      Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
   
-  private static final String SYDNEYCBD_2023_PBF = Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
+  private static final String SYDNEYCBD_2023_PBF =
+      Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
   
-  private static final String EXAMPLE_REMOTE_URL = "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
+  private static final String EXAMPLE_REMOTE_URL =
+      "https://api.openstreetmap.org/api/0.6/map?bbox=13.465661,52.504055,13.469817,52.506204";
 
   /** configure for parsing road and pt infrastructure networks (activate rail and disable walk and cycle infrastructure)
    *
    * @param osmReader to configure
    */
   private void configureForRoadAndPt(final OsmIntermodalReader osmReader){
+
+    var highwaySettings = osmReader.getSettings().getNetworkSettings().getHighwaySettings();
+
     /* test out excluding a particular type highway:road from parsing */
-    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-    osmReader.getSettings().getNetworkSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
+    highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+    highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+    highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.PEDESTRIAN);
 
     /* activate railways */
     osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
@@ -60,6 +72,16 @@ public class BasicOsmReaderTest {
     if (LOGGER == null) {
       LOGGER = Logging.createLogger(BasicOsmReaderTest.class);
     } 
+  }
+
+  /**
+   * run garbage collection after each test as it apparently is not triggered properly within
+   * in some test environments (or takes too long before being triggered)
+   */
+  @AfterEach
+  public void afterTest() {
+    IdGenerator.reset();
+    System.gc();
   }
 
   @AfterAll
@@ -74,28 +96,45 @@ public class BasicOsmReaderTest {
   public void osmReaderRoadInfrastructureTest() {
     try {
       OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
-      
+      osmReader.getSettings().setRetainOsmTags(true);
+      var highwaySettings = osmReader.getSettings().getHighwaySettings();
+
       /* test out excluding a particular type highway:road from parsing */
-      osmReader.getSettings().getHighwaySettings().deactivateOsmHighwayType(OsmHighwayTags.ROAD);
+      highwaySettings.deactivateOsmHighwayType(OsmHighwayTags.ROAD);
       
       /* test out setting different defaults for the highway:primary type*/
-      osmReader.getSettings().getHighwaySettings().overwriteCapacityMaxDensityDefaults(OsmHighwayTags.PRIMARY, 2200.0, 180.0);
+      highwaySettings.overwriteCapacityMaxDensityDefaults(
+              OsmHighwayTags.PRIMARY, 2200.0, 180.0);
       
       /* add railway mode tram to secondary_link type, since it is allowed on this type of link */
-      osmReader.getSettings().getHighwaySettings().addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
+      highwaySettings.addAllowedOsmHighwayModes(OsmHighwayTags.SECONDARY, OsmRailwayTags.TRAM);
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
+      /* weak connectivity on purpose, so that both notions stay covered by the suite. The Melbourne cases exercise
+       * the strong default. On an extract this small the two differ markedly, since the clip truncates one way
+       * streets into pockets that the strong notion then treats as subnetworks of their own */
+      osmReader.getSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
 
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
-      assertEquals(network.getTransportLayers().size(), 1);
-      assertEquals(network.getTransportLayers().getFirst().getLinks().size(), 1075);
-      assertEquals(network.getTransportLayers().getFirst().getLinkSegments().size(), 2119);
-      assertEquals(network.getTransportLayers().getFirst().getNodes().size(), 882);
-      
+      assertEquals(1, network.getTransportLayers().size());
+      /* car access is withdrawn on 16 segments without removing anything, since every link involved is still open to
+       * another mode. What is removed are the ways carrying a denying access value, which lose their modes in both
+       * directions and so leave nothing behind */
+      assertEquals(1008, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(1833, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(829, network.getTransportLayers().getFirst().getNodes().size());
+
+      assert network.getTransportLayers().getFirst().getLinks().stream().allMatch(
+              Edge::hasInputProperty) : "OSM tags not retained on all links";
+
+      //todo flesh out this assert as not all nodes will have tags...
+      //assert network.getTransportLayers().getFirst().getNodes().stream().allMatch(Vertex::hasInputProperty) : "OSM tags not retained on all nodes";
+
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
       e.printStackTrace();
@@ -111,9 +150,13 @@ public class BasicOsmReaderTest {
     try {
       OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(SYDNEYCBD_2023_OSM, CountryNames.AUSTRALIA);
       configureForRoadAndPt(osmReader);
+      osmReader.getSettings().getNetworkSettings().setConsolidateLinkSegmentTypes(true);
 
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getNetworkSettings());
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings().getPublicTransportSettings());
+      /* weak connectivity on purpose, see the note in #osmReaderRoadInfrastructureTest */
+      osmReader.getSettings().getNetworkSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
 
       Pair<MacroscopicNetwork, Zoning> resultPair = osmReader.read();
       MacroscopicNetwork network = resultPair.first();
@@ -130,21 +173,50 @@ public class BasicOsmReaderTest {
       // when input source is updated this will fail, mainly meant to serve as check to flag a change when any changes are made to how OSM data is parsed and make sure the changes
       // are deemed correct
       assertEquals(1, network.getTransportLayers().size());
-      assertEquals(1234, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2437, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(1030, network.getTransportLayers().getFirst().getNodes().size());
+
+      /* car access is withdrawn on 24 segments without removing anything, since each link involved remains open to
+       * another mode. What is removed are the ways carrying a denying access value, which lose their modes in both
+       * directions and so leave nothing behind */
+      assertEquals(1167, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2067, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(976, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
       assertEquals(104, zoning.getTransferZones().size() );
       assertEquals(8, zoning.getTransferZoneGroups().size());
       assertEquals(0, zoning.getOdConnectoids().size());
-      assertEquals(131, zoning.getTransferConnectoids().size());
 
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS), true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN), true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM),true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL),  true);
-      assertEquals(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.FERRY),  true);
+      var tConnectoids = zoning.getTransferConnectoids();
+
+      var noneTypeAccessEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.NONE)).count();
+      var unknownTypeAccessEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.UNKNOWN)).count();
+      var ptStopTypeAccessLinkSegments = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.PT_VEHICLE_STOP)).
+          map( e -> (DirectedConnectoidAccessZoneEntry)e).
+          mapToLong(e -> e.getAccessLinkSegments().size()).sum();
+      var accessZoneEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS)).count();
+      var egressZoneEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_EGRESS)).count();
+      var accessEgressZoneEntries = tConnectoids.stream().flatMap(
+          c ->c.getAccessZoneEntriesStream(ZoneConnectoidType.ZONE_ACCESS_EGRESS)).count();
+
+      assertEquals(0, noneTypeAccessEntries);
+      assertEquals(0, unknownTypeAccessEntries);
+      assertEquals(124, ptStopTypeAccessLinkSegments);
+      assertEquals(3, accessZoneEntries);
+      assertEquals(3, egressZoneEntries);
+      /* two more than before: the connectoids that previously sat on removed dangling infrastructure now
+       * survive, since the infrastructure does */
+      assertEquals(94, accessEgressZoneEntries);
+
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL));
+      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.FERRY));
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
@@ -161,6 +233,11 @@ public class BasicOsmReaderTest {
     try {
       OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(SYDNEYCBD_2023_PBF, CountryNames.AUSTRALIA);
       OsmNetworkSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(osmReader.getSettings());
+      /* weak connectivity on purpose, so that both notions stay covered by the suite. The Melbourne cases exercise
+       * the strong default. On an extract this small the two differ markedly, since the clip truncates one way
+       * streets into pockets that the strong notion then treats as subnetworks of their own */
+      osmReader.getSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       MacroscopicNetwork network = osmReader.read();
       assertNotNull(network);
     }catch(Exception e) {

@@ -1,14 +1,17 @@
 package org.goplanit.osm.util;
 
+import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.network.LayeredNetwork;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
-import org.goplanit.osm.converter.network.*;
-import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.graph.EdgeUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
-
-import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
@@ -16,6 +19,7 @@ import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -71,7 +75,9 @@ public class PlanitNetworkLayerUtils {
    * @param networkData to extract layer specific data from
    * @return true when one or more layers are found, false otherwise
    */
-  public static boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkReaderData networkData){
+  public static boolean hasNetworkLayersWithActiveOsmNode(
+          long osmNodeId, LayeredNetwork<?, ?> network, OsmNetworkReaderData networkData){
+
     OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);
     if(osmNode != null) {      
       for(NetworkLayer networkLayer : network.getTransportLayers()) {
@@ -104,7 +110,9 @@ public class PlanitNetworkLayerUtils {
       MacroscopicNetworkLayer networkLayer){
     MacroscopicLinkSegment linkSegment = (MacroscopicLinkSegment) link.getEdgeSegment(directionAb);
     if(linkSegment == null) {
-      linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(link, directionAb, true /*register on nodes and link*/);
+      linkSegment = networkLayer.getLinkSegments().getFactory().registerNew(
+              link, directionAb, true /*register on nodes and link*/);
+
       /* Xml id */
       linkSegment.setXmlId(Long.toString(linkSegment.getId()));
       /* external id, identical to link since OSM has no directional ids */
@@ -118,7 +126,11 @@ public class PlanitNetworkLayerUtils {
 
     }else{
       LOGGER.warning(String.format(
-          "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%d), ignored entity",linkSegment.getId(), link.getVertexA().getExternalId(), link.getVertexB().getExternalId(), link.getExternalId()));
+          "Already exists link segment (id:%d) between OSM nodes (%s, %s) of OSM way (%s), ignored entity",
+              linkSegment.getId(),
+              link.getVertexA().getExternalId(),
+              link.getVertexB().getExternalId(),
+              link.getExternalId()));
     }
 
     /* link segment type */
@@ -140,17 +152,20 @@ public class PlanitNetworkLayerUtils {
    * @return created and registered link
    */
   public static MacroscopicLink createPopulateAndRegisterLink(
-      Node nodeA,
-      Node nodeB,
-      LineString geometry,
-      MacroscopicNetworkLayer layer,
+      @Nonnull Node nodeA,
+      @Nonnull Node nodeB,
+      @Nonnull LineString geometry,
+      @Nonnull MacroscopicNetworkLayer layer,
       String externalId,
       String name,
-      PlanitJtsCrsUtils geoUtils){
+      @Nonnull PlanitJtsCrsUtils geoUtils){
 
     /* length and geometry */
     double linkLength = 0;
-    /* update the length based on the geometry */
+    /* update the length based on the geometry or if no internal geometry, its nodes */
+    if(geometry == null || geometry.isEmpty()) {
+      throw new PlanItRunTimeException("no geometry created for PLANit link, this shouldn't happen");
+    }
     linkLength = geoUtils.getDistanceInKilometres(geometry);
 
     /* create link */
@@ -222,7 +237,8 @@ public class PlanitNetworkLayerUtils {
    * @param layerData to register on
    * @return created node, null when something went wrong
    */
-  public static Node createPopulateAndRegisterNode(Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
+  public static Node createPopulateAndRegisterNode(
+      Point osmNodeLocation, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData){
     /* create */
     Node node = networkLayer.getNodes().getFactory().registerNew(osmNodeLocation, true);
     if(node!= null) {
@@ -232,4 +248,5 @@ public class PlanitNetworkLayerUtils {
     }
     return node;
   }
+
 }
