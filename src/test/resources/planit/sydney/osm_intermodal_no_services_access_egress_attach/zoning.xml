@@ -870,116 +870,116 @@
                 <accesszone ref="89" lengthkm="0.0" lsrefs="2240" modes="ferry" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="109" externalid="inferred" noderef="275">
-                <accesszone ref="50" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="50" lengthkm="0.07666284924750295" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="11" externalid="9780863959" noderef="985">
                 <accesszone ref="62" lengthkm="0.0" lsrefs="1379" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="110" externalid="inferred" noderef="782">
-                <accesszone ref="63" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="75" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="63" lengthkm="0.00608174294068628" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="75" lengthkm="0.03862660880986351" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="111" externalid="inferred" noderef="780">
-                <accesszone ref="64" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="64" lengthkm="0.006740852172522684" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="112" externalid="inferred" noderef="781">
-                <accesszone ref="64" lengthkm="0.0" modes="bicycle" type="access_egress"/>
-                <accesszone ref="65" lengthkm="0.0" modes="bicycle" type="access_egress"/>
+                <accesszone ref="64" lengthkm="0.006447567292072157" modes="bicycle" type="access_egress"/>
+                <accesszone ref="65" lengthkm="0.04462567402076124" modes="bicycle" type="access_egress"/>
             </connectoid>
             <connectoid id="113" externalid="inferred" noderef="778">
-                <accesszone ref="65" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="65" lengthkm="0.00672761967661702" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="114" externalid="inferred" noderef="117">
-                <accesszone ref="66" lengthkm="0.0" modes="bicycle" type="access_egress"/>
-                <accesszone ref="67" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="66" lengthkm="0.0547626268194576" modes="bicycle" type="access_egress"/>
+                <accesszone ref="67" lengthkm="0.009299494433034515" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="115" externalid="inferred" noderef="776">
-                <accesszone ref="66" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="66" lengthkm="0.006530078914612011" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="116" externalid="inferred" noderef="269">
-                <accesszone ref="80" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
-                <accesszone ref="87" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
-                <accesszone ref="88" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="80" lengthkm="0.10578119571897532" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="87" lengthkm="0.08410444814378146" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="88" lengthkm="0.09715214970705355" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="117" externalid="inferred" noderef="10">
-                <accesszone ref="81" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
-                <accesszone ref="86" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="81" lengthkm="0.09964667068541913" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="86" lengthkm="0.07126606804681622" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="118" externalid="inferred" noderef="667">
-                <accesszone ref="83" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="83" lengthkm="0.08284066795691948" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="119" externalid="inferred" noderef="593">
-                <accesszone ref="84" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="90" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="91" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
-                <accesszone ref="92" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="84" lengthkm="0.08106923012126747" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="90" lengthkm="0.07274686556020377" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="91" lengthkm="0.05760321745614756" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="92" lengthkm="0.07051887596327898" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="12" externalid="6576039160" noderef="986">
                 <accesszone ref="62" lengthkm="0.0" lsrefs="1380" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="120" externalid="inferred" noderef="759">
-                <accesszone ref="85" lengthkm="0.0" modes="bicycle,bus,car,goods,hgv,lhgv,motor_bike,pedestrian" type="access_egress"/>
-                <accesszone ref="89" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="85" lengthkm="0.0750161525823293" modes="bicycle,bus,car,goods,hgv,lhgv,motor_bike,pedestrian" type="access_egress"/>
+                <accesszone ref="89" lengthkm="0.08461674572029407" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="121" externalid="inferred" noderef="308">
-                <accesszone ref="101" lengthkm="0.0" modes="bicycle" type="access_egress"/>
+                <accesszone ref="101" lengthkm="0.04971614122967308" modes="bicycle" type="access_egress"/>
             </connectoid>
             <connectoid id="122" externalid="inferred" noderef="603">
-                <accesszone ref="101" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="101" lengthkm="0.044379798304878315" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="123" externalid="inferred" noderef="307">
-                <accesszone ref="103" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="103" lengthkm="0.23701043192470014" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="124" externalid="inferred" noderef="512">
-                <accesszone ref="60" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="61" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="60" lengthkm="0.003979539779368007" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="61" lengthkm="0.010821480445215893" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="125" externalid="inferred" noderef="521">
-                <accesszone ref="62" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="62" lengthkm="0.09309652568744439" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="126" externalid="inferred" noderef="11">
-                <accesszone ref="62" lengthkm="0.0" modes="bicycle" type="access_egress"/>
+                <accesszone ref="62" lengthkm="0.07962435747337576" modes="bicycle" type="access_egress"/>
             </connectoid>
             <connectoid id="127" externalid="inferred" noderef="942">
-                <accesszone ref="68" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="76" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="68" lengthkm="0.0026556321851611453" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="76" lengthkm="0.005235608157918806" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="128" externalid="inferred" noderef="386">
-                <accesszone ref="69" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
-                <accesszone ref="70" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="69" lengthkm="0.011308731684105401" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="70" lengthkm="0.0022833717935074258" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="129" externalid="inferred" noderef="382">
-                <accesszone ref="69" lengthkm="0.0" modes="bicycle" type="access_egress"/>
+                <accesszone ref="69" lengthkm="0.013830518628012094" modes="bicycle" type="access_egress"/>
             </connectoid>
             <connectoid id="13" externalid="5114365145" noderef="987">
                 <accesszone ref="68" lengthkm="0.0" lsrefs="1386" modes="train" type="pt_veh_stop"/>
                 <accesszone ref="76" lengthkm="0.0" lsrefs="1386" modes="train" type="pt_veh_stop"/>
             </connectoid>
             <connectoid id="130" externalid="inferred" noderef="721">
-                <accesszone ref="70" lengthkm="0.0" modes="bicycle" type="access_egress"/>
+                <accesszone ref="70" lengthkm="0.037696476281175735" modes="bicycle" type="access_egress"/>
             </connectoid>
             <connectoid id="131" externalid="inferred" noderef="504">
-                <accesszone ref="71" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="72" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="71" lengthkm="0.01834586743751848" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="72" lengthkm="0.01653686906854994" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="132" externalid="inferred" noderef="467">
-                <accesszone ref="73" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="73" lengthkm="0.004346754295788594" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="133" externalid="inferred" noderef="63">
-                <accesszone ref="73" lengthkm="0.0" modes="bicycle" type="access"/>
+                <accesszone ref="73" lengthkm="0.016089302396504596" modes="bicycle" type="access"/>
             </connectoid>
             <connectoid id="134" externalid="inferred" noderef="142">
-                <accesszone ref="73" lengthkm="0.0" modes="bicycle" type="egress"/>
+                <accesszone ref="73" lengthkm="0.03152963720835419" modes="bicycle" type="egress"/>
             </connectoid>
             <connectoid id="135" externalid="inferred" noderef="922">
-                <accesszone ref="74" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="74" lengthkm="0.012733637742470796" modes="bicycle,pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="136" externalid="inferred" noderef="772">
-                <accesszone ref="77" lengthkm="0.0" modes="bicycle,pedestrian" type="access_egress"/>
-                <accesszone ref="78" lengthkm="0.0" modes="bicycle" type="access_egress"/>
+                <accesszone ref="77" lengthkm="0.004413936114457709" modes="bicycle,pedestrian" type="access_egress"/>
+                <accesszone ref="78" lengthkm="0.01840571070922106" modes="bicycle" type="access_egress"/>
             </connectoid>
             <connectoid id="137" externalid="inferred" noderef="779">
-                <accesszone ref="78" lengthkm="0.0" modes="pedestrian" type="access_egress"/>
+                <accesszone ref="78" lengthkm="0.010440994975131856" modes="pedestrian" type="access_egress"/>
             </connectoid>
             <connectoid id="14" externalid="7053939943" noderef="988">
                 <accesszone ref="75" lengthkm="0.0" lsrefs="1107,2121" modes="light_rail" type="pt_veh_stop"/>
