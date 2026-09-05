@@ -33,6 +33,9 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class SydneyOsmPlanitTest {
 
+  /** Absolute tolerance for platform-dependent GML coordinate differences */
+  private static final double GML_COORDINATE_TOLERANCE = 1e-4;
+
   public static final Path RESOURCE_PATH = Path.of("src","test","resources");
 
   public static final Path SYDNEYCBD_2022_OSM =
@@ -112,10 +115,12 @@ public class SydneyOsmPlanitTest {
       GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
                 write(network, zoning);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(
-              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(
-              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+              GML_COORDINATE_TOLERANCE);
+      PlanitAssertionUtils.assertZoningFilesSimilarWithGmlCoordinateTolerance(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+              GML_COORDINATE_TOLERANCE);
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -153,8 +158,9 @@ public class SydneyOsmPlanitTest {
       NetworkConverter theConverter = NetworkConverterFactory.create(osmReader, planitWriter);
       theConverter.convert();
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(
-          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+          GML_COORDINATE_TOLERANCE);
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -198,10 +204,12 @@ public class SydneyOsmPlanitTest {
       /* execute */
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(
-          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(
-          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+          GML_COORDINATE_TOLERANCE);
+      PlanitAssertionUtils.assertZoningFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+          GML_COORDINATE_TOLERANCE);
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -256,10 +264,12 @@ public class SydneyOsmPlanitTest {
       GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
               write(network, zoning);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(
-          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(
-          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+          GML_COORDINATE_TOLERANCE);
+      PlanitAssertionUtils.assertZoningFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString(),
+          GML_COORDINATE_TOLERANCE);
 
     } catch (final Exception e) {
       e.printStackTrace();

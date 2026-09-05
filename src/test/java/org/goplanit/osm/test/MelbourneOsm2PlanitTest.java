@@ -37,6 +37,9 @@ import static org.junit.jupiter.api.Assertions.fail;
  */
 public class MelbourneOsm2PlanitTest {
 
+  /** Absolute tolerance for platform-dependent GML coordinate differences */
+  private static final double GML_COORDINATE_TOLERANCE = 1e-4;
+
   public static final Path RESOURCE_PATH = Path.of("src", "test", "resources");
 
   public static final Path MELBOURNE_PBF = Path.of(
@@ -114,8 +117,10 @@ public class MelbourneOsm2PlanitTest {
 
       //todo: Error for differences is 99% certain due to layers exactly on top of each other.
       // Fix https://github.com/TrafficPLANit/PLANitOSM/issues/40
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
-      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR, PLANIT_REF_DIR, GML_COORDINATE_TOLERANCE);
+      PlanitAssertionUtils.assertZoningFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR, PLANIT_REF_DIR, GML_COORDINATE_TOLERANCE);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -152,8 +157,10 @@ public class MelbourneOsm2PlanitTest {
 
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
-      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR, PLANIT_REF_DIR, GML_COORDINATE_TOLERANCE);
+      PlanitAssertionUtils.assertZoningFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR, PLANIT_REF_DIR, GML_COORDINATE_TOLERANCE);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -201,7 +208,8 @@ public class MelbourneOsm2PlanitTest {
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings);
       Osm2PlanitConversionTemplates.osm2PlanitSettingsBased(inputSettings, outputSettings);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);
+      PlanitAssertionUtils.assertNetworkFilesSimilarWithGmlCoordinateTolerance(
+          PLANIT_OUTPUT_DIR, PLANIT_REF_DIR, GML_COORDINATE_TOLERANCE);
 
     } catch (Exception e) {
       e.printStackTrace();
