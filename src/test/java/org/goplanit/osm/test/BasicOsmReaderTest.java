@@ -205,7 +205,7 @@ public class BasicOsmReaderTest {
 
       assertEquals(0, noneTypeAccessEntries);
       assertEquals(0, unknownTypeAccessEntries);
-      assertEquals(124, ptStopTypeAccessLinkSegments);
+      assertEquals(134, ptStopTypeAccessLinkSegments);
       assertEquals(3, accessZoneEntries);
       assertEquals(3, egressZoneEntries);
       /* two more than before: the connectoids that previously sat on removed dangling infrastructure now
