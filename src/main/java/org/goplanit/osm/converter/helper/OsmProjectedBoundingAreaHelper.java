@@ -109,13 +109,17 @@ public class OsmProjectedBoundingAreaHelper extends ProjectedBoundingAreaHelper 
       OsmEntity osmEntity, EntityType type, Map<String, String> tags, OsmNodeData osmNodeData) {
     boolean useWaterLeniency =
         OsmPtv1Tags.isFerryTerminal(tags) || OsmWaterModeTags.supportsAnyPtv2WaterModeAccess(tags);
-    return (!useWaterLeniency && isPartlyOrWhollyWithinBoundaryArea(
-        osmEntity, type, osmNodeData, true)) ||
-        isNearPartlyOrWhollyWithinBoundaryArea(
-            osmEntity,
-            type,
-            osmNodeData,
-            maximumDistanceWaterBasedOutsideBoundingPolygonInMeters,true);
+    if(!useWaterLeniency){
+      return isPartlyOrWhollyWithinBoundaryArea(osmEntity, type, osmNodeData, true);
+    }
+
+    /* water based infrastructure is routinely sited beyond a boundary derived from land based entities, a wharf
+     * across a harbour being the typical case, so it remains eligible while it stays within the allowance */
+    return isNearPartlyOrWhollyWithinBoundaryArea(
+        osmEntity,
+        type,
+        osmNodeData,
+        maximumDistanceWaterBasedOutsideBoundingPolygonInMeters,true);
   }
 
   /**
