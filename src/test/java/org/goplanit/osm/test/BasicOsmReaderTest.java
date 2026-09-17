@@ -178,7 +178,7 @@ public class BasicOsmReaderTest {
        * another mode. What is removed are the ways carrying a denying access value, which lose their modes in both
        * directions and so leave nothing behind */
       assertEquals(1167, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2067, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(2149, network.getTransportLayers().getFirst().getLinkSegments().size());
       assertEquals(976, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );

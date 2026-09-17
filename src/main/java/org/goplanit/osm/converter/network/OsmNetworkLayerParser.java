@@ -20,10 +20,12 @@ import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentUtils;
 import org.goplanit.utils.graph.directed.BannedMovement;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
@@ -796,7 +798,24 @@ public class OsmNetworkLayerParser {
     var  backwardDirectionLinkSegmentType =
         extractDirectionalLinkSegmentTypeByOsmWay(osmWay, tags, linkSegmentType, !forwardDirection);
 
-    return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);    
+    /* rail and water bound infrastructure is bidirectional: a track or waterway is traversable either way and OSM
+     * directional tagging on it expresses signalling or a preferred direction rather than a restriction on the
+     * infrastructure itself. Honouring it removes half of that network and leaves scheduled services without a path
+     * back along the line they arrived on. Hence when exactly one direction retains access and that access is
+     * exclusively of such a track type, the other direction adopts the same type. Infrastructure shared with road
+     * bound modes, a tram embedded in a street being the typical case, is not exclusive and is left alone, since
+     * there the directional tagging is a genuine restriction */
+    if((forwardDirectionLinkSegmentType == null) != (backwardDirectionLinkSegmentType == null)) {
+      var accessibleDirectionType = forwardDirectionLinkSegmentType != null ?
+          forwardDirectionLinkSegmentType : backwardDirectionLinkSegmentType;
+      if(MacroscopicLinkSegmentUtils.isExclusivelyOfTrackType(accessibleDirectionType, TrackModeType.RAIL) ||
+          MacroscopicLinkSegmentUtils.isExclusivelyOfTrackType(accessibleDirectionType, TrackModeType.WATER)) {
+        forwardDirectionLinkSegmentType = accessibleDirectionType;
+        backwardDirectionLinkSegmentType = accessibleDirectionType;
+      }
+    }
+
+    return Pair.of(forwardDirectionLinkSegmentType, backwardDirectionLinkSegmentType);
   }    
   
   /** Constructor
