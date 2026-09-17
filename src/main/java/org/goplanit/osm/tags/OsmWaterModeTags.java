@@ -79,6 +79,17 @@ public class OsmWaterModeTags {
    */
   public static TreeSet<String> getPublicTransportModesFrom(final Collection<String> eligibleOsmModes) {
     return getModesFrom(eligibleOsmModes);
-  }   
-  
+  }
+
+  /**
+   * Check if any water mode is supported, e.g. ferry=yes
+   *
+   * @param tags to check
+   * @return true when available, false otherwise
+   */
+  public static boolean supportsAnyPtv2WaterModeAccess(Map<String, String> tags) {
+    return getSupportedWaterModeTags().stream().anyMatch( waterModeKeyTag ->
+            tags.containsKey(waterModeKeyTag) && tags.get(waterModeKeyTag).equals(OsmAccessTags.YES));
+
+  }
 }

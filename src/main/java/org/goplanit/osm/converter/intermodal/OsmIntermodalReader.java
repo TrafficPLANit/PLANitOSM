@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.intermodal.IntermodalReader;
 import org.goplanit.network.MacroscopicNetwork;
+import org.goplanit.network.MacroscopicNetworkModifierUtils;
 import org.goplanit.network.ServiceNetwork;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
@@ -15,17 +16,18 @@ import org.goplanit.osm.converter.zoning.OsmZoningReaderFactory;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.PlanitZoningUtils;
 import org.goplanit.service.routed.RoutedServices;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.Quadruple;
 import org.goplanit.zoning.Zoning;
+import org.goplanit.zoning.ZoningModifierUtils;
 
 /**
- * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the transfer zones
- * of a zoning instance. By default an intermodal reader will activate parsing transfer infrastructure as well as the network infrastructure (including rail which for a 
- * "regular" network reader is turned off by default, since we assume that more often than not, once desires to include rail when parsing pt networks.
- * One can manually change these defaults via the various settings made available.
+ * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the
+ * transfer zones of a zoning instance. By default an intermodal reader will activate parsing transfer
+ * infrastructure as well as the network infrastructure (including rail which for a "regular" network reader is
+ * turned off by default, since we assume that more often than not, once desires to include rail when parsing
+ * pt networks. One can manually change these defaults via the various settings made available.
  * 
  * @author markr
  *
@@ -36,15 +38,15 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReader.class.getCanonicalName());
   
   /** the settings to use */
-  private OsmIntermodalReaderSettings settings;
+  private final OsmIntermodalReaderSettings settings;
   
   /** the zoning to populate if any */
-  private Zoning zoningToPopulate;
+  private final Zoning zoningToPopulate;
 
   /** the network to populate */
-  private PlanitOsmNetwork osmNetworkToPopulate;
-       
-    
+  private final PlanitOsmNetwork osmNetworkToPopulate;
+
+
   /** Make sure settings are consistent for those properties that are assumed to be
    * 
    * @return true when valid, false otherwise
@@ -54,30 +56,39 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
     
     /* both source countries must be the same */
-    if( !networkSettings.getCountryName().equals(ptSettings.getCountryName())){
+    if( networkSettings.getCountryName() == null ||
+        !networkSettings.getCountryName().equals(ptSettings.getCountryName())){
         LOGGER.severe(String.format(
-            "OSM intermodal reader requires both the network and zoning (pt) to utilise the same source country upon parsing, found %s and %s respctively instead",networkSettings.getCountryName(), ptSettings.getCountryName()));
+            "OSM intermodal reader requires both the network and zoning (pt) to utilise the same source country " +
+                "upon parsing, found %s and %s respectively instead",
+            networkSettings.getCountryName(), ptSettings.getCountryName()));
       return false;
     }
     
     /* both input files must be the same */
-    if(!networkSettings.getInputSource().equals(ptSettings.getInputSource())) {
+    if(networkSettings.getInputSource() == null ||
+        !networkSettings.getInputSource().equals(ptSettings.getInputSource())) {
       LOGGER.warning(
-          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same osm input file upon parsing, found %s and %s respctively instead",networkSettings.getInputSource(), ptSettings.getInputSource()));
+          String.format("OSM intermodal reader requires both the network and zoning (pt) to utilise the same " +
+              "OSM input file upon parsing, found %s and %s respectively instead",
+              networkSettings.getInputSource(), ptSettings.getInputSource()));
       if(networkSettings.getInputSource()!=null) {
         LOGGER.warning(
-            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,networkSettings.getInputSource()));
+            String.format("SALVAGED: set zoning input file to network input file instead: %s" ,
+                networkSettings.getInputSource()));
         ptSettings.setInputSource(networkSettings.getInputSource());
       }else if(ptSettings.getInputSource()!=null) {
         LOGGER.warning(
-            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,ptSettings.getInputSource()));
+            String.format("SALVAGED: set network input file to zoning input file instead: %s" ,
+                ptSettings.getInputSource()));
         networkSettings.setInputSource(ptSettings.getInputSource());
       }else {
         return false;
       }
     }
 
-    if(!(networkSettings.isHighwayParserActive() || networkSettings.isRailwayParserActive() || networkSettings.isWaterwayParserActive())){
+    if(!(networkSettings.isHighwayParserActive() || networkSettings.isRailwayParserActive() ||
+        networkSettings.isWaterwayParserActive())){
       LOGGER.warning("Not a single type of network is activated nor road, rail, or water");
       return false;
     }
@@ -86,28 +97,38 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
        
   }
 
-  /** Based on configuration remove any dangling subnetworks if required
-   * 
+  /**
+   * Based on configuration remove any dangling subnetworks if required
+   *
    * @param osmNetworkReader to use
-   * @param osmZoningReader to use
-   * @param zoning to use
+   * @param network          to use
+   * @param osmZoningReader  to use
+   * @param zoning           to use
    */
-  private void removeDanglingEntities(OsmNetworkReader osmNetworkReader, OsmZoningReader osmZoningReader, Zoning zoning) {
-    
-    /* subnetworks */
+  private void removeDanglingEntities(
+          OsmNetworkReader osmNetworkReader, PlanitOsmNetwork network, OsmZoningReader osmZoningReader, Zoning zoning) {
+
+    boolean recreateIds = false;
+    /* subnetworks. Delegated to the network reader so that removal honours the per track type configuration, the
+     * size thresholds and the connectoid listener, all of which it owns. Passing the zoning lets connectoids that
+     * sit on removed infrastructure be dealt with at the same time, which is the reason this is postponed to here
+     * rather than performed during the network read */
     if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
-      osmNetworkReader.removeDanglingSubNetworks(zoning);
+      osmNetworkReader.removeDanglingSubNetworks(zoning, recreateIds);
     }
-    
+    MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(network);
+
+    recreateIds = false;
     /* (transfer) zones */
     if(osmZoningReader.getSettings().isRemoveDanglingZones()) {
-      PlanitZoningUtils.removeDanglingZones(zoning);
+      PlanitZoningUtils.removeDanglingZones(zoning, recreateIds);
     }     
     
     /* transfer zone groups */
     if(osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups()) {
-      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning);
-    } 
+      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning, recreateIds);
+    }
+    ZoningModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(zoning);
   }
 
   /**
@@ -147,7 +168,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     this.settings = settings;
     this.zoningToPopulate = zoningToPopulate;
     this.osmNetworkToPopulate = osmNetworkToPopulate;
-  }  
+  }
   
    
   /**
@@ -164,12 +185,21 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
       return null;
     }
             
+    /* log the configuration for the parse as a whole, before any of it is temporarily altered below. The network
+     * and zoning readers are created with their own settings logging suppressed, so this is the single place the
+     * user sees it and the values shown are the ones they configured */
+    getSettings().logSettings();
+
     /* NETWORK READER */
-    OsmNetworkReader osmNetworkReader = OsmNetworkReaderFactory.create(getSettings().getNetworkSettings());
+    OsmNetworkReader osmNetworkReader =
+        OsmNetworkReaderFactory.createWithoutSettingsLogging(getSettings().getNetworkSettings());
     
-    /* disable removing dangling subnetworks, until zoning has been parsed as well */
-    boolean originalRemoveDanglingSubNetworks = osmNetworkReader.getSettings().isRemoveDanglingSubnetworks();
-    osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(false);
+    /* postpone removing dangling subnetworks until the zoning has been parsed as well, so connectoids on removed
+     * infrastructure can be dealt with at the same time. Captured per track type so the user's configuration is
+     * restored exactly, rather than collapsed to a single on/off */
+    var originalRemoveDanglingSubNetworkModes =
+        new java.util.LinkedHashMap<>(osmNetworkReader.getSettings().getRemoveDanglingSubnetworkModes());
+    osmNetworkReader.getSettings().deactivateRemoveDanglingSubnetworks();
     
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
 
@@ -179,28 +209,32 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
 
     /* ZONING READER */
     OsmPublicTransportReaderSettings ptSettings = getSettings().getPublicTransportSettings();
-    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.create(
-        ptSettings, zoningToPopulate, network, osmNetworkReader.createNetworkToZoningReaderData());
+    var n2zData = osmNetworkReader.createNetworkToZoningReaderData();
+    OsmZoningReader osmZoningReader = OsmZoningReaderFactory.createWithoutSettingsLogging(
+        ptSettings, zoningToPopulate, network, n2zData);
     
     /* configuration */
     boolean originalRemoveDanglingZones = osmZoningReader.getSettings().isRemoveDanglingZones();
-    boolean originalRemoveDanglingTransferZoneGroups = osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups();
+    boolean originalRemoveDanglingTransferZoneGroups =
+        osmZoningReader.getSettings().isRemoveDanglingTransferZoneGroups();
     {
       /* default activate the parser because otherwise there is no point in using an intermodal reader anyway */
       osmZoningReader.getSettings().activateParser(true);    
       
       osmZoningReader.getSettings().setRemoveDanglingZones(false);    
       osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(false);      
-    }            
-               
+    }
     Zoning zoning = osmZoningReader.read();
-    
-    /* now remove dangling entities if indicated */
-    osmNetworkReader.getSettings().setRemoveDanglingSubnetworks(originalRemoveDanglingSubNetworks);
+
+    /* restore original settings on dangling and ...*/
+    originalRemoveDanglingSubNetworkModes.forEach(
+        (modeType, config) -> osmNetworkReader.getSettings().activateRemoveDanglingSubnetworks(
+            modeType, config.getBelowSize(), config.getAboveSize(), config.getConnectivity()));
     osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
     osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
-    removeDanglingEntities(osmNetworkReader, osmZoningReader, zoning);
-    
+    /* ... remove dangling entities if indicated */
+    removeDanglingEntities(osmNetworkReader, network, osmZoningReader, zoning);
+
     /* return result */
     return Pair.of(network, zoning);
   }
@@ -222,8 +256,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
   }
 
   /**
-   * Currently no support for this yet on the OSM side. To be implemented in the future. For now services are to be sourced
-   * from GTFS and spliced into the OSM network
+   * Currently no support for this yet on the OSM side. To be implemented in the future. For now services
+   * are to be sourced from GTFS and spliced into the OSM network
    *
    * @return false
    */
@@ -245,6 +279,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
       return null;
     }
 
-    throw new PlanItRunTimeException("Support for service reader as part of Intermodal reader not yet supported in OSMIntermodalReader");
+    throw new PlanItRunTimeException("Support for service reader as part of Intermodal reader not yet supported" +
+        " in OSMIntermodalReader");
   }
 }

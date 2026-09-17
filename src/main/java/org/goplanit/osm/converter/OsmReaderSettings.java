@@ -1,15 +1,14 @@
 package org.goplanit.osm.converter;
 
 import java.net.URL;
+import java.util.logging.Logger;
 
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Polygon;
 
 /**
  * Settings relevant for a Planit Xml reader
@@ -19,15 +18,25 @@ import org.locationtech.jts.geom.Polygon;
  */
 public abstract class OsmReaderSettings implements ConverterReaderSettings {
 
+  private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
+
   /** input source to use */
   private URL inputSource;
   
   /** country name to use to initialise OSM defaults for */
-  private final String countryName;  
-  
-  /** allow to restrict parsing to only within the bounding polygon, when null entire input is parsed */
-  private Polygon boundingPolygon = null;
-  
+  private final String countryName;
+
+  /** OsmBoundary to apply, if null no restriction is applied */
+  private OsmBoundary osmBoundary = null;
+
+  /**
+   * Flag to indicate if OSM tags are to be retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   */
+  private boolean retainOsmTags = DEFAULT_RETAIN_OSM_TAGS;
+
+  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
+
   /**
    * Default constructor with default locale (Global)
    */
@@ -64,7 +73,18 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
   public OsmReaderSettings(final URL inputSource, final String countryName) {
     this.inputSource = inputSource;
     this.countryName = countryName;
-  }  
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), level));
+  }
   
   /** The input source used 
    * 
@@ -101,7 +121,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) throws PlanItException {
     try{
-      setInputSource(UrlUtils.createFromLocalPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
     }catch(Exception e) {
       throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
     }
@@ -113,50 +133,53 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    */
   public final String getCountryName() {
     return this.countryName;
-  } 
-  
-  /** Set an additional (more restricting) square bounding box based on provided envelope
-   * 
-   * @param x1, first x coordinate
-   * @param y1, first y coordinate
-   * @param x2, second x coordinate
-   * @param y2, second y coordinate
-   * @throws PlanItException thrown if error
-   */
-  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) throws PlanItException {
-    setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
   }
-  
-  /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
-   * 
-   * @param boundingBox to use
+
+
+  /**
+   * boundary to restrict parsing to
+   *
+   * @param osmBoundary to apply
    */
-  public final void setBoundingBox(Envelope boundingBox) {
-    setBoundingPolygon(PlanitJtsUtils.create2DPolygon(boundingBox));
+  public void setBoundingArea(final OsmBoundary osmBoundary){
+    this.osmBoundary = osmBoundary;
   }
-  
-  /** Set a polygon based bounding box to restrict parsing to
-   * 
-   * @param boundingPolygon to use
+
+  /**
+   * The OsmBoundary configured by the user
+   *
+   * @return osmBoundary
    */
-  public final void setBoundingPolygon(Polygon boundingPolygon) {
-    this.boundingPolygon = boundingPolygon;
-  } 
-  
+  public OsmBoundary getBoundingArea(){
+    return this.osmBoundary;
+  }
+
   /** Set a polygon based bounding box to restrict parsing to
    * 
    * @return boundingPolygon used, can be null
    */
-  public final Polygon getBoundingPolygon() {
-    return this.boundingPolygon;
-  }  
-  
-  /** Set a polygon based bounding box to restrict parsing to
-   * 
-   * @return boundingPolygon used, can be null
+  public final boolean hasBoundingBoundary() {
+    return this.osmBoundary!=null;
+  }
+
+  /**
+   * Flag to indicate if OSM tags are retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   *
+   * @return flag
    */
-  public final boolean hasBoundingPolygon() {
-    return this.boundingPolygon!=null;
-  }   
-   
+  public boolean isRetainOsmTags() {
+    return retainOsmTags;
+  }
+
+  /**
+   * Flag to indicate if OSM tags are to be retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   *
+   * @param retainOsmTags flag to set
+   */
+  public void setRetainOsmTags(boolean retainOsmTags) {
+    this.retainOsmTags = retainOsmTags;
+  }
 }
+

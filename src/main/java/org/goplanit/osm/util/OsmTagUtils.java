@@ -1,14 +1,12 @@
 package org.goplanit.osm.util;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmTags;
+import org.goplanit.utils.misc.CharacterUtils;
 import org.goplanit.utils.misc.StringUtils;
 
 /**
@@ -25,6 +23,28 @@ public class OsmTagUtils {
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
   public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";
 
+  /** input property key used for persisting original OSM keys */
+  public static final String PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY = "osm_tags";
+
+  /**
+   * Convert the OSM key value tags into a single string in the form of
+   * \{\(key1\):\(value1\),\(key2\):\(value2\)\} when using a comma as separator and a colon as key value separator
+   *
+   * @param osmTags to convert to string
+   * @param separator separator between entries
+   * @param keyValueSeparator separator between single entry key value pair
+   * @return string form of osm tags
+   */
+  public static String osm4jTagsToString(Map<String,String> osmTags, Character separator, Character keyValueSeparator){
+    final StringBuilder sb = new StringBuilder();
+    sb.append("{");
+    osmTags.forEach((k,v) ->
+            sb.append("(").append(k).append(")").append(keyValueSeparator).
+                    append("(").append(v).append(")").append(separator));
+    sb.deleteCharAt(sb.length()-1); // remove final separator
+    sb.append("}");
+    return sb.toString();
+  }
   
   /** Verify if the passed in value tag is present in the list of value tags provided
    * 
@@ -33,15 +53,26 @@ public class OsmTagUtils {
    * @return true when present, false otherwise
    */
   public static boolean matchesAnyValueTag(final String valueTag, final String... valueTags) {
-    for(int index=0; index < valueTags.length;++ index) {
-      if(valueTag.equals(valueTags[index])) {
+    for(String value :  valueTags) {
+      if(valueTag.equals(value)) {
         return true;
       }
     }
     return false;
   }
+
+  /** Verify if the passed in value tag is present in the collection of value tags provided
+   *
+   * @param valueTag to check
+   * @param valueTags to check against
+   * @return true when present, false otherwise
+   */
+  public static boolean matchesAnyValueTag(final String valueTag, final Collection<String> valueTags) {
+    return matchesAnyValueTag(valueTag, valueTags.toArray(String[]::new));
+  }
     
-  /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+  /** Verify if the passed in key matches and of the passed in values in the tags provided, all value tags are
+   * filtered by applying {@link #VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
    * @param keyTag to check 
@@ -52,14 +83,16 @@ public class OsmTagUtils {
     return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
   }   
   
-  /** Verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags are filtered by applying {@link VALUETAG_SPECIALCHAR_STRIP_REGEX}
+  /** Verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags
+   * are filtered by applying {@link #VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 
    * @param tags to check existence from
    * @param keyTags to check 
    * @param valueTags to check
    * @return true when match is present, false otherwise
    */  
-  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
+  public static boolean anyKeyMatchesAnyValueTag(
+          final Map<String,String> tags, final String[] keyTags, final String... valueTags) {
     return anyKeyMatchesAnyValueTag(tags, VALUETAG_SPECIALCHAR_STRIP_REGEX, keyTags, valueTags);
   }
   
@@ -71,11 +104,13 @@ public class OsmTagUtils {
    * @param valueTags to check
    * @return true when match is present, false otherwise
    */  
-  public static boolean anyKeyMatchesAnyValueTag(final Map<String,String> tags, String regEx, final String[] keyTags, final String... valueTags) {
+  public static boolean anyKeyMatchesAnyValueTag(
+          final Map<String,String> tags, String regEx, final String[] keyTags, final String... valueTags) {
     if(containsAnyKey(tags, keyTags)) {
       for(int index=0; index < keyTags.length;++ index) {
         String currentKey = keyTags[index];
-        if(tags.containsKey(currentKey) && matchesAnyValueTag(tags.get(currentKey).replaceAll(regEx, ""), valueTags)) {
+        if(tags.containsKey(currentKey) &&
+                matchesAnyValueTag(tags.get(currentKey).replaceAll(regEx, ""), valueTags)) {
           return true;
         }
       }
@@ -94,7 +129,8 @@ public class OsmTagUtils {
     if(subTagConditions != null) {    
       for(int index=0;index<subTagConditions.length;++index) {
         String subTag = subTagConditions[index];
-        compositeKey  = (subTag!=null && !subTag.isBlank()) ? compositeKey.concat(":").concat(subTag) : compositeKey; 
+        compositeKey  =
+                (subTag!=null && !subTag.isBlank()) ? compositeKey.concat(":").concat(subTag) : compositeKey;
       }
     }
     return compositeKey;

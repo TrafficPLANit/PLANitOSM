@@ -16,11 +16,15 @@ public class OsmPedestrianTags {
   
   protected static String[] PEDESTRIAN_POSITIVE_VALUE_TAGS = {OsmPedestrianTags.YES, OsmPedestrianTags.SIDEWALK};
   
-  protected static String[] PEDESTRIAN_NEGATIVE_VALUE_TAGS = {OsmPedestrianTags.NO, OsmPedestrianTags.NONE, OsmPedestrianTags.SEPARATE};
+  protected static String[] PEDESTRIAN_NEGATIVE_VALUE_TAGS =
+          {OsmPedestrianTags.NO, OsmPedestrianTags.NONE, OsmPedestrianTags.SEPARATE};
       
-  protected static String[] PEDESTRIAN_LOCATION_VALUE_TAGS = {OsmPedestrianTags.BOTH, OsmPedestrianTags.LEFT, OsmPedestrianTags.RIGHT};
+  protected static String[] PEDESTRIAN_LOCATION_VALUE_TAGS =
+          {OsmPedestrianTags.BOTH, OsmPedestrianTags.LEFT, OsmPedestrianTags.RIGHT};
   
-  protected static String[] PEDESTRIAN_POSITIVE_AND_LOCATION_VALUE_TAGS = Stream.concat(Stream.of(PEDESTRIAN_POSITIVE_VALUE_TAGS), Stream.of(PEDESTRIAN_LOCATION_VALUE_TAGS)).toArray(String[]::new);  
+  protected static String[] PEDESTRIAN_POSITIVE_AND_LOCATION_VALUE_TAGS =
+          Stream.concat(Stream.of(PEDESTRIAN_POSITIVE_VALUE_TAGS),
+                  Stream.of(PEDESTRIAN_LOCATION_VALUE_TAGS)).toArray(String[]::new);
     
   /** set of available pedestrian key tags 
    * <ul>
