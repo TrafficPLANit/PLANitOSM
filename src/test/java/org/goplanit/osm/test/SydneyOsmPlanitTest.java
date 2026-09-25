@@ -1,9 +1,20 @@
 package org.goplanit.osm.test;
 
+import org.goplanit.converter.network.NetworkConverter;
+import org.goplanit.converter.network.NetworkConverterFactory;
+import org.goplanit.geoio.converter.intermodal.GeometryIntermodalWriterFactory;
+import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterFactory;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
+import org.goplanit.io.converter.network.PlanitNetworkWriter;
+import org.goplanit.io.converter.network.PlanitNetworkWriterFactory;
 import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
+import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
+import org.goplanit.osm.converter.network.OsmNetworkReader;
+import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
+import org.goplanit.utils.graph.directed.Connectivity;
+import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.junit.jupiter.api.AfterAll;
@@ -26,10 +37,12 @@ public class SydneyOsmPlanitTest {
 
   public static final Path RESOURCE_PATH = Path.of("src","test","resources");
 
-  public static final Path SYDNEYCBD_2022_OSM = Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd.osm");
+  public static final Path SYDNEYCBD_2022_OSM =
+          Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd.osm");
 
   @SuppressWarnings("unused")
-  public static final Path SYDNEYCBD_2023_PBF = Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd_2023.osm.pbf");
+  public static final Path SYDNEYCBD_2023_PBF =
+          Path.of(RESOURCE_PATH.toString(),"osm","sydney-cbd","sydneycbd_2023.osm.pbf");
 
   /** the logger */
   private static Logger LOGGER = null;
@@ -38,12 +51,13 @@ public class SydneyOsmPlanitTest {
   public static void setUp() throws Exception {
     if (LOGGER == null) {
       LOGGER = Logging.createLogger(SydneyOsmPlanitTest.class);
-    } 
+    }
+    IdGenerator.reset();
   }
 
   /**
    * run garbage collection after each test as it apparently is not triggered properly within
-   * Eclipse (or takes too long before being triggered)
+   * in some test environments (or takes too long before being triggered)
    */
   @AfterEach
   public void afterTest() {
@@ -57,14 +71,16 @@ public class SydneyOsmPlanitTest {
   }
 
   /**
-   * Test case which parses an OSM file, loads it into PLANit memory model and persists only the ferry network and stops as
-   * a PLANit network/zoning result
+   * Test case which parses an OSM file, loads it into PLANit memory model and persists only the ferry network
+   * and stops as a PLANit network/zoning result
    */
   @Test
   public void testOsm2PlanitFerryNetwork() {
 
-    final Path PLANIT_OUTPUT_DIR =  Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_ferry");
-    final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_ferry");
+    final Path PLANIT_OUTPUT_DIR =
+        Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_ferry");
+    final Path PLANIT_REF_DIR =
+        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_ferry");
 
     try {
 
@@ -74,18 +90,34 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateHighwayParser(false);
       readerSettings.getNetworkSettings().activateRailwayParser(false);
       readerSettings.getNetworkSettings().activateWaterwayParser(true);
-      readerSettings.getNetworkSettings().setRemoveDanglingSubnetworks(false);
+
+      readerSettings.getNetworkSettings().deactivateRemoveDanglingSubnetworks();
+      readerSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
+
+      // ferry only
+      readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
 
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
 
-
       PlanitIntermodalWriterSettings writerSettings =
           new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
-      Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
 
+      /* reader */
+      var result = OsmIntermodalReaderFactory.create(readerSettings).read();
+      var network = result.first();
+      var zoning = result.second();
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      /* writer */
+      PlanitIntermodalWriterFactory.create(writerSettings).write(network, zoning);
+
+      /* Geopackage intermodal writer (for inspection only) */
+      GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
+                write(network, zoning);
+
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertZoningFilesSimilar(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -100,12 +132,36 @@ public class SydneyOsmPlanitTest {
   @Test
   public void testOsm2PlanitNetworkComprehensive() {
     
-    final Path PLANIT_OUTPUT_DIR =  Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_comprehensive");
-    final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_comprehensive");
+    final Path PLANIT_OUTPUT_DIR =
+            Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_network_comprehensive");
+    final Path PLANIT_REF_DIR =
+            Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_network_comprehensive");
 
     try {
-      Osm2PlanitConversionTemplates.osm2PlanitNetworkComprehensive(SYDNEYCBD_2023_PBF.toAbsolutePath().toString(), PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      /* OSM reader */
+      OsmNetworkReader osmReader = OsmNetworkReaderFactory.create(
+              SYDNEYCBD_2023_PBF.toAbsolutePath().toString(),  CountryNames.AUSTRALIA);
+
+      /* reader configuration */
+      osmReader.getSettings().activateRailwayParser(true);
+      osmReader.getSettings().getHighwaySettings().activateAllOsmHighwayTypes();
+      osmReader.getSettings().setConsolidateLinkSegmentTypes(false);
+      /* the Sydney cases deliberately stay on weak connectivity so that both notions remain covered by the test
+       * suite, see the Melbourne cases for the strong counterpart. Note that on a small clipped extract such as
+       * this the difference is pronounced, since a boundary that truncates one way streets manufactures pockets */
+      osmReader.getSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
+
+      /* PLANit writer */
+      PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(
+              PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+
+      /* convert */
+      NetworkConverter theConverter = NetworkConverterFactory.create(osmReader, planitWriter);
+      theConverter.convert();
+
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
       e.printStackTrace();
@@ -115,14 +171,16 @@ public class SydneyOsmPlanitTest {
   }
 
   /**
-   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network and zoning (containing stops but no services).
-   * We do so for rail, bus, and ferry.
+   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
+   * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
    */
   @Test
   public void testOsm2PlanitIntermodalNoServices() {
 
-    final Path PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services");
-    final Path PLANIT_REF_DIR =  Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services");
+    final Path PLANIT_OUTPUT_DIR =
+            Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney","osm_intermodal_no_services");
+    final Path PLANIT_REF_DIR =
+            Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services");
     try {
 
       var readerSettings =
@@ -131,6 +189,15 @@ public class SydneyOsmPlanitTest {
       /* activate rail and water pt infrastructure parsing */
       readerSettings.getNetworkSettings().getRailwaySettings().activateParser(true);
       readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
+
+      /* weak connectivity on purpose, see the note in #testOsm2PlanitNetworkComprehensive */
+      readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
+
+      // tested separately in #testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus
+      readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectRailBasedStopsToPassengerNetwork(false);
+      readerSettings.getPublicTransportSettings().setConnectBusBasedStopsToPassengerNetwork(false);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
@@ -142,13 +209,77 @@ public class SydneyOsmPlanitTest {
       /* execute */
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(readerSettings, writerSettings);
 
-      PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
-      PlanitAssertionUtils.assertZoningFilesSimilar(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertZoningFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
 
     } catch (final Exception e) {
       e.printStackTrace();
       LOGGER.severe( e.getMessage());
       fail("testOsm2PlanitIntermodalNoServices");
+    }
+  }
+
+  /**
+   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
+   * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
+   * <p>
+   * In addition, we explicitly create mode compatible connectoids to their access/egress modes
+   * for ferry, rail, and bus stops
+   * </p>
+   */
+  @Test
+  public void testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus() {
+
+    final Path PLANIT_OUTPUT_DIR = Path.of(RESOURCE_PATH.toString(),"testcases","planit","sydney",
+            "osm_intermodal_no_services_access_egress_attach");
+    final Path PLANIT_REF_DIR =
+        Path.of(RESOURCE_PATH.toString(),"planit","sydney","osm_intermodal_no_services_access_egress_attach");
+    try {
+
+      var readerSettings =
+          new OsmIntermodalReaderSettings(SYDNEYCBD_2023_PBF.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+
+      /* activate rail and water pt infrastructure parsing */
+      readerSettings.getNetworkSettings().getRailwaySettings().activateParser(true);
+      readerSettings.getNetworkSettings().getWaterwaySettings().activateParser(true);
+
+      /* weak connectivity on purpose, see the note in #testOsm2PlanitNetworkComprehensive */
+      readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
+          PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
+
+      /* reduce warnings based on verified situations that are identified as ok to ignore */
+      OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());
+
+      readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(true);
+      readerSettings.getPublicTransportSettings().setConnectRailBasedStopsToPassengerNetwork(true);
+      readerSettings.getPublicTransportSettings().setConnectBusBasedStopsToPassengerNetwork(true);
+
+      var writerSettings =
+          new PlanitIntermodalWriterSettings( PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA);
+
+      /* reader */
+      var result = OsmIntermodalReaderFactory.create(readerSettings).read();
+      var network = result.first();
+      var zoning = result.second();
+
+      // PLANit writer
+      PlanitIntermodalWriterFactory.create(writerSettings).write(network, zoning);
+
+      /* Geopackage intermodal writer (for inspection only) */
+      GeometryIntermodalWriterFactory.create(PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), CountryNames.AUSTRALIA).
+              write(network, zoning);
+
+      PlanitAssertionUtils.assertNetworkFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+      PlanitAssertionUtils.assertZoningFilesSimilar(
+          PLANIT_OUTPUT_DIR.toAbsolutePath().toString(), PLANIT_REF_DIR.toAbsolutePath().toString());
+
+    } catch (final Exception e) {
+      e.printStackTrace();
+      LOGGER.severe( e.getMessage());
+      fail("testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus");
     }
   }
 

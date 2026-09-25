@@ -16,6 +16,8 @@ import org.goplanit.osm.util.OsmTagUtils;
  *
  */
 public class OsmBicycleTags {
+
+  private OsmBicycleTags(){}
   
   /**
    * <ul>
@@ -27,7 +29,8 @@ public class OsmBicycleTags {
    * </ul>
    */
   protected static final String[] CYCLEWAY_REGULAR_POSITIVE_VALUE_TAGS = 
-    {OsmBicycleTags.LANE, OsmBicycleTags.SHARED_LANE, OsmBicycleTags.SHOULDER, OsmBicycleTags.TRACK, OsmBicycleTags.SHARE_BUSWAY};
+    {OsmBicycleTags.LANE, OsmBicycleTags.SHARED_LANE, OsmBicycleTags.SHOULDER, OsmBicycleTags.TRACK,
+            OsmBicycleTags.SHARE_BUSWAY};
   
   /**
    * <ul>
@@ -64,12 +67,15 @@ public class OsmBicycleTags {
    * <li>cycleway:right</li>
    * </ul>
    */  
-  protected static final String[] LOCATION_BASED_CYCLEWAY_KEY_TAGS = {OsmBicycleTags.CYCLEWAY_RIGHT, OsmBicycleTags.CYCLEWAY_LEFT};    
+  protected static final String[] LOCATION_BASED_CYCLEWAY_KEY_TAGS =
+          {OsmBicycleTags.CYCLEWAY_RIGHT, OsmBicycleTags.CYCLEWAY_LEFT};
 
   /**
    * combining {@code basicCycleWayKeyTags} and {@code locationBasedCycleWayKeyTags}
    */  
-  protected static final String[] BASIC_AND_LOCATION_BASED_KEY_TAGS = Stream.concat(Stream.of(BASIC_CYCLEWAY_KEY_TAGS),Stream.of(LOCATION_BASED_CYCLEWAY_KEY_TAGS)).toArray(String[]::new); 
+  protected static final String[] BASIC_AND_LOCATION_BASED_KEY_TAGS =
+          Stream.concat(Stream.of(BASIC_CYCLEWAY_KEY_TAGS),Stream.of(
+                  LOCATION_BASED_CYCLEWAY_KEY_TAGS)).toArray(String[]::new);
   
   /**
    * <ul>
@@ -87,49 +93,71 @@ public class OsmBicycleTags {
   
   /** highway type cycle way, which can also be used as key cycleway=*/
   public static final String CYCLEWAY = OsmHighwayTags.CYCLEWAY;   
-  
+
+  /** BOTH CYCLE WAY tag */
   public static final String CYCLEWAY_BOTH = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.BOTH);
   
   /* cycleway scheme */
-  
+
+  /** RIGHT CYCLE WAY tag */
   public static final String CYCLEWAY_RIGHT = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.RIGHT);
-  
-  public static final String CYCLEWAY_LEFT = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.LEFT);    
-  
-  public static final String CYCLEWAY_RIGHT_ONEWAY = OsmTagUtils.createCompositeOsmKey(CYCLEWAY_RIGHT, OsmOneWayTags.ONEWAY);
-  
-  public static final String CYCLEWAY_LEFT_ONEWAY = OsmTagUtils.createCompositeOsmKey(CYCLEWAY_LEFT, OsmOneWayTags.ONEWAY);
+
+  /** LEFT CYCLE WAY tag */
+  public static final String CYCLEWAY_LEFT = OsmTagUtils.createCompositeOsmKey(CYCLEWAY, OsmTags.LEFT);
+
+  /** RIGHT CYCLE WAY ONE DIRECTION tag */
+  public static final String CYCLEWAY_RIGHT_ONEWAY =
+          OsmTagUtils.createCompositeOsmKey(CYCLEWAY_RIGHT, OsmOneWayTags.ONEWAY);
+
+  /** LEFT CYCLE WAY ONE DIRECTION tag */
+  public static final String CYCLEWAY_LEFT_ONEWAY =
+          OsmTagUtils.createCompositeOsmKey(CYCLEWAY_LEFT, OsmOneWayTags.ONEWAY);
     
   /* values */
-    
-  public static final String DISMOUNT = OsmAccessTags.DISMOUNT; 
-  
-  public static final String LANE = OsmLaneTags.LANE;   
-  
+
+  /** DISMOUNT TAG */
+  public static final String DISMOUNT = OsmAccessTags.DISMOUNT;
+
+  /** LANE TAG */
+  public static final String LANE = OsmLaneTags.LANE;
+
+  /** NO TAG */
   public static final String NO = OsmTags.NO;
-  
+
+  /** OPPOSITE TAG */
   public static final String OPPOSITE = "opposite";
-   
+
+  /** OPPOSITE TRACK  TAG */
   public static final String OPPOSITE_TRACK = "opposite_track";
-  
+
+  /** OPPOSITE LANE TAG */
   public static final String OPPOSITE_LANE = OsmLaneTags.OPPOSITE_LANE;
-  
-  public static final String OPPOSITE_SHARE_BUSWAY = "opposite_share_busway";  
-  
+
+  /** OPPOSITE SHARE BUSWAY TAG */
+  public static final String OPPOSITE_SHARE_BUSWAY = "opposite_share_busway";
+
+  /** SHARE BUSWAY TAG */
   public static final String SHARE_BUSWAY = "share_busway";
-  
+
+  /** SHARED LANE TAG */
   public static final String SHARED_LANE = OsmLaneTags.SHARED_LANE;
-  
+
+  /** SHOULDER TAG */
   public static final String SHOULDER = "shoulder";
-  
+
+  /** SEPARATE TAG */
   public static final String SEPARATE = OsmAccessTags.SEPARATE;
-  
+
+  /** SIDE PATH TAG */
   public static final String SIDEPATH = "sidepath";
-  
+
+  /** TRACK TAG */
   public static final String TRACK = OsmHighwayTags.TRACK;
-  
-  public static final String YES = OsmTags.YES;  
-  
+
+  /** YES TAG */
+  public static final String YES = OsmTags.YES;
+
+  /** PROPOSED TAG */
   private static final String PROPOSED = OsmTags.PROPOSED;  
   
   
@@ -193,11 +221,14 @@ public class OsmBicycleTags {
    * @param cyclewayKeys eligible keys, assumed to be valid cycleway keys from this class (not checked)
    * @return true when present, false otherwise
    */
-  public static boolean isCyclewayIncludedForAnyOf(Map<String, String> tags, boolean oppositeDirection, String... cyclewayKeys) {
+  public static boolean isCyclewayIncludedForAnyOf(
+          Map<String, String> tags, boolean oppositeDirection, String... cyclewayKeys) {
     if(!oppositeDirection) {
-      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularPositiveValueTags());
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(
+              tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularPositiveValueTags());
     }else {
-      return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayPositiveOppositeDirectionValueTags());
+      return OsmTagUtils.anyKeyMatchesAnyValueTag(
+              tags, cyclewayKeys, OsmBicycleTags.getCycleWayPositiveOppositeDirectionValueTags());
     }
   }    
   
@@ -229,7 +260,8 @@ public class OsmBicycleTags {
    * @return true when present, false otherwise
    */  
   public static boolean isCyclewayExcludedForAnyOf(Map<String, String> tags, String... cyclewayKeys) {
-    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularNegativeValueTags());
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(
+            tags, cyclewayKeys, OsmBicycleTags.getCycleWayRegularNegativeValueTags());
   }   
   
 
@@ -240,7 +272,8 @@ public class OsmBicycleTags {
    * @return true when present, false otherwise
    */
   public static boolean isNoOneWayCyclewayInAnyLocation(Map<String, String> tags) {
-    return OsmTagUtils.anyKeyMatchesAnyValueTag(tags, getCycleWayOneWayLocationBasedKeyTags(), OsmBicycleTags.getCycleWayRegularNegativeValueTags());
+    return OsmTagUtils.anyKeyMatchesAnyValueTag(
+            tags, getCycleWayOneWayLocationBasedKeyTags(), OsmBicycleTags.getCycleWayRegularNegativeValueTags());
   }
   
 }

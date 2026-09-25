@@ -2,7 +2,11 @@ package org.goplanit.osm.converter.zoning;
 
 import java.util.logging.Logger;
 
+import org.goplanit.converter.zoning.AccessEgressInjectionSettings;
+import org.goplanit.network.MacroscopicNetwork;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.zoning.Zoning;
 
 /**
  * Data specifically required in the zoning reader while parsing OSM data
@@ -22,23 +26,34 @@ public class OsmZoningReaderData {
   /* UNPROCESSED OSM */
   
   /* PLANit entity related tracking during parsing */
-  OsmZoningReaderPlanitData planitData = new OsmZoningReaderPlanitData();
+  protected final OsmZoningReaderPlanitConverterData planitData;
   
   /* OSM entity related tracking during parsing */
-  OsmZoningReaderOsmData osmData = new OsmZoningReaderOsmData();   
-  
-  /**
-   * Default constructor using country set to GLOBAL (right hand drive)
+  protected final OsmZoningReaderOsmData osmConverterData = new OsmZoningReaderOsmData();
+
+  /** the osmBoundary used during parsing.
    */
-  public OsmZoningReaderData() {
-    this(CountryNames.GLOBAL);
+  private OsmBoundary osmBoundingArea = null;
+
+  /**
+   * Constructor using country set to GLOBAL (right hand drive)
+   *
+   * @param network to use
+   * @param zoning to use
+   */
+  public OsmZoningReaderData(MacroscopicNetwork network, Zoning zoning) {
+    this(network, zoning, CountryNames.GLOBAL);
   }  
   
-  /** Constructor 
+  /** Constructor
+   *
+   * @param network to use
+   * @param zoning to use
    * @param countryName for this zoning
    */
-  public OsmZoningReaderData(String countryName) {
+  public OsmZoningReaderData(MacroscopicNetwork network, Zoning zoning, String countryName) {
     this.countryName = countryName;
+    this.planitData = new OsmZoningReaderPlanitConverterData(network, zoning);
   }
   
   /** Collect the country name
@@ -54,14 +69,15 @@ public class OsmZoningReaderData {
    */
   public void reset() {
     planitData.reset();
-    osmData.reset();        
+    osmConverterData.reset();
+    osmBoundingArea = null;
   }
 
   /** collect the planit related tracking data 
    * 
    * @return planit data
    */
-  public OsmZoningReaderPlanitData getPlanitData() {
+  public OsmZoningReaderPlanitConverterData getPlanitConverterData() {
     return planitData;
   }
   
@@ -69,8 +85,43 @@ public class OsmZoningReaderData {
    * 
    * @return osm data
    */
-  public OsmZoningReaderOsmData getOsmData() {
-    return osmData;
+  public OsmZoningReaderOsmData getOsmConverterData() {
+    return osmConverterData;
   }
-  
+
+  /** get the bounding area
+   *
+   * @return bounding area
+   */
+  public OsmBoundary getBoundingArea(){
+    return osmBoundingArea;
+  }
+
+  /**
+   * Set the bounding area to use
+   *
+   * @param osmBoundingArea to use
+   */
+  public void setBoundingArea(OsmBoundary osmBoundingArea){
+    this.osmBoundingArea = osmBoundingArea;
+  }
+
+  /**
+   * Check if zoning has a bounding boundary area set
+   *
+   * @return true if present, false otherwise
+   */
+  public boolean hasBoundingArea() {
+    return getBoundingArea() != null;
+  }
+
+  /** ugly way to get to internal settings based on OSMPtSettings
+   *
+   * @param ptSettings to get access to
+   * @return access to internal accessEgressSettings
+   */
+  public static AccessEgressInjectionSettings getAccessEgressInjectionSettingsFrom(
+      OsmPublicTransportReaderSettings ptSettings) {
+    return ptSettings.accessEgressInjectionSettings;
+  }
 }

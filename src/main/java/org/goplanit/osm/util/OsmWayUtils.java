@@ -2,14 +2,12 @@ package org.goplanit.osm.util;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.converter.network.OsmNetworkHandlerHelper;
-import org.goplanit.osm.converter.network.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
@@ -22,7 +20,6 @@ import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.locale.DrivingDirectionDefaultByCountry;
 import org.goplanit.utils.misc.Pair;
-import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.zoning.Zone;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -91,13 +88,15 @@ public class OsmWayUtils {
    * a positive result (true is returned)
    * @return true if circular, false otherwise
    */
-  public static boolean isCircularOsmWay(final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtStart) {
+  public static boolean isCircularOsmWay(
+          final OsmWay osmWay, final Map<String, String> tags, final boolean mustEndAtStart) {
     /* a circular road, has:
      * -  more than two nodes...
      * -  ...any node that appears at least twice (can be that a way is both circular but the circular component 
      *    is only part of the geometry 
      */
-    if(tags.containsKey(OsmHighwayTags.HIGHWAY) || tags.containsKey(OsmRailwayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
+    if(tags.containsKey(OsmHighwayTags.HIGHWAY) ||
+            tags.containsKey(OsmRailwayTags.RAILWAY) && osmWay.getNumberOfNodes() > 2) {
       if(mustEndAtStart) {
         return OsmWayUtils.isOsmWayPerfectLoop(osmWay);
       }else {
@@ -142,7 +141,7 @@ public class OsmWayUtils {
    * @return true when lockwise direction is default, false otherwise
    */
   public static boolean isCircularWayDefaultDirectionClockwise(String countryName) {
-    return DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName) ? true : false;
+    return DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName);
   }
 
   /** assuming the tags represent an OSM way that is tagged as a junction=roundabout or circular, this method
@@ -156,7 +155,9 @@ public class OsmWayUtils {
    * @param countryName country name we determine the driving direction from in case it is not explicitly tagged
    * @return true when isForwardDirection is closed, false otherwise
    */
-  public static boolean isCircularWayDirectionClosed(Map<String, String> tags, boolean isForwardDirection, String countryName) {
+  public static boolean isCircularWayDirectionClosed(
+          Map<String, String> tags, boolean isForwardDirection, String countryName) {
+
     Boolean isClockWise = null;
     if(OsmDirectionTags.isDirectionExplicitClockwise(tags)) {
       isClockWise = true;
@@ -165,7 +166,8 @@ public class OsmWayUtils {
     }else {
       isClockWise = OsmWayUtils.isCircularWayDefaultDirectionClockwise(countryName);
     }
-    /* clockwise stands for forward direction, so when they do not match, all modes are to be excluded, the direction is closed */
+    /* clockwise stands for forward direction, so when they do not match, all modes are to be excluded,
+    the direction is closed */
     return isClockWise!=isForwardDirection;
   } 
   
@@ -181,10 +183,16 @@ public class OsmWayUtils {
    * @return coordinate array found, empty when no nodes were found available
    * @throws PlanItException thrown if error
    */
-  public static Coordinate[] createCoordinateArray(OsmWay osmWay, Map<Long,OsmNode> osmNodes, int startNodeIndex, int endNodeIndex, PlanitExceptionConsumer<Set<Long>> missingNodeConsumer) throws PlanItException{
+  public static Coordinate[] createCoordinateArray(
+      OsmWay osmWay,
+      Map<Long,OsmNode> osmNodes,
+      int startNodeIndex,
+      int endNodeIndex,
+      PlanitExceptionConsumer<Set<Long>> missingNodeConsumer) throws PlanItException{
     Set<Long> missingNodes = null;
         
-    /* in the special case the end node index is smaller than start node index (circular way) we "loop around" to accommodate this */
+    /* in the special case the end node index is smaller than start node index (circular way) we
+    "loop around" to accommodate this */
     Coordinate[] coordArray = null;
     int stopIndex = endNodeIndex;
     if(endNodeIndex < startNodeIndex) {
@@ -198,7 +206,7 @@ public class OsmWayUtils {
       OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
       if(osmNode==null) {
         if(missingNodes==null) {
-          missingNodes = new HashSet<Long>();
+          missingNodes = new HashSet<>();
         }
         missingNodes.add(osmWay.getNodeId(index));
         continue;
@@ -213,7 +221,7 @@ public class OsmWayUtils {
         OsmNode osmNode = osmNodes.get(osmWay.getNodeId(index));
         if(osmNode==null) {
           if(missingNodes==null) {
-            missingNodes = new HashSet<Long>();
+            missingNodes = new HashSet<>();
           }
           missingNodes.add(osmWay.getNodeId(index));
           continue;
@@ -255,29 +263,31 @@ public class OsmWayUtils {
    * @return coordinate array
    * @throws PlanItException thrown if error
    */  
-  public static Coordinate[] createCoordinateArray(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+  public static Coordinate[] createCoordinateArray(
+          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
     
     /* throw when issue */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
       if(missingNodes!=null) {
-        throw new PlanItException(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+        throw new PlanItException(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes));
       }
     };
     
     return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
   }  
   
-  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array for the given range. In case there are missing
-   * nodes we log this but retain as much of the information in the returned coordinate array as possible
+  /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array for the given range.
+   * In case there are missing nodes we log this but retain as much of the information in the returned
+   * coordinate array as possible
    * 
    * @param osmWay to extract node coordinates from
    * @param osmNodes to collect nodes from by reference node ids in the way
-   * @param startNodeIndex to use
-   * @param endNodeIndex to use
+   * @param startNodeIndex to use (inclusive)
+   * @param endNodeIndex to use (inclusive)
    * @return coordinate array
-   * @throws PlanItException thrown if error
-   */  
-  public static Coordinate[] createCoordinateArrayNoThrow(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+   */
+  public static Coordinate[] createCoordinateArrayNoThrow(
+          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes){
     
     /* log -> no throw */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
@@ -285,8 +295,14 @@ public class OsmWayUtils {
         LOGGER.warning(String.format("Missing OSM nodes for OSM way %d: %s",osmWay.getId(), missingNodes));
       }
     };
-    
-    return createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
+
+    Coordinate[] result = null;
+    try {
+      result = createCoordinateArray(osmWay, osmNodes, startNodeIndex, endNodeIndex, missingNodeConsumer);
+    }catch(Exception e){
+      // do nothing consumer has taken care of it
+    }
+    return result;
   }  
   
   /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case there are missing
@@ -301,13 +317,14 @@ public class OsmWayUtils {
     /* log -> no throw */
     PlanitExceptionConsumer<Set<Long>> missingNodeConsumer = (missingNodes) -> {
       if(missingNodes!=null) {
-        LOGGER.warning(String.format("Missing OSM nodes for for OSM way %d: %s",osmWay.getId(), missingNodes.toString()));
+        LOGGER.warning(String.format("Missing OSM nodes for for OSM way %d: %s",osmWay.getId(), missingNodes));
       }
     };
     
     Coordinate[] coordArray = null;  
     try {
-      coordArray =  createCoordinateArray(osmWay, osmNodes, 0, osmWay.getNumberOfNodes()-1, missingNodeConsumer);
+      coordArray =  createCoordinateArray(
+              osmWay, osmNodes, 0, osmWay.getNumberOfNodes()-1, missingNodeConsumer);
     }catch (PlanItException e) {
       LOGGER.severe(e.getMessage());
     }
@@ -339,12 +356,14 @@ public class OsmWayUtils {
     LOGGER.setLevel(logLevel);
     Geometry geometry = null;
     if(isOsmWayPerfectLoop(osmWay)) {
-      /* area, so extract polygon geometry, in case of missing nodes, we log this but do not throw an exception, instead we keep the best possible shape that remains */
+      /* area, so extract polygon geometry, in case of missing nodes, we log this but do not throw an exception,
+      instead we keep the best possible shape that remains */
       geometry = extractPolygonNoThrow(osmWay, osmNodes); 
     }
     
     if(geometry== null) {
-      /* (open) line string (or unable to salvage polygon in case of missing nodes, so try to create line string instead)*/
+      /* (open) line string (or unable to salvage polygon in case of missing nodes, so try to create
+      line string instead)*/
       geometry = extractLineStringNoThrow(osmWay, osmNodes);        
     }
     
@@ -381,7 +400,8 @@ public class OsmWayUtils {
    * @return line string instance representing the shape of the way
    * @throws PlanItException thrown if error
    */  
-  public static LineString extractLineString(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+  public static LineString extractLineString(
+          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
     Coordinate[] coordArray = createCoordinateArray(osmWay, startNodeIndex, endNodeIndex, osmNodes);
     return  PlanitJtsUtils.createLineString(coordArray);
   }
@@ -394,9 +414,9 @@ public class OsmWayUtils {
    * @param endNodeIndex to use
    * @param osmNodes to consider
    * @return line string instance representing the shape of the way
-   * @throws PlanItException thrown if error
-   */  
-  public static LineString extractLineStringNoThrow(OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes) throws PlanItException {
+   */
+  public static LineString extractLineStringNoThrow(
+          OsmWay osmWay, int startNodeIndex, int endNodeIndex, Map<Long, OsmNode> osmNodes){
     Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, startNodeIndex, endNodeIndex, osmNodes);
     return  PlanitJtsUtils.createLineString(coordArray);
   }  
@@ -432,12 +452,14 @@ public class OsmWayUtils {
    * @return parsed geometry, can be null if not valid for some reason
    */
   public static Point extractPoint(OsmWay osmWay, Map<Long, OsmNode> osmNodes){
+
     Coordinate[] coordArray = createCoordinateArrayNoThrow(osmWay, osmNodes);
     /* create point when enough coordinates are available */
     if(coordArray!= null && coordArray.length>=1) {
       return  PlanitJtsUtils.createPoint(coordArray[0]);
     }else {
-      LOGGER.severe(String.format("Unable to extract a single location from nodes references by osm way %d",osmWay.getId()));
+      LOGGER.severe(String.format("Unable to extract a single location from nodes references by osm way %d",
+              osmWay.getId()));
     }
     return null;
   }  
@@ -471,7 +493,7 @@ public class OsmWayUtils {
       if(coordArray!= null && coordArray.length>=2) {
         if(coordArray.length < osmWay.getNumberOfNodes() ) {
           /* create closed ring in case nodes are missing but we still have a viable polygon shape */
-          coordArray = PlanitJtsUtils.makeClosed2D(coordArray); 
+          coordArray = PlanitJtsUtils.makeClosed2D(coordArray);
           salvaged = true;
         }
         polygon = PlanitJtsUtils.createPolygon(coordArray);
@@ -497,7 +519,12 @@ public class OsmWayUtils {
    * @return zone closest, null if none matches criteria
    */
   public static Zone findZoneClosest(
-      final OsmWay osmWay, final Collection<? extends Zone> zones, Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+      final OsmWay osmWay,
+      final Collection<? extends Zone> zones,
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      final PlanitJtsCrsUtils geoUtils){
+
     return findZoneClosest(osmWay, zones, Double.POSITIVE_INFINITY, osmNodes, suppressLogging, geoUtils);
   }  
 
@@ -514,7 +541,12 @@ public class OsmWayUtils {
    * @return zone closest, null if none matches criteria
    */
   public static Zone findZoneClosest(
-      final OsmWay osmWay, final Collection<? extends Zone> zones, double maxDistanceMeters, Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+      final OsmWay osmWay,
+      final Collection<? extends Zone> zones,
+      double maxDistanceMeters,
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      final PlanitJtsCrsUtils geoUtils){
     return findPlanitEntityClosest(osmWay, zones, maxDistanceMeters, osmNodes, suppressLogging, geoUtils);
   }   
   
@@ -530,7 +562,11 @@ public class OsmWayUtils {
    * @return edge closest, null if none matches criteria
    */
   public static Edge findEdgeClosest(
-      final OsmWay osmWay, final Collection<? extends Edge> edges, final Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+      final OsmWay osmWay,
+      final Collection<? extends Edge> edges,
+      final Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      final PlanitJtsCrsUtils geoUtils){
     return findEdgeClosest(osmWay, edges, Double.POSITIVE_INFINITY, osmNodes, suppressLogging, geoUtils);
   }   
   
@@ -547,7 +583,12 @@ public class OsmWayUtils {
    * @return edge closest, null if none matches criteria
    */
   public static Edge findEdgeClosest(
-      final OsmWay osmWay, final Collection<? extends Edge> edges, double maxDistanceMeters, final Map<Long,OsmNode> osmNodes, boolean suppressLogging, final PlanitJtsCrsUtils geoUtils){
+      final OsmWay osmWay,
+      final Collection<? extends Edge> edges,
+      double maxDistanceMeters,
+      final Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      final PlanitJtsCrsUtils geoUtils){
     return findPlanitEntityClosest(osmWay, edges, maxDistanceMeters, osmNodes, suppressLogging, geoUtils);
   }
 
@@ -585,45 +626,17 @@ public class OsmWayUtils {
     return null;
   }
 
-
-  /** find the most prominent (important) of the edges based on the osm highway type they carry
-   * @param edges to check
-   * @return osm highway type found to be the most prominent
-   */
-  public static String findMostProminentOsmHighWayType(Set<? extends Edge> edges) {
-    String mostProminent = OsmHighwayTags.UNCLASSIFIED; /* lowest priority option */
-    for(Edge edge : edges) {
-      String osmWayType = OsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
-      if(OsmHighwayTags.compareHighwayType(mostProminent,osmWayType)<0) {
-        mostProminent = osmWayType;
-      }
-    }
-    return mostProminent;
-  }
-
-
-  /** Remove all edges with osm way types that are deemed less prominent than the one provided based on the OSM highway tags ordering
-   * @param osmHighwayType to use as a reference
-   * @param edgesToFilter the collection being filtered
-   */
-  public static void removeEdgesWithOsmHighwayTypesLessImportantThan(String osmHighwayType, Set<? extends Edge> edgesToFilter) {
-    Iterator<? extends Edge> iterator = edgesToFilter.iterator();
-    while(iterator.hasNext()) {
-      Edge edge = iterator.next();
-      String osmWayType = OsmNetworkHandlerHelper.getLinkOsmWayType((Link)edge);
-      if(OsmHighwayTags.compareHighwayType(osmHighwayType,osmWayType)>0) {
-        iterator.remove();
-      }
-    }
-  }
-  
   /** finds the first available osm node index on the osm way
    * @param offsetIndex to start search from
    * @param osmWay to collect from
    * @param osmNodes to check existence of osm way nodes
    * @return index of first available osm node, null if not found
    */
-  public static Integer findFirstAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
+  public static Integer findFirstAvailableOsmNodeIndexAfter(
+          int offsetIndex,
+          final OsmWay osmWay,
+          final Map<Long, OsmNode> osmNodes){
+
     for(int nodeIndex = offsetIndex+1; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
       var node = osmNodes.get(osmWay.getNodeId(nodeIndex));
       if(node == null) {
@@ -641,7 +654,9 @@ public class OsmWayUtils {
    * @param osmNodes to check existence of osm way nodes
    * @return last index of node that is available, null otherwise
    */
-  public static Integer findLastAvailableOsmNodeIndexAfter(int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
+  public static Integer findLastAvailableOsmNodeIndexAfter(
+          int offsetIndex, final OsmWay osmWay, final Map<Long, OsmNode> osmNodes){
+
     for(int nodeIndex =  osmWay.getNumberOfNodes()-1; nodeIndex>offsetIndex; --nodeIndex) {
       var node = osmNodes.get(osmWay.getNodeId(nodeIndex));
       if(node == null) {
@@ -676,7 +691,9 @@ public class OsmWayUtils {
    * @param networkData to use
    * @return the index, null if nothing is found
    */
-  public static Integer getOsmWayNodeIndexByLocation(OsmWay osmWay, Point nodePosition, OsmNetworkReaderData networkData){
+  public static Integer getOsmWayNodeIndexByLocation(
+          OsmWay osmWay, Point nodePosition, OsmNetworkReaderData networkData){
+
     for(int nodeIndex = 0; nodeIndex< osmWay.getNumberOfNodes(); ++nodeIndex) {
       long osmNodeId = osmWay.getNodeId(nodeIndex);
       OsmNode osmNode = networkData.getOsmNodeData().getRegisteredOsmNode(osmNodeId);

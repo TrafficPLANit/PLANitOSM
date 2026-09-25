@@ -2,6 +2,7 @@ package org.goplanit.osm.util;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -31,6 +32,17 @@ public class PlanitOsmUtils {
   
   /** the logger */
   static final Logger LOGGER = Logger.getLogger(PlanitOsmUtils.class.getCanonicalName());
+
+  /**
+   * Create an external idea like "_key_=_value_". If key is empty or null just return "_value_"
+   *
+   * @param osmKeyTag key to use
+   * @param osmValueTag value to use
+   * @return external id
+   */
+  public static String createExternalIdByOsmKeyValue(String osmKeyTag, String osmValueTag) {
+    return osmKeyTag != null ? OsmTagUtils.toConcatEqualsString(osmKeyTag, osmValueTag) : osmValueTag;
+  }
   
   /**
    * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)
@@ -52,7 +64,8 @@ public class PlanitOsmUtils {
     
   /** regular expression pattern([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.* used to extract decimal values and unit (if any) where the decimal value is in group two 
    * and the unit in group 3 (indicated by second section of round brackets)*/
-  public static final Pattern SPEED_LIMIT_PATTERN = Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");    
+  public static final Pattern SPEED_LIMIT_PATTERN =
+          Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");
  
   /**
    * parse an OSM maxSpeedValue tag value and perform unit conversion to km/h if needed
@@ -64,7 +77,9 @@ public class PlanitOsmUtils {
     PlanItException.throwIfNull(maxSpeedValue, "max speed value is null");
     
     double speedLimitKmh = -1;
-    /* split in parts where all that are not a valid numeric speed limit are removed and retained are the potential speed limits */
+
+    // split in parts where all that are not a valid numeric speed limit are removed and retained are the potential
+    // speed limits
     Matcher speedLimitMatcher = SPEED_LIMIT_PATTERN.matcher(maxSpeedValue);
     if (!speedLimitMatcher.matches()){
       throw new PlanItException(String.format("invalid value string encountered for maxSpeed: %s",maxSpeedValue));      
@@ -111,15 +126,20 @@ public class PlanitOsmUtils {
    * @return closest edge found
    */
   public static Edge findEdgeClosest(
-      OsmEntity osmEntity, Collection<? extends Edge> edges, Map<Long,OsmNode> osmNodes, boolean suppressLogging, PlanitJtsCrsUtils geoUtils){
-    EntityType type = Osm4JUtils.getEntityType(osmEntity);
-    switch (type) {
+      OsmEntity osmEntity,
+      Collection<? extends Edge> edges,
+      Map<Long,OsmNode> osmNodes,
+      boolean suppressLogging,
+      PlanitJtsCrsUtils geoUtils){
+
+    switch (Objects.requireNonNull(Osm4JUtils.getEntityType(osmEntity))) {
     case Node:
       return OsmNodeUtils.findEdgeClosest((OsmNode)osmEntity, edges, suppressLogging, geoUtils);
     case Way:
       return OsmWayUtils.findEdgeClosest((OsmWay)osmEntity, edges, osmNodes, suppressLogging, geoUtils);
     default:
-      if(!suppressLogging) LOGGER.warning(String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
+      if(!suppressLogging) LOGGER.warning(
+              String.format("unsupported osm entity type when finding closest edge to %d",osmEntity.getId()));
       break;
     }
     return null;
@@ -148,15 +168,17 @@ public class PlanitOsmUtils {
     LOGGER.setLevel(logLevel);  
     Geometry theGeometry = null;
     if(osmEntity instanceof OsmNode){
-      OsmNode osmNode = OsmNode.class.cast(osmEntity);
+      OsmNode osmNode = (OsmNode) osmEntity;
       try {
         theGeometry = PlanitJtsUtils.createPoint(OsmNodeUtils.getX(osmNode), OsmNodeUtils.getY(osmNode));
       } catch (PlanItRunTimeException e) {
-        LOGGER.severe(String.format("Unable to construct location information for osm node %d when creating transfer zone", osmNode.getId()));
+        LOGGER.severe(String.format(
+                "Unable to construct location information for osm node %d when creating transfer zone",
+                osmNode.getId()));
       }
     }else if(osmEntity instanceof OsmWay) {
       /* either area or linestring */
-      OsmWay osmWay = OsmWay.class.cast(osmEntity);
+      OsmWay osmWay = (OsmWay) osmEntity;
       theGeometry = OsmWayUtils.extractGeometry(osmWay, osmNodes, logLevel);       
     }
     LOGGER.setLevel(originalLogLevel);
