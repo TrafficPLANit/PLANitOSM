@@ -120,7 +120,7 @@ public class OsmNetworkLayerParser {
    * additional action by this parser is required to maintain a consistent network layer result during parsing or after
    */
   private void initialiseEventListeners() {
-    networkLayer.getLayerModifier().removeAllListeners();
+    networkLayer.getLayerModifier().removeAllNonInternalListeners();
     /* whenever a link(segment) is broken we ensure that its XML id is synced with the internal id to ensure it
     remains unique */
     networkLayer.getLayerModifier().addListener(syncXmlIdToIdOnBreakLink);
