@@ -43,6 +43,10 @@ public class OsmRailwaySettings extends OsmWaySettings {
     return defaultMappings;
   }
 
+  /** maximum distance from a traffic signal on a track to the road it crosses, see
+   * {@link #setMaximumDistanceTrackSignalToRoadCrossingInMeters(double)} */
+  private double maximumDistanceTrackSignalToRoadCrossingInMeters = DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M;
+
   /**
    * Initialise this instance with the default OSM rail mode mappings.
    * <p>
@@ -81,7 +85,10 @@ public class OsmRailwaySettings extends OsmWaySettings {
     
   /** by default the railway parser is deactivated */
   public static boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
-  
+
+  /** default maximum distance from a traffic signal on a tram or light rail track to the road it crosses, in metres */
+  public static final double DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M = 50;
+
   /**
    * Constructor 
    * 
@@ -349,12 +356,32 @@ public class OsmRailwaySettings extends OsmWaySettings {
     return collectAllowedOsmWayModes(osmRailwayValueType);    
   }
 
+  /** Get the maximum distance from a traffic signal on a tram or light rail track to the road it crosses
+   *
+   * @return distance in metres
+   */
+  public double getMaximumDistanceTrackSignalToRoadCrossingInMeters() {
+    return maximumDistanceTrackSignalToRoadCrossingInMeters;
+  }
+
+  /** Set the maximum distance from a traffic signal on a tram or light rail track to the road it crosses. Such a
+   * signal, with no road through its node, makes the node where its track crosses a road within this distance along
+   * the track a signalised junction, car traffic being held there for the tram; beyond it the signal is ignored
+   *
+   * @param distanceMeters distance to use
+   */
+  public void setMaximumDistanceTrackSignalToRoadCrossingInMeters(double distanceMeters) {
+    this.maximumDistanceTrackSignalToRoadCrossingInMeters = distanceMeters;
+  }
+
   /**
    * {@inheritDoc}
    */
   @Override
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum track signal to road crossing distance (m)",
+        getMaximumDistanceTrackSignalToRoadCrossingInMeters(), level));
     logModeMappings(level + 1);
   }
 }

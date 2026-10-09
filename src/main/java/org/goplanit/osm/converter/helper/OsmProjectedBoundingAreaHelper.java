@@ -89,6 +89,23 @@ public class OsmProjectedBoundingAreaHelper extends ProjectedBoundingAreaHelper 
   }
 
   /**
+   * Factory method, empty when there is no boundary
+   * @param osmBoundary to consider, may be null
+   * @param originalCrs to consider
+   * @param destinationCountryName to consider
+   * @param maximumDistanceFerryOutsideBoundingPolygonInMeters to consider
+   * @return helper created
+   */
+  public static OsmProjectedBoundingAreaHelper ofNullable(
+      OsmBoundary osmBoundary,
+      CoordinateReferenceSystem originalCrs,
+      String destinationCountryName,
+      double maximumDistanceFerryOutsideBoundingPolygonInMeters) {
+    return osmBoundary == null ? empty() :
+        of(osmBoundary, originalCrs, destinationCountryName, maximumDistanceFerryOutsideBoundingPolygonInMeters);
+  }
+
+  /**
    * Factory method for empty instance
    * @return empty instance
    */

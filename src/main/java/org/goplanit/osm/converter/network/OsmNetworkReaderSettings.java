@@ -40,6 +40,29 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderSettings.class.getCanonicalName());
 
+  /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
+   * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
+   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
+   * the specified distance outside the bounding polygon and still be included. */
+  protected double maximumDistanceFerryOutsideBoundingPolygonInMeters =
+      DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
+
+  /** parse intersections from traffic signals, see {@link #setParseIntersections(boolean)} */
+  protected boolean parseIntersections = DEFAULT_PARSE_INTERSECTIONS;
+
+  /** maximum distance from a vehicle signal to the junction it controls, see
+   * {@link #setMaximumDistanceVehicleSignalToJunctionInMeters(double)} */
+  protected double maximumDistanceVehicleSignalToJunctionInMeters = DEFAULT_MAX_VEHICLE_SIGNAL_TO_JUNCTION_DISTANCE_M;
+
+  /** maximum distance for a signalised pedestrian crossing to count as part of a signalised junction, see
+   * {@link #setMaximumDistanceSignalisedCrossingToJunctionInMeters(double)} */
+  protected double maximumDistanceSignalisedCrossingToJunctionInMeters =
+      DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M;
+
+  /** break links at isolated signalised pedestrian crossings, see
+   * {@link #setBreakLinksAtIsolatedSignalisedCrossings(boolean)} */
+  protected boolean breakLinksAtIsolatedSignalisedCrossings = DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS;
+
   /** all settings specific to osm railway tags */
   protected OsmRailwaySettings osmRailwaySettings;
   
@@ -127,13 +150,6 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected boolean alwaysKeepLargestSubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
 
 
-  /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
-   * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
-   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
-   * the specified distance outside the bounding polygon and still be included. */
-  private double maximumDistanceFerryOutsideBoundingPolygonInMeters =
-      DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
-      
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
 
@@ -180,6 +196,19 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
   public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
+
+  /** by default intersections are parsed from traffic signals */
+  public static final boolean DEFAULT_PARSE_INTERSECTIONS = true;
+
+  /** by default a vehicle signal controls a junction at most 50 m away */
+  public static final double DEFAULT_MAX_VEHICLE_SIGNAL_TO_JUNCTION_DISTANCE_M = 50;
+
+  /** by default a signalised pedestrian crossing at most 30 m before a signalised junction is part of it */
+  public static final double DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M = 30;
+
+  /** by default links are not broken at isolated signalised pedestrian crossings, so parsing does not change the
+   * network */
+  public static final boolean DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS = false;
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings.
@@ -276,6 +305,13 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         isAlwaysKeepLargestSubnetwork(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
         getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Parse intersections", isParseIntersections(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum vehicle signal to junction distance (m)",
+        getMaximumDistanceVehicleSignalToJunctionInMeters(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum signalised crossing to junction distance (m)",
+        getMaximumDistanceSignalisedCrossingToJunctionInMeters(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signalised crossings",
+        isBreakLinksAtIsolatedSignalisedCrossings(), level));
 
     /* the effective classification is logged in full, defaults and user overrides combined, so that what is
      * reported is what parsing applies rather than requiring the reader to merge the two in their head */
@@ -1192,6 +1228,83 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * */
   public void setConsolidateLinkSegmentTypes(boolean flag) {
     this.consolidateLinkSegmentTypes = flag;
+  }
+
+  /** Verify if intersections are parsed from traffic signals
+   *
+   * @return true when parsed, false otherwise
+   */
+  public boolean isParseIntersections() {
+    return parseIntersections;
+  }
+
+  /** Parse intersections from traffic signals: junctions controlled by vehicle signals, and signalised pedestrian
+   * crossings. When off, the parsed network has no intersections and is otherwise the same
+   *
+   * @param flag to set
+   */
+  public void setParseIntersections(boolean flag) {
+    this.parseIntersections = flag;
+  }
+
+  /** Get the maximum distance from a vehicle signal to the junction it controls
+   *
+   * @return distance in meters
+   */
+  public double getMaximumDistanceVehicleSignalToJunctionInMeters() {
+    return maximumDistanceVehicleSignalToJunctionInMeters;
+  }
+
+  /** Set the maximum distance from a vehicle signal to the junction it controls, along the road. A signal farther
+   * from any junction is ignored
+   *
+   * @param distanceMeters distance to use
+   */
+  public void setMaximumDistanceVehicleSignalToJunctionInMeters(double distanceMeters) {
+    this.maximumDistanceVehicleSignalToJunctionInMeters = distanceMeters;
+  }
+
+  /** Get the maximum distance for a signalised pedestrian crossing to count as part of a signalised junction
+   *
+   * @return distance in meters
+   */
+  public double getMaximumDistanceSignalisedCrossingToJunctionInMeters() {
+    return maximumDistanceSignalisedCrossingToJunctionInMeters;
+  }
+
+  /** Set the maximum distance for a signalised pedestrian crossing to count as part of a signalised junction. A
+   * crossing whose walking or cycling infrastructure is not parsed, on a road leading within this distance to a
+   * signalised junction along one of its approaches, is part of that junction and ignored. Beyond it, the crossing is
+   * isolated, see {@link #setBreakLinksAtIsolatedSignalisedCrossings(boolean)}
+   *
+   * @param distanceMeters distance to use
+   */
+  public void setMaximumDistanceSignalisedCrossingToJunctionInMeters(double distanceMeters) {
+    this.maximumDistanceSignalisedCrossingToJunctionInMeters = distanceMeters;
+  }
+
+  /** Verify if links are broken at isolated signalised pedestrian crossings
+   *
+   * @return true when broken, false otherwise
+   */
+  public boolean isBreakLinksAtIsolatedSignalisedCrossings() {
+    return breakLinksAtIsolatedSignalisedCrossings;
+  }
+
+  /** Break links at isolated signalised pedestrian crossings, so each becomes its own crossing intersection. A
+   * crossing is isolated when it is not part of a signalised junction: its walking or cycling infrastructure is not
+   * parsed, and it is farther than {@link #getMaximumDistanceSignalisedCrossingToJunctionInMeters()} from any
+   * signalised junction along one of its approaches. Crossings that are part of a signalised junction are never
+   * broken at, and crossings whose walking or cycling infrastructure is parsed are always their own intersection,
+   * whatever this setting. A vehicle signal with no junction within
+   * {@link #getMaximumDistanceVehicleSignalToJunctionInMeters()} controls something other than cars crossing, and
+   * counts as an isolated crossing too. An isolated crossing already on a node needs no link broken, but only becomes
+   * its own intersection when this is on. When off, isolated crossings are ignored and counted
+   *
+   * @param flag to set
+   */
+  public void setBreakLinksAtIsolatedSignalisedCrossings(boolean flag) {
+    this.breakLinksAtIsolatedSignalisedCrossings = flag;
   }
 
 }

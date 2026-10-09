@@ -1,5 +1,7 @@
 package org.goplanit.osm.converter.network.data;
 
+import org.goplanit.osm.converter.diagnostics.OsmParseDiagnostics;
+import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityDiagnostics;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
@@ -47,6 +49,16 @@ public class OsmNetworkReaderData {
   /** track spatial eligibility of OSM entities, for example based on boundary used (if any) */
   private final OsmSpatialEligibilityData osmSpatialEligibilityData = new OsmSpatialEligibilityData();
 
+  /** OSM node ids of the traffic signals among the eligible OSM nodes, vehicle or crossing, recorded only when
+   * intersections are parsed, ordered so that integrating them does not depend on hash order */
+  private final SortedSet<Long> trafficSignalOsmNodeIds = new TreeSet<>();
+
+  /** what became of the OSM entities read, for now the traffic signals */
+  private final OsmParseDiagnostics parseDiagnostics = new OsmParseDiagnostics();
+
+  /** what became of the PLANit entities derived from them, for now the intersections */
+  private final OsmPlanitEntityDiagnostics planitEntityDiagnostics = new OsmPlanitEntityDiagnostics();
+
   /** Track OSM ways that have been processed and identified as being unavailable/not used. This has been communicated if needed
    *  to users, so any subsequent dependencies on this OSM way can be safely ignored without issuing further warnings
    */
@@ -91,7 +103,10 @@ public class OsmNetworkReaderData {
 
     osmBoundingArea = null;
     osmSpatialEligibilityData.reset();
-  }  
+    trafficSignalOsmNodeIds.clear();
+    parseDiagnostics.reset();
+    planitEntityDiagnostics.reset();
+  }
 
   /**
    * Access to the bounding area to apply (if any). Will always have a polygon
@@ -130,6 +145,42 @@ public class OsmNetworkReaderData {
    */
   public OsmSpatialEligibilityData getOsmSpatialEligibilityData(){
     return osmSpatialEligibilityData;
+  }
+
+  /**
+   * Record an eligible OSM node as carrying a traffic signal, vehicle or crossing
+   *
+   * @param osmNodeId to record
+   */
+  public void registerTrafficSignalOsmNodeId(long osmNodeId){
+    trafficSignalOsmNodeIds.add(osmNodeId);
+  }
+
+  /**
+   * Collect the OSM node ids of the traffic signals among the eligible OSM nodes, ordered by id
+   *
+   * @return OSM node ids, unmodifiable
+   */
+  public SortedSet<Long> getTrafficSignalOsmNodeIds(){
+    return Collections.unmodifiableSortedSet(trafficSignalOsmNodeIds);
+  }
+
+  /**
+   * Access to what became of the OSM entities read, for now the traffic signals
+   *
+   * @return parse diagnostics
+   */
+  public OsmParseDiagnostics getParseDiagnostics(){
+    return parseDiagnostics;
+  }
+
+  /**
+   * Access to what became of the PLANit entities derived from the OSM entities read, for now the intersections
+   *
+   * @return PLANit entity diagnostics
+   */
+  public OsmPlanitEntityDiagnostics getPlanitEntityDiagnostics(){
+    return planitEntityDiagnostics;
   }
 
   /** collect the identified circular ways (unmodifiable)

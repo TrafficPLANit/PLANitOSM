@@ -4,7 +4,7 @@ import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.osm.util.PlanitNetworkLayerUtils;
+import org.goplanit.osm.util.PlanitOsmNetworkLayerUtils;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.DirectedVertex;
@@ -92,7 +92,7 @@ class OsmZoningHelperBase {
    * @return true when one or more layers are found, false otherwise
    */
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId) {
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
+    return PlanitOsmNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
         osmNodeId, getZoningReaderData().getPlanitConverterData().getReferenceNetwork(), network2ZoningData);
   }
 

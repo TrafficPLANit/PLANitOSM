@@ -3,6 +3,7 @@ package org.goplanit.osm.util;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.mode.Mode;
@@ -41,5 +42,23 @@ public class PlanitLinkOsmUtils {
     /* in case osm way is broken, multiple PLANit links might exist with the same external id, find closest
     one and use it */
     return (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(geometry, nominatedLinks, geoUtils);
-  }  
+  }
+
+  /** Verify if a link segment runs in the given OSM direction of the OSM way its link was created from: a link's A to B
+   * direction is its way's forward direction, B to A its backward direction, also after the link is broken
+   *
+   * @param segment to check
+   * @param osmDirection an OSM direction value, e.g., forward, backward or both; null, both or an unrecognised value
+   *                     covers both directions
+   * @return true when the segment runs in the direction, false otherwise
+   */
+  public static boolean isInOsmDirection(MacroscopicLinkSegment segment, String osmDirection) {
+    if (OsmDirectionTags.FORWARD.equals(osmDirection)) {
+      return segment.isDirectionAb();
+    }
+    if (OsmDirectionTags.BACKWARD.equals(osmDirection)) {
+      return !segment.isDirectionAb();
+    }
+    return true;
+  }
 }

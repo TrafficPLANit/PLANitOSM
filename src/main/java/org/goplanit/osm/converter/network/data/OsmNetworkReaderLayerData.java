@@ -467,4 +467,5 @@ public class OsmNetworkReaderLayerData {
   public MacroscopicLink findPlanitLinkByOsmWayId(long osmWayId) {
     return osmWayIdToPlanitLink.get(osmWayId);
   }
+
 }

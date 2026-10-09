@@ -199,7 +199,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
    * @return true when one or more layers are found, false otherwise
    */
   protected boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
+    return PlanitOsmNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(
         osmNodeId, getReferenceNetwork(), getNetworkToZoningData());
   }
 
@@ -492,15 +492,11 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     this.network2ZoningData = network2ZoningData;
 
     this.zoningReaderData = zoningReaderData;
-    if(getZoningReaderData().hasBoundingArea()){
-      projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.of(
-          getZoningReaderData().getBoundingArea(),
-          network2ZoningData.getNetworkSettings().getSourceCRS(),
-          transferSettings.getCountryName(),
-          getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
-    }else{
-      projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.empty();
-    }
+    projectedBoundingAreaHelper = OsmProjectedBoundingAreaHelper.ofNullable(
+        getZoningReaderData().getBoundingArea(),
+        network2ZoningData.getNetworkSettings().getSourceCRS(),
+        transferSettings.getCountryName(),
+        getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
 
     /* gis initialisation */
     this.geoUtils = new PlanitJtsCrsUtils(getReferenceNetwork().getCoordinateReferenceSystem());

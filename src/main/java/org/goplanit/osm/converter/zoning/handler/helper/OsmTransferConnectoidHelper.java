@@ -239,36 +239,36 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       networkLayer.getLayerModifier().addListener(listener);
     }
         
-    /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */    
-    {      
-      /* remove links from spatial index when they are broken up and their geometry changes, after breaking more links
-      exist with smaller geometries... insert those after as replacements*/
-      getZoningReaderData().getPlanitConverterData().removeLinksFromSpatialLinkIndex(linksToBreak);
-    }    
-          
-    /* break links and group resulting new links by original link's OSM id*/
-    var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
+    try {
+      /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */
+      {
+        /* remove links from spatial index when they are broken up and their geometry changes, after breaking more links
+        exist with smaller geometries... insert those after as replacements*/
+        getZoningReaderData().getPlanitConverterData().removeLinksFromSpatialLinkIndex(linksToBreak);
+      }
 
-    var movementsByCentreVertex =
-        getZoningReaderData().getPlanitConverterData().getBannedMovementsIndexedByCentreVertex();
-    var newlyBrokenLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
-        networkLayer.getLayerModifier().breakAt(
-            linksToBreak, planitNode, movementsByCentreVertex, referenceNetwork.getCoordinateReferenceSystem()),
-        l -> Long.parseLong(l.getExternalId()));
-  
-    /* TRACKING DATA CONSISTENCY - AFTER */
-    {
-      /* insert created/updated links and their geometries to spatial index instead */
-      newlyBrokenLinks.forEach( (id, links) ->
-              getZoningReaderData().getPlanitConverterData().addLinksToSpatialLinkIndex(networkLayer, links));
-                    
-      /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to
-      be able to find the correct planit links for (internal) osm nodes */
-      layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);                            
-    }
+      /* break links and group resulting new links by original link's OSM id*/
+      var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
 
-    if(listener != null) {
-      networkLayer.getLayerModifier().removeListener(listener);
+      var newlyBrokenLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
+          networkLayer.getLayerModifier().breakAt(
+              linksToBreak, planitNode, referenceNetwork.getCoordinateReferenceSystem()),
+          l -> Long.parseLong(l.getExternalId()));
+
+      /* TRACKING DATA CONSISTENCY - AFTER */
+      {
+        /* insert created/updated links and their geometries to spatial index instead */
+        newlyBrokenLinks.forEach( (id, links) ->
+                getZoningReaderData().getPlanitConverterData().addLinksToSpatialLinkIndex(networkLayer, links));
+
+        /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to
+        be able to find the correct planit links for (internal) osm nodes */
+        layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);
+      }
+    } finally {
+      if(listener != null) {
+        networkLayer.getLayerModifier().removeListener(listener);
+      }
     }
   }
 
@@ -400,11 +400,12 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
         // on location provided
         if(osmNode != null) {
           /* all regular cases */
-          planitNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
+          planitNode = PlanitOsmNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
         }else {
           // special cases whenever parser decided that location required planit node even though there exists no OSM
           //node at this location
-          planitNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNodeLocation, networkLayer, layerData);
+          planitNode = PlanitOsmNetworkLayerUtils.createPopulateAndRegisterNode(
+              osmNodeLocation, networkLayer, layerData);
         }
         profiler.logConnectoidStatus(
             getZoningReaderData().getPlanitConverterData().getReferenceZoning().getTransferConnectoids().size());

@@ -90626,6 +90626,710 @@
                 <ban id="8" externalid="6198990" fromref="8806" toref="9493"/>
                 <ban id="9" externalid="6198991" fromref="454" toref="455"/>
             </turns>
+            <intersections>
+                <intersection id="0" externalid="8965680" noderefs="163" control="signalised" types="junction">
+                    <segments type="approach" refs="1254,171,6559,891"/>
+                </intersection>
+                <intersection id="1" externalid="8965682" noderefs="495" control="signalised" types="junction">
+                    <segments type="approach" refs="10296,10302,1256,1315"/>
+                </intersection>
+                <intersection id="10" externalid="15397477" noderefs="169" control="signalised" types="junction">
+                    <segments type="approach" refs="1210,2864,8802,9496"/>
+                </intersection>
+                <intersection id="100" externalid="10187679265" noderefs="3841" control="signalised" types="crossing">
+                    <segments type="approach" refs="270,5445,9883,9885"/>
+                </intersection>
+                <intersection id="101" externalid="10187696063" noderefs="3844" control="signalised" types="crossing">
+                    <segments type="approach" refs="4694,620,9895,9897"/>
+                </intersection>
+                <intersection id="102" externalid="10187696064" noderefs="3845" control="signalised" types="crossing">
+                    <segments type="approach" refs="4688,8598,9899,9901"/>
+                </intersection>
+                <intersection id="103" externalid="10187696065" noderefs="3846" control="signalised" types="crossing">
+                    <segments type="approach" refs="4690,8596,9903,9905"/>
+                </intersection>
+                <intersection id="104" externalid="10187696066" noderefs="3847" control="signalised" types="crossing">
+                    <segments type="approach" refs="4692,5147,9907,9909"/>
+                </intersection>
+                <intersection id="105" externalid="10187696156" noderefs="3848" control="signalised" types="crossing">
+                    <segments type="approach" refs="9553,9586,9911,9913"/>
+                </intersection>
+                <intersection id="106" externalid="10187841588" noderefs="3851" control="signalised" types="crossing">
+                    <segments type="approach" refs="3274,4790,9923,9925"/>
+                </intersection>
+                <intersection id="107" externalid="10187841589" noderefs="3852" control="signalised" types="crossing">
+                    <segments type="approach" refs="3309,4786,9928"/>
+                </intersection>
+                <intersection id="108" externalid="10187841590" noderefs="3853" control="signalised" types="crossing">
+                    <segments type="approach" refs="3272,8218,9930,9932"/>
+                </intersection>
+                <intersection id="109" externalid="10187841591" noderefs="3854" control="signalised" types="crossing">
+                    <segments type="approach" refs="3271,4788,9935"/>
+                </intersection>
+                <intersection id="11" externalid="15399164" noderefs="255" control="signalised" types="junction">
+                    <segments type="approach" refs="1829,264,3047"/>
+                </intersection>
+                <intersection id="110" externalid="10188047310,3516277352,10188047312" noderefs="3857" control="signalised" types="crossing">
+                    <segments type="approach" refs="4836,9945,9947,9974"/>
+                </intersection>
+                <intersection id="111" externalid="10188047311" noderefs="3858" control="signalised" types="crossing">
+                    <segments type="approach" refs="9946,9949,9951,9976"/>
+                </intersection>
+                <intersection id="112" externalid="10188047621" noderefs="3859" control="signalised" types="crossing">
+                    <segments type="approach" refs="2166,4838,9953,9955"/>
+                </intersection>
+                <intersection id="113" externalid="10188047624" noderefs="3860" control="signalised" types="crossing">
+                    <segments type="approach" refs="4844,7169,9957,9959"/>
+                </intersection>
+                <intersection id="114" externalid="10188047632" noderefs="3861" control="signalised" types="crossing">
+                    <segments type="approach" refs="4848,9904,9961,9963"/>
+                </intersection>
+                <intersection id="115" externalid="10188047633" noderefs="3862" control="signalised" types="crossing">
+                    <segments type="approach" refs="4408,4846,9965,9967"/>
+                </intersection>
+                <intersection id="116" externalid="10188047649" noderefs="3863" control="signalised" types="crossing">
+                    <segments type="approach" refs="4876,9952,9969,9971"/>
+                </intersection>
+                <intersection id="117" externalid="10188047652" noderefs="3864" control="signalised" types="crossing">
+                    <segments type="approach" refs="4878,626,9973,9975"/>
+                </intersection>
+                <intersection id="118" externalid="10188047653" noderefs="3865" control="signalised" types="crossing">
+                    <segments type="approach" refs="2130,9972,9977,9979"/>
+                </intersection>
+                <intersection id="119" externalid="10188047658" noderefs="3866" control="signalised" types="crossing">
+                    <segments type="approach" refs="4882,9576,9981,9983"/>
+                </intersection>
+                <intersection id="12" externalid="15401227" noderefs="168" control="signalised" types="junction">
+                    <segments type="approach" refs="1642,1914,6123,8839"/>
+                </intersection>
+                <intersection id="120" externalid="10188047659" noderefs="3867" control="signalised" types="crossing">
+                    <segments type="approach" refs="9570,9980,9985,9987"/>
+                </intersection>
+                <intersection id="121" externalid="10188047663" noderefs="3868" control="signalised" types="crossing">
+                    <segments type="approach" refs="195,4880,9989,9991"/>
+                </intersection>
+                <intersection id="122" externalid="10188047692" noderefs="3869" control="signalised" types="crossing">
+                    <segments type="approach" refs="4904,743,9993,9995"/>
+                </intersection>
+                <intersection id="123" externalid="10188047693" noderefs="3870" control="signalised" types="crossing">
+                    <segments type="approach" refs="3709,4906,9997,9999"/>
+                </intersection>
+                <intersection id="124" externalid="10188047694" noderefs="3871" control="signalised" types="crossing">
+                    <segments type="approach" refs="10001,10003,20,4908"/>
+                </intersection>
+                <intersection id="125" externalid="10188047695" noderefs="3872" control="signalised" types="crossing">
+                    <segments type="approach" refs="10005,10007,745,9996"/>
+                </intersection>
+                <intersection id="126" externalid="10188047696" noderefs="80" control="signalised" types="crossing">
+                    <segments type="approach" refs="744,746,83,9138"/>
+                </intersection>
+                <intersection id="127" externalid="10188047745" noderefs="3873" control="signalised" types="crossing">
+                    <segments type="approach" refs="10009,10011,4942,4944"/>
+                </intersection>
+                <intersection id="128" externalid="10188047779" noderefs="3875" control="signalised" types="crossing">
+                    <segments type="approach" refs="10017,10019,10034,4962"/>
+                </intersection>
+                <intersection id="129" externalid="10188047816" noderefs="3876" control="signalised" types="crossing">
+                    <segments type="approach" refs="10021,10023,1071,4984"/>
+                </intersection>
+                <intersection id="13" externalid="15401537" noderefs="34" control="signalised" types="crossing">
+                    <segments type="approach" refs="3659,37,4224,4251,4253"/>
+                </intersection>
+                <intersection id="130" externalid="10188047835" noderefs="3877" control="signalised" types="crossing">
+                    <segments type="approach" refs="10025,10027,4988,8816"/>
+                </intersection>
+                <intersection id="131" externalid="10188047836" noderefs="3878" control="signalised" types="crossing">
+                    <segments type="approach" refs="10029,10031,1004,4986"/>
+                </intersection>
+                <intersection id="132" externalid="10188047880" noderefs="3879" control="signalised" types="crossing">
+                    <segments type="approach" refs="10033,10035,4998,89"/>
+                </intersection>
+                <intersection id="133" externalid="10188047883" noderefs="3880" control="signalised" types="crossing">
+                    <segments type="approach" refs="10037,10039,10062,5006"/>
+                </intersection>
+                <intersection id="134" externalid="10188047896" noderefs="3881" control="signalised" types="crossing">
+                    <segments type="approach" refs="10041,10043,5014,81"/>
+                </intersection>
+                <intersection id="135" externalid="10188047901" noderefs="3882" control="signalised" types="crossing">
+                    <segments type="approach" refs="10045,10047,5018,6922"/>
+                </intersection>
+                <intersection id="136" externalid="10188047925" noderefs="3884" control="signalised" types="crossing">
+                    <segments type="approach" refs="10053,10055,3301,5016"/>
+                </intersection>
+                <intersection id="137" externalid="10188047947" noderefs="3885" control="signalised" types="crossing">
+                    <segments type="approach" refs="10057,10059,2105,5048"/>
+                </intersection>
+                <intersection id="138" externalid="10188047948" noderefs="3886" control="signalised" types="crossing">
+                    <segments type="approach" refs="10061,10063,2103,5046"/>
+                </intersection>
+                <intersection id="139" externalid="10188047949" noderefs="3887" control="signalised" types="crossing">
+                    <segments type="approach" refs="10065,10067,5044,9992"/>
+                </intersection>
+                <intersection id="14" externalid="15405036" noderefs="178" control="signalised" types="junction">
+                    <segments type="approach" refs="4473,940,9630"/>
+                </intersection>
+                <intersection id="140" externalid="10188047950" noderefs="3888" control="signalised" types="crossing">
+                    <segments type="approach" refs="10069,10071,5042,6460"/>
+                </intersection>
+                <intersection id="141" externalid="10188082730" noderefs="3890" control="signalised" types="crossing">
+                    <segments type="approach" refs="10077,10079,10218,5073"/>
+                </intersection>
+                <intersection id="142" externalid="10188082773" noderefs="3891" control="signalised" types="crossing">
+                    <segments type="approach" refs="10081,10083,1324,5091"/>
+                </intersection>
+                <intersection id="143" externalid="10188082788" noderefs="3893" control="signalised" types="crossing">
+                    <segments type="approach" refs="10089,10091,2876,5101"/>
+                </intersection>
+                <intersection id="144" externalid="10188082796" noderefs="3895" control="signalised" types="crossing">
+                    <segments type="approach" refs="10092,10097,10099,7404"/>
+                </intersection>
+                <intersection id="145" externalid="10188082797" noderefs="3896" control="signalised" types="crossing">
+                    <segments type="approach" refs="10101,10103,1245,5105"/>
+                </intersection>
+                <intersection id="146" externalid="10188082798" noderefs="3897" control="signalised" types="crossing">
+                    <segments type="approach" refs="10105,10107,10110,97"/>
+                </intersection>
+                <intersection id="147" externalid="10188095044" noderefs="3903" control="signalised" types="crossing">
+                    <segments type="approach" refs="10129,10131,1053,5145"/>
+                </intersection>
+                <intersection id="148" externalid="10197020145,10197020149" noderefs="187" control="signalised" types="crossing">
+                    <segments type="approach" refs="196,2131,2132,9982"/>
+                </intersection>
+                <intersection id="149" externalid="10197020156" noderefs="3543" control="signalised" types="crossing">
+                    <segments type="approach" refs="10158,8701,8703,9078"/>
+                </intersection>
+                <intersection id="15" externalid="15405751" noderefs="74" control="signalised" types="junction crossing">
+                    <segments type="approach" refs="6068,78,9058,9736"/>
+                </intersection>
+                <intersection id="150" externalid="10197152378" noderefs="3904" control="signalised" types="crossing">
+                    <segments type="approach" refs="10133,10135,1373,5179"/>
+                </intersection>
+                <intersection id="151" externalid="10197152379" noderefs="3905" control="signalised" types="crossing">
+                    <segments type="approach" refs="10137,10139,5173,9368"/>
+                </intersection>
+                <intersection id="152" externalid="10197152380" noderefs="3906" control="signalised" types="crossing">
+                    <segments type="approach" refs="10141,10143,5183,6464"/>
+                </intersection>
+                <intersection id="153" externalid="10197152381" noderefs="3907" control="signalised" types="crossing">
+                    <segments type="approach" refs="10145,10147,1371,5175"/>
+                </intersection>
+                <intersection id="154" externalid="10197152388" noderefs="3908" control="signalised" types="crossing">
+                    <segments type="approach" refs="10149,10151,10152,8234"/>
+                </intersection>
+                <intersection id="155" externalid="10197152389" noderefs="3909" control="signalised" types="crossing">
+                    <segments type="approach" refs="10153,10155,5191,8700"/>
+                </intersection>
+                <intersection id="156" externalid="10197152390" noderefs="3910" control="signalised" types="crossing">
+                    <segments type="approach" refs="10134,10157,10159,5189"/>
+                </intersection>
+                <intersection id="157" externalid="10197152393" noderefs="3911" control="signalised" types="crossing">
+                    <segments type="approach" refs="10161,10163,10166,4820"/>
+                </intersection>
+                <intersection id="158" externalid="10197152394" noderefs="3912" control="signalised" types="crossing">
+                    <segments type="approach" refs="10165,10167,1839,5199"/>
+                </intersection>
+                <intersection id="159" externalid="10228256893" noderefs="3921" control="signalised" types="crossing">
+                    <segments type="approach" refs="10201,10203,5347,8102"/>
+                </intersection>
+                <intersection id="16" externalid="15406810" noderefs="480" control="signalised" types="junction">
+                    <segments type="approach" refs="1624,6069,7067"/>
+                </intersection>
+                <intersection id="160" externalid="10228256898" noderefs="3922" control="signalised" types="crossing">
+                    <segments type="approach" refs="10205,10207,1320,5353"/>
+                </intersection>
+                <intersection id="161" externalid="10228256905" noderefs="3923" control="signalised" types="crossing">
+                    <segments type="approach" refs="10209,10211,1322,5357"/>
+                </intersection>
+                <intersection id="162" externalid="10228256906" noderefs="3924" control="signalised" types="crossing">
+                    <segments type="approach" refs="10213,10215,6999,9222"/>
+                </intersection>
+                <intersection id="163" externalid="10228256909" noderefs="3925" control="signalised" types="crossing">
+                    <segments type="approach" refs="10217,10219,1326,5363"/>
+                </intersection>
+                <intersection id="164" externalid="10228256912" noderefs="3926" control="signalised" types="crossing">
+                    <segments type="approach" refs="10221,10223,10226,5369"/>
+                </intersection>
+                <intersection id="165" externalid="10228258019" noderefs="3927" control="signalised" types="crossing">
+                    <segments type="approach" refs="10225,10227,129,5379"/>
+                </intersection>
+                <intersection id="166" externalid="10228258048" noderefs="3931" control="signalised" types="crossing">
+                    <segments type="approach" refs="10241,10243,10246,9154"/>
+                </intersection>
+                <intersection id="167" externalid="10228258094" noderefs="3934" control="signalised" types="crossing">
+                    <segments type="approach" refs="10253,10255,9234,9850"/>
+                </intersection>
+                <intersection id="168" externalid="10241424303" noderefs="3935" control="signalised" types="crossing">
+                    <segments type="approach" refs="10257,10259,1247,5427"/>
+                </intersection>
+                <intersection id="169" externalid="10241424304" noderefs="3936" control="signalised" types="crossing">
+                    <segments type="approach" refs="10261,10263,10334,5425"/>
+                </intersection>
+                <intersection id="17" externalid="15406815" noderefs="79" control="signalised" types="junction">
+                    <segments type="approach" refs="10040,10046,10076,3302"/>
+                </intersection>
+                <intersection id="170" externalid="10241424305" noderefs="3937" control="signalised" types="crossing">
+                    <segments type="approach" refs="10265,10267,1253,5423"/>
+                </intersection>
+                <intersection id="171" externalid="10241424306" noderefs="3938" control="signalised" types="crossing">
+                    <segments type="approach" refs="10269,10271,155,5421"/>
+                </intersection>
+                <intersection id="172" externalid="10245932144" noderefs="3941" control="signalised" types="crossing">
+                    <segments type="approach" refs="10281,10283,10286,6324"/>
+                </intersection>
+                <intersection id="173" externalid="10245932146" noderefs="3943" control="signalised" types="crossing">
+                    <segments type="approach" refs="10289,10291,4410,5443"/>
+                </intersection>
+                <intersection id="174" externalid="10245932147" noderefs="3944" control="signalised" types="crossing">
+                    <segments type="approach" refs="10293,10295,5447,6156"/>
+                </intersection>
+                <intersection id="175" externalid="10245932171" noderefs="3945" control="signalised" types="crossing">
+                    <segments type="approach" refs="10297,10299,10386,5457"/>
+                </intersection>
+                <intersection id="176" externalid="10245932185" noderefs="3946" control="signalised" types="crossing">
+                    <segments type="approach" refs="10301,10303,5465,7237"/>
+                </intersection>
+                <intersection id="177" externalid="10245932186" noderefs="3947" control="signalised" types="crossing">
+                    <segments type="approach" refs="10305,10307,1255,5463"/>
+                </intersection>
+                <intersection id="178" externalid="10245932190" noderefs="3948" control="signalised" types="crossing">
+                    <segments type="approach" refs="10309,10311,1314,5461"/>
+                </intersection>
+                <intersection id="179" externalid="10245932196" noderefs="3949" control="signalised" types="crossing">
+                    <segments type="approach" refs="10313,10315,1795,5475"/>
+                </intersection>
+                <intersection id="18" externalid="15407240" noderefs="1024" control="signalised" types="junction crossing">
+                    <segments type="approach" refs="2108,6462,6776"/>
+                </intersection>
+                <intersection id="180" externalid="10245942972" noderefs="3954" control="signalised" types="crossing">
+                    <segments type="approach" refs="10333,10335,165,5503"/>
+                </intersection>
+                <intersection id="181" externalid="10245942973" noderefs="3955" control="signalised" types="crossing">
+                    <segments type="approach" refs="10337,10339,5505,6113"/>
+                </intersection>
+                <intersection id="182" externalid="10245942974" noderefs="3956" control="signalised" types="crossing">
+                    <segments type="approach" refs="10341,10343,5501,6121"/>
+                </intersection>
+                <intersection id="183" externalid="10245942987" noderefs="3958" control="signalised" types="crossing">
+                    <segments type="approach" refs="10349,10351,1304,5513"/>
+                </intersection>
+                <intersection id="184" externalid="10245942994" noderefs="3959" control="signalised" types="crossing">
+                    <segments type="approach" refs="10353,10355,3078,5517"/>
+                </intersection>
+                <intersection id="185" externalid="10245942995" noderefs="3960" control="signalised" types="crossing">
+                    <segments type="approach" refs="10338,10357,10359,5515"/>
+                </intersection>
+                <intersection id="186" externalid="10245942996" noderefs="3961" control="signalised" types="crossing">
+                    <segments type="approach" refs="10361,10363,3076,5519"/>
+                </intersection>
+                <intersection id="187" externalid="10245943025" noderefs="3963" control="signalised" types="crossing">
+                    <segments type="approach" refs="10369,10371,1251,5531"/>
+                </intersection>
+                <intersection id="188" externalid="10245943026" noderefs="3964" control="signalised" types="crossing">
+                    <segments type="approach" refs="10373,10375,5529,7826"/>
+                </intersection>
+                <intersection id="189" externalid="10245943027" noderefs="3965" control="signalised" types="crossing">
+                    <segments type="approach" refs="10377,10379,141,5527"/>
+                </intersection>
+                <intersection id="19" externalid="15407245" noderefs="876" control="signalised" types="junction">
+                    <segments type="approach" refs="4502,6506"/>
+                </intersection>
+                <intersection id="190" externalid="10245943036" noderefs="3966" control="signalised" types="crossing">
+                    <segments type="approach" refs="10381,10383,5565,6668"/>
+                </intersection>
+                <intersection id="191" externalid="10245943037" noderefs="3967" control="signalised" types="crossing">
+                    <segments type="approach" refs="10385,10387,548,5563"/>
+                </intersection>
+                <intersection id="192" externalid="10245943038" noderefs="3968" control="signalised" types="crossing">
+                    <segments type="approach" refs="10368,10389,10391,5561"/>
+                </intersection>
+                <intersection id="193" externalid="10245943039" noderefs="3969" control="signalised" types="crossing">
+                    <segments type="approach" refs="10393,10395,546,5559"/>
+                </intersection>
+                <intersection id="194" externalid="10245943071" noderefs="3970" control="signalised" types="crossing">
+                    <segments type="approach" refs="10397,10399,12,5477"/>
+                </intersection>
+                <intersection id="195" externalid="15401509" noderefs="843" control="signalised" types="junction">
+                    <segments type="approach" refs="6475"/>
+                </intersection>
+                <intersection id="196" externalid="345543321" noderefs="842" control="signalised" types="junction">
+                    <segments type="approach" refs="1035"/>
+                </intersection>
+                <intersection id="197" externalid="666758991,10188047675,10188047678,10188047679" noderefs="19" control="signalised" types="junction">
+                    <segments type="approach" refs="21,3710,84,8580"/>
+                </intersection>
+                <intersection id="198" externalid="1849591645" noderefs="3607" control="signalised" types="junction">
+                    <segments type="approach" refs="8951"/>
+                </intersection>
+                <intersection id="199" externalid="3899037421" noderefs="416" control="signalised" types="junction">
+                    <segments type="approach" refs="454"/>
+                </intersection>
+                <intersection id="2" externalid="8965683" noderefs="672" control="signalised" types="junction">
+                    <segments type="approach" refs="1960,6049,785"/>
+                </intersection>
+                <intersection id="20" externalid="15407247" noderefs="642" control="signalised" types="junction">
+                    <segments type="approach" refs="10066,10070,2106"/>
+                </intersection>
+                <intersection id="200" externalid="3910190217,10188082774" noderefs="478" control="signalised" types="junction">
+                    <segments type="approach" refs="10080,9296"/>
+                </intersection>
+                <intersection id="201" externalid="3910190702,10188082779" noderefs="112" control="signalised" types="junction">
+                    <segments type="approach" refs="120,9848"/>
+                </intersection>
+                <intersection id="202" externalid="3921252668" noderefs="1343" control="signalised" types="junction">
+                    <segments type="approach" refs="1835"/>
+                </intersection>
+                <intersection id="203" externalid="3921252674" noderefs="3790" control="signalised" types="junction">
+                    <segments type="approach" refs="1831"/>
+                </intersection>
+                <intersection id="204" externalid="5147304740,5147304741" noderefs="85" control="signalised" types="junction">
+                    <segments type="approach" refs="10036,90"/>
+                </intersection>
+                <intersection id="205" externalid="5147327948,5147327949" noderefs="677" control="signalised" types="junction">
+                    <segments type="approach" refs="10290,6498"/>
+                </intersection>
+                <intersection id="206" externalid="6594605922,10188049454" noderefs="524" control="signalised" types="junction">
+                    <segments type="approach" refs="2873,586"/>
+                </intersection>
+                <intersection id="207" externalid="9006017849" noderefs="2333" control="signalised" types="junction">
+                    <segments type="approach" refs="9544"/>
+                </intersection>
+                <intersection id="208" externalid="9006017853,9006017854" noderefs="87" control="signalised" types="junction">
+                    <segments type="approach" refs="623,9559"/>
+                </intersection>
+                <intersection id="209" externalid="9006017865,9006017868" noderefs="3515" control="signalised" types="junction">
+                    <segments type="approach" refs="9580,9910"/>
+                </intersection>
+                <intersection id="21" externalid="15407248" noderefs="188" control="signalised" types="junction crossing">
+                    <segments type="approach" refs="2165,2449,7251,9988"/>
+                </intersection>
+                <intersection id="210" externalid="10185379885,10185379886,10185379887" noderefs="20" control="signalised" types="junction">
+                    <segments type="approach" refs="1806,7335,9616"/>
+                </intersection>
+                <intersection id="211" externalid="10187679266,10245932148" noderefs="262" control="signalised" types="junction">
+                    <segments type="approach" refs="10282,10294"/>
+                </intersection>
+                <intersection id="212" externalid="10187696067,10187696068,10187696069,10187696070" noderefs="3517" control="signalised" types="junction">
+                    <segments type="approach" refs="8597,8599,9896,9908"/>
+                </intersection>
+                <intersection id="213" externalid="10187841613" noderefs="3005" control="signalised" types="junction">
+                    <segments type="approach" refs="10160"/>
+                </intersection>
+                <intersection id="214" externalid="10187841617,10197020153" noderefs="1067" control="signalised" types="junction">
+                    <segments type="approach" refs="8702,9074"/>
+                </intersection>
+                <intersection id="215" externalid="10188047617,10188047625,10188047626,10188047627" noderefs="547" control="signalised" types="junction">
+                    <segments type="approach" refs="2167,4409,9958,9962"/>
+                </intersection>
+                <intersection id="216" externalid="10188047773,10188047774,10188047775,10188047776" noderefs="86" control="signalised" types="junction">
+                    <segments type="approach" refs="10016,3300,8278,9100"/>
+                </intersection>
+                <intersection id="217" externalid="10188047830,10188047867" noderefs="561" control="signalised" types="junction">
+                    <segments type="approach" refs="10026,1005"/>
+                </intersection>
+                <intersection id="218" externalid="10188049455" noderefs="1328" control="signalised" types="junction">
+                    <segments type="approach" refs="9106"/>
+                </intersection>
+                <intersection id="219" externalid="10188095039,10188095040,10188095041" noderefs="92" control="signalised" types="junction">
+                    <segments type="approach" refs="10096,1246,9412"/>
+                </intersection>
+                <intersection id="22" externalid="15449304" noderefs="263" control="signalised" types="junction crossing">
+                    <segments type="approach" refs="1629,273,7255,9882"/>
+                </intersection>
+                <intersection id="220" externalid="10197020144,10197020146,10197020147,10197020148" noderefs="550" control="signalised" types="junction">
+                    <segments type="approach" refs="2133,627,9970,9986"/>
+                </intersection>
+                <intersection id="221" externalid="10197020150" noderefs="1018" control="signalised" types="junction">
+                    <segments type="approach" refs="9926"/>
+                </intersection>
+                <intersection id="222" externalid="10197020151,10197020152" noderefs="467" control="signalised" types="junction">
+                    <segments type="approach" refs="9922,9929"/>
+                </intersection>
+                <intersection id="223" externalid="10197152344,10197152401,10197152402" noderefs="84" control="signalised" types="junction">
+                    <segments type="approach" refs="10138,10142,1374"/>
+                </intersection>
+                <intersection id="224" externalid="10197152349,10197152350,10197152403" noderefs="488" control="signalised" types="junction">
+                    <segments type="approach" refs="1272,1599,9374"/>
+                </intersection>
+                <intersection id="225" externalid="10228256901,10228256914,10228256915,10228256916" noderefs="123" control="signalised" types="junction">
+                    <segments type="approach" refs="10202,10220,1321,1327"/>
+                </intersection>
+                <intersection id="226" externalid="10228256902,10228258023" noderefs="122" control="signalised" types="junction">
+                    <segments type="approach" refs="10254,130"/>
+                </intersection>
+                <intersection id="227" externalid="10228258022" noderefs="1956" control="signalised" types="junction">
+                    <segments type="approach" refs="10214"/>
+                </intersection>
+                <intersection id="228" externalid="10241424307,10241424308,10241448609" noderefs="152" control="signalised" types="junction">
+                    <segments type="approach" refs="10260,10264,1248"/>
+                </intersection>
+                <intersection id="229" externalid="10245942937" noderefs="565" control="signalised" types="junction">
+                    <segments type="approach" refs="9304"/>
+                </intersection>
+                <intersection id="23" externalid="20827843" noderefs="90" control="signalised" types="junction">
+                    <segments type="approach" refs="7385,9084,96"/>
+                </intersection>
+                <intersection id="230" externalid="10245942938" noderefs="563" control="signalised" types="junction">
+                    <segments type="approach" refs="3483"/>
+                </intersection>
+                <intersection id="231" externalid="10245942939,10245942940" noderefs="751" control="signalised" types="junction">
+                    <segments type="approach" refs="6438,901"/>
+                </intersection>
+                <intersection id="232" externalid="10245942941,10245942942" noderefs="866" control="signalised" types="junction">
+                    <segments type="approach" refs="10128,10256"/>
+                </intersection>
+                <intersection id="233" externalid="10245943060,10245943061,10245943062" noderefs="108" control="signalised" types="junction">
+                    <segments type="approach" refs="10374,1252,142"/>
+                </intersection>
+                <intersection id="24" externalid="20827844" noderefs="91" control="signalised" types="junction">
+                    <segments type="approach" refs="7722,8876,9648"/>
+                </intersection>
+                <intersection id="25" externalid="26358753" noderefs="18" control="signalised" types="junction">
+                    <segments type="approach" refs="10382,10390,547,549"/>
+                </intersection>
+                <intersection id="26" externalid="26526387" noderefs="1684" control="signalised" types="junction">
+                    <segments type="approach" refs="7225,9634"/>
+                </intersection>
+                <intersection id="27" externalid="26526396" noderefs="158" control="signalised" types="junction">
+                    <segments type="approach" refs="10342,6114"/>
+                </intersection>
+                <intersection id="28" externalid="33165422" noderefs="676" control="signalised" types="junction crossing">
+                    <segments type="approach" refs="1626,6373,789,791"/>
+                </intersection>
+                <intersection id="29" externalid="85531511" noderefs="603" control="signalised" types="crossing">
+                    <segments type="approach" refs="1098,3227,6333,689"/>
+                </intersection>
+                <intersection id="3" externalid="8965800" noderefs="13" control="signalised" types="junction">
+                    <segments type="approach" refs="10314,10396,6050"/>
+                </intersection>
+                <intersection id="30" externalid="403820498,9006017856" noderefs="549" control="signalised" types="crossing">
+                    <segments type="approach" refs="625,6311,8590,9588"/>
+                </intersection>
+                <intersection id="31" externalid="642998199" noderefs="1026" control="signalised" types="junction">
+                    <segments type="approach" refs="10352,10358,1305,3077"/>
+                </intersection>
+                <intersection id="32" externalid="935792194,9006017867" noderefs="88" control="signalised" types="crossing">
+                    <segments type="approach" refs="617,619,8588,9584"/>
+                </intersection>
+                <intersection id="33" externalid="1070474087" noderefs="2214" control="signalised" types="junction">
+                    <segments type="approach" refs="7760,8032"/>
+                </intersection>
+                <intersection id="34" externalid="1070474095" noderefs="28" control="signalised" types="junction">
+                    <segments type="approach" refs="4270,4272,9030"/>
+                </intersection>
+                <intersection id="35" externalid="1070474100" noderefs="3544" control="signalised" types="crossing">
+                    <segments type="approach" refs="4262,540,8705,8707"/>
+                </intersection>
+                <intersection id="36" externalid="1070474110" noderefs="3545" control="signalised" types="crossing">
+                    <segments type="approach" refs="30,3471,8709,8711"/>
+                </intersection>
+                <intersection id="37" externalid="1424924874,9006017861,9006017866" noderefs="3550" control="signalised" types="crossing">
+                    <segments type="approach" refs="618,6310,8729,8731"/>
+                </intersection>
+                <intersection id="38" externalid="1425901342" noderefs="3551" control="signalised" types="crossing">
+                    <segments type="approach" refs="1259,3741,8733,8735"/>
+                </intersection>
+                <intersection id="39" externalid="1570660660,9006017845" noderefs="548" control="signalised" types="crossing">
+                    <segments type="approach" refs="1260,3737,3740,622"/>
+                </intersection>
+                <intersection id="4" externalid="8965827,10228258044,10228258045" noderefs="1033" control="signalised" types="junction crossing">
+                    <segments type="approach" refs="2315,2834,2861,6616,8972"/>
+                </intersection>
+                <intersection id="40" externalid="1614492632" noderefs="269" control="signalised" types="junction">
+                    <segments type="approach" refs="1621,9050"/>
+                </intersection>
+                <intersection id="41" externalid="1633391051" noderefs="735" control="signalised" types="crossing">
+                    <segments type="approach" refs="6421,737,874"/>
+                </intersection>
+                <intersection id="42" externalid="1810714485" noderefs="1077" control="signalised" types="junction">
+                    <segments type="approach" refs="6567,9226"/>
+                </intersection>
+                <intersection id="43" externalid="1832328520" noderefs="814" control="signalised" types="junction">
+                    <segments type="approach" refs="1648,4259"/>
+                </intersection>
+                <intersection id="44" externalid="1986167706" noderefs="3564" control="signalised" types="crossing">
+                    <segments type="approach" refs="1065,8785,8788"/>
+                </intersection>
+                <intersection id="45" externalid="1986167712" noderefs="3565" control="signalised" types="crossing">
+                    <segments type="approach" refs="1068,7061,8789"/>
+                </intersection>
+                <intersection id="46" externalid="1986167726" noderefs="1555" control="signalised" types="crossing">
+                    <segments type="approach" refs="2172,507,520,7060,7062"/>
+                </intersection>
+                <intersection id="47" externalid="2281643758,10031673090" noderefs="3572" control="signalised" types="crossing">
+                    <segments type="approach" refs="4192,7690,8815,8817"/>
+                </intersection>
+                <intersection id="48" externalid="2843788700" noderefs="3578" control="signalised" types="crossing">
+                    <segments type="approach" refs="174,8834,8838"/>
+                </intersection>
+                <intersection id="49" externalid="2843788702" noderefs="3579" control="signalised" types="crossing">
+                    <segments type="approach" refs="6635,8837,8841"/>
+                </intersection>
+                <intersection id="5" externalid="13757701" noderefs="831" control="signalised" types="junction">
+                    <segments type="approach" refs="2819,9518,9520"/>
+                </intersection>
+                <intersection id="50" externalid="3420655031" noderefs="1222" control="signalised" types="crossing">
+                    <segments type="approach" refs="1647,2138,3255,3295,6803"/>
+                </intersection>
+                <intersection id="51" externalid="3593631035" noderefs="3588" control="signalised" types="crossing">
+                    <segments type="approach" refs="8000,8875,8877,9640"/>
+                </intersection>
+                <intersection id="52" externalid="3899037438" noderefs="489" control="signalised" types="crossing">
+                    <segments type="approach" refs="1660,2179,3095,538,6279"/>
+                </intersection>
+                <intersection id="53" externalid="3910190701" noderefs="3600" control="signalised" types="crossing">
+                    <segments type="approach" refs="119,3044,8923,8925"/>
+                </intersection>
+                <intersection id="54" externalid="3929903765" noderefs="3605" control="signalised" types="crossing">
+                    <segments type="approach" refs="3299,8276,8943,8945"/>
+                </intersection>
+                <intersection id="55" externalid="4513015609" noderefs="3612" control="signalised" types="crossing">
+                    <segments type="approach" refs="5397,7023,8971,8973"/>
+                </intersection>
+                <intersection id="56" externalid="5641003455,10197152414" noderefs="3637" control="signalised" types="crossing">
+                    <segments type="approach" refs="272,5221,9071,9073"/>
+                </intersection>
+                <intersection id="57" externalid="5692890291" noderefs="3638" control="signalised" types="crossing">
+                    <segments type="approach" refs="2146,2352,9075,9077"/>
+                </intersection>
+                <intersection id="58" externalid="5692890292,10197020155" noderefs="3639" control="signalised" types="crossing">
+                    <segments type="approach" refs="486,9076,9079,9081"/>
+                </intersection>
+                <intersection id="59" externalid="6038996868" noderefs="3644" control="signalised" types="crossing">
+                    <segments type="approach" refs="2456,6918,9099,9101"/>
+                </intersection>
+                <intersection id="6" externalid="13757741" noderefs="417" control="signalised" types="junction">
+                    <segments type="approach" refs="1619,1799,456"/>
+                </intersection>
+                <intersection id="60" externalid="6038996872" noderefs="3078" control="signalised" types="crossing">
+                    <segments type="approach" refs="2452,4961,6509,8277,8279"/>
+                </intersection>
+                <intersection id="61" externalid="6038996874" noderefs="2282" control="signalised" types="crossing">
+                    <segments type="approach" refs="2458,3356,3357,7665"/>
+                </intersection>
+                <intersection id="62" externalid="6038996875" noderefs="3645" control="signalised" types="crossing">
+                    <segments type="approach" refs="3353,7664,9103,9105"/>
+                </intersection>
+                <intersection id="63" externalid="6038996879" noderefs="3646" control="signalised" types="crossing">
+                    <segments type="approach" refs="10010,1803,9107,9109"/>
+                </intersection>
+                <intersection id="64" externalid="6076031965" noderefs="1759" control="signalised" types="crossing">
+                    <segments type="approach" refs="2471,6374,7252"/>
+                </intersection>
+                <intersection id="65" externalid="6337512681" noderefs="1781" control="signalised" types="crossing">
+                    <segments type="approach" refs="2506,4875,7266,733"/>
+                </intersection>
+                <intersection id="66" externalid="6337588985" noderefs="1906" control="signalised" types="crossing">
+                    <segments type="approach" refs="2541,2746,731,7336,7338"/>
+                </intersection>
+                <intersection id="67" externalid="6476830385" noderefs="3654" control="signalised" types="crossing">
+                    <segments type="approach" refs="8582,9139,9141,9950"/>
+                </intersection>
+                <intersection id="68" externalid="6594385336" noderefs="3663" control="signalised" types="crossing">
+                    <segments type="approach" refs="2880,5385,9175,9177"/>
+                </intersection>
+                <intersection id="69" externalid="6936407757" noderefs="3700" control="signalised" types="crossing">
+                    <segments type="approach" refs="5215,8752,9321,9323"/>
+                </intersection>
+                <intersection id="7" externalid="13877961" noderefs="3513" control="signalised" types="crossing">
+                    <segments type="approach" refs="1801,2557,8581,8583"/>
+                </intersection>
+                <intersection id="70" externalid="6936407779" noderefs="3712" control="signalised" types="crossing">
+                    <segments type="approach" refs="1271,5157,9369,9371"/>
+                </intersection>
+                <intersection id="71" externalid="6936407780" noderefs="3713" control="signalised" types="crossing">
+                    <segments type="approach" refs="5163,9362,9373,9375"/>
+                </intersection>
+                <intersection id="72" externalid="6936407781" noderefs="1203" control="signalised" types="crossing">
+                    <segments type="approach" refs="1600,5159,6617,6785"/>
+                </intersection>
+                <intersection id="73" externalid="8205512267" noderefs="3744" control="signalised" types="crossing">
+                    <segments type="approach" refs="1893,3608,9497,9499"/>
+                </intersection>
+                <intersection id="74" externalid="8608847048" noderefs="3748" control="signalised" types="crossing">
+                    <segments type="approach" refs="2825,3660,9513,9515"/>
+                </intersection>
+                <intersection id="75" externalid="8608847049" noderefs="1953" control="signalised" types="crossing">
+                    <segments type="approach" refs="2821,3658,4256,4258"/>
+                </intersection>
+                <intersection id="76" externalid="8608847061" noderefs="3750" control="signalised" types="crossing">
+                    <segments type="approach" refs="3562,3674,9521,9523"/>
+                </intersection>
+                <intersection id="77" externalid="9006017848" noderefs="3756" control="signalised" types="crossing">
+                    <segments type="approach" refs="3458,4738,9546"/>
+                </intersection>
+                <intersection id="78" externalid="9006017850" noderefs="3757" control="signalised" types="crossing">
+                    <segments type="approach" refs="3455,4726,9548,9550"/>
+                </intersection>
+                <intersection id="79" externalid="9006017851" noderefs="3758" control="signalised" types="crossing">
+                    <segments type="approach" refs="4728,91,9552,9554"/>
+                </intersection>
+                <intersection id="8" externalid="13887177" noderefs="847" control="signalised" types="junction">
+                    <segments type="approach" refs="4240,4242"/>
+                </intersection>
+                <intersection id="80" externalid="9006017852" noderefs="3759" control="signalised" types="crossing">
+                    <segments type="approach" refs="3739,9551,9556,9558"/>
+                </intersection>
+                <intersection id="81" externalid="9006017855" noderefs="3760" control="signalised" types="crossing">
+                    <segments type="approach" refs="4724,924,9561"/>
+                </intersection>
+                <intersection id="82" externalid="9006017857" noderefs="3761" control="signalised" types="crossing">
+                    <segments type="approach" refs="8730,9563,9565,9568"/>
+                </intersection>
+                <intersection id="83" externalid="9006017858" noderefs="3762" control="signalised" types="crossing">
+                    <segments type="approach" refs="4782,616,9567,9569"/>
+                </intersection>
+                <intersection id="84" externalid="9006017859" noderefs="3763" control="signalised" types="crossing">
+                    <segments type="approach" refs="4752,624,9571,9573"/>
+                </intersection>
+                <intersection id="85" externalid="9006017860" noderefs="3764" control="signalised" types="crossing">
+                    <segments type="approach" refs="8728,9572,9575,9577"/>
+                </intersection>
+                <intersection id="86" externalid="9006017862" noderefs="3765" control="signalised" types="crossing">
+                    <segments type="approach" refs="10150,4776,9579,9581"/>
+                </intersection>
+                <intersection id="87" externalid="9006017863" noderefs="3766" control="signalised" types="crossing">
+                    <segments type="approach" refs="10154,9578,9583,9585"/>
+                </intersection>
+                <intersection id="88" externalid="9006017864" noderefs="3767" control="signalised" types="crossing">
+                    <segments type="approach" refs="3747,4750,9587,9589"/>
+                </intersection>
+                <intersection id="89" externalid="9469982620" noderefs="3770" control="signalised" types="crossing">
+                    <segments type="approach" refs="115,5533,9599,9601"/>
+                </intersection>
+                <intersection id="9" externalid="15397462" noderefs="747" control="signalised" types="junction">
+                    <segments type="approach" refs="1644,3296,7806,895"/>
+                </intersection>
+                <intersection id="90" externalid="9810727898" noderefs="3774" control="signalised" types="crossing">
+                    <segments type="approach" refs="4590,6250,9615,9617"/>
+                </intersection>
+                <intersection id="91" externalid="9810727901" noderefs="3775" control="signalised" types="crossing">
+                    <segments type="approach" refs="1805,4584,9619,9621"/>
+                </intersection>
+                <intersection id="92" externalid="9885532912" noderefs="3778" control="signalised" types="crossing">
+                    <segments type="approach" refs="7986,9631,9633,9636"/>
+                </intersection>
+                <intersection id="93" externalid="9885532913" noderefs="3779" control="signalised" types="crossing">
+                    <segments type="approach" refs="3307,9608,9635,9637"/>
+                </intersection>
+                <intersection id="94" externalid="9885532914" noderefs="2336" control="signalised" types="crossing">
+                    <segments type="approach" refs="3904,7723,8002,9656"/>
+                </intersection>
+                <intersection id="95" externalid="9888816855" noderefs="3780" control="signalised" types="crossing">
+                    <segments type="approach" refs="4176,4190,9639,9641"/>
+                </intersection>
+                <intersection id="96" externalid="9888821420" noderefs="3784" control="signalised" types="crossing">
+                    <segments type="approach" refs="6075,9655,9657,9658"/>
+                </intersection>
+                <intersection id="97" externalid="9888821421" noderefs="3785" control="signalised" types="crossing">
+                    <segments type="approach" refs="4184,8004,9659,9661"/>
+                </intersection>
+                <intersection id="98" externalid="9888821422" noderefs="3786" control="signalised" types="crossing">
+                    <segments type="approach" refs="3903,4180,9663,9665"/>
+                </intersection>
+                <intersection id="99" externalid="9888821423" noderefs="3787" control="signalised" types="crossing">
+                    <segments type="approach" refs="4475,9662,9667,9669"/>
+                </intersection>
+            </intersections>
         </layer>
     </infrastructurelayers>
 </macroscopicnetwork>

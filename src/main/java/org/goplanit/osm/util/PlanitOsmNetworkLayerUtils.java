@@ -1,6 +1,7 @@
 package org.goplanit.osm.util;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.network.LayeredNetwork;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
@@ -24,15 +25,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
+import static org.goplanit.osm.util.OsmTagUtils.PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY;
+import static org.goplanit.utils.misc.CharacterUtils.COLON;
+import static org.goplanit.utils.misc.CharacterUtils.COMMA;
+
 /**
- * Utilities regarding PLANit network layers with respect to parsing OSM netities for it 
+ * Utilities regarding PLANit network layers with respect to parsing OSM entities for it
  * 
  * @author markr
  *
  */
-public class PlanitNetworkLayerUtils {
+public class PlanitOsmNetworkLayerUtils {
 
-  private static final Logger LOGGER = Logger.getLogger(PlanitNetworkLayerUtils.class.getCanonicalName());
+  private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkLayerUtils.class.getCanonicalName());
 
   /** Collect the layers where the OSM node is active in either as an extreme node or internal to a PLANit link
    *
@@ -226,6 +231,38 @@ public class PlanitNetworkLayerUtils {
       layerData.registerPlanitNodeByOsmNode(osmNode, node);
       layerData.getProfiler().logNodeStatus(networkLayer.getNumberOfNodes());
     }
+    return node;
+  }
+
+  /**
+   * Collect the PLANit node of the osmNode, creating and registering it on the provided layer when absent
+   *
+   * @param osmNode to collect or create PLANit node for
+   * @param networkLayer to create node on
+   * @param layerData to register on
+   * @param retainOsmTags when true the OSM tags of the node are registered as custom input property
+   * @return collected or created node, null when something went wrong
+   */
+  public static Node getOrCreatePopulateAndRegisterNode(
+      OsmNode osmNode, MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData,
+      boolean retainOsmTags){
+
+    /* planit node */
+    Node node = layerData.getPlanitNodeByOsmNode(osmNode);
+    if(node == null) {
+      /* create and register */
+      node = createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
+    }
+
+    /* register original OSM tags as custom input property if indicated to be retained (we only do this for
+    *  nodes that are converted into PLANit nodes, not for intermediate nodes (shape nodes) */
+    if(retainOsmTags){
+      var tags = OsmModelUtil.getTagsAsMap(osmNode);
+      if(!tags.isEmpty()) {
+        node.addInputProperty(PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY, OsmTagUtils.osm4jTagsToString(tags, COMMA, COLON));
+      }
+    }
+
     return node;
   }
 

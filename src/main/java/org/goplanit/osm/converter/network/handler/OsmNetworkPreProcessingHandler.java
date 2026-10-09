@@ -3,9 +3,11 @@ package org.goplanit.osm.converter.network.handler;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
+import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.osm.util.OsmNodeUtils;
 
 import java.io.IOException;
@@ -219,6 +221,12 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         // 1. register all OSM nodes that are deemed eligible and have been pre-registered based on identified
         // OSM ways' nodes or special cases
         osmNodeData.registerEligibleOsmNode(node);
+
+        // 2. record the traffic signals among them, linked to junctions once the layers are complete
+        if(getSettings().isParseIntersections() && node.getNumberOfTags() > 0 &&
+            OsmTrafficSignalTags.isTrafficSignals(OsmModelUtil.getTagsAsMap(node))){
+          getNetworkData().registerTrafficSignalOsmNodeId(node.getId());
+        }
       }
     }
 

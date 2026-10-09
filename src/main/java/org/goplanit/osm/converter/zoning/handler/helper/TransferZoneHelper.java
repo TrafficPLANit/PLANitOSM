@@ -754,7 +754,7 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     if(!osmNodeTags.containsKey(OsmTags.LAYER)){
       /* collect from PLANit link(s) the stop position is connected to */
       var eligibleNetworkLayers =
-          PlanitNetworkLayerUtils.getNetworkLayersWithActiveOsmNode(
+          PlanitOsmNetworkLayerUtils.getNetworkLayersWithActiveOsmNode(
                   stopPositionOsmNode.getId(), referenceNetwork, getNetworkToZoningData());
 
       var stopPositionLocation = OsmNodeUtils.createPoint(stopPositionOsmNode);

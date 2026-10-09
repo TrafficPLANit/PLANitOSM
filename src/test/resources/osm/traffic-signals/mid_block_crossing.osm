@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Signalised pedestrian crossing on shape node 31 of way 10 (2-31-3), about 150 m from either end, with no junction
+     anywhere; the footway crossing there is not in the data; primary, two-way -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="2" lat="-33.8700" lon="151.2084"/>
+  <node id="3" lat="-33.8700" lon="151.2116"/>
+  <node id="31" lat="-33.8700" lon="151.2100">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <way id="10">
+    <nd ref="2"/><nd ref="31"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+</osm>

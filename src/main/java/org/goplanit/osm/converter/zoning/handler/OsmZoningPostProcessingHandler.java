@@ -768,7 +768,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
 
     /* create network node at ferry terminal location + find closest node on chosen ferry link */
-    var ferryStopNode = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(
+    var ferryStopNode = PlanitOsmNetworkLayerUtils.createPopulateAndRegisterNode(
         osmFerryStopLocation, networkLayer, getNetworkToZoningData().getNetworkLayerData(networkLayer));
     var closestNodeWithDistance = PlanitEntityGeoUtils.findPlanitEntityClosest(
         osmFerryStopLocation.getCoordinate(),
@@ -780,7 +780,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* create new ferry link to attach to ferry network */
     var lineString = PlanitJtsUtils.createLineString(
         osmFerryStopLocation.getCoordinate(), closestNodeWithDistance.first().getPosition().getCoordinate());
-    var ferryLink = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
+    var ferryLink = PlanitOsmNetworkLayerUtils.createPopulateAndRegisterLink(
         ferryStopNode,
         closestNodeWithDistance.first(),
         lineString,
@@ -802,10 +802,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     var lanes = getNetworkToZoningData().getNetworkSettings().getDefaultDirectionalLanesByWayType(
         waterWayKey, waterWayValue);
     /* a->b */
-    PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+    PlanitOsmNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
         ferryLink, true /* A->B */, linkSegmentType, speedLimit, lanes, networkLayer);
     /* b->a */
-    PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+    PlanitOsmNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
         ferryLink, false /* B->A */, linkSegmentType, speedLimit, lanes, networkLayer);
 
     return true;

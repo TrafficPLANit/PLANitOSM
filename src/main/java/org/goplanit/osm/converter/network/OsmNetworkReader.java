@@ -12,6 +12,7 @@ import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
 import org.goplanit.network.MacroscopicNetworkModifierUtils;
 import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.converter.OsmBoundingBoundaryPreProcessingHandler;
+import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
@@ -123,7 +124,7 @@ public class OsmNetworkReader implements NetworkReader {
    * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
    * private so only the factory can apply it at creation time.
    */
-  void suppressSettingsLogging() {
+  protected void suppressSettingsLogging() {
     this.suppressSettingsLogging = true;
   }
 
@@ -331,8 +332,12 @@ public class OsmNetworkReader implements NetworkReader {
         }
       }
 
-      /* only once every mode has been dealt with is it settled what nothing can use any more */
-      var cleanup = MacroscopicNetworkLayerUtils.removeInfrastructureWithoutModeAccess(layer);
+      /* only once every mode has been dealt with is it settled what nothing can use any more; the intersections this
+       * removes are recorded as lost */
+      var cleanup = layer.getLayerModifier().removeInfrastructureWithoutModeAccess();
+      var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
+      cleanup.getRemovedIntersections().forEach(intersection -> planitEntityDiagnostics.registerIssue(
+          OsmPlanitEntityIssue.INTERSECTION_LOST_BY_PRUNING, intersection.getExternalId()));
       if(!cleanup.isEmpty()) {
         LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
       }
@@ -455,6 +460,13 @@ public class OsmNetworkReader implements NetworkReader {
 
     // clean up ids to be contiguous
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(osmNetworkToPopulate);
+
+    /* what became of the OSM entities read, and of the PLANit entities derived from them */
+    if(getSettings().isParseIntersections()) {
+      networkData.getParseDiagnostics().logSummary(LOGGER, "[STATS] OSM traffic signals",
+          networkData.getTrafficSignalOsmNodeIds().size());
+      networkData.getPlanitEntityDiagnostics().logSummary(LOGGER, "[STATS] PLANit intersections");
+    }
     LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */

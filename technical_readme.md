@@ -115,6 +115,202 @@ unique even during the breaking of links.
 > as their elements. Hence, breaking links will eventually end up invoking the modification on a directed graph 
 > implementation
 
+### Traffic signals and intersections
+
+When parsing intersections is on (`setParseIntersections`, the default), the network reader turns OSM traffic signals
+into signalised intersections of the layer. An intersection has one or more member nodes, a kind (`junction`,
+`crossing`, or both) and its approaches: the link segments entering it that its signals control. Its external id lists
+the OSM node ids of the signals defining it, comma separated, e.g. the stop lines of its arms. Nothing else in the
+network changes, except that links can be broken at isolated signalised crossings when that setting is on (see below).
+
+Where it happens:
+
+* Pre-processing records the traffic signals among the eligible OSM nodes, by OSM node id
+  (`OsmNetworkReaderData.registerTrafficSignalOsmNodeId`).
+* Per layer, at the end of `OsmNetworkLayerParser.complete()`, after `breakLinksWithInternalConnections()`, the
+  `OsmTrafficSignalIntegrator` links the recorded signals to the layer's nodes and creates the intersections.
+* When the reader removes dangling subnetworks, the clean-up of infrastructure without mode access
+  (`MacroscopicNetworkLayerModifier.removeInfrastructureWithoutModeAccess()`) removes the intersections left without
+  approaches; its result lists them, and each is recorded as lost by pruning. An intersection whose approaches only
+  lose vehicle access, staying open to walking, is kept (X-031).
+
+#### Which signals count
+
+The rules live in `OsmTrafficSignalTags`:
+
+* **vehicle signal** - `highway=traffic_signals`, unless its `traffic_signals=*` value marks a crossing or a signal that
+  controls no traffic.
+* **crossing signal** - `crossing=traffic_signals`, `crossing:signals=yes`, or `highway=traffic_signals` with
+  `traffic_signals=pedestrian_crossing` or `traffic_signals=crossing` (`CROSSING_TRAFFIC_SIGNAL_TYPES`).
+* **not controlling traffic** - `traffic_signals=ramp_meter`, `emergency`, `blinker`, `gate`, `control_box` or
+  `level_crossing` (`NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES`): ignored and counted.
+* A node tagged both `highway=traffic_signals` and `crossing=traffic_signals` is a vehicle signal and a crossing signal, each
+  handled by its own rules. OSM uses this both for junctions mapped with signals at their stop lines and for pedestrian
+  signals, and no tag tells them apart, so both roles are kept.
+
+#### Junction nodes
+
+A node is a junction node for vehicle signals where three or more links usable by a motorised road mode meet. A crosswalk,
+where footways meet the road, is not one: the road simply continues through it. For crossing signals every parsed link
+counts, footways included, so where a parsed footway crosses the road the crossing node is a junction node of its own.
+
+#### The cases, in the order tried
+
+Each signal is handled by the first case that applies, cheapest check first. There are three passes, because later
+cases depend on what earlier ones create; the integrator lists the same cases on
+`discardPostponeOrConstructIntersection()`, `assignVehicleSignalsToJunctions()` and
+`integrateCrossingsAndUnassignedVehicleSignals()`.
+
+First pass, per signal:
+
+1. Not controlling traffic: ignored.
+2. Not on a node of the layer nor inside one of its links: ignored.
+3. Vehicle signal on a junction node: that node becomes a `junction`, every segment entering it an approach, except a
+   segment against the traffic leaving the node (no motorised road or rail mode on it, while its opposite segment
+   carries one), which approaches nothing the signal controls.
+
+   ```
+                 4
+                 |
+                 v
+        2 --->-- 1 --<--- 3      1: highway=traffic_signals, on the junction's centre
+                 ^               arrows mark the approaches
+                 |
+                 5
+   ```
+
+4. Vehicle signal on a road but not on a junction node, e.g. at a stop line before the junction: the junctions it
+   reaches are collected for the second pass. The road is
+   followed along its motorised segments, through nodes where it simply continues (crosswalks included), up to the
+   maximum distance (`setMaximumDistanceVehicleSignalToJunctionInMeters`, default 50 m), in each direction the signal
+   applies to:
+   * `traffic_signals:direction=forward` or `backward`, relative to the OSM way, only that direction; `both`, both; any
+     other value, such as a compass bearing, is handled as untagged and noted;
+   * on a one-way road only the direction of travel;
+   * no direction tag, or ways through the signal that disagree on their orientation (counted as a direction conflict):
+     one direction only, the one whose first target is nearest (second pass).
+   Per direction the signal goes to the first eligible junction: one where only service lanes or living streets without
+   signals of their own join is passed over when a junction that counts follows within reach.
+5. Signal on a track, cycleway or footway (no road through its node): on a track or cycleway its own way is followed,
+   on a cycleway only along segments that allow bicycles, to the nearest node a road meets. From a tram or light rail
+   track, within the railway settings' maximum (`setMaximumDistanceTrackSignalToRoadCrossingInMeters`, default 50 m),
+   that node becomes a `junction`, car traffic being held there for the tram; from a cycleway, within the crossing
+   distance (below), a `crossing`; every segment entering it an approach. Where the way branches before a road and more
+   than one branch reaches a road within reach, the branching node becomes that intersection instead, with the segment
+   arriving there from the signal as its only approach and no road node joined; a branch reaching no road is not a
+   candidate. With no road in reach the signal is ignored, as is a signal on any other way, such as a footway. No link is
+   broken.
+
+   ```
+             12      13
+             |       |
+     1 ----- 2 ----- 5 ----- 3     road
+             |      /
+             15 --/                15: the track branches, each branch reaching the road
+             |
+             11                    11: signal on the track
+             |
+             10
+   ```
+
+   Here 15 becomes a `junction` with approach 10->15 only; neither 2 nor 5 is joined.
+6. Crossing signal on a junction node: that node becomes a `crossing`, every segment entering it an approach; with a
+   vehicle signal on it as well, it is both a `junction` and a `crossing`.
+7. Any other crossing signal is collected for the third pass.
+
+Second pass, per collected vehicle signal, once the signal evidence of every junction is known (a vehicle signal on its node, or
+a vehicle signal on another road reaching it first). First, a direction in which the signal reaches a signalised crossing
+with no junction within the crossing distance beyond it is dropped: the signal is that crossing's stop line, not the
+junction's. A junction where only service lanes or living streets of lower capacity than the road through join, with
+no signals of its own, does not count here. Before that, a signal without a usable direction keeps the direction whose
+first target is nearest: the junction it would be assigned to there, or an isolated crossing before it; within 10 m,
+the junction where the road of higher capacity crosses. A signal with no direction left is counted as such, takes no
+part in the signal evidence and waits for the third pass. Then:
+
+1. The junction ahead: in each direction, the segment arriving at the first junction reached becomes its approach.
+   When that first junction has no signal evidence of its own, and a junction further along within the maximum
+   distance is where a road of higher capacity crosses, the signal goes to the latter instead, since a side street with
+   no signals of its own is passed on the way to the signalised junction:
+
+   ```
+                                     7
+                                     |
+        2 ------------------- 1 -4 --- 6 ------ 3      1: vehicle signal, direction forward
+                            ~5 m | ~20 m|              4: residential side street, no signals of its own
+                                 9     8               6: junction with a primary road
+   ```
+
+   Here junction 6 gets approach 4->6 and side street 4 gets nothing.
+2. No junction ahead, a bounding area is set, and the signal lies outside it (on a way running out of it) or inside it
+   within the maximum distance of its edge: the junction it controls is likely cut off, so the signal is ignored.
+3. Otherwise collected for the third pass.
+
+Third pass:
+
+1. Per collected crossing signal: part of a signalised junction nearby when, in either direction along the road, the
+   first junction reached within the crossing distance (`setMaximumDistanceSignalisedCrossingToJunctionInMeters`,
+   default 30 m) is signalised with the arriving segment as one of its approaches; nothing is created for it.
+
+   ```
+                              8
+                              |
+        2 --------------- 31 -- 1 --------------- 3    1: vehicle signal on the junction's centre
+                            ~10 m                      31: crossing signal, footways not parsed
+                              |
+                              9
+   ```
+
+   Otherwise it is an isolated crossing (4.).
+2. Per collected vehicle signal without a junction ahead, all before any of them becomes a crossing, so the result does not
+   depend on their order: when a signalised crossing lies ahead along the road within the crossing distance, the signal
+   is the stop line of that crossing, and the segment arriving there carries it; it makes no crossing of its own.
+3. The remaining vehicle signals are isolated crossings too (4.): what crosses there is unknown, but not only cars. Stop
+   lines of isolated crossings from the second pass join their crossing when it has an intersection, and create
+   nothing otherwise.
+4. An isolated crossing becomes its own `crossing` intersection, every segment entering it an approach, only when
+   breaking links at isolated signalised crossings is on (`setBreakLinksAtIsolatedSignalisedCrossings`, default off);
+   the link is then broken at the signal's node when it is not a PLANit node yet. With the setting off nothing is
+   created and no link is broken.
+
+   ```
+        2 ------------------- 31 ------------------- 3      31: crossing signal, no junction anywhere
+                  ~150 m               ~150 m
+   ```
+
+   With the setting on, the link is broken at 31, which becomes a crossing with approaches 2->31 and 3->31.
+
+Links broken for an isolated crossing are broken through the layer modifier, so intersections registered before stay
+consistent, and a listener keeps the record of signals per approach on the pieces of a broken approach.
+
+Divided roads are not joined: each carriageway's crossing node is a junction of its own, with the approaches that reach
+it.
+
+```
+    2 ->-- 21 > ------- 5 ------->-- 3      eastbound carriageway
+                        |
+    8 --<------------- 6 ------ < 23 --<-- 4    westbound carriageway
+```
+
+Here 5 and 6 are two intersections; the cross road between them is no approach.
+
+#### Diagnostics
+
+What happens is recorded where it is decided, in two stages, and logged at the end of `read()`:
+
+* **OSM traffic signals** (`OsmParseDiagnostics`, `OsmTrafficSignalOutcome`) - the outcomes with a sample of their OSM
+  node ids, logged per group (`OsmTrafficSignalOutcomeGroup`), each adding up: signals ignored before their kind
+  matters, as a share of all signals recorded; one outcome per vehicle signal, as a share of the vehicle signals; one
+  per crossing signal, as a share of the crossing signals, a node with both kinds counted in both; then the notes
+  recorded alongside an outcome (e.g. passing a side street for a higher class junction, an unrecognised direction), as
+  counts only. For vehicle signals left as isolated crossings, a distribution of how far along the road the nearest
+  junction is, up to 200 m, follows.
+* **PLANit intersections** (`OsmPlanitEntityDiagnostics`, `OsmPlanitEntityIssue`) - the intersections and approaches
+  created, and their issues: an intersection lost when pruning removed all its approaches (read from the clean-up's
+  result), an approach no motorised road or rail mode can use, and an intersection without any such approach.
+
+The rules above are covered scenario by scenario in `OsmTrafficSignalsTest` and `OsmTrafficSignalIntegratorTest`, each
+hand-made `.osm` file under `src/test/resources/osm/traffic-signals/` drawn in the test.
+
 ### PLANit infrastructure layers
 
 PLANit in principle supports multiple infrastructure layers, where one or more modes are exclusively tied to a layer. 

@@ -18,6 +18,7 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -63,5 +64,46 @@ public class PlanitNetworkLayerModifierUtils {
       });
     }
     return groupNewLinksByOriginalLinkKey;
+  }
+
+  /**
+   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
+   * on an existing link but also an internal link on another node, we break the links where this node
+   * is internal. the end result is a situations where all nodes used by more than one link are extreme
+   * nodes, i.e., start/end nodes.
+   * <p>
+   * Osm ways with multiple PLANit links associated with them can cause problems because in the handler we only
+   * register nodes internal to the original way to link mapping. If a link is broken we adjust the original link
+   * and create an additional link causing the original mapping between internal nodes and PLANit link to be
+   * potentially incorrect. We require the osmWaysWithMultiplePlanitLinks map to track these changes so that
+   * we can always identify which of multiple PLANit links an internal node currently resides on.
+   *
+   * @param networkLayer the links are on
+   * @param layerData of the layer, tracking which links locations are internal to
+   * @param thePlanitNode to break links for where it is internal to them
+   * @param crs to recompute the lengths of the broken links with
+   * @return true when links were broken, false otherwise
+   */
+  public static boolean breakLinksWithInternalNode(
+      MacroscopicNetworkLayer networkLayer, OsmNetworkReaderLayerData layerData, Node thePlanitNode,
+      CoordinateReferenceSystem crs) {
+    if(layerData.isLocationInternalToAnyLink(thePlanitNode.getPosition())) {
+      /* links to break */
+      List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(thePlanitNode.getPosition());
+
+      /* break links */
+      var brokenLinks = networkLayer.getLayerModifier().breakAt(linksToBreak, thePlanitNode, crs);
+
+      var newOsmWaysWithMultipleLinks = convertBrokenLinksByGroupingThemWithCustomKey(
+          brokenLinks,
+          l -> Long.parseLong(l.getExternalId()));
+
+      /* update mapping since another osmWayId now has multiple PLANit links and this is needed in the layer
+      data to be able to find the correct PLANit links for which osm nodes are internal */
+      layerData.updateOsmWaysWithMultiplePlanitLinks(newOsmWaysWithMultipleLinks);
+
+      return true;
+    }
+    return false;
   }
 }

@@ -82,7 +82,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @return true when one or more layers are found, false otherwise
    */
   private boolean hasNetworkLayersWithActiveOsmNode(long osmNodeId){
-    return PlanitNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getNetwork(), getNetworkData());
+    return PlanitOsmNetworkLayerUtils.hasNetworkLayersWithActiveOsmNode(osmNodeId, getNetwork(), getNetworkData());
   }
 
   /**

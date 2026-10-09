@@ -2,7 +2,6 @@ package org.goplanit.osm.converter.network;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
-import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.graph.directed.modifier.event.handler.SyncXmlIdToIdBreakEdgeSegmentHandler;
 import org.goplanit.graph.modifier.event.handler.SyncXmlIdToIdBreakEdgeHandler;
 import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
@@ -26,7 +25,6 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentUtils;
-import org.goplanit.utils.graph.directed.BannedMovement;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.LineString;
@@ -77,6 +75,9 @@ public class OsmNetworkLayerParser {
   
   /** geo utility instance based on network wide crs this layer is part of */
   private final PlanitJtsCrsUtils geoUtils;
+
+  /** the integrator of traffic signals run on the layer, null when intersections are not parsed */
+  private OsmTrafficSignalIntegrator trafficSignalIntegrator;
   
   /** listener with functionality to sync XML ids to unique internal id upon breaking a link, ensures that
    * when persisting
@@ -316,7 +317,7 @@ public class OsmNetworkLayerParser {
     /* when not present and valid geometry, create new link */
     if(link == null) {
 
-      link = PlanitNetworkLayerUtils.createPopulateAndRegisterLink(
+      link = PlanitOsmNetworkLayerUtils.createPopulateAndRegisterLink(
           nodeFirst,
           nodeLast,
           lineString,
@@ -327,6 +328,11 @@ public class OsmNetworkLayerParser {
 
       /* register the links vertical layer index (used in the zoning reader for example) */
       getLayerData().setLinkVerticalLayerIndex(link, tags);
+
+      /* lowest order roads, known only from the OSM way's tags, are handed to the traffic signal integrator */
+      if(trafficSignalIntegrator != null){
+        trafficSignalIntegrator.registerIfLowestOrderRoad(link, tags);
+      }
 
       /* register original OSM tags as custom input property if indicated to be retained */
       if(settings.isRetainOsmTags()){
@@ -594,7 +600,7 @@ public class OsmNetworkLayerParser {
       Integer numLanes){
 
     var linkSegment =
-        PlanitNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
+        PlanitOsmNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
             link, directionAb, linkSegmentType, speedLimit, numLanes, networkLayer);
     layerData.getProfiler().logLinkSegmentStatus(networkLayer.getNumberOfLinkSegments());
     return linkSegment;
@@ -712,25 +718,10 @@ public class OsmNetworkLayerParser {
     if(osmNode == null) {
       return null;
     }
-    
-    /* planit node */
-    Node node = this.layerData.getPlanitNodeByOsmNode(osmNode);
-    if(node == null) {      
-      /* create and register */
-      node = PlanitNetworkLayerUtils.createPopulateAndRegisterNode(osmNode, networkLayer, layerData);
-    }
 
-    /* register original OSM tags as custom input property if indicated to be retained (we only do this for
-    *  nodes that are converted into PLANit nodes, not for intermediate nodes (shape nodes) */
-    if(settings.isRetainOsmTags()){
-      var tags = OsmModelUtil.getTagsAsMap(osmNode);
-      if(!tags.isEmpty()) {
-        node.addInputProperty(PLANIT_OSM_TAGS_INPUT_PROPERTY_KEY, OsmTagUtils.osm4jTagsToString(tags, COMMA, COLON));
-      }
-    }
-
-    return node;
-  }   
+    return PlanitOsmNetworkLayerUtils.getOrCreatePopulateAndRegisterNode(
+        osmNode, networkLayer, layerData, settings.isRetainOsmTags());
+  }
   
   
   /** extract a link from the way
@@ -837,6 +828,10 @@ public class OsmNetworkLayerParser {
     
     this.layerData = new OsmNetworkReaderLayerData();    
     this.modeParser = new OsmNetworkLayerModeConversion(settings, networkLayer);
+    if(settings.isParseIntersections()) {
+      this.trafficSignalIntegrator =
+          new OsmTrafficSignalIntegrator(networkLayer, layerData, networkData, settings, geoUtils);
+    }
     
     initialiseEventListeners();        
   }
@@ -909,49 +904,6 @@ public class OsmNetworkLayerParser {
    * is internal. the end result is a situations where all nodes used by more than one link are extreme
    * nodes, i.e., start/end nodes.
    * <p>
-   * Osm ways with multiple PLANit links associated with them can cause problems because in the handler we only
-   * register nodes internal to the original way to link mapping. If a link is broken we adjust the original link
-   * and create an additional link causing the original mapping between internal nodes and PLANit link to be
-   * potentially incorrect. We require the osmWaysWithMultiplePlanitLinks map to track these changes so that
-   * we can always identify which of multiple PLANit links an internal node currently resides on.
-   *
-   * @param thePlanitNode           to break links for where it is internal to them (based on its OSM node id reference)
-   * @param movementsByCentreVertex to be able to quickly update banned turns affected by the breaking of links
-   * @return true when links were broken, false otherwise
-   */
-  protected boolean breakLinksWithInternalNode(
-      final Node thePlanitNode, Map<Node, List<BannedMovement>> movementsByCentreVertex){
-
-    if(layerData.isLocationInternalToAnyLink(thePlanitNode.getPosition())) {
-      /* links to break */
-      List<MacroscopicLink> linksToBreak = layerData.findPlanitLinksWithInternalLocation(thePlanitNode.getPosition());
-                  
-      /* break links */
-      var brokenLinks = networkLayer.getLayerModifier().breakAt(
-          linksToBreak,
-          thePlanitNode,
-          movementsByCentreVertex,
-          geoUtils.getCoordinateReferenceSystem());
-
-      var newOsmWaysWithMultipleLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
-          brokenLinks,
-          l -> Long.parseLong(l.getExternalId()));
-      
-      /* update mapping since another osmWayId now has multiple PLANit links and this is needed in the layer
-      data to be able to find the correct PLANit links for which osm nodes are internal */
-      layerData.updateOsmWaysWithMultiplePlanitLinks(newOsmWaysWithMultipleLinks);
-      
-      return true;
-    }
-    return false;
-  }
-  
-  /**
-   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
-   * on an existing link but also an internal link on another node, we break the links where this node
-   * is internal. the end result is a situations where all nodes used by more than one link are extreme 
-   * nodes, i.e., start/end nodes.
-   * <p>
    * Osm ways with multiple planit links associated with them can cause problems because in the handler we only register
    * nodes internal to the original way to link mapping. If a link is broken we adjust the original link and create
    * an additional link causing the original mapping between internal nodes and PLANit link to be potentially incorrect.
@@ -962,11 +914,6 @@ public class OsmNetworkLayerParser {
   protected void breakLinksWithInternalConnections() {
     LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");
 
-    // get all movements indexed by centre vertex. Any breaking of edges will allow quick lookups
-    // without breaking because nodes are not altered/removed
-    var movementsByCentreVertex =
-        this.networkLayer.getBannedMovements().createGroupByIndex(m -> (Node)m.getCentreVertex());
-
     long nodeIndex = -1;
     long originalNumberOfNodes = networkLayer.getNumberOfNodes();
 
@@ -975,7 +922,8 @@ public class OsmNetworkLayerParser {
       Node node = networkLayer.getNodes().get(nodeIndex);
 
       // 1. break links when a link's internal node is another existing link's extreme node
-      boolean linksBroken = breakLinksWithInternalNode(node, movementsByCentreVertex);
+      boolean linksBroken = PlanitNetworkLayerModifierUtils.breakLinksWithInternalNode(
+          networkLayer, layerData, node, geoUtils.getCoordinateReferenceSystem());
       if(linksBroken) {
         processedOsmNodeIds.add(Long.valueOf(node.getExternalId()));
       }
@@ -993,7 +941,8 @@ public class OsmNetworkLayerParser {
           LOGGER.severe(String.format("OSM node %d internal to one or more OSM ways could not be extracted " +
               "as PLANit node when breaking links at its location, this should not happen", osmNode.getId()));
         }
-        breakLinksWithInternalNode(planitIntersectionNode, movementsByCentreVertex);
+        PlanitNetworkLayerModifierUtils.breakLinksWithInternalNode(
+            networkLayer, layerData, planitIntersectionNode, geoUtils.getCoordinateReferenceSystem());
       }
     });
 
@@ -1036,7 +985,12 @@ public class OsmNetworkLayerParser {
 
     /* break links */
     breakLinksWithInternalConnections();
-    
+
+    /* intersections from traffic signals, now that every junction node exists */
+    if(settings.isParseIntersections()) {
+      trafficSignalIntegrator.execute();
+    }
+
     /* useful for debugging */
     networkLayer.validate();
 
@@ -1051,6 +1005,15 @@ public class OsmNetworkLayerParser {
    */
   public OsmNetworkReaderLayerData getLayerData() {
     return this.layerData;
+  }
+
+  /**
+   * Collect the integrator of traffic signals run on the layer, holding what became of each signal
+   *
+   * @return integrator, null when intersections are not parsed
+   */
+  public OsmTrafficSignalIntegrator getTrafficSignalIntegrator() {
+    return trafficSignalIntegrator;
   }
 
 }
