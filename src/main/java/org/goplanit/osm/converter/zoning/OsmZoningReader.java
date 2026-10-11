@@ -69,7 +69,7 @@ public class OsmZoningReader implements ZoningReader {
    * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
    * private so only the factory can apply it at creation time.
    */
-  void suppressSettingsLogging() {
+  protected void suppressSettingsLogging() {
     this.suppressSettingsLogging = true;
   }
 

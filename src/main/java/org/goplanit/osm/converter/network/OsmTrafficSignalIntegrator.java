@@ -73,7 +73,7 @@ public class OsmTrafficSignalIntegrator {
 
   /** looking ahead along the road from a vehicle signal. It travels segments motorised road traffic can use, looks for
    * nodes where the road branches, and carries on past them along the same OSM way or a way of the same name */
-  private static final LookAhead ROAD_LOOK_AHEAD = new LookAhead(
+  private static final LookAhead LOOK_AHEAD_FOR_JUNCTIONS = new LookAhead(
       OsmTrafficSignalIntegrator::isMotorisedRoadSegment,
       OsmTrafficSignalIntegrator::isRoadBranchNode, true);
 
@@ -100,7 +100,7 @@ public class OsmTrafficSignalIntegrator {
   private final Set<String> lowestOrderRoadOsmWayIds = new HashSet<>();
 
   /** looking ahead along the road from a vehicle signal to the first signalised crossing */
-  private final LookAhead crossingLookAhead = new LookAhead(
+  private final LookAhead lookAheadForSignalisedCrossings = new LookAhead(
       OsmTrafficSignalIntegrator::isMotorisedRoadSegment, this::isSignalisedCrossingNode, false);
 
   /** intersections created but not yet registered on the layer, in the order created */
@@ -151,7 +151,7 @@ public class OsmTrafficSignalIntegrator {
 
   /** A node a look-ahead reaches from a signal: the segment arriving there, and the distance to it. The node can be a
    * junction or a signalised crossing. From a track or cycleway it can also be a road node or a branch node */
-  private static final class JunctionAhead {
+  private static final class TargetAhead {
 
     /** the segment arriving at the node */
     private final MacroscopicLinkSegment arriving;
@@ -165,7 +165,7 @@ public class OsmTrafficSignalIntegrator {
      * @param arriving the segment arriving at the node
      * @param distance from the signal to the node, along the way, in metres
      */
-    private JunctionAhead(MacroscopicLinkSegment arriving, double distance) {
+    private TargetAhead(MacroscopicLinkSegment arriving, double distance) {
       this.arriving = arriving;
       this.distance = distance;
     }
@@ -175,7 +175,7 @@ public class OsmTrafficSignalIntegrator {
      *
      * @return node reached
      */
-    private Node getJunction() {
+    private Node getTargetNode() {
       return (Node) arriving.getDownstreamVertex();
     }
   }
@@ -188,7 +188,7 @@ public class OsmTrafficSignalIntegrator {
     private final OsmNode signal;
 
     /** per direction the signal applies to, the junctions reached along the road, nearest first. No list is empty */
-    private final List<List<JunctionAhead>> junctionsPerDirection;
+    private final List<List<TargetAhead>> junctionsPerDirection;
 
     /** true when the signal applies to one direction, but it is unknown which. That is the case when no direction is
      * tagged, or when the OSM ways through it disagree on the tagged one */
@@ -201,7 +201,7 @@ public class OsmTrafficSignalIntegrator {
      * @param junctionsPerDirection per direction, the junctions reached along the road, nearest first. No list is empty
      * @param oneDirectionUnknown true when the signal applies to one direction, but it is unknown which
      */
-    private PendingVehicleSignal(OsmNode signal, List<List<JunctionAhead>> junctionsPerDirection,
+    private PendingVehicleSignal(OsmNode signal, List<List<TargetAhead>> junctionsPerDirection,
         boolean oneDirectionUnknown) {
       this.signal = signal;
       this.junctionsPerDirection = junctionsPerDirection;
@@ -216,7 +216,7 @@ public class OsmTrafficSignalIntegrator {
    * road but not on a junction node gives evidence to the first junction it reaches in each direction, for the road it
    * arrives on. Signals on a track or cycleway, and discarded signals, take no part. Whether stop lines of isolated
    * crossings take part depends on the signals it is created from. A signal is never evidence for its own road, see
-   * {@link #hasOwnSignals(JunctionAhead)}.
+   * {@link #hasOwnSignals(TargetAhead)}.
    */
   private static final class VehicleSignalEvidence {
 
@@ -237,7 +237,7 @@ public class OsmTrafficSignalIntegrator {
       for (var pendingSignal : pending) {
         for (var junctions : pendingSignal.junctionsPerDirection) {
           var first = junctions.get(0);
-          firstArrivals.computeIfAbsent(first.getJunction(), junction -> new ArrayList<>(1)).add(first.arriving);
+          firstArrivals.computeIfAbsent(first.getTargetNode(), junction -> new ArrayList<>(1)).add(first.arriving);
         }
       }
     }
@@ -249,8 +249,8 @@ public class OsmTrafficSignalIntegrator {
      * @param junctionAhead reached from the signal
      * @return true when it has signals of its own, false otherwise
      */
-    private boolean hasOwnSignals(JunctionAhead junctionAhead) {
-      var junction = junctionAhead.getJunction();
+    private boolean hasOwnSignals(TargetAhead junctionAhead) {
+      var junction = junctionAhead.getTargetNode();
       if (junctionNodesWithVehicleSignal.contains(junction)) {
         return true;
       }
@@ -261,13 +261,13 @@ public class OsmTrafficSignalIntegrator {
 
   /** The first target of a vehicle signal in one direction: the junction it would be assigned to, or an isolated
    * signalised crossing before it */
-  private static final class DirectionTarget {
+  private static final class FirstTargetInDirection {
 
     /** the junctions reached in the direction, nearest first */
-    private final List<JunctionAhead> junctions;
+    private final List<TargetAhead> junctions;
 
     /** the junction this direction resolves to, see {@link #resolveJunction(List, VehicleSignalEvidence)} */
-    private final JunctionAhead junction;
+    private final TargetAhead junction;
 
     /** distance from the signal to the target, in metres */
     private final double distance;
@@ -283,7 +283,8 @@ public class OsmTrafficSignalIntegrator {
      * @param distance from the signal to the target, in metres
      * @param isCrossing true when the target is an isolated crossing before the junction
      */
-    private DirectionTarget(List<JunctionAhead> junctions, JunctionAhead junction, double distance, boolean isCrossing) {
+    private FirstTargetInDirection(
+        List<TargetAhead> junctions, TargetAhead junction, double distance, boolean isCrossing) {
       this.junctions = junctions;
       this.junction = junction;
       this.distance = distance;
@@ -581,9 +582,9 @@ public class OsmTrafficSignalIntegrator {
    * @param junctionAhead the junction reached and the segment arriving there
    * @return links of the other roads, empty when none
    */
-  private static List<MacroscopicLink> crossingRoadLinks(JunctionAhead junctionAhead) {
+  private static List<MacroscopicLink> crossingRoadLinks(TargetAhead junctionAhead) {
     var arrivingLink = junctionAhead.arriving.getParent();
-    return junctionAhead.getJunction().getEdges().stream().map(MacroscopicLink.class::cast)
+    return junctionAhead.getTargetNode().getEdges().stream().map(MacroscopicLink.class::cast)
         .filter(link -> link != arrivingLink && isMotorisedRoadLink(link) && !isSameOsmWayOrName(link, arrivingLink))
         .collect(Collectors.toList());
   }
@@ -591,12 +592,12 @@ public class OsmTrafficSignalIntegrator {
   /**
    * Capacity of the road crossing at a junction reached from a signal. It is the highest capacity of any segment of the
    * other roads there that motorised road traffic can use, in either direction, see
-   * {@link #crossingRoadLinks(JunctionAhead)}. A segment's capacity is its capacity per lane times its lanes.
+   * {@link #crossingRoadLinks(TargetAhead)}. A segment's capacity is its capacity per lane times its lanes.
    *
    * @param junctionAhead reached from the signal
    * @return capacity in pcu/h, 0 when no other road meets it
    */
-  private static double crossingCapacity(JunctionAhead junctionAhead) {
+  private static double crossingCapacity(TargetAhead junctionAhead) {
     double capacity = 0;
     for (var link : crossingRoadLinks(junctionAhead)) {
       for (var segment : new MacroscopicLinkSegment[] {link.getLinkSegmentAb(), link.getLinkSegmentBa()}) {
@@ -672,7 +673,7 @@ public class OsmTrafficSignalIntegrator {
    * @param isolatedCrossings distances from isolated crossings to the junctions they reach, per segment arriving there
    * @return distance in metres, infinite when no isolated crossing lies before the junction
    */
-  private static double isolatedCrossingDistance(List<JunctionAhead> junctions, JunctionAhead resolved,
+  private static double isolatedCrossingDistance(List<TargetAhead> junctions, TargetAhead resolved,
       Map<MacroscopicLinkSegment, List<Double>> isolatedCrossings) {
     double crossingDistance = Double.POSITIVE_INFINITY;
     for (var passed : junctions) {
@@ -788,10 +789,10 @@ public class OsmTrafficSignalIntegrator {
         .filter(OsmTrafficSignalIntegrator::isMotorisedRoadLink).collect(Collectors.toList()))) {
       trackAsDiagnostic(OsmTrafficSignalOutcome.DIRECTION_CONFLICT, location.signal);
       return new PendingVehicleSignal(
-          location.signal, findTargetsAlongRoad(location, null, maxDistance, ROAD_LOOK_AHEAD), true);
+          location.signal, findTargetsAlongRoad(location, null, maxDistance, LOOK_AHEAD_FOR_JUNCTIONS), true);
     }
-    return new PendingVehicleSignal(
-        location.signal, findTargetsAlongRoad(location, direction, maxDistance, ROAD_LOOK_AHEAD), direction == null);
+    return new PendingVehicleSignal(location.signal,
+        findTargetsAlongRoad(location, direction, maxDistance, LOOK_AHEAD_FOR_JUNCTIONS), direction == null);
   }
 
   /**
@@ -819,7 +820,7 @@ public class OsmTrafficSignalIntegrator {
    * is held there for the tram. From a cycleway, within the crossing distance, it becomes a signalised crossing. Every
    * segment entering it is an approach. If the way branches before the road, and more than one branch reaches a road,
    * the branch node becomes the intersection instead, see
-   * {@link #findRoadCrossingOrBranch(JunctionAhead, double, LookAhead)}. Its only approach is then the segment arriving
+   * {@link #findRoadCrossingOrBranch(TargetAhead, double, LookAhead)}. Its only approach is then the segment arriving
    * from the signal, and no road node is joined. The signal is discarded when no road is in reach, or when it is on
    * another kind of way, such as a footway. The outcome is recorded either way, and no link is broken.
    *
@@ -837,24 +838,26 @@ public class OsmTrafficSignalIntegrator {
     Predicate<MacroscopicLinkSegment> travels = onTrack ?
         segment -> segment.isAnyModeAllowed(Mode::isRailMode) :
         segment -> segment.isAnyModeAllowed(OsmTrafficSignalIntegrator::isBicycleMode);
-    var lookAhead = new LookAhead(travels, node -> hasMotorisedRoadLink(node) || isBranchNode(node, travels), false);
+    var lookAheadForRoadOrBranch =
+        new LookAhead(travels, node -> hasMotorisedRoadLink(node) || isBranchNode(node, travels), false);
     double maxDistance = onTrack ?
         settings.getRailwaySettings().getMaximumDistanceTrackSignalToRoadCrossingInMeters() :
         settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
-    var reached = findTargetsAlongRoad(location, null, maxDistance, lookAhead);
-    var nearest = reached.stream().map(targets -> findRoadCrossingOrBranch(targets.get(0), maxDistance, lookAhead))
+    var reached = findTargetsAlongRoad(location, null, maxDistance, lookAheadForRoadOrBranch);
+    var nearest = reached.stream()
+        .map(targets -> findRoadCrossingOrBranch(targets.get(0), maxDistance, lookAheadForRoadOrBranch))
         .filter(Objects::nonNull).min(Comparator.comparingDouble(target -> target.distance));
     if (nearest.isEmpty()) {
       trackAsDiagnostic(OsmTrafficSignalOutcome.TRACK_OR_CYCLEWAY_SIGNAL_WITHOUT_ROAD_CROSSING, signal);
       return;
     }
     var type = onTrack ? IntersectionType.JUNCTION : IntersectionType.CROSSING;
-    if (!hasMotorisedRoadLink(nearest.get().getJunction())) {
+    if (!hasMotorisedRoadLink(nearest.get().getTargetNode())) {
       addArrivingSegmentAsApproach(nearest.get(), signal, type);
       trackAsDiagnostic(OsmTrafficSignalOutcome.TRACK_OR_CYCLEWAY_SIGNAL_AT_BRANCH, signal);
       return;
     }
-    integrateSignalOnNode(signal, nearest.get().getJunction(), type);
+    integrateSignalOnNode(signal, nearest.get().getTargetNode(), type);
     trackAsDiagnostic(onTrack ? OsmTrafficSignalOutcome.TRACK_SIGNAL_AT_ROAD_CROSSING :
         OsmTrafficSignalOutcome.CYCLEWAY_SIGNAL_AT_ROAD_CROSSING, signal);
   }
@@ -870,14 +873,14 @@ public class OsmTrafficSignalIntegrator {
    * @param lookAhead segments travelled and targets looked for
    * @return the road node or the branch node, with the segment arriving there, null when no branch reaches a road
    */
-  private JunctionAhead findRoadCrossingOrBranch(JunctionAhead reached, double maxDistance, LookAhead lookAhead) {
-    var node = reached.getJunction();
+  private TargetAhead findRoadCrossingOrBranch(TargetAhead reached, double maxDistance, LookAhead lookAhead) {
+    var node = reached.getTargetNode();
     if (hasMotorisedRoadLink(node)) {
       return reached;
     }
-    JunctionAhead alongOnlyBranch = null;
+    TargetAhead alongOnlyBranch = null;
     for (var leaving : findAllowedContinuations(reached.arriving, node, lookAhead.travels)) {
-      var targets = findJunctionsAhead(
+      var targets = findTargetsAhead(
           leaving, reached.distance + leaving.getParent().getLengthKm() * 1000, maxDistance, lookAhead);
       var alongBranch = targets.isEmpty() ? null : findRoadCrossingOrBranch(targets.get(0), maxDistance, lookAhead);
       if (alongBranch != null) {
@@ -936,16 +939,20 @@ public class OsmTrafficSignalIntegrator {
     var vehicleSignalsExceptIsolatedCrossingStopLines =
         new ArrayList<PendingVehicleSignal>(firstPass.vehicleSignalsNotOnJunctionNode.size());
     for (var pendingSignal : firstPass.vehicleSignalsNotOnJunctionNode) {
-      var remainingDirectionsOfPendingSignal = dropDirectionsPastIsolatedCrossings(
-          inNearestDirectionWhenUnknown(pendingSignal, isolatedCrossings, evidenceWithIsolatedCrossingStopLines),
-          isolatedCrossings, evidenceWithIsolatedCrossingStopLines);
-      if (remainingDirectionsOfPendingSignal != pendingSignal &&
-          remainingDirectionsOfPendingSignal.junctionsPerDirection.isEmpty()) {
-        /* no direction left: the signal is the stop line of an isolated crossing. The third pass joins it there */
+      var firstTargets = keepNearestDirectionWhenUnknown(pendingSignal,
+          findFirstTargets(pendingSignal, isolatedCrossings, evidenceWithIsolatedCrossingStopLines));
+      var directionsToJunctions = firstTargets.stream().filter(target -> !target.isCrossing)
+          .map(target -> target.junctions).collect(Collectors.toList());
+      if (!firstTargets.isEmpty() && directionsToJunctions.isEmpty()) {
+        /* every direction left leads to an isolated crossing first: the signal is the stop line of that crossing.
+         * The third pass joins it there */
         trackAsDiagnostic(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_BEFORE_ISOLATED_CROSSING, pendingSignal.signal);
         secondPass.isolatedCrossingStopLines.add(pendingSignal.signal);
       } else {
-        vehicleSignalsExceptIsolatedCrossingStopLines.add(remainingDirectionsOfPendingSignal);
+        boolean stillOneDirectionUnknown =
+            pendingSignal.oneDirectionUnknown && pendingSignal.junctionsPerDirection.size() < 2;
+        vehicleSignalsExceptIsolatedCrossingStopLines.add(
+            new PendingVehicleSignal(pendingSignal.signal, directionsToJunctions, stillOneDirectionUnknown));
       }
     }
 
@@ -984,13 +991,13 @@ public class OsmTrafficSignalIntegrator {
 
   /**
    * Verify if only lowest order roads of lower capacity join the road at a junction reached. The road arrived along is
-   * not a lowest order road. Every other road there is one, see {@link #crossingRoadLinks(JunctionAhead)}. And their
+   * not a lowest order road. Every other road there is one, see {@link #crossingRoadLinks(TargetAhead)}. And their
    * capacity is below that of the segment arriving.
    *
    * @param junctionAhead the junction reached and the segment arriving there
    * @return true when only lowest order roads of lower capacity join there, false otherwise
    */
-  private boolean isJoinedOnlyByLowestOrderRoads(JunctionAhead junctionAhead) {
+  private boolean isJoinedOnlyByLowestOrderRoads(TargetAhead junctionAhead) {
     if (isOnLowestOrderRoad(junctionAhead.arriving.getParent())) {
       return false;
     }
@@ -1008,13 +1015,13 @@ public class OsmTrafficSignalIntegrator {
    * @param evidence of the junctions' own signals
    * @return true when it counts, false otherwise
    */
-  private boolean countsAsJunction(JunctionAhead junctionAhead, VehicleSignalEvidence evidence) {
+  private boolean countsAsJunction(TargetAhead junctionAhead, VehicleSignalEvidence evidence) {
     return evidence.hasOwnSignals(junctionAhead) || !isJoinedOnlyByLowestOrderRoads(junctionAhead);
   }
 
   /**
    * The junction a vehicle signal is assigned to in one direction. Normally it is the first junction reached that
-   * counts, see {@link #countsAsJunction(JunctionAhead, VehicleSignalEvidence)}. So a junction where only service lanes
+   * counts, see {@link #countsAsJunction(TargetAhead, VehicleSignalEvidence)}. So a junction where only service lanes
    * or living streets without signals join is passed over, when one that counts follows within reach. If none counts,
    * the first junction reached is used. There is one exception. If the junction found has no signals of its own, a
    * junction further along the same OSM way, or a way with the same name, may be taken instead. That happens when a
@@ -1025,7 +1032,7 @@ public class OsmTrafficSignalIntegrator {
    * @param evidence of the junctions' own signals
    * @return the junction assigned to
    */
-  private JunctionAhead resolveJunction(List<JunctionAhead> junctions, VehicleSignalEvidence evidence) {
+  private TargetAhead resolveJunction(List<TargetAhead> junctions, VehicleSignalEvidence evidence) {
     int first = 0;
     while (first < junctions.size() && !countsAsJunction(junctions.get(first), evidence)) {
       first++;
@@ -1064,8 +1071,8 @@ public class OsmTrafficSignalIntegrator {
     var isolated = new IdentityHashMap<MacroscopicLinkSegment, List<Double>>();
     for (var crossing : crossingSignals) {
       boolean isolatedPastLowestOrderRoad = false;
-      for (var junctions : findTargetsAlongRoad(crossing, null, reach, ROAD_LOOK_AHEAD)) {
-        var passed = new ArrayList<JunctionAhead>(1);
+      for (var junctions : findTargetsAlongRoad(crossing, null, reach, LOOK_AHEAD_FOR_JUNCTIONS)) {
+        var passed = new ArrayList<TargetAhead>(1);
         boolean isIsolated = true;
         boolean lowestOrderRoadWithinCrossingDistance = false;
         for (var junction : junctions) {
@@ -1099,13 +1106,28 @@ public class OsmTrafficSignalIntegrator {
    * @param evidence of the junctions' own signals
    * @return the first target
    */
-  private DirectionTarget findFirstTarget(List<JunctionAhead> junctions,
+  private FirstTargetInDirection findFirstTarget(List<TargetAhead> junctions,
       Map<MacroscopicLinkSegment, List<Double>> isolatedCrossings, VehicleSignalEvidence evidence) {
     var junction = resolveJunction(junctions, evidence);
     double crossingDistance = isolatedCrossingDistance(junctions, junction, isolatedCrossings);
     return Precision.smaller(crossingDistance, junction.distance, Precision.EPSILON_6) ?
-        new DirectionTarget(junctions, junction, crossingDistance, true) :
-        new DirectionTarget(junctions, junction, junction.distance, false);
+        new FirstTargetInDirection(junctions, junction, crossingDistance, true) :
+        new FirstTargetInDirection(junctions, junction, junction.distance, false);
+  }
+
+  /**
+   * The first target of a vehicle signal in each direction it applies to, see
+   * {@link #findFirstTarget(List, Map, VehicleSignalEvidence)}. Each direction is resolved once here.
+   *
+   * @param pending the signal with the junctions it reaches
+   * @param isolatedCrossings distances from isolated crossings to the junctions they reach, per segment arriving there
+   * @param evidence of the junctions' own signals
+   * @return per direction, its first target, in the order of the signal's directions
+   */
+  private List<FirstTargetInDirection> findFirstTargets(PendingVehicleSignal pending,
+      Map<MacroscopicLinkSegment, List<Double>> isolatedCrossings, VehicleSignalEvidence evidence) {
+    return pending.junctionsPerDirection.stream()
+        .map(junctions -> findFirstTarget(junctions, isolatedCrossings, evidence)).collect(Collectors.toList());
   }
 
   /**
@@ -1114,23 +1136,22 @@ public class OsmTrafficSignalIntegrator {
    * {@link #NEAR_TIE_DELTA_DISTANCE_M} farther where a road of higher capacity crosses, that direction is kept instead.
    *
    * @param pending the signal with the junctions it reaches
-   * @param isolatedCrossings distances from isolated crossings to the junctions they reach, per segment arriving there
-   * @param evidence of the junctions' own signals
-   * @return the signal as it is when its direction is known, or when it reaches targets in one direction only.
-   *         Otherwise a copy with only the kept direction
+   * @param firstTargets per direction, its first target, see
+   *                     {@link #findFirstTargets(PendingVehicleSignal, Map, VehicleSignalEvidence)}
+   * @return the first targets as they are when the direction is known, or when there is only one. Otherwise only the
+   *         first target of the kept direction
    */
-  private PendingVehicleSignal inNearestDirectionWhenUnknown(PendingVehicleSignal pending,
-      Map<MacroscopicLinkSegment, List<Double>> isolatedCrossings, VehicleSignalEvidence evidence) {
-    if (!pending.oneDirectionUnknown || pending.junctionsPerDirection.size() < 2) {
-      return pending;
+  private List<FirstTargetInDirection> keepNearestDirectionWhenUnknown(PendingVehicleSignal pending,
+      List<FirstTargetInDirection> firstTargets) {
+    if (!pending.oneDirectionUnknown || firstTargets.size() < 2) {
+      return firstTargets;
     }
-    var targets = pending.junctionsPerDirection.stream()
-        .map(junctions -> findFirstTarget(junctions, isolatedCrossings, evidence))
+    var byDistance = firstTargets.stream()
         .sorted(Comparator.comparingDouble(target -> target.distance)).collect(Collectors.toList());
-    var nearest = targets.get(0);
+    var nearest = byDistance.get(0);
     var chosen = nearest;
     if (!nearest.isCrossing) {
-      for (var other : targets.subList(1, targets.size())) {
+      for (var other : byDistance.subList(1, byDistance.size())) {
         if (!other.isCrossing &&
             !Precision.greater(other.distance - nearest.distance, NEAR_TIE_DELTA_DISTANCE_M, Precision.EPSILON_6) &&
             Precision.greater(crossingCapacity(other.junction), crossingCapacity(chosen.junction), Precision.EPSILON_6)) {
@@ -1139,25 +1160,7 @@ public class OsmTrafficSignalIntegrator {
       }
     }
     trackAsDiagnostic(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_ONE_DIRECTION_CHOSEN, pending.signal);
-    return new PendingVehicleSignal(pending.signal, List.of(chosen.junctions), false);
-  }
-
-  /**
-   * Drop the directions in which an isolated signalised crossing lies between the signal and its junction, see
-   * {@link #isolatedCrossingDistance(List, JunctionAhead, Map)}
-   *
-   * @param pending the signal with the junctions it reaches
-   * @param isolatedCrossings distances from isolated crossings to the junctions they reach, per segment arriving there
-   * @param evidence of the junctions' own signals
-   * @return the signal as it is when no direction is dropped. Otherwise a copy with the directions left
-   */
-  private PendingVehicleSignal dropDirectionsPastIsolatedCrossings(PendingVehicleSignal pending,
-      Map<MacroscopicLinkSegment, List<Double>> isolatedCrossings, VehicleSignalEvidence evidence) {
-    var kept = pending.junctionsPerDirection.stream().filter(junctions -> Double.isInfinite(
-        isolatedCrossingDistance(junctions, resolveJunction(junctions, evidence), isolatedCrossings)))
-        .collect(Collectors.toList());
-    return kept.size() == pending.junctionsPerDirection.size() ? pending :
-        new PendingVehicleSignal(pending.signal, kept, pending.oneDirectionUnknown);
+    return List.of(chosen);
   }
 
   /**
@@ -1263,8 +1266,8 @@ public class OsmTrafficSignalIntegrator {
    */
   private boolean isPartOfSignalisedJunction(OsmNode signal) {
     var maxDistance = settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
-    return findFirstTargetsAlongRoad(signal, null, maxDistance, ROAD_LOOK_AHEAD).stream().anyMatch(first -> {
-      var intersection = intersectionsByOsmNodeId.get(Long.parseLong(first.getJunction().getExternalId()));
+    return findFirstTargetsAlongRoad(signal, null, maxDistance, LOOK_AHEAD_FOR_JUNCTIONS).stream().anyMatch(first -> {
+      var intersection = intersectionsByOsmNodeId.get(Long.parseLong(first.getTargetNode().getExternalId()));
       return intersection != null && intersection.isSignalised() &&
           intersection.getApproachSegment(first.arriving.getId()) != null;
     });
@@ -1292,9 +1295,9 @@ public class OsmTrafficSignalIntegrator {
   private boolean addApproachToSignalisedCrossingAhead(OsmNode signal) {
     var direction = findRecognisedDirection(OsmModelUtil.getTagsAsMap(signal));
     var reached = findFirstTargetsAlongRoad(signal, direction,
-        settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters(), crossingLookAhead);
+        settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters(), lookAheadForSignalisedCrossings);
     for (var crossing : reached) {
-      addApproach(intersectionsByOsmNodeId.get(Long.parseLong(crossing.getJunction().getExternalId())),
+      addApproach(intersectionsByOsmNodeId.get(Long.parseLong(crossing.getTargetNode().getExternalId())),
           crossing.arriving, signal);
     }
     return !reached.isEmpty();
@@ -1337,8 +1340,8 @@ public class OsmTrafficSignalIntegrator {
    * @return distance in metres, null when none within reach
    */
   private Double findNearestJunctionDistance(OsmNode signal) {
-    return findFirstTargetsAlongRoad(signal, null, OsmNearestJunctionBucket.MAX_DISTANCE_M, ROAD_LOOK_AHEAD).stream()
-        .map(first -> first.distance).min(Double::compare).orElse(null);
+    return findFirstTargetsAlongRoad(signal, null, OsmNearestJunctionBucket.MAX_DISTANCE_M, LOOK_AHEAD_FOR_JUNCTIONS)
+        .stream().map(first -> first.distance).min(Double::compare).orElse(null);
   }
 
   /**
@@ -1384,7 +1387,7 @@ public class OsmTrafficSignalIntegrator {
    * @param lookAhead segments travelled and targets looked for
    * @return the targets reached per direction, nearest first, no direction without one
    */
-  private List<List<JunctionAhead>> findTargetsAlongRoad(
+  private List<List<TargetAhead>> findTargetsAlongRoad(
       OsmNode signal, String direction, double maxDistance, LookAhead lookAhead) {
     var location = locate(signal);
     return location == null ? List.of() : findTargetsAlongRoad(location, direction, maxDistance, lookAhead);
@@ -1402,7 +1405,7 @@ public class OsmTrafficSignalIntegrator {
    * @param lookAhead segments travelled and targets looked for
    * @return the targets reached per direction, nearest first, no direction without one
    */
-  private List<List<JunctionAhead>> findTargetsAlongRoad(
+  private List<List<TargetAhead>> findTargetsAlongRoad(
       SignalLocation location, String direction, double maxDistance, LookAhead lookAhead) {
     if (location.isOnNode()) {
       return findAlongLinks(location.getLinks(), direction, segment -> segment.getUpstreamVertex() == location.node,
@@ -1424,10 +1427,10 @@ public class OsmTrafficSignalIntegrator {
    * @param lookAhead segments travelled and targets looked for
    * @return the first target reached per direction, empty when none within reach
    */
-  private List<JunctionAhead> findFirstTargetsAlongRoad(
+  private List<TargetAhead> findFirstTargetsAlongRoad(
       OsmNode signal, String direction, double maxDistance, LookAhead lookAhead) {
     var reached = findTargetsAlongRoad(signal, direction, maxDistance, lookAhead);
-    return reached.stream().map(junctions -> junctions.get(0)).collect(Collectors.toList());
+    return reached.stream().map(targets -> targets.get(0)).collect(Collectors.toList());
   }
 
   /**
@@ -1444,18 +1447,18 @@ public class OsmTrafficSignalIntegrator {
    * @param lookAhead segments travelled and targets looked for
    * @return per passing segment that reaches any, the targets reached, nearest first
    */
-  private List<List<JunctionAhead>> findAlongLinks(List<MacroscopicLink> links, String direction,
+  private List<List<TargetAhead>> findAlongLinks(List<MacroscopicLink> links, String direction,
       Predicate<MacroscopicLinkSegment> passesSignal, ToDoubleFunction<MacroscopicLinkSegment> distanceFromSignal,
       double maxDistance, LookAhead lookAhead) {
-    var found = new ArrayList<List<JunctionAhead>>(2);
+    var found = new ArrayList<List<TargetAhead>>(2);
     for (var link : links) {
       for (var segment : new MacroscopicLinkSegment[] {link.getLinkSegmentAb(), link.getLinkSegmentBa()}) {
         if (segment != null && lookAhead.travels.test(segment) &&
             PlanitLinkOsmUtils.isInOsmDirection(segment, direction) && passesSignal.test(segment)) {
-          var junctions = findJunctionsAhead(
+          var targets = findTargetsAhead(
               segment, distanceFromSignal.applyAsDouble(segment), maxDistance, lookAhead);
-          if (!junctions.isEmpty()) {
-            found.add(junctions);
+          if (!targets.isEmpty()) {
+            found.add(targets);
           }
         }
       }
@@ -1477,9 +1480,9 @@ public class OsmTrafficSignalIntegrator {
    * @param lookAhead segments travelled and targets looked for
    * @return the targets reached, nearest first
    */
-  private List<JunctionAhead> findJunctionsAhead(
+  private List<TargetAhead> findTargetsAhead(
       MacroscopicLinkSegment segment, double distanceToItsEnd, double maxDistance, LookAhead lookAhead) {
-    var junctions = new ArrayList<JunctionAhead>(1);
+    var targets = new ArrayList<TargetAhead>(1);
     var distance = distanceToItsEnd;
     var passed = new HashSet<Node>();
     var current = segment;
@@ -1489,7 +1492,7 @@ public class OsmTrafficSignalIntegrator {
         break;
       }
       if (lookAhead.isTarget.test(ahead)) {
-        junctions.add(new JunctionAhead(current, distance));
+        targets.add(new TargetAhead(current, distance));
         if (!lookAhead.beyondTarget) {
           break;
         }
@@ -1501,7 +1504,7 @@ public class OsmTrafficSignalIntegrator {
         distance += current.getParent().getLengthKm() * 1000;
       }
     }
-    return junctions;
+    return targets;
   }
 
   /**
@@ -1562,8 +1565,8 @@ public class OsmTrafficSignalIntegrator {
    * @param signal the OSM node of the signal
    * @param type kind of intersection the signal makes
    */
-  private void addArrivingSegmentAsApproach(JunctionAhead reached, OsmNode signal, IntersectionType type) {
-    var node = reached.getJunction();
+  private void addArrivingSegmentAsApproach(TargetAhead reached, OsmNode signal, IntersectionType type) {
+    var node = reached.getTargetNode();
     addApproach(getOrCreateIntersection(Long.parseLong(node.getExternalId()), node, type), reached.arriving, signal);
   }
 
