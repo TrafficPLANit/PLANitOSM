@@ -96,7 +96,7 @@ public class PlanitNetworkLayerModifierUtils {
 
       var newOsmWaysWithMultipleLinks = convertBrokenLinksByGroupingThemWithCustomKey(
           brokenLinks,
-          l -> Long.parseLong(l.getExternalId()));
+          PlanitOsmUtils::parseOsmId);
 
       /* update mapping since another osmWayId now has multiple PLANit links and this is needed in the layer
       data to be able to find the correct PLANit links for which osm nodes are internal */

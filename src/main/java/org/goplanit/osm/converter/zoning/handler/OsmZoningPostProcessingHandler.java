@@ -1023,7 +1023,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   private void processIncompleteTransferZone(TransferZone transferZone) {
 
     EntityType osmEntityType = PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry());
-    long osmEntityId = Long.parseLong(transferZone.getExternalId());
+    long osmEntityId = PlanitOsmUtils.parseOsmId(transferZone);
 
     // only when transfer zone falls within boundary area we log warnings as if we can't complete in such cases it is
     // likely due to the network being truncated, and it is expected behaviour
@@ -1129,7 +1129,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       /* create connectoids */    
       if(selectedAccessLink != null) {
         getTransferConnectoidHelper().extractTransferConnectoidsForStandAloneTransferZoneByPlanitLink(
-            Long.parseLong(transferZone.getExternalId()),
+            PlanitOsmUtils.parseOsmId(transferZone),
             transferZone.getGeometry(),
             selectedAccessLink,
             transferZone,

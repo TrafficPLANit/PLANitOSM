@@ -1,9 +1,11 @@
 package org.goplanit.osm.converter.network.handler;
 
+import de.topobyte.osm4j.core.model.iface.OsmBounds;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmRelation;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
@@ -223,9 +225,16 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         osmNodeData.registerEligibleOsmNode(node);
 
         // 2. record the traffic signals among them, linked to junctions once the layers are complete
-        if(getSettings().isParseIntersections() && node.getNumberOfTags() > 0 &&
-            OsmTrafficSignalTags.isTrafficSignals(OsmModelUtil.getTagsAsMap(node))){
-          getNetworkData().registerTrafficSignalOsmNodeId(node.getId());
+        if(getSettings().isParseIntersections()) {
+          Map<String, String> tags = node.getNumberOfTags() > 0 ? OsmModelUtil.getTagsAsMap(node) : Map.of();
+          if(OsmTrafficSignalTags.isTrafficSignals(tags)) {
+            getNetworkData().registerTrafficSignalOsmNodeId(node.getId());
+          }
+          // 3. and the nodes whose crossing signal may be tagged only on the crossing way through them
+          if(getNetworkData().getSignalisedCrossingWayId(node.getId()) != null &&
+              !OsmTrafficSignalTags.isCrossingTrafficSignals(tags)) {
+            getNetworkData().registerOsmNodeOnSignalisedCrossingWayOnly(node.getId());
+          }
         }
       }
     }
@@ -241,6 +250,20 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
 
   /**
+   * Record the bounds the input file declares, e.g. in its PBF header, so the edge of the parsed area is known when no
+   * bounding area is set
+   *
+   * @param bounds the input file declares
+   */
+  @Override
+  public void handle(OsmBounds bounds) {
+    if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)) {
+      getNetworkData().setInputFileBounds(
+          OsmBoundary.of(bounds.getLeft(), bounds.getRight(), bounds.getBottom(), bounds.getTop()));
+    }
+  }
+
+  /**
    * for all OSM ways that are explicitly marked for inclusion despite falling outside the bounding polygon, or
    * otherwise we extract their nodes and mark them for inclusion as exceptions to the bounding polygon filter that is
    * applied during the main parsing pass in the regular PlanitOsmNetworkHandler
@@ -249,6 +272,11 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmWay osmWay) {
 
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)) {
+      /* any signalised crossing way, parsed or not, since its crossing signal may be tagged only on the way */
+      if(getSettings().isParseIntersections() && osmWay.getNumberOfTags() > 0 &&
+          OsmTrafficSignalTags.isSignalisedCrossingWay(OsmModelUtil.getTagsAsMap(osmWay))) {
+        getNetworkData().registerSignalisedCrossingWayNodes(osmWay);
+      }
       wrapHandleInfrastructureOsmWay(osmWay, this::handleEligibleOsmWayStageOne);
       osmWayCounter.increment();
     }else if(stage.equals(Stage.TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS)){

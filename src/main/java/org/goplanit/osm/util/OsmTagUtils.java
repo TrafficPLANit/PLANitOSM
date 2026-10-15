@@ -83,6 +83,29 @@ public class OsmTagUtils {
     return anyKeyMatchesAnyValueTag(tags, new String[] {keyTag}, valueTags);
   }   
   
+  /** Verify if the key's value matches any of the passed in values, where the key may carry several values separated
+   * by semicolons, e.g. crossing=traffic_signals;marked. Each value is trimmed and filtered by applying
+   * {@link #VALUETAG_SPECIALCHAR_STRIP_REGEX} before it is compared
+   *
+   * @param tags to check existence from
+   * @param keyTag to check
+   * @param valueTags to check
+   * @return true when one of the key's values matches, false otherwise
+   */
+  public static boolean keyMatchesAnyValueTagAmongMultipleValues(
+      Map<String, String> tags, String keyTag, String... valueTags) {
+    var value = tags.get(keyTag);
+    if (value == null) {
+      return false;
+    }
+    for (var singleValue : value.split(";")) {
+      if (matchesAnyValueTag(singleValue.trim().replaceAll(VALUETAG_SPECIALCHAR_STRIP_REGEX, ""), valueTags)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /** Verify if any of the passed in keys matches and of the passed in values in the tags provided, all value tags
    * are filtered by applying {@link #VALUETAG_SPECIALCHAR_STRIP_REGEX}
    * 

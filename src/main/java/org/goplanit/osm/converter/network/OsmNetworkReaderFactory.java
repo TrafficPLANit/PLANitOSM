@@ -4,7 +4,7 @@ import java.net.URL;
 import java.nio.file.Paths;
 
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.id.IdGroupingToken;
 import org.goplanit.utils.locale.CountryNames;
 
@@ -39,13 +39,13 @@ public class OsmNetworkReaderFactory {
    * @param countryName country which the input file represents, used to determine defaults in case not specifically specified in OSM data, when left blank global defaults will be used
    * based on a right hand driving approach
    * @return created osm reader
-   * @throws PlanItException thrown if error
+   * @throws PlanItRunTimeException thrown if error
    */
-  public static OsmNetworkReader create(String inputFile, String countryName) throws PlanItException {
+  public static OsmNetworkReader create(String inputFile, String countryName) {
     try {
       return create(Paths.get(inputFile).toUri().toURL(), countryName);
     }catch(Exception e) {
-      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
+      throw new PlanItRunTimeException("Unable to convert input file %s to Url", e, inputFile);
     }
   }
   
@@ -56,13 +56,13 @@ public class OsmNetworkReaderFactory {
    * based on a right hand driving approach
    * @param osmNetworkToPopulate the network to populate
    * @return created osm reader
-   * @throws PlanItException thrown if error
+   * @throws PlanItRunTimeException thrown if error
    */
-  public static OsmNetworkReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) throws PlanItException {
+  public static OsmNetworkReader create(String inputFile, String countryName, PlanitOsmNetwork osmNetworkToPopulate) {
     try {
       return create(Paths.get(inputFile).toUri().toURL(), countryName, osmNetworkToPopulate);
     }catch(Exception e) {
-      throw new PlanItException("Unable to convert input file %s to Url", e, inputFile);
+      throw new PlanItRunTimeException("Unable to convert input file %s to Url", e, inputFile);
     }
   }  
   

@@ -10,6 +10,7 @@ import org.goplanit.osm.converter.network.handler.OsmNetworkHandlerProfiler;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.OsmTagUtils;
+import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
@@ -72,7 +73,7 @@ public class OsmNetworkReaderLayerData {
       while(linksWithLocationInternal.hasNext()) {
         Link orginalLinkToBreak = linksWithLocationInternal.next(); 
         
-        Long osmOriginalWayId = Long.valueOf(orginalLinkToBreak.getExternalId());
+        Long osmOriginalWayId = PlanitOsmUtils.parseOsmId(orginalLinkToBreak);
         if(osmWaysWithMultiplePlanitLinks != null && osmWaysWithMultiplePlanitLinks.containsKey(osmOriginalWayId)) {
           
           /* link has been broken before, find out in which of its broken links the node to break at resides on */
@@ -182,7 +183,7 @@ public class OsmNetworkReaderLayerData {
   public Node getPlanitNodeByOsmNode(OsmNode osmNode){
     if(osmNode != null) {
       Node planitNode = getPlanitNodeByLocation(OsmNodeUtils.createPoint(osmNode));
-      if(planitNode!=null && osmNode.getId() != Long.valueOf(planitNode.getExternalId())) {
+      if(planitNode!=null && osmNode.getId() != PlanitOsmUtils.parseOsmId(planitNode)) {
         /* match found, but different osm ids for same location, meaning that separate nodes reside in same location */
         LOGGER.warning(String.format("OsmNodes %d and %s, reside on same location, likely tagging error",
             osmNode.getId(), planitNode.getExternalId()));

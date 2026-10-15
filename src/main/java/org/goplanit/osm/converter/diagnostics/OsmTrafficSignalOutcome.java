@@ -43,6 +43,18 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
       "crossing signals isolated with only a service lane or living street joining"),
 
+  /** a crossing signal tagged only on the crossing way, a footway, cycleway or path, through the node where it meets
+   * the road, not on the node itself */
+  CROSSING_SIGNAL_ONLY_ON_CROSSING_WAY(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "crossing signals tagged only on the crossing way, not on its node"),
+
+  /** a crossing signal tagged on the crossing way while the node where it meets the road says the crossing has no
+   * signals, e.g. crossing=zebra; the crossing way is trusted, and the tagging is worth checking in OSM */
+  CROSSING_SIGNAL_TAGS_INCONSISTENT(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "crossing signals on a crossing way whose node says there are none, check in OSM"),
+
   /** a vehicle signal without a usable direction, no direction tagged or one the OSM ways through it disagree on,
    * reaches targets in more than one direction: it keeps the direction whose first target is nearest; recorded besides
    * its assignment outcome */
@@ -50,14 +62,22 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
       "vehicle signals without a usable direction kept to one direction"),
 
-  /** a vehicle signal found no junction ahead and lies outside the parsed area or within the junction reach of its
-   * edge, where the junction it controls is likely cut off: ignored */
+  /** a vehicle signal whose junction is the node where its road ends outside the parsed area. The junction itself is
+   * cut off by the edge, and the node where the parsed road ends stands in for it */
+  VEHICLE_SIGNAL_AT_ROAD_END_OUTSIDE_PARSED_AREA(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "vehicle signals whose junction is where their road ends outside the parsed area, standing in for one cut off"),
+
+  /** a vehicle signal found no junction ahead, nor a signalised crossing ahead to join, and lies outside the parsed
+   * area or within the junction reach of its edge, where the junction it controls is likely cut off: ignored. Also a
+   * vehicle signal that is the stop line of, or lies within the crossing distance of, a crossing ignored there, see
+   * {@link #CROSSING_AT_EDGE_OF_PARSED_AREA} */
   VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA(
       OsmTrafficSignalOutcomeGroup.VEHICLE_SIGNAL,
       "vehicle signals without a junction ahead at the edge of the parsed area"),
 
-  /** a crossing signal not on a junction node lies within reach of a signalised junction, along one of its approaches,
-   * and is part of it: nothing is added and no link is broken */
+  /** a crossing signal not on a junction node lies within reach of a signalised junction, along one of its approaches
+   * or one of its exit arms, and is part of it: nothing is added and no link is broken */
   CROSSING_PART_OF_SIGNALISED_JUNCTION(
       OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL, "crossing signals part of a signalised junction nearby"),
 
@@ -68,6 +88,13 @@ public enum OsmTrafficSignalOutcome {
   /** an isolated signalised crossing left without intersection, breaking links at isolated crossings being off */
   ISOLATED_CROSSING_NO_LINK_BROKEN(
       OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL, "isolated crossings where no link is broken"),
+
+  /** a crossing signal not on a junction node and not part of a signalised junction lies outside the parsed area, or
+   * inside within the maximum distance from a crossing to a junction of its edge. A junction it belongs to may be cut
+   * off there, so whether it is isolated is unknown: ignored, no intersection is added and no link is broken */
+  CROSSING_AT_EDGE_OF_PARSED_AREA(
+      OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL,
+      "crossing signals without a junction at the edge of the parsed area, ignored"),
 
   /** a vehicle signal whose direction is none of forward, backward or both, e.g. a compass bearing, is handled as
    * untagged */

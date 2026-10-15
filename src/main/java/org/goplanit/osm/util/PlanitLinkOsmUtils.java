@@ -11,6 +11,7 @@ import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.goplanit.utils.network.layer.physical.Link;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 
@@ -60,5 +61,20 @@ public class PlanitLinkOsmUtils {
       return !segment.isDirectionAb();
     }
     return true;
+  }
+
+  /**
+   * Verify if two links are on the same OSM way, or on OSM ways with the same name. This still holds after PLANit broke
+   * an OSM way into several links. It compares the external ids, which are OSM way ids, and the names.
+   *
+   * @param one link
+   * @param other link
+   * @return true when on the same OSM way or on OSM ways with the same name, false otherwise
+   */
+  public static boolean isSameOsmWayOrName(Link one, Link other) {
+    if (one.getExternalId() != null && one.getExternalId().equals(other.getExternalId())) {
+      return true;
+    }
+    return one.getName() != null && !one.getName().isBlank() && one.getName().equals(other.getName());
   }
 }

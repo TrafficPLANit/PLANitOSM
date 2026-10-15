@@ -3,6 +3,7 @@ package org.goplanit.osm.test;
 import java.util.List;
 import java.util.Map;
 
+import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
@@ -44,6 +45,51 @@ public class OsmTrafficSignalTagsTest {
       assertTrue(OsmTrafficSignalTags.isCrossingTrafficSignals(tags));
       assertFalse(OsmTrafficSignalTags.isVehicleTrafficSignal(tags));
       assertTrue(OsmTrafficSignalTags.isTrafficSignals(tags));
+    }
+  }
+
+  /** A crossing value listing several values, separated by semicolons, is a crossing signal when one of them is */
+  @Test
+  public void crossingSignalAmongSeveralValues() {
+    for (var value : List.of("traffic_signals;marked", "marked;traffic_signals", "marked; traffic_signals")) {
+      assertTrue(OsmTrafficSignalTags.isCrossingTrafficSignals(tags(OsmTrafficSignalTags.CROSSING, value)), value);
+    }
+    assertFalse(OsmTrafficSignalTags.isCrossingTrafficSignals(tags(OsmTrafficSignalTags.CROSSING, "marked;zebra")));
+  }
+
+  /** A footway, cycleway or path tagged with crossing signals is a signalised crossing way, a road is not */
+  @Test
+  public void signalisedCrossingWay() {
+    for (var highway : List.of(OsmHighwayTags.FOOTWAY, OsmHighwayTags.CYCLEWAY, OsmHighwayTags.PATH)) {
+      assertTrue(OsmTrafficSignalTags.isSignalisedCrossingWay(tags(OsmHighwayTags.HIGHWAY, highway,
+          OsmTrafficSignalTags.CROSSING, OsmTrafficSignalTags.CROSSING_TRAFFIC_SIGNALS)), highway);
+      assertTrue(OsmTrafficSignalTags.isSignalisedCrossingWay(tags(OsmHighwayTags.HIGHWAY, highway,
+          OsmTrafficSignalTags.CROSSING_SIGNALS, OsmTags.YES)), highway);
+      assertFalse(OsmTrafficSignalTags.isSignalisedCrossingWay(tags(OsmHighwayTags.HIGHWAY, highway,
+          OsmTrafficSignalTags.CROSSING, "zebra")), highway);
+    }
+    assertFalse(OsmTrafficSignalTags.isSignalisedCrossingWay(tags(OsmHighwayTags.HIGHWAY, OsmHighwayTags.PRIMARY,
+        OsmTrafficSignalTags.CROSSING, OsmTrafficSignalTags.CROSSING_TRAFFIC_SIGNALS)));
+  }
+
+  /** Crossing values stating the crossing has no signals, while marked or no crossing value says nothing about them */
+  @Test
+  public void crossingWithoutSignals() {
+    for (var tags : List.of(
+        tags(OsmTrafficSignalTags.CROSSING, "zebra"),
+        tags(OsmTrafficSignalTags.CROSSING, "uncontrolled"),
+        tags(OsmTrafficSignalTags.CROSSING, "unmarked"),
+        tags(OsmTrafficSignalTags.CROSSING, "informal"),
+        tags(OsmTrafficSignalTags.CROSSING, OsmTags.NO),
+        tags(OsmTrafficSignalTags.CROSSING_SIGNALS, OsmTags.NO))) {
+      assertTrue(OsmTrafficSignalTags.isCrossingWithoutSignals(tags), tags.toString());
+    }
+    for (var tags : List.of(
+        tags(OsmTrafficSignalTags.CROSSING, "marked"),
+        tags(OsmTrafficSignalTags.CROSSING, OsmTrafficSignalTags.CROSSING_TRAFFIC_SIGNALS),
+        tags(OsmHighwayTags.HIGHWAY, "crossing"),
+        tags())) {
+      assertFalse(OsmTrafficSignalTags.isCrossingWithoutSignals(tags), tags.toString());
     }
   }
 
@@ -100,5 +146,17 @@ public class OsmTrafficSignalTagsTest {
         tags())) {
       assertFalse(OsmTrafficSignalTags.isTrafficSignals(tags), tags.toString());
     }
+  }
+
+  /** a signal's direction is recognised when forward, backward or both, not when e.g. a compass bearing or untagged */
+  @Test
+  public void recognisedDirectionIsForwardBackwardOrBoth() {
+    for (var direction : List.of(OsmDirectionTags.FORWARD, OsmDirectionTags.BACKWARD, OsmDirectionTags.BOTH)) {
+      assertEquals(direction, OsmTrafficSignalTags.getRecognisedDirection(
+          tags(OsmTrafficSignalTags.TRAFFIC_SIGNALS_DIRECTION, direction)));
+    }
+    assertNull(OsmTrafficSignalTags.getRecognisedDirection(tags(OsmTrafficSignalTags.TRAFFIC_SIGNALS_DIRECTION, "45")));
+    assertNull(OsmTrafficSignalTags.getRecognisedDirection(
+        tags(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS)));
   }
 }

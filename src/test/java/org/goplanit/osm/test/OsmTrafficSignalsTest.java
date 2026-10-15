@@ -6,10 +6,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
@@ -44,8 +44,7 @@ public class OsmTrafficSignalsTest {
   }
 
   /** read a scenario file with the given settings changes, and return its only layer */
-  private static MacroscopicNetworkLayer parse(String scenario, Consumer<OsmNetworkReaderSettings> configure)
-      throws PlanItException {
+  private static MacroscopicNetworkLayer parse(String scenario, Consumer<OsmNetworkReaderSettings> configure) {
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenario + ".osm").toString(), CountryNames.AUSTRALIA);
     configure.accept(reader.getSettings());
@@ -55,7 +54,7 @@ public class OsmTrafficSignalsTest {
   }
 
   /** read a scenario file with default settings */
-  private static MacroscopicNetworkLayer parse(String scenario) throws PlanItException {
+  private static MacroscopicNetworkLayer parse(String scenario) {
     return parse(scenario, settings -> {});
   }
 
@@ -74,7 +73,7 @@ public class OsmTrafficSignalsTest {
 
   /** A junction without traffic signals gets no intersection; the network itself is read as usual */
   @Test
-  public void junctionWithoutSignalsHasNoIntersection() throws PlanItException {
+  public void junctionWithoutSignalsHasNoIntersection() {
     /*
      *              4
      *              |
@@ -91,7 +90,7 @@ public class OsmTrafficSignalsTest {
 
   /** A stop sign is not a traffic signal, so it creates no intersection */
   @Test
-  public void stopSignIgnored() throws PlanItException {
+  public void stopSignIgnored() {
     /*
      *              4
      *              |
@@ -110,7 +109,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal on the shared node of two crossing two-way roads makes that node one signalised junction,
    * with every segment entering it as an approach */
   @Test
-  public void fourArmJunctionTaggedOnItsCentre() throws PlanItException {
+  public void fourArmJunctionTaggedOnItsCentre() {
     /*
      *              4
      *              |
@@ -138,7 +137,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal on a junction's centre leaves out only the segment entering against a one-way arm leading
    * away from it: that arm's traffic exits the junction; a footway and a tram track entering it are still approaches */
   @Test
-  public void junctionOnCentreLeavesOutOnlyTheOneWayArmLeavingIt() throws PlanItException {
+  public void junctionOnCentreLeavesOutOnlyTheOneWayArmLeavingIt() {
     /*
      *           6  4
      *            : |
@@ -169,7 +168,7 @@ public class OsmTrafficSignalsTest {
   /** With footways parsed, a crossing signal where a footway crosses the road makes that node its own signalised
    * crossing, the footway segments entering it included as approaches */
   @Test
-  public void signalisedCrossingWithFootwaysParsed() throws PlanItException {
+  public void signalisedCrossingWithFootwaysParsed() {
     /*
      *              4
      *              :
@@ -194,9 +193,136 @@ public class OsmTrafficSignalsTest {
         Set.copyOf(intersection.getApproachSegments()));
   }
 
+  /** A crossing signal tagged only on the crossing way makes the node where it meets the road a signalised crossing,
+   * as if the node carried it; the ends of the crossing way are no crossing */
+  @Test
+  public void crossingSignalTaggedOnlyOnCrossingWay() {
+    /*
+     *              4
+     *              :
+     *              v
+     *     2 --->-- 1 --<--- 3      way 10: 2-1-3 primary, two-way (---)
+     *              ^                way 11: 4-1-5 footway, footway=crossing, crossing=traffic_signals (:)
+     *              :                arms of about 100 m; arrows mark the approaches
+     *              5
+     *
+     *   1: highway=crossing, crossing=marked, so the node says nothing about signals
+     */
+    var layer = parse("crossing_signal_on_crossing_way_only",
+        settings -> settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY));
+
+    var intersection = onlyIntersection(layer);
+    var crossing = nodeByOsmId(layer, 1);
+    assertEquals(List.of(crossing), intersection.getMemberNodes());
+    assertEquals(EnumSet.of(IntersectionType.CROSSING), intersection.getTypes());
+    assertEquals(crossing.streamEntrySegments().collect(Collectors.toSet()),
+        Set.copyOf(intersection.getApproachSegments()));
+  }
+
+  /** A crossing signal tagged only on the crossing way counts though footways are not parsed: the road node it crosses
+   * at is an isolated signalised crossing */
+  @Test
+  public void crossingSignalTaggedOnlyOnCrossingWayFootwaysNotParsed() {
+    /*
+     *     2 --->-- 1 --<--- 3      way 10: 2-1-3 primary, two-way (---); arrows mark the approaches
+     *                               way 11: 4-1-5 footway crossing at 1, not parsed, crossing=traffic_signals
+     *
+     *   1: highway=crossing, crossing=marked; breaking links at isolated signalised crossings on
+     */
+    var layer = parse("crossing_signal_on_crossing_way_only",
+        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+
+    var intersection = onlyIntersection(layer);
+    assertEquals(List.of(nodeByOsmId(layer, 1)), intersection.getMemberNodes());
+    assertEquals(EnumSet.of(IntersectionType.CROSSING), intersection.getTypes());
+    assertEquals(Set.of(segment(layer, 2, 1), segment(layer, 3, 1)), Set.copyOf(intersection.getApproachSegments()));
+  }
+
+  /** A vehicle signal where its road ends outside the bounds the input file declares makes that node its junction: the
+   * junction itself is cut off by the edge, and the node where the parsed road ends stands in for it */
+  @Test
+  public void vehicleSignalWhereRoadEndsOutsideDeclaredBoundsMakesItsNodeTheJunction() {
+    /*
+     *                         4
+     *                         |                |
+     *     1 --------------->- 2 ----->-------- | -- 5      way 10: 1-2-5 primary, two-way; way 11: 2-4 secondary
+     *                         <- about 37 m -> | <- 18 m   arrow marks the approach of 5
+     *                                    edge of the declared bounds (lon 151.2120)
+     *
+     *   5: highway=traffic_signals, where the road ends outside the bounds; no bounding area set
+     */
+    var layer = parse("vehicle_signal_where_road_ends_outside_parsed_area");
+
+    var intersection = onlyIntersection(layer);
+    assertEquals(List.of(nodeByOsmId(layer, 5)), intersection.getMemberNodes());
+    assertEquals(EnumSet.of(IntersectionType.JUNCTION), intersection.getTypes());
+    assertEquals(List.of(segment(layer, 2, 5)), intersection.getApproachSegments());
+  }
+
+  /** A bounding area marks the edge of the parsed area too, over the bounds the input file declares */
+  @Test
+  public void vehicleSignalWhereRoadEndsOutsideBoundingAreaMakesItsNodeTheJunction() {
+    /*
+     *                         4
+     *                         |                |
+     *     1 --------------->- 2 ----->-------- | -- 5      way 10: 1-2-5 primary, two-way; way 11: 2-4 secondary
+     *                                          |           the declared bounds reach past 5, the bounding area
+     *                                    edge of the bounding area (lon 151.2120)
+     *
+     *   5: highway=traffic_signals, where the road ends outside the bounding area
+     */
+    var layer = parse("vehicle_signal_where_road_ends_inside_parsed_area",
+        settings -> settings.setBoundingArea(OsmBoundary.of(151.2060, 151.2120, -33.8720, -33.8680)));
+
+    var intersection = onlyIntersection(layer);
+    assertEquals(List.of(nodeByOsmId(layer, 5)), intersection.getMemberNodes());
+    assertEquals(List.of(segment(layer, 2, 5)), intersection.getApproachSegments());
+  }
+
+  /** Where a road ends inside the parsed area, it really ends, so a vehicle signal there does not make a junction of
+   * it, but looks for the junction along the road as before */
+  @Test
+  public void vehicleSignalWhereRoadEndsInsideParsedAreaSnapsToJunctionAlongRoad() {
+    /*
+     *                         4
+     *                         |                         |
+     *     1 ----------------- 2 -<--------------- 5     |   way 10: 1-2-5 primary, two-way; way 11: 2-4 secondary
+     *                         <- about 37 m ->          |   arrow marks the approach of 2
+     *                                    edge of the declared bounds (lon 151.2140)
+     *
+     *   5: highway=traffic_signals, where the road ends inside the bounds
+     */
+    var layer = parse("vehicle_signal_where_road_ends_inside_parsed_area");
+
+    var intersection = onlyIntersection(layer);
+    assertEquals(List.of(nodeByOsmId(layer, 2)), intersection.getMemberNodes());
+    assertEquals(List.of(segment(layer, 5, 2)), intersection.getApproachSegments());
+  }
+
+  /** A vehicle signal looking ahead along its road takes the node where the road ends outside the parsed area as the
+   * junction it controls, when it lies within reach */
+  @Test
+  public void vehicleSignalBeforeRoadEndOutsideParsedAreaSnapsToRoadEnd() {
+    /*
+     *              4
+     *              |                 |
+     *     1 ------ 2 ------->------- | ---- 6 ---->--- 5      way 10: 1-2-6-5 primary, two-way; way 11: 2-4 secondary
+     *                                |   <- about 37 m ->     arrow marks the approach of 5
+     *                     edge of the declared bounds (lon 151.2120)
+     *
+     *   6: highway=traffic_signals, traffic_signals:direction=forward, a shape node outside the bounds; 5: the road
+     *   ends there, outside the bounds
+     */
+    var layer = parse("vehicle_signal_before_road_end_outside_parsed_area");
+
+    var intersection = onlyIntersection(layer);
+    assertEquals(List.of(nodeByOsmId(layer, 5)), intersection.getMemberNodes());
+    assertEquals(List.of(segment(layer, 2, 5)), intersection.getApproachSegments());
+  }
+
   /** A node carrying both a vehicle signal and a crossing signal is one intersection of both kinds */
   @Test
-  public void bothKindsOnOneNode() throws PlanItException {
+  public void bothKindsOnOneNode() {
     /*
      *              4
      *              |
@@ -216,7 +342,7 @@ public class OsmTrafficSignalsTest {
 
   /** With intersections switched off, a traffic signal creates no intersection */
   @Test
-  public void intersectionsSwitchedOff() throws PlanItException {
+  public void intersectionsSwitchedOff() {
     /*
      * the network of fourArmJunctionTaggedOnItsCentre, 1: highway=traffic_signals, read with intersections off
      *
@@ -236,7 +362,7 @@ public class OsmTrafficSignalsTest {
    * intersection of its own, the signal snaps to the junction ahead, whose intersection gets the segment leaving the
    * signal as an approach */
   @Test
-  public void signalOnTwoLinkNodeSnapsToJunctionAhead() throws PlanItException {
+  public void signalOnTwoLinkNodeSnapsToJunctionAhead() {
     /*
      *                               7
      *                               |
@@ -264,7 +390,7 @@ public class OsmTrafficSignalsTest {
   /** An untagged vehicle signal on a shape node of a two-way road applies to one direction of travel, the one whose
    * junction is nearest: that junction gets the segment the signal lies on as an approach */
   @Test
-  public void signalWithoutDirectionSnapsToNearestJunction() throws PlanItException {
+  public void signalWithoutDirectionSnapsToNearestJunction() {
     /*
      *                7                       9
      *                |                       |
@@ -289,7 +415,7 @@ public class OsmTrafficSignalsTest {
   /** An untagged vehicle signal with junctions in both directions within the near tie delta distance of each other
    * goes to the one where the road of higher capacity crosses, even when that one is farther */
   @Test
-  public void signalWithoutDirectionPrefersHigherCapacityJunctionOnNearTie() throws PlanItException {
+  public void signalWithoutDirectionPrefersHigherCapacityJunctionOnNearTie() {
     /*
      *                   9        7
      *                   |        |
@@ -311,7 +437,7 @@ public class OsmTrafficSignalsTest {
   /** An untagged vehicle signal compares, per direction, the junction it would be assigned to there: a side street
    * passed over for a higher class junction further along does not make that direction the nearer */
   @Test
-  public void signalWithoutDirectionComparesAssignedJunctions() throws PlanItException {
+  public void signalWithoutDirectionComparesAssignedJunctions() {
     /*
      *              7                 10
      *              |                 |
@@ -333,7 +459,7 @@ public class OsmTrafficSignalsTest {
   /** An untagged vehicle signal choosing its direction does not count a junction where only a service lane without
    * signals of its own joins, as for signalised crossings, also when the lane can only be driven out of */
   @Test
-  public void signalWithoutDirectionSkipsServiceLaneWhenChoosing() throws PlanItException {
+  public void signalWithoutDirectionSkipsServiceLaneWhenChoosing() {
     /*
      *                9           7
      *                |           |
@@ -356,7 +482,7 @@ public class OsmTrafficSignalsTest {
    * are usable by motorised modes, so for the vehicle signal the node is a crosswalk, not a junction, and it snaps to
    * the junction ahead along the pieces of the broken way */
   @Test
-  public void signalOnNodeBrokenForFootwaySnapsToJunctionAhead() throws PlanItException {
+  public void signalOnNodeBrokenForFootwaySnapsToJunctionAhead() {
     /*
      *                7
      *                |
@@ -384,7 +510,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal followed along the road passes through a node where the road simply continues, and the
    * segment arriving at the junction beyond becomes its approach */
   @Test
-  public void signalWalksThroughTwoLinkNodeToJunction() throws PlanItException {
+  public void signalWalksThroughTwoLinkNodeToJunction() {
     /*
      *                                          7
      *                                          |
@@ -412,7 +538,7 @@ public class OsmTrafficSignalsTest {
    * it creates nothing and breaks no link, with breaking links at isolated crossings on the link is broken at it and it
    * is its own crossing intersection */
   @Test
-  public void vehicleSignalFarFromAnyJunctionOnShapeNode() throws PlanItException {
+  public void vehicleSignalFarFromAnyJunctionOnShapeNode() {
     /*
      *                                              7
      *                                              |
@@ -446,7 +572,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal with no junction within the maximum distance, on a node where two links meet, is an isolated
    * crossing that needs no link broken */
   @Test
-  public void vehicleSignalFarFromAnyJunctionOnTwoLinkNode() throws PlanItException {
+  public void vehicleSignalFarFromAnyJunctionOnTwoLinkNode() {
     /*
      *     2 ------------------- 1 ------------------- 3    way 10: 2-1 primary, way 11: 1-3 primary, both two-way
      *            ~150 m                ~150 m              no junction anywhere
@@ -473,7 +599,7 @@ public class OsmTrafficSignalsTest {
   /** The maximum distance from a vehicle signal to its junction decides whether a signal 12 m before a junction
    * reaches it */
   @Test
-  public void tighterMaximumDistance() throws PlanItException {
+  public void tighterMaximumDistance() {
     /*
      *                                   7
      *                                   |
@@ -498,7 +624,7 @@ public class OsmTrafficSignalsTest {
   /** An untagged vehicle signal on a one-way road applies only in the direction motorised modes can travel, even
    * where pedestrians may walk the other way */
   @Test
-  public void oneWayRoad() throws PlanItException {
+  public void oneWayRoad() {
     /*
      *                7                       9
      *                |                       |
@@ -520,7 +646,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal followed along the road passes through a crosswalk, where a parsed footway crosses the road:
    * only links usable by motorised road modes count towards a junction for a vehicle signal */
   @Test
-  public void vehicleSignalBeforeCrosswalkWithFootwaysParsed() throws PlanItException {
+  public void vehicleSignalBeforeCrosswalkWithFootwaysParsed() {
     /*
      *                          20      7
      *                           :      |
@@ -553,7 +679,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal tagged with a direction applies only to traffic in that direction of its OSM way, so a side
    * street behind it does not get the signal, even within the maximum distance */
   @Test
-  public void directionTaggedSignal() throws PlanItException {
+  public void directionTaggedSignal() {
     /*
      *                                         7
      *                                         |
@@ -578,7 +704,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal tagged with a direction, where OSM ways of opposite orientation meet, cannot tell which
    * direction is meant: only the nearer of the junctions reached in its two directions gets it */
   @Test
-  public void waysDisagreeOnTheDirection() throws PlanItException {
+  public void waysDisagreeOnTheDirection() {
     /*
      *                7                    9
      *                |                    |
@@ -600,7 +726,7 @@ public class OsmTrafficSignalsTest {
   /** A vehicle signal passes over a side street without signals of its own for a junction further along its road,
    * within the maximum distance, where a road of higher capacity crosses */
   @Test
-  public void unsignalisedSideStreetBeforeHigherClassJunction() throws PlanItException {
+  public void unsignalisedSideStreetBeforeHigherClassJunction() {
     /*
      *                                  7
      *                                  |
@@ -624,7 +750,7 @@ public class OsmTrafficSignalsTest {
   /** A side street with a vehicle signal of its own is a signalised junction: the vehicle signal on the main road
    * before it stays with it, even with a junction where a road of higher capacity crosses further along */
   @Test
-  public void signalisedSideStreetBeforeHigherClassJunction() throws PlanItException {
+  public void signalisedSideStreetBeforeHigherClassJunction() {
     /*
      *                                  7
      *                                  |
@@ -649,7 +775,7 @@ public class OsmTrafficSignalsTest {
   /** Vehicle signals at the stop line of every arm, the centre node untagged, make one intersection at the centre
    * with one approach per arm */
   @Test
-  public void signalsOnEveryArmCentreUntagged() throws PlanItException {
+  public void signalsOnEveryArmCentreUntagged() {
     /*
      *                         4
      *                         |
@@ -677,7 +803,7 @@ public class OsmTrafficSignalsTest {
   /** A junction whose centre node and one of its stop lines both carry a vehicle signal has each entering segment
    * as an approach exactly once */
   @Test
-  public void centreAndStopLineBothTagged() throws PlanItException {
+  public void centreAndStopLineBothTagged() {
     /*
      *                         4
      *                         |
@@ -700,7 +826,7 @@ public class OsmTrafficSignalsTest {
   /** A junction of a dual carriageway and a two-way road consists of two nodes, one per carriageway: each node with a
    * signal before it is its own single-node intersection, and the road between the carriageways is not an approach */
   @Test
-  public void dualCarriagewayJunction() throws PlanItException {
+  public void dualCarriagewayJunction() {
     /*
      *                         7
      *                         27 v
@@ -731,7 +857,7 @@ public class OsmTrafficSignalsTest {
    * signalised crossings off (the default) nothing changes; on, the link is broken at it and it becomes its own
    * crossing intersection */
   @Test
-  public void midBlockCrossing() throws PlanItException {
+  public void midBlockCrossing() {
     /*
      *     2 ------------------- 31 ------------------- 3      way 10: 2-31-3 primary, two-way, no junction anywhere
      *               ~150 m               ~150 m
@@ -758,7 +884,7 @@ public class OsmTrafficSignalsTest {
   /** A crossing signal on the road 10 m before a signalised junction: with footways not parsed it is isolated from the
    * pedestrian network and part of the junction, with footways parsed it is its own crossing next to the junction */
   @Test
-  public void crossingNearSignalisedJunction() throws PlanItException {
+  public void crossingNearSignalisedJunction() {
     /*
      *                           8
      *                     21    |                      way 11: 8-1-9 secondary, two-way
@@ -800,10 +926,43 @@ public class OsmTrafficSignalsTest {
         Set.copyOf(crossing.getApproachSegments()));
   }
 
+  /** A crossing signal on the exit arm of a signalised junction, past it along a one-way road, is part of that junction
+   * when within the crossing distance of it, although looking along the traffic it faces away from the junction */
+  @Test
+  public void crossingOnExitArmOfSignalisedJunction() {
+    /*
+     *                 7
+     *                 |
+     *   2 ----------> 6 --> 31 ----------------> 3    way 10: 2-6-31-3 primary, one-way
+     *                 | ~15 m                         way 11: 7-6-8 secondary, two-way
+     *                 8
+     *
+     *   6: highway=traffic_signals, on the junction's centre: a signalised junction
+     *   31: highway=crossing, crossing=traffic_signals, a shape node of way 10, ~15 m past 6 on its exit arm
+     *
+     *   within the 30 m crossing distance of junction 6, behind it against the traffic: part of that junction, so even
+     *   with breaking links at isolated crossings on, no link is broken at 31. With the crossing distance lowered to
+     *   10 m, junction 6 is out of reach and 31 is an isolated crossing
+     */
+    var withinReach = parse("crossing_on_exit_arm_of_signalised_junction",
+        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+    assertEquals(4, withinReach.getLinks().size());
+    assertEquals(List.of(nodeByOsmId(withinReach, 6)), onlyIntersection(withinReach).getMemberNodes());
+
+    IdGenerator.reset();
+    var beyondReach = parse("crossing_on_exit_arm_of_signalised_junction", settings -> {
+      settings.setBreakLinksAtIsolatedSignalisedCrossings(true);
+      settings.setMaximumDistanceSignalisedCrossingToJunctionInMeters(10);
+    });
+    assertEquals(5, beyondReach.getLinks().size());
+    assertEquals(2, beyondReach.getIntersections().size());
+    assertEquals(EnumSet.of(IntersectionType.CROSSING), intersectionAt(beyondReach, 31).getTypes());
+  }
+
   /** A crossing signal on the road 10 m before a junction without traffic signals, footways not parsed, is isolated:
    * the junction nearby does not make it part of anything */
   @Test
-  public void crossingNearUnsignalisedJunction() throws PlanItException {
+  public void crossingNearUnsignalisedJunction() {
     /*
      *                           8
      *                     21    |                      way 11: 8-1-9 secondary, two-way
@@ -834,7 +993,7 @@ public class OsmTrafficSignalsTest {
   /** Breaking a link at an isolated crossing that is an approach of a signalised junction further away keeps that
    * junction's approach, now the piece of the link arriving at the junction */
   @Test
-  public void crossingBreaksJunctionApproach() throws PlanItException {
+  public void crossingBreaksJunctionApproach() {
     /*
      *                                     8
      *                                     |                way 11: 8-1-9 secondary, two-way

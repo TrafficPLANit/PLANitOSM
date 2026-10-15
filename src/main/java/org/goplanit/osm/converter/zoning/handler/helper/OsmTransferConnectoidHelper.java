@@ -81,7 +81,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     if(osmStopLocationNodeId != null && settings.isOverwriteWaitingAreaOfStopLocation(osmStopLocationNodeId)) {
       /* ... exception 2: user override with mapping to this zone for this node, in which case we
       allow crossing traffic regardless */
-      mustAvoidCrossingTraffic = !Long.valueOf(transferZone.getExternalId()).equals(
+      mustAvoidCrossingTraffic = !Long.valueOf(PlanitOsmUtils.parseOsmId(transferZone)).equals(
               settings.getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNodeId).second());
     } 
     return mustAvoidCrossingTraffic;   
@@ -253,7 +253,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       var newlyBrokenLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
           networkLayer.getLayerModifier().breakAt(
               linksToBreak, planitNode, referenceNetwork.getCoordinateReferenceSystem()),
-          l -> Long.parseLong(l.getExternalId()));
+          PlanitOsmUtils::parseOsmId);
 
       /* TRACKING DATA CONSISTENCY - AFTER */
       {
@@ -528,7 +528,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
        *  override default mapping between waiting area and stop location when needed */
       this.getOverwrittenWaitingAreaSourceIdForNode = n -> {
         var result = transferSettings.getOverwrittenWaitingAreaOfStopLocation(
-                n.getExternalId() != null ? Long.valueOf(n.getExternalId()) : null);
+                n.getExternalId() != null ? PlanitOsmUtils.parseOsmId(n) : null);
         return result!= null ? String.valueOf(result.second()) : null;
       };
     }
@@ -1041,9 +1041,9 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
               getSettings().getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNode.getId());
       /* when type match (point=node, otherwise=way)  and id match we can continue, otherwise not */
       if( !(waitingAreaGeometry instanceof Point &&
-              Long.parseLong(transferZone.getExternalId()) == overwriteResult.second())) {
+              PlanitOsmUtils.parseOsmId(transferZone) == overwriteResult.second())) {
         return;
-      }else if( Long.parseLong(transferZone.getExternalId()) != overwriteResult.second()) {
+      }else if( PlanitOsmUtils.parseOsmId(transferZone) != overwriteResult.second()) {
         return;
       }
       suppressLogging = true;

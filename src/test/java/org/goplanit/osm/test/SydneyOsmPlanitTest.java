@@ -151,6 +151,10 @@ public class SydneyOsmPlanitTest {
        * this the difference is pronounced, since a boundary that truncates one way streets manufactures pockets */
       osmReader.getSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
+      /* isolated signalised crossings get their own intersection in the Sydney cases, so a signal with no junction in
+       * reach is kept, e.g. the one halfway along the slip lane of the Cahill Expressway Onramp. The Melbourne cases
+       * keep the default, so both remain covered */
+      osmReader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
 
       /* PLANit writer */
       PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(
@@ -193,6 +197,8 @@ public class SydneyOsmPlanitTest {
       /* weak connectivity on purpose, see the note in #testOsm2PlanitNetworkComprehensive */
       readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
+      /* isolated signalised crossings on, see the note in #testOsm2PlanitNetworkComprehensive */
+      readerSettings.getNetworkSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
 
       // tested separately in #testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
@@ -248,6 +254,8 @@ public class SydneyOsmPlanitTest {
       /* weak connectivity on purpose, see the note in #testOsm2PlanitNetworkComprehensive */
       readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
+      /* isolated signalised crossings on, see the note in #testOsm2PlanitNetworkComprehensive */
+      readerSettings.getNetworkSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());

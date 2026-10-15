@@ -40,6 +40,10 @@ public class OsmNetworkReaderData {
    */
   private OsmBoundary osmBoundingArea = null;
 
+  /** the bounds the input file declares, null when it declares none. Unlike the bounding area these restrict nothing
+   * that is parsed */
+  private OsmBoundary inputFileBounds = null;
+
   /**
    * Track OSM nodes to retain in memory during network parsing, which might or might not end up being used
    * to construct links or other entities
@@ -52,6 +56,15 @@ public class OsmNetworkReaderData {
   /** OSM node ids of the traffic signals among the eligible OSM nodes, vehicle or crossing, recorded only when
    * intersections are parsed, ordered so that integrating them does not depend on hash order */
   private final SortedSet<Long> trafficSignalOsmNodeIds = new TreeSet<>();
+
+  /** per OSM node of a signalised crossing way, the id of that way, recorded only when intersections are parsed, for
+   * any crossing way, parsed or not */
+  private final Map<Long, Long> signalisedCrossingWayIdByOsmNodeId = new HashMap<>();
+
+  /** OSM node ids of the eligible OSM nodes on a signalised crossing way without crossing signal tags of their own,
+   * among them the node where the crossing way crosses a road, ordered so that integrating them does not depend on
+   * hash order */
+  private final SortedSet<Long> osmNodeIdsOnSignalisedCrossingWayOnly = new TreeSet<>();
 
   /** what became of the OSM entities read, for now the traffic signals */
   private final OsmParseDiagnostics parseDiagnostics = new OsmParseDiagnostics();
@@ -102,8 +115,11 @@ public class OsmNetworkReaderData {
     osmLayerParsers.clear();
 
     osmBoundingArea = null;
+    inputFileBounds = null;
     osmSpatialEligibilityData.reset();
     trafficSignalOsmNodeIds.clear();
+    signalisedCrossingWayIdByOsmNodeId.clear();
+    osmNodeIdsOnSignalisedCrossingWayOnly.clear();
     parseDiagnostics.reset();
     planitEntityDiagnostics.reset();
   }
@@ -163,6 +179,48 @@ public class OsmNetworkReaderData {
    */
   public SortedSet<Long> getTrafficSignalOsmNodeIds(){
     return Collections.unmodifiableSortedSet(trafficSignalOsmNodeIds);
+  }
+
+  /**
+   * Record the OSM nodes of a signalised crossing way, each with the id of that way, unless it was recorded with
+   * another signalised crossing way before
+   *
+   * @param osmWay the signalised crossing way
+   */
+  public void registerSignalisedCrossingWayNodes(OsmWay osmWay){
+    for(int index = 0; index < osmWay.getNumberOfNodes(); ++index){
+      signalisedCrossingWayIdByOsmNodeId.putIfAbsent(osmWay.getNodeId(index), osmWay.getId());
+    }
+  }
+
+  /**
+   * Collect the id of the signalised crossing way an OSM node is on
+   *
+   * @param osmNodeId of the node
+   * @return id of the signalised crossing way, null when the node is on none
+   */
+  public Long getSignalisedCrossingWayId(long osmNodeId){
+    return signalisedCrossingWayIdByOsmNodeId.get(osmNodeId);
+  }
+
+  /**
+   * Record an eligible OSM node on a signalised crossing way that has no crossing signal tags of its own
+   *
+   * @param osmNodeId to record
+   */
+  public void registerOsmNodeOnSignalisedCrossingWayOnly(long osmNodeId){
+    osmNodeIdsOnSignalisedCrossingWayOnly.add(osmNodeId);
+  }
+
+  /**
+   * Collect the OSM node ids of the eligible OSM nodes on a signalised crossing way without crossing signal tags of
+   * their own, ordered by id. Among them is the node where the crossing way crosses a road, but also, e.g., where it
+   * meets the kerb
+   *
+   * @return OSM node ids, unmodifiable
+   */
+  public SortedSet<Long> getOsmNodeIdsOnSignalisedCrossingWayOnly(){
+    return Collections.unmodifiableSortedSet(osmNodeIdsOnSignalisedCrossingWayOnly);
   }
 
   /**
@@ -296,6 +354,24 @@ public class OsmNetworkReaderData {
    */
   public void setBoundingArea(OsmBoundary osmBoundingArea){
     this.osmBoundingArea = osmBoundingArea;
+  }
+
+  /**
+   * Collect the bounds the input file declares, e.g. in its PBF header or as the bounds element of OSM XML
+   *
+   * @return the declared bounds, null when the input file declares none
+   */
+  public OsmBoundary getInputFileBounds(){
+    return inputFileBounds;
+  }
+
+  /**
+   * Set the bounds the input file declares
+   *
+   * @param inputFileBounds the declared bounds
+   */
+  public void setInputFileBounds(OsmBoundary inputFileBounds){
+    this.inputFileBounds = inputFileBounds;
   }
 
 }

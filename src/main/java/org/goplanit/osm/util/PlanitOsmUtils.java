@@ -14,6 +14,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.Edge;
+import org.goplanit.utils.id.ExternalIdAble;
 import org.locationtech.jts.geom.Geometry;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -43,7 +44,18 @@ public class PlanitOsmUtils {
   public static String createExternalIdByOsmKeyValue(String osmKeyTag, String osmValueTag) {
     return osmKeyTag != null ? OsmTagUtils.toConcatEqualsString(osmKeyTag, osmValueTag) : osmValueTag;
   }
-  
+
+  /**
+   * The OSM id of a PLANit entity created from an OSM entity, e.g. a node from an OSM node or a link from an OSM way.
+   * It is the entity's external id, read as a number.
+   *
+   * @param entity created from an OSM entity
+   * @return the OSM id
+   */
+  public static long parseOsmId(ExternalIdAble entity) {
+    return Long.parseLong(entity.getExternalId());
+  }
+
   /**
    * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)
    * 

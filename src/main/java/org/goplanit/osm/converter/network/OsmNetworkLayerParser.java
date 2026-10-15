@@ -925,7 +925,7 @@ public class OsmNetworkLayerParser {
       boolean linksBroken = PlanitNetworkLayerModifierUtils.breakLinksWithInternalNode(
           networkLayer, layerData, node, geoUtils.getCoordinateReferenceSystem());
       if(linksBroken) {
-        processedOsmNodeIds.add(Long.valueOf(node.getExternalId()));
+        processedOsmNodeIds.add(PlanitOsmUtils.parseOsmId(node));
       }
     }
 

@@ -34,6 +34,26 @@ public class OsmTrafficSignalTags {
   /** key stating whether a crossing has traffic signals, e.g. {@code crossing:signals=yes} */
   public static final String CROSSING_SIGNALS = OsmTagUtils.createCompositeOsmKey(CROSSING, SIGNALS);
 
+  /** value of {@code crossing=uncontrolled}, a crossing without signals */
+  public static final String UNCONTROLLED = "uncontrolled";
+
+  /** value of {@code crossing=unmarked}, a crossing without markings or signals */
+  public static final String UNMARKED = "unmarked";
+
+  /** value of {@code crossing=zebra}, a zebra crossing, without signals */
+  public static final String ZEBRA = "zebra";
+
+  /** value of {@code crossing=informal}, a place people cross without any crossing facilities */
+  public static final String INFORMAL = "informal";
+
+  /** values of {@code highway=*} of a way that can be a crossing way, crossing a road where it meets it */
+  public static final Set<String> CROSSING_WAY_HIGHWAY_TYPES = Set.of(OsmHighwayTags.FOOTWAY, OsmHighwayTags.CYCLEWAY,
+      OsmHighwayTags.PATH, OsmHighwayTags.BRIDLEWAY, OsmHighwayTags.PEDESTRIAN);
+
+  /** values of {@code crossing=*} stating a crossing has no signals */
+  public static final Set<String> CROSSING_VALUES_WITHOUT_SIGNALS =
+      Set.of(UNCONTROLLED, UNMARKED, ZEBRA, INFORMAL, OsmTags.NO);
+
   /** value of {@code traffic_signals=pedestrian_crossing}, signals of a signalised pedestrian crossing */
   public static final String PEDESTRIAN_CROSSING_TRAFFIC_SIGNALS = "pedestrian_crossing";
 
@@ -100,9 +120,34 @@ public class OsmTrafficSignalTags {
    * @return true when a crossing signal, false otherwise
    */
   public static boolean isCrossingTrafficSignals(Map<String, String> tags) {
-    return OsmTagUtils.keyMatchesAnyValueTag(tags, CROSSING, CROSSING_TRAFFIC_SIGNALS) ||
-        OsmTagUtils.keyMatchesAnyValueTag(tags, CROSSING_SIGNALS, OsmTags.YES) ||
+    return OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING, CROSSING_TRAFFIC_SIGNALS) ||
+        OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING_SIGNALS, OsmTags.YES) ||
         hasTrafficSignalsSubTypeIn(tags, CROSSING_TRAFFIC_SIGNAL_TYPES);
+  }
+
+  /** Verify if the tags mark a signalised crossing way: a footway, cycleway or path tagged {@code
+   * crossing=traffic_signals} or {@code crossing:signals=yes}
+   *
+   * @param tags of the OSM way to check
+   * @return true when a signalised crossing way, false otherwise
+   */
+  public static boolean isSignalisedCrossingWay(Map<String, String> tags) {
+    return OsmTagUtils.keyMatchesAnyValueTag(
+            tags, OsmHighwayTags.HIGHWAY, CROSSING_WAY_HIGHWAY_TYPES.toArray(String[]::new)) &&
+        (OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING, CROSSING_TRAFFIC_SIGNALS) ||
+            OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING_SIGNALS, OsmTags.YES));
+  }
+
+  /** Verify if the tags state the crossing has no signals: {@code crossing:signals=no}, or a {@code crossing=*} value
+   * in {@link #CROSSING_VALUES_WITHOUT_SIGNALS}. {@code crossing=marked} says nothing about signals
+   *
+   * @param tags to check
+   * @return true when the tags state the crossing has no signals, false otherwise
+   */
+  public static boolean isCrossingWithoutSignals(Map<String, String> tags) {
+    return OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING_SIGNALS, OsmTags.NO) ||
+        OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(
+            tags, CROSSING, CROSSING_VALUES_WITHOUT_SIGNALS.toArray(String[]::new));
   }
 
   /** Verify if the tags mark a signal that controls no junction or crossing: {@code highway=traffic_signals} with a
@@ -123,5 +168,17 @@ public class OsmTrafficSignalTags {
    */
   public static boolean isTrafficSignals(Map<String, String> tags) {
     return isVehicleTrafficSignal(tags) || isCrossingTrafficSignals(tags) || isNonControllingTrafficSignals(tags);
+  }
+
+  /** The direction a signal applies to, relative to its OSM way: a {@code traffic_signals:direction} of forward,
+   * backward or both. Any other value, such as a compass bearing, is not recognised
+   *
+   * @param tags of the signal
+   * @return the direction tagged, null when not tagged or not recognised
+   */
+  public static String getRecognisedDirection(Map<String, String> tags) {
+    var direction = tags.get(TRAFFIC_SIGNALS_DIRECTION);
+    return OsmDirectionTags.FORWARD.equals(direction) || OsmDirectionTags.BACKWARD.equals(direction) ||
+        OsmDirectionTags.BOTH.equals(direction) ? direction : null;
   }
 }

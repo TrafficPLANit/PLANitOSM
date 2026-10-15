@@ -141,7 +141,15 @@ The rules live in `OsmTrafficSignalTags`:
 * **vehicle signal** - `highway=traffic_signals`, unless its `traffic_signals=*` value marks a crossing or a signal that
   controls no traffic.
 * **crossing signal** - `crossing=traffic_signals`, `crossing:signals=yes`, or `highway=traffic_signals` with
-  `traffic_signals=pedestrian_crossing` or `traffic_signals=crossing` (`CROSSING_TRAFFIC_SIGNAL_TYPES`).
+  `traffic_signals=pedestrian_crossing` or `traffic_signals=crossing` (`CROSSING_TRAFFIC_SIGNAL_TYPES`). A `crossing` value
+  listing several values, such as `traffic_signals;marked`, counts when one of them does.
+* **crossing signal on the crossing way** - many crossings carry their signals only on the crossing way, a footway,
+  cycleway or path tagged `crossing=traffic_signals` or `crossing:signals=yes`, not on the node where it crosses the road.
+  That node is then a crossing signal as well, also when footways are not parsed. The other nodes of the crossing way,
+  such as where it meets the kerb, are not on a road and are no signal. The crossing way is trusted over the node: where
+  the node says the crossing has no signals (`crossing=zebra`, `uncontrolled`, `unmarked`, `informal` or `no`, or
+  `crossing:signals=no`), it is still a crossing signal, but the case is counted as inconsistent and logged as a warning
+  with the ids of the node and the way, so it can be checked in OSM.
 * **not controlling traffic** - `traffic_signals=ramp_meter`, `emergency`, `blinker`, `gate`, `control_box` or
   `level_crossing` (`NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES`): ignored and counted.
 * A node tagged both `highway=traffic_signals` and `crossing=traffic_signals` is a vehicle signal and a crossing signal, each
@@ -153,6 +161,14 @@ The rules live in `OsmTrafficSignalTags`:
 A node is a junction node for vehicle signals where three or more links usable by a motorised road mode meet. A crosswalk,
 where footways meet the road, is not one: the road simply continues through it. For crossing signals every parsed link
 counts, footways included, so where a parsed footway crosses the road the crossing node is a junction node of its own.
+
+A road end outside the parsed area is a junction node for vehicle signals as well. Pre-processing keeps a way whole once
+one of its nodes lies inside the area, so a road can run on past the edge and end where it reached a junction that is
+cut off. The node where it ends, with only one road link, stands in for that junction, as far as a vehicle signal can
+reach it like any junction. A signal on that node makes it its junction, and a signal looking ahead along its road can
+snap to it. Inside the parsed area such a node is a real dead end and no junction. The parsed area is the bounding area
+when one is set, or else the bounds the input file declares (its PBF header box, or the bounds element of OSM XML). A
+file that declares none has no edge.
 
 #### The cases, in the order tried
 
@@ -225,7 +241,8 @@ junction's. A junction where only service lanes or living streets of lower capac
 no signals of its own, does not count here. Before that, a signal without a usable direction keeps the direction whose
 first target is nearest: the junction it would be assigned to there, or an isolated crossing before it; within 10 m,
 the junction where the road of higher capacity crosses. A signal with no direction left is counted as such, takes no
-part in the signal evidence and waits for the third pass. Then:
+part in the signal evidence and waits for the third pass. When every crossing it stops at is one the third pass
+ignores at the edge of the parsed area (third pass, 1.), it is ignored with them instead. Then:
 
 1. The junction ahead: in each direction, the segment arriving at the first junction reached becomes its approach.
    When that first junction has no signal evidence of its own, and a junction further along within the maximum
@@ -241,9 +258,7 @@ part in the signal evidence and waits for the third pass. Then:
    ```
 
    Here junction 6 gets approach 4->6 and side street 4 gets nothing.
-2. No junction ahead, a bounding area is set, and the signal lies outside it (on a way running out of it) or inside it
-   within the maximum distance of its edge: the junction it controls is likely cut off, so the signal is ignored.
-3. Otherwise collected for the third pass.
+2. No junction ahead, not even a road end outside the parsed area within reach: collected for the third pass.
 
 Third pass:
 
@@ -260,13 +275,39 @@ Third pass:
                               9
    ```
 
+   It also is part of a signalised junction when the first junction behind it, going back along the road against the
+   traffic within the crossing distance, is signalised: it then lies on one of that junction's exit arms, such as past
+   it along a one-way road, where looking along the traffic it faces away from the junction.
+
+   ```
+                         7
+                         |
+        2 ------------>  6 --> 31 ------------> 3   6: vehicle signal on the junction's centre
+                         |  ~15 m                   31: crossing signal on the exit arm of one-way way 2-6-31-3
+                         8
+   ```
+
+   Otherwise, when it lies outside the parsed area, or inside within the crossing distance of its edge, it is ignored:
+   a junction it belongs to may be cut off by the edge, so whether it is isolated is unknown. Nothing is created and no
+   link is broken. A junction found within reach, a road end outside the parsed area included, still counts as above.
+
+   ```
+        ═══════════════════════════ edge of the parsed area
+                       |  ~195 m
+                       S      1: vehicle signal, stop line of crossing 31: ignored with it
+                       X      31: crossing signal, no junction found: ignored
+                       |      the side street there lies outside the input file, so it is not in the data
+   ```
+
    Otherwise it is an isolated crossing (4.).
 2. Per collected vehicle signal without a junction ahead, all before any of them becomes a crossing, so the result does not
    depend on their order: when a signalised crossing lies ahead along the road within the crossing distance, the signal
    is the stop line of that crossing, and the segment arriving there carries it; it makes no crossing of its own.
-3. The remaining vehicle signals are isolated crossings too (4.): what crosses there is unknown, but not only cars. Stop
-   lines of isolated crossings from the second pass join their crossing when it has an intersection, and create
-   nothing otherwise.
+3. Of the remaining vehicle signals, one outside the parsed area (on a way running out of it), or inside it within the
+   maximum distance of its edge, is ignored: the junction it controls is likely cut off. So is one within the crossing
+   distance of a crossing ignored at the edge (1.), as the crow flies: it is likely that crossing's stop line. The
+   others are isolated crossings too (4.): what crosses there is unknown, but not only cars. Stop lines of isolated
+   crossings from the second pass join their crossing when it has an intersection, and create nothing otherwise.
 4. An isolated crossing becomes its own `crossing` intersection, every segment entering it an approach, only when
    breaking links at isolated signalised crossings is on (`setBreakLinksAtIsolatedSignalisedCrossings`, default off);
    the link is then broken at the signal's node when it is not a PLANit node yet. With the setting off nothing is

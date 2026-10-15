@@ -212,11 +212,11 @@ public class BasicOsmReaderTest {
        * survive, since the infrastructure does */
       assertEquals(94, accessEgressZoneEntries);
 
-      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.BUS));
-      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAIN));
-      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.TRAM));
-      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.LIGHTRAIL));
-      assertTrue(network.getTransportLayers().getFirst().supportsPredefinedMode(PredefinedModeType.FERRY));
+      assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.BUS));
+      assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.TRAIN));
+      assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.TRAM));
+      assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.LIGHTRAIL));
+      assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.FERRY));
       
     }catch(Exception e) {
       LOGGER.severe(e.getMessage());      
