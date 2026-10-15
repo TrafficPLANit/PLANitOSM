@@ -1026,13 +1026,11 @@ public class OsmTrafficSignalIntegrator {
   }
 
   /**
-   * The junction a vehicle signal is assigned to in one direction. Normally it is the first junction reached that
-   * counts, see {@link #countsAsJunction(TargetAhead, VehicleSignalEvidence)}. So a junction where only service lanes
-   * or living streets without signals join is passed over, when one that counts follows within reach. If none counts,
-   * the first junction reached is used. There is one exception. If the junction found has no signals of its own, a
-   * junction further along the same OSM way, or a way with the same name, may be taken instead. That happens when a
-   * road of higher capacity crosses there, within the maximum distance. The junction with the highest capacity crossing
-   * road wins, the nearest on a tie.
+   * The junction a vehicle signal is assigned to in one direction: the first junction reached that counts, see
+   * {@link #countsAsJunction(TargetAhead, VehicleSignalEvidence)}. So a junction where only service lanes or living
+   * streets without signals join is passed over, when one that counts follows within reach. A junction that counts is
+   * never passed over, even when a road of higher capacity crosses further along. If none counts, the first junction
+   * reached is used.
    *
    * @param junctions reached in the direction, nearest first
    * @param evidence of the junctions' own signals
@@ -1046,15 +1044,7 @@ public class OsmTrafficSignalIntegrator {
     if (first == junctions.size()) {
       first = 0;
     }
-    var chosen = junctions.get(first);
-    if (!evidence.hasOwnSignals(chosen)) {
-      for (var further : junctions.subList(first + 1, junctions.size())) {
-        if (Precision.greater(crossingCapacity(further), crossingCapacity(chosen), Precision.EPSILON_6)) {
-          chosen = further;
-        }
-      }
-    }
-    return chosen;
+    return junctions.get(first);
   }
 
   /**
@@ -1193,16 +1183,16 @@ public class OsmTrafficSignalIntegrator {
    * @return true when assigned to at least one junction, false otherwise
    */
   private boolean assignToJunctions(PendingVehicleSignal pending, VehicleSignalEvidence evidence) {
-    boolean higherClassJunctionChosen = false;
+    boolean lowestOrderRoadJunctionPassed = false;
     boolean roadEndOutsideParsedAreaChosen = false;
     for (var junctions : pending.junctionsPerDirection) {
       var chosen = resolveJunction(junctions, evidence);
-      higherClassJunctionChosen |= chosen != junctions.get(0);
+      lowestOrderRoadJunctionPassed |= chosen != junctions.get(0);
       roadEndOutsideParsedAreaChosen |= isRoadEndOutsideParsedArea(chosen.getTargetNode());
       addArrivingSegmentAsApproach(chosen, pending.signal, IntersectionType.JUNCTION);
     }
-    if (higherClassJunctionChosen) {
-      trackAsDiagnostic(OsmTrafficSignalOutcome.HIGHER_CLASS_JUNCTION_CHOSEN, pending.signal);
+    if (lowestOrderRoadJunctionPassed) {
+      trackAsDiagnostic(OsmTrafficSignalOutcome.LOWEST_ORDER_ROAD_JUNCTION_PASSED, pending.signal);
     }
     if (roadEndOutsideParsedAreaChosen) {
       trackAsDiagnostic(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_AT_ROAD_END_OUTSIDE_PARSED_AREA, pending.signal);

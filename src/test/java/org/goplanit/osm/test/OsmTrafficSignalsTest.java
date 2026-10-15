@@ -434,19 +434,19 @@ public class OsmTrafficSignalsTest {
     assertEquals(List.of(segment(layer, 4, 6)), junction.getApproachSegments());
   }
 
-  /** An untagged vehicle signal compares, per direction, the junction it would be assigned to there: a side street
-   * passed over for a higher class junction further along does not make that direction the nearer */
+  /** An untagged vehicle signal compares, per direction, the junction it would be assigned to there: a service lane
+   * junction passed over on the way to a junction further along does not make that direction the nearer */
   @Test
   public void signalWithoutDirectionComparesAssignedJunctions() {
     /*
      *              7                 10
      *              |                 |
      *     2 ------ 5 ---- 4 --- 1 -- 6 --------- 3      way 10: 2-5-4-1-6-3 primary, two-way
-     *              |~30 m | ~12 m ~15 m                 way 12: 7-5-8 primary; ways 11 (9-4) and 13 (10-6) residential
+     *              |~30 m | ~12 m ~15 m                 way 12: 7-5-8 primary; way 11 (9-4) service; way 13 (10-6) residential
      *              8      9
      *
      *   1: highway=traffic_signals without a direction, a shape node of way 10
-     *   expected: west resolves to primary junction 5 (30 m), passing side street 4; east to side street 6 (15 m), more
+     *   expected: west resolves to primary junction 5 (30 m), passing service lane 4; east to side street 6 (15 m), more
      *   than 10 m nearer, so junction 6 gets approach 4->6, nothing else
      */
     var layer = parse("signal_without_direction_side_street_before_primary");
@@ -723,10 +723,10 @@ public class OsmTrafficSignalsTest {
     assertEquals(List.of(segment(layer, 1, 6)), intersection.getApproachSegments());
   }
 
-  /** A vehicle signal passes over a side street without signals of its own for a junction further along its road,
-   * within the maximum distance, where a road of higher capacity crosses */
+  /** A vehicle signal stops at a side street without signals of its own, even when a road of higher capacity crosses
+   * at a junction further along its road, within the maximum distance */
   @Test
-  public void unsignalisedSideStreetBeforeHigherClassJunction() {
+  public void vehicleSignalStopsAtUnsignalisedSideStreetBeforeHigherClassJunction() {
     /*
      *                                  7
      *                                  |
@@ -737,14 +737,14 @@ public class OsmTrafficSignalsTest {
      *   1: highway=traffic_signals, traffic_signals:direction=forward, a shape node of way 10
      *   4: side street junction (three road links), about 5 m ahead of the signal, no signal evidence of its own
      *   6: junction with a primary road, about 25 m ahead of the signal, within the 50 m default
-     *   expected: the side street is passed over for junction 6, where a road of higher capacity (primary against
-     *   residential, capacity per segment) crosses: junction 6 gets approach 4->6, junction 4 gets nothing
+     *   expected: a residential side street is a junction like any other, so junction 4 gets approach 2->4 and
+     *   junction 6 gets nothing
      */
     var layer = parse("unsignalised_side_street_before_primary_junction");
 
     var intersection = onlyIntersection(layer);
-    assertEquals(List.of(nodeByOsmId(layer, 6)), intersection.getMemberNodes());
-    assertEquals(List.of(segment(layer, 4, 6)), intersection.getApproachSegments());
+    assertEquals(List.of(nodeByOsmId(layer, 4)), intersection.getMemberNodes());
+    assertEquals(List.of(segment(layer, 2, 4)), intersection.getApproachSegments());
   }
 
   /** A side street with a vehicle signal of its own is a signalised junction: the vehicle signal on the main road

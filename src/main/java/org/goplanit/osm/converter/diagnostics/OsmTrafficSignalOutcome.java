@@ -108,11 +108,11 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
       "vehicle signals with a direction the ways disagree on, nearest junction taken"),
 
-  /** a vehicle signal passed over a junction without signals of its own for one further along its road where a
-   * road of higher capacity crosses, in at least one direction */
-  HIGHER_CLASS_JUNCTION_CHOSEN(
+  /** a vehicle signal passed over a junction where only service lanes or living streets without signals of their own
+   * join, for one further along its road, in at least one direction */
+  LOWEST_ORDER_ROAD_JUNCTION_PASSED(
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
-      "vehicle signals passing a junction without signals for a higher class one"),
+      "vehicle signals passing a junction joined only by service lanes or living streets"),
 
   /** a signal on a track made the node where the track crosses a road ahead a signalised junction */
   TRACK_SIGNAL_AT_ROAD_CROSSING(

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Vehicle signal 1 (direction forward) on shape node 1 of way 10 (2-1-4-31-5-3): residential way 11 (9-4) joins
+<!-- Vehicle signal 1 (direction forward) on shape node 1 of way 10 (2-1-4-31-5-3): service lane 11 (9-4) joins
      about 10 m ahead, signalised pedestrian crossing 31 about 13 m ahead, primary way 12 (7-5-8) crosses about 48 m
      ahead, 35 m past the crossing; way 10 primary, all ways two-way -->
 <osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
@@ -24,7 +24,7 @@
   </way>
   <way id="11">
     <nd ref="9"/><nd ref="4"/>
-    <tag k="highway" v="residential"/>
+    <tag k="highway" v="service"/>
   </way>
   <way id="12">
     <nd ref="7"/><nd ref="5"/><nd ref="8"/>

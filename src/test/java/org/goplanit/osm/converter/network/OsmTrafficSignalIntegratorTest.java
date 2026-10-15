@@ -354,18 +354,18 @@ public class OsmTrafficSignalIntegratorTest {
 
   /**
    * A vehicle signal is the stop line of an isolated crossing also when the crossing lies past a junction the signal
-   * passes over for a higher class one further along
+   * passes over, because only a service lane joins there
    */
   @Test
-  public void vehicleSignalStopsAtIsolatedCrossingPastSideStreet() {
+  public void vehicleSignalStopsAtIsolatedCrossingPastServiceLane() {
     /*
      *                  9                 7
      *                  |                 |
-     *   2 ------- 1 -> 4 - 31 ---------- 5 -------- 3     way 10 primary, two-way; signal 1 (forward); residential
+     *   2 ------- 1 -> 4 - 31 ---------- 5 -------- 3     way 10 primary, two-way; signal 1 (forward); service lane
      *               ~10 m ~13 m    ~48 m |                way 11 (9-4); signalised crossing 31; primary way 12 (7-5-8)
      *                                    8
      *
-     *   the signal resolves to junction 5, passing side street 4 for the higher class road; crossing 31 lies between, 35 m
+     *   the signal resolves to junction 5, passing service lane 4; crossing 31 lies between, 35 m
      *   before junction 5, so it is isolated and the signal is its stop line: no junction gets it
      */
     var reader = OsmNetworkReaderFactory.create(

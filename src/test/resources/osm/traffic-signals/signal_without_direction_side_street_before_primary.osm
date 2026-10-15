@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Vehicle signal on shape node 1 of way 10 (2-5-4-1-6-3) without a direction: residential way 11 (9-4) joins about
+<!-- Vehicle signal on shape node 1 of way 10 (2-5-4-1-6-3) without a direction: service lane 11 (9-4) joins about
      12 m west of it, primary way 12 (7-5-8) crosses about 30 m west, residential way 13 (10-6) joins about 15 m east;
      way 10 primary, all ways two-way -->
 <osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
@@ -21,7 +21,7 @@
   </way>
   <way id="11">
     <nd ref="9"/><nd ref="4"/>
-    <tag k="highway" v="residential"/>
+    <tag k="highway" v="service"/>
   </way>
   <way id="12">
     <nd ref="7"/><nd ref="5"/><nd ref="8"/>

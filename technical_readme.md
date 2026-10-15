@@ -244,10 +244,10 @@ the junction where the road of higher capacity crosses. A signal with no directi
 part in the signal evidence and waits for the third pass. When every crossing it stops at is one the third pass
 ignores at the edge of the parsed area (third pass, 1.), it is ignored with them instead. Then:
 
-1. The junction ahead: in each direction, the segment arriving at the first junction reached becomes its approach.
-   When that first junction has no signal evidence of its own, and a junction further along within the maximum
-   distance is where a road of higher capacity crosses, the signal goes to the latter instead, since a side street with
-   no signals of its own is passed on the way to the signalised junction:
+1. The junction ahead: in each direction, the segment arriving at the first junction reached becomes its approach. A
+   junction where only service lanes or living streets of lower capacity join, with no signals of its own, is passed
+   over when another junction follows within the maximum distance. Any other junction takes the signal, even when a
+   road of higher capacity crosses further along:
 
    ```
                                      7
@@ -257,7 +257,7 @@ ignores at the edge of the parsed area (third pass, 1.), it is ignored with them
                                  9     8               6: junction with a primary road
    ```
 
-   Here junction 6 gets approach 4->6 and side street 4 gets nothing.
+   Here side street 4 gets approach 2->4 and junction 6 gets nothing.
 2. No junction ahead, not even a road end outside the parsed area within reach: collected for the third pass.
 
 Third pass:
@@ -342,8 +342,8 @@ What happens is recorded where it is decided, in two stages, and logged at the e
   node ids, logged per group (`OsmTrafficSignalOutcomeGroup`), each adding up: signals ignored before their kind
   matters, as a share of all signals recorded; one outcome per vehicle signal, as a share of the vehicle signals; one
   per crossing signal, as a share of the crossing signals, a node with both kinds counted in both; then the notes
-  recorded alongside an outcome (e.g. passing a side street for a higher class junction, an unrecognised direction), as
-  counts only. For vehicle signals left as isolated crossings, a distribution of how far along the road the nearest
+  recorded alongside an outcome (e.g. passing a junction joined only by service lanes or living streets, an
+  unrecognised direction), as counts only. For vehicle signals left as isolated crossings, a distribution of how far along the road the nearest
   junction is, up to 200 m, follows.
 * **PLANit intersections** (`OsmPlanitEntityDiagnostics`, `OsmPlanitEntityIssue`) - the intersections and approaches
   created, and their issues: an intersection lost when pruning removed all its approaches (read from the clean-up's
