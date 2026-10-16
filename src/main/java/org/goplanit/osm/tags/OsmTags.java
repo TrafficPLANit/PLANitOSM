@@ -8,12 +8,6 @@ import java.util.Map;
  */
 public class OsmTags {
       
-    /*  tags related to nodes */
-        
-    public static final String TRAFFIC_SINGALS = "traffic_signals";
-
-    public static final String CROSSING = "crossing";    
-                     
     /* misc */
 
   public static final String AMENITY = "amenity";

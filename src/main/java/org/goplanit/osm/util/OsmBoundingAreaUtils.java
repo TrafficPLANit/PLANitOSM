@@ -1,12 +1,13 @@
 package org.goplanit.osm.util;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Logger;
 
-import org.goplanit.osm.converter.network.OsmNetworkReaderData;
-import org.goplanit.utils.exceptions.PlanItException;
+import de.topobyte.osm4j.core.model.iface.EntityType;
+import org.goplanit.osm.converter.OsmBoundary;
+import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
-import org.goplanit.utils.misc.LoggingUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Polygon;
@@ -14,6 +15,9 @@ import org.locationtech.jts.geom.Polygon;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
+
+import javax.annotation.Nullable;
 
 /**
  * Utilities regarding the use of a bounding box when parsing OSM data
@@ -26,7 +30,11 @@ public class OsmBoundingAreaUtils {
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmBoundingAreaUtils.class.getCanonicalName());
 
-  
+  /**
+   * Dummy constructor
+   */
+  private OsmBoundingAreaUtils(){}
+
   /** Create a (Rectangular) bounding box around the OSM ways geometry based on the provided offset
    * 
    * @param osmWay to collect bounding box for
@@ -35,7 +43,12 @@ public class OsmBoundingAreaUtils {
    * @param geoUtils to extract length based on crs
    * @return created bounding box as Envelope
    */
-  private static Envelope createBoundingBox(final OsmWay osmWay, double offsetInMeters, final Map<Long,OsmNode> osmNodes, final PlanitJtsCrsUtils geoUtils) {
+  private static Envelope createBoundingBox(
+          final OsmWay osmWay,
+          double offsetInMeters,
+          final Map<Long,OsmNode> osmNodes,
+          final PlanitJtsCrsUtils geoUtils) {
+
     double minX = Double.POSITIVE_INFINITY;
     double minY = Double.POSITIVE_INFINITY;
     double maxX = Double.NEGATIVE_INFINITY;
@@ -52,30 +65,6 @@ public class OsmBoundingAreaUtils {
     return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
   }
 
-  /** log the given warning message but only when it is not too close to the bounding box, because then it is too likely that it is discarded due to missing
-   * infrastructure or other missing assets that could not be parsed fully as they pass through the bounding box barrier. Therefore the resulting warning message is likely 
-   * more confusing than helpful in those situation and is therefore ignored
-   * 
-   * @param message to log if not too close to bounding box
-   * @param geometry to determine distance to bounding box to
-   * @param boundingBox to use
-   * @param geoUtils to use
-   */
-  public static void logWarningIfNotNearBoundingBox(String message, final Geometry geometry, final Envelope boundingBox, final PlanitJtsCrsUtils geoUtils) {
-    LoggingUtils.logWarningIf(LOGGER, message,geometry, g -> !isNearNetworkBoundingBox(g, boundingBox, geoUtils));
-  }  
-  
-  /** check if geometry is near network bounding box using buffer based on PlanitOsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS
-   * 
-   * @param geometry to check
-   * @param networkBoundingBox to consider
-   * @param geoUtils to use
-   * @return true when near, false otherwise
-   */
-  public static boolean isNearNetworkBoundingBox(Geometry geometry, Envelope networkBoundingBox, PlanitJtsCrsUtils geoUtils){    
-    return geoUtils.isGeometryNearBoundingBox(geometry, networkBoundingBox, OsmNetworkReaderData.BOUNDINGBOX_NEARNESS_DISTANCE_METERS);
-  }
-  
   /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
    * or if no node is provided (null), false is returned by definition
    * 
@@ -101,7 +90,8 @@ public class OsmBoundingAreaUtils {
    * @param boundingPolygon defining the area 
    * @return true when covered by bounding area, false otherwise
    */
-  public static boolean isCoveredByZoningBoundingPolygon(OsmWay osmWay, Map<Long, OsmNode> osmNodes, Polygon boundingPolygon) {
+  public static boolean isCoveredByZoningBoundingPolygon(
+          OsmWay osmWay, Map<Long, OsmNode> osmNodes, Polygon boundingPolygon) {
     if(osmWay==null || boundingPolygon==null) {
       return false;
     }
@@ -113,7 +103,7 @@ public class OsmBoundingAreaUtils {
     for(int index=0;index<osmWay.getNumberOfNodes();++index) {
       long osmNodeId = osmWay.getNodeId(index);
       OsmNode osmNode = osmNodes.get(osmNodeId);
-      if(osmNode!=null && isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
+      if(isCoveredByZoningBoundingPolygon(osmNode, boundingPolygon)) {
         coveredByBoundingPolygon = true;
         break;
       }
@@ -130,10 +120,11 @@ public class OsmBoundingAreaUtils {
    * @param geoUtils used to extract distances based on underlying crs
    * @return bounding box
    */
-  public static Envelope createBoundingBoxForOsmWay(OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
+  public static Envelope createBoundingBoxForOsmEntity(
+          OsmEntity osmEntity, double offsetInMeters, Map<Long, OsmNode> osmNodes, PlanitJtsCrsUtils geoUtils) {
     /* search bounding box */
     Envelope boundingBox = null; 
-    switch (Osm4JUtils.getEntityType(osmEntity)) {
+    switch (Objects.requireNonNull(Osm4JUtils.getEntityType(osmEntity))) {
     case Node:
       boundingBox = createBoundingBox((OsmNode)osmEntity,offsetInMeters, geoUtils);
       break;
@@ -141,7 +132,8 @@ public class OsmBoundingAreaUtils {
       boundingBox = createBoundingBox((OsmWay)osmEntity, offsetInMeters, osmNodes, geoUtils);
       break;  
     default:
-      LOGGER.severe(String.format("unknown entity type %s when identifying bounding box for osm entity %s",Osm4JUtils.getEntityType(osmEntity).toString(), osmEntity.getId()));
+      LOGGER.severe(String.format("unknown entity type %s when identifying bounding box for osm entity %s",
+              Osm4JUtils.getEntityType(osmEntity).toString(), osmEntity.getId()));
       break;
     }
     return boundingBox;

@@ -1,14 +1,15 @@
 package org.goplanit.osm.converter;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
+import de.topobyte.osm4j.core.model.iface.OsmWay;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 /**
- * Manage OSM nodes that are retained in memory for parsing. This is supported through a two stage process where nodes can be pre-registered
- * and then be registered at a later point.
+ * Manage OSM nodes that are retained in memory for parsing. This is supported through a two stage process where nodes
+ * can be pre-registered and then be registered at a later point.
  */
 public class OsmNodeData {
 
@@ -30,16 +31,32 @@ public class OsmNodeData {
    */
   public void registerEligibleOsmNode(OsmNode osmNode) {
     if(!osmNodes.containsKey(osmNode.getId())) {
-      LOGGER.severe("Only OSM nodes that have already been marked as eligible can be complemented with the actual OSM node contents");
+      LOGGER.severe("Only OSM nodes that have already been marked as eligible can be complemented with the actual " +
+          "OSM node contents");
     }
     osmNodes.put(osmNode.getId(), osmNode);
   }
 
-  /** Pre-register an OSM node for future population with the actual node contents (see {@link #registerEligibleOsmNode(OsmNode)}
+  /**
+   * Preregister all OSM nodes of OSM way
+   *
+   * @param osmWay to register nodes for
+   */
+  public void preregisterOsmWayNodes(OsmWay osmWay) {
+    for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
+      // to be preregistered in full in complete() to avoid checking against these in above check regarding
+      // bounding boundary
+      preregisterEligibleOsmNode(osmWay.getNodeId(index));
+    }
+  }
+
+  /** Pre-register an OSM node for future population with the actual node contents
+   * (see {@link #registerEligibleOsmNode(OsmNode)}
+   *
    * @param osmNodeId to pre-register
    */
-  public void preRegisterEligibleOsmNode(long osmNodeId) {
-    osmNodes.put(osmNodeId, null);
+  public void preregisterEligibleOsmNode(long osmNodeId) {
+     osmNodes.put(osmNodeId, null);
   }
 
   /** Collect an OSM node
@@ -64,6 +81,10 @@ public class OsmNodeData {
    */
   public boolean containsPreregisteredOsmNode(long osmNodeId) {
     return osmNodes.containsKey(osmNodeId);
+  }
+
+  public int countPreregisteredOsmNodes(){
+    return osmNodes.size();
   }
 
   /**

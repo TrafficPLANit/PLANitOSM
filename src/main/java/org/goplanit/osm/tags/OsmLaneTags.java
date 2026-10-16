@@ -20,17 +20,20 @@ public class OsmLaneTags {
 
   public static final String LANES_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES, OsmDirectionTags.BACKWARD);
   
-  public static String LANES_PSV = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
+  public static String LANES_PSV =
+          OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
   
   public static String LANES_BUS = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeTags.BUS);
   
   public static final String LANES_PSV_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
   
-  public static final String LANES_PSV_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
+  public static final String LANES_PSV_BACKWARD =
+          OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
   
 public static final String LANES_BUS_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
   
-  public static final String LANES_BUS_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);  
+  public static final String LANES_BUS_BACKWARD =
+          OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
   
   /* value tags */
   

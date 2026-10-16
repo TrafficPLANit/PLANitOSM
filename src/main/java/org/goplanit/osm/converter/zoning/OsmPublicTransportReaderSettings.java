@@ -6,7 +6,9 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+import org.goplanit.converter.zoning.AccessEgressInjectionSettings;
 import org.goplanit.osm.converter.OsmReaderSettings;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -30,15 +32,18 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
   
-  /** flag indicating if we should remove (transfer) zones that are dangling, i.e., all (transfer) zones that do not have any
+  /** flag indicating if we should remove (transfer) zones that are dangling, i.e., all (transfer) zones
+   * that do not have any
    * registered connectoids to an underlying network (layer) */
   private boolean removeDanglingZones = DEFAULT_REMOVE_DANGLING_ZONES;
   
-  /** flag indicating if we should remove transfer zone groups that are dangling, i.e., all transfer zone groups that do not have any
+  /** flag indicating if we should remove transfer zone groups that are dangling, i.e., all transfer zone groups
+   *  that do not have any
    * registered transfer zones */
   private boolean removeDanglingTransferZoneGroups = DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS;  
 
-  /** the maximum search radius used when trying to map stops/platforms to stop positions on the networks, when no explicit
+  /** the maximum search radius used when trying to map stops/platforms to stop positions on the networks,
+   * when no explicit
    * relation is made known by OSM */
   private double searchRadiusPlatformToStopInMeters = DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M;
   
@@ -46,31 +51,36 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * relation is made known by OSM */
   private double searchRadiusStationToPlatformInMeters = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
   
-  /** the maximum search radius used when trying to to find parallel platforms for stand-alone stations */
+  /** the maximum search radius used when trying to find parallel platforms for stand-alone stations */
   private double searchRadiusStationToParallelTracksInMeters = DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M;
   
   /**
-   * exclude osm node, ways from parsing when identified as problematic for some reason. they can be stops, platforms, stations, etc.
+   * exclude osm node, ways from parsing when identified as problematic for some reason. they can be stops,
+   * platforms, stations, etc.
    */
-  private final Map<EntityType,Set<Long>> excludedPtOsmEntities = new HashMap<EntityType,Set<Long>>();
+  private final Map<EntityType,Set<Long>> excludedPtOsmEntities = new HashMap<>();
   
   /**
-   * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole, station, halt, stop, etc. (by entity type and osm id).
-   * This overrides the parser's mapping functionality and immediately maps the stop location to this osm entity. 
+   * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole,
+   * station, halt, stop, etc. (by entity type and osm id). This overrides the parser's mapping functionality
+   * and immediately maps the stop location to this osm entity.
    */
   private final Map<Long,Pair<EntityType,Long>> overwritePtStopLocation2WaitingAreaMapping = new HashMap<>();
 
   /**
-   * Provide explicit mapping for waiting areas, e.g. platforms, poles, stations (by osm node id) to the osm way (by osm id) to place stop_locations on (connectoids)
-   * This overrides the parser's functionality to automatically attempt to identify the correct stop_location. Note that this should only be used for waiting areas that
-   * could not successfully be mapped to a stop_location and therefore have no known stop_location in the network. 
-   * Further one cannot override a waiting area here that is also part of a stop_location to waiting area override. 
+   * Provide explicit mapping for waiting areas, e.g. platforms, poles, stations (by osm node id) to the osm way
+   * (by osm id) to place stop_locations on (connectoids). This overrides the parser's functionality to
+   * automatically attempt to identify the correct stop_location. Note that this should only be used for
+   * waiting areas that could not successfully be mapped to a stop_location and therefore have no known
+   * stop_location in the network. Further one cannot override a waiting area here that is also part of a
+   * stop_location to waiting area override.
    */
   private final Map<EntityType, Map<Long,Long>> overwritePtWaitingArea2OsmWayMapping = new HashMap<>();
 
   /**
-   * track overwritten mode access values for specific OSM waiting areas. Can be used in case the OSM file is incorrectly tagged which causes problems
-   * in the memory model. Here one can be manually overwrite the allowable modes for this particular waiting area.
+   * track overwritten mode access values for specific OSM waiting areas. Can be used in case the OSM file is
+   * incorrectly tagged which causes problems in the memory model. Here one can be manually overwrite the
+   * allowable modes for this particular waiting area.
    */
   protected final Map<EntityType, Map<Long, SortedSet<String>>> overwriteWaitingAreaModeAccess = new HashMap<>(
       Map.ofEntries(
@@ -88,10 +98,14 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   private boolean connectDanglingFerryStopToNearbyFerryRoute = DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE;
 
   /**
-   * Search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
-   * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
+   * Search radius in meters for mapping ferry stops to ferry routes. When found and
+   * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true then a new link to the nearest waterway
+   * running the ferry is created to avoid the ferry stop to be dangling
    */
   private double  searchRadiusFerryStopToFerryRouteMeters = DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M;
+
+  /** bundles a number of settings regarding attaching access/egress settings for transfer zones */
+  AccessEgressInjectionSettings accessEgressInjectionSettings = new AccessEgressInjectionSettings();
     
   /** by default the transfer parser is activated */
   public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
@@ -103,12 +117,14 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public static boolean DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS = true;
     
   /**
-   * default search radius in meters for mapping stops/platforms to stop positions on the networks when they have no explicit reference
+   * default search radius in meters for mapping stops/platforms to stop positions on the networks when they
+   * have no explicit reference
    */
   public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 25;
   
   /**
-   * default search radius in meters for mapping stations to platforms on the networks when they have no explicit reference
+   * default search radius in meters for mapping stations to platforms on the networks when they have no
+   * explicit reference
    */
   public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 35;  
   
@@ -118,21 +134,22 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public static double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
   
   /**
-   * The default buffer distance when looking for edges within a distance of the closest edge to create connectoids (stop_locations) on for transfer zones. 
-   * In case multiple candidates are close just selecting the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
+   * The default buffer distance when looking for edges within a distance of the closest edge to create
+   * connectoids (stop_locations) on for transfer zones. In case multiple candidates are close just selecting
+   * the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
    */
   public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
 
-  /** by default we connect dangling ferry stops to the nearest ferry route */
+  /** by default, we connect dangling ferry stops to the nearest ferry route */
   public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
 
   /**
-   * default search radius in meters for mapping ferry stops to ferry routes. When found and {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true
-   * then a new link to the nearest waterway running the ferry is created to avoid the ferry stop to be dangling
+   * default search radius in meters for mapping ferry stops to ferry routes. When found and
+   * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true then a new link to the nearest waterway
+   * running the ferry is created to avoid the ferry stop to be dangling
    */
   public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
-            
-  
+
   /** Constructor using default (Global) locale
   */
   public OsmPublicTransportReaderSettings() {
@@ -150,10 +167,11 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    /** Constructor with user defined source locale
    *
    * @param inputSource to use, expected local file location
-   * @param countryName the full country name to use speed limit data for, see also the OsmSpeedLimitDefaultsByCountry class
+   * @param countryName the full country name to use speed limit data for, see also the
+   *                    OsmSpeedLimitDefaultsByCountry class
    */
   public OsmPublicTransportReaderSettings(String inputSource, String countryName) {
-    this(UrlUtils.createFromLocalPath(Path.of(inputSource)), countryName);
+    this(UrlUtils.createFromLocalAbsoluteOrRelativePath(Path.of(inputSource)), countryName);
   }
   
   /** Constructor with user defined source locale 
@@ -177,25 +195,48 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
-    LOGGER.info(String.format("Public transport infrastructure parser activated: %s", isParserActive()));
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsHeader("OSM Public Transport Reader Settings"));
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Public transport infrastructure parser activated", isParserActive(), level));
 
     if(isParserActive()) {
-      LOGGER.info(String.format("OSM (transfer) zoning input file: %s", getInputSource()));
-      if(hasBoundingPolygon()) {
-        LOGGER.info(String.format("Bounding polygon set to: %s",getBoundingPolygon().toString()));
+      LOGGER.info(LoggingUtils.settingsValue("Stop location to waiting area search radius (m)",
+          String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Station location to waiting area search radius (m)",
+          String.format("%.2f", getStationToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Station location to parallel tracks search radius (m)",
+          String.format("%.2f", getStationToParallelTracksSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zones",
+          isRemoveDanglingZones(), 0));
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zone groups",
+          isRemoveDanglingTransferZoneGroups(), level));
+      LOGGER.info(LoggingUtils.settingsValue("Connect dangling ferry stops to nearby ferry routes (if present)",
+          isConnectDanglingFerryStopToNearbyFerryRoute(), level));
+      if(isConnectDanglingFerryStopToNearbyFerryRoute()) {
+        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to ferry route search radius (m)",
+            String.format("%.2f", getFerryStopToFerryRouteSearchRadiusMeters()), level));
       }
-
-      LOGGER.info(String.format("Stop location to waiting area search radius: %.2fm", getStopToWaitingAreaSearchRadiusMeters()));
-      LOGGER.info(String.format("Station location to waiting area search radius: %.2fm", getStationToWaitingAreaSearchRadiusMeters()));
-      LOGGER.info(String.format("Station location to parallel tracks search radius: %.2fm", getStationToParallelTracksSearchRadiusMeters()));
-      LOGGER.info(String.format("Remove dangling transfer zones: %s", isRemoveDanglingZones()));
-      LOGGER.info(String.format("Remove dangling transfer zone groups: %s", isRemoveDanglingTransferZoneGroups()));
-      LOGGER.info(String.format("Connect dangling ferry stops to nearby ferry routes (if present): %s", connectDanglingFerryStopToNearbyFerryRoute));
-      LOGGER.info(String.format("Ferry stop to ferry route search radius: %.2fm", getFerryStopToFerryRouteSearchRadiusMeters()));
+      LOGGER.info(LoggingUtils.settingsValue("Connect ferry stops to nearby passenger land network (if eligible)",
+          isConnectFerryStopsToNearbyLandNetwork(), level));
+      if(isConnectFerryStopsToNearbyLandNetwork()) {
+        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to land network search radius (m)",
+            String.format("%.2f", getFerryStopToNearbyLandNetworkSearchRadiusMeters()), level));
+      }
+      LOGGER.info(LoggingUtils.settingsValue("Connect rail-based stops to nearby passenger network (if eligible)",
+          isConnectRailBasedStopsToPassengerNetwork(), 0));
+      if(isConnectRailBasedStopsToPassengerNetwork()) {
+        LOGGER.info(LoggingUtils.settingsValue("Rail-based stop to road network search radius (m)",
+            String.format("%.2f", getRailBasedStopToPassengerNetworkSearchRadiusMeters()), level));
+      }
+      LOGGER.info(LoggingUtils.settingsValue("Connect bus-based stops to nearby passenger network (if eligible)",
+          isConnectBusBasedStopsToPassengerNetwork(), level));
+      if(isConnectRailBasedStopsToPassengerNetwork()) {
+        LOGGER.info(LoggingUtils.settingsValue("Bus-based stop to passenger network search radius (m)",
+            String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), level)); // sync to standard search
+      }
     }
   }
-
   // USER CONFIGURATION
 
   /** set the flag whether the public transport infrastructure should be parsed or not
@@ -265,7 +306,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }      
     
   /** Provide OSM ids of nodes that we are not to parse as public transport infrastructure, for example 
-   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc. tagged as a node
+   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc.
+   * tagged as a node
    * 
    * @param osmIds to exclude (int or long)
    */
@@ -274,16 +316,18 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }
   
   /** Provide OSM ids of nodes that we are not to parse as public transport infrastructure, for example 
-   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc. tagged as a node
+   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc.
+   * tagged as a node
    * 
    * @param osmIds to exclude (int or long)
    */
   public void excludeOsmNodesById(final Collection<Number> osmIds) {
-    osmIds.forEach( osmId -> excludeOsmNodeById(osmId));
+    osmIds.forEach(this::excludeOsmNodeById);
   }
   
   /** Provide OSM id of node that we are not to parse as public transport infrastructure, for example 
-   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc. tagged as a node
+   * when we know the original coding or tagging is problematic for a stop_position, station, platform, etc.
+   * tagged as a node
    * 
    * @param osmId to exclude (int or long)
    */
@@ -293,7 +337,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }  
   
   /** Provide OSM ids of ways that we are not to parse as public transport infrastructure, for example 
-   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way (line, or polygon)
+   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way
+   * (line, or polygon)
    * 
    * @param osmIds to exclude (int or long)
    */
@@ -302,16 +347,18 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }
   
   /** Provide OSM ids of ways that we are not to parse as public transport infrastructure, for example 
-   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way (line or polygon)
+   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way
+   * (line or polygon)
    * 
    * @param osmIds to exclude (int or long)
    */
   public void excludeOsmWaysById(final Collection<Number> osmIds) {
-    osmIds.forEach( osmId -> excludeOsmWayById(osmId));
+    osmIds.forEach(this::excludeOsmWayById);
   }   
   
   /** Provide OSM id of way that we are not to parse as public transport infrastructure, for example 
-   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way (line or polygon)
+   * when we know the original coding or tagging is problematic for a station, platform, etc. tagged as a way
+   * (line or polygon)
    * 
    * @param osmId to exclude
    */
@@ -341,23 +388,28 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   }
 
   /**
-   * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole, station, halt, stop, etc. (by entity type and osm id).
-   * This overrides the parser's mapping functionality and immediately maps the stop location to this osm entity. Can be useful to avoid warnings or wrong mapping of
+   * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole,
+   * station, halt, stop, etc. (by entity type and osm id). This overrides the parser's mapping functionality
+   * and immediately maps the stop location to this osm entity. Can be useful to avoid warnings or wrong mapping of
    * stop locations in case of tagging errors.
    * 
    * @param stopLocationOsmNodeId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
    * @param waitingAreaOsmId osm id of waiting area (platform, pole, etc.) (int or long)
    */
-  public void overwriteWaitingAreaOfStopLocation(final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
-    overwritePtStopLocation2WaitingAreaMapping.put(stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));    
+  public void overwriteWaitingAreaOfStopLocation(
+          final Number stopLocationOsmNodeId, final EntityType waitingAreaEntityType, final Number waitingAreaOsmId) {
+    overwritePtStopLocation2WaitingAreaMapping.put(
+            stopLocationOsmNodeId.longValue(), Pair.of(waitingAreaEntityType, waitingAreaOsmId.longValue()));
   }
 
   /** multiples in triple form for {@link #overwriteWaitingAreaOfStopLocation(Number, EntityType, Number)}
    * @param overwriteTriples triples to provide (stopLocationOsmId, waitingAreaEntityType, waitingAreasOsmId)
    */
-  public void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
-    Arrays.stream(overwriteTriples).forEach(t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
+  @SafeVarargs
+  public final void overwriteWaitingAreaOfStopLocations(Triple<Number, EntityType, Number>... overwriteTriples) {
+    Arrays.stream(overwriteTriples).forEach(
+        t -> overwriteWaitingAreaOfStopLocation(t.first(), t.second(), t.third()));
   }
 
   /** Verify if stop location's OSM id is marked for overwritten platform mapping
@@ -381,19 +433,22 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     return overwritePtStopLocation2WaitingAreaMapping.get(stopLocationOsmNodeId.longValue());
   }  
   
-  /** Verify if the waiting area is used as the designated waiting area for a stop location by means of a user explicitly stating it as such
+  /** Verify if the waiting area is used as the designated waiting area for a stop location by means of a user
+   * explicitly stating it as such
    * 
    * @param waitingAreaType of the waiting area
    * @param osmWaitingAreaId to use (int or long)
    * @return true when waiting area is defined for a stop location as designated waiting area, false otherwise
    */
-  public boolean isWaitingAreaOfStopLocationOverwritten(final EntityType waitingAreaType, final Number osmWaitingAreaId) {
+  public boolean isWaitingAreaOfStopLocationOverwritten(
+          final EntityType waitingAreaType, final Number osmWaitingAreaId) {
     if(osmWaitingAreaId == null){
       return false;
     }
 
     for( Entry<Long, Pair<EntityType, Long>> entry : overwritePtStopLocation2WaitingAreaMapping.entrySet()) {
-      if(entry.getValue().first().equals(waitingAreaType) && entry.getValue().second().equals(osmWaitingAreaId.longValue())) {
+      if(entry.getValue().first().equals(waitingAreaType) &&
+              entry.getValue().second().equals(osmWaitingAreaId.longValue())) {
         return true;
       }
     }
@@ -402,9 +457,9 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   
   /**
    * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by OSM id).
-   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the nominated OSM way.
-   * Only use in case the platform has no stop_location and no stop_location maps to this waiting area.
-   * One cannot use this method and also use this waiting area in overriding stop_location mappings.
+   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the
+   * nominated OSM way. Only use in case the platform has no stop_location and no stop_location maps to
+   * this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
    * 
    * @param waitingAreaOsmId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
@@ -413,11 +468,15 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void overwriteWaitingAreaNominatedOsmWayForStopLocation(
       final Number waitingAreaOsmId, final EntityType waitingAreaEntityType, final Number osmWayId) {
     if(osmWayId == null || waitingAreaOsmId == null || waitingAreaEntityType==null){
-      LOGGER.severe("unable to overwrite waiting area nominated OsmWay for stop location as one of the parameters is null");
+      LOGGER.severe("unable to overwrite waiting area nominated OsmWay for stop location as one " +
+              "of the parameters is null");
     }
 
     overwritePtWaitingArea2OsmWayMapping.putIfAbsent(waitingAreaEntityType, new HashMap<>());
-    overwritePtWaitingArea2OsmWayMapping.get(waitingAreaEntityType).put(waitingAreaOsmId.longValue(), osmWayId.longValue());
+    assert waitingAreaOsmId != null;
+    assert osmWayId != null;
+    overwritePtWaitingArea2OsmWayMapping.get(
+            waitingAreaEntityType).put(waitingAreaOsmId.longValue(), osmWayId.longValue());
   }  
   
   /** Verify if waiting area's osm id is marked for overwritten osm way mapping
@@ -426,7 +485,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType type of waiting area
    * @return true when present, false otherwise
    */
-  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, final EntityType waitingAreaEntityType) {
+  public boolean hasWaitingAreaNominatedOsmWayForStopLocation(
+          final Number waitingAreaOsmId, final EntityType waitingAreaEntityType) {
     if(waitingAreaOsmId == null || waitingAreaEntityType == null){
       return false;
     }
@@ -440,7 +500,8 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    * @param waitingAreaEntityType type of waiting area
    * @return osm way id, null if not available
    */
-  public Long getWaitingAreaNominatedOsmWayForStopLocation(final Number waitingAreaOsmId, EntityType waitingAreaEntityType) {
+  public Long getWaitingAreaNominatedOsmWayForStopLocation(
+          final Number waitingAreaOsmId, EntityType waitingAreaEntityType) {
     if(waitingAreaOsmId == null || waitingAreaEntityType == null){
       return null;
     }
@@ -520,7 +581,6 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     return suppressStopAreaLogging.contains(osmStopAreaRelationId.longValue());
   }
 
-
   /**
    * Is flag for connecting dangling ferry stops to nearby ferry route set or not
    * @return true when active, false otherwise
@@ -538,10 +598,18 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     this.connectDanglingFerryStopToNearbyFerryRoute = connectDanglingFerryStopToNearbyFerryRoute;
   }
 
+  /**
+   * Access to search radius for ferry stop to ferry route
+   * @return search radius
+   */
   public double getFerryStopToFerryRouteSearchRadiusMeters() {
     return searchRadiusFerryStopToFerryRouteMeters;
   }
 
+  /**
+   * Access to search radius for ferry stop to ferry route
+   * @param searchRadiusFerryStopToFerryRouteMeters search radius
+   */
   public void setFerryStopToFerryRouteSearchRadiusMeters(Number searchRadiusFerryStopToFerryRouteMeters) {
     if(searchRadiusFerryStopToFerryRouteMeters == null){
       LOGGER.severe("Unable to set ferry stop to ferry route search radius as parameter is null");
@@ -549,6 +617,85 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     }
     this.searchRadiusFerryStopToFerryRouteMeters = searchRadiusFerryStopToFerryRouteMeters.doubleValue();
   }
+
+  /**
+   * flag for connecting ferry stops to nearby land network if not already connected
+   * @return true when active, false otherwise
+   */
+  public boolean isConnectFerryStopsToNearbyLandNetwork() {
+    return accessEgressInjectionSettings.isConnectFerryStopsToNearbyLandNetwork();
+  }
+
+  /** Decide whether to connect ferry stops to nearby land network if not already connected
+   *
+   * @param connectFerryStopToNearbyLandNetwork when true do this, when false do not
+   */
+  public void setConnectFerryStopsToNearbyLandNetwork(boolean connectFerryStopToNearbyLandNetwork) {
+    this.accessEgressInjectionSettings.setConnectFerryStopsToNearbyLandNetwork(connectFerryStopToNearbyLandNetwork);
+  }
+
+  /**
+   * Access to search radius for ferry stop to ferry route
+   * @return search radius
+   */
+  public double getFerryStopToNearbyLandNetworkSearchRadiusMeters() {
+    return accessEgressInjectionSettings.getFerryStopToNearbyLandNetworkSearchRadiusMeters();
+  }
+
+  /**
+   * flag for connecting rail based stops to nearby road network if not already connected
+   * @return true when active, false otherwise
+   */
+  public boolean isConnectRailBasedStopsToPassengerNetwork() {
+    return accessEgressInjectionSettings.isConnectRailBasedStopsToPassengerNetwork();
+  }
+
+  /** Decide whether to connect ferry stops to nearby land network if not already connected
+   *
+   * @param connectRailBasedStopToPassengerNetwork when true do this, when false do not
+   */
+  public void setConnectRailBasedStopsToPassengerNetwork(boolean connectRailBasedStopToPassengerNetwork) {
+    accessEgressInjectionSettings.setConnectRailBasedStopsToPassengerNetwork(connectRailBasedStopToPassengerNetwork);
+  }
+
+  /**
+   * Access to search radius for rail based stop to road network
+   * @return search radius
+   */
+  public double getRailBasedStopToPassengerNetworkSearchRadiusMeters() {
+    return accessEgressInjectionSettings.getRailBasedStopToPassengerNetworkSearchRadiusMeters();
+  }
+
+  /**
+   * Set  search radius for ferry stop to land network
+   * @param searchRadiusFerryStopToLandNetworkMeters  search radius
+   */
+  public void setFerryStopToLandNetworkSearchRadiusMeters(Number searchRadiusFerryStopToLandNetworkMeters) {
+    if(searchRadiusFerryStopToLandNetworkMeters == null){
+      LOGGER.severe("Unable to set ferry stop to land network search radius as parameter is null");
+      return;
+    }
+    accessEgressInjectionSettings.setFerryStopToLandNetworkSearchRadiusMeters(
+        searchRadiusFerryStopToLandNetworkMeters.doubleValue());
+  }
+
+  /**
+   * flag for connecting bus based stops to nearby passenger network if not already connected
+   * @return true when active, false otherwise
+   */
+  public boolean isConnectBusBasedStopsToPassengerNetwork() {
+    return accessEgressInjectionSettings.isConnectBusBasedStopsToPassengerNetwork();
+  }
+
+  /** Decide whether to connect bus based stops to nearby road network if not already connected for access egress modes
+   *
+   * @param connectBusBasedStopToPassengerNetwork when true do this, when false do not
+   */
+  public void setConnectBusBasedStopsToPassengerNetwork(boolean connectBusBasedStopToPassengerNetwork) {
+    this.accessEgressInjectionSettings.setConnectBusBasedStopsToPassengerNetwork(
+        connectBusBasedStopToPassengerNetwork);
+  }
+
 
   /**
    * Overwrite the mode access for a given waiting area
@@ -560,9 +707,11 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   public void overwriteWaitingAreaModeAccess(Number osmId, EntityType osmEntityType, String... osmModes){
     var overwritesByType = overwriteWaitingAreaModeAccess.get(osmEntityType);
     if(overwritesByType == null){
-      LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes access for waiting areas", osmEntityType.toString()));
+      LOGGER.severe(String.format("IGNORE: Unsupported OSM entity type (%s) for registering overwritten modes" +
+              " access for waiting areas", osmEntityType.toString()));
+      return;
     }
-    overwritesByType.put(osmId.longValue(), new TreeSet(Arrays.asList(osmModes)));
+    overwritesByType.put(osmId.longValue(), new TreeSet<>(Arrays.asList(osmModes)));
   }
 
   /**

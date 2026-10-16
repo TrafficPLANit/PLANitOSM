@@ -9,10 +9,12 @@ import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
 
 /**
- * Configure and retrieve the default configuration for the number of lanes for various osm way types (these are the total lanes on a link covering both directions.
- * The "default" defaults for highway tags originate from https://wiki.openstreetmap.org/wiki/Key:lanes, while the "default" defaults for railways, i.e., the number of tracks
- * is based on https://wiki.openstreetmap.org/wiki/Key:railway#Tracks. Waterways are given a single lane equivalent.
- * 
+ * Configure and retrieve the default configuration for the number of lanes for various osm way types
+ * (these are the total lanes on a link covering both directions). The "default" defaults for highway tags originate
+ * from <a href="https://wiki.openstreetmap.org/wiki/Key:lanes">OSM key:lanes</a>, while the "default" defaults for
+ * railways, i.e., the number of tracks is based on <a href="https://wiki.openstreetmap.org/wiki/Key:railway#Tracks">
+ * OSM key:railways tracks</a>. Waterways are given a single lane equivalent.
+ *
  * @author markr
  *
  */
@@ -23,7 +25,7 @@ public class OsmLaneDefaults {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmLaneDefaults.class.getCanonicalName());  
   
-  /** store the road based defaults */
+  /** store the road-based defaults */
   protected static Map<String, Integer> defaultRoadLanesPerDirection = new HashMap<>();
     
   /** store the defaults  for class instance */
@@ -35,7 +37,7 @@ public class OsmLaneDefaults {
   /** railway tracks per direction if not configured */
   protected int tracksPerDirectionIfUnspecified  = DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED;
 
-  /** water way lanes per direction if not configured */
+  /** waterway lanes per direction if not configured */
   protected int waterwayLanesPerDirectionIfUnspecified  = DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED;
       
   /* initialise */
@@ -44,7 +46,8 @@ public class OsmLaneDefaults {
   }
   
   /**
-   * Initialise the defaults to use based on "common sense" as outlined in https://wiki.openstreetmap.org/wiki/Key:lanes
+   * Initialise the defaults to use based on "common sense" as outlined in
+   * <a href="https://wiki.openstreetmap.org/wiki/Key:lanes">OSM key:lanes</a>
    */
   protected static void populateDefaultLanesPerDirection(){
     /* 2 lanes for larger roads */
@@ -56,11 +59,13 @@ public class OsmLaneDefaults {
     defaultRoadLanesPerDirection.put(OsmHighwayTags.RESIDENTIAL,    MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.TERTIARY,       MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.TERTIARY_LINK,  MINIMUM_LANES_PER_DIRECTION);
+    defaultRoadLanesPerDirection.put(OsmHighwayTags.BUSWAY,         MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.SECONDARY,      MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.SECONDARY_LINK, MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.PRIMARY,        MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.PRIMARY_LINK,   MINIMUM_LANES_PER_DIRECTION);
-    /* 1 lane for even smaller roads, while the specification also lists 1 lane in total, PLANit has no use for this, so it is ignored */
+    /* 1 lane for even smaller roads, while the specification also lists 1 lane in total, PLANit has no use for this,
+    so it is ignored */
     defaultRoadLanesPerDirection.put(OsmHighwayTags.UNCLASSIFIED,   MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.PEDESTRIAN,     MINIMUM_LANES_PER_DIRECTION);
     defaultRoadLanesPerDirection.put(OsmHighwayTags.FOOTWAY,        MINIMUM_LANES_PER_DIRECTION);
@@ -73,12 +78,12 @@ public class OsmLaneDefaults {
     defaultRoadLanesPerDirection.put(OsmHighwayTags.ROAD,           MINIMUM_LANES_PER_DIRECTION);    
     defaultRoadLanesPerDirection.put(OsmHighwayTags.BRIDLEWAY,      MINIMUM_LANES_PER_DIRECTION);
   }
-  
-  
+
   /** minimum number of lanes per direction, default is 1*/
   public static final int MINIMUM_LANES_PER_DIRECTION = 1;
   
-  /** in case no mapping between highway type and number of lanes is present, use this. Default set to {@code  MINIMUM_LANES_PER_DIRECTION} */
+  /** in case no mapping between highway type and number of lanes is present, use this. Default set to
+   * {@code  MINIMUM_LANES_PER_DIRECTION} */
   public static final int DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;
   
   /** store the rail default. Default set to {@code  MINIMUM_LANES_PER_DIRECTION} */
@@ -100,6 +105,7 @@ public class OsmLaneDefaults {
     this.lanesPerDirection = new HashMap<>(osmLaneDefaults.lanesPerDirection);
     this.lanesPerDirectionIfUnspecified = osmLaneDefaults.lanesPerDirectionIfUnspecified;
     this.tracksPerDirectionIfUnspecified = osmLaneDefaults.tracksPerDirectionIfUnspecified;
+    this.waterwayLanesPerDirectionIfUnspecified = osmLaneDefaults.waterwayLanesPerDirectionIfUnspecified;
   }
 
   /** Overwrite current default
@@ -109,6 +115,26 @@ public class OsmLaneDefaults {
    */
   public Integer setDefaultDirectionalLanesByHighwayType(String type, Integer defaultNumberOfLanesPerDirection) {
     return lanesPerDirection.put(type,defaultNumberOfLanesPerDirection);
+  }
+
+  /** Check if the number of lanes based on the way key value, e.g. highway=primary, for any direction
+   * (not total) has a default available
+   *
+   * @param osmWayKey key to use
+   * @param osmWayValue way type value
+   * @return true when available, false otherwise
+   */
+  public Boolean containsDefaultDirectionalLanes(String osmWayKey, String osmWayValue) {
+    if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
+      return lanesPerDirection.containsKey(osmWayValue);
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey) || OsmWaterwayTags.isAnyWaterwayKeyTag(osmWayKey)){
+      return true;
+    }else{
+      LOGGER.warning(String.format(
+              "Unknown OSM way key tag [%s], unable to determine if lane defaults have been set", osmWayKey));
+      return false;
+
+    }
   }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).
@@ -122,7 +148,8 @@ public class OsmLaneDefaults {
       return lanesPerDirection.get(osmWayValue); 
     }else {
       LOGGER.warning(
-          String.format("highway type %s has no number of default lanes associated with it, reverting to missing default: %d", osmWayValue, DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED));
+          String.format("Highway type [%s] has no number of default lanes associated with it, " +
+              "reverting to missing default: %d", osmWayValue, DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED));
       return DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED;
     }
   }
@@ -145,7 +172,7 @@ public class OsmLaneDefaults {
    * @return waterwayLanesPerDirectionIfUnspecified in case not explicitly specified
    */
   public Integer getDefaultDirectionalWaterwayLanes() {
-    return this.tracksPerDirectionIfUnspecified;
+    return this.waterwayLanesPerDirectionIfUnspecified;
   }
   
   /** collect the number of lanes based on the highway type, e.g. highway=type, for any direction (not total).
@@ -163,7 +190,7 @@ public class OsmLaneDefaults {
     }else if(OsmWaterwayTags.isWaterBasedWay(osmKey, osmValue)) {
       return getDefaultDirectionalWaterwayLanes();
     }else {
-      LOGGER.warning(String.format("unrecognised OSM way key %s, cannot collect default directional lanes",osmKey));
+      LOGGER.warning(String.format("unrecognised OSM way key [%s], cannot collect default directional lanes",osmKey));
     }
     return null;
   }  

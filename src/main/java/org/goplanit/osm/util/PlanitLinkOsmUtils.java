@@ -3,6 +3,7 @@ package org.goplanit.osm.util;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.mode.Mode;
@@ -10,6 +11,7 @@ import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.goplanit.utils.network.layer.physical.Link;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
 
@@ -32,9 +34,47 @@ public class PlanitLinkOsmUtils {
    */
   public static MacroscopicLink getClosestLinkWithOsmWayIdToGeometry(
       long osmWayId, Geometry geometry, MacroscopicNetworkLayer networkLayer, PlanitJtsCrsUtils geoUtils){
-    /* collect all PLANit links that match the OSM way id (very slow, but it is rare and not worth the indexing generally) */
-    Collection<? extends MacroscopicLink> nominatedLinks = networkLayer.getLinks().getByExternalId(String.valueOf(osmWayId));
-    /* in case osm way is broken, multiple planit links might exist with the same external id, find closest one and use it */
+
+    /* collect all PLANit links that match the OSM way id (very slow, but it is rare and not worth
+    the indexing generally) */
+    Collection<? extends MacroscopicLink> nominatedLinks =
+            networkLayer.getLinks().getByExternalId(String.valueOf(osmWayId));
+
+    /* in case osm way is broken, multiple PLANit links might exist with the same external id, find closest
+    one and use it */
     return (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(geometry, nominatedLinks, geoUtils);
-  }  
+  }
+
+  /** Verify if a link segment runs in the given OSM direction of the OSM way its link was created from: a link's A to B
+   * direction is its way's forward direction, B to A its backward direction, also after the link is broken
+   *
+   * @param segment to check
+   * @param osmDirection an OSM direction value, e.g., forward, backward or both; null, both or an unrecognised value
+   *                     covers both directions
+   * @return true when the segment runs in the direction, false otherwise
+   */
+  public static boolean isInOsmDirection(MacroscopicLinkSegment segment, String osmDirection) {
+    if (OsmDirectionTags.FORWARD.equals(osmDirection)) {
+      return segment.isDirectionAb();
+    }
+    if (OsmDirectionTags.BACKWARD.equals(osmDirection)) {
+      return !segment.isDirectionAb();
+    }
+    return true;
+  }
+
+  /**
+   * Verify if two links are on the same OSM way, or on OSM ways with the same name. This still holds after PLANit broke
+   * an OSM way into several links. It compares the external ids, which are OSM way ids, and the names.
+   *
+   * @param one link
+   * @param other link
+   * @return true when on the same OSM way or on OSM ways with the same name, false otherwise
+   */
+  public static boolean isSameOsmWayOrName(Link one, Link other) {
+    if (one.getExternalId() != null && one.getExternalId().equals(other.getExternalId())) {
+      return true;
+    }
+    return one.getName() != null && !one.getName().isBlank() && one.getName().equals(other.getName());
+  }
 }

@@ -1,7 +1,8 @@
 package org.goplanit.osm.defaults;
 
 /**
- * A class containing instances for each of the OSM speed limit default categories: urban/non-urban highways and railways
+ * A class containing instances for each of the OSM speed limit default categories: urban/non-urban highways
+ * and railways
  * 
  * @author markr
  *
@@ -137,9 +138,9 @@ public class OsmSpeedLimitDefaults {
   /**
    * clone
    * 
-   * @return shallow copy
+   * @return deep copy
    */
-  public OsmSpeedLimitDefaults shallowClone() {
+  public OsmSpeedLimitDefaults deepClone() {
     return new OsmSpeedLimitDefaults(this);
   }
   

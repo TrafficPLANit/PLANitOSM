@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two-way primary road 1-2-3; cycleway 20-21-22-2 meeting it at node 2, cycleway signal 21 about 10 m before the
+     road; footway 23-22-24 crossing the cycleway at node 22, about 3 m before the road -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2080"/>
+  <node id="2" lat="-33.8700" lon="151.2100"/>
+  <node id="3" lat="-33.8700" lon="151.2120"/>
+  <node id="20" lat="-33.8710" lon="151.2100"/>
+  <node id="21" lat="-33.87009" lon="151.2100">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="22" lat="-33.87003" lon="151.2100"/>
+  <node id="23" lat="-33.87003" lon="151.2097"/>
+  <node id="24" lat="-33.87003" lon="151.2103"/>
+  <way id="30">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="32">
+    <nd ref="20"/><nd ref="21"/><nd ref="22"/><nd ref="2"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+  <way id="33">
+    <nd ref="23"/><nd ref="22"/><nd ref="24"/>
+    <tag k="highway" v="footway"/>
+  </way>
+</osm>

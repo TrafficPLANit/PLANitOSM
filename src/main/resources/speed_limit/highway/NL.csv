@@ -9,6 +9,7 @@ secondary, 50, 80
 secondary_link, 50, 80      
 tertiary, 50, 80          
 tertiary_link, 50, 80
+busway, 50, 80
 unclassified, 50, 80      
 residential, 50, 80          
 living_street, 15, 15
