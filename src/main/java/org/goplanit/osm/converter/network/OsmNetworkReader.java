@@ -1,6 +1,7 @@
 package org.goplanit.osm.converter.network;
 
 import java.net.URL;
+import java.util.Objects;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -27,8 +28,10 @@ import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
 import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
+import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentUtils;
+import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult;
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
@@ -372,6 +375,78 @@ public class OsmNetworkReader implements NetworkReader {
     }
   }
 
+  /**
+   * Record what consolidating the intersections of a layer did with the PLANit entity diagnostics, each entity once
+   *
+   * @param result of the consolidation
+   */
+  private void registerConsolidationResult(IntersectionConsolidationModifierResult result) {
+    var diagnostics = networkData.getPlanitEntityDiagnostics();
+    result.getReplacedIntersections().forEach(replaced -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERSECTION_REPLACED_BY_CONSOLIDATION, replaced.first().getExternalId(),
+        "by " + replaced.second().getExternalId()));
+    result.getIntersectionClustersTooLargeToSubdivide().forEach(cluster -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERSECTION_CLUSTER_TOO_LARGE_TO_SUBDIVIDE, cluster.get(0).getExternalId(),
+        cluster.size() + " parsed intersections"));
+    result.getJoinedNodes().forEach(node -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.NODE_JOINED_BY_CONSOLIDATION, node.getExternalId()));
+    result.getApproachSegmentsMadeInternal().forEach(segment -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.APPROACH_MADE_INTERNAL_BY_CONSOLIDATION, segment.getParent().getExternalId(),
+        "from node " + segment.getUpstreamNode().getExternalId()));
+    result.getInternalLinksLongerThanWarningLength().forEach(link -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERNAL_LINK_LONGER_THAN_WARNING_LENGTH, link.getExternalId(),
+        String.format("%.0f m", link.getLengthMeters())));
+    result.getLinksReachedOnlyThroughIntersection().forEach(reached -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.LINK_REACHED_ONLY_THROUGH_INTERSECTION,
+        reached.getEnteringSegment().getParent().getExternalId(),
+        String.format("%.0f m%s", reached.getDistanceMeters(), reached.isWithSignal() ? ", with a signal" : "")));
+    result.getCrossingsJoined().forEach(crossing -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.CROSSING_JOINED_TO_JUNCTION, crossing.getExternalId()));
+    result.getCrossingsJoinedFromSlipLane().forEach(crossing -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION, crossing.getExternalId()));
+    result.getMissingApproachSegments().forEach(segment -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.MISSING_APPROACH, segment.getParent().getExternalId(),
+        "into node " + segment.getDownstreamNode().getExternalId()));
+    result.getJunctionsWithFewLitArms().forEach(junction -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.JUNCTION_WITH_FEW_LIT_ARMS, junction.getExternalId()));
+  }
+
+  /**
+   * Consolidate the intersections of each layer when the settings ask for it, see
+   * {@link OsmNetworkReaderSettings#setConsolidateIntersections(boolean)}. Meant to run once dangling subnetworks are
+   * removed, so only what remains is consolidated, and before ids are synced. A segment turning internal gets a signal
+   * when a vehicle signal made into an approach stands on it. What it did is logged, and recorded with the PLANit
+   * entity diagnostics
+   */
+  public void consolidateIntersections() {
+    if(!settings.isConsolidateIntersections()) {
+      return;
+    }
+    if(!settings.isParseIntersections()) {
+      LOGGER.warning("Intersections are not consolidated, since they are not parsed");
+      return;
+    }
+    var crs = getOsmNetworkToPopulate().getCoordinateReferenceSystem();
+    /* the collapsed mode types become the modes of the parsed network */
+    var collapsedModes = settings.getCollapsedModeTypes().stream()
+        .map(modeType -> (Mode) getOsmNetworkToPopulate().getModes().get(modeType))
+        .filter(Objects::nonNull).collect(Collectors.toList());
+    for(var entry : networkData.getLayerParsers().entrySet()) {
+      var layerModifier = entry.getKey().getLayerModifier();
+      var trafficSignalIntegrator = entry.getValue().getTrafficSignalIntegrator();
+      var result = layerModifier.consolidateIntersections(
+          crs, settings.getIntersectionConsolidatorSettings(), trafficSignalIntegrator::isVehicleSignalStandingOn);
+      registerConsolidationResult(result);
+      LOGGER.info(String.format("Consolidated intersections: %s", result));
+      /* once consolidated, the collapsed modes go onto one node per spatial intersection */
+      if(!collapsedModes.isEmpty()) {
+        var collapseResult = layerModifier.collapseIntersectionsToNonSpatialForModes(
+            entry.getKey().getIntersections().streamSpatial().collect(Collectors.toList()), collapsedModes, crs);
+        LOGGER.info(String.format("Collapsed intersections: %s", collapseResult));
+      }
+    }
+  }
+
   /** Collect the osm network to populate
    *
    * @return osm network
@@ -457,6 +532,9 @@ public class OsmNetworkReader implements NetworkReader {
     if(getSettings().isRemoveDanglingSubnetworks()) {
       removeDanglingSubNetworks(recreateIds);
     }
+
+    /* intersections, once pruning has settled what remains */
+    consolidateIntersections();
 
     // clean up ids to be contiguous
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(osmNetworkToPopulate);

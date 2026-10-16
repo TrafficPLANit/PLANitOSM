@@ -54,7 +54,7 @@ public class OsmNetworkHandlerProfiler {
    * for logging we log each x number of entities parsed, this is done smartly to minimize number of lines
    * while still providing information, hence the modulo use is dynamic
    */  
-  private long moduloLoggingCounterMovements = 500;
+  private long moduloLoggingCounterBannedTurns = 500;
 
   /**
    * Increment counter for passed in osm tag 
@@ -108,8 +108,8 @@ public class OsmNetworkHandlerProfiler {
         NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinks()));
     LOGGER.info(String.format("%s [STATS] created %d PLANit links segments ",
         NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfLinkSegments()));
-    LOGGER.info(String.format("%s [STATS] created %d PLANit banned movements ",
-        NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfBannedMovements()));
+    LOGGER.info(String.format("%s [STATS] created %d PLANit banned turns ",
+        NetworkLayer.createLayerLogPrefix(networkLayer), networkLayer.getNumberOfBannedTurns()));
   }
 
   /**
@@ -149,14 +149,14 @@ public class OsmNetworkHandlerProfiler {
   }
 
   /**
-   * log user information based on currently number of registered banned movements
+   * log user information based on currently number of registered banned turns
    *
-   * @param numberOfBannedMovements registered number of banned movements so far
+   * @param numberOfBannedTurns registered number of banned turns so far
    */
-  public void logBannedMovementStatus(long numberOfBannedMovements) {
-    if(numberOfBannedMovements >= moduloLoggingCounterMovements) {
-      LOGGER.info(String.format("Created %d banned movements out of OSM relations",numberOfBannedMovements));
-      moduloLoggingCounterMovements *=2;
+  public void logBannedTurnStatus(long numberOfBannedTurns) {
+    if(numberOfBannedTurns >= moduloLoggingCounterBannedTurns) {
+      LOGGER.info(String.format("Created %d banned turns out of OSM relations",numberOfBannedTurns));
+      moduloLoggingCounterBannedTurns *=2;
     }
   }
 

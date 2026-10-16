@@ -53,6 +53,8 @@ import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionTyp
 import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.Node;
 
+import org.locationtech.jts.geom.Coordinate;
+
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
@@ -116,9 +118,6 @@ public class OsmTrafficSignalIntegrator {
   /** intersections created but not yet registered on the layer, in the order created */
   private final List<Intersection> created = new ArrayList<>();
 
-  /** intersections registered on the layer, in the order registered */
-  private final List<Intersection> registered = new ArrayList<>();
-
   /** intersections created, by the OSM node id of their signal or junction node. Only kept while executing: later
    * changes to the layer, such as pruning, could leave it pointing at removed intersections */
   private final Map<Long, Intersection> intersectionsByOsmNodeId = new HashMap<>();
@@ -126,6 +125,10 @@ public class OsmTrafficSignalIntegrator {
   /** per approach segment, the OSM nodes of the signals that made it an approach, in the order handled. Keyed by
    * identity, because segment ids are recreated after parsing */
   private final Map<MacroscopicLinkSegment, List<OsmNode>> signalsByApproach = new IdentityHashMap<>();
+
+  /** per OSM way id, where the vehicle signals made into an approach stand on its links, see
+   * {@link #isVehicleSignalStandingOn(MacroscopicLinkSegment)} */
+  private final Map<String, List<VehicleSignalPosition>> vehicleSignalPositionsByOsmWayId = new HashMap<>();
 
   /**
    * How to look ahead from a signal along its way. It says which segments may be travelled, which nodes are targets,
@@ -170,15 +173,20 @@ public class OsmTrafficSignalIntegrator {
     /** from the signal to the node, along the way, in metres */
     private final double distance;
 
+    /** the segment carrying traffic past the signal, where the look-ahead started */
+    private final MacroscopicLinkSegment passing;
+
     /**
      * Constructor
      *
      * @param arriving the segment arriving at the node
      * @param distance from the signal to the node, along the way, in metres
+     * @param passing the segment carrying traffic past the signal, where the look-ahead started
      */
-    private TargetAhead(MacroscopicLinkSegment arriving, double distance) {
+    private TargetAhead(MacroscopicLinkSegment arriving, double distance, MacroscopicLinkSegment passing) {
       this.arriving = arriving;
       this.distance = distance;
+      this.passing = passing;
     }
 
     /**
@@ -188,6 +196,28 @@ public class OsmTrafficSignalIntegrator {
      */
     private Node getTargetNode() {
       return arriving.getDownstreamNode();
+    }
+  }
+
+  /** Where a vehicle signal stands: its position, and the direction of the segment carrying traffic past it, relative
+   * to its link. Pieces of a link broken later keep that direction, so it still holds for them */
+  private static final class VehicleSignalPosition {
+
+    /** position of the signal, as in the geometry of the link it lies inside, or of the node it is on */
+    private final Coordinate position;
+
+    /** true when the traffic passing the signal runs from node A to node B of its link */
+    private final boolean directionAb;
+
+    /**
+     * Constructor
+     *
+     * @param position of the signal
+     * @param directionAb true when the traffic passing the signal runs from node A to node B of its link
+     */
+    private VehicleSignalPosition(Coordinate position, boolean directionAb) {
+      this.position = position;
+      this.directionAb = directionAb;
     }
   }
 
@@ -887,7 +917,7 @@ public class OsmTrafficSignalIntegrator {
     TargetAhead alongOnlyBranch = null;
     for (var leaving : MacroscopicLinkSegmentUtils.findContinuations(reached.arriving, lookAhead.travels)) {
       var targets = findTargetsAhead(
-          leaving, reached.distance + leaving.getParent().getLengthKm() * 1000, maxDistance, lookAhead);
+          leaving, reached.distance + leaving.getParent().getLengthMeters(), maxDistance, lookAhead);
       var alongBranch = targets.isEmpty() ? null : findRoadCrossingOrBranch(targets.get(0), maxDistance, lookAhead);
       if (alongBranch != null) {
         if (alongOnlyBranch != null) {
@@ -1190,6 +1220,7 @@ public class OsmTrafficSignalIntegrator {
       lowestOrderRoadJunctionPassed |= chosen != junctions.get(0);
       roadEndOutsideParsedAreaChosen |= isRoadEndOutsideParsedArea(chosen.getTargetNode());
       addArrivingSegmentAsApproach(chosen, pending.signal, IntersectionType.JUNCTION);
+      recordWhereVehicleSignalStands(pending.signal, chosen.passing);
     }
     if (lowestOrderRoadJunctionPassed) {
       trackAsDiagnostic(OsmTrafficSignalOutcome.LOWEST_ORDER_ROAD_JUNCTION_PASSED, pending.signal);
@@ -1379,7 +1410,7 @@ public class OsmTrafficSignalIntegrator {
     if (location.isOnNode()) {
       for (MacroscopicLinkSegment entering : location.node.<MacroscopicLinkSegment>getEntryLinkSegments()) {
         passingSegments.add(entering);
-        distancesBehind.add(entering.getParent().getLengthKm() * 1000);
+        distancesBehind.add(entering.getParent().getLengthMeters());
       }
     } else {
       var signalPosition = OsmNodeUtils.createPoint(signal);
@@ -1387,7 +1418,7 @@ public class OsmTrafficSignalIntegrator {
         for (var segment : new MacroscopicLinkSegment[] {link.getLinkSegmentAb(), link.getLinkSegmentBa()}) {
           if (segment != null) {
             passingSegments.add(segment);
-            distancesBehind.add(segment.getParent().getLengthKm() * 1000 -
+            distancesBehind.add(segment.getParent().getLengthMeters() -
                 PlanitGraphGeoUtils.getDistanceToDownstreamVertexInMetres(segment, signalPosition, geoUtils));
           }
         }
@@ -1408,7 +1439,7 @@ public class OsmTrafficSignalIntegrator {
         var preceding = MacroscopicLinkSegmentUtils.findPredecessors(current, travels);
         current = preceding.size() == 1 ? preceding.get(0) : null;
         if (current != null) {
-          distance += current.getParent().getLengthKm() * 1000;
+          distance += current.getParent().getLengthMeters();
         }
       }
     }
@@ -1441,6 +1472,7 @@ public class OsmTrafficSignalIntegrator {
     for (var crossing : reached) {
       addApproach(intersectionsByOsmNodeId.get(PlanitOsmUtils.parseOsmId(crossing.getTargetNode())),
           crossing.arriving, signal);
+      recordWhereVehicleSignalStands(signal, crossing.passing);
     }
     return !reached.isEmpty();
   }
@@ -1489,11 +1521,11 @@ public class OsmTrafficSignalIntegrator {
   /**
    * Record the intersections none of whose approaches a motorised road or rail mode can use. This is done once all
    * signals are handled. Only then is an intersection complete: a later signal can still add approaches to one
-   * registered earlier.
+   * registered earlier. The layer's intersections are those registered here.
    */
   private void recordIntersectionsWithoutControlledApproach() {
     var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
-    for (var intersection : registered) {
+    for (var intersection : networkLayer.getIntersections()) {
       if (intersection.getApproachSegments().stream().noneMatch(
           approach -> approach.isAnyModeAllowed(OsmTrafficSignalIntegrator::isControlledVehicleMode))) {
         planitEntityDiagnostics.registerIssue(
@@ -1551,7 +1583,7 @@ public class OsmTrafficSignalIntegrator {
       SignalLocation location, String direction, double maxDistance, LookAhead lookAhead) {
     if (location.isOnNode()) {
       return findAlongLinks(location.getLinks(), direction, segment -> segment.getUpstreamVertex() == location.node,
-          segment -> segment.getParent().getLengthKm() * 1000, maxDistance, lookAhead);
+          segment -> segment.getParent().getLengthMeters(), maxDistance, lookAhead);
     }
     var signalPosition = OsmNodeUtils.createPoint(location.signal);
     return findAlongLinks(location.links, direction, segment -> true,
@@ -1634,7 +1666,7 @@ public class OsmTrafficSignalIntegrator {
         break;
       }
       if (lookAhead.isTarget.test(ahead)) {
-        targets.add(new TargetAhead(current, distance));
+        targets.add(new TargetAhead(current, distance, segment));
         if (!lookAhead.beyondTarget) {
           break;
         }
@@ -1643,7 +1675,7 @@ public class OsmTrafficSignalIntegrator {
         current = findContinuingLinkSegment(current, lookAhead.travels, false);
       }
       if (current != null) {
-        distance += current.getParent().getLengthKm() * 1000;
+        distance += current.getParent().getLengthMeters();
       }
     }
     return targets;
@@ -1664,7 +1696,8 @@ public class OsmTrafficSignalIntegrator {
       intersection.addType(type);
       return intersection;
     }
-    intersection = networkLayer.getIntersections().getFactory().create(node, IntersectionControlType.SIGNALISED, type);
+    intersection = networkLayer.getIntersections().getFactory().createNonSpatial(
+        node, IntersectionControlType.SIGNALISED, type);
     intersection.setXmlId(String.valueOf(intersection.getId()));
     intersectionsByOsmNodeId.put(osmNodeId, intersection);
     created.add(intersection);
@@ -1713,13 +1746,12 @@ public class OsmTrafficSignalIntegrator {
   }
 
   /**
-   * Register an intersection on the layer. It is remembered as registered by the integrator, and counted as created.
+   * Register an intersection on the layer, and count it as created
    *
    * @param intersection to register
    */
   private void register(Intersection intersection) {
     networkLayer.getIntersections().getFactory().register(intersection);
-    registered.add(intersection);
     networkData.getPlanitEntityDiagnostics().registerIntersectionCreated();
   }
 
@@ -1790,6 +1822,49 @@ public class OsmTrafficSignalIntegrator {
     recordIntersectionsWithoutControlledApproach();
     lowestOrderRoadOsmWayIds.clear();
     intersectionsByOsmNodeId.clear();
+  }
+
+  /**
+   * Record where a vehicle signal made into an approach stands: on the segment carrying traffic past it, which lies
+   * wholly ahead of a signal on a node
+   *
+   * @param signal the OSM node of the signal
+   * @param passing the segment carrying traffic past the signal
+   */
+  private void recordWhereVehicleSignalStands(OsmNode signal, MacroscopicLinkSegment passing) {
+    vehicleSignalPositionsByOsmWayId.computeIfAbsent(passing.getParent().getExternalId(), id -> new ArrayList<>(1))
+        .add(new VehicleSignalPosition(OsmNodeUtils.createCoordinate(signal), passing.isDirectionAb()));
+  }
+
+  /**
+   * Verify if a vehicle signal made into an approach stands on a link segment: it lies inside the segment's link, or
+   * on the node the segment starts at, and applies to the segment's direction. It holds for the pieces of links broken
+   * after the signals were integrated too. A signal on a junction node stands on no segment
+   *
+   * @param segment to check
+   * @return true when a vehicle signal stands on it, false otherwise
+   */
+  public boolean isVehicleSignalStandingOn(MacroscopicLinkSegment segment) {
+    var positions = vehicleSignalPositionsByOsmWayId.get(segment.getParent().getExternalId());
+    if (positions == null) {
+      return false;
+    }
+    var coordinates = segment.getParent().getGeometry().getCoordinates();
+    var upstream = segment.getUpstreamNode().getPosition().getCoordinate();
+    for (var signal : positions) {
+      if (signal.directionAb != segment.isDirectionAb()) {
+        continue;
+      }
+      if (signal.position.equals2D(upstream)) {
+        return true;
+      }
+      for (int index = 1; index < coordinates.length - 1; ++index) {
+        if (signal.position.equals2D(coordinates[index])) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

@@ -1016,4 +1016,13 @@ public class OsmNetworkLayerParser {
     return trafficSignalIntegrator;
   }
 
+  /**
+   * Collect the conversion of OSM modes to the PLANit modes of the layer
+   *
+   * @return mode conversion of the layer
+   */
+  public OsmNetworkLayerModeConversion getModeConversion() {
+    return modeParser;
+  }
+
 }

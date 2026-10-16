@@ -116,6 +116,8 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     if(osmNetworkReader.getSettings().isRemoveDanglingSubnetworks()) {
       osmNetworkReader.removeDanglingSubNetworks(zoning, recreateIds);
     }
+    /* intersections, once pruning has settled what remains */
+    osmNetworkReader.consolidateIntersections();
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(network);
 
     recreateIds = false;
@@ -200,6 +202,9 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     var originalRemoveDanglingSubNetworkModes =
         new java.util.LinkedHashMap<>(osmNetworkReader.getSettings().getRemoveDanglingSubnetworkModes());
     osmNetworkReader.getSettings().deactivateRemoveDanglingSubnetworks();
+    /* consolidating intersections waits for the removal of dangling subnetworks */
+    boolean originalConsolidateIntersections = osmNetworkReader.getSettings().isConsolidateIntersections();
+    osmNetworkReader.getSettings().setConsolidateIntersections(false);
     
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
 
@@ -230,6 +235,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     originalRemoveDanglingSubNetworkModes.forEach(
         (modeType, config) -> osmNetworkReader.getSettings().activateRemoveDanglingSubnetworks(
             modeType, config.getBelowSize(), config.getAboveSize(), config.getConnectivity()));
+    osmNetworkReader.getSettings().setConsolidateIntersections(originalConsolidateIntersections);
     osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
     osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
     /* ... remove dangling entities if indicated */

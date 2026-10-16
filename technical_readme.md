@@ -334,6 +334,62 @@ it.
 
 Here 5 and 6 are two intersections; the cross road between them is no approach.
 
+#### Consolidating intersections
+
+OSM maps a junction of divided roads as several nodes, so the integrator makes several intersections for it. With
+`setConsolidateIntersections(true)` (off by default) the reader joins them into one, through the layer modifier's
+`consolidateIntersections`. It runs once dangling subnetworks are removed and before ids are synced, so only what
+remains is consolidated. The intermodal reader holds it back until it has removed dangling subnetworks after the
+zoning. When intersections are not parsed it does not run, and a warning says so.
+
+What consolidation does (PLANit's `IntersectionConsolidator`, next to the layer modifier):
+
+1. Intersections with the kind `junction` within 25 m of each other along the road form an intersection cluster.
+2. Every way to divide a cluster is scored on how well traffic entering each part can leave it in every direction the
+   cluster offers. Every member must earn its place. The best division wins, and a tie goes to fewer parts.
+3. Each part becomes one spatial intersection, replacing the intersections it is made from: nodes between them
+   become members, and every segment between two members becomes internal.
+4. A link that road traffic only reaches by driving through the intersection, within 50 m, becomes internal too.
+5. A crossing within 25 m of a junction along the road joins it. A crossing on a slip lane joins its junction when it
+   lies within 60 m of a member node in a straight line.
+6. Road segments entering a signalised junction that are not approaches are counted, not added.
+7. Each spatial intersection stores every movement through it: from each approach to each exit its internal
+   segments connect, with its length. A movement stores only a ban placed on it directly; the modes that can make it,
+   after mode access and banned turns at member nodes, are worked out when needed.
+8. On request (`setCollapsedModeTypes`, none by default), the chosen modes are collapsed onto a new centre node per
+   spatial intersection, their bans moved onto the new turns where they hold exactly.
+
+Where a vehicle signal stands matters when a segment turns internal: one with a vehicle signal on it becomes an
+internal segment with a signal, such as a stop line between the carriageways of a divided road. The integrator
+records each vehicle signal it made into an approach, by OSM way, direction and position
+(`OsmTrafficSignalIntegrator.isVehicleSignalStandingOn`). That
+still holds when a link is broken later, for example by the zoning reader. A signal on a junction node gives no
+internal segment a signal.
+
+The values that tune it are PLANit's `IntersectionConsolidatorSettings`, held by the reader settings: change them in
+place through `getIntersectionConsolidatorSettings()`, or switch consolidation on with settings of your own through
+`setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum internal link length 25 m, minimum
+coverage gain per member 0.05, coverage tie margin 0.001, at most 10 parsed intersections in a cluster that is
+subdivided, internal link length warning 100 m, maximum distance reached only through an intersection 50 m, and
+maximum distance from a crossing on a slip lane to its junction 60 m. The modes to collapse are set with
+`setCollapsedModeTypes` on the reader settings. The values are logged with the other settings when consolidation is
+on. What consolidation did is logged on one line, and each entity is recorded in the PLANit
+intersections diagnostics below.
+
+#### Turn restrictions
+
+An OSM turn restriction via a node becomes banned turns, each naming the modes it bans:
+
+* `restriction=<type>` is for vehicles: it bans every mode that is a vehicle, so not pedestrians, except the modes
+  listed in `except` and the modes with a `restriction:<mode>` tag of their own;
+* `restriction:<mode>=<type>` bans that mode only;
+* OSM modes map to PLANit modes as for access tags, a category such as `psv` standing for its modes; a restriction left
+  with no activated mode creates no ban;
+* a banned turn bans only the modes that can make it, those allowed on both its segments; a turn none of them can make
+  gets no ban, and a ban for every mode that can make its turn names no modes.
+
+Restrictions with a via way are still dropped, and `restriction:conditional` is not read.
+
 #### Diagnostics
 
 What happens is recorded where it is decided, in two stages, and logged at the end of `read()`:
@@ -347,10 +403,14 @@ What happens is recorded where it is decided, in two stages, and logged at the e
   junction is, up to 200 m, follows.
 * **PLANit intersections** (`OsmPlanitEntityDiagnostics`, `OsmPlanitEntityIssue`) - the intersections and approaches
   created, and their issues: an intersection lost when pruning removed all its approaches (read from the clean-up's
-  result), an approach no motorised road or rail mode can use, and an intersection without any such approach.
+  result), an approach no motorised road or rail mode can use, and an intersection without any such approach. With
+  consolidation on, also what it did, each entity once: intersections replaced, clusters too large to subdivide,
+  nodes joined, approaches made internal, long internal links, links reached only through their intersection,
+  crossings joined (along the road or from a slip lane), missing approaches and junctions with few lit arms.
 
-The rules above are covered scenario by scenario in `OsmTrafficSignalsTest` and `OsmTrafficSignalIntegratorTest`, each
-hand-made `.osm` file under `src/test/resources/osm/traffic-signals/` drawn in the test.
+The rules above are covered scenario by scenario in `OsmTrafficSignalsTest`, `OsmTrafficSignalIntegratorTest`,
+`OsmIntersectionConsolidationTest` and `OsmTurnRestrictionModesTest`, each hand-made `.osm` file under
+`src/test/resources/osm/traffic-signals/` drawn in the test. Consolidation's own rules are tested in PLANit's `IntersectionConsolidationTest`.
 
 ### PLANit infrastructure layers
 

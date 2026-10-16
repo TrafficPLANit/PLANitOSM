@@ -23069,384 +23069,741 @@
                 </link>
             </links>
             <turns>
-                <ban id="0" externalid="3634714" fromref="488" toref="489"/>
-                <ban id="1" externalid="3634714" fromref="488" toref="1128"/>
-                <ban id="10" externalid="6198992" fromref="786" toref="785"/>
-                <ban id="11" externalid="6198993" fromref="852" toref="851"/>
-                <ban id="12" externalid="6198993" fromref="852" toref="1352"/>
-                <ban id="13" externalid="6453464" fromref="746" toref="617"/>
-                <ban id="14" externalid="6719210" fromref="1795" toref="1295"/>
-                <ban id="15" externalid="7367429" fromref="1805" toref="94"/>
-                <ban id="16" externalid="7367430" fromref="95" toref="587"/>
-                <ban id="17" externalid="7637857" fromref="1993" toref="367"/>
-                <ban id="18" externalid="9579452" fromref="378" toref="1119"/>
-                <ban id="19" externalid="9754382" fromref="1127" toref="489"/>
-                <ban id="2" externalid="3634714" fromref="488" toref="1494"/>
-                <ban id="20" externalid="9754385" fromref="1496" toref="1134"/>
-                <ban id="21" externalid="9754386" fromref="612" toref="1133"/>
-                <ban id="22" externalid="9760846" fromref="2218" toref="1968"/>
-                <ban id="23" externalid="9760846" fromref="1180" toref="1181"/>
-                <ban id="24" externalid="9761065" fromref="1874" toref="1141"/>
-                <ban id="25" externalid="9761113" fromref="851" toref="571"/>
-                <ban id="26" externalid="9761114" fromref="700" toref="701"/>
-                <ban id="27" externalid="9761114" fromref="700" toref="1168"/>
-                <ban id="28" externalid="9761197" fromref="470" toref="99"/>
-                <ban id="29" externalid="9761212" fromref="1868" toref="1970"/>
-                <ban id="3" externalid="4676574" fromref="747" toref="97"/>
-                <ban id="30" externalid="9925439" fromref="1797" toref="1174"/>
-                <ban id="31" externalid="9992881" fromref="2121" toref="431"/>
-                <ban id="32" externalid="9992882" fromref="432" toref="2122"/>
-                <ban id="33" externalid="9992882" fromref="432" toref="431"/>
-                <ban id="34" externalid="9994462" fromref="823" toref="824"/>
-                <ban id="35" externalid="9994462" fromref="823" toref="1215"/>
-                <ban id="36" externalid="9994463" fromref="815" toref="816"/>
-                <ban id="37" externalid="9994463" fromref="815" toref="1214"/>
-                <ban id="38" externalid="10046007" fromref="194" toref="195"/>
-                <ban id="39" externalid="10046007" fromref="194" toref="786"/>
-                <ban id="4" externalid="4676592" fromref="1815" toref="98"/>
-                <ban id="40" externalid="10097370" fromref="1226" toref="909"/>
-                <ban id="41" externalid="10097371" fromref="909" toref="910"/>
-                <ban id="42" externalid="10097371" fromref="909" toref="1228"/>
-                <ban id="43" externalid="10156455" fromref="1792" toref="520"/>
-                <ban id="44" externalid="10323689" fromref="579" toref="89"/>
-                <ban id="45" externalid="10459893" fromref="1492" toref="1481"/>
-                <ban id="46" externalid="10459893" fromref="1492" toref="1493"/>
-                <ban id="47" externalid="11569745" fromref="1212" toref="1213"/>
-                <ban id="48" externalid="11569745" fromref="1212" toref="1335"/>
-                <ban id="49" externalid="11569745" fromref="1212" toref="1336"/>
-                <ban id="5" externalid="4676594" fromref="646" toref="854"/>
-                <ban id="50" externalid="13485276" fromref="936" toref="660"/>
-                <ban id="51" externalid="13599507" fromref="1746" toref="410"/>
-                <ban id="52" externalid="13909647" fromref="1965" toref="1177"/>
-                <ban id="53" externalid="14893618" fromref="540" toref="1592"/>
-                <ban id="54" externalid="14893619" fromref="1368" toref="1592"/>
-                <ban id="55" externalid="14893620" fromref="420" toref="1323"/>
-                <ban id="6" externalid="6198990" fromref="2210" toref="1164"/>
-                <ban id="7" externalid="6198991" fromref="192" toref="193"/>
-                <ban id="8" externalid="6198991" fromref="192" toref="194"/>
-                <ban id="9" externalid="6198992" fromref="786" toref="192"/>
+                <ban id="0" externalid="3634714" fromlsref="488" tolsref="489" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="1" externalid="3634714" fromlsref="488" tolsref="1128" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="10" externalid="6198993" fromlsref="852" tolsref="851" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="11" externalid="6198993" fromlsref="852" tolsref="1352" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="12" externalid="6453464" fromlsref="746" tolsref="617" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="13" externalid="6719210" fromlsref="1795" tolsref="1295" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="14" externalid="7367429" fromlsref="1805" tolsref="94" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="15" externalid="7367430" fromlsref="95" tolsref="587" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="16" externalid="7637857" fromlsref="1993" tolsref="367" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="17" externalid="9579452" fromlsref="378" tolsref="1119" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="18" externalid="9754382" fromlsref="1127" tolsref="489" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="19" externalid="9754385" fromlsref="1496" tolsref="1134" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="2" externalid="3634714" fromlsref="488" tolsref="1494" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="20" externalid="9754386" fromlsref="612" tolsref="1133" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="21" externalid="9760846" fromlsref="2218" tolsref="1968" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="22" externalid="9761065" fromlsref="1874" tolsref="1141" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="23" externalid="9761113" fromlsref="851" tolsref="571" moderefs="car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="24" externalid="9761114" fromlsref="700" tolsref="1168" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="25" externalid="9761197" fromlsref="470" tolsref="99" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="26" externalid="9761212" fromlsref="1868" tolsref="1970" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="27" externalid="9925439" fromlsref="1797" tolsref="1174" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="28" externalid="9994462" fromlsref="823" tolsref="1215" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="29" externalid="9994463" fromlsref="815" tolsref="1214" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="3" externalid="4676574" fromlsref="747" tolsref="97"/>
+                <ban id="30" externalid="10046007" fromlsref="194" tolsref="786" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="31" externalid="10097370" fromlsref="1226" tolsref="909" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="32" externalid="10097371" fromlsref="909" tolsref="1228" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="33" externalid="10156455" fromlsref="1792" tolsref="520"/>
+                <ban id="34" externalid="10323689" fromlsref="579" tolsref="89" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="35" externalid="10459893" fromlsref="1492" tolsref="1481" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="36" externalid="11569745" fromlsref="1212" tolsref="1335"/>
+                <ban id="37" externalid="11569745" fromlsref="1212" tolsref="1336" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="38" externalid="13485276" fromlsref="936" tolsref="660" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="39" externalid="13599507" fromlsref="1746" tolsref="410" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="4" externalid="4676592" fromlsref="1815" tolsref="98"/>
+                <ban id="40" externalid="13909647" fromlsref="1965" tolsref="1177" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="41" externalid="14893618" fromlsref="540" tolsref="1592" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="42" externalid="14893619" fromlsref="1368" tolsref="1592" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="43" externalid="14893620" fromlsref="420" tolsref="1323"/>
+                <ban id="5" externalid="4676594" fromlsref="646" tolsref="854"/>
+                <ban id="6" externalid="6198990" fromlsref="2210" tolsref="1164" moderefs="bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="7" externalid="6198991" fromlsref="192" tolsref="194" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="8" externalid="6198992" fromlsref="786" tolsref="192" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
+                <ban id="9" externalid="6198992" fromlsref="786" tolsref="785" moderefs="bicycle,bus,car,goods,hgv,lhgv,motor_bike"/>
             </turns>
             <intersections>
-                <intersection id="0" externalid="8965680" noderefs="96" control="signalised" types="junction">
-                    <segments type="approach" refs="1805,403,588,95"/>
-                </intersection>
-                <intersection id="1" externalid="8965682" noderefs="236" control="signalised" types="junction">
-                    <segments type="approach" refs="1934,234,590,631"/>
-                </intersection>
-                <intersection id="10" externalid="15399164" noderefs="146" control="signalised" types="junction">
-                    <segments type="approach" refs="1215,142,815"/>
-                </intersection>
-                <intersection id="100" externalid="8965823" noderefs="2" control="signalised" types="crossing">
-                    <segments type="approach" refs="3,7,783"/>
-                </intersection>
-                <intersection id="101" externalid="13757743" noderefs="157" control="signalised" types="crossing">
-                    <segments type="approach" refs="1649,598"/>
-                </intersection>
-                <intersection id="102" externalid="15405025" noderefs="32" control="signalised" types="crossing">
-                    <segments type="approach" refs="1916,2167,629,635"/>
-                </intersection>
-                <intersection id="103" externalid="15405030" noderefs="518" control="signalised" types="crossing">
-                    <segments type="approach" refs="1357,1989,2049,627"/>
-                </intersection>
-                <intersection id="104" externalid="15405041" noderefs="942" control="signalised" types="crossing">
-                    <segments type="approach" refs="2038,2040,31,626"/>
-                </intersection>
-                <intersection id="105" externalid="26526386" noderefs="945" control="signalised" types="crossing">
-                    <segments type="approach" refs="1354,2050,2052,628"/>
-                </intersection>
-                <intersection id="106" externalid="2843788698" noderefs="998" control="signalised" types="crossing">
-                    <segments type="approach" refs="97"/>
-                </intersection>
-                <intersection id="11" externalid="15401227" noderefs="101" control="signalised" types="junction">
-                    <segments type="approach" refs="1815,616,746,854"/>
-                </intersection>
-                <intersection id="12" externalid="15401509" noderefs="256" control="signalised" types="junction">
-                    <segments type="approach" refs="1776"/>
-                </intersection>
-                <intersection id="13" externalid="15401537" noderefs="15" control="signalised" types="crossing">
-                    <segments type="approach" refs="1477,1494,17"/>
-                </intersection>
-                <intersection id="14" externalid="15405036" noderefs="109" control="signalised" types="junction">
-                    <segments type="approach" refs="1568,2285,430"/>
-                </intersection>
-                <intersection id="15" externalid="15405751" noderefs="35" control="signalised" types="junction crossing">
-                    <segments type="approach" refs="152,1646,2196,34"/>
-                </intersection>
-                <intersection id="16" externalid="15405753" noderefs="725" control="signalised" types="junction">
-                    <segments type="approach" refs="1000"/>
-                </intersection>
-                <intersection id="17" externalid="15406810" noderefs="224" control="signalised" types="junction">
-                    <segments type="approach" refs="1647,736,919"/>
-                </intersection>
-                <intersection id="18" externalid="15406815" noderefs="40" control="signalised" types="junction">
-                    <segments type="approach" refs="1298,154,37,642"/>
-                </intersection>
-                <intersection id="19" externalid="15407240" noderefs="513" control="signalised" types="junction crossing">
-                    <segments type="approach" refs="1766,2271,922"/>
-                </intersection>
-                <intersection id="2" externalid="8965683" noderefs="348" control="signalised" types="junction">
-                    <segments type="approach" refs="1641,383,856"/>
-                </intersection>
-                <intersection id="20" externalid="15407245" noderefs="462" control="signalised" types="junction">
-                    <segments type="approach" refs="1583,1792"/>
-                </intersection>
-                <intersection id="21" externalid="15407247" noderefs="333" control="signalised" types="junction">
-                    <segments type="approach" refs="1764,363,920"/>
-                </intersection>
-                <intersection id="22" externalid="15407248" noderefs="116" control="signalised" types="junction crossing">
-                    <segments type="approach" refs="1063,113,2303,949"/>
-                </intersection>
-                <intersection id="23" externalid="15449304" noderefs="154" control="signalised" types="junction crossing">
-                    <segments type="approach" refs="148,151,1732,741"/>
-                </intersection>
-                <intersection id="24" externalid="20827843" noderefs="50" control="signalised" types="junction">
-                    <segments type="approach" refs="1645,1958,50"/>
-                </intersection>
-                <intersection id="25" externalid="20827844" noderefs="51" control="signalised" types="junction">
-                    <segments type="approach" refs="2204,49,634"/>
-                </intersection>
-                <intersection id="26" externalid="26358753" noderefs="6" control="signalised" types="junction">
-                    <segments type="approach" refs="1832,233,235,585"/>
-                </intersection>
-                <intersection id="27" externalid="26526387" noderefs="728" control="signalised" types="junction">
-                    <segments type="approach" refs="1924,2333"/>
-                </intersection>
-                <intersection id="28" externalid="26526396" noderefs="93" control="signalised" types="junction">
-                    <segments type="approach" refs="1662,1788"/>
-                </intersection>
-                <intersection id="29" externalid="33165422" noderefs="352" control="signalised" types="junction crossing">
-                    <segments type="approach" refs="1733,387,389,738"/>
-                </intersection>
-                <intersection id="3" externalid="8965800" noderefs="1" control="signalised" types="junction">
-                    <segments type="approach" refs="0,1642,781"/>
-                </intersection>
-                <intersection id="30" externalid="642998199" noderefs="515" control="signalised" types="junction">
-                    <segments type="approach" refs="1227,1228,1661,621"/>
-                </intersection>
-                <intersection id="31" externalid="1070474087" noderefs="841" control="signalised" types="junction">
-                    <segments type="approach" refs="1251,2011"/>
-                </intersection>
-                <intersection id="32" externalid="1070474095" noderefs="11" control="signalised" types="junction">
-                    <segments type="approach" refs="1509,1511,632"/>
-                </intersection>
-                <intersection id="33" externalid="1614492632" noderefs="156" control="signalised" types="junction">
-                    <segments type="approach" refs="730,733"/>
-                </intersection>
-                <intersection id="34" externalid="1614496946" noderefs="23" control="signalised" types="junction">
-                    <segments type="approach" refs="24"/>
-                </intersection>
-                <intersection id="35" externalid="1810714485" noderefs="539" control="signalised" types="junction">
-                    <segments type="approach" refs="1336,2143"/>
-                </intersection>
-                <intersection id="36" externalid="1832328520" noderefs="415" control="signalised" types="junction">
-                    <segments type="approach" refs="1498,750"/>
-                </intersection>
-                <intersection id="37" externalid="1846152984" noderefs="582" control="signalised" types="junction">
-                    <segments type="approach" refs="727"/>
-                </intersection>
-                <intersection id="38" externalid="1849591645" noderefs="24" control="signalised" types="junction">
-                    <segments type="approach" refs="2085"/>
-                </intersection>
-                <intersection id="39" externalid="3420655031" noderefs="680" control="signalised" types="crossing">
-                    <segments type="approach" refs="1879,2293,932"/>
-                </intersection>
-                <intersection id="4" externalid="8965827,10228258044,10228258045" noderefs="522" control="signalised" types="junction crossing">
-                    <segments type="approach" refs="1142,1874,985"/>
-                </intersection>
-                <intersection id="40" externalid="3899037438" noderefs="234" control="signalised" types="crossing">
-                    <segments type="approach" refs="230,760,957"/>
-                </intersection>
-                <intersection id="41" externalid="666758991,10188047675,10188047678,10188047679" noderefs="7" control="signalised" types="junction">
-                    <segments type="approach" refs="1376,40,787,9"/>
-                </intersection>
-                <intersection id="42" externalid="3899037421" noderefs="196" control="signalised" types="junction">
-                    <segments type="approach" refs="192"/>
-                </intersection>
-                <intersection id="43" externalid="3910190217,10188082774" noderefs="222" control="signalised" types="junction">
-                    <segments type="approach" refs="1797,640"/>
-                </intersection>
-                <intersection id="44" externalid="3910190702" noderefs="63" control="signalised" types="junction">
-                    <segments type="approach" refs="64"/>
-                </intersection>
-                <intersection id="45" externalid="3921252668" noderefs="621" control="signalised" types="junction">
-                    <segments type="approach" refs="821"/>
-                </intersection>
-                <intersection id="46" externalid="3921252674" noderefs="977" control="signalised" types="junction">
-                    <segments type="approach" refs="817"/>
-                </intersection>
-                <intersection id="47" externalid="5147304740,5147304741" noderefs="46" control="signalised" types="junction">
-                    <segments type="approach" refs="2279,46"/>
-                </intersection>
-                <intersection id="48" externalid="5147327948,5147327949" noderefs="353" control="signalised" types="junction">
-                    <segments type="approach" refs="1790,2277"/>
-                </intersection>
-                <intersection id="49" externalid="6594605922,10188049454" noderefs="260" control="signalised" types="junction">
-                    <segments type="approach" refs="1173,266"/>
-                </intersection>
-                <intersection id="5" externalid="13757701" noderefs="432" control="signalised" types="junction">
-                    <segments type="approach" refs="1127,1350,488"/>
-                </intersection>
-                <intersection id="50" externalid="9006017849" noderefs="857" control="signalised" types="junction">
-                    <segments type="approach" refs="1326"/>
-                </intersection>
-                <intersection id="51" externalid="9006017853,9006017854" noderefs="48" control="signalised" types="junction">
-                    <segments type="approach" refs="283,420"/>
-                </intersection>
-                <intersection id="52" externalid="9006017865,9006017868" noderefs="943" control="signalised" types="junction">
-                    <segments type="approach" refs="2289,47"/>
-                </intersection>
-                <intersection id="53" externalid="10185379885,10185379886,10185379887" noderefs="8" control="signalised" types="junction">
-                    <segments type="approach" refs="1692,351,792"/>
-                </intersection>
-                <intersection id="54" externalid="10187679266,10245932148" noderefs="153" control="signalised" types="junction">
-                    <segments type="approach" refs="1718,2309"/>
-                </intersection>
-                <intersection id="55" externalid="10187696067,10187696068,10187696069,10187696070" noderefs="944" control="signalised" types="junction">
-                    <segments type="approach" refs="1602,2046,2048,2315"/>
-                </intersection>
-                <intersection id="56" externalid="10187841613" noderefs="932" control="signalised" types="junction">
-                    <segments type="approach" refs="1595"/>
-                </intersection>
-                <intersection id="57" externalid="10187841617,10197020153" noderefs="536" control="signalised" types="junction">
-                    <segments type="approach" refs="659,936"/>
-                </intersection>
-                <intersection id="58" externalid="10188047617,10188047625,10188047626,10188047627" noderefs="270" control="signalised" types="junction">
-                    <segments type="approach" refs="1544,1908,2045,951"/>
-                </intersection>
-                <intersection id="59" externalid="10188047773,10188047774,10188047775,10188047776" noderefs="47" control="signalised" types="junction">
-                    <segments type="approach" refs="1296,1795,2281,45"/>
-                </intersection>
-                <intersection id="6" externalid="13757741" noderefs="197" control="signalised" types="junction">
-                    <segments type="approach" refs="194,731,785"/>
-                </intersection>
-                <intersection id="60" externalid="10188047830,10188047867" noderefs="276" control="signalised" types="junction">
-                    <segments type="approach" refs="2259,479"/>
-                </intersection>
-                <intersection id="61" externalid="10188049455" noderefs="605" control="signalised" types="junction">
-                    <segments type="approach" refs="789"/>
-                </intersection>
-                <intersection id="62" externalid="10188095039,10188095040,10188095041" noderefs="52" control="signalised" types="junction">
-                    <segments type="approach" refs="1176,1965,580"/>
-                </intersection>
-                <intersection id="63" externalid="10197020144,10197020146,10197020147,10197020148" noderefs="273" control="signalised" types="junction">
-                    <segments type="approach" refs="284,287,931,950"/>
-                </intersection>
-                <intersection id="64" externalid="10197020150" noderefs="506" control="signalised" types="junction">
-                    <segments type="approach" refs="1305"/>
-                </intersection>
-                <intersection id="65" externalid="10197020151,10197020152" noderefs="215" control="signalised" types="junction">
-                    <segments type="approach" refs="1268,1270"/>
-                </intersection>
-                <intersection id="66" externalid="10197152344,10197152401,10197152402" noderefs="45" control="signalised" types="junction">
-                    <segments type="approach" refs="2307,599,660"/>
-                </intersection>
-                <intersection id="67" externalid="10197152349,10197152350,10197152403" noderefs="233" control="signalised" types="junction">
-                    <segments type="approach" refs="2125,600,717"/>
-                </intersection>
-                <intersection id="68" externalid="10228256901,10228256914,10228256915,10228256916" noderefs="72" control="signalised" types="junction">
-                    <segments type="approach" refs="1419,637,643,71"/>
-                </intersection>
-                <intersection id="69" externalid="10228256902,10228258023" noderefs="71" control="signalised" types="junction">
-                    <segments type="approach" refs="218,72"/>
-                </intersection>
-                <intersection id="7" externalid="13887177" noderefs="448" control="signalised" types="junction">
-                    <segments type="approach" refs="1483,1485"/>
-                </intersection>
-                <intersection id="70" externalid="10228258022" noderefs="794" control="signalised" types="junction">
-                    <segments type="approach" refs="1868"/>
-                </intersection>
-                <intersection id="71" externalid="10241424307,10241424308,10241448609" noderefs="88" control="signalised" types="junction">
-                    <segments type="approach" refs="582,587,91"/>
-                </intersection>
-                <intersection id="72" externalid="10245942937" noderefs="280" control="signalised" types="junction">
-                    <segments type="approach" refs="294"/>
-                </intersection>
-                <intersection id="73" externalid="10245942938" noderefs="278" control="signalised" types="junction">
-                    <segments type="approach" refs="1333"/>
-                </intersection>
-                <intersection id="74" externalid="10245942939,10245942940" noderefs="371" control="signalised" types="junction">
-                    <segments type="approach" refs="1746,411"/>
-                </intersection>
-                <intersection id="75" externalid="10245942941,10245942942" noderefs="459" control="signalised" types="junction">
-                    <segments type="approach" refs="515,581"/>
-                </intersection>
-                <intersection id="76" externalid="10245943060,10245943061,10245943062" noderefs="59" control="signalised" types="junction">
-                    <segments type="approach" refs="1243,586,78"/>
-                </intersection>
-                <intersection id="77" externalid="8589583,651310555" noderefs="713" control="signalised" types="crossing">
-                    <segments type="approach" refs="1408,983"/>
-                </intersection>
-                <intersection id="78" externalid="8589585,1655439114" noderefs="979" control="signalised" types="crossing">
-                    <segments type="approach" refs="1589,2184"/>
-                </intersection>
-                <intersection id="79" externalid="1633391051" noderefs="980" control="signalised" types="crossing">
-                    <segments type="approach" refs="2186,357"/>
-                </intersection>
-                <intersection id="8" externalid="15397462" noderefs="368" control="signalised" types="junction">
-                    <segments type="approach" refs="1292,407,748"/>
-                </intersection>
-                <intersection id="80" externalid="1986167706" noderefs="981" control="signalised" types="crossing">
-                    <segments type="approach" refs="519"/>
-                </intersection>
-                <intersection id="81" externalid="1986167726" noderefs="982" control="signalised" types="crossing">
-                    <segments type="approach" refs="205,2189"/>
-                </intersection>
-                <intersection id="82" externalid="2045043330" noderefs="983" control="signalised" types="crossing">
-                    <segments type="approach" refs="1886,2191"/>
-                </intersection>
-                <intersection id="83" externalid="2045059225" noderefs="630" control="signalised" types="crossing">
-                    <segments type="approach" refs="1004,842"/>
-                </intersection>
-                <intersection id="84" externalid="2268947005" noderefs="984" control="signalised" types="crossing">
-                    <segments type="approach" refs="1245,2193"/>
-                </intersection>
-                <intersection id="85" externalid="2281643758,10031673090" noderefs="985" control="signalised" types="crossing">
-                    <segments type="approach" refs="2195,2265"/>
-                </intersection>
-                <intersection id="86" externalid="4417297891" noderefs="350" control="signalised" types="crossing">
-                    <segments type="approach" refs="1836,385"/>
-                </intersection>
-                <intersection id="87" externalid="5147320980" noderefs="986" control="signalised" types="crossing">
-                    <segments type="approach" refs="2197,841"/>
-                </intersection>
-                <intersection id="88" externalid="5641003455,10197152414" noderefs="987" control="signalised" types="crossing">
-                    <segments type="approach" refs="150,2199"/>
-                </intersection>
-                <intersection id="89" externalid="6038996875" noderefs="988" control="signalised" types="crossing">
-                    <segments type="approach" refs="1313,2201"/>
-                </intersection>
-                <intersection id="9" externalid="15397477" noderefs="102" control="signalised" types="junction">
-                    <segments type="approach" refs="1164,470,572,851"/>
-                </intersection>
-                <intersection id="90" externalid="6337512681" noderefs="989" control="signalised" types="crossing">
-                    <segments type="approach" refs="2203,353"/>
-                </intersection>
-                <intersection id="91" externalid="6936407757" noderefs="990" control="signalised" types="crossing">
-                    <segments type="approach" refs="2053,2205"/>
-                </intersection>
-                <intersection id="92" externalid="8608847049" noderefs="790" control="signalised" types="crossing">
-                    <segments type="approach" refs="1129,1497"/>
-                </intersection>
-                <intersection id="93" externalid="10188047310,3516277352,10188047312" noderefs="991" control="signalised" types="crossing">
-                    <segments type="approach" refs="2207,286"/>
-                </intersection>
-                <intersection id="94" externalid="10188047816" noderefs="992" control="signalised" types="crossing">
-                    <segments type="approach" refs="2209,523"/>
-                </intersection>
-                <intersection id="95" externalid="2041295321" noderefs="993" control="signalised" types="crossing">
-                    <segments type="approach" refs="2211,757"/>
-                </intersection>
-                <intersection id="96" externalid="9920391746" noderefs="994" control="signalised" types="crossing">
-                    <segments type="approach" refs="1499,2213"/>
-                </intersection>
-                <intersection id="97" externalid="9920391761" noderefs="995" control="signalised" types="crossing">
-                    <segments type="approach" refs="2013,2215"/>
-                </intersection>
-                <intersection id="98" externalid="9920391791" noderefs="996" control="signalised" types="crossing">
-                    <segments type="approach" refs="1507,2217"/>
-                </intersection>
-                <intersection id="99" externalid="10185680978,10188082779" noderefs="997" control="signalised" types="crossing">
-                    <segments type="approach" refs="1657,2219"/>
+                <intersection id="0" externalid="8965680" noderef="96" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1805"/>
+                        <approach ref="403"/>
+                        <approach ref="588"/>
+                        <approach ref="95"/>
+                    </approaches>
+                </intersection>
+                <intersection id="1" externalid="8965682" noderef="236" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1934"/>
+                        <approach ref="234"/>
+                        <approach ref="590"/>
+                        <approach ref="631"/>
+                    </approaches>
+                </intersection>
+                <intersection id="10" externalid="15399164" noderef="146" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1215"/>
+                        <approach ref="142"/>
+                        <approach ref="815"/>
+                    </approaches>
+                </intersection>
+                <intersection id="100" externalid="8965823" noderef="2" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="3"/>
+                        <approach ref="7"/>
+                        <approach ref="783"/>
+                    </approaches>
+                </intersection>
+                <intersection id="101" externalid="13757743" noderef="157" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1649"/>
+                        <approach ref="598"/>
+                    </approaches>
+                </intersection>
+                <intersection id="102" externalid="15405025" noderef="32" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1916"/>
+                        <approach ref="2167"/>
+                        <approach ref="629"/>
+                        <approach ref="635"/>
+                    </approaches>
+                </intersection>
+                <intersection id="103" externalid="15405030" noderef="518" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1357"/>
+                        <approach ref="1989"/>
+                        <approach ref="2049"/>
+                        <approach ref="627"/>
+                    </approaches>
+                </intersection>
+                <intersection id="104" externalid="15405041" noderef="942" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2038"/>
+                        <approach ref="2040"/>
+                        <approach ref="31"/>
+                        <approach ref="626"/>
+                    </approaches>
+                </intersection>
+                <intersection id="105" externalid="26526386" noderef="945" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1354"/>
+                        <approach ref="2050"/>
+                        <approach ref="2052"/>
+                        <approach ref="628"/>
+                    </approaches>
+                </intersection>
+                <intersection id="106" externalid="2843788698" noderef="998" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="97"/>
+                    </approaches>
+                </intersection>
+                <intersection id="11" externalid="15401227" noderef="101" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1815"/>
+                        <approach ref="616"/>
+                        <approach ref="746"/>
+                        <approach ref="854"/>
+                    </approaches>
+                </intersection>
+                <intersection id="12" externalid="15401509" noderef="256" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1776"/>
+                    </approaches>
+                </intersection>
+                <intersection id="13" externalid="15401537" noderef="15" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1477"/>
+                        <approach ref="1494"/>
+                        <approach ref="17"/>
+                    </approaches>
+                </intersection>
+                <intersection id="14" externalid="15405036" noderef="109" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1568"/>
+                        <approach ref="2285"/>
+                        <approach ref="430"/>
+                    </approaches>
+                </intersection>
+                <intersection id="15" externalid="15405751" noderef="35" control="signalised" types="junction crossing">
+                    <approaches>
+                        <approach ref="152"/>
+                        <approach ref="1646"/>
+                        <approach ref="2196"/>
+                        <approach ref="34"/>
+                    </approaches>
+                </intersection>
+                <intersection id="16" externalid="15405753" noderef="725" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1000"/>
+                    </approaches>
+                </intersection>
+                <intersection id="17" externalid="15406810" noderef="224" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1647"/>
+                        <approach ref="736"/>
+                        <approach ref="919"/>
+                    </approaches>
+                </intersection>
+                <intersection id="18" externalid="15406815" noderef="40" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1298"/>
+                        <approach ref="154"/>
+                        <approach ref="37"/>
+                        <approach ref="642"/>
+                    </approaches>
+                </intersection>
+                <intersection id="19" externalid="15407240" noderef="513" control="signalised" types="junction crossing">
+                    <approaches>
+                        <approach ref="1766"/>
+                        <approach ref="2271"/>
+                        <approach ref="922"/>
+                    </approaches>
+                </intersection>
+                <intersection id="2" externalid="8965683" noderef="348" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1641"/>
+                        <approach ref="383"/>
+                        <approach ref="856"/>
+                    </approaches>
+                </intersection>
+                <intersection id="20" externalid="15407245" noderef="462" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1583"/>
+                        <approach ref="1792"/>
+                    </approaches>
+                </intersection>
+                <intersection id="21" externalid="15407247" noderef="333" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1764"/>
+                        <approach ref="363"/>
+                        <approach ref="920"/>
+                    </approaches>
+                </intersection>
+                <intersection id="22" externalid="15407248" noderef="116" control="signalised" types="junction crossing">
+                    <approaches>
+                        <approach ref="1063"/>
+                        <approach ref="113"/>
+                        <approach ref="2303"/>
+                        <approach ref="949"/>
+                    </approaches>
+                </intersection>
+                <intersection id="23" externalid="15449304" noderef="154" control="signalised" types="junction crossing">
+                    <approaches>
+                        <approach ref="148"/>
+                        <approach ref="151"/>
+                        <approach ref="1732"/>
+                        <approach ref="741"/>
+                    </approaches>
+                </intersection>
+                <intersection id="24" externalid="20827843" noderef="50" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1645"/>
+                        <approach ref="1958"/>
+                        <approach ref="50"/>
+                    </approaches>
+                </intersection>
+                <intersection id="25" externalid="20827844" noderef="51" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2204"/>
+                        <approach ref="49"/>
+                        <approach ref="634"/>
+                    </approaches>
+                </intersection>
+                <intersection id="26" externalid="26358753" noderef="6" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1832"/>
+                        <approach ref="233"/>
+                        <approach ref="235"/>
+                        <approach ref="585"/>
+                    </approaches>
+                </intersection>
+                <intersection id="27" externalid="26526387" noderef="728" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1924"/>
+                        <approach ref="2333"/>
+                    </approaches>
+                </intersection>
+                <intersection id="28" externalid="26526396" noderef="93" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1662"/>
+                        <approach ref="1788"/>
+                    </approaches>
+                </intersection>
+                <intersection id="29" externalid="33165422" noderef="352" control="signalised" types="junction crossing">
+                    <approaches>
+                        <approach ref="1733"/>
+                        <approach ref="387"/>
+                        <approach ref="389"/>
+                        <approach ref="738"/>
+                    </approaches>
+                </intersection>
+                <intersection id="3" externalid="8965800" noderef="1" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="0"/>
+                        <approach ref="1642"/>
+                        <approach ref="781"/>
+                    </approaches>
+                </intersection>
+                <intersection id="30" externalid="642998199" noderef="515" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1227"/>
+                        <approach ref="1228"/>
+                        <approach ref="1661"/>
+                        <approach ref="621"/>
+                    </approaches>
+                </intersection>
+                <intersection id="31" externalid="1070474087" noderef="841" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1251"/>
+                        <approach ref="2011"/>
+                    </approaches>
+                </intersection>
+                <intersection id="32" externalid="1070474095" noderef="11" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1509"/>
+                        <approach ref="1511"/>
+                        <approach ref="632"/>
+                    </approaches>
+                </intersection>
+                <intersection id="33" externalid="1614492632" noderef="156" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="730"/>
+                        <approach ref="733"/>
+                    </approaches>
+                </intersection>
+                <intersection id="34" externalid="1614496946" noderef="23" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="24"/>
+                    </approaches>
+                </intersection>
+                <intersection id="35" externalid="1810714485" noderef="539" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1336"/>
+                        <approach ref="2143"/>
+                    </approaches>
+                </intersection>
+                <intersection id="36" externalid="1832328520" noderef="415" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1498"/>
+                        <approach ref="750"/>
+                    </approaches>
+                </intersection>
+                <intersection id="37" externalid="1846152984" noderef="582" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="727"/>
+                    </approaches>
+                </intersection>
+                <intersection id="38" externalid="1849591645" noderef="24" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2085"/>
+                    </approaches>
+                </intersection>
+                <intersection id="39" externalid="3420655031" noderef="680" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1879"/>
+                        <approach ref="2293"/>
+                        <approach ref="932"/>
+                    </approaches>
+                </intersection>
+                <intersection id="4" externalid="8965827,10228258044,10228258045" noderef="522" control="signalised" types="junction crossing">
+                    <approaches>
+                        <approach ref="1142"/>
+                        <approach ref="1874"/>
+                        <approach ref="985"/>
+                    </approaches>
+                </intersection>
+                <intersection id="40" externalid="3899037438" noderef="234" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="230"/>
+                        <approach ref="760"/>
+                        <approach ref="957"/>
+                    </approaches>
+                </intersection>
+                <intersection id="41" externalid="666758991,10188047675,10188047678,10188047679" noderef="7" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1376"/>
+                        <approach ref="40"/>
+                        <approach ref="787"/>
+                        <approach ref="9"/>
+                    </approaches>
+                </intersection>
+                <intersection id="42" externalid="3899037421" noderef="196" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="192"/>
+                    </approaches>
+                </intersection>
+                <intersection id="43" externalid="3910190217,10188082774" noderef="222" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1797"/>
+                        <approach ref="640"/>
+                    </approaches>
+                </intersection>
+                <intersection id="44" externalid="3910190702" noderef="63" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="64"/>
+                    </approaches>
+                </intersection>
+                <intersection id="45" externalid="3921252668" noderef="621" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="821"/>
+                    </approaches>
+                </intersection>
+                <intersection id="46" externalid="3921252674" noderef="977" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="817"/>
+                    </approaches>
+                </intersection>
+                <intersection id="47" externalid="5147304740,5147304741" noderef="46" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2279"/>
+                        <approach ref="46"/>
+                    </approaches>
+                </intersection>
+                <intersection id="48" externalid="5147327948,5147327949" noderef="353" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1790"/>
+                        <approach ref="2277"/>
+                    </approaches>
+                </intersection>
+                <intersection id="49" externalid="6594605922,10188049454" noderef="260" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1173"/>
+                        <approach ref="266"/>
+                    </approaches>
+                </intersection>
+                <intersection id="5" externalid="13757701" noderef="432" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1127"/>
+                        <approach ref="1350"/>
+                        <approach ref="488"/>
+                    </approaches>
+                </intersection>
+                <intersection id="50" externalid="9006017849" noderef="857" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1326"/>
+                    </approaches>
+                </intersection>
+                <intersection id="51" externalid="9006017853,9006017854" noderef="48" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="283"/>
+                        <approach ref="420"/>
+                    </approaches>
+                </intersection>
+                <intersection id="52" externalid="9006017865,9006017868" noderef="943" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2289"/>
+                        <approach ref="47"/>
+                    </approaches>
+                </intersection>
+                <intersection id="53" externalid="10185379885,10185379886,10185379887" noderef="8" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1692"/>
+                        <approach ref="351"/>
+                        <approach ref="792"/>
+                    </approaches>
+                </intersection>
+                <intersection id="54" externalid="10187679266,10245932148" noderef="153" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1718"/>
+                        <approach ref="2309"/>
+                    </approaches>
+                </intersection>
+                <intersection id="55" externalid="10187696067,10187696068,10187696069,10187696070" noderef="944" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1602"/>
+                        <approach ref="2046"/>
+                        <approach ref="2048"/>
+                        <approach ref="2315"/>
+                    </approaches>
+                </intersection>
+                <intersection id="56" externalid="10187841613" noderef="932" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1595"/>
+                    </approaches>
+                </intersection>
+                <intersection id="57" externalid="10187841617,10197020153" noderef="536" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="659"/>
+                        <approach ref="936"/>
+                    </approaches>
+                </intersection>
+                <intersection id="58" externalid="10188047617,10188047625,10188047626,10188047627" noderef="270" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1544"/>
+                        <approach ref="1908"/>
+                        <approach ref="2045"/>
+                        <approach ref="951"/>
+                    </approaches>
+                </intersection>
+                <intersection id="59" externalid="10188047773,10188047774,10188047775,10188047776" noderef="47" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1296"/>
+                        <approach ref="1795"/>
+                        <approach ref="2281"/>
+                        <approach ref="45"/>
+                    </approaches>
+                </intersection>
+                <intersection id="6" externalid="13757741" noderef="197" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="194"/>
+                        <approach ref="731"/>
+                        <approach ref="785"/>
+                    </approaches>
+                </intersection>
+                <intersection id="60" externalid="10188047830,10188047867" noderef="276" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2259"/>
+                        <approach ref="479"/>
+                    </approaches>
+                </intersection>
+                <intersection id="61" externalid="10188049455" noderef="605" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="789"/>
+                    </approaches>
+                </intersection>
+                <intersection id="62" externalid="10188095039,10188095040,10188095041" noderef="52" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1176"/>
+                        <approach ref="1965"/>
+                        <approach ref="580"/>
+                    </approaches>
+                </intersection>
+                <intersection id="63" externalid="10197020144,10197020146,10197020147,10197020148" noderef="273" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="284"/>
+                        <approach ref="287"/>
+                        <approach ref="931"/>
+                        <approach ref="950"/>
+                    </approaches>
+                </intersection>
+                <intersection id="64" externalid="10197020150" noderef="506" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1305"/>
+                    </approaches>
+                </intersection>
+                <intersection id="65" externalid="10197020151,10197020152" noderef="215" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1268"/>
+                        <approach ref="1270"/>
+                    </approaches>
+                </intersection>
+                <intersection id="66" externalid="10197152344,10197152401,10197152402" noderef="45" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2307"/>
+                        <approach ref="599"/>
+                        <approach ref="660"/>
+                    </approaches>
+                </intersection>
+                <intersection id="67" externalid="10197152349,10197152350,10197152403" noderef="233" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="2125"/>
+                        <approach ref="600"/>
+                        <approach ref="717"/>
+                    </approaches>
+                </intersection>
+                <intersection id="68" externalid="10228256901,10228256914,10228256915,10228256916" noderef="72" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1419"/>
+                        <approach ref="637"/>
+                        <approach ref="643"/>
+                        <approach ref="71"/>
+                    </approaches>
+                </intersection>
+                <intersection id="69" externalid="10228256902,10228258023" noderef="71" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="218"/>
+                        <approach ref="72"/>
+                    </approaches>
+                </intersection>
+                <intersection id="7" externalid="13887177" noderef="448" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1483"/>
+                        <approach ref="1485"/>
+                    </approaches>
+                </intersection>
+                <intersection id="70" externalid="10228258022" noderef="794" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1868"/>
+                    </approaches>
+                </intersection>
+                <intersection id="71" externalid="10241424307,10241424308,10241448609" noderef="88" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="582"/>
+                        <approach ref="587"/>
+                        <approach ref="91"/>
+                    </approaches>
+                </intersection>
+                <intersection id="72" externalid="10245942937" noderef="280" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="294"/>
+                    </approaches>
+                </intersection>
+                <intersection id="73" externalid="10245942938" noderef="278" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1333"/>
+                    </approaches>
+                </intersection>
+                <intersection id="74" externalid="10245942939,10245942940" noderef="371" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1746"/>
+                        <approach ref="411"/>
+                    </approaches>
+                </intersection>
+                <intersection id="75" externalid="10245942941,10245942942" noderef="459" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="515"/>
+                        <approach ref="581"/>
+                    </approaches>
+                </intersection>
+                <intersection id="76" externalid="10245943060,10245943061,10245943062" noderef="59" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1243"/>
+                        <approach ref="586"/>
+                        <approach ref="78"/>
+                    </approaches>
+                </intersection>
+                <intersection id="77" externalid="8589583,651310555" noderef="713" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1408"/>
+                        <approach ref="983"/>
+                    </approaches>
+                </intersection>
+                <intersection id="78" externalid="8589585,1655439114" noderef="979" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1589"/>
+                        <approach ref="2184"/>
+                    </approaches>
+                </intersection>
+                <intersection id="79" externalid="1633391051" noderef="980" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2186"/>
+                        <approach ref="357"/>
+                    </approaches>
+                </intersection>
+                <intersection id="8" externalid="15397462" noderef="368" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1292"/>
+                        <approach ref="407"/>
+                        <approach ref="748"/>
+                    </approaches>
+                </intersection>
+                <intersection id="80" externalid="1986167706" noderef="981" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="519"/>
+                    </approaches>
+                </intersection>
+                <intersection id="81" externalid="1986167726" noderef="982" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="205"/>
+                        <approach ref="2189"/>
+                    </approaches>
+                </intersection>
+                <intersection id="82" externalid="2045043330" noderef="983" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1886"/>
+                        <approach ref="2191"/>
+                    </approaches>
+                </intersection>
+                <intersection id="83" externalid="2045059225" noderef="630" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1004"/>
+                        <approach ref="842"/>
+                    </approaches>
+                </intersection>
+                <intersection id="84" externalid="2268947005" noderef="984" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1245"/>
+                        <approach ref="2193"/>
+                    </approaches>
+                </intersection>
+                <intersection id="85" externalid="2281643758,10031673090" noderef="985" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2195"/>
+                        <approach ref="2265"/>
+                    </approaches>
+                </intersection>
+                <intersection id="86" externalid="4417297891" noderef="350" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1836"/>
+                        <approach ref="385"/>
+                    </approaches>
+                </intersection>
+                <intersection id="87" externalid="5147320980" noderef="986" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2197"/>
+                        <approach ref="841"/>
+                    </approaches>
+                </intersection>
+                <intersection id="88" externalid="5641003455,10197152414" noderef="987" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="150"/>
+                        <approach ref="2199"/>
+                    </approaches>
+                </intersection>
+                <intersection id="89" externalid="6038996875" noderef="988" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1313"/>
+                        <approach ref="2201"/>
+                    </approaches>
+                </intersection>
+                <intersection id="9" externalid="15397477" noderef="102" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="1164"/>
+                        <approach ref="470"/>
+                        <approach ref="572"/>
+                        <approach ref="851"/>
+                    </approaches>
+                </intersection>
+                <intersection id="90" externalid="6337512681" noderef="989" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2203"/>
+                        <approach ref="353"/>
+                    </approaches>
+                </intersection>
+                <intersection id="91" externalid="6936407757" noderef="990" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2053"/>
+                        <approach ref="2205"/>
+                    </approaches>
+                </intersection>
+                <intersection id="92" externalid="8608847049" noderef="790" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1129"/>
+                        <approach ref="1497"/>
+                    </approaches>
+                </intersection>
+                <intersection id="93" externalid="10188047310,3516277352,10188047312" noderef="991" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2207"/>
+                        <approach ref="286"/>
+                    </approaches>
+                </intersection>
+                <intersection id="94" externalid="10188047816" noderef="992" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2209"/>
+                        <approach ref="523"/>
+                    </approaches>
+                </intersection>
+                <intersection id="95" externalid="2041295321" noderef="993" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2211"/>
+                        <approach ref="757"/>
+                    </approaches>
+                </intersection>
+                <intersection id="96" externalid="9920391746" noderef="994" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1499"/>
+                        <approach ref="2213"/>
+                    </approaches>
+                </intersection>
+                <intersection id="97" externalid="9920391761" noderef="995" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2013"/>
+                        <approach ref="2215"/>
+                    </approaches>
+                </intersection>
+                <intersection id="98" externalid="9920391791" noderef="996" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1507"/>
+                        <approach ref="2217"/>
+                    </approaches>
+                </intersection>
+                <intersection id="99" externalid="10185680978,10188082779" noderef="997" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="1657"/>
+                        <approach ref="2219"/>
+                    </approaches>
                 </intersection>
             </intersections>
         </layer>

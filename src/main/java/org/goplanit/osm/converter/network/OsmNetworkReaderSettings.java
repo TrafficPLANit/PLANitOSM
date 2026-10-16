@@ -14,6 +14,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import java.net.URL;
@@ -62,6 +63,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** break links at isolated signalised pedestrian crossings, see
    * {@link #setBreakLinksAtIsolatedSignalisedCrossings(boolean)} */
   protected boolean breakLinksAtIsolatedSignalisedCrossings = DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS;
+
+  /** consolidate the parsed intersections, see {@link #setConsolidateIntersections(boolean)} */
+  protected boolean consolidateIntersections = DEFAULT_CONSOLIDATE_INTERSECTIONS;
+
+  /** see {@link #getIntersectionConsolidatorSettings()} */
+  protected IntersectionConsolidatorSettings intersectionConsolidatorSettings = new IntersectionConsolidatorSettings();
+
+  /** see {@link #setCollapsedModeTypes(PredefinedModeType...)} */
+  protected final Set<PredefinedModeType> collapsedModeTypes = new TreeSet<>();
 
   /** all settings specific to osm railway tags */
   protected OsmRailwaySettings osmRailwaySettings;
@@ -210,6 +220,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * network */
   public static final boolean DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS = false;
 
+  /** by default the parsed intersections are not consolidated, so each signalised node keeps its own intersection */
+  public static final boolean DEFAULT_CONSOLIDATE_INTERSECTIONS = false;
+
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings.
    * This is especially relevant for speed limits and mode access restrictions (unless manually adjusted by the user)
@@ -312,6 +325,29 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         getMaximumDistanceSignalisedCrossingToJunctionInMeters(), level));
     LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signalised crossings",
         isBreakLinksAtIsolatedSignalisedCrossings(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Consolidate intersections", isConsolidateIntersections(), level));
+    if(isConsolidateIntersections()){
+      int consolidationLevel = level + 1;
+      var consolidatorSettings = getIntersectionConsolidatorSettings();
+      LOGGER.info(LoggingUtils.settingsSection("Intersection consolidation", consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum internal link length (m)",
+          consolidatorSettings.getMaximumInternalLinkLengthMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Minimum coverage gain per member",
+          consolidatorSettings.getMinimumCoverageGainPerMember(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Coverage tie margin",
+          consolidatorSettings.getCoverageTieMargin(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum parsed intersections per intersection cluster",
+          consolidatorSettings.getMaximumParsedIntersectionsPerIntersectionCluster(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Internal link length warning (m)",
+          consolidatorSettings.getInternalLinkLengthWarningMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum distance reached only through intersection (m)",
+          consolidatorSettings.getMaximumDistanceReachedOnlyThroughIntersectionMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum distance slip lane crossing to junction (m)",
+          consolidatorSettings.getMaximumDistanceSlipLaneCrossingToJunctionMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Modes collapsed onto one node per intersection",
+          getCollapsedModeTypes().isEmpty() ? "none" : getCollapsedModeTypes().stream().map(PredefinedModeType::value)
+              .collect(Collectors.joining(", ")), consolidationLevel));
+    }
 
     /* the effective classification is logged in full, defaults and user overrides combined, so that what is
      * reported is what parsing applies rather than requiring the reader to merge the two in their head */
@@ -1305,6 +1341,65 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   public void setBreakLinksAtIsolatedSignalisedCrossings(boolean flag) {
     this.breakLinksAtIsolatedSignalisedCrossings = flag;
+  }
+
+  /** Verify if the parsed intersections are consolidated
+   *
+   * @return true when consolidated, false otherwise
+   */
+  public boolean isConsolidateIntersections() {
+    return consolidateIntersections;
+  }
+
+  /** Consolidate the parsed intersections: the intersections of the signalised nodes of one junction are joined into
+   * one, crossings next to it join it, and links reached only through it become internal. It runs after dangling
+   * subnetworks are removed, and only when intersections are parsed, see {@link #setParseIntersections(boolean)}. The
+   * settings of {@link #getIntersectionConsolidatorSettings()} tune it
+   *
+   * @param flag to set
+   */
+  public void setConsolidateIntersections(boolean flag) {
+    this.consolidateIntersections = flag;
+  }
+
+  /** Consolidate the parsed intersections or not, see {@link #setConsolidateIntersections(boolean)}, with the given
+   * settings in place of those held
+   *
+   * @param flag to set
+   * @param consolidatorSettings to tune consolidation with
+   */
+  public void setConsolidateIntersections(boolean flag, IntersectionConsolidatorSettings consolidatorSettings) {
+    setConsolidateIntersections(flag);
+    this.intersectionConsolidatorSettings = consolidatorSettings;
+  }
+
+  /** The settings that tune consolidation: reach, scoring values and warning lengths, each at its default until
+   * changed. The modes to collapse once consolidated are set with {@link #setCollapsedModeTypes(PredefinedModeType...)}
+   *
+   * @return consolidation settings, to change in place
+   */
+  public IntersectionConsolidatorSettings getIntersectionConsolidatorSettings() {
+    return intersectionConsolidatorSettings;
+  }
+
+  /** Get the mode types collapsed onto one node per consolidated intersection
+   *
+   * @return collapsed mode types, unmodifiable, empty for none
+   */
+  public Set<PredefinedModeType> getCollapsedModeTypes() {
+    return Collections.unmodifiableSet(collapsedModeTypes);
+  }
+
+  /** Set the mode types to collapse onto one node per consolidated intersection, replacing those set before. For each
+   * spatial intersection, a centre node is added; links used only by these modes end there,
+   * and the links inside the intersection lose access for them. A mode type not part of the parsed network is ignored.
+   * None by default, so the parsed detail is kept
+   *
+   * @param modeTypes to collapse, none to collapse nothing
+   */
+  public void setCollapsedModeTypes(PredefinedModeType... modeTypes) {
+    collapsedModeTypes.clear();
+    collapsedModeTypes.addAll(List.of(modeTypes));
   }
 
 }

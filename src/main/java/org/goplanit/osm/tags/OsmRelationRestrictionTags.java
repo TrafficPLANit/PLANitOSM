@@ -25,6 +25,39 @@ public class OsmRelationRestrictionTags {
   public static final String NO_ENTRY = "no_entry";
   public static final String NO_EXIT = "no_exit";
 
+  /** key listing the OSM modes a restriction does not apply to, separated by semicolons */
+  public static final String EXCEPT = "except";
+
+  /** start of the key of a restriction for one OSM mode only, e.g. restriction:hgv */
+  public static final String RESTRICTION_FOR_MODE_PREFIX = RESTRICTION + ":";
+
+  /** key of a restriction applying at certain times only, not a mode */
+  public static final String RESTRICTION_CONDITIONAL = RESTRICTION_FOR_MODE_PREFIX + "conditional";
+
+  /**
+   * The OSM mode a key restricts for that mode only, such as hgv for restriction:hgv
+   *
+   * @param key to check
+   * @return the OSM mode (or mode category), null when the key is not a restriction for one mode
+   */
+  public static String getModeOfRestrictionForMode(String key) {
+    if (key == null || !key.startsWith(RESTRICTION_FOR_MODE_PREFIX) || key.equals(RESTRICTION_CONDITIONAL)) {
+      return null;
+    }
+    return key.substring(RESTRICTION_FOR_MODE_PREFIX.length());
+  }
+
+  /**
+   * Verify if the tags hold a restriction, for every mode or for one mode only
+   *
+   * @param tags to check
+   * @return true when they hold a restriction tag or a restriction tag for one mode, false otherwise
+   */
+  public static boolean hasRestriction(java.util.Map<String, String> tags) {
+    return tags.containsKey(RESTRICTION) ||
+        tags.keySet().stream().anyMatch(key -> getModeOfRestrictionForMode(key) != null);
+  }
+
   
   
 }

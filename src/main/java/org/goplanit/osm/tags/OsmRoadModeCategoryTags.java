@@ -143,7 +143,19 @@ public class OsmRoadModeCategoryTags {
               "OSM mode category %s is not listed among available categories, ignored",osmModeCategory));
     }
     return Collections.unmodifiableCollection(osmCategory2Modes.getOrDefault(osmModeCategory, new HashSet<>()));
-  }  
+  }
+
+  /**
+   * Collect the OSM modes a tag value stands for: the modes of its category when it is a mode category, such as psv,
+   * and the mode itself otherwise
+   *
+   * @param osmModeOrCategory OSM mode or mode category
+   * @return the OSM modes it stands for, unmodifiable
+   */
+  public static Collection<String> getRoadModesOfModeOrCategory(String osmModeOrCategory){
+    return isRoadModeCategoryTag(osmModeOrCategory) ?
+        getRoadModesByCategory(osmModeOrCategory) : List.of(osmModeOrCategory);
+  }
   
   /**
    * verify of the mode is part of the given Osm mode category

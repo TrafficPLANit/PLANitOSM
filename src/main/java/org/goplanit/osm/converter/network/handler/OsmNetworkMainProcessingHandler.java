@@ -20,6 +20,9 @@ import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.Triple;
 import org.goplanit.utils.network.layer.NetworkLayer;
+import org.goplanit.utils.mode.Mode;
+import org.goplanit.utils.mode.VehicularModeType;
+import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentType;
@@ -485,6 +488,61 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
+   * The activated PLANit modes of a layer that an OSM mode stands for, an OSM mode category such as psv standing for
+   * each of its modes
+   *
+   * @param osmModeOrCategory to convert
+   * @param layer whose modes count
+   * @return the PLANit modes of the layer, empty when none
+   */
+  private Set<Mode> findActivatedLayerModes(String osmModeOrCategory, MacroscopicNetworkLayer layer) {
+    var osmModes = OsmRoadModeCategoryTags.getRoadModesOfModeOrCategory(osmModeOrCategory);
+    var modes = getNetworkData().getLayerParser(layer).getModeConversion().getActivatedPlanitModes(osmModes);
+    modes.retainAll(layer.getSupportedModes());
+    return modes;
+  }
+
+  /**
+   * Find, per restriction type of an OSM turn restriction, the modes of the layer it bans. A restriction tag is for
+   * vehicles: it bans every mode of the layer that is a vehicle, except those listed in the except tag and those with
+   * a restriction tag of their own. A restriction tag for one mode, such as restriction:hgv, bans that mode only. A
+   * type banning no activated mode of the layer is left out
+   *
+   * @param tags of the restriction
+   * @param layer whose modes count
+   * @return the banned modes per restriction type, in the order found
+   */
+  private Map<String, Set<Mode>> findBannedModesByRestrictionType(Map<String, String> tags,
+      MacroscopicNetworkLayer layer) {
+    var bannedModesByType = new LinkedHashMap<String, Set<Mode>>();
+    var modesWithOwnRestriction = new HashSet<Mode>();
+    for (var tag : tags.entrySet()) {
+      var osmMode = OsmRelationRestrictionTags.getModeOfRestrictionForMode(tag.getKey());
+      if (osmMode == null) {
+        continue;
+      }
+      var modes = findActivatedLayerModes(osmMode, layer);
+      modesWithOwnRestriction.addAll(modes);
+      bannedModesByType.computeIfAbsent(tag.getValue(), type -> new HashSet<>()).addAll(modes);
+    }
+    var restrictionType = tags.get(OsmRelationRestrictionTags.RESTRICTION);
+    if (restrictionType != null) {
+      var modes = new HashSet<>(layer.getSupportedModes());
+      modes.removeIf(mode ->
+          mode.hasPhysicalFeatures() && mode.getPhysicalFeatures().getVehicularType() == VehicularModeType.NO_VEHICLE);
+      var excepted = tags.get(OsmRelationRestrictionTags.EXCEPT);
+      if (excepted != null) {
+        Arrays.stream(excepted.split(";")).map(String::trim).filter(osmMode -> !osmMode.isEmpty())
+            .forEach(osmMode -> modes.removeAll(findActivatedLayerModes(osmMode, layer)));
+      }
+      modes.removeAll(modesWithOwnRestriction);
+      bannedModesByType.computeIfAbsent(restrictionType, type -> new HashSet<>()).addAll(modes);
+    }
+    bannedModesByType.values().removeIf(Set::isEmpty);
+    return bannedModesByType;
+  }
+
+  /**
    * Extract PLANit turn restriction from the given OSM relation
    *
    * @param osmRelation to extract from (which is assumed to reflect a turn restriction of some kind)
@@ -507,7 +565,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
 
     //todo: initially identify if via relation is a way or multiple nodes/ways. If so we track how many we ditch for
-    //  logging but we ignore them as our movements do not support this yet. Analyse what percentage of total this is
+    //  logging but we ignore them as banned turns pass one node only. Analyse what percentage of total this is
     //  to flag if we should try and parse/support this
 
     // check via support - currently we only support a single node as via point // todo: expand to support?
@@ -561,28 +619,31 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
     if(planitFromSegment == null || planitToSegment == null){
       /* a link only carries a segment for a direction that permits at least one mode, so a one-way way yields a
-       * single directional segment. When the restriction applies to a direction that has no segment, the movement it
+       * single directional segment. When the restriction applies to a direction that has no segment, the turn it
        * bans is impossible regardless and there is nothing to register */
       LOGGER.fine(String.format("OSM turn restriction (%d) applies to a direction without a link segment, " +
-          "movement is impossible regardless, skip", osmRelation.getId()));
+          "turn is impossible regardless, skip", osmRelation.getId()));
       return;
     }
 
-    String restrictionType = tags.get(OsmRelationRestrictionTags.RESTRICTION);
-    if (restrictionType != null) {
+    var layer = getNetwork().getLayerByMode(((MacroscopicLinkSegment) planitFromSegment).getAnyAllowedMode());
+    for (var bannedModesOfType : findBannedModesByRestrictionType(tags, layer).entrySet()) {
+      var restrictionType = bannedModesOfType.getKey();
+      var bannedModes = bannedModesOfType.getValue();
       switch (restrictionType) {
         case OsmRelationRestrictionTags.NO_LEFT_TURN:
         case OsmRelationRestrictionTags.NO_RIGHT_TURN:
         case OsmRelationRestrictionTags.NO_U_TURN:
         case OsmRelationRestrictionTags.NO_STRAIGHT_ON:
-          extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, planitToSegment, restrictionType);
+          extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, planitToSegment,
+              restrictionType, bannedModes);
           break;
 
         case OsmRelationRestrictionTags.ONLY_LEFT_TURN:
         case OsmRelationRestrictionTags.ONLY_RIGHT_TURN:
         case OsmRelationRestrictionTags.ONLY_STRAIGHT_ON:
-          extractLimitedMandatoryTurnMovement(
-              osmRelation, tags, planitFromSegment, planitViaNode, planitToSegment, restrictionType);
+          extractBannedTurnsForMandatoryTurn(osmRelation, tags, planitFromSegment, planitViaNode, planitToSegment,
+              restrictionType, bannedModes);
           break;
 
         case OsmRelationRestrictionTags.NO_EXIT:
@@ -596,7 +657,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
   /**
    * Extract the restricted movement based on the prohibited turn restriction in OSM, i.e., when a single turn is
-   * restricted but other turns remain viable.
+   * restricted but other turns remain viable. Only modes that can make the turn are banned: those allowed on both its
+   * segments. When none of them is banned, no banned turn is registered
    *
    * @param osmRelation     relation with the information to extract
    * @param tags            tags of the osm entity
@@ -604,6 +666,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param planitViaNode        the PLANit via node
    * @param planitToSegment        the PLANit to link
    * @param restrictionType type of prohibitive restriction
+   * @param bannedModes the modes the restriction bans
    */
   private void extractOsmProhibitiveTurnBan(
       OsmRelation osmRelation,
@@ -611,16 +674,30 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       EdgeSegment planitFromSegment,
       Node planitViaNode,
       EdgeSegment planitToSegment,
-      String restrictionType) {
+      String restrictionType,
+      Set<Mode> bannedModes) {
 
-    // construct PLANit (banned) movement
-    var layer = getNetwork().getLayerByMode(((MacroscopicLinkSegment) planitFromSegment).getAnyAllowedMode());
-    var newBannedMovement = layer.getBannedMovements().getFactory().registerNew(planitFromSegment, planitToSegment);
-    newBannedMovement.setExternalId(String.valueOf(osmRelation.getId()));
+    var fromSegment = (MacroscopicLinkSegment) planitFromSegment;
+    var toSegment = (MacroscopicLinkSegment) planitToSegment;
+    var modesThatCanMakeTurn = toSegment.getAllowedModesFrom(fromSegment.getAllowedModes());
+    var bannedModesThatCanMakeTurn = new HashSet<>(modesThatCanMakeTurn);
+    bannedModesThatCanMakeTurn.retainAll(bannedModes);
+    if (bannedModesThatCanMakeTurn.isEmpty()) {
+      return;
+    }
+    /* a ban for every mode that can make the turn names none, it then bans every mode */
+    Collection<Mode> explicitlyBannedModes =
+        bannedModesThatCanMakeTurn.containsAll(modesThatCanMakeTurn) ? List.of() : bannedModesThatCanMakeTurn;
+
+    // construct PLANit banned turn
+    var layer = getNetwork().getLayerByMode(fromSegment.getAnyAllowedMode());
+    var newBannedTurn = layer.getBannedTurns().getFactory().registerNew(fromSegment, toSegment,
+        explicitlyBannedModes);
+    newBannedTurn.setExternalId(String.valueOf(osmRelation.getId()));
 
     // log
-    getNetworkData().getLayerParsers().get(layer).getLayerData().getProfiler().logBannedMovementStatus(
-        layer.getNumberOfBannedMovements());
+    getNetworkData().getLayerParsers().get(layer).getLayerData().getProfiler().logBannedTurnStatus(
+        layer.getNumberOfBannedTurns());
   }
 
   /**
@@ -633,14 +710,16 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param planitViaNode        the PLANit via node
    * @param planitToSegment        the PLANit to link
    * @param restrictionType type of prohibitive restriction
+   * @param bannedModes the modes the restriction bans on the other turns
    */
-  private void extractLimitedMandatoryTurnMovement(
+  private void extractBannedTurnsForMandatoryTurn(
       OsmRelation osmRelation,
       Map<String, String> tags,
       EdgeSegment planitFromSegment,
       Node planitViaNode,
       EdgeSegment planitToSegment,
-      String restrictionType) {
+      String restrictionType,
+      Set<Mode> bannedModes) {
 
     // instead of marking this particular turn prohibited, we mark all other turns from this incoming segment as
     // prohibited
@@ -648,7 +727,8 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       if(exitSegment.equals(planitToSegment)){
         continue;
       }
-      extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, exitSegment, restrictionType);
+      extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, exitSegment, restrictionType,
+          bannedModes);
     }
   }
 
@@ -729,7 +809,7 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
     // process explicitly tagged (turn) restrictions
     if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmTags.TYPE, OsmRelationTypeTags.RESTRICTION) &&
-        tags.containsKey(OsmRelationRestrictionTags.RESTRICTION)){
+        OsmRelationRestrictionTags.hasRestriction(tags)){
       extractOsmTurnRestriction(osmRelation, tags);
     }
   }
