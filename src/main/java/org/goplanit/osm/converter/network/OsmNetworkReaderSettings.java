@@ -8,9 +8,11 @@ import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.Connectivity;
+import org.goplanit.utils.id.IdMapperType;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.LoggingUtils;
+import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -133,8 +135,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** see {@link #getIntersectionConsolidatorSettings()} */
   protected IntersectionConsolidatorSettings intersectionConsolidatorSettings = new IntersectionConsolidatorSettings();
 
-  /** see {@link #setCollapsedModeTypes(PredefinedModeType...)} */
-  protected final Set<PredefinedModeType> collapsedModeTypes = new TreeSet<>();
+  /** see {@link #getIntersectionCollapserSettings()} */
+  protected OsmIntersectionCollapserSettings intersectionCollapserSettings = new OsmIntersectionCollapserSettings();
 
   /** all settings specific to osm railway tags */
   protected OsmRailwaySettings osmRailwaySettings;
@@ -235,6 +237,15 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
           DEFAULT_MINIMUM_SUBNETWORK_SIZE, Integer.MAX_VALUE, DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY));
     }
     return configByMode;
+  }
+
+  /** The lists of node ids of the consolidation settings as logged, "none" when empty
+   *
+   * @param nodeIdLists the lists of node ids, each with the kind of id they are
+   * @return the node ids, or none
+   */
+  private static Object toLoggedNodeIds(List<Pair<Set<String>, IdMapperType>> nodeIdLists) {
+    return nodeIdLists.isEmpty() ? "none" : nodeIdLists.stream().map(Pair::first).collect(Collectors.toList());
   }
 
   /**
@@ -370,9 +381,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
         isBreakLinksAtIsolatedSignalisedCrossings(), level));
     LOGGER.info(LoggingUtils.settingsValue("Consolidate intersections", isConsolidateIntersections(), level));
     if(isConsolidateIntersections()){
-      int consolidationLevel = level + 1;
+      int consolidationLevel = level + 2;
       var consolidatorSettings = getIntersectionConsolidatorSettings();
-      LOGGER.info(LoggingUtils.settingsSection("Intersection consolidation", consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsSection("Intersection consolidation", level + 1));
       LOGGER.info(LoggingUtils.settingsValue("Maximum joining reach (m)",
           consolidatorSettings.getMaximumJoiningReachMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Minimum coverage gain per member",
@@ -393,10 +404,23 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
           consolidatorSettings.getMaximumDistanceReachedOnlyThroughIntersectionMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Maximum distance slip lane crossing to junction (m)",
           consolidatorSettings.getMaximumDistanceSlipLaneCrossingToJunctionMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Modes collapsed onto one node per intersection",
-          getCollapsedModeTypes().isEmpty() ? "none" : getCollapsedModeTypes().stream().map(PredefinedModeType::value)
-              .collect(Collectors.joining(", ")), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Nodes to join into one intersection",
+          toLoggedNodeIds(consolidatorSettings.getNodeIdsToJoinIntoOneIntersection()), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Nodes to keep in separate intersections",
+          toLoggedNodeIds(consolidatorSettings.getNodeIdsToKeepInSeparateIntersections()), consolidationLevel));
     }
+    int collapseLevel = level + 2;
+    var collapserSettings = getIntersectionCollapserSettings();
+    LOGGER.info(LoggingUtils.settingsSection("Intersection collapse", level + 1));
+    LOGGER.info(LoggingUtils.settingsValue("Modes collapsed onto one node per intersection",
+        collapserSettings.getCollapsedModeTypes().isEmpty() ? "none" : collapserSettings.getCollapsedModeTypes()
+            .stream().map(PredefinedModeType::value).collect(Collectors.joining(", ")), collapseLevel));
+    LOGGER.info(LoggingUtils.settingsValue("OSM modes collapsed onto one node per intersection",
+        collapserSettings.getCollapsedOsmModes().isEmpty() ? "none" : collapserSettings.getCollapsedOsmModes(),
+        collapseLevel));
+    LOGGER.info(LoggingUtils.settingsValue("OSM nodes excluded from collapse",
+        collapserSettings.getOsmNodeIdsExcludedFromCollapse().isEmpty() ? "none" :
+            collapserSettings.getOsmNodeIdsExcludedFromCollapse(), collapseLevel));
 
     /* the effective classification is logged in full, defaults and user overrides combined, so that what is
      * reported is what parsing applies rather than requiring the reader to merge the two in their head */
@@ -1380,7 +1404,10 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
 
   /** The settings that tune consolidation: reach, scoring values and warning lengths, each at its default until
-   * changed. The modes to collapse once consolidated are set with {@link #setCollapsedModeTypes(PredefinedModeType...)}
+   * changed. What to collapse once consolidated is set apart, see {@link #getIntersectionCollapserSettings()}. The
+   * nodes to join into one intersection, or to keep in separate intersections, are added with
+   * {@link #addOsmNodeIdsToJoinIntoOneIntersection(long...)} and
+   * {@link #addOsmNodeIdsToKeepInSeparateIntersections(long...)}
    *
    * @return consolidation settings, to change in place
    */
@@ -1388,24 +1415,40 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return intersectionConsolidatorSettings;
   }
 
-  /** Get the mode types collapsed onto one node per consolidated intersection
+  /** The settings of collapsing the consolidated intersections onto one node for some modes: the modes to collapse and
+   * the OSM nodes excluded from collapse, nothing collapsed until changed
    *
-   * @return collapsed mode types, unmodifiable, empty for none
+   * @return collapse settings, to change in place
    */
-  public Set<PredefinedModeType> getCollapsedModeTypes() {
-    return Collections.unmodifiableSet(collapsedModeTypes);
+  public OsmIntersectionCollapserSettings getIntersectionCollapserSettings() {
+    return intersectionCollapserSettings;
   }
 
-  /** Set the mode types to collapse onto one node per consolidated intersection, replacing those set before. For each
-   * spatial intersection, a centre node is added; links used only by these modes end there,
-   * and the links inside the intersection lose access for them. A mode type not part of the parsed network is ignored.
-   * None by default, so the parsed detail is kept
+  /** Add a list of OSM nodes to join into one intersection when consolidating, see
+   * {@link IntersectionConsolidatorSettings#addNodeIdsToJoinIntoOneIntersection(Collection, IdMapperType)}. The
+   * intersections holding the nodes are joined, so any node of an intersection will do. A list needs at least two
+   * different nodes. Each call adds one list, to the consolidation settings held, see
+   * {@link #getIntersectionConsolidatorSettings()}
    *
-   * @param modeTypes to collapse, none to collapse nothing
+   * @param osmNodeIds the OSM node ids of the nodes to join
    */
-  public void setCollapsedModeTypes(PredefinedModeType... modeTypes) {
-    collapsedModeTypes.clear();
-    collapsedModeTypes.addAll(List.of(modeTypes));
+  public void addOsmNodeIdsToJoinIntoOneIntersection(long... osmNodeIds) {
+    /* the external id PLANit gives a node it parses from OSM is its OSM node id */
+    intersectionConsolidatorSettings.addNodeIdsToJoinIntoOneIntersection(
+        StringUtils.toStrings(osmNodeIds), IdMapperType.EXTERNAL_ID);
+  }
+
+  /** Add a list of OSM nodes to keep in separate intersections when consolidating, see
+   * {@link IntersectionConsolidatorSettings#addNodeIdsToKeepInSeparateIntersections(Collection, IdMapperType)}. A list
+   * needs at least two different nodes. Each call adds one list, to the consolidation settings held, see
+   * {@link #getIntersectionConsolidatorSettings()}
+   *
+   * @param osmNodeIds the OSM node ids of the nodes to keep in separate intersections
+   */
+  public void addOsmNodeIdsToKeepInSeparateIntersections(long... osmNodeIds) {
+    /* the external id PLANit gives a node it parses from OSM is its OSM node id */
+    intersectionConsolidatorSettings.addNodeIdsToKeepInSeparateIntersections(
+        StringUtils.toStrings(osmNodeIds), IdMapperType.EXTERNAL_ID);
   }
 
 }

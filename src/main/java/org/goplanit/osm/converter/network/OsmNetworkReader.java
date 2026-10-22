@@ -1,7 +1,9 @@
 package org.goplanit.osm.converter.network;
 
 import java.net.URL;
-import java.util.Objects;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
@@ -27,7 +29,6 @@ import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
 import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.ApproachOutcome;
@@ -35,6 +36,7 @@ import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsol
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnVertexRemovalHandler;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import de.topobyte.osm4j.core.access.OsmReader;
 
@@ -246,6 +248,48 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
+   * Record, with the PLANit entity diagnostics, each OSM node id that every layer lists as not found. Each layer holds
+   * only the nodes of its own modes, so a node of one layer is not found in the others
+   *
+   * @param issue to record each with
+   * @param notFoundOfEachLayer per layer, the OSM node ids it did not find
+   */
+  private void registerNotFoundInEveryLayer(OsmPlanitEntityIssue issue, List<List<String>> notFoundOfEachLayer) {
+    if(notFoundOfEachLayer.isEmpty()) {
+      return;
+    }
+    var notFoundInEveryLayer = new LinkedHashSet<>(notFoundOfEachLayer.get(0));
+    notFoundOfEachLayer.forEach(notFoundInEveryLayer::retainAll);
+    var diagnostics = networkData.getPlanitEntityDiagnostics();
+    notFoundInEveryLayer.forEach(osmNodeId -> diagnostics.registerIssue(issue, osmNodeId));
+  }
+
+  /**
+   * Collapse the modes the settings set onto one node per spatial intersection of each layer, once consolidated, see
+   * {@link OsmNetworkReaderSettings#getIntersectionCollapserSettings()}. The modes now exist, so the PLANit collapse
+   * settings are built from the OSM ones, mapping OSM modes as the network settings do. What it did is logged, and a
+   * node excluded from collapse is recorded as not found with the PLANit entity diagnostics only when no layer has it
+   *
+   * @param crs of the network
+   */
+  private void collapseIntersections(CoordinateReferenceSystem crs) {
+    var osmCollapserSettings = settings.getIntersectionCollapserSettings();
+    if(!osmCollapserSettings.hasCollapsedModes()) {
+      return;
+    }
+    var collapserSettings = osmCollapserSettings.createIntersectionCollapserSettings(
+        settings::getMappedPlanitModeType, getOsmNetworkToPopulate().getModes());
+    var notFoundOfEachLayer = new ArrayList<List<String>>();
+    for(var layer : networkData.getLayerParsers().keySet()) {
+      var collapseResult = layer.getLayerModifier().collapseIntersectionsToNonSpatialForModes(
+          layer.getIntersections().streamSpatial().collect(Collectors.toList()), collapserSettings, crs);
+      LOGGER.info(String.format("Collapsed intersections: %s", collapseResult));
+      notFoundOfEachLayer.add(collapseResult.getExcludedNodeIdsNotFound());
+    }
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND, notFoundOfEachLayer);
+  }
+
+  /**
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
    */
   public void initialiseBeforeParsing() {
@@ -432,7 +476,8 @@ public class OsmNetworkReader implements NetworkReader {
    * removed, so only what remains is consolidated, and before ids are synced. A segment turning internal gets a signal
    * when it has a signal of its own, see {@link OsmTrafficSignalIntegrator#hasSignalOfItsOwn}, or when it is a footway
    * or cycleway segment into a signalised crossing. What it did is logged, and recorded with the PLANit entity
-   * diagnostics
+   * diagnostics. A node listed in the settings is recorded as not found only when no layer has it. Once consolidated,
+   * the modes chosen are collapsed, see {@link OsmNetworkReaderSettings#getIntersectionCollapserSettings()}
    */
   public void consolidateIntersections() {
     if(!settings.isConsolidateIntersections()) {
@@ -443,24 +488,19 @@ public class OsmNetworkReader implements NetworkReader {
       return;
     }
     var crs = getOsmNetworkToPopulate().getCoordinateReferenceSystem();
-    /* the collapsed mode types become the modes of the parsed network */
-    var collapsedModes = settings.getCollapsedModeTypes().stream()
-        .map(modeType -> (Mode) getOsmNetworkToPopulate().getModes().get(modeType))
-        .filter(Objects::nonNull).collect(Collectors.toList());
+    var notFoundOfEachLayer = new ArrayList<List<String>>();
     for(var entry : networkData.getLayerParsers().entrySet()) {
-      var layerModifier = entry.getKey().getLayerModifier();
       var trafficSignalIntegrator = entry.getValue().getTrafficSignalIntegrator();
-      var result = layerModifier.consolidateIntersections(
+      var result = entry.getKey().getLayerModifier().consolidateIntersections(
           crs, settings.getIntersectionConsolidatorSettings(), trafficSignalIntegrator::hasSignalOfItsOwn);
       registerConsolidationResult(result);
       LOGGER.info(String.format("Consolidated intersections: %s", result));
-      /* once consolidated, the collapsed modes go onto one node per spatial intersection */
-      if(!collapsedModes.isEmpty()) {
-        var collapseResult = layerModifier.collapseIntersectionsToNonSpatialForModes(
-            entry.getKey().getIntersections().streamSpatial().collect(Collectors.toList()), collapsedModes, crs);
-        LOGGER.info(String.format("Collapsed intersections: %s", collapseResult));
-      }
+      notFoundOfEachLayer.add(result.getListedNodeIdsNotFound());
     }
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND, notFoundOfEachLayer);
+
+    /* once consolidated, the modes chosen are collapsed onto one node per spatial intersection */
+    collapseIntersections(crs);
   }
 
   /** Collect the osm network to populate

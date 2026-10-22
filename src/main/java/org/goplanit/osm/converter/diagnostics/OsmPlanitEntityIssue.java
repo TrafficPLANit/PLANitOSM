@@ -64,7 +64,13 @@ public enum OsmPlanitEntityIssue {
   APPROACH_ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD("approaches added with the signal tagged on the node ahead"),
 
   /** a signalised junction where fewer than half of the road approaches have a signal of their own */
-  JUNCTION_WITH_FEW_SIGNALISED_ARMS("signalised junctions where fewer than half of the road approaches have a signal");
+  JUNCTION_WITH_FEW_SIGNALISED_ARMS("signalised junctions where fewer than half of the road approaches have a signal"),
+
+  /** a node listed to join or to keep apart by its OSM node id that no layer of the network has */
+  NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND("nodes listed to join or keep apart, not in the network"),
+
+  /** a node excluded from collapse by its OSM node id that no layer of the network has */
+  NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND("nodes excluded from collapse, not in the network");
 
   /** label used when logging */
   private final String label;

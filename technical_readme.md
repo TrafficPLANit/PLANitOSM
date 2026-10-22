@@ -396,8 +396,9 @@ What consolidation does (PLANit's `IntersectionConsolidator`, next to the layer 
 7. Each spatial intersection stores every movement through it: from each approach to each exit its internal
    segments connect, with its length. A movement stores only a ban placed on it directly; the modes that can make it,
    after mode access and banned turns at member nodes, are worked out when needed.
-8. On request (`setCollapsedModeTypes`, none by default), the chosen modes are collapsed onto a new centre node per
-   spatial intersection, once consolidation is done (the layer modifier's `collapseIntersectionsToNonSpatialForModes`).
+8. On request (none by default), the chosen modes are collapsed onto a new centre node per spatial intersection, once
+   consolidation is done (the layer modifier's `collapseIntersectionsToNonSpatialForModes`). A spatial intersection
+   with a node excluded from collapse is left as it is.
    The new turns are banned so each collapsed mode can only make what it could make while the intersection was
    spatial: worked out from the stored movements and, for a segment entering it that is not an approach, such as a
    footway, from what that segment could reach.
@@ -415,15 +416,24 @@ the junction's own signals.
 
 The values that tune it are PLANit's `IntersectionConsolidatorSettings`, held by the reader settings: change them in
 place through `getIntersectionConsolidatorSettings()`, or switch consolidation on with settings of your own through
-`setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum internal link length 40 m, minimum
+`setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum joining reach 40 m, minimum
 coverage gain per member 0.05, coverage tie margin 0.05, every subdivision tried for clusters of up to 10 parsed
 intersections and a larger cluster subdivided step by step keeping 3 subdivisions per step, junctions pulled in
 within the radius plus 30 m over a connection of at most 80 m, internal link length
 warning 100 m, maximum distance reached only through an intersection 60 m, and
-maximum distance from a crossing on a slip lane to its junction 60 m. The modes to collapse are set with
-`setCollapsedModeTypes` on the reader settings. The values are logged with the other settings when consolidation is
-on. What consolidation did is logged on one line, and each entity is recorded in the PLANit
-intersections diagnostics below.
+maximum distance from a crossing on a slip lane to its junction 60 m.
+
+The user can change the grouping by OSM node id, each call adding one list of at least two nodes:
+`addOsmNodeIdsToJoinIntoOneIntersection` and `addOsmNodeIdsToKeepInSeparateIntersections` on the reader settings.
+Any node of an intersection stands for the whole intersection. Once the crossings have joined, the intersections
+holding the nodes of a list to join are joined into one, even where the grouping rules would keep them apart. No step
+puts nodes of one list to keep apart into one intersection, and keeping apart wins over joining.
+
+What to collapse is set on `getIntersectionCollapserSettings()`: predefined mode types (`setCollapsedModeTypes`), OSM
+modes (`setCollapsedOsmModes`), and OSM nodes whose intersection is not collapsed
+(`addOsmNodeIdsExcludedFromCollapse`). The consolidation values are logged with the other settings when consolidation
+is on, and the collapse settings as a section of their own. What consolidation and collapse did is logged on one line
+each, and each entity is recorded in the PLANit intersections diagnostics below.
 
 #### Turn restrictions
 
@@ -457,7 +467,8 @@ What happens is recorded where it is decided, in two stages, and logged at the e
   nodes joined, approaches made internal, long internal links, links reached only through their intersection,
   junctions pulled in within a radius, crossings joined (along the road or from a slip lane), approaches added
   without a signal (on a slip lane, or not)
-  and junctions with few lit arms.
+  and junctions with few lit arms. Also each OSM node id listed to join or keep apart, or excluded from collapse,
+  that no layer of the network has, once.
 
 The rules above are covered scenario by scenario in `OsmTrafficSignalsTest`, `OsmTrafficSignalIntegratorTest`,
 `OsmIntersectionConsolidationTest` and `OsmTurnRestrictionModesTest`, each hand-made `.osm` file under
