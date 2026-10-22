@@ -177,9 +177,9 @@ public class BasicOsmReaderTest {
       /* car access is withdrawn on 24 segments without removing anything, since each link involved remains open to
        * another mode. What is removed are the ways carrying a denying access value, which lose their modes in both
        * directions and so leave nothing behind */
-      assertEquals(1167, network.getTransportLayers().getFirst().getLinks().size());
-      assertEquals(2149, network.getTransportLayers().getFirst().getLinkSegments().size());
-      assertEquals(976, network.getTransportLayers().getFirst().getNodes().size());
+      assertEquals(1169, network.getTransportLayers().getFirst().getLinks().size());
+      assertEquals(2153, network.getTransportLayers().getFirst().getLinkSegments().size());
+      assertEquals(978, network.getTransportLayers().getFirst().getNodes().size());
 
       assertEquals(0, zoning.getOdZones().size() );
       assertEquals(104, zoning.getTransferZones().size() );
@@ -205,7 +205,7 @@ public class BasicOsmReaderTest {
 
       assertEquals(0, noneTypeAccessEntries);
       assertEquals(0, unknownTypeAccessEntries);
-      assertEquals(134, ptStopTypeAccessLinkSegments);
+      assertEquals(133, ptStopTypeAccessLinkSegments);
       assertEquals(3, accessZoneEntries);
       assertEquals(3, egressZoneEntries);
       /* two more than before: the connectoids that previously sat on removed dangling infrastructure now

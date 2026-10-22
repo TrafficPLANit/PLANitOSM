@@ -332,162 +332,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     
 
   /**
-   * Collect the default settings for this way based on its highway type
-   * 
-   * @param osmWay the way
-   * @param tags the tags of this way
-   * @return the link segment types per layer if available, otherwise null is returned
-   */
-  protected Map<NetworkLayer, MacroscopicLinkSegmentType> getDefaultLinkSegmentTypeByOsmWayType(
-          OsmWay osmWay, Map<String, String> tags) {
-    String osmTypeKeyToUse = null;
-    
-    /* exclude ways that are areas and in fact not ways */
-    boolean isExplicitArea = OsmTags.isArea(tags);   
-    if(isExplicitArea) {
-      return null;
-    }
-    
-    var settings = getSettings();
-        
-    /* highway (road), railway (rail), or waterway */
-    Function<String, Boolean> isWayActivatedLambda = osmTypeValueToUse -> false;
-    Function<String, Boolean> isTypeConfigurationMissingLambda = osmTypeValueToUse -> false;
-    if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
-      osmTypeKeyToUse = OsmHighwayTags.getHighwayKeyTag();
-      isWayActivatedLambda = osmTypeValueToUse ->
-          settings.getHighwaySettings().isOsmHighwayTypeDeactivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = OsmHighwayTags::isNonRoadBasedHighwayValueTag;
-    }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
-      osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
-      isWayActivatedLambda = osmTypeValueToUse ->
-          settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = OsmRailwayTags::isNonRailBasedRailway;
-    }else if(OsmWaterwayTags.isWaterBasedWay(tags) && settings.isWaterwayParserActive()) {
-      osmTypeKeyToUse = OsmWaterwayTags.getUsedKeyTag(tags);
-      isWayActivatedLambda = osmTypeValueToUse ->
-          settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmTypeValueToUse);
-      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // not yet aware of situations for waterways
-      // where this happens
-    }
-    
-    /* without mapping no type */
-    if(osmTypeKeyToUse==null) {
-      return null;
-    }
-
-    String osmTypeValueToUse = tags.get(osmTypeKeyToUse);        
-    Map<NetworkLayer,MacroscopicLinkSegmentType> linkSegmentTypes =
-        getNetwork().getDefaultLinkSegmentTypeByOsmTag( osmTypeKeyToUse, osmTypeValueToUse);
-    if(linkSegmentTypes != null) {
-      for(var entry : linkSegmentTypes.entrySet()){
-        var layer = (MacroscopicNetworkLayerImpl) entry.getKey();
-        var linkSegmentType = entry.getValue();
-        if(linkSegmentType != null) {
-            getNetworkData().getLayerParser(layer).getLayerData().getProfiler().incrementOsmTagCounter(
-                osmTypeKeyToUse, osmTypeValueToUse);
-          }
-      }
-    }
-    /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate
-    because we do not want or it cannot be mapped in the first place*/
-    /*... not available even though it is not marked as deactivated AND it appears to be a type that can be converted
-     into a link, so something is not properly configured*/
-    else if(isWayActivatedLambda.apply(osmTypeValueToUse) && isTypeConfigurationMissingLambda.apply(osmTypeValueToUse)){
-      LOGGER.warning(String.format(
-          "No link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or " +
-              "unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
-    }
-        
-    return linkSegmentTypes;
-  }  
-  
-  /** process all registered circular ways after parsing of basic nodes and ways is complete. Because circular
-   * ways are transformed into multiple
-   * links, they in effect yield multiple links per original OSM way (id). In case such an OSMway is referenced
-   * later it no longer maps to a single
-   * PLANit link, hence we return how each OSMway is mapped to the set of links created for the circular way
-   *   
-   */
-  protected  void processCircularWays() {
-    
-    LOGGER.info("Converting OSM circular ways into multiple link topologies...");
-    
-    /* process circular ways in order of original OSM way ids, so it is a deterministic process and results are
-    reproducible in terms of generated PLANit link/segment ids */
-    getNetworkData().getOsmCircularWays().entrySet().stream().sorted(Entry.comparingByKey()).forEach(entry -> {
-      try {        
-        
-        handleRawCircularWay(entry.getValue());
-                
-      }catch (Exception e) {
-        LOGGER.severe(e.getMessage());
-        LOGGER.severe(String.format("Unable to process circular way OSM id: %d",entry.getKey()));
-      }        
-    });
-    
-    LOGGER.info(String.format("Processed %d circular ways...DONE",getNetworkData().getOsmCircularWays().size()));
-    getNetworkData().clearOsmCircularWays();
-  }
-    
-  /**
-   * extract OSM way's PLANit infrastructure for the entire way, i.e., link, nodes, and link segments where applicable. 
-   * The parser will try to infer missing/default data by using defaults set by the user
-   * 
-   * @param osmWay to parse
-   * @param tags related to the OSM way
-   */
-  protected void extractOsmWay(OsmWay osmWay, Map<String, String> tags){
-    /* parse entire OSM way (0-endNodeIndex), and not part of a circular piece of infrastructure */
-    extractPartialOsmWay(osmWay, tags, 0,
-        osmWay.getNumberOfNodes()-1, false /*not part of circular infrastructure */);
-  }
-
-  /**
-   * Extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being
-   * a (partial) section of a circular way, then
-   * we only allow the presumed one way direction applicable when creating directional link segments. The result is
-   * a newly registered link, its nodes, and link segment(s) on
-   * the network. The parser will try to infer missing/default data by using defaults set by the user.
-   * 
-   * @param osmWay to parse
-   * @param tags related to the OSM way
-   * @param startNodeIndex to start parsing nodes from
-   * @param endNodeIndex to end parsing nodes from
-   * @param isPartOfCircularWay indicates if it is part of a circular way or not
-   * @return created link (if any), if no link could be created null is returned
-   */  
-  protected Map<NetworkLayer,MacroscopicLink> extractPartialOsmWay(
-          OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
-
-    Map<NetworkLayer,MacroscopicLink> linksByLayer = null;
-    var directionalLinkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay, tags);
-    for(var entry : directionalLinkSegmentTypesByLayer.entrySet()) {
-      MacroscopicNetworkLayerImpl networkLayer = entry.getKey();
-      var linkSegmentTypesPair = entry.getValue();
-      
-      if(linkSegmentTypesPair != null && linkSegmentTypesPair.anyIsNotNull()) {
-        OsmNetworkLayerParser layerHandler = getNetworkData().getLayerParser(networkLayer);
-        if(layerHandler == null) {
-          throw new PlanItRunTimeException("Layer handler not available, should have been instantiated in " +
-              "PlanitOsmHandler constructor");
-        }
-        /* delegate to layer handler */
-        MacroscopicLink link = layerHandler.extractPartialOsmWay(
-            osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypesPair);
-        if(link != null) {
-          if(linksByLayer == null) {
-            linksByLayer = new HashMap<>();
-          }
-          linksByLayer.put(networkLayer, link);        
-        }
-      }
-    }    
-    
-    return linksByLayer;
-  }
-
-  /**
    * The activated PLANit modes of a layer that an OSM mode stands for, an OSM mode category such as psv standing for
    * each of its modes
    *
@@ -730,6 +574,162 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       extractOsmProhibitiveTurnBan(osmRelation, tags, planitFromSegment, planitViaNode, exitSegment, restrictionType,
           bannedModes);
     }
+  }
+
+  /**
+   * Collect the default settings for this way based on its highway type
+   * 
+   * @param osmWay the way
+   * @param tags the tags of this way
+   * @return the link segment types per layer if available, otherwise null is returned
+   */
+  protected Map<NetworkLayer, MacroscopicLinkSegmentType> getDefaultLinkSegmentTypeByOsmWayType(
+          OsmWay osmWay, Map<String, String> tags) {
+    String osmTypeKeyToUse = null;
+    
+    /* exclude ways that are areas and in fact not ways */
+    boolean isExplicitArea = OsmTags.isArea(tags);   
+    if(isExplicitArea) {
+      return null;
+    }
+    
+    var settings = getSettings();
+        
+    /* highway (road), railway (rail), or waterway */
+    Function<String, Boolean> isWayActivatedLambda = osmTypeValueToUse -> false;
+    Function<String, Boolean> isTypeConfigurationMissingLambda = osmTypeValueToUse -> false;
+    if (OsmHighwayTags.hasHighwayKeyTag(tags) && settings.isHighwayParserActive()) {
+      osmTypeKeyToUse = OsmHighwayTags.getHighwayKeyTag();
+      isWayActivatedLambda = osmTypeValueToUse ->
+          settings.getHighwaySettings().isOsmHighwayTypeDeactivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = OsmHighwayTags::isNonRoadBasedHighwayValueTag;
+    }else if(OsmRailwayTags.hasRailwayKeyTag(tags) && settings.isRailwayParserActive()) {
+      osmTypeKeyToUse = OsmRailwayTags.getRailwayKeyTag();
+      isWayActivatedLambda = osmTypeValueToUse ->
+          settings.getRailwaySettings().isOsmRailwayTypeDeactivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = OsmRailwayTags::isNonRailBasedRailway;
+    }else if(OsmWaterwayTags.isWaterBasedWay(tags) && settings.isWaterwayParserActive()) {
+      osmTypeKeyToUse = OsmWaterwayTags.getUsedKeyTag(tags);
+      isWayActivatedLambda = osmTypeValueToUse ->
+          settings.getWaterwaySettings().isOsmWaterwayTypeActivated(osmTypeValueToUse);
+      isTypeConfigurationMissingLambda = osmTypeValueToUse -> true; // not yet aware of situations for waterways
+      // where this happens
+    }
+    
+    /* without mapping no type */
+    if(osmTypeKeyToUse==null) {
+      return null;
+    }
+
+    String osmTypeValueToUse = tags.get(osmTypeKeyToUse);        
+    Map<NetworkLayer,MacroscopicLinkSegmentType> linkSegmentTypes =
+        getNetwork().getDefaultLinkSegmentTypeByOsmTag( osmTypeKeyToUse, osmTypeValueToUse);
+    if(linkSegmentTypes != null) {
+      for(var entry : linkSegmentTypes.entrySet()){
+        var layer = (MacroscopicNetworkLayerImpl) entry.getKey();
+        var linkSegmentType = entry.getValue();
+        if(linkSegmentType != null) {
+            getNetworkData().getLayerParser(layer).getLayerData().getProfiler().incrementOsmTagCounter(
+                osmTypeKeyToUse, osmTypeValueToUse);
+          }
+      }
+    }
+    /* determine if we should inform the user on not finding a mapped type, i.e., is this of concern or legitimate
+    because we do not want or it cannot be mapped in the first place*/
+    /*... not available even though it is not marked as deactivated AND it appears to be a type that can be converted
+     into a link, so something is not properly configured*/
+    else if(isWayActivatedLambda.apply(osmTypeValueToUse) && isTypeConfigurationMissingLambda.apply(osmTypeValueToUse)){
+      LOGGER.warning(String.format(
+          "No link segment type available for : %s:%s (id:%d) --> ignored. Consider explicitly supporting or " +
+              "unsupporting this type", osmTypeKeyToUse, osmTypeValueToUse, osmWay.getId()));
+    }
+        
+    return linkSegmentTypes;
+  }  
+  
+  /** process all registered circular ways after parsing of basic nodes and ways is complete. Because circular
+   * ways are transformed into multiple
+   * links, they in effect yield multiple links per original OSM way (id). In case such an OSMway is referenced
+   * later it no longer maps to a single
+   * PLANit link, hence we return how each OSMway is mapped to the set of links created for the circular way
+   *   
+   */
+  protected  void processCircularWays() {
+    
+    LOGGER.info("Converting OSM circular ways into multiple link topologies...");
+    
+    /* process circular ways in order of original OSM way ids, so it is a deterministic process and results are
+    reproducible in terms of generated PLANit link/segment ids */
+    getNetworkData().getOsmCircularWays().entrySet().stream().sorted(Entry.comparingByKey()).forEach(entry -> {
+      try {        
+        
+        handleRawCircularWay(entry.getValue());
+                
+      }catch (Exception e) {
+        LOGGER.severe(e.getMessage());
+        LOGGER.severe(String.format("Unable to process circular way OSM id: %d",entry.getKey()));
+      }        
+    });
+    
+    LOGGER.info(String.format("Processed %d circular ways...DONE",getNetworkData().getOsmCircularWays().size()));
+    getNetworkData().clearOsmCircularWays();
+  }
+    
+  /**
+   * extract OSM way's PLANit infrastructure for the entire way, i.e., link, nodes, and link segments where applicable. 
+   * The parser will try to infer missing/default data by using defaults set by the user
+   * 
+   * @param osmWay to parse
+   * @param tags related to the OSM way
+   */
+  protected void extractOsmWay(OsmWay osmWay, Map<String, String> tags){
+    /* parse entire OSM way (0-endNodeIndex), and not part of a circular piece of infrastructure */
+    extractPartialOsmWay(osmWay, tags, 0,
+        osmWay.getNumberOfNodes()-1, false /*not part of circular infrastructure */);
+  }
+
+  /**
+   * Extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being
+   * a (partial) section of a circular way, then
+   * we only allow the presumed one way direction applicable when creating directional link segments. The result is
+   * a newly registered link, its nodes, and link segment(s) on
+   * the network. The parser will try to infer missing/default data by using defaults set by the user.
+   * 
+   * @param osmWay to parse
+   * @param tags related to the OSM way
+   * @param startNodeIndex to start parsing nodes from
+   * @param endNodeIndex to end parsing nodes from
+   * @param isPartOfCircularWay indicates if it is part of a circular way or not
+   * @return created link (if any), if no link could be created null is returned
+   */  
+  protected Map<NetworkLayer,MacroscopicLink> extractPartialOsmWay(
+          OsmWay osmWay, Map<String, String> tags, int startNodeIndex, int endNodeIndex, boolean isPartOfCircularWay) {
+
+    Map<NetworkLayer,MacroscopicLink> linksByLayer = null;
+    var directionalLinkSegmentTypesByLayer = extractLinkSegmentTypes(osmWay, tags);
+    for(var entry : directionalLinkSegmentTypesByLayer.entrySet()) {
+      MacroscopicNetworkLayerImpl networkLayer = entry.getKey();
+      var linkSegmentTypesPair = entry.getValue();
+      
+      if(linkSegmentTypesPair != null && linkSegmentTypesPair.anyIsNotNull()) {
+        OsmNetworkLayerParser layerHandler = getNetworkData().getLayerParser(networkLayer);
+        if(layerHandler == null) {
+          throw new PlanItRunTimeException("Layer handler not available, should have been instantiated in " +
+              "PlanitOsmHandler constructor");
+        }
+        /* delegate to layer handler */
+        MacroscopicLink link = layerHandler.extractPartialOsmWay(
+            osmWay, tags, startNodeIndex, endNodeIndex, isPartOfCircularWay, linkSegmentTypesPair);
+        if(link != null) {
+          if(linksByLayer == null) {
+            linksByLayer = new HashMap<>();
+          }
+          linksByLayer.put(networkLayer, link);        
+        }
+      }
+    }    
+    
+    return linksByLayer;
   }
 
   /** actual handling of OSM way assuming it is eligible for processing

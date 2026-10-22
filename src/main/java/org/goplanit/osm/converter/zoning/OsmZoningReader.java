@@ -65,15 +65,6 @@ public class OsmZoningReader implements ZoningReader {
   private boolean suppressSettingsLogging = false;
        
   /**
-   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
-   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
-   * private so only the factory can apply it at creation time.
-   */
-  protected void suppressSettingsLogging() {
-    this.suppressSettingsLogging = true;
-  }
-
-  /**
    * Log some information about this reader's configuration
    */
   private void logInfo() {
@@ -83,7 +74,7 @@ public class OsmZoningReader implements ZoningReader {
     }
     getSettings().logSettings();
   }
-  
+
   /** Make sure that if a bounding area is available on the network, any explicitly defined zoning bounding polygon
    * should ideally not exceed the network bounding area since it makes little sense to try and parse pt infrastructure
    * outside the network's geographically parsed area. If it does exceed, log a warning and replace it with the network
@@ -321,7 +312,7 @@ public class OsmZoningReader implements ZoningReader {
       readWithHandler(osmReader, osmHandler);
     } 
   }   
-  
+
   /**
    * conduct post-processing processing step of zoning reader given the information available from pre-processing
    *  
@@ -342,6 +333,15 @@ public class OsmZoningReader implements ZoningReader {
           profiler);
       readWithHandler(osmReader, osmPostProcessingHandler);
     } 
+  }
+
+  /**
+   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
+   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
+   * private so only the factory can apply it at creation time.
+   */
+  protected void suppressSettingsLogging() {
+    this.suppressSettingsLogging = true;
   }
 
   protected PlanitOsmNetwork getReferenceNetwork(){

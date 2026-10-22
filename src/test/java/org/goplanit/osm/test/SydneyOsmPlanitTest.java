@@ -152,8 +152,8 @@ public class SydneyOsmPlanitTest {
       osmReader.getSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       /* isolated signalised crossings get their own intersection in the Sydney cases, so a signal with no junction in
-       * reach is kept, e.g. the one halfway along the slip lane of the Cahill Expressway Onramp. The Melbourne cases
-       * keep the default, so both remain covered */
+       * reach is kept, e.g. the one halfway along the slip lane of the Cahill Expressway Onramp. So does the Melbourne
+       * bounding box case; the other Melbourne cases keep the default, so both remain covered */
       osmReader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
 
       /* PLANit writer */

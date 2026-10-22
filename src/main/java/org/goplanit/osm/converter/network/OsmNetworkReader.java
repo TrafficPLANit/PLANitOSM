@@ -2,8 +2,8 @@ package org.goplanit.osm.converter.network;
 
 import java.net.URL;
 import java.util.Objects;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.function.Predicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -21,7 +21,6 @@ import org.goplanit.osm.converter.network.handler.OsmNetworkPreProcessingHandler
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmHandlerUtils;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
@@ -30,9 +29,9 @@ import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentUtils;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult;
-import org.goplanit.utils.network.layer.physical.Link;
+import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.ApproachOutcome;
+import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.IntersectionOutcome;
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnVertexRemovalHandler;
@@ -50,6 +49,24 @@ public class OsmNetworkReader implements NetworkReader {
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
       
+  /** the issue each intersection the consolidation lists is recorded as, by what happened to it */
+  private static final Map<IntersectionOutcome, OsmPlanitEntityIssue> ISSUE_OF_INTERSECTION_OUTCOME = Map.of(
+      IntersectionOutcome.CROSSING_JOINED, OsmPlanitEntityIssue.CROSSING_JOINED_TO_JUNCTION,
+      IntersectionOutcome.CROSSING_JOINED_FROM_SLIP_LANE, OsmPlanitEntityIssue.CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION,
+      IntersectionOutcome.JUNCTION_PULLED_IN_WITHIN_RADIUS, OsmPlanitEntityIssue.JUNCTION_PULLED_IN_WITHIN_RADIUS,
+      IntersectionOutcome.JUNCTION_PULLED_IN_TO_SALVAGE_APPROACH_WITHOUT_SIGNAL,
+      OsmPlanitEntityIssue.JUNCTION_PULLED_IN_TO_SALVAGE_APPROACH_WITHOUT_SIGNAL,
+      IntersectionOutcome.JUNCTION_WITH_FEW_SIGNALISED_ARMS, OsmPlanitEntityIssue.JUNCTION_WITH_FEW_SIGNALISED_ARMS);
+
+  /** the issue each approach segment the consolidation lists is recorded as, by what happened to it */
+  private static final Map<ApproachOutcome, OsmPlanitEntityIssue> ISSUE_OF_APPROACH_OUTCOME = Map.of(
+      ApproachOutcome.MADE_INTERNAL, OsmPlanitEntityIssue.APPROACH_MADE_INTERNAL_BY_CONSOLIDATION,
+      ApproachOutcome.ADDED_WITHOUT_SIGNAL_ON_SLIP_LANE, OsmPlanitEntityIssue.APPROACH_ON_SLIP_LANE_ADDED_WITHOUT_SIGNAL,
+      ApproachOutcome.ADDED_WITHOUT_SIGNAL_NOT_ON_SLIP_LANE,
+      OsmPlanitEntityIssue.APPROACH_NOT_ON_SLIP_LANE_ADDED_WITHOUT_SIGNAL,
+      ApproachOutcome.ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD,
+      OsmPlanitEntityIssue.APPROACH_ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD);
+
   /** network reader data tracked during parsing */
   private final OsmNetworkReaderData networkData;
 
@@ -62,46 +79,6 @@ public class OsmNetworkReader implements NetworkReader {
   /** when set, this reader does not log its own settings, see {@link #suppressSettingsLogging()} */
   private boolean suppressSettingsLogging = false;
   
-  /**
-   * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
-   */
-  public void initialiseBeforeParsing() {
-    PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null &&
-            getOsmNetworkToPopulate().getTransportLayers().size()>0,
-        "Network is expected to be empty at start of parsing OSM network, but it has layers already");
-    var resolvedSettings = new OsmNetworkReaderSettingsResolved(settings);
-    resolvedSettings.logExcludedOsmWayTypes();
-    
-    /* gis initialisation */
-    PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
-    try {
-      getOsmNetworkToPopulate().transform(settings.getSourceCRS());
-    }catch(PlanItRunTimeException e) {
-      LOGGER.severe(String.format("Unable to update network to CRS %s", settings.getSourceCRS().getName()));
-    }
-
-    /* initialise the modes on the network based on the settings chosen */
-    getOsmNetworkToPopulate().createAndRegisterOsmCompatiblePlanitPredefinedModes(getSettings());
-    if(getOsmNetworkToPopulate().getModes().firstMatch( m -> !m.isPredefinedModeType()) != null){
-      // todo if we support custom modes, then all locations where we determine the mapping from OSM mode to PLANit
-      //  mode needs revisiting to account for such custom mode mappings + settings need updating to support this
-      //  activation somehow !!
-      throw new PlanItRunTimeException("OSM based PLANit networks currently support only predefined mode mappings, " +
-          "but found custom PLANit mode, this is not allowed");
-    }
-    //todo: make the configuration configurable again via the settings, however this requires changing the configurator
-    // to work with predefined mode types rather than actual mode instances
-    var planitInfrastructureLayerConfiguration =
-        MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
-
-    /* (default) link segment types (on the network) */
-    getOsmNetworkToPopulate().createAndRegisterLayers(planitInfrastructureLayerConfiguration);
-    getOsmNetworkToPopulate().createAndRegisterOsmCompatibleLinkSegmentTypes(getSettings(), resolvedSettings);
-
-    /* initialise layer specific parsers and bounding area*/
-    networkData.initialiseLayerParsers(getOsmNetworkToPopulate(), settings, geoUtils);
-  }
-
   /**
    * Helper to create an OSM4jReader, handler for a given stage and perform the parsing
    *
@@ -120,15 +97,6 @@ public class OsmNetworkReader implements NetworkReader {
         networkData,
         settings);
     OsmHandlerUtils.readWithHandler(osmReader, osmHandler);
-  }
-
-  /**
-   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
-   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
-   * private so only the factory can apply it at creation time.
-   */
-  protected void suppressSettingsLogging() {
-    this.suppressSettingsLogging = true;
   }
 
   /**
@@ -197,7 +165,7 @@ public class OsmNetworkReader implements NetworkReader {
 
     networkData.setBoundingArea(boundaryManager.getCompleteBoundingArea());
   }
-  
+
   /** Perform preprocessing if needed, identify the OSM entities eligible for processing
    */
   private void doPreprocessing(){
@@ -229,7 +197,6 @@ public class OsmNetworkReader implements NetworkReader {
 
   }
 
-
   /** Perform main processing of OSM network reader
    */
   private void doMainProcessing() {
@@ -243,7 +210,91 @@ public class OsmNetworkReader implements NetworkReader {
         new OsmNetworkMainProcessingHandler(getOsmNetworkToPopulate(), networkData, settings);
     OsmHandlerUtils.readWithHandler(osmReader, osmHandler);
   }
-  
+
+  /**
+   * Record what consolidating the intersections of a layer did with the PLANit entity diagnostics, each entity once
+   *
+   * @param result of the consolidation
+   */
+  private void registerConsolidationResult(IntersectionConsolidationModifierResult result) {
+    var diagnostics = networkData.getPlanitEntityDiagnostics();
+    result.getReplacedIntersections().forEach(replaced -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERSECTION_REPLACED_BY_CONSOLIDATION, replaced.first().getExternalId(),
+        "by " + replaced.second().getExternalId()));
+    result.getIntersectionClustersSubdividedStepByStep().forEach(cluster -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERSECTION_CLUSTER_SUBDIVIDED_STEP_BY_STEP, cluster.get(0).getExternalId(),
+        cluster.size() + " parsed intersections"));
+    result.getJoinedNodes().forEach(node -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.NODE_JOINED_BY_CONSOLIDATION, node.getExternalId()));
+    result.getInternalLinksLongerThanWarningLength().forEach(link -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERNAL_LINK_LONGER_THAN_WARNING_LENGTH, link.getExternalId(),
+        String.format("%.0f m", link.getLengthMeters())));
+    result.getLinksReachedOnlyThroughIntersection().forEach(reached -> diagnostics.registerIssue(
+        OsmPlanitEntityIssue.LINK_REACHED_ONLY_THROUGH_INTERSECTION,
+        reached.getEnteringSegment().getParent().getExternalId(),
+        String.format("%.0f m%s", reached.getDistanceMeters(), reached.isWithSignal() ? ", with a signal" : "")));
+    for (var outcome : IntersectionOutcome.values()) {
+      result.getIntersections(outcome).forEach(intersection -> diagnostics.registerIssue(
+          ISSUE_OF_INTERSECTION_OUTCOME.get(outcome), intersection.getExternalId()));
+    }
+    for (var outcome : ApproachOutcome.values()) {
+      result.getApproaches(outcome).forEach(segment -> diagnostics.registerIssue(ISSUE_OF_APPROACH_OUTCOME.get(outcome),
+          segment.getParent().getExternalId(), outcome == ApproachOutcome.MADE_INTERNAL ?
+              "from node " + segment.getUpstreamNode().getExternalId() :
+              "into node " + segment.getDownstreamNode().getExternalId()));
+    }
+  }
+
+  /**
+   * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
+   */
+  public void initialiseBeforeParsing() {
+    PlanItRunTimeException.throwIf(getOsmNetworkToPopulate().getTransportLayers() != null &&
+            getOsmNetworkToPopulate().getTransportLayers().size()>0,
+        "Network is expected to be empty at start of parsing OSM network, but it has layers already");
+    var resolvedSettings = new OsmNetworkReaderSettingsResolved(settings);
+    resolvedSettings.logExcludedOsmWayTypes();
+    
+    /* gis initialisation */
+    PlanitJtsCrsUtils geoUtils = new PlanitJtsCrsUtils(settings.getSourceCRS());
+    try {
+      getOsmNetworkToPopulate().transform(settings.getSourceCRS());
+    }catch(PlanItRunTimeException e) {
+      LOGGER.severe(String.format("Unable to update network to CRS %s", settings.getSourceCRS().getName()));
+    }
+
+    /* initialise the modes on the network based on the settings chosen */
+    getOsmNetworkToPopulate().createAndRegisterOsmCompatiblePlanitPredefinedModes(getSettings());
+    if(getOsmNetworkToPopulate().getModes().firstMatch( m -> !m.isPredefinedModeType()) != null){
+      // todo if we support custom modes, then all locations where we determine the mapping from OSM mode to PLANit
+      //  mode needs revisiting to account for such custom mode mappings + settings need updating to support this
+      //  activation somehow !!
+      throw new PlanItRunTimeException("OSM based PLANit networks currently support only predefined mode mappings, " +
+          "but found custom PLANit mode, this is not allowed");
+    }
+    //todo: make the configuration configurable again via the settings, however this requires changing the configurator
+    // to work with predefined mode types rather than actual mode instances
+    var planitInfrastructureLayerConfiguration =
+        MacroscopicNetworkLayerConfigurator.createAllInOneConfiguration(osmNetworkToPopulate.getModes());
+
+    /* (default) link segment types (on the network) */
+    getOsmNetworkToPopulate().createAndRegisterLayers(planitInfrastructureLayerConfiguration);
+    getOsmNetworkToPopulate().createAndRegisterOsmCompatibleLinkSegmentTypes(getSettings(), resolvedSettings);
+
+    /* initialise layer specific parsers and bounding area*/
+    networkData.initialiseLayerParsers(getOsmNetworkToPopulate(), settings, geoUtils);
+  }
+
+  /**
+   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
+   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
+   * private so only the factory can apply it at creation time.
+   */
+  protected void suppressSettingsLogging() {
+    this.suppressSettingsLogging = true;
+  }
+
+
   /** Collect the network data gathered
    * 
    * @return network data
@@ -376,47 +427,12 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Record what consolidating the intersections of a layer did with the PLANit entity diagnostics, each entity once
-   *
-   * @param result of the consolidation
-   */
-  private void registerConsolidationResult(IntersectionConsolidationModifierResult result) {
-    var diagnostics = networkData.getPlanitEntityDiagnostics();
-    result.getReplacedIntersections().forEach(replaced -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.INTERSECTION_REPLACED_BY_CONSOLIDATION, replaced.first().getExternalId(),
-        "by " + replaced.second().getExternalId()));
-    result.getIntersectionClustersTooLargeToSubdivide().forEach(cluster -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.INTERSECTION_CLUSTER_TOO_LARGE_TO_SUBDIVIDE, cluster.get(0).getExternalId(),
-        cluster.size() + " parsed intersections"));
-    result.getJoinedNodes().forEach(node -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.NODE_JOINED_BY_CONSOLIDATION, node.getExternalId()));
-    result.getApproachSegmentsMadeInternal().forEach(segment -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.APPROACH_MADE_INTERNAL_BY_CONSOLIDATION, segment.getParent().getExternalId(),
-        "from node " + segment.getUpstreamNode().getExternalId()));
-    result.getInternalLinksLongerThanWarningLength().forEach(link -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.INTERNAL_LINK_LONGER_THAN_WARNING_LENGTH, link.getExternalId(),
-        String.format("%.0f m", link.getLengthMeters())));
-    result.getLinksReachedOnlyThroughIntersection().forEach(reached -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.LINK_REACHED_ONLY_THROUGH_INTERSECTION,
-        reached.getEnteringSegment().getParent().getExternalId(),
-        String.format("%.0f m%s", reached.getDistanceMeters(), reached.isWithSignal() ? ", with a signal" : "")));
-    result.getCrossingsJoined().forEach(crossing -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.CROSSING_JOINED_TO_JUNCTION, crossing.getExternalId()));
-    result.getCrossingsJoinedFromSlipLane().forEach(crossing -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION, crossing.getExternalId()));
-    result.getMissingApproachSegments().forEach(segment -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.MISSING_APPROACH, segment.getParent().getExternalId(),
-        "into node " + segment.getDownstreamNode().getExternalId()));
-    result.getJunctionsWithFewLitArms().forEach(junction -> diagnostics.registerIssue(
-        OsmPlanitEntityIssue.JUNCTION_WITH_FEW_LIT_ARMS, junction.getExternalId()));
-  }
-
-  /**
    * Consolidate the intersections of each layer when the settings ask for it, see
    * {@link OsmNetworkReaderSettings#setConsolidateIntersections(boolean)}. Meant to run once dangling subnetworks are
    * removed, so only what remains is consolidated, and before ids are synced. A segment turning internal gets a signal
-   * when a vehicle signal made into an approach stands on it. What it did is logged, and recorded with the PLANit
-   * entity diagnostics
+   * when it has a signal of its own, see {@link OsmTrafficSignalIntegrator#hasSignalOfItsOwn}, or when it is a footway
+   * or cycleway segment into a signalised crossing. What it did is logged, and recorded with the PLANit entity
+   * diagnostics
    */
   public void consolidateIntersections() {
     if(!settings.isConsolidateIntersections()) {
@@ -435,7 +451,7 @@ public class OsmNetworkReader implements NetworkReader {
       var layerModifier = entry.getKey().getLayerModifier();
       var trafficSignalIntegrator = entry.getValue().getTrafficSignalIntegrator();
       var result = layerModifier.consolidateIntersections(
-          crs, settings.getIntersectionConsolidatorSettings(), trafficSignalIntegrator::isVehicleSignalStandingOn);
+          crs, settings.getIntersectionConsolidatorSettings(), trafficSignalIntegrator::hasSignalOfItsOwn);
       registerConsolidationResult(result);
       LOGGER.info(String.format("Consolidated intersections: %s", result));
       /* once consolidated, the collapsed modes go onto one node per spatial intersection */

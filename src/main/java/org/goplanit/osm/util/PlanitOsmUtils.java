@@ -34,6 +34,29 @@ public class PlanitOsmUtils {
   /** the logger */
   static final Logger LOGGER = Logger.getLogger(PlanitOsmUtils.class.getCanonicalName());
 
+  /** regular expression pattern([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.* used to extract decimal values and unit (if any) where the decimal value is in group two 
+   * and the unit in group 3 (indicated by second section of round brackets)*/
+  public static final Pattern SPEED_LIMIT_PATTERN =
+          Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");
+
+  /**
+   * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)
+   * 
+   * @param unitString the string containing the unit, e.g. "mph", "knots", etc
+   * @return multiplier the multiplier from x to km/h
+   * @throws PlanItException thrown when conversion not available
+   */
+  private static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
+    switch (unitString) {
+    case OsmSpeedTags.MILES_PER_HOUR:
+      return 0.621371;
+    case OsmSpeedTags.KNOTS:
+      return 0.539957;      
+    default:
+      throw new PlanItException(String.format("unit conversion to km/h not available from %s",unitString));
+    }
+  }  
+
   /**
    * Create an external idea like "_key_=_value_". If key is empty or null just return "_value_"
    *
@@ -56,29 +79,6 @@ public class PlanitOsmUtils {
     return Long.parseLong(entity.getExternalId());
   }
 
-  /**
-   * convert the unit string to a multipler with respect to km/h (the default unit for speed in OSM)
-   * 
-   * @param unitString the string containing the unit, e.g. "mph", "knots", etc
-   * @return multiplier the multiplier from x to km/h
-   * @throws PlanItException thrown when conversion not available
-   */
-  private static double determineMaxSpeedUnitMultiplierKmPerHour(final String unitString) throws PlanItException {
-    switch (unitString) {
-    case OsmSpeedTags.MILES_PER_HOUR:
-      return 0.621371;
-    case OsmSpeedTags.KNOTS:
-      return 0.539957;      
-    default:
-      throw new PlanItException(String.format("unit conversion to km/h not available from %s",unitString));
-    }
-  }  
-    
-  /** regular expression pattern([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.* used to extract decimal values and unit (if any) where the decimal value is in group two 
-   * and the unit in group 3 (indicated by second section of round brackets)*/
-  public static final Pattern SPEED_LIMIT_PATTERN =
-          Pattern.compile("([^0-9]*)([0-9]*\\.?[0-9]+).*(km/h|kmh|kph|mph|knots)?.*");
- 
   /**
    * parse an OSM maxSpeedValue tag value and perform unit conversion to km/h if needed
    * @param maxSpeedValue string

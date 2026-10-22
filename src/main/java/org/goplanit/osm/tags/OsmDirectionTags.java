@@ -55,5 +55,15 @@ public class OsmDirectionTags {
     return tags.containsKey(OsmDirectionTags.DIRECTION) &&
             tags.get(OsmDirectionTags.DIRECTION).equals(OsmDirectionTags.ANTI_CLOCKWISE);
   }  
+
+  /**
+   * Verify if a direction value is forward or backward, the two values that name one direction along an OSM way
+   *
+   * @param direction value, may be null
+   * @return true when forward or backward, false otherwise
+   */
+  public static boolean isForwardOrBackward(String direction) {
+    return FORWARD.equals(direction) || BACKWARD.equals(direction);
+  }
     
 }

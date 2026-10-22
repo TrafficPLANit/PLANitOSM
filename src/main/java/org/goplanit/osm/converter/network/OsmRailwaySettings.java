@@ -25,6 +25,16 @@ public class OsmRailwaySettings extends OsmWaySettings {
   /** immutable default rail mode mappings used to initialise each instance */
   private static final Map<String, PredefinedModeType> DEFAULT_OSM_RAIL_MODE_MAPPINGS =
       Collections.unmodifiableMap(createDefaultOsmRailModeMappings());
+
+  /** by default the railway parser is deactivated */
+  public static boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
+
+  /** default maximum distance from a traffic signal on a tram or light rail track to the road it crosses, in metres */
+  public static final double DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M = 50;
+
+  /** maximum distance from a traffic signal on a track to the road it crosses, see
+   * {@link #setMaximumDistanceTrackSignalToRoadCrossingInMeters(double)} */
+  private double maximumDistanceTrackSignalToRoadCrossingInMeters = DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M;
     
   /**
    * Create the immutable default OSM rail mode mappings used to initialise each instance.
@@ -42,10 +52,6 @@ public class OsmRailwaySettings extends OsmWaySettings {
     defaultMappings.put(OsmRailModeTags.TRAM, PredefinedModeType.TRAM);
     return defaultMappings;
   }
-
-  /** maximum distance from a traffic signal on a track to the road it crosses, see
-   * {@link #setMaximumDistanceTrackSignalToRoadCrossingInMeters(double)} */
-  private double maximumDistanceTrackSignalToRoadCrossingInMeters = DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M;
 
   /**
    * Initialise this instance with the default OSM rail mode mappings.
@@ -83,12 +89,6 @@ public class OsmRailwaySettings extends OsmWaySettings {
     return allowedModes;
   }  
     
-  /** by default the railway parser is deactivated */
-  public static boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
-
-  /** default maximum distance from a traffic signal on a tram or light rail track to the road it crosses, in metres */
-  public static final double DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M = 50;
-
   /**
    * Constructor 
    * 

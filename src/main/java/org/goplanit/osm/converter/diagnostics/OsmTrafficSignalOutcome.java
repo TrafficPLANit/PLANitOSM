@@ -43,6 +43,14 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
       "crossing signals isolated with only a service lane or living street joining"),
 
+  /** a signalised crossing counts as isolated although a junction lies within the maximum distance from a crossing to a
+   * junction beyond it, since a vehicle signal passing it has a vehicle signal past it, before that junction, facing
+   * back towards it for the traffic coming the other way: these are its own stop lines. It is then never part of a
+   * signalised junction nearby; recorded besides the crossing's own outcome */
+  CROSSING_ISOLATED_BETWEEN_ITS_STOP_LINES(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "crossing signals isolated between their own stop lines, with a junction nearby"),
+
   /** a crossing signal tagged only on the crossing way, a footway, cycleway or path, through the node where it meets
    * the road, not on the node itself */
   CROSSING_SIGNAL_ONLY_ON_CROSSING_WAY(

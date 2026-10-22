@@ -14,8 +14,11 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionType;
+import org.goplanit.utils.network.layer.physical.Node;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +36,43 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 public class OsmTrafficSignalIntegratorTest {
 
   /**
+   * The OSM node ids of signals
+   *
+   * @param signals to collect the ids of, may be null
+   * @return ids in order, empty when none
+   */
+  private static List<Long> osmIds(List<OsmNode> signals) {
+    return signals == null ? List.of() : signals.stream().map(OsmNode::getId).collect(Collectors.toList());
+  }
+
+  /**
+   * Create a reader of a traffic signal scenario limited to a bounding area, breaking links at isolated crossings
+   *
+   * @param scenarioFile name of the scenario file
+   * @param boundingArea to parse within
+   * @return the reader
+   */
+  private static OsmNetworkReader createReaderWithinBoundingArea(String scenarioFile, OsmBoundary boundingArea) {
+    var reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenarioFile).toString(), CountryNames.AUSTRALIA);
+    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().setBoundingArea(boundingArea);
+    return reader;
+  }
+
+  /**
+   * The segments entering a node that a motorised road or rail mode may use: the approaches a signal on the node gives
+   *
+   * @param node to find them at
+   * @return the segments
+   */
+  private static Set<MacroscopicLinkSegment> segmentsForMotorisedRoadOrRailEntering(Node node) {
+    return node.streamEntrySegments().map(MacroscopicLinkSegment.class::cast)
+        .filter(segment -> segment.isAnyModeAllowed(Mode::isMotorisedRoadOrRailMode))
+        .collect(Collectors.toSet());
+  }
+
+  /**
    * Reset the id generation
    */
   @BeforeEach
@@ -46,16 +86,6 @@ public class OsmTrafficSignalIntegratorTest {
   @AfterEach
   public void tearDown() {
     IdGenerator.reset();
-  }
-
-  /**
-   * The OSM node ids of signals
-   *
-   * @param signals to collect the ids of, may be null
-   * @return ids in order, empty when none
-   */
-  private static List<Long> osmIds(List<OsmNode> signals) {
-    return signals == null ? List.of() : signals.stream().map(OsmNode::getId).collect(Collectors.toList());
   }
 
   /** An approach cut short by breaking its link at an isolated crossing keeps the signal it is an approach for, now
@@ -215,21 +245,6 @@ public class OsmTrafficSignalIntegratorTest {
     assertEquals(List.of(31L, 1L), osmIds(signalsByApproach.get(segment(layer, 2, 31))));
     var crossing = layer.getIntersections().stream().findFirst().orElseThrow();
     assertEquals(Set.of("31", "1"), Set.of(crossing.getSplitExternalId()));
-  }
-
-  /**
-   * Create a reader of a traffic signal scenario limited to a bounding area, breaking links at isolated crossings
-   *
-   * @param scenarioFile name of the scenario file
-   * @param boundingArea to parse within
-   * @return the reader
-   */
-  private static OsmNetworkReader createReaderWithinBoundingArea(String scenarioFile, OsmBoundary boundingArea) {
-    var reader = OsmNetworkReaderFactory.create(
-        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenarioFile).toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
-    reader.getSettings().setBoundingArea(boundingArea);
-    return reader;
   }
 
   /**
@@ -453,6 +468,131 @@ public class OsmTrafficSignalIntegratorTest {
     assertEquals(Set.of("1", "10"), Set.of(junction.getSplitExternalId()));
   }
 
+  /**
+   * Vehicle signals facing a signalised crossing from either side are its own stop lines, also with junctions within
+   * the crossing distance of it: a signal passing the crossing is not assigned to the junction beyond when, past the
+   * crossing and before that junction, a vehicle signal faces back towards it for the traffic coming the other way.
+   * That holds when the junction beyond has signals of its own too. A signal facing the other way behind the passing
+   * signal, not past the crossing, does not count
+   */
+  @Test
+  public void vehicleSignalsFacingCrossingFromEitherSideAreItsStopLines() {
+    /*
+     *              8                          10
+     *              |                          |
+     *   2 -------- 6 ---- 1 -> 31 <- 5 ------ 7 -------- 3     way 10 primary, two-way; signal 1 (forward) and signal
+     *              |         ~9 m ~9 m        |                5 (backward) either side of signalised crossing 31,
+     *              9                          11               which lies ~18 m from junction 6 with residential way
+     *                                                          11 and from junction 7 with residential way 12
+     *
+     *   second file: side street way 12 carries signal 13 (forward), ~11 m before junction 7
+     *
+     *   2 -------- 6 - 5 <- 1 -> 31 --------- 7 -------- 3     third file: signal 5 back to back with signal 1, ~5 m
+     *                                                          west of it, facing the traffic heading for junction 6
+     */
+    var reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signals_bracketing_crossing_between_junctions.osm").toString(),
+        CountryNames.AUSTRALIA);
+    var layer = reader.read().getTransportLayers().getFirst();
+    var diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
+    assertEquals(Set.of("1", "5"),
+        Set.copyOf(diagnostics.getSignalIds(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_BEFORE_ISOLATED_CROSSING)));
+    assertEquals(List.of("31"),
+        diagnostics.getSignalIds(OsmTrafficSignalOutcome.CROSSING_ISOLATED_BETWEEN_ITS_STOP_LINES));
+    assertTrue(layer.getIntersections().isEmpty());
+
+    /* breaking links at isolated crossings on: both stop lines join the crossing's own intersection */
+    IdGenerator.reset();
+    reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signals_bracketing_crossing_between_junctions.osm").toString(),
+        CountryNames.AUSTRALIA);
+    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    layer = reader.read().getTransportLayers().getFirst();
+    assertEquals(1, layer.getIntersections().size());
+    var crossing = layer.getIntersections().stream().findFirst().orElseThrow();
+    assertEquals(List.of(nodeByOsmId(layer, 31)), crossing.getMemberNodes());
+    assertEquals(Set.of("31", "1", "5"), Set.of(crossing.getSplitExternalId()));
+    assertEquals(Set.of(segment(layer, 6, 31), segment(layer, 7, 31)), Set.copyOf(crossing.getApproachSegments()));
+
+    /* the junction beyond with a signal of its own: still the crossing's stop lines, the junction keeps its own */
+    IdGenerator.reset();
+    reader = OsmNetworkReaderFactory.create(TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(
+        "vehicle_signals_bracketing_crossing_next_to_signalised_junction.osm").toString(), CountryNames.AUSTRALIA);
+    layer = reader.read().getTransportLayers().getFirst();
+    diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
+    assertEquals(Set.of("1", "5"),
+        Set.copyOf(diagnostics.getSignalIds(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_BEFORE_ISOLATED_CROSSING)));
+    assertEquals(List.of("13"), diagnostics.getSignalIds(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_SNAPPED));
+    assertEquals(List.of("31"), diagnostics.getSignalIds(OsmTrafficSignalOutcome.ISOLATED_CROSSING_NO_LINK_BROKEN));
+    assertEquals(1, layer.getIntersections().size());
+    assertEquals(List.of(nodeByOsmId(layer, 7)),
+        layer.getIntersections().stream().findFirst().orElseThrow().getMemberNodes());
+
+    /* the signal facing the other way stands behind signal 1, not past the crossing: each goes to the junction ahead */
+    IdGenerator.reset();
+    reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signals_back_to_back_before_crossing.osm").toString(),
+        CountryNames.AUSTRALIA);
+    layer = reader.read().getTransportLayers().getFirst();
+    diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
+    assertEquals(Set.of("1", "5"),
+        Set.copyOf(diagnostics.getSignalIds(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_SNAPPED)));
+    assertEquals(List.of(),
+        diagnostics.getSignalIds(OsmTrafficSignalOutcome.CROSSING_ISOLATED_BETWEEN_ITS_STOP_LINES));
+    assertEquals(Set.of(nodeByOsmId(layer, 6), nodeByOsmId(layer, 7)), layer.getIntersections().stream()
+        .flatMap(intersection -> intersection.getMemberNodes().stream()).collect(Collectors.toSet()));
+  }
+
+  /**
+   * A vehicle signal before a tram track that crosses the road stops at the track: its stop line is before the track,
+   * so the node where the track crosses is its junction, not the road junction beyond it
+   */
+  @Test
+  public void vehicleSignalStopsAtTramTrack() {
+    /*
+     *                       51          7
+     *                       #           |
+     *   2 ------> 1 ------> 41 -------> 6 ------> 3     one-way way 10, signal 1 (forward) ~18 m before 41, where
+     *                       #           |               tram way 20 crosses, ~28 m before junction 6 with side
+     *                       52          8               street way 11
+     */
+    var reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signal_before_tram_track.osm").toString(), CountryNames.AUSTRALIA);
+    reader.getSettings().activateRailwayParser(true);
+    var layer = reader.read().getTransportLayers().getFirst();
+
+    assertEquals(1, layer.getIntersections().size());
+    var junction = layer.getIntersections().stream().findFirst().orElseThrow();
+    assertEquals(List.of(nodeByOsmId(layer, 41)), junction.getMemberNodes());
+    assertTrue(Set.of(junction.getSplitExternalId()).contains("1"));
+    assertTrue(junction.getApproachSegments().contains(segment(layer, 2, 41)));
+  }
+
+  /**
+   * A road that carries a tram on the same way has no tram track crossing it: a node along it where only a footway
+   * crosses is not a junction for vehicle signals, so the signal goes on to the road junction beyond it
+   */
+  @Test
+  public void vehicleSignalOnRoadWithTramOnTheSameWayGoesOnToJunction() {
+    /*
+     *                       51          7
+     *                       ~           |
+     *   2 ======> 1 ======> 41 =======> 6 ------> 3     one-way way 10, road and tram on the same way (=), signal 1
+     *                       ~           |               (forward) ~18 m before 41, where footway 20 (~) crosses,
+     *                       52          8               ~28 m before junction 6 with side street way 11
+     */
+    var reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signal_on_road_with_tram_on_the_same_way.osm").toString(),
+        CountryNames.AUSTRALIA);
+    reader.getSettings().activateRailwayParser(true);
+    reader.getSettings().getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+    var layer = reader.read().getTransportLayers().getFirst();
+
+    assertEquals(1, layer.getIntersections().size());
+    var junction = layer.getIntersections().stream().findFirst().orElseThrow();
+    assertEquals(List.of(nodeByOsmId(layer, 6)), junction.getMemberNodes());
+  }
+
   /** A ramp meter controls no junction or crossing: it is ignored and recorded as such, not made an isolated crossing */
   @Test
   public void rampMeterIgnored() {
@@ -496,7 +636,8 @@ public class OsmTrafficSignalIntegratorTest {
      *   railway parser on, cycleways parsed, breaking links at isolated crossings on:
      *   11 is on the track 15 m before it crosses the road at 2: 2 is a signalised junction, every segment entering it
      *   an approach, road and track; 21 is on the cycleway 10 m before it meets the road at 4: 4 is a signalised
-     *   crossing; 13 has no road within 50 m along the track: ignored; no link broken: five links
+     *   crossing, the road its only approach, since approaches are for motorised road and rail traffic; 13 has no road
+     *   within 50 m along the track: ignored; no link broken: five links
      */
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("track_and_cycleway_signals.osm").toString(), CountryNames.AUSTRALIA);
@@ -516,8 +657,8 @@ public class OsmTrafficSignalIntegratorTest {
     var cyclewayEnd = nodeByOsmId(layer, 4);
     var crossing = layer.getIntersections().getByMemberNode(cyclewayEnd);
     assertEquals(EnumSet.of(IntersectionType.CROSSING), crossing.getTypes());
-    assertEquals(cyclewayEnd.streamEntrySegments().collect(Collectors.toSet()),
-        Set.copyOf(crossing.getApproachSegments()));
+    assertEquals(segmentsForMotorisedRoadOrRailEntering(cyclewayEnd), Set.copyOf(crossing.getApproachSegments()));
+    assertNotEquals(cyclewayEnd.streamEntrySegments().count(), crossing.getApproachSegments().size());
 
     var diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
     assertEquals(List.of("11"), diagnostics.getSignalIds(OsmTrafficSignalOutcome.TRACK_SIGNAL_AT_ROAD_CROSSING));
@@ -615,8 +756,8 @@ public class OsmTrafficSignalIntegratorTest {
      *                     20
      *
      *   21: highway=traffic_signals, a shape node of the cycleway; cycleways and footways parsed
-     *   beyond 21 the footway crosses at 22, not followed: 2 is a signalised crossing, every segment entering it an
-     *   approach
+     *   beyond 21 the footway crosses at 22, not followed: 2 is a signalised crossing, the road segments entering it
+     *   its approaches
      */
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("cycleway_footway_crossing_before_road.osm").toString(),
@@ -631,8 +772,7 @@ public class OsmTrafficSignalIntegratorTest {
     var crossing = layer.getIntersections().getByMemberNode(cyclewayEnd);
     assertNotNull(crossing);
     assertEquals(EnumSet.of(IntersectionType.CROSSING), crossing.getTypes());
-    assertEquals(cyclewayEnd.streamEntrySegments().collect(Collectors.toSet()),
-        Set.copyOf(crossing.getApproachSegments()));
+    assertEquals(segmentsForMotorisedRoadOrRailEntering(cyclewayEnd), Set.copyOf(crossing.getApproachSegments()));
     assertEquals(List.of("21"), reader.getNetworkReaderData().getParseDiagnostics()
         .getSignalIds(OsmTrafficSignalOutcome.CYCLEWAY_SIGNAL_AT_ROAD_CROSSING));
   }
@@ -769,8 +909,8 @@ public class OsmTrafficSignalIntegratorTest {
         .getSignalIds(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA));
   }
 
-  /** What became of the intersections is recorded with their ids: one pruned away with its island, one without an
-   * approach any vehicle a traffic signal controls can use */
+  /** What became of the intersections is recorded with their ids: one pruned away with its island, one removed for
+   * having no approach, since no vehicle a traffic signal controls can use it */
   @Test
   public void intersectionIssuesRecorded() {
     /*
@@ -787,7 +927,7 @@ public class OsmTrafficSignalIntegratorTest {
      *   40: highway=traffic_signals, on the island's junction
      *   parsed with footways and cycleways, car, foot and bicycle as the only road modes, and dangling subnetworks
      *   pruned for all three: the island is unusable by any mode and removed with its intersection; the crossing at 30
-     *   stays, with only footway and cycleway approaches
+     *   is removed once every signal is handled: only footways and cycleways enter it, so it has no approach
      */
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("crossing_on_paths_and_pruned_island.osm").toString(),
@@ -799,12 +939,14 @@ public class OsmTrafficSignalIntegratorTest {
         OsmRoadModeTags.MOTOR_CAR, OsmRoadModeTags.FOOT, OsmRoadModeTags.BICYCLE);
     settings.activateRemoveDanglingSubnetworks(PredefinedModeType.PEDESTRIAN);
     settings.activateRemoveDanglingSubnetworks(PredefinedModeType.BICYCLE);
-    reader.read();
+    var layer = reader.read().getTransportLayers().getFirst();
     var diagnostics = reader.getNetworkReaderData().getPlanitEntityDiagnostics();
 
     assertEquals(2, diagnostics.getIntersectionsCreated());
     assertEquals(List.of("40"), diagnostics.getEntityIds(OsmPlanitEntityIssue.INTERSECTION_LOST_BY_PRUNING));
-    assertEquals(List.of("30"), diagnostics.getEntityIds(OsmPlanitEntityIssue.INTERSECTION_WITHOUT_CONTROLLED_APPROACH));
+    assertEquals(List.of("30"),
+        diagnostics.getEntityIds(OsmPlanitEntityIssue.INTERSECTION_REMOVED_WITHOUT_CONTROLLED_APPROACH));
+    assertTrue(layer.getIntersections().isEmpty());
   }
 
   /**

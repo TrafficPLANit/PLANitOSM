@@ -28,6 +28,12 @@ public class OsmHighwaySettings extends OsmWaySettings {
   private static final Map<String, PredefinedModeType> DEFAULT_OSM_ROAD_MODE_MAPPINGS =
       Collections.unmodifiableMap(createDefaultOsmRoadModeMappings());
      
+  /**  default value whether speed limits are based on urban area defaults: true */
+  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;   
+
+  /** by default the highway parser is activated */
+  public static boolean DEFAULT_HIGHWAYS_PARSER_ACTIVE = true;  
+
   /** non-urban speed limit defaults (urban defaults placed on base class) */
   OsmSpeedLimitDefaultsCategory nonUrbanSpeedLimitDefaults;
      
@@ -152,12 +158,6 @@ public class OsmHighwaySettings extends OsmWaySettings {
   }  
 
   
-  /**  default value whether speed limits are based on urban area defaults: true */
-  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;   
-  
-  /** by default the highway parser is activated */
-  public static boolean DEFAULT_HIGHWAYS_PARSER_ACTIVE = true;  
-
   /**
    * Verify if the passed in OSM highway type is explicitly deactivated. Deactivated types will be ignored
    * when processing ways.

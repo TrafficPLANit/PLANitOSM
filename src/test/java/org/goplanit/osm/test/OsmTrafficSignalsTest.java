@@ -32,17 +32,6 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
  */
 public class OsmTrafficSignalsTest {
 
-  /** location of the hand-made scenario files */
-  @BeforeEach
-  public void setUp() {
-    IdGenerator.reset();
-  }
-
-  @AfterAll
-  public static void tearDown() {
-    IdGenerator.reset();
-  }
-
   /** read a scenario file with the given settings changes, and return its only layer */
   private static MacroscopicNetworkLayer parse(String scenario, Consumer<OsmNetworkReaderSettings> configure) {
     var reader = OsmNetworkReaderFactory.create(
@@ -69,6 +58,17 @@ public class OsmTrafficSignalsTest {
   private static Intersection onlyIntersection(MacroscopicNetworkLayer layer) {
     assertEquals(1, layer.getIntersections().size());
     return layer.getIntersections().stream().findFirst().orElseThrow();
+  }
+
+  /** location of the hand-made scenario files */
+  @BeforeEach
+  public void setUp() {
+    IdGenerator.reset();
+  }
+
+  @AfterAll
+  public static void tearDown() {
+    IdGenerator.reset();
   }
 
   /** A junction without traffic signals gets no intersection; the network itself is read as usual */
@@ -135,7 +135,8 @@ public class OsmTrafficSignalsTest {
   }
 
   /** A vehicle signal on a junction's centre leaves out only the segment entering against a one-way arm leading
-   * away from it: that arm's traffic exits the junction; a footway and a tram track entering it are still approaches */
+   * away from it: that arm's traffic exits the junction; a tram track entering it is still an approach, a footway
+   * entering it is not */
   @Test
   public void junctionOnCentreLeavesOutOnlyTheOneWayArmLeavingIt() {
     /*
@@ -149,9 +150,9 @@ public class OsmTrafficSignalsTest {
      *
      *   1: highway=traffic_signals, on the junction's centre
      *   way 12's segment 3->1 runs against its direction, for walking only: its link carries motorised traffic away
-     *   from the centre only, so it is not an approach; the footway's segment 6->1 and the tram's 7->1 are: people on
-     *   foot and trams approach the junction along them; the junction has five approaches: 2->1, 4->1, 5->1, 6->1,
-     *   7->1
+     *   from the centre only, so it is not an approach; the tram's 7->1 is: trams approach the junction along it; the
+     *   footway's 6->1 is not, no motorised road or rail mode uses it; the junction has four approaches: 2->1, 4->1,
+     *   5->1, 7->1
      */
     var layer = parse("one_way_arm_leaving_junction", settings -> {
       settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY);
@@ -160,21 +161,20 @@ public class OsmTrafficSignalsTest {
 
     var intersection = onlyIntersection(layer);
     assertNotNull(segment(layer, 3, 1), "the walking segment against the one-way arm enters the junction");
-    assertEquals(Set.of(segment(layer, 2, 1), segment(layer, 4, 1), segment(layer, 5, 1), segment(layer, 6, 1),
-            segment(layer, 7, 1)),
+    assertEquals(Set.of(segment(layer, 2, 1), segment(layer, 4, 1), segment(layer, 5, 1), segment(layer, 7, 1)),
         Set.copyOf(intersection.getApproachSegments()));
   }
 
   /** With footways parsed, a crossing signal where a footway crosses the road makes that node its own signalised
-   * crossing, the footway segments entering it included as approaches */
+   * crossing, approached along the road only: the footway segments entering it are not approaches */
   @Test
   public void signalisedCrossingWithFootwaysParsed() {
     /*
      *              4
      *              :
-     *              v
+     *              :
      *     2 --->-- 1 --<--- 3      way 10: 2-1-3 primary, two-way (---)
-     *              ^                way 11: 4-1-5 footway, two-way (:)
+     *              :                way 11: 4-1-5 footway, two-way (:)
      *              :                arms of about 100 m; arrows mark the approaches
      *              5
      *
@@ -188,21 +188,19 @@ public class OsmTrafficSignalsTest {
     assertEquals(List.of(crossing), intersection.getMemberNodes());
     assertEquals(EnumSet.of(IntersectionType.CROSSING), intersection.getTypes());
     assertEquals("1", intersection.getExternalId());
-    assertEquals(4, intersection.getApproachSegments().size());
-    assertEquals(crossing.streamEntrySegments().collect(Collectors.toSet()),
-        Set.copyOf(intersection.getApproachSegments()));
+    assertEquals(Set.of(segment(layer, 2, 1), segment(layer, 3, 1)), Set.copyOf(intersection.getApproachSegments()));
   }
 
   /** A crossing signal tagged only on the crossing way makes the node where it meets the road a signalised crossing,
-   * as if the node carried it; the ends of the crossing way are no crossing */
+   * as if the node carried it, approached along the road only; the ends of the crossing way are no crossing */
   @Test
   public void crossingSignalTaggedOnlyOnCrossingWay() {
     /*
      *              4
      *              :
-     *              v
+     *              :
      *     2 --->-- 1 --<--- 3      way 10: 2-1-3 primary, two-way (---)
-     *              ^                way 11: 4-1-5 footway, footway=crossing, crossing=traffic_signals (:)
+     *              :                way 11: 4-1-5 footway, footway=crossing, crossing=traffic_signals (:)
      *              :                arms of about 100 m; arrows mark the approaches
      *              5
      *
@@ -215,8 +213,7 @@ public class OsmTrafficSignalsTest {
     var crossing = nodeByOsmId(layer, 1);
     assertEquals(List.of(crossing), intersection.getMemberNodes());
     assertEquals(EnumSet.of(IntersectionType.CROSSING), intersection.getTypes());
-    assertEquals(crossing.streamEntrySegments().collect(Collectors.toSet()),
-        Set.copyOf(intersection.getApproachSegments()));
+    assertEquals(Set.of(segment(layer, 2, 1), segment(layer, 3, 1)), Set.copyOf(intersection.getApproachSegments()));
   }
 
   /** A crossing signal tagged only on the crossing way counts though footways are not parsed: the road node it crosses
@@ -902,7 +899,7 @@ public class OsmTrafficSignalsTest {
      *   part of that junction: even with breaking links at isolated crossings on, no link is broken at 31 and the
      *   junction's intersection is unchanged
      *   footways parsed: 31 is where the footway crosses the road, a junction node, so it is its own signalised
-     *   crossing intersection next to the junction's, the footway segments included as approaches
+     *   crossing intersection next to the junction's, approached along the road only: 2->31 and 1->31
      */
     var footwaysNotParsed = parse("crossing_near_signalised_junction",
         settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
@@ -921,8 +918,7 @@ public class OsmTrafficSignalsTest {
     assertEquals(EnumSet.of(IntersectionType.JUNCTION), intersectionAt(footwaysParsed, 1).getTypes());
     var crossing = intersectionAt(footwaysParsed, 31);
     assertEquals(EnumSet.of(IntersectionType.CROSSING), crossing.getTypes());
-    assertEquals(4, crossing.getApproachSegments().size());
-    assertEquals(nodeByOsmId(footwaysParsed, 31).streamEntrySegments().collect(Collectors.toSet()),
+    assertEquals(Set.of(segment(footwaysParsed, 2, 31), segment(footwaysParsed, 1, 31)),
         Set.copyOf(crossing.getApproachSegments()));
   }
 

@@ -681,56 +681,6 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return matchedTransferZones;
   }
 
-  /** Constructor 
-   *
-   * @param zoningReaderData to use
-   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
-   * @param transferSettings to use
-   * @param profiler to use
-   */
-  public TransferZoneHelper(
-      OsmZoningReaderData zoningReaderData,
-      final OsmNetworkToZoningReaderData network2ZoningData,
-      OsmPublicTransportReaderSettings transferSettings,  
-      OsmZoningHandlerProfiler profiler) {
-    super(zoningReaderData, network2ZoningData, transferSettings);
-    this.profiler = profiler;
-
-    /* parser for identifying, filtering etc. of PT PLANit modes from OSM entities -
-    for all available PLANit modes on network*/
-    this.publicTransportModeParser = new OsmPublicTransportModeConversion(
-        getNetworkToZoningData().getNetworkSettings(),
-        transferSettings,
-        zoningReaderData.getPlanitConverterData().getReferenceNetwork().getModes());
-    
-    /* parser for identifying pt PLANit modes from OSM entities */
-    this.connectoidHelper = new OsmTransferConnectoidHelper(
-        zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
-  }
-
-  /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in
-   * reference osm modes In case no eligible modes are provided (null), we allow any transfer zone with at least one
-   * valid mapped mode
-   *  
-   * @param eligibleOsmModes to map against (may be null)
-   * @param potentialTransferZones to extract mode compatible transfer zones
-   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water
-   *                                mode, when false only exact matches are allowed
-   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also
-   *                                          considered. If such a match is found, user is requested to
-   *                                          verify correctness
-   * @return matched transfer zones
-   */  
-  public Set<TransferZone> filterModeCompatibleTransferZones(
-      Collection<String> eligibleOsmModes,
-      Collection<TransferZone> potentialTransferZones,
-      boolean allowPseudoModeMatches,
-      boolean allowModelessTransferZoneMatches) {
-
-    return potentialTransferZones.stream().filter(tz -> isTransferZoneModeCompatible(
-        tz, eligibleOsmModes, allowPseudoModeMatches, allowModelessTransferZoneMatches)).collect(Collectors.toSet());
-  }
-
   /**
    * Find all transfer zones with an identical vertical layer index as the provided tags contains. If the tags do not
    * contain an explicit layer, then the default layer index of 0 is assumed.
@@ -794,6 +744,56 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         tz ->  (isDefaultVerticalLayer && planitData.getTransferZoneOsmVerticalLayerIndex(tz) == null)  ||
                 Objects.equals(planitData.getTransferZoneOsmVerticalLayerIndex(tz),
                         finalVerticalLayerIndex)).collect(Collectors.toSet());
+  }
+
+  /** Constructor 
+   *
+   * @param zoningReaderData to use
+   * @param network2ZoningData data transferred from parsing network to be used by zoning reader.
+   * @param transferSettings to use
+   * @param profiler to use
+   */
+  public TransferZoneHelper(
+      OsmZoningReaderData zoningReaderData,
+      final OsmNetworkToZoningReaderData network2ZoningData,
+      OsmPublicTransportReaderSettings transferSettings,  
+      OsmZoningHandlerProfiler profiler) {
+    super(zoningReaderData, network2ZoningData, transferSettings);
+    this.profiler = profiler;
+
+    /* parser for identifying, filtering etc. of PT PLANit modes from OSM entities -
+    for all available PLANit modes on network*/
+    this.publicTransportModeParser = new OsmPublicTransportModeConversion(
+        getNetworkToZoningData().getNetworkSettings(),
+        transferSettings,
+        zoningReaderData.getPlanitConverterData().getReferenceNetwork().getModes());
+    
+    /* parser for identifying pt PLANit modes from OSM entities */
+    this.connectoidHelper = new OsmTransferConnectoidHelper(
+        zoningReaderData, getNetworkToZoningData(), transferSettings, profiler);
+  }
+
+  /** Find all transfer zones with at least one compatible mode (and PLANit mode mapped) based on the passed in
+   * reference osm modes In case no eligible modes are provided (null), we allow any transfer zone with at least one
+   * valid mapped mode
+   *  
+   * @param eligibleOsmModes to map against (may be null)
+   * @param potentialTransferZones to extract mode compatible transfer zones
+   * @param allowPseudoModeMatches, when true only broad category needs to match, i.e., both have a road/rail/water
+   *                                mode, when false only exact matches are allowed
+   * @param allowModelessTransferZoneMatches, when true transfer zones that do not have any known mode are also
+   *                                          considered. If such a match is found, user is requested to
+   *                                          verify correctness
+   * @return matched transfer zones
+   */  
+  public Set<TransferZone> filterModeCompatibleTransferZones(
+      Collection<String> eligibleOsmModes,
+      Collection<TransferZone> potentialTransferZones,
+      boolean allowPseudoModeMatches,
+      boolean allowModelessTransferZoneMatches) {
+
+    return potentialTransferZones.stream().filter(tz -> isTransferZoneModeCompatible(
+        tz, eligibleOsmModes, allowPseudoModeMatches, allowModelessTransferZoneMatches)).collect(Collectors.toSet());
   }
 
   /** Attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed

@@ -30,11 +30,6 @@ public class OsmBoundingAreaUtils {
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmBoundingAreaUtils.class.getCanonicalName());
 
-  /**
-   * Dummy constructor
-   */
-  private OsmBoundingAreaUtils(){}
-
   /** Create a (Rectangular) bounding box around the OSM ways geometry based on the provided offset
    * 
    * @param osmWay to collect bounding box for
@@ -64,6 +59,11 @@ public class OsmBoundingAreaUtils {
     }
     return geoUtils.createBoundingBox(minX, minY, maxX, maxY, offsetInMeters);      
   }
+
+  /**
+   * Dummy constructor
+   */
+  private OsmBoundingAreaUtils(){}
 
   /** Verify if node resides on or within the zoning bounding polygon. If no bounding area is defined
    * or if no node is provided (null), false is returned by definition

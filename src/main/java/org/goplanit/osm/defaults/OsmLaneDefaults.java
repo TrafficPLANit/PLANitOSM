@@ -28,6 +28,16 @@ public class OsmLaneDefaults {
   /** store the road-based defaults */
   protected static Map<String, Integer> defaultRoadLanesPerDirection = new HashMap<>();
     
+  /** minimum number of lanes per direction, default is 1*/
+  public static final int MINIMUM_LANES_PER_DIRECTION = 1;
+
+  /** in case no mapping between highway type and number of lanes is present, use this. Default set to
+   * {@code  MINIMUM_LANES_PER_DIRECTION} */
+  public static final int DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;
+
+  /** store the rail default. Default set to {@code  MINIMUM_LANES_PER_DIRECTION} */
+  public static final int DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;  
+
   /** store the defaults  for class instance */
   protected Map<String, Integer> lanesPerDirection;
       
@@ -79,16 +89,6 @@ public class OsmLaneDefaults {
     defaultRoadLanesPerDirection.put(OsmHighwayTags.BRIDLEWAY,      MINIMUM_LANES_PER_DIRECTION);
   }
 
-  /** minimum number of lanes per direction, default is 1*/
-  public static final int MINIMUM_LANES_PER_DIRECTION = 1;
-  
-  /** in case no mapping between highway type and number of lanes is present, use this. Default set to
-   * {@code  MINIMUM_LANES_PER_DIRECTION} */
-  public static final int DEFAULT_LANES_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;
-  
-  /** store the rail default. Default set to {@code  MINIMUM_LANES_PER_DIRECTION} */
-  public static final int DEFAULT_TRACKS_PER_DIRECTION_IF_UNSPECIFIED = MINIMUM_LANES_PER_DIRECTION;  
-  
   /**
    * Constructor
    */

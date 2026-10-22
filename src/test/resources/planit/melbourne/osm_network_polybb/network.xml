@@ -267819,7 +267819,6 @@
                 </intersection>
                 <intersection id="1" externalid="26034534" noderef="7650" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="13293"/>
                         <approach ref="19391"/>
                         <approach ref="9729"/>
                     </approaches>
@@ -267963,8 +267962,6 @@
                 </intersection>
                 <intersection id="120" externalid="9107595514" noderef="4563" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="22642"/>
-                        <approach ref="5065"/>
                         <approach ref="8711"/>
                     </approaches>
                 </intersection>
@@ -270197,8 +270194,6 @@
                 <intersection id="5" externalid="26034673" noderef="11269" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="25406"/>
-                        <approach ref="28028"/>
-                        <approach ref="28030"/>
                         <approach ref="29186"/>
                     </approaches>
                 </intersection>
@@ -270260,7 +270255,6 @@
                 <intersection id="51" externalid="470974719" noderef="4964" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="16191"/>
-                        <approach ref="5523"/>
                         <approach ref="8664"/>
                     </approaches>
                 </intersection>
@@ -271337,8 +271331,6 @@
                 <intersection id="7" externalid="26051949" noderef="11271" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="25254"/>
-                        <approach ref="28036"/>
-                        <approach ref="28038"/>
                         <approach ref="29196"/>
                     </approaches>
                 </intersection>
@@ -271924,8 +271916,6 @@
                 </intersection>
                 <intersection id="80" externalid="2165149751,3394729660" noderef="7138" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="11139"/>
-                        <approach ref="13272"/>
                         <approach ref="15425"/>
                         <approach ref="19247"/>
                     </approaches>
@@ -272505,8 +272495,6 @@
                 </intersection>
                 <intersection id="9" externalid="26051952" noderef="11273" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="28044"/>
-                        <approach ref="28046"/>
                         <approach ref="29202"/>
                         <approach ref="6681"/>
                     </approaches>
@@ -272832,7 +272820,6 @@
                     <approaches>
                         <approach ref="13275"/>
                         <approach ref="17412"/>
-                        <approach ref="6846"/>
                     </approaches>
                 </intersection>
             </intersections>

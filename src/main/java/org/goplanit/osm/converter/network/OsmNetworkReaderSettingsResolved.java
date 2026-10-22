@@ -27,16 +27,6 @@ public final class OsmNetworkReaderSettingsResolved {
   private final SortedMap<String, SortedSet<String>> excludedOsmWayTypesByKey = new TreeMap<>();
 
   /**
-   * Constructor.
-   *
-   * @param settings configured reader settings to resolve from
-   */
-  public OsmNetworkReaderSettingsResolved(final OsmNetworkReaderSettings settings) {
-    populateResolvedWayTypes(settings);
-    this.activatedOsmWayTypesByKeyView = createUnmodifiableWayTypesView(activatedOsmWayTypesByKey);
-  }
-
-  /**
    * Create an unmodifiable view on the provided resolved OSM way types by OSM key.
    *
    * @param osmWayTypesByKey to create the view for
@@ -104,6 +94,16 @@ public final class OsmNetworkReaderSettingsResolved {
         }
       }
     }
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param settings configured reader settings to resolve from
+   */
+  public OsmNetworkReaderSettingsResolved(final OsmNetworkReaderSettings settings) {
+    populateResolvedWayTypes(settings);
+    this.activatedOsmWayTypesByKeyView = createUnmodifiableWayTypesView(activatedOsmWayTypesByKey);
   }
 
   /**

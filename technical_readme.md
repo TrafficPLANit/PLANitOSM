@@ -119,7 +119,10 @@ unique even during the breaking of links.
 
 When parsing intersections is on (`setParseIntersections`, the default), the network reader turns OSM traffic signals
 into signalised intersections of the layer. An intersection has one or more member nodes, a kind (`junction`,
-`crossing`, or both) and its approaches: the link segments entering it that its signals control. Its external id lists
+`crossing`, or both) and its approaches: the link segments entering it that its signals control, only those a
+motorised road or rail mode may use. A footway or cycleway entering a signalised crossing is no approach. Once all
+signals are handled, an intersection left without an approach is removed and recorded, such as a signalised crossing
+where only a footway and a cycleway meet; its node keeps its signal for consolidation. Its external id lists
 the OSM node ids of the signals defining it, comma separated, e.g. the stop lines of its arms. Nothing else in the
 network changes, except that links can be broken at isolated signalised crossings when that setting is on (see below).
 
@@ -162,6 +165,11 @@ A node is a junction node for vehicle signals where three or more links usable b
 where footways meet the road, is not one: the road simply continues through it. For crossing signals every parsed link
 counts, footways included, so where a parsed footway crosses the road the crossing node is a junction node of its own.
 
+A node where a parsed tram or light rail track crosses the road is a junction node for vehicle signals too. The stop line
+of a vehicle signal before the track is before the track, so a signal stops there rather than at the road junction
+beyond it. Example: on St Kilda Road at High Street, Melbourne, signal 3296124516 stops at the first of the two High
+Street tram tracks it reaches.
+
 A road end outside the parsed area is a junction node for vehicle signals as well. Pre-processing keeps a way whole once
 one of its nodes lies inside the area, so a road can run on past the edge and end where it reached a junction that is
 cut off. The node where it ends, with only one road link, stands in for that junction, as far as a vehicle signal can
@@ -181,7 +189,8 @@ First pass, per signal:
 
 1. Not controlling traffic: ignored.
 2. Not on a node of the layer nor inside one of its links: ignored.
-3. Vehicle signal on a junction node: that node becomes a `junction`, every segment entering it an approach, except a
+3. Vehicle signal on a junction node: that node becomes a `junction`, every segment entering it that a motorised road or
+   rail mode may use an approach, except a
    segment against the traffic leaving the node (no motorised road or rail mode on it, while its opposite segment
    carries one), which approaches nothing the signal controls.
 
@@ -211,9 +220,10 @@ First pass, per signal:
    on a cycleway only along segments that allow bicycles, to the nearest node a road meets. From a tram or light rail
    track, within the railway settings' maximum (`setMaximumDistanceTrackSignalToRoadCrossingInMeters`, default 50 m),
    that node becomes a `junction`, car traffic being held there for the tram; from a cycleway, within the crossing
-   distance (below), a `crossing`; every segment entering it an approach. Where the way branches before a road and more
-   than one branch reaches a road within reach, the branching node becomes that intersection instead, with the segment
-   arriving there from the signal as its only approach and no road node joined; a branch reaching no road is not a
+   distance (below), a `crossing`; every segment entering it that a motorised road or rail mode may use an approach.
+   Where the way branches before a road and more than one branch reaches a road within reach, the branching node
+   becomes that intersection instead, with the segment arriving there from the signal as its only approach on a track
+   and none on a cycleway, and no road node joined; a branch reaching no road is not a
    candidate. With no road in reach the signal is ignored, as is a signal on any other way, such as a footway. No link is
    broken.
 
@@ -230,7 +240,8 @@ First pass, per signal:
    ```
 
    Here 15 becomes a `junction` with approach 10->15 only; neither 2 nor 5 is joined.
-6. Crossing signal on a junction node: that node becomes a `crossing`, every segment entering it an approach; with a
+6. Crossing signal on a junction node: that node becomes a `crossing`, every segment entering it that a motorised road
+   or rail mode may use an approach; with a
    vehicle signal on it as well, it is both a `junction` and a `crossing`.
 7. Any other crossing signal is collected for the third pass.
 
@@ -308,7 +319,8 @@ Third pass:
    distance of a crossing ignored at the edge (1.), as the crow flies: it is likely that crossing's stop line. The
    others are isolated crossings too (4.): what crosses there is unknown, but not only cars. Stop lines of isolated
    crossings from the second pass join their crossing when it has an intersection, and create nothing otherwise.
-4. An isolated crossing becomes its own `crossing` intersection, every segment entering it an approach, only when
+4. An isolated crossing becomes its own `crossing` intersection, every segment entering it that a motorised road or rail
+   mode may use an approach, only when
    breaking links at isolated signalised crossings is on (`setBreakLinksAtIsolatedSignalisedCrossings`, default off);
    the link is then broken at the signal's node when it is not a PLANit node yet. With the setting off nothing is
    created and no link is broken.
@@ -344,33 +356,70 @@ zoning. When intersections are not parsed it does not run, and a warning says so
 
 What consolidation does (PLANit's `IntersectionConsolidator`, next to the layer modifier):
 
-1. Intersections with the kind `junction` within 25 m of each other along the road form an intersection cluster.
+1. Intersections with the kind `junction` within 40 m of each other along the road form an intersection cluster.
 2. Every way to divide a cluster is scored on how well traffic entering each part can leave it in every direction the
-   cluster offers. Every member must earn its place. The best division wins, and a tie goes to fewer parts.
+   cluster offers. Every member must earn its place. The best division wins, and a tie goes to fewer parts. A cluster
+   of more than 10 parsed intersections is divided step by step instead, keeping the best few divisions per step.
 3. Each part becomes one spatial intersection, replacing the intersections it is made from: nodes between them
-   become members, and every segment between two members becomes internal.
-4. A link that road traffic only reaches by driving through the intersection, within 50 m, becomes internal too.
-5. A crossing within 25 m of a junction along the road joins it. A crossing on a slip lane joins its junction when it
-   lies within 60 m of a member node in a straight line.
-6. Road segments entering a signalised junction that are not approaches are counted, not added.
+   become members, and every segment between two members becomes internal. A node in front of the junction stays
+   outside, so the roads from it stay approaches with their signals: a fork where a road splits into signalised
+   branches, which road traffic only reaches from outside, and a node where a road splits into the carriageways of the
+   junction with a signal on the inbound one.
+4. A link that road traffic only reaches by driving through the intersection, within 60 m, becomes internal too.
+   Then any other junction within the intersection's radius plus 30 m of its centre (from the member nodes roads and
+   rails use), reached within 80 m over any
+   links, is pulled in, and this repeats until nothing more is: a signal inside a junction belongs to it. A node on
+   that connection in front of the junction, such as a fork with signalised branches, stays outside. A connection
+   that crosses a tram or light rail track may reach 15 m further, about the width of a tram corridor.
+5. A crossing within 40 m of a junction along the road joins it; a crossing no road reaches, such as a footway
+   crossing a tram track, looks along any links instead. A crossing on a slip lane joins its junction when it
+   lies within 60 m of a member node in a straight line. Then nodes the intersection encloses join it, whatever their
+   links carry, such as the nodes of a tram crossover between member nodes: nodes within the intersection's radius
+   that connect two or more of its member nodes without leaving it, over links each within 40 m. A node only
+   footways, cycleways and the like use also joins when it lies on a connection of at most 50 m between two member
+   nodes through such nodes, such as a footway corner between two crossings, however far from the centre. The centre
+   and radius count only the member nodes roads and rails use, so footway nodes never widen them. This repeats until
+   no more nodes join. A link from an enclosed node to beyond the radius becomes an arm, and a node in front of the
+   junction stays out. So does a footway or cycleway node that would hang off the intersection, such as a pavement
+   leading away from a corner: one linked to fewer than two of its nodes, or cut off from its member nodes. A footway
+   or cycleway segment into a signalised crossing, or into the node of a signal where
+   no road or rail passes, becomes an internal segment with a signal.
+6. A road entering a signalised junction without being an approach, not on a slip lane, is traced back against the
+   traffic, within 80 m, to the first signalised junction within the reach of step 4 plus 15 m. That junction is
+   pulled in with the road between them, since the missing signal most likely sits there; the further 15 m apply
+   along that road only. Step 4 then runs again, this repeats until nothing more is pulled in, and the intersections
+   that grew by pulling in a junction make internal the links now reached only through them, such as a road leaving
+   one junction and coming back into the other, and join the nodes they now enclose. Road segments entering a
+   signalised junction that are still not
+   approaches become approaches without a signal of their own, so movements are stored from them too. Each is recorded as on a slip lane, which often has no signal, or not:
+   a road entering a signalised junction without a signal is unusual, so a signal may be missing from OSM.
 7. Each spatial intersection stores every movement through it: from each approach to each exit its internal
    segments connect, with its length. A movement stores only a ban placed on it directly; the modes that can make it,
    after mode access and banned turns at member nodes, are worked out when needed.
 8. On request (`setCollapsedModeTypes`, none by default), the chosen modes are collapsed onto a new centre node per
-   spatial intersection, their bans moved onto the new turns where they hold exactly.
+   spatial intersection, once consolidation is done (the layer modifier's `collapseIntersectionsToNonSpatialForModes`).
+   The new turns are banned so each collapsed mode can only make what it could make while the intersection was
+   spatial: worked out from the stored movements and, for a segment entering it that is not an approach, such as a
+   footway, from what that segment could reach.
 
 Where a vehicle signal stands matters when a segment turns internal: one with a vehicle signal on it becomes an
 internal segment with a signal, such as a stop line between the carriageways of a divided road. The integrator
 records each vehicle signal it made into an approach, by OSM way, direction and position
 (`OsmTrafficSignalIntegrator.isVehicleSignalStandingOn`). That
 still holds when a link is broken later, for example by the zoning reader. A signal on a junction node gives no
-internal segment a signal.
+internal segment a signal, since mappers often tag every node of a junction. A signalised crossing's footway or
+cycleway sides are the exception: each has a light of its own, so such an approach into the crossing keeps the
+crossing's signal when it turns internal. A road into the crossing does not, in either direction: road traffic stops
+for the crossing on the road from outside, which stays an approach, and the road from inside the junction is run by
+the junction's own signals.
 
 The values that tune it are PLANit's `IntersectionConsolidatorSettings`, held by the reader settings: change them in
 place through `getIntersectionConsolidatorSettings()`, or switch consolidation on with settings of your own through
-`setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum internal link length 25 m, minimum
-coverage gain per member 0.05, coverage tie margin 0.001, at most 10 parsed intersections in a cluster that is
-subdivided, internal link length warning 100 m, maximum distance reached only through an intersection 50 m, and
+`setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum internal link length 40 m, minimum
+coverage gain per member 0.05, coverage tie margin 0.05, every subdivision tried for clusters of up to 10 parsed
+intersections and a larger cluster subdivided step by step keeping 3 subdivisions per step, junctions pulled in
+within the radius plus 30 m over a connection of at most 80 m, internal link length
+warning 100 m, maximum distance reached only through an intersection 60 m, and
 maximum distance from a crossing on a slip lane to its junction 60 m. The modes to collapse are set with
 `setCollapsedModeTypes` on the reader settings. The values are logged with the other settings when consolidation is
 on. What consolidation did is logged on one line, and each entity is recorded in the PLANit
@@ -403,10 +452,12 @@ What happens is recorded where it is decided, in two stages, and logged at the e
   junction is, up to 200 m, follows.
 * **PLANit intersections** (`OsmPlanitEntityDiagnostics`, `OsmPlanitEntityIssue`) - the intersections and approaches
   created, and their issues: an intersection lost when pruning removed all its approaches (read from the clean-up's
-  result), an approach no motorised road or rail mode can use, and an intersection without any such approach. With
-  consolidation on, also what it did, each entity once: intersections replaced, clusters too large to subdivide,
+  result), and an intersection removed for having no approach a motorised road or rail mode can use. With
+  consolidation on, also what it did, each entity once: intersections replaced, clusters subdivided step by step,
   nodes joined, approaches made internal, long internal links, links reached only through their intersection,
-  crossings joined (along the road or from a slip lane), missing approaches and junctions with few lit arms.
+  junctions pulled in within a radius, crossings joined (along the road or from a slip lane), approaches added
+  without a signal (on a slip lane, or not)
+  and junctions with few lit arms.
 
 The rules above are covered scenario by scenario in `OsmTrafficSignalsTest`, `OsmTrafficSignalIntegratorTest`,
 `OsmIntersectionConsolidationTest` and `OsmTurnRestrictionModesTest`, each hand-made `.osm` file under

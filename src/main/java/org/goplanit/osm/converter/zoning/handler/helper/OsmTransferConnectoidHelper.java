@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.zoning.handler.helper;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
+import org.goplanit.converter.zoning.StopLocationOnLinkSegment;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
@@ -10,6 +11,7 @@ import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.handler.OsmZoningHandlerProfiler;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
+import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.graph.directed.EdgeSegment;
 import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
@@ -84,7 +86,56 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       mustAvoidCrossingTraffic = !Long.valueOf(PlanitOsmUtils.parseOsmId(transferZone)).equals(
               settings.getOverwrittenWaitingAreaOfStopLocation(osmStopLocationNodeId).second());
     } 
-    return mustAvoidCrossingTraffic;   
+    return mustAvoidCrossingTraffic;
+  }
+
+  /**
+   * Log that no stop location could be created on an access link for a waiting area
+   *
+   * @param accessLink the stop location was looked for on
+   * @param transferZone of the waiting area
+   */
+  private static void logStopLocationNotCreated(MacroscopicLink accessLink, TransferZone transferZone) {
+    LOGGER.warning(
+        String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is " +
+            "likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()));
+  }
+
+  /**
+   * Create the mapping from a waiting area's OSM id to the OSM way id the user nominated as its access link, see
+   * {@link OsmPublicTransportReaderSettings#getWaitingAreaNominatedOsmWayForStopLocation}
+   *
+   * @param transferZone of the waiting area, whose geometry tells which kind of OSM entity the waiting area is
+   * @return mapping from waiting area OSM id to the nominated OSM way id, giving null when none is nominated
+   */
+  private Function<String, String> createNominatedAccessLinkSourceIdMapping(TransferZone transferZone) {
+    return tzOsmId -> {
+      EntityType osmWaitingAreaEntityType =
+          PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(true));
+      Long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(
+          Long.valueOf(tzOsmId), osmWaitingAreaEntityType);
+      return osmWayId!=null ? String.valueOf(osmWayId) : null;
+    };
+  }
+
+  /**
+   * Create the mapping from a location to the OSM id of the waiting area the user attached the stop location there to,
+   * see {@link OsmPublicTransportReaderSettings#getOverwrittenWaitingAreaOfStopLocation}
+   *
+   * @param planitMode whose network layer holds the OSM nodes looked up by location
+   * @return mapping from location to waiting area OSM id, giving null when the location is no OSM node, or when the
+   * user attached it to no waiting area
+   */
+  private Function<Point, String> createOverwrittenWaitingAreaSourceIdForPointMapping(Mode planitMode) {
+    var networkLayer = getZoningReaderData().getPlanitConverterData().getReferenceNetwork().getLayerByMode(planitMode);
+    return point -> {
+      final var osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(point);
+      if(osmNode == null){
+        return null;
+      }
+      var result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmNode.getId());
+      return result!= null ? String.valueOf(result.second()) : null;
+    };
   }
 
   /**
@@ -128,14 +179,6 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       }
     }
 
-    Function<String, String> getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId = tzOsmId -> {
-      EntityType osmWaitingAreaEntityType =
-          PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry(true));
-      Long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(
-          Long.valueOf(tzOsmId), osmWaitingAreaEntityType);
-      return osmWayId!=null ? String.valueOf(osmWayId) : null;
-    };
-
     return ZoningConverterUtils.findAccessEntryLinkSegmentsForWaitingArea(
             transferZone.getExternalId(),
             transferZone.getGeometry(true),
@@ -145,7 +188,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
             accessMode,
             getSettings().getCountryName(),
             mustAvoidCrossingTraffic,
-            getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId,
+            createNominatedAccessLinkSourceIdMapping(transferZone),
             this.getOverwrittenWaitingAreaSourceIdForNode,
             getGeoUtils());
   }
@@ -456,55 +499,61 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
             suppressLogging);
   }
 
-  /** extract a connectoid location within the link based on an existing coordinate (osm node) or by inserting an
-   * additional coordinate in the location closest to the provided
-   * waiting area geometry. A new location is only inserted into the link's geometry when all existing coordinates
-   * on the link's geometry fall outside the user specified distance between
-   * waiting area and stop location.
-   * 
+  /** extract a connectoid location on the link of the given access link segments: the stop location of each segment,
+   * see {@link #findStopLocationOnLinkSegment(TransferZone, MacroscopicLinkSegment, Mode, double)}, chosen among them
+   * by the distance to the waiting area, see {@link ZoningConverterUtils#chooseStopLocationOnAccessLink}. A location
+   * that is not the existing coordinate closest to the waiting area is inserted into the link's geometry, projected
+   * from the waiting area's centre.
+   *
    * @param transferZone transfer zone to use
-   * @param accessLink to create connectoid location on on either one of its extreme or internal coordinates
-   * @param planitAccessModeType to consider
+   * @param accessLinkSegments of one access link, the segments the stop may be on
+   * @param accessMode to consider
    * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area
    *                                                   that we allow
    * @param networkLayer the link is registered on
-   * @return connectoid location to use, may or may not be an existing osm node location, or not
+   * @return connectoid location to use, may or may not be an existing osm node location, null when none is found
    */
-  private Point extractTransferConnectoidLocationStandAloneTransferZoneOnLink(
+  private Point extractTransferConnectoidLocationStandAloneTransferZoneOnAccessLinkSegments(
       TransferZone transferZone,
-      MacroscopicLink accessLink,
-      PredefinedModeType planitAccessModeType,
+      SortedSet<MacroscopicLinkSegment> accessLinkSegments,
+      Mode accessMode,
       double maxAllowedStopToTransferZoneDistanceMeters,
       MacroscopicNetworkLayer networkLayer) {
-    
-    /* determine distance to closest OSM node on existing planit link to create stop location (connectoid) for*/
-    Point connectoidLocation =
-        findTransferConnectoidLocationForStandAloneTransferZoneOnLink(
-                transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters);
-    
+
+    var accessLink = accessLinkSegments.first().getParent();
+    Point connectoidLocation = ZoningConverterUtils.chooseStopLocationOnAccessLink(
+        accessLinkSegments,
+        accessLinkSegment -> {
+          var stopLocation = findStopLocationOnLinkSegment(
+              transferZone, accessLinkSegment, accessMode, maxAllowedStopToTransferZoneDistanceMeters);
+          return stopLocation == null ? null : stopLocation.getLocation();
+        },
+        location -> getGeoUtils().getClosestDistanceInMeters(location.getCoordinate(), transferZone.getGeometry(true)),
+        (accessLinkSegment, location) -> false);
+
     if(connectoidLocation !=null) {
-      
+
       /* in case identified projected location is not identical to an existing shape point or extreme point of the link,
       insert it into the geometry */
       Coordinate closestExistingCoordinate = getGeoUtils().getClosestExistingLineStringCoordinateToGeometry(
               transferZone.getGeometry(), accessLink.getGeometry());
       if( !closestExistingCoordinate.equals2D(connectoidLocation.getCoordinate())) {
-  
-        /* add projected location to geometry of link */
+
+        /* add projected location to geometry of link, projected from the waiting area's centre as the location is */
         LinearLocation projectedLinearLocationOnLink =
                 PlanitEntityGeoUtils.extractClosestProjectedLinearLocationToGeometryFromEdge(
-                        transferZone.getGeometry(true), accessLink, getGeoUtils());
+                        PlanitJtsUtils.extractCentre(transferZone.getGeometry(true)), accessLink, getGeoUtils());
         accessLink.updateGeometryInjectCoordinateAtProjectedLocation(projectedLinearLocationOnLink);
-                
+
         /* new location must be marked as internal to link, otherwise the link will not be broken when extracting
         connectoids at this location*/
         getNetworkToZoningData().getNetworkLayerData(networkLayer).registerLocationAsInternalToPlanitLink(
                 connectoidLocation, accessLink);
       }
     }
-        
+
     return connectoidLocation;
-  }  
+  }
 
   /** Constructor 
    *
@@ -534,65 +583,55 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     }
   }
 
-  /** find a suitable connectoid location on the given link based on the constraints that it must be able to reside
-   * on a link segment that is in the correct relative position
-   * to the transfer zone and supports the access mode on at least one of the designated link segment(s) that is
-   * eligible (if any). If not null is returned
-   *  
-   * @param transferZone to find location for
-   * @param accessLink to find location on
-   * @param planitModeType to be compatible with
-   * @param maxAllowedDistanceMeters the maximum allowed distance between stop and waiting area that we allow
-   * @return found location either existing node or projected location that is nearest and does not exist as a
-   * shape point on the link yet, or null if no valid position could be found
+  /**
+   * Find the access link segments of the given links for a stand-alone transfer zone, with the user's overwrites of
+   * the default stop location applied, see {@link ZoningConverterUtils#findAccessLinkSegmentsForWaitingAreaOnLinks}
+   *
+   * @param transferZone of the waiting area
+   * @param links to find access link segments on
+   * @param accessMode to find access link segments for
+   * @return the access link segments found, in id order
    */
-  public Point findTransferConnectoidLocationForStandAloneTransferZoneOnLink(
-          final TransferZone transferZone,
-          final MacroscopicLink accessLink,
-          final PredefinedModeType planitModeType,
-          double maxAllowedDistanceMeters) {
+  public SortedSet<MacroscopicLinkSegment> findAccessLinkSegmentsForWaitingAreaOnLinks(
+      TransferZone transferZone, Collection<MacroscopicLink> links, Mode accessMode) {
+    return ZoningConverterUtils.findAccessLinkSegmentsForWaitingAreaOnLinks(
+        transferZone.getExternalId(),
+        transferZone.getGeometry(true),
+        links,
+        ExternalIdAble::getExternalId,
+        List.of(accessMode),
+        mode -> createNominatedAccessLinkSourceIdMapping(transferZone),
+        getOverwrittenWaitingAreaSourceIdForNode,
+        getSettings().getCountryName(),
+        getGeoUtils());
+  }
 
-    var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
-    final Mode planitMode = referenceNetwork.getModes().get(planitModeType);
-    /* prep remaining functions that overwrite default behaviour of PLANit connectoid location
-    finder based on user settings */
-    Function<Point, String> getOverwrittenWaitingAreaSourceIdForPoint;
-    Function<String, String> getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId;
-    {
-      /* transform point to waiting area source id if a specific waiting area is to be attached to it,
-      overwrites default behaviour of finding connectoid location in PLANit */
-      getOverwrittenWaitingAreaSourceIdForPoint = p -> {
-        final var networkLayer = referenceNetwork.getLayerByMode(planitMode);
-        final var osmNode = getNetworkToZoningData().getNetworkLayerData(networkLayer).getOsmNodeByLocation(p);
-        if(osmNode == null){
-          return null;
-        }
-        var result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmNode.getId());
-        return result!= null ? String.valueOf(result.second()) : null;
-      };
-
-      getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId = tzOsmId -> {
-        EntityType osmWaitingAreaEntityType =
-                PlanitTransferZoneUtils.transferZoneGeometryToOsmEntityType(transferZone.getGeometry());
-        Long osmWayId = getSettings().getWaitingAreaNominatedOsmWayForStopLocation(
-                Long.valueOf(tzOsmId), osmWaitingAreaEntityType);
-        return osmWayId!=null ? String.valueOf(osmWayId) : null;
-      };
-    }
-
-    /* call PLANit connectoid location finder method with appropriate parameters */
-    return ZoningConverterUtils.findTransferConnectoidLocationForWaitingAreaOnLink(
-            transferZone.getExternalId(),
-            transferZone.getGeometry(true),
-            accessLink,
-            accessLink.getExternalId(),
-            planitMode,
-            maxAllowedDistanceMeters,
-            getOverwrittenWaitingAreaSourceIdForNode,
-            getOverwrittenWaitingAreaSourceIdForPoint,
-            getOverwrittenAccessLinkSourceIdForWaitingAreaSourceId,
-            getSettings().getCountryName(),
-            getGeoUtils());
+  /**
+   * Find where the stop of a stand-alone transfer zone goes on an access link segment, with the user's overwrites of
+   * the default stop location applied, see {@link ZoningConverterUtils#findStopLocationForWaitingAreaOnLinkSegment}
+   *
+   * @param transferZone of the waiting area
+   * @param accessLinkSegment to find the location on
+   * @param accessMode the stop serves
+   * @param maxAllowedDistanceMeters the maximum allowed distance between stop and waiting area
+   * @return the stop location, null when the segment gives none
+   */
+  public StopLocationOnLinkSegment findStopLocationOnLinkSegment(TransferZone transferZone,
+      MacroscopicLinkSegment accessLinkSegment, Mode accessMode, double maxAllowedDistanceMeters) {
+    return ZoningConverterUtils.findStopLocationForWaitingAreaOnLinkSegment(
+        transferZone.getExternalId(),
+        transferZone.getGeometry(true),
+        accessLinkSegment,
+        accessLinkSegment.getParent().getExternalId(),
+        accessMode,
+        maxAllowedDistanceMeters,
+        getSettings().getMaxEndNodeToIdealStopPointMeters(),
+        getSettings().getMaxShapePointToIdealStopPointMeters(),
+        getOverwrittenWaitingAreaSourceIdForNode,
+        createOverwrittenWaitingAreaSourceIdForPointMapping(accessMode),
+        createNominatedAccessLinkSourceIdMapping(transferZone),
+        getSettings().getCountryName(),
+        getGeoUtils());
   }
 
   /**
@@ -993,11 +1032,11 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     return success;
   }  
   
-  /** create connectoids not based on OSM node location but based on auto-generated geographic location on the provided
-   * link's link segments by finding either a close enough existing coordinate (OSM node), or if not close enough a
-   * newly created coordinate at the appropriate position. Then create connectoids accordingly by breaking the link in
-   * these locations. This is assumed to become connectoids for a vehicle stop location of some sort.
-   * 
+  /** create connectoids on an access link whose access link segments are not known yet, such as a link the user
+   * nominated: its access link segments are found first, see
+   * {@link #findAccessLinkSegmentsForWaitingAreaOnLinks(TransferZone, Collection, Mode)}, and the connectoids are
+   * created on them, see {@link #extractTransferConnectoidsForStandAloneTransferZoneByAccessLinkSegments}.
+   *
    * @param osmWaitingAreaId the waiting area pertains to
    * @param waitingAreaGeometry geometry of the waiting area
    * @param accessLink to create connectoids on by breaking it
@@ -1017,15 +1056,54 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       double maxAllowedStopToTransferZoneDistanceMeters,
       MacroscopicNetworkLayer networkLayer,
       boolean suppressLogging) {
+    var accessMode = getZoningReaderData().getPlanitConverterData().getReferenceNetwork().getModes().get(
+        planitAccessModeType);
+    var accessLinkSegments = findAccessLinkSegmentsForWaitingAreaOnLinks(transferZone, List.of(accessLink), accessMode);
+    if(accessLinkSegments.isEmpty()) {
+      if(!suppressLogging) {
+        logStopLocationNotCreated(accessLink, transferZone);
+      }
+      return;
+    }
+    extractTransferConnectoidsForStandAloneTransferZoneByAccessLinkSegments(osmWaitingAreaId, waitingAreaGeometry,
+        accessLinkSegments, transferZone, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters,
+        networkLayer, suppressLogging);
+  }
+
+  /** create connectoids not based on OSM node location but based on auto-generated geographic location on the link of
+   * the provided access link segments, by finding either a close enough existing coordinate (OSM node), or if not close
+   * enough a newly created coordinate at the appropriate position. Then create connectoids accordingly by breaking the
+   * link in these locations. This is assumed to become connectoids for a vehicle stop location of some sort.
+   *
+   * @param osmWaitingAreaId the waiting area pertains to
+   * @param waitingAreaGeometry geometry of the waiting area
+   * @param accessLinkSegments of one access link, the segments the stop may be on, not empty, see
+   *                           {@link #findAccessLinkSegmentsForWaitingAreaOnLinks(TransferZone, Collection, Mode)}
+   * @param transferZone to register connectoids on
+   * @param planitAccessModeType eligible mode type for the station
+   * @param maxAllowedStopToTransferZoneDistanceMeters the maximum allowed distance between stop and waiting area that
+   *                                                   we allow
+   * @param networkLayer the modes relate to
+   * @param suppressLogging when true suppress logging, false otherwise
+   */
+  public void extractTransferConnectoidsForStandAloneTransferZoneByAccessLinkSegments(
+      long osmWaitingAreaId,
+      Geometry waitingAreaGeometry,
+      SortedSet<MacroscopicLinkSegment> accessLinkSegments,
+      TransferZone transferZone,
+      PredefinedModeType planitAccessModeType,
+      double maxAllowedStopToTransferZoneDistanceMeters,
+      MacroscopicNetworkLayer networkLayer,
+      boolean suppressLogging) {
 
     /* geolocation on planit link, possibly inserted for this purpose by this method if no viable osm node/existing
     coordinate is present */
-    Point connectoidLocation = extractTransferConnectoidLocationStandAloneTransferZoneOnLink(
-        transferZone, accessLink, planitAccessModeType, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
+    var accessMode = getZoningReaderData().getPlanitConverterData().getReferenceNetwork().getModes().get(
+        planitAccessModeType);
+    Point connectoidLocation = extractTransferConnectoidLocationStandAloneTransferZoneOnAccessLinkSegments(
+        transferZone, accessLinkSegments, accessMode, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     if(!suppressLogging && connectoidLocation == null) {
-      LOGGER.warning(
-          String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is " +
-              "likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()));
+      logStopLocationNotCreated(accessLinkSegments.first().getParent(), transferZone);
     }
     
     /* special case - user overwrite verification */

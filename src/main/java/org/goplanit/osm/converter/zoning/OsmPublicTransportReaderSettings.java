@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import org.goplanit.converter.zoning.AccessEgressInjectionSettings;
+import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.OsmReaderSettings;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
@@ -28,6 +29,49 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /** logger to use */
   @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(OsmPublicTransportReaderSettings.class.getCanonicalName());
+
+  /** by default the transfer parser is activated */
+  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
+
+  /** by default we are removing dangling zones */
+  public static boolean DEFAULT_REMOVE_DANGLING_ZONES = true;
+
+  /** by default we are removing dangling transfer zone groups */
+  public static boolean DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS = true;
+
+  /**
+   * default search radius in meters for mapping stops/platforms to stop positions on the networks when they
+   * have no explicit reference
+   */
+  public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 25;
+
+  /**
+   * default search radius in meters for mapping stations to platforms on the networks when they have no
+   * explicit reference
+   */
+  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 35;  
+
+  /**
+   * Default search radius in meters when trying to find parallel lines (tracks) for stand-alone stations 
+   */
+  public static double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
+
+  /**
+   * The default buffer distance when looking for edges within a distance of the closest edge to create
+   * connectoids (stop_locations) on for transfer zones. In case multiple candidates are close just selecting
+   * the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
+   */
+  public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
+
+  /** by default, we connect dangling ferry stops to the nearest ferry route */
+  public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
+
+  /**
+   * default search radius in meters for mapping ferry stops to ferry routes. When found and
+   * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true then a new link to the nearest waterway
+   * running the ferry is created to avoid the ferry stop to be dangling
+   */
+  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
 
   /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
@@ -53,7 +97,17 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   
   /** the maximum search radius used when trying to find parallel platforms for stand-alone stations */
   private double searchRadiusStationToParallelTracksInMeters = DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M;
-  
+
+  /** when placing a stop without a known stop location, an end node within this distance of its ideal stop point is
+   * reused rather than breaking the link */
+  private double maxEndNodeToIdealStopPointMeters =
+      ZoningConverterUtils.DEFAULT_MAX_END_NODE_TO_IDEAL_STOP_POINT_METERS;
+
+  /** when breaking a link for a stop without a known stop location, an inner shape point within this distance of its
+   * ideal stop point is used rather than breaking the link right next to it */
+  private double maxShapePointToIdealStopPointMeters =
+      ZoningConverterUtils.DEFAULT_MAX_SHAPE_POINT_TO_IDEAL_STOP_POINT_METERS;
+
   /**
    * exclude osm node, ways from parsing when identified as problematic for some reason. they can be stops,
    * platforms, stations, etc.
@@ -107,49 +161,6 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   /** bundles a number of settings regarding attaching access/egress settings for transfer zones */
   AccessEgressInjectionSettings accessEgressInjectionSettings = new AccessEgressInjectionSettings();
     
-  /** by default the transfer parser is activated */
-  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
-  
-  /** by default we are removing dangling zones */
-  public static boolean DEFAULT_REMOVE_DANGLING_ZONES = true;
-  
-  /** by default we are removing dangling transfer zone groups */
-  public static boolean DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS = true;
-    
-  /**
-   * default search radius in meters for mapping stops/platforms to stop positions on the networks when they
-   * have no explicit reference
-   */
-  public static double DEFAULT_SEARCH_RADIUS_PLATFORM2STOP_M = 25;
-  
-  /**
-   * default search radius in meters for mapping stations to platforms on the networks when they have no
-   * explicit reference
-   */
-  public static double DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M = 35;  
-  
-  /**
-   * Default search radius in meters when trying to find parallel lines (tracks) for stand-alone stations 
-   */
-  public static double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
-  
-  /**
-   * The default buffer distance when looking for edges within a distance of the closest edge to create
-   * connectoids (stop_locations) on for transfer zones. In case multiple candidates are close just selecting
-   * the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
-   */
-  public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
-
-  /** by default, we connect dangling ferry stops to the nearest ferry route */
-  public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
-
-  /**
-   * default search radius in meters for mapping ferry stops to ferry routes. When found and
-   * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true then a new link to the nearest waterway
-   * running the ferry is created to avoid the ferry stop to be dangling
-   */
-  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
-
   /** Constructor using default (Global) locale
   */
   public OsmPublicTransportReaderSettings() {
@@ -203,6 +214,10 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
     if(isParserActive()) {
       LOGGER.info(LoggingUtils.settingsValue("Stop location to waiting area search radius (m)",
           String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("End node reused within distance of ideal stop point (m)",
+          String.format("%.2f", getMaxEndNodeToIdealStopPointMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Link broken at shape point within distance of ideal stop point (m)",
+          String.format("%.2f", getMaxShapePointToIdealStopPointMeters()), level));
       LOGGER.info(LoggingUtils.settingsValue("Station location to waiting area search radius (m)",
           String.format("%.2f", getStationToWaitingAreaSearchRadiusMeters()), level));
       LOGGER.info(LoggingUtils.settingsValue("Station location to parallel tracks search radius (m)",
@@ -269,7 +284,44 @@ public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
    */
   public double getStopToWaitingAreaSearchRadiusMeters() {
     return this.searchRadiusPlatformToStopInMeters;
-  }  
+  }
+
+  /** Set the distance within which an end node of the link chosen for a stop without a known stop location is reused
+   * rather than breaking the link, measured from the stop's ideal stop point: the point of the link closest to the
+   * waiting area's centre
+   *
+   * @param maxEndNodeToIdealStopPointMeters to use
+   */
+  public void setMaxEndNodeToIdealStopPointMeters(Number maxEndNodeToIdealStopPointMeters) {
+    this.maxEndNodeToIdealStopPointMeters = maxEndNodeToIdealStopPointMeters.doubleValue();
+  }
+
+  /** Collect the distance within which an end node of the link chosen for a stop without a known stop location is
+   * reused rather than breaking the link, measured from the stop's ideal stop point
+   *
+   * @return distance in meters
+   */
+  public double getMaxEndNodeToIdealStopPointMeters() {
+    return this.maxEndNodeToIdealStopPointMeters;
+  }
+
+  /** Set the distance within which an inner shape point of the link chosen for a stop without a known stop location
+   * is used to break the link at, rather than breaking it right next to it, measured from the stop's ideal stop point
+   *
+   * @param maxShapePointToIdealStopPointMeters to use
+   */
+  public void setMaxShapePointToIdealStopPointMeters(Number maxShapePointToIdealStopPointMeters) {
+    this.maxShapePointToIdealStopPointMeters = maxShapePointToIdealStopPointMeters.doubleValue();
+  }
+
+  /** Collect the distance within which an inner shape point of the link chosen for a stop without a known stop
+   * location is used to break the link at, measured from the stop's ideal stop point
+   *
+   * @return distance in meters
+   */
+  public double getMaxShapePointToIdealStopPointMeters() {
+    return this.maxShapePointToIdealStopPointMeters;
+  }
   
   /** Set the maximum search radius used when trying to map stations to platforms on the networks, 
    * when no explicit relation is made known by OSM 

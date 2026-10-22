@@ -2,11 +2,9 @@ package org.goplanit.osm.converter.zoning.handler;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.converter.zoning.TransferZoningInjectAccessEgressExecutor;
@@ -16,24 +14,22 @@ import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderData;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderOsmData;
+import org.goplanit.osm.converter.zoning.handler.helper.OsmTransferConnectoidHelper;
 import org.goplanit.osm.converter.zoning.handler.helper.TransferZoneGroupHelper;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitEntityGeoUtils;
-import org.goplanit.utils.geo.PlanitGraphGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.id.ExternalIdAble;
-import org.goplanit.utils.math.Precision;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.*;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
-import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.*;
 import org.goplanit.utils.zoning.connectoid.ZoneConnectoidType;
@@ -136,122 +132,30 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /** From the provided options, select the most appropriate based on proximity, mode compatibility, relative location
-   * to transfer zone, and importance of the OSM way type
+   * to transfer zone, and importance of the OSM way type, see
+   * {@link ZoningConverterUtils#findMostAppropriateStopLocationLinkByDistanceToStopLocation}. A link is judged by where
+   * its stop would go, see {@link OsmTransferConnectoidHelper#findStopLocationOnLinkSegment}, and the highest capacity
+   * is preferred for a road mode. The user's overwrites of the default stop location apply, so the access link segments
+   * returned are the ones the stop is placed on
    *
    * @param transferZone under consideration
    * @param osmAccessMode access mode to use
    * @param eligibleLinks for connectoids
-   * @return most appropriate link that is found
+   * @return most appropriate link that is found with its access link segments, null when none is found
    */
-  private Pair<MacroscopicLink, Set<LinkSegment>> findMostAppropriateStopLocationLinkForWaitingArea(
+  private Pair<MacroscopicLink, SortedSet<MacroscopicLinkSegment>> findMostAppropriateStopLocationLinkForWaitingArea(
       TransferZone transferZone, String osmAccessMode, Collection<MacroscopicLink> eligibleLinks) {
 
-    // prep
-    Function<MacroscopicLink, String> linkToSourceId = ExternalIdAble::getExternalId;
     var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
     var accessMode = getReferenceNetwork().getModes().get(accessModeType);
 
-    /* 1) reduce candidates to access links related to access link segments that are deemed valid in terms of mode
-    and location (closest already complies as per above) */
-    Set<LinkSegment> accessLinkSegments = new HashSet<>(2);
-    for(var currAccessLink : eligibleLinks) {
-      boolean mustAvoidCrossingTraffic =  ZoningConverterUtils.isAvoidCrossTrafficForAccessMode(accessMode);
-      var currAccessLinkSegments = ZoningConverterUtils.findAccessLinkSegmentsForWaitingArea(
-          transferZone.getExternalId(),
-          transferZone.getGeometry(),
-          currAccessLink,
-          linkToSourceId.apply(currAccessLink),
-          accessMode,
-          getZoningReaderData().getCountryName(),
-          mustAvoidCrossingTraffic,
-          null,
-          null,
-          getGeoUtils());
-      if (currAccessLinkSegments != null && !currAccessLinkSegments.isEmpty()) {
-        accessLinkSegments.addAll(currAccessLinkSegments);
-      }
-    }
-    // extract parent links from options
-    var candidatesToFilter =
-        accessLinkSegments.stream().flatMap(
-            ls -> Stream.of((MacroscopicLink)ls.getParent())).collect(Collectors.toSet());
-
-    /* 2) make sure a valid stop_location on each remaining link can be created (for example if stop_location would be
-     * on an extreme node, it is possible no access link segment upstream of that node remains
-     *    which would render an otherwise valid position invalid */
-    var candidatesWithValidConnectoidLocation = new HashSet<MacroscopicLink>();
-    for(var candidate : candidatesToFilter){
-      if(null != ZoningConverterUtils.findTransferConnectoidLocationForWaitingAreaOnLink(
-          transferZone.getExternalId(),
-          transferZone.getGeometry(),
-          candidate,
-          linkToSourceId.apply(candidate),
-          accessMode,
-          getSettings().getStopToWaitingAreaSearchRadiusMeters(),
-          null,
-          null,
-          null,
-          getZoningReaderData().getCountryName(),
-          getGeoUtils())){
-        candidatesWithValidConnectoidLocation.add(candidate);
-      }
-    }
-
-    if(candidatesWithValidConnectoidLocation.isEmpty() ) {
-      return null;
-    }else if(candidatesWithValidConnectoidLocation.size()==1) {
-      var selectedAccessLink = candidatesWithValidConnectoidLocation.iterator().next();
-      accessLinkSegments.removeIf( ls -> !ls.getParent().equals(selectedAccessLink)); // sync
-      return Pair.of(selectedAccessLink, accessLinkSegments);
-    }
-
-    /* 3) all proper candidates so  reduce options further based on proximity to closest viable link, while removing
-     * options outside of the closest distance buffer */
-    var filteredCandidates =
-        PlanitGraphGeoUtils.findEdgesWithinClosestDistanceDeltaToGeometry(
-            transferZone.getGeometry(),
-            candidatesWithValidConnectoidLocation,
-            OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M,
-            getGeoUtils()).keySet();
-    accessLinkSegments.removeIf( ls -> !filteredCandidates.contains((MacroscopicLink) ls.getParent())); // sync
-
-    if(filteredCandidates.size()==1){
-      var selectedAccessLink = filteredCandidates.iterator().next();
-      accessLinkSegments.removeIf( ls -> !ls.getParent().equals(selectedAccessLink)); // sync
-      return Pair.of(selectedAccessLink, accessLinkSegments);
-    }
-
-    /* 4) Remaining options are all valid and close ... choose based on importance, the premise being that road based
-     * PT services tend to be located on main roads, rather than smaller roads so, we choose the first link segment
-     * with the highest capacity found (if they differ) and then return its parent link as the candidate */
-    if(!(accessMode.getPhysicalFeatures().getTrackType() == TrackModeType.RAIL) &&
-        filteredCandidates.size()>1 &&
-        filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(accessLinkSegments::contains).map(
-            MacroscopicLinkSegment::getCapacityOrDefaultPcuHLane).distinct().count()>1){
-
-      // retain only edge segments with the maximum capacity
-      var maxCapacity = accessLinkSegments.stream().map(
-          ls -> ((MacroscopicLinkSegment)ls).getCapacityOrDefaultPcuHLane()).max(Comparator.naturalOrder());
-      var lowerCapacitySegments =
-          filteredCandidates.stream().flatMap(l -> l.getLinkSegments().stream()).filter(
-              ls -> Precision.smaller(ls.getCapacityOrDefaultPcuHLane(), maxCapacity.get(), Precision.EPSILON_6)).
-              collect(Collectors.toUnmodifiableSet());
-      accessLinkSegments.removeAll(lowerCapacitySegments);
-      filteredCandidates.removeAll(
-          lowerCapacitySegments.stream().map(MacroscopicLinkSegment::getParent).collect(
-              Collectors.toUnmodifiableSet()));
-    }
-
-    /* now find the closest remaining*/
-    MacroscopicLink finalSelectedAccessLink = filteredCandidates.iterator().next();
-    if(filteredCandidates.size()>1) {
-      finalSelectedAccessLink = (MacroscopicLink) PlanitGraphGeoUtils.findEdgeClosest(
-          transferZone.getGeometry(), filteredCandidates, getGeoUtils());
-    }
-    final var dummy = finalSelectedAccessLink;
-    accessLinkSegments.removeIf(ls -> !ls.getParent().equals(dummy)); // sync
-
-    return Pair.of(finalSelectedAccessLink, accessLinkSegments);
+    var connectoidHelper = getTransferConnectoidHelper();
+    return ZoningConverterUtils.findMostAppropriateStopLocationLinkByDistanceToStopLocation(
+        connectoidHelper.findAccessLinkSegmentsForWaitingAreaOnLinks(transferZone, eligibleLinks, accessMode),
+        List.of(accessMode),
+        (accessLinkSegment, mode) -> connectoidHelper.findStopLocationOnLinkSegment(
+            transferZone, accessLinkSegment, mode, getSettings().getStopToWaitingAreaSearchRadiusMeters()),
+        OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M);
   }
 
   /** Find all links that are within the given search bounding box, are mode compatible, and have a matching
@@ -602,27 +506,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * If ferry terminal is mapped to another user defined waiting area, detect and retrieve it
-   * @param osmFerryTerminal to check
-   * @param tags to use
-   * @return transfer zone if any is user mapped, null otherwise
-   */
-  public TransferZone findUserOverwrittenWaitingAreaForFerryTerminal(
-      OsmEntity osmFerryTerminal, Map<String, String> tags){
-    if(getSettings().isOverwriteWaitingAreaOfStopLocation(osmFerryTerminal.getId())) {
-      /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
-      Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmFerryTerminal.getId());
-      var ferryTerminalTransferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(
-          result.first(), result.second());
-      LOGGER.fine(String.format("Mapped ferry stop %d to overwritten waiting area %d",
-          osmFerryTerminal.getId(), result.second()));
-      PlanitTransferZoneUtils.updateTransferZoneOverArchingNameIfAbsent(ferryTerminalTransferZone, tags);
-      return ferryTerminalTransferZone;
-    }
-    return null;
-  }
-
-  /**
    * process unprocessed ferry terminal that is in Ptv1 tagging that is not part of any stop_area.
    * This assumes the ferry terminal reflects both the transfer zone explicit stop_position on its node
    *
@@ -908,7 +791,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-
   /**
    * Process the stop_position represented by the provided osm node that is nto part of any stop_area and therefore
    * has not been matched to any platform/pole yet, i.e., transfer zone. It is our task to do that now (if possible).
@@ -1064,6 +946,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       MacroscopicNetworkLayer networkLayer = getReferenceNetwork().getLayerByPredefinedModeType(accessModeType);
 
       MacroscopicLink selectedAccessLink = null;
+      SortedSet<MacroscopicLinkSegment> selectedAccessLinkSegments = null;
       if(getSettings().hasWaitingAreaNominatedOsmWayForStopLocation(osmEntityId, osmEntityType)) {
         
         /* user override for what link to use for connectoids */        
@@ -1123,11 +1006,24 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         var accessResult =
             findMostAppropriateStopLocationLinkForWaitingArea(
                 transferZone, osmAccessMode, flattenedSpatiallyMatchedLinks);
-        selectedAccessLink = accessResult==null ? null : accessResult.first();
+        if(accessResult != null) {
+          selectedAccessLink = accessResult.first();
+          selectedAccessLinkSegments = accessResult.second();
+        }
       }
-       
-      /* create connectoids */    
-      if(selectedAccessLink != null) {
+
+      /* create connectoids, on the access link segments the choice found, or on the link the user nominated */
+      if(selectedAccessLinkSegments != null) {
+        getTransferConnectoidHelper().extractTransferConnectoidsForStandAloneTransferZoneByAccessLinkSegments(
+            PlanitOsmUtils.parseOsmId(transferZone),
+            transferZone.getGeometry(),
+            selectedAccessLinkSegments,
+            transferZone,
+            accessModeType,
+            getSettings().getStopToWaitingAreaSearchRadiusMeters(),
+            networkLayer,
+            false);
+      } else if(selectedAccessLink != null) {
         getTransferConnectoidHelper().extractTransferConnectoidsForStandAloneTransferZoneByPlanitLink(
             PlanitOsmUtils.parseOsmId(transferZone),
             transferZone.getGeometry(),
@@ -1172,7 +1068,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     processIncompleteTransferZones(
         getZoningReaderData().getPlanitConverterData().getTransferZonesByOsmId(EntityType.Way));
   }
-  
 
    /** Once a station is identified as stand-alone during processing and the transfer zone is created/identified
     * we create its connectoids here.
@@ -1273,7 +1168,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-
   /** Once a station is identified as stand-alone during processing, i.e., no platforms, poles nearby, we must create
    * the appropriate transfer zones (without connectoids). Then afterwards we create the connectoids as well
    * 
@@ -1362,7 +1256,6 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-
   /**
    * Process the remaining unprocessed Osm entities that were marked for processing, or were identified as not
    * having explicit stop_position, i.e., no connectoids have yet been created.
@@ -1437,7 +1330,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         osmNode, locationIsKnownOsmStopPosition, matchedTransferZones, modeResult.second(),
         transferZoneGroup, suppressLogging);
   }  
-  
+
   /** extract a Ptv2 stop position part of a stop_area relation but not yet identified in the regular phase of
    * parsing as a stop_position. Hence, it is not properly tagged. In this method we try to salvage it by
    * inferring its properties (eligible modes, vertical plane). We do so, by mapping it to the nearest compatible
@@ -1504,7 +1397,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }
 
   }  
-  
+
   /** extract a Ptv2 stop position part of a stop_area relation. Based on description in
    * <a href="https://wiki.openstreetmap.org/wiki/Tag:public_transport%3Dstop_position">OSM wiki</a>
    *
@@ -1605,7 +1498,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       extractUnknownPtv2StopAreaStopPosition(stopPositionNode, tags, transferZoneGroup, suppressLogging);
     }
   }  
-  
+
   /** extract stop area relation of Ptv2 scheme. We create connectoids for all now already present transfer zones.
    * 
    * @param osmRelation to extract stop_area for
@@ -1645,6 +1538,31 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     }    
        
   }
+
+  /**
+   * If ferry terminal is mapped to another user defined waiting area, detect and retrieve it
+   * @param osmFerryTerminal to check
+   * @param tags to use
+   * @return transfer zone if any is user mapped, null otherwise
+   */
+  public TransferZone findUserOverwrittenWaitingAreaForFerryTerminal(
+      OsmEntity osmFerryTerminal, Map<String, String> tags){
+    if(getSettings().isOverwriteWaitingAreaOfStopLocation(osmFerryTerminal.getId())) {
+      /* transfer zone to use is user replaced, so immediately adopt this transfer zone  */
+      Pair<EntityType, Long> result = getSettings().getOverwrittenWaitingAreaOfStopLocation(osmFerryTerminal.getId());
+      var ferryTerminalTransferZone = getZoningReaderData().getPlanitConverterData().getTransferZoneByOsmId(
+          result.first(), result.second());
+      LOGGER.fine(String.format("Mapped ferry stop %d to overwritten waiting area %d",
+          osmFerryTerminal.getId(), result.second()));
+      PlanitTransferZoneUtils.updateTransferZoneOverArchingNameIfAbsent(ferryTerminalTransferZone, tags);
+      return ferryTerminalTransferZone;
+    }
+    return null;
+  }
+
+
+
+
 
   /**
    * Wrapped version of handling pr telation in post processing ensureing only spatially eligible and pt compatible

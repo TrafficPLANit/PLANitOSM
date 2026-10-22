@@ -22,6 +22,15 @@ public class PlanitLinkOsmUtilsTest {
 
   private MacroscopicNetworkLayer layer;
 
+  /** a link between two new nodes, created for the given OSM way, with the given name, none when null */
+  private MacroscopicLink link(String osmWayId, String name) {
+    var link = layer.getLinks().getFactory().registerNew(
+        layer.getNodes().getFactory().registerNew(), layer.getNodes().getFactory().registerNew(), 1, true);
+    link.setExternalId(osmWayId);
+    link.setName(name);
+    return link;
+  }
+
   @BeforeEach
   public void setUp() {
     IdGenerator.reset();
@@ -31,15 +40,6 @@ public class PlanitLinkOsmUtilsTest {
   @AfterEach
   public void tearDown() {
     IdGenerator.reset();
-  }
-
-  /** a link between two new nodes, created for the given OSM way, with the given name, none when null */
-  private MacroscopicLink link(String osmWayId, String name) {
-    var link = layer.getLinks().getFactory().registerNew(
-        layer.getNodes().getFactory().registerNew(), layer.getNodes().getFactory().registerNew(), 1, true);
-    link.setExternalId(osmWayId);
-    link.setName(name);
-    return link;
   }
 
   /**

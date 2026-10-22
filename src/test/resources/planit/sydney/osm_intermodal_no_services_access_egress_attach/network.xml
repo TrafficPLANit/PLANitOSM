@@ -1018,19 +1018,19 @@
                         <gml:pos>1578901.335931373 -3922367.127805369</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1017" externalid="3910190219">
+                <node id="1017">
                     <gml:Point>
-                        <gml:pos>1579348.1359119245 -3922182.387115668</gml:pos>
+                        <gml:pos>1579335.0160193618 -3922179.0445885183</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1018" externalid="10188047867">
+                <node id="1018">
                     <gml:Point>
-                        <gml:pos>1578790.3843365172 -3922500.4075560593</gml:pos>
+                        <gml:pos>1578788.6627334305 -3922507.8533148696</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1019">
                     <gml:Point>
-                        <gml:pos>1578782.9784008977 -3922532.4375087717</gml:pos>
+                        <gml:pos>1578782.9784008954 -3922532.4375087717</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="102" externalid="15397477">
@@ -1038,19 +1038,19 @@
                         <gml:pos>1579405.5686896034 -3922371.1362268175</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1020">
-                    <gml:Point>
-                        <gml:pos>1578777.999704363 -3922553.9699349003</gml:pos>
-                    </gml:Point>
-                </node>
-                <node id="1021" externalid="2999125565">
+                <node id="1020" externalid="2999125565">
                     <gml:Point>
                         <gml:pos>1578772.8721863837 -3922576.2601252724</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1022" externalid="2999125456">
+                <node id="1021">
                     <gml:Point>
-                        <gml:pos>1578757.6065670021 -3922640.39348897</gml:pos>
+                        <gml:pos>1578759.128746884 -3922634.05159818</gml:pos>
+                    </gml:Point>
+                </node>
+                <node id="1022">
+                    <gml:Point>
+                        <gml:pos>1578753.9084737715 -3922656.565877454</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1023">
@@ -1063,19 +1063,19 @@
                         <gml:pos>1578711.9426002624 -3922589.318735671</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1025" externalid="2999125560">
+                <node id="1025">
                     <gml:Point>
-                        <gml:pos>1578713.9251107648 -3922550.9307762217</gml:pos>
+                        <gml:pos>1578715.1233948572 -3922522.5407858687</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1026" externalid="5481665555">
+                <node id="1026">
                     <gml:Point>
-                        <gml:pos>1578714.6323825894 -3922533.118636706</gml:pos>
+                        <gml:pos>1578700.382712953 -3922854.4811748127</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1027" externalid="5147327948">
+                <node id="1027">
                     <gml:Point>
-                        <gml:pos>1578633.1163829109 -3922769.125560382</gml:pos>
+                        <gml:pos>1578632.7985055991 -3922777.061409456</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1028">
@@ -1098,49 +1098,49 @@
                         <gml:pos>1579283.2446494054 -3922476.5677284477</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1031" externalid="9885509263">
+                <node id="1031">
                     <gml:Point>
-                        <gml:pos>1579094.6849382077 -3922978.2079647155</gml:pos>
+                        <gml:pos>1579325.0752676905 -3922318.9147993396</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1032">
                     <gml:Point>
-                        <gml:pos>1579297.7328308043 -3922424.239620857</gml:pos>
+                        <gml:pos>1579095.971073449 -3922972.007744769</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1033">
                     <gml:Point>
-                        <gml:pos>1578560.001781169 -3923048.765911718</gml:pos>
+                        <gml:pos>1579297.7328308043 -3922424.239620857</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1034">
                     <gml:Point>
-                        <gml:pos>1578555.810155138 -3923209.875002013</gml:pos>
+                        <gml:pos>1578560.001781169 -3923048.765911718</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1035">
                     <gml:Point>
-                        <gml:pos>1579307.3155596994 -3922743.1710565044</gml:pos>
+                        <gml:pos>1578555.810155138 -3923209.875002013</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1036">
                     <gml:Point>
-                        <gml:pos>1579364.6110042518 -3922535.42116906</gml:pos>
+                        <gml:pos>1579307.3155596994 -3922743.1710565044</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1037">
                     <gml:Point>
+                        <gml:pos>1579364.6110042518 -3922535.42116906</gml:pos>
+                    </gml:Point>
+                </node>
+                <node id="1038">
+                    <gml:Point>
                         <gml:pos>1578708.2128668502 -3922653.6129908324</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1038" externalid="1427601759">
+                <node id="1039" externalid="1427601759">
                     <gml:Point>
                         <gml:pos>1578491.11875118 -3922612.0674588084</gml:pos>
-                    </gml:Point>
-                </node>
-                <node id="1039">
-                    <gml:Point>
-                        <gml:pos>1578614.9873802543 -3923227.8545716284</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="104" externalid="33167039">
@@ -1150,42 +1150,42 @@
                 </node>
                 <node id="1040">
                     <gml:Point>
-                        <gml:pos>1578637.0238343312 -3922687.364193554</gml:pos>
+                        <gml:pos>1578614.9873802543 -3923227.8545716284</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1041">
                     <gml:Point>
-                        <gml:pos>1578641.8937658453 -3922567.02600038</gml:pos>
+                        <gml:pos>1578637.0238343312 -3922687.364193554</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1042">
                     <gml:Point>
-                        <gml:pos>1578616.321542904 -3923203.3815584583</gml:pos>
+                        <gml:pos>1578641.8937658453 -3922567.02600038</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1043">
                     <gml:Point>
+                        <gml:pos>1578616.321542904 -3923203.3815584583</gml:pos>
+                    </gml:Point>
+                </node>
+                <node id="1044">
+                    <gml:Point>
                         <gml:pos>1578626.9511150678 -3922924.2929644347</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1044" externalid="10197152381">
+                <node id="1045" externalid="10197152381">
                     <gml:Point>
                         <gml:pos>1578621.6507807656 -3923098.497143012</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1045" externalid="6669045397">
+                <node id="1046">
                     <gml:Point>
-                        <gml:pos>1578344.0145867502 -3922841.2577259024</gml:pos>
+                        <gml:pos>1578375.2615949148 -3922632.4298834717</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1046" externalid="10187696067">
+                <node id="1047">
                     <gml:Point>
-                        <gml:pos>1578399.7501793918 -3922633.7190357433</gml:pos>
-                    </gml:Point>
-                </node>
-                <node id="1047" externalid="10185379886">
-                    <gml:Point>
-                        <gml:pos>1578500.1293595543 -3922320.1628693067</gml:pos>
+                        <gml:pos>1578501.7394993096 -3922297.3560619913</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1048" externalid="1640074997">
@@ -1193,9 +1193,9 @@
                         <gml:pos>1578710.0059461137 -3921584.8428568877</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1049" externalid="5350221952">
+                <node id="1049">
                     <gml:Point>
-                        <gml:pos>1578600.3447695298 -3921711.706987228</gml:pos>
+                        <gml:pos>1578738.7086987984 -3921575.432123239</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="105" externalid="33167040">
@@ -1203,9 +1203,9 @@
                         <gml:pos>1579264.054609145 -3922257.840776782</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1050" externalid="1640074989">
+                <node id="1050">
                     <gml:Point>
-                        <gml:pos>1578751.908307573 -3921576.983036691</gml:pos>
+                        <gml:pos>1578676.3062647989 -3921731.337865469</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1051" externalid="1832328196">
@@ -1213,9 +1213,9 @@
                         <gml:pos>1578767.7182564656 -3921726.076986132</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1052" externalid="1832327997">
+                <node id="1052">
                     <gml:Point>
-                        <gml:pos>1578979.8625422802 -3921471.6197393364</gml:pos>
+                        <gml:pos>1578964.5520955324 -3921482.4016178893</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1053" externalid="1849591550">
@@ -1223,9 +1223,9 @@
                         <gml:pos>1579677.5674359312 -3922981.3640717505</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1054" externalid="2765897661">
+                <node id="1054">
                     <gml:Point>
-                        <gml:pos>1579718.2142288026 -3922945.523261483</gml:pos>
+                        <gml:pos>1579707.8854037446 -3922954.6307943678</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1055">
@@ -1238,9 +1238,9 @@
                         <gml:pos>1578261.6531881758 -3922849.5381307653</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1057" externalid="1802422531">
+                <node id="1057">
                     <gml:Point>
-                        <gml:pos>1579020.3742584 -3923275.743018493</gml:pos>
+                        <gml:pos>1579021.5676768466 -3923270.796262183</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1058">
@@ -1250,7 +1250,7 @@
                 </node>
                 <node id="1059">
                     <gml:Point>
-                        <gml:pos>1578623.9664425545 -3923013.1442041174</gml:pos>
+                        <gml:pos>1579016.05190319 -3923293.414398836</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="106" externalid="20959062">
@@ -1258,14 +1258,14 @@
                         <gml:pos>1579201.3126848398 -3922241.6315110433</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="1060" externalid="10245932157">
+                <node id="1060">
                     <gml:Point>
-                        <gml:pos>1579271.4320460903 -3922226.491120361</gml:pos>
+                        <gml:pos>1578623.9664425545 -3923013.1442041174</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1061">
                     <gml:Point>
-                        <gml:pos>1578492.2706386698 -3922600.347996262</gml:pos>
+                        <gml:pos>1579272.7188338195 -3922219.751812172</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="1062" externalid="3593631034">
@@ -1301,6 +1301,11 @@
                 <node id="1068">
                     <gml:Point>
                         <gml:pos>1578265.162358232 -3922792.761920448</gml:pos>
+                    </gml:Point>
+                </node>
+                <node id="1069">
+                    <gml:Point>
+                        <gml:pos>1579192.7364296927 -3922843.0858131656</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="107" externalid="26358740">
@@ -6183,19 +6188,19 @@
                         <gml:pos>1579001.9421405161 -3923070.6475725505</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="987" externalid="5641003455">
-                    <gml:Point>
-                        <gml:pos>1578775.9518136915 -3922890.3375099394</gml:pos>
-                    </gml:Point>
-                </node>
-                <node id="988" externalid="6038996875">
+                <node id="987" externalid="6038996875">
                     <gml:Point>
                         <gml:pos>1578706.040755144 -3922301.305190903</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="989" externalid="6337512681">
+                <node id="988" externalid="6337512681">
                     <gml:Point>
                         <gml:pos>1578492.074937589 -3922486.6875417</gml:pos>
+                    </gml:Point>
+                </node>
+                <node id="989" externalid="6936407757">
+                    <gml:Point>
+                        <gml:pos>1578793.778489686 -3922895.076984122</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="99" externalid="15397468">
@@ -6203,19 +6208,19 @@
                         <gml:pos>1579349.661496653 -3922591.3110049027</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="990" externalid="6936407757">
-                    <gml:Point>
-                        <gml:pos>1578793.778489686 -3922895.076984122</gml:pos>
-                    </gml:Point>
-                </node>
-                <node id="991" externalid="10188047310">
+                <node id="990" externalid="10188047310">
                     <gml:Point>
                         <gml:pos>1578580.137324073 -3922544.283095682</gml:pos>
                     </gml:Point>
                 </node>
-                <node id="992" externalid="10188047816">
+                <node id="991" externalid="10188047816">
                     <gml:Point>
                         <gml:pos>1578763.0161041636 -3922403.20198625</gml:pos>
+                    </gml:Point>
+                </node>
+                <node id="992" externalid="10228258048">
+                    <gml:Point>
+                        <gml:pos>1579016.583217197 -3922109.163879135</gml:pos>
                     </gml:Point>
                 </node>
                 <node id="993" externalid="2041295321">
@@ -6820,7 +6825,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1034" externalid="785918400" nodearef="692" nodebref="1036">
+                <link id="1034" externalid="785918400" nodearef="692" nodebref="1037">
                     <name>Macquarie Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579387.51309503 -3922448.2051786 1579373.72992954 -3922501.89445919 1579371.48390808 -3922510.63996923 1579364.61100425 -3922535.42116906</gml:posList>
@@ -7929,7 +7934,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1107" externalid="524946780" nodearef="932" nodebref="1033">
+                <link id="1107" externalid="524946780" nodearef="932" nodebref="1034">
                     <name>Kent Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578558.16909141 -3923098.55035299 1578558.31469795 -3923094.66100232 1578560.00178117 -3923048.76591172</gml:posList>
@@ -8097,7 +8102,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1118" externalid="324785023" nodearef="946" nodebref="990">
+                <link id="1118" externalid="324785023" nodearef="946" nodebref="989">
                     <name>King Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578784.61817716 -3922892.64536983 1578793.77848969 -3922895.07698412</gml:posList>
@@ -8552,10 +8557,10 @@
                         <maxspeed>70.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1148" externalid="702219816" nodearef="961" nodebref="960">
+                <link id="1148" externalid="702219816" nodearef="961" nodebref="992">
                     <name>George Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579021.2331873 -3922101.98593383 1579016.5832172 -3922109.16387914 1579015.10603957 -3922111.45518393</gml:posList>
+                        <gml:posList srsDimension="2">1579021.2331873 -3922101.98593383 1579016.5832172 -3922109.16387914</gml:posList>
                     </gml:LineString>
                     <linksegment id="2113" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -9177,10 +9182,10 @@
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1190" externalid="129820126" nodearef="985" nodebref="1020">
+                <link id="1190" externalid="129820126" nodearef="985" nodebref="1019">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578777.04947729 -3922558.07958801 1578777.99970436 -3922553.9699349</gml:posList>
+                        <gml:posList srsDimension="2">1578777.04947729 -3922558.07958801 1578782.9784009 -3922532.43750877</gml:posList>
                     </gml:LineString>
                     <linksegment id="2194" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9205,87 +9210,87 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1192" externalid="34695430" nodearef="987" nodebref="963">
-                    <name>King Street</name>
-                    <gml:LineString>
-                        <gml:posList srsDimension="2">1578775.95181369 -3922890.33750994 1578781.20300962 -3922891.7404419</gml:posList>
-                    </gml:LineString>
-                    <linksegment id="2198" dir="a_b" typeref="19">
-                        <numberoflanes>4</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                    <linksegment id="2199" dir="b_a" typeref="30">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                </link>
-                <link id="1193" externalid="824064072" nodearef="988" nodebref="223">
+                <link id="1192" externalid="824064072" nodearef="987" nodebref="223">
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578706.04075514 -3922301.3051909 1578721.09361284 -3922332.7269712</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2200" dir="a_b" typeref="17">
+                    <linksegment id="2198" dir="a_b" typeref="17">
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2201" dir="b_a" typeref="14">
+                    <linksegment id="2199" dir="b_a" typeref="14">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1194" externalid="150290323" nodearef="989" nodebref="325">
+                <link id="1193" externalid="150290323" nodearef="988" nodebref="325">
                     <name>Sussex Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578492.07493759 -3922486.6875417 1578492.32856391 -3922461.23928265</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2202" dir="a_b" typeref="21">
+                    <linksegment id="2200" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2203" dir="b_a" typeref="21">
+                    <linksegment id="2201" dir="b_a" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1195" externalid="324785023" nodearef="990" nodebref="51">
+                <link id="1194" externalid="324785023" nodearef="989" nodebref="51">
                     <name>King Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578793.77848969 -3922895.07698412 1578841.89113702 -3922908.60057363 1578861.12130576 -3922914.2797828 1578880.85342733 -3922920.42915593 1578896.34485116 -3922925.25912517 1578905.67258284 -3922927.95893777</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2204" dir="a_b" typeref="19">
+                    <linksegment id="2202" dir="a_b" typeref="19">
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2205" dir="b_a" typeref="30">
+                    <linksegment id="2203" dir="b_a" typeref="30">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1196" externalid="129388680" nodearef="991" nodebref="274">
+                <link id="1195" externalid="129388680" nodearef="990" nodebref="274">
                     <name>Kent Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578580.13732407 -3922544.28309568 1578580.46642776 -3922537.71258826 1578582.36366172 -3922492.30905472</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2206" dir="a_b" typeref="21">
+                    <linksegment id="2204" dir="a_b" typeref="21">
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2207" dir="b_a" typeref="21">
+                    <linksegment id="2205" dir="b_a" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1197" externalid="187987179" nodearef="992" nodebref="466">
+                <link id="1196" externalid="187987179" nodearef="991" nodebref="466">
                     <name>Margaret Lane</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578763.01610416 -3922403.20198625 1578759.6357764 -3922430.56955834</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2208" dir="a_b" typeref="11">
+                    <linksegment id="2206" dir="a_b" typeref="11">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2209" dir="b_a" typeref="11">
+                    <linksegment id="2207" dir="b_a" typeref="11">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                </link>
+                <link id="1197" externalid="702219816" nodearef="992" nodebref="960">
+                    <name>George Street</name>
+                    <gml:LineString>
+                        <gml:posList srsDimension="2">1579016.5832172 -3922109.16387914 1579015.10603957 -3922111.45518393</gml:posList>
+                    </gml:LineString>
+                    <linksegment id="2208" dir="a_b" typeref="21">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>20.0</maxspeed>
+                    </linksegment>
+                    <linksegment id="2209" dir="b_a" typeref="31">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>20.0</maxspeed>
                     </linksegment>
                 </link>
                 <link id="1198" externalid="337986765" nodearef="993" nodebref="589">
@@ -9664,7 +9669,7 @@
                 <link id="1222" externalid="151559214" nodearef="1017" nodebref="349">
                     <name>Alfred Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579348.13591192 -3922182.38711567 1579303.94489005 -3922171.12872875</gml:posList>
+                        <gml:posList srsDimension="2">1579335.01601936 -3922179.04458852 1579303.94489005 -3922171.12872875</gml:posList>
                     </gml:LineString>
                     <linksegment id="2257" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
@@ -9678,7 +9683,7 @@
                 <link id="1223" externalid="129820126" nodearef="1018" nodebref="276">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578790.38433652 -3922500.40755606 1578791.09921028 -3922497.30950256 1578793.54157794 -3922486.7309689</gml:posList>
+                        <gml:posList srsDimension="2">1578788.66273343 -3922507.85331487 1578790.38433652 -3922500.40755606 1578791.09921028 -3922497.30950256 1578793.54157794 -3922486.7309689</gml:posList>
                     </gml:LineString>
                     <linksegment id="2259" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9692,7 +9697,7 @@
                 <link id="1224" externalid="129820126" nodearef="1019" nodebref="1018">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578782.9784009 -3922532.43750877 1578790.38433652 -3922500.40755606</gml:posList>
+                        <gml:posList srsDimension="2">1578782.9784009 -3922532.43750877 1578788.66273343 -3922507.85331487</gml:posList>
                     </gml:LineString>
                     <linksegment id="2261" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9703,10 +9708,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1225" externalid="129820126" nodearef="1020" nodebref="1019">
+                <link id="1225" externalid="129820126" nodearef="1020" nodebref="985">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578777.99970436 -3922553.9699349 1578782.9784009 -3922532.43750877</gml:posList>
+                        <gml:posList srsDimension="2">1578772.87218638 -3922576.26012527 1578776.514721 -3922560.61215801 1578777.04947729 -3922558.07958801</gml:posList>
                     </gml:LineString>
                     <linksegment id="2263" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9717,10 +9722,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1226" externalid="129820126" nodearef="1021" nodebref="985">
+                <link id="1226" externalid="129820126" nodearef="1021" nodebref="1020">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578772.87218638 -3922576.26012527 1578776.514721 -3922560.61215801 1578777.04947729 -3922558.07958801</gml:posList>
+                        <gml:posList srsDimension="2">1578759.12874688 -3922634.05159818 1578771.08605148 -3922584.23374304 1578772.87218638 -3922576.26012527</gml:posList>
                     </gml:LineString>
                     <linksegment id="2265" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9734,7 +9739,7 @@
                 <link id="1227" externalid="129820126" nodearef="1022" nodebref="1021">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578757.606567 -3922640.39348897 1578771.08605148 -3922584.23374304 1578772.87218638 -3922576.26012527</gml:posList>
+                        <gml:posList srsDimension="2">1578753.90847377 -3922656.56587745 1578757.606567 -3922640.39348897 1578759.12874688 -3922634.05159818</gml:posList>
                     </gml:LineString>
                     <linksegment id="2267" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9748,7 +9753,7 @@
                 <link id="1228" externalid="129820126" nodearef="1023" nodebref="1022">
                     <name>Carrington Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578748.19757576 -3922681.54064344 1578757.606567 -3922640.39348897</gml:posList>
+                        <gml:posList srsDimension="2">1578748.19757576 -3922681.54064344 1578753.90847377 -3922656.56587745</gml:posList>
                     </gml:LineString>
                     <linksegment id="2269" dir="a_b" typeref="28">
                         <numberoflanes>1</numberoflanes>
@@ -9783,10 +9788,10 @@
                         <maxspeed>70.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1230" externalid="1091753305" nodearef="1025" nodebref="512">
+                <link id="1230" externalid="324785054" nodearef="1025" nodebref="585">
                     <name>York Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578713.92511076 -3922550.93077622 1578712.88798947 -3922574.77872097</gml:posList>
+                        <gml:posList srsDimension="2">1578715.12339486 -3922522.54078587 1578714.63238259 -3922533.11863671 1578714.29339262 -3922541.58121143</gml:posList>
                     </gml:LineString>
                     <linksegment id="2273" dir="a_b" typeref="19">
                         <numberoflanes>3</numberoflanes>
@@ -9797,13 +9802,13 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1231" externalid="324785054" nodearef="1026" nodebref="585">
+                <link id="1231" externalid="324785034" nodearef="1026" nodebref="154">
                     <name>York Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578714.63238259 -3922533.11863671 1578714.29339262 -3922541.58121143</gml:posList>
+                        <gml:posList srsDimension="2">1578700.38271295 -3922854.48117481 1578700.06627168 -3922873.18825228</gml:posList>
                     </gml:LineString>
                     <linksegment id="2275" dir="a_b" typeref="19">
-                        <numberoflanes>3</numberoflanes>
+                        <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                     <linksegment id="2276" dir="b_a" typeref="30">
@@ -9814,7 +9819,7 @@
                 <link id="1232" externalid="1097892515" nodearef="1027" nodebref="353">
                     <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578633.11638291 -3922769.12556038 1578633.60260152 -3922759.32441379</gml:posList>
+                        <gml:posList srsDimension="2">1578632.7985056 -3922777.06140946 1578633.11638291 -3922769.12556038 1578633.60260152 -3922759.32441379</gml:posList>
                     </gml:LineString>
                     <linksegment id="2277" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -9853,7 +9858,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1235" externalid="252102269" nodearef="1030" nodebref="1032">
+                <link id="1235" externalid="252102269" nodearef="1030" nodebref="1033">
                     <name>Phillip Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579283.24464941 -3922476.56772845 1579297.7328308 -3922424.23962086</gml:posList>
@@ -9867,58 +9872,58 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1236" externalid="408466887" nodearef="1031" nodebref="109">
+                <link id="1236" externalid="252133055" nodearef="1031" nodebref="520">
+                    <name>Phillip Street</name>
+                    <gml:LineString>
+                        <gml:posList srsDimension="2">1579325.07526769 -3922318.91479934 1579327.94349468 -3922308.33469943</gml:posList>
+                    </gml:LineString>
+                    <linksegment id="2285" dir="a_b" typeref="21">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                    <linksegment id="2286" dir="b_a" typeref="21">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                </link>
+                <link id="1237" externalid="408466887" nodearef="1032" nodebref="109">
                     <name>Elizabeth Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579094.68493821 -3922978.20796472 1579094.09127728 -3922981.09998337 1579093.03984387 -3922986.16764359</gml:posList>
+                        <gml:posList srsDimension="2">1579095.97107345 -3922972.00774477 1579094.68493821 -3922978.20796472 1579094.09127728 -3922981.09998337 1579093.03984387 -3922986.16764359</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2285" dir="a_b" typeref="15">
+                    <linksegment id="2287" dir="a_b" typeref="15">
                         <numberoflanes>3</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2286" dir="b_a" typeref="15">
+                    <linksegment id="2288" dir="b_a" typeref="15">
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1237" externalid="252102269" nodearef="1032" nodebref="757">
+                <link id="1238" externalid="252102269" nodearef="1033" nodebref="757">
                     <name>Phillip Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579297.7328308 -3922424.23962086 1579303.89723177 -3922401.97525293</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2287" dir="a_b" typeref="21">
+                    <linksegment id="2289" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2288" dir="b_a" typeref="21">
+                    <linksegment id="2290" dir="b_a" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1238" externalid="524946780" nodearef="1033" nodebref="943">
+                <link id="1239" externalid="524946780" nodearef="1034" nodebref="943">
                     <name>Kent Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578560.00178117 -3923048.76591172 1578566.23996472 -3922879.05395292 1578566.42829795 -3922875.32643698 1578566.76037042 -3922868.6671889</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2289" dir="a_b" typeref="21">
+                    <linksegment id="2291" dir="a_b" typeref="21">
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2290" dir="b_a" typeref="31">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                </link>
-                <link id="1239" externalid="778420267" nodearef="1034" nodebref="681">
-                    <name>Kent Street</name>
-                    <gml:LineString>
-                        <gml:posList srsDimension="2">1578555.81015514 -3923209.87500201 1578556.68751942 -3923177.08027649</gml:posList>
-                    </gml:LineString>
-                    <linksegment id="2291" dir="a_b" typeref="17">
-                        <numberoflanes>3</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                    <linksegment id="2292" dir="b_a" typeref="14">
+                    <linksegment id="2292" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
@@ -9937,80 +9942,80 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1240" externalid="785917939" nodearef="1035" nodebref="680">
+                <link id="1240" externalid="778420267" nodearef="1035" nodebref="681">
+                    <name>Kent Street</name>
+                    <gml:LineString>
+                        <gml:posList srsDimension="2">1578555.81015514 -3923209.87500201 1578556.68751942 -3923177.08027649</gml:posList>
+                    </gml:LineString>
+                    <linksegment id="2293" dir="a_b" typeref="17">
+                        <numberoflanes>3</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                    <linksegment id="2294" dir="b_a" typeref="14">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                </link>
+                <link id="1241" externalid="785917939" nodearef="1036" nodebref="680">
                     <name>Macquarie Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579307.3155597 -3922743.1710565 1579281.18193536 -3922855.05206322 1579277.74237811 -3922869.49169996</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2293" dir="a_b" typeref="33">
+                    <linksegment id="2295" dir="a_b" typeref="33">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2294" dir="b_a" typeref="33">
+                    <linksegment id="2296" dir="b_a" typeref="33">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1241" externalid="785918400" nodearef="1036" nodebref="627">
+                <link id="1242" externalid="785918400" nodearef="1037" nodebref="627">
                     <name>Macquarie Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579364.61100425 -3922535.42116906 1579353.90003045 -3922574.0411839</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2295" dir="a_b" typeref="19">
+                    <linksegment id="2297" dir="a_b" typeref="19">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2296" dir="b_a" typeref="19">
+                    <linksegment id="2298" dir="b_a" typeref="19">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1242" externalid="478243190" nodearef="1037" nodebref="281">
+                <link id="1243" externalid="478243190" nodearef="1038" nodebref="281">
                     <name>York Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578708.21286685 -3922653.61299083 1578706.49358972 -3922690.98966469</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2297" dir="a_b" typeref="19">
+                    <linksegment id="2299" dir="a_b" typeref="19">
                         <numberoflanes>2</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2298" dir="b_a" typeref="30">
+                    <linksegment id="2300" dir="b_a" typeref="30">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1243" externalid="1097892514" nodearef="1038" nodebref="1061">
+                <link id="1244" externalid="1097892514" nodearef="1039" nodebref="326">
                     <name>Sussex Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578491.11875118 -3922612.06745881 1578492.27063867 -3922600.34799626</gml:posList>
+                        <gml:posList srsDimension="2">1578491.11875118 -3922612.06745881 1578492.4839875 -3922598.17735463</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2299" dir="a_b" typeref="21">
+                    <linksegment id="2301" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2300" dir="b_a" typeref="21">
+                    <linksegment id="2302" dir="b_a" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1244" externalid="3188567" nodearef="1039" nodebref="1042">
+                <link id="1245" externalid="3188567" nodearef="1040" nodebref="1043">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578614.98738025 -3923227.85457163 1578616.3215429 -3923203.38155846</gml:posList>
-                    </gml:LineString>
-                    <linksegment id="2301" dir="a_b" typeref="21">
-                        <numberoflanes>4</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                    <linksegment id="2302" dir="b_a" typeref="31">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                </link>
-                <link id="1245" externalid="1097892515" nodearef="1040" nodebref="116">
-                    <name>Clarence Street</name>
-                    <gml:LineString>
-                        <gml:posList srsDimension="2">1578637.02383433 -3922687.36419355 1578639.01327378 -3922645.46154239</gml:posList>
                     </gml:LineString>
                     <linksegment id="2303" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -10021,10 +10026,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1246" externalid="635918871" nodearef="1041" nodebref="433">
+                <link id="1246" externalid="1097892515" nodearef="1041" nodebref="116">
                     <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578641.89376585 -3922567.02600038 1578643.27826968 -3922529.324934 1578644.28119135 -3922503.76822909</gml:posList>
+                        <gml:posList srsDimension="2">1578637.02383433 -3922687.36419355 1578639.01327378 -3922645.46154239</gml:posList>
                     </gml:LineString>
                     <linksegment id="2305" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -10035,10 +10040,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1247" externalid="3188567" nodearef="1042" nodebref="45">
+                <link id="1247" externalid="635918871" nodearef="1042" nodebref="433">
                     <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578616.3215429 -3923203.38155846 1578620.49300282 -3923126.8618762 1578620.70555002 -3923123.02629596 1578621.20407139 -3923112.05728692</gml:posList>
+                        <gml:posList srsDimension="2">1578641.89376585 -3922567.02600038 1578643.27826968 -3922529.324934 1578644.28119135 -3922503.76822909</gml:posList>
                     </gml:LineString>
                     <linksegment id="2307" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -10049,10 +10054,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1248" externalid="273641207" nodearef="1043" nodebref="153">
+                <link id="1248" externalid="3188567" nodearef="1043" nodebref="45">
                     <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578626.95111507 -3922924.29296443 1578628.58604933 -3922882.4640205 1578628.71408498 -3922879.10688381 1578629.016011 -3922871.38538211</gml:posList>
+                        <gml:posList srsDimension="2">1578616.3215429 -3923203.38155846 1578620.49300282 -3923126.8618762 1578620.70555002 -3923123.02629596 1578621.20407139 -3923112.05728692</gml:posList>
                     </gml:LineString>
                     <linksegment id="2309" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -10063,10 +10068,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1249" externalid="273641207" nodearef="1044" nodebref="149">
+                <link id="1249" externalid="273641207" nodearef="1044" nodebref="153">
                     <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578621.65078077 -3923098.49714301 1578623.33929476 -3923039.70993016</gml:posList>
+                        <gml:posList srsDimension="2">1578626.95111507 -3922924.29296443 1578628.58604933 -3922882.4640205 1578628.71408498 -3922879.10688381 1578629.016011 -3922871.38538211</gml:posList>
                     </gml:LineString>
                     <linksegment id="2311" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -10091,24 +10096,24 @@
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1250" externalid="129736085" nodearef="1045" nodebref="275">
-                    <name>King Street</name>
+                <link id="1250" externalid="273641207" nodearef="1045" nodebref="149">
+                    <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578344.01458675 -3922841.2577259 1578341.09660768 -3922840.65531251 1578338.92670505 -3922839.2760532 1578336.90326603 -3922837.17073377</gml:posList>
+                        <gml:posList srsDimension="2">1578621.65078077 -3923098.49714301 1578623.33929476 -3923039.70993016</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2313" dir="a_b" typeref="17">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>50.0</maxspeed>
+                    <linksegment id="2313" dir="a_b" typeref="21">
+                        <numberoflanes>4</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2314" dir="b_a" typeref="14">
+                    <linksegment id="2314" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
-                        <maxspeed>50.0</maxspeed>
+                        <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
                 <link id="1251" externalid="129087878" nodearef="1046" nodebref="944">
                     <name>Erskine Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578399.75017939 -3922633.71903574 1578402.77553199 -3922633.87959685 1578411.61301477 -3922634.33955977</gml:posList>
+                        <gml:posList srsDimension="2">1578375.26159491 -3922632.42988347 1578399.75017939 -3922633.71903574 1578402.77553199 -3922633.87959685 1578411.61301477 -3922634.33955977</gml:posList>
                     </gml:LineString>
                     <linksegment id="2315" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -10122,7 +10127,7 @@
                 <link id="1252" externalid="385081630" nodearef="1047" nodebref="719">
                     <name>Hickson Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578500.12935955 -3922320.16286931 1578503.81200826 -3922267.9998912 1578505.14434475 -3922250.97566063</gml:posList>
+                        <gml:posList srsDimension="2">1578501.73949931 -3922297.35606199 1578503.81200826 -3922267.9998912 1578505.14434475 -3922250.97566063</gml:posList>
                     </gml:LineString>
                     <linksegment id="2317" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -10147,32 +10152,32 @@
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1254" externalid="152771366" nodearef="1049" nodebref="331">
-                    <name>Argyle Street</name>
-                    <gml:LineString>
-                        <gml:posList srsDimension="2">1578600.34476953 -3921711.70698723 1578626.18275666 -3921716.38001823</gml:posList>
-                    </gml:LineString>
-                    <linksegment id="2321" dir="a_b" typeref="17">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                    <linksegment id="2322" dir="b_a" typeref="17">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                </link>
-                <link id="1255" externalid="151181078" nodearef="1050" nodebref="1052">
+                <link id="1254" externalid="151181078" nodearef="1049" nodebref="1052">
                     <name>Hickson Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578751.90830757 -3921576.98303669 1578772.58334973 -3921578.19410804 1578795.88429323 -3921578.28568405 1578822.385959 -3921572.74829309 1578859.68042646 -3921555.77832982 1578877.16014946 -3921543.83024822 1578882.90524668 -3921539.89944746 1578979.86254228 -3921471.61973934</gml:posList>
+                        <gml:posList srsDimension="2">1578738.7086988 -3921575.43212324 1578751.90830757 -3921576.98303669 1578772.58334973 -3921578.19410804 1578795.88429323 -3921578.28568405 1578822.385959 -3921572.74829309 1578859.68042646 -3921555.77832982 1578877.16014946 -3921543.83024822 1578882.90524668 -3921539.89944746 1578964.55209553 -3921482.40161789</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2323" dir="a_b" typeref="21">
+                    <linksegment id="2321" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2324" dir="b_a" typeref="31">
+                    <linksegment id="2322" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>50.0</maxspeed>
+                    </linksegment>
+                </link>
+                <link id="1255" externalid="187990285" nodearef="1050" nodebref="380">
+                    <name>Argyle Street</name>
+                    <gml:LineString>
+                        <gml:posList srsDimension="2">1578676.3062648 -3921731.33786547 1578666.35619365 -3921728.41852158</gml:posList>
+                    </gml:LineString>
+                    <linksegment id="2323" dir="a_b" typeref="17">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                    <linksegment id="2324" dir="b_a" typeref="17">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
                 <link id="1256" externalid="172324373" nodearef="1051" nodebref="419">
@@ -10192,7 +10197,7 @@
                 <link id="1257" externalid="151181078" nodearef="1052" nodebref="335">
                     <name>Hickson Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578979.86254228 -3921471.61973934 1578985.81117078 -3921467.56110553 1578990.08481776 -3921465.61057805</gml:posList>
+                        <gml:posList srsDimension="2">1578964.55209553 -3921482.40161789 1578979.86254228 -3921471.61973934 1578985.81117078 -3921467.56110553 1578990.08481776 -3921465.61057805</gml:posList>
                     </gml:LineString>
                     <linksegment id="2327" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -10206,7 +10211,7 @@
                 <link id="1258" externalid="387790896" nodearef="1053" nodebref="1054">
                     <name>Art Gallery Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579677.56743593 -3922981.36407175 1579718.2142288 -3922945.52326148</gml:posList>
+                        <gml:posList srsDimension="2">1579677.56743593 -3922981.36407175 1579707.88540374 -3922954.63079437</gml:posList>
                     </gml:LineString>
                     <linksegment id="2329" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -10220,7 +10225,7 @@
                 <link id="1259" externalid="387790896" nodearef="1054" nodebref="342">
                     <name>Art Gallery Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579718.2142288 -3922945.52326148 1579736.25248428 -3922926.89246799 1579743.51435048 -3922918.15902624 1579779.6235316 -3922874.73161097</gml:posList>
+                        <gml:posList srsDimension="2">1579707.88540374 -3922954.63079437 1579718.2142288 -3922945.52326148 1579736.25248428 -3922926.89246799 1579743.51435048 -3922918.15902624 1579779.6235316 -3922874.73161097</gml:posList>
                     </gml:LineString>
                     <linksegment id="2331" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -10273,10 +10278,10 @@
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1262" externalid="324139694" nodearef="1057" nodebref="584">
+                <link id="1262" externalid="324139694" nodearef="1057" nodebref="1059">
                     <name>Elizabeth Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579020.3742584 -3923275.74301849 1578999.22192176 -3923362.22182514</gml:posList>
+                        <gml:posList srsDimension="2">1579021.56767685 -3923270.79626218 1579020.3742584 -3923275.74301849 1579016.05190319 -3923293.41439884</gml:posList>
                     </gml:LineString>
                     <linksegment id="2337" dir="a_b" typeref="15">
                         <numberoflanes>3</numberoflanes>
@@ -10290,7 +10295,7 @@
                 <link id="1263" externalid="324139694" nodearef="1058" nodebref="1057">
                     <name>Elizabeth Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579033.30139472 -3923222.15975212 1579020.3742584 -3923275.74301849</gml:posList>
+                        <gml:posList srsDimension="2">1579033.30139472 -3923222.15975212 1579021.56767685 -3923270.79626218</gml:posList>
                     </gml:LineString>
                     <linksegment id="2339" dir="a_b" typeref="15">
                         <numberoflanes>3</numberoflanes>
@@ -10301,46 +10306,46 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1264" externalid="273641207" nodearef="1059" nodebref="1043">
+                <link id="1264" externalid="324139694" nodearef="1059" nodebref="584">
+                    <name>Elizabeth Street</name>
+                    <gml:LineString>
+                        <gml:posList srsDimension="2">1579016.05190319 -3923293.41439884 1578999.22192176 -3923362.22182514</gml:posList>
+                    </gml:LineString>
+                    <linksegment id="2341" dir="a_b" typeref="15">
+                        <numberoflanes>3</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                    <linksegment id="2342" dir="b_a" typeref="15">
+                        <numberoflanes>3</numberoflanes>
+                        <maxspeed>40.0</maxspeed>
+                    </linksegment>
+                </link>
+                <link id="1265" externalid="273641207" nodearef="1060" nodebref="1044">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578623.96644255 -3923013.14420412 1578624.71102586 -3922981.60311261 1578626.95111507 -3922924.29296443</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2341" dir="a_b" typeref="21">
+                    <linksegment id="2343" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2342" dir="b_a" typeref="31">
+                    <linksegment id="2344" dir="b_a" typeref="31">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="1265" externalid="2077109" nodearef="1060" nodebref="105">
+                <link id="1266" externalid="2077109" nodearef="1061" nodebref="105">
                     <name>Young Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579271.43204609 -3922226.49112036 1579264.05460915 -3922257.84077678</gml:posList>
+                        <gml:posList srsDimension="2">1579272.71883382 -3922219.75181217 1579271.43204609 -3922226.49112036 1579264.05460915 -3922257.84077678</gml:posList>
                     </gml:LineString>
-                    <linksegment id="2343" dir="a_b" typeref="17">
+                    <linksegment id="2345" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
-                    <linksegment id="2344" dir="b_a" typeref="17">
+                    <linksegment id="2346" dir="b_a" typeref="17">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>40.0</maxspeed>
-                    </linksegment>
-                </link>
-                <link id="1266" externalid="1097892514" nodearef="1061" nodebref="326">
-                    <name>Sussex Street</name>
-                    <gml:LineString>
-                        <gml:posList srsDimension="2">1578492.27063867 -3922600.34799626 1578492.4839875 -3922598.17735463</gml:posList>
-                    </gml:LineString>
-                    <linksegment id="2345" dir="a_b" typeref="21">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>50.0</maxspeed>
-                    </linksegment>
-                    <linksegment id="2346" dir="b_a" typeref="21">
-                        <numberoflanes>1</numberoflanes>
-                        <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
                 <link id="1267" externalid="785917939" nodearef="1062" nodebref="840">
@@ -10453,6 +10458,19 @@
                     <linksegment id="2360" dir="b_a" typeref="0">
                         <numberoflanes>1</numberoflanes>
                         <maxspeed>20.0</maxspeed>
+                    </linksegment>
+                </link>
+                <link id="1274" externalid="1065434005" nodearef="1069" nodebref="1007">
+                    <gml:LineString>
+                        <gml:posList srsDimension="2">1579192.73642969 -3922843.08581317 1579233.86899062 -3922852.17333584</gml:posList>
+                    </gml:LineString>
+                    <linksegment id="2361" dir="a_b" typeref="26">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>60.0</maxspeed>
+                    </linksegment>
+                    <linksegment id="2362" dir="b_a" typeref="26">
+                        <numberoflanes>1</numberoflanes>
+                        <maxspeed>60.0</maxspeed>
                     </linksegment>
                 </link>
                 <link id="128" externalid="80941027" nodearef="219" nodebref="220">
@@ -10997,7 +11015,7 @@
                 <link id="168" externalid="129087878" nodearef="269" nodebref="1046">
                     <name>Erskine Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578343.47348953 -3922630.75654067 1578399.75017939 -3922633.71903574</gml:posList>
+                        <gml:posList srsDimension="2">1578343.47348953 -3922630.75654067 1578375.26159491 -3922632.42988347</gml:posList>
                     </gml:LineString>
                     <linksegment id="280" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -11050,7 +11068,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="171" externalid="129388680" nodearef="273" nodebref="991">
+                <link id="171" externalid="129388680" nodearef="273" nodebref="990">
                     <name>Kent Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578575.85683779 -3922643.87791298 1578576.26668742 -3922635.03526431 1578576.3539446 -3922633.12044409 1578577.03869776 -3922618.10077303 1578579.63605476 -3922554.12667189 1578580.13732407 -3922544.28309568</gml:posList>
@@ -11064,10 +11082,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="172" externalid="129736085" nodearef="82" nodebref="1045">
+                <link id="172" externalid="129736085" nodearef="82" nodebref="275">
                     <name>King Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578398.93360418 -3922839.50022478 1578395.97038532 -3922841.58692329 1578392.85081891 -3922842.5828532 1578388.18974096 -3922842.89865526 1578373.24585898 -3922842.32151694 1578348.42705737 -3922841.39772688 1578344.01458675 -3922841.2577259</gml:posList>
+                        <gml:posList srsDimension="2">1578398.93360418 -3922839.50022478 1578395.97038532 -3922841.58692329 1578392.85081891 -3922842.5828532 1578388.18974096 -3922842.89865526 1578373.24585898 -3922842.32151694 1578348.42705737 -3922841.39772688 1578344.10049111 -3922841.2604515 1578344.01458675 -3922841.2577259 1578341.09660768 -3922840.65531251 1578338.92670505 -3922839.2760532 1578336.90326603 -3922837.17073377</gml:posList>
                     </gml:LineString>
                     <linksegment id="288" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
@@ -11569,7 +11587,7 @@
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="206" externalid="150290323" nodearef="326" nodebref="989">
+                <link id="206" externalid="150290323" nodearef="326" nodebref="988">
                     <name>Sussex Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578492.4839875 -3922598.17735463 1578494.10950516 -3922573.76448729 1578491.76872337 -3922519.86932174 1578492.07493759 -3922486.6875417</gml:posList>
@@ -11681,10 +11699,10 @@
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="213" externalid="151181078" nodearef="328" nodebref="1050">
+                <link id="213" externalid="151181078" nodearef="328" nodebref="1049">
                     <name>Hickson Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578651.30612327 -3921573.19248363 1578654.89379871 -3921569.6103597 1578659.17947439 -3921567.63909779 1578664.06125084 -3921567.20897354 1578670.02416916 -3921567.36215041 1578751.90830757 -3921576.98303669</gml:posList>
+                        <gml:posList srsDimension="2">1578651.30612327 -3921573.19248363 1578654.89379871 -3921569.6103597 1578659.17947439 -3921567.63909779 1578664.06125084 -3921567.20897354 1578670.02416916 -3921567.36215041 1578738.7086988 -3921575.43212324</gml:posList>
                     </gml:LineString>
                     <linksegment id="367" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -11805,7 +11823,7 @@
                 <link id="221" externalid="151559214" nodearef="348" nodebref="1017">
                     <name>Alfred Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579358.55506697 -3922191.3299837 1579357.32842248 -3922188.43216698 1579355.2877839 -3922185.91222493 1579352.11709914 -3922183.7711496 1579348.13591192 -3922182.38711567</gml:posList>
+                        <gml:posList srsDimension="2">1579358.55506697 -3922191.3299837 1579357.32842248 -3922188.43216698 1579355.2877839 -3922185.91222493 1579352.11709914 -3922183.7711496 1579348.13591192 -3922182.38711567 1579335.01601936 -3922179.04458852</gml:posList>
                     </gml:LineString>
                     <linksegment id="382" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
@@ -12916,7 +12934,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="298" externalid="187987179" nodearef="465" nodebref="992">
+                <link id="298" externalid="187987179" nodearef="465" nodebref="991">
                     <name>Margaret Lane</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578763.82244944 -3922396.67496963 1578763.01610416 -3922403.20198625</gml:posList>
@@ -12944,10 +12962,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="3" externalid="2077109" nodearef="2" nodebref="1060">
+                <link id="3" externalid="2077109" nodearef="2" nodebref="1061">
                     <name>Young Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579286.89123639 -3922170.74980456 1579284.15399671 -3922172.74490873 1579282.05918352 -3922175.74184787 1579280.80953207 -3922179.01119411 1579279.08015278 -3922186.43563998 1579271.43204609 -3922226.49112036</gml:posList>
+                        <gml:posList srsDimension="2">1579286.89123639 -3922170.74980456 1579284.15399671 -3922172.74490873 1579282.05918352 -3922175.74184787 1579280.80953207 -3922179.01119411 1579279.08015278 -3922186.43563998 1579272.71883382 -3922219.75181217</gml:posList>
                     </gml:LineString>
                     <linksegment id="6" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
@@ -13028,10 +13046,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="304" externalid="187990285" nodearef="470" nodebref="380">
+                <link id="304" externalid="187990285" nodearef="470" nodebref="1050">
                     <name>Argyle Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578706.00025483 -3921740.05011979 1578666.35619365 -3921728.41852158</gml:posList>
+                        <gml:posList srsDimension="2">1578706.00025483 -3921740.05011979 1578676.3062648 -3921731.33786547</gml:posList>
                     </gml:LineString>
                     <linksegment id="535" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
@@ -13800,10 +13818,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="359" externalid="252133055" nodearef="236" nodebref="520">
+                <link id="359" externalid="252133055" nodearef="236" nodebref="1031">
                     <name>Phillip Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579311.9198031 -3922367.42877814 1579314.99686728 -3922356.09133352 1579327.94349468 -3922308.33469943</gml:posList>
+                        <gml:posList srsDimension="2">1579311.9198031 -3922367.42877814 1579314.99686728 -3922356.09133352 1579325.07526769 -3922318.91479934</gml:posList>
                     </gml:LineString>
                     <linksegment id="630" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -14017,7 +14035,7 @@
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="373" externalid="273641207" nodearef="45" nodebref="1044">
+                <link id="373" externalid="273641207" nodearef="45" nodebref="1045">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578621.20407139 -3923112.05728692 1578621.65078077 -3923098.49714301</gml:posList>
@@ -14717,10 +14735,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="424" externalid="324785054" nodearef="224" nodebref="1026">
+                <link id="424" externalid="324785054" nodearef="224" nodebref="1025">
                     <name>York Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578717.29034002 -3922475.8578999 1578714.63238259 -3922533.11863671</gml:posList>
+                        <gml:posList srsDimension="2">1578717.29034002 -3922475.8578999 1578715.12339486 -3922522.54078587</gml:posList>
                     </gml:LineString>
                     <linksegment id="742" dir="a_b" typeref="19">
                         <numberoflanes>3</numberoflanes>
@@ -15086,7 +15104,7 @@
                 <link id="449" externalid="385081630" nodearef="8" nodebref="1047">
                     <name>Hickson Road</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578498.8105823 -3922339.51677786 1578499.92059119 -3922323.29722491 1578500.12935955 -3922320.16286931</gml:posList>
+                        <gml:posList srsDimension="2">1578498.8105823 -3922339.51677786 1578499.92059119 -3922323.29722491 1578500.12935955 -3922320.16286931 1578501.73949931 -3922297.35606199</gml:posList>
                     </gml:LineString>
                     <linksegment id="791" dir="a_b" typeref="21">
                         <numberoflanes>1</numberoflanes>
@@ -15439,10 +15457,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="473" externalid="408466887" nodearef="628" nodebref="1031">
+                <link id="473" externalid="408466887" nodearef="628" nodebref="1032">
                     <name>Elizabeth Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579098.53263828 -3922959.65892251 1579094.68493821 -3922978.20796472</gml:posList>
+                        <gml:posList srsDimension="2">1579098.53263828 -3922959.65892251 1579095.97107345 -3922972.00774477</gml:posList>
                     </gml:LineString>
                     <linksegment id="835" dir="a_b" typeref="15">
                         <numberoflanes>3</numberoflanes>
@@ -16079,7 +16097,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="516" externalid="478243190" nodearef="513" nodebref="1037">
+                <link id="516" externalid="478243190" nodearef="513" nodebref="1038">
                     <name>York Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578708.48670999 -3922647.65965719 1578708.21286685 -3922653.61299083</gml:posList>
@@ -17127,7 +17145,7 @@
                         <maxspeed>50.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="587" externalid="635918871" nodearef="116" nodebref="1041">
+                <link id="587" externalid="635918871" nodearef="116" nodebref="1042">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578639.01327378 -3922645.46154239 1578641.89376585 -3922567.02600038</gml:posList>
@@ -18756,7 +18774,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="699" externalid="778420267" nodearef="848" nodebref="1034">
+                <link id="699" externalid="778420267" nodearef="848" nodebref="1035">
                     <name>Kent Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578554.13278849 -3923272.57039793 1578555.81015514 -3923209.87500201</gml:posList>
@@ -18931,7 +18949,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="710" externalid="785917939" nodearef="368" nodebref="1035">
+                <link id="710" externalid="785917939" nodearef="368" nodebref="1036">
                     <name>Macquarie Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1579311.84631345 -3922723.77449145 1579307.3155597 -3922743.1710565</gml:posList>
@@ -19122,7 +19140,7 @@
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="725" externalid="824064072" nodearef="162" nodebref="988">
+                <link id="725" externalid="824064072" nodearef="162" nodebref="987">
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578702.81190628 -3922293.98837275 1578706.04075514 -3922301.3051909</gml:posList>
                     </gml:LineString>
@@ -20108,9 +20126,9 @@
                         <maxspeed>60.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="792" externalid="1065434005" nodearef="887" nodebref="1007">
+                <link id="792" externalid="1065434005" nodearef="887" nodebref="1069">
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1579046.63896673 -3922822.48347846 1579062.07717266 -3922819.61002646 1579089.49619956 -3922820.81570808 1579114.86866134 -3922825.88271874 1579233.86899062 -3922852.17333584</gml:posList>
+                        <gml:posList srsDimension="2">1579046.63896673 -3922822.48347846 1579062.07717266 -3922819.61002646 1579089.49619956 -3922820.81570808 1579114.86866134 -3922825.88271874 1579192.73642969 -3922843.08581317</gml:posList>
                     </gml:LineString>
                     <linksegment id="1441" dir="a_b" typeref="26">
                         <numberoflanes>1</numberoflanes>
@@ -20822,10 +20840,10 @@
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="840" externalid="1091753305" nodearef="912" nodebref="1025">
+                <link id="840" externalid="1091753305" nodearef="912" nodebref="512">
                     <name>York Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578714.02544313 -3922548.5165585 1578713.92511076 -3922550.93077622</gml:posList>
+                        <gml:posList srsDimension="2">1578714.02544313 -3922548.5165585 1578713.92511076 -3922550.93077622 1578713.66929404 -3922556.81314103 1578712.88798947 -3922574.77872097</gml:posList>
                     </gml:LineString>
                     <linksegment id="1533" dir="a_b" typeref="19">
                         <numberoflanes>3</numberoflanes>
@@ -20892,7 +20910,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="845" externalid="1097892514" nodearef="270" nodebref="1038">
+                <link id="845" externalid="1097892514" nodearef="270" nodebref="1039">
                     <name>Sussex Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578487.01061194 -3922640.20365311 1578488.84949442 -3922628.40586637 1578489.27903815 -3922625.62489904 1578491.11875118 -3922612.06745881</gml:posList>
@@ -20909,7 +20927,7 @@
                 <link id="846" externalid="1097892515" nodearef="153" nodebref="1027">
                     <name>Clarence Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578629.016011 -3922871.38538211 1578629.3875543 -3922862.21441177 1578633.11638291 -3922769.12556038</gml:posList>
+                        <gml:posList srsDimension="2">1578629.016011 -3922871.38538211 1578629.3875543 -3922862.21441177 1578632.7985056 -3922777.06140946</gml:posList>
                     </gml:LineString>
                     <linksegment id="1545" dir="a_b" typeref="21">
                         <numberoflanes>4</numberoflanes>
@@ -21109,10 +21127,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="86" externalid="34695430" nodearef="154" nodebref="987">
+                <link id="86" externalid="34695430" nodearef="154" nodebref="963">
                     <name>King Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578700.06627168 -3922873.18825228 1578711.578936 -3922875.87706557 1578743.88147232 -3922882.36586002 1578768.81749305 -3922888.44122556 1578775.95181369 -3922890.33750994</gml:posList>
+                        <gml:posList srsDimension="2">1578700.06627168 -3922873.18825228 1578711.578936 -3922875.87706557 1578743.88147232 -3922882.36586002 1578768.81749305 -3922888.44122556 1578775.95181369 -3922890.33750994 1578781.20300962 -3922891.7404419</gml:posList>
                     </gml:LineString>
                     <linksegment id="150" dir="a_b" typeref="19">
                         <numberoflanes>4</numberoflanes>
@@ -22055,7 +22073,7 @@
                         <maxspeed>20.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="931" externalid="273641207" nodearef="149" nodebref="1059">
+                <link id="931" externalid="273641207" nodearef="149" nodebref="1060">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578623.33929476 -3923039.70993016 1578623.96644255 -3923013.14420412</gml:posList>
@@ -22406,10 +22424,10 @@
                         <maxspeed>30.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="955" externalid="324785034" nodearef="352" nodebref="154">
+                <link id="955" externalid="324785034" nodearef="352" nodebref="1026">
                     <name>York Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578704.16877232 -3922765.99461013 1578700.80776756 -3922831.25607233 1578700.73335249 -3922833.75184056 1578700.06627168 -3922873.18825228</gml:posList>
+                        <gml:posList srsDimension="2">1578704.16877232 -3922765.99461013 1578700.80776756 -3922831.25607233 1578700.73335249 -3922833.75184056 1578700.38271295 -3922854.48117481</gml:posList>
                     </gml:LineString>
                     <linksegment id="1732" dir="a_b" typeref="19">
                         <numberoflanes>1</numberoflanes>
@@ -22420,7 +22438,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="956" externalid="1097892515" nodearef="353" nodebref="1040">
+                <link id="956" externalid="1097892515" nodearef="353" nodebref="1041">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578633.60260152 -3922759.32441379 1578633.92005033 -3922753.10867943 1578634.87023821 -3922732.72368107 1578637.02383433 -3922687.36419355</gml:posList>
@@ -22528,10 +22546,10 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="963" externalid="152771366" nodearef="377" nodebref="1049">
+                <link id="963" externalid="152771366" nodearef="377" nodebref="331">
                     <name>Argyle Street</name>
                     <gml:LineString>
-                        <gml:posList srsDimension="2">1578592.80433158 -3921708.9085389 1578596.4791431 -3921710.56192182 1578600.34476953 -3921711.70698723</gml:posList>
+                        <gml:posList srsDimension="2">1578592.80433158 -3921708.9085389 1578596.4791431 -3921710.56192182 1578600.34476953 -3921711.70698723 1578601.30426219 -3921711.88051897 1578626.18275666 -3921716.38001823</gml:posList>
                     </gml:LineString>
                     <linksegment id="1748" dir="a_b" typeref="17">
                         <numberoflanes>1</numberoflanes>
@@ -22678,7 +22696,7 @@
                         <maxspeed>40.0</maxspeed>
                     </linksegment>
                 </link>
-                <link id="973" externalid="3188567" nodearef="435" nodebref="1039">
+                <link id="973" externalid="3188567" nodearef="435" nodebref="1040">
                     <name>Clarence Street</name>
                     <gml:LineString>
                         <gml:posList srsDimension="2">1578614.23316558 -3923241.68931816 1578614.98738025 -3923227.85457163</gml:posList>
@@ -23138,49 +23156,37 @@
                         <approach ref="815"/>
                     </approaches>
                 </intersection>
-                <intersection id="100" externalid="8965823" noderef="2" control="signalised" types="crossing">
+                <intersection id="100" externalid="10185680978,10188082779" noderef="997" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="3"/>
-                        <approach ref="7"/>
-                        <approach ref="783"/>
+                        <approach ref="1657"/>
                     </approaches>
                 </intersection>
-                <intersection id="101" externalid="13757743" noderef="157" control="signalised" types="crossing">
+                <intersection id="101" externalid="8965823" noderef="2" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="1649"/>
-                        <approach ref="598"/>
+                        <approach ref="7"/>
+                        <approach ref="783"/>
                     </approaches>
                 </intersection>
                 <intersection id="102" externalid="15405025" noderef="32" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1916"/>
-                        <approach ref="2167"/>
-                        <approach ref="629"/>
-                        <approach ref="635"/>
                     </approaches>
                 </intersection>
                 <intersection id="103" externalid="15405030" noderef="518" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1357"/>
                         <approach ref="1989"/>
-                        <approach ref="2049"/>
-                        <approach ref="627"/>
                     </approaches>
                 </intersection>
                 <intersection id="104" externalid="15405041" noderef="942" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="2038"/>
-                        <approach ref="2040"/>
                         <approach ref="31"/>
-                        <approach ref="626"/>
                     </approaches>
                 </intersection>
                 <intersection id="105" externalid="26526386" noderef="945" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1354"/>
-                        <approach ref="2050"/>
-                        <approach ref="2052"/>
-                        <approach ref="628"/>
                     </approaches>
                 </intersection>
                 <intersection id="106" externalid="2843788698" noderef="998" control="signalised" types="crossing">
@@ -23205,22 +23211,19 @@
                     <approaches>
                         <approach ref="1477"/>
                         <approach ref="1494"/>
-                        <approach ref="17"/>
                     </approaches>
                 </intersection>
                 <intersection id="14" externalid="15405036" noderef="109" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1568"/>
-                        <approach ref="2285"/>
+                        <approach ref="2287"/>
                         <approach ref="430"/>
                     </approaches>
                 </intersection>
                 <intersection id="15" externalid="15405751" noderef="35" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="152"/>
-                        <approach ref="1646"/>
                         <approach ref="2196"/>
-                        <approach ref="34"/>
                     </approaches>
                 </intersection>
                 <intersection id="16" externalid="15405753" noderef="725" control="signalised" types="junction">
@@ -23247,7 +23250,6 @@
                     <approaches>
                         <approach ref="1766"/>
                         <approach ref="2271"/>
-                        <approach ref="922"/>
                     </approaches>
                 </intersection>
                 <intersection id="2" externalid="8965683" noderef="348" control="signalised" types="junction">
@@ -23272,31 +23274,26 @@
                 </intersection>
                 <intersection id="22" externalid="15407248" noderef="116" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1063"/>
                         <approach ref="113"/>
-                        <approach ref="2303"/>
+                        <approach ref="2305"/>
                         <approach ref="949"/>
                     </approaches>
                 </intersection>
                 <intersection id="23" externalid="15449304" noderef="154" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="148"/>
-                        <approach ref="151"/>
-                        <approach ref="1732"/>
-                        <approach ref="741"/>
+                        <approach ref="2275"/>
                     </approaches>
                 </intersection>
                 <intersection id="24" externalid="20827843" noderef="50" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1645"/>
                         <approach ref="1958"/>
-                        <approach ref="50"/>
                     </approaches>
                 </intersection>
                 <intersection id="25" externalid="20827844" noderef="51" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="2204"/>
-                        <approach ref="49"/>
+                        <approach ref="2202"/>
                         <approach ref="634"/>
                     </approaches>
                 </intersection>
@@ -23322,9 +23319,6 @@
                 </intersection>
                 <intersection id="29" externalid="33165422" noderef="352" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1733"/>
-                        <approach ref="387"/>
-                        <approach ref="389"/>
                         <approach ref="738"/>
                     </approaches>
                 </intersection>
@@ -23392,22 +23386,18 @@
                 <intersection id="39" externalid="3420655031" noderef="680" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1879"/>
-                        <approach ref="2293"/>
-                        <approach ref="932"/>
+                        <approach ref="2295"/>
                     </approaches>
                 </intersection>
                 <intersection id="4" externalid="8965827,10228258044,10228258045" noderef="522" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1142"/>
                         <approach ref="1874"/>
                         <approach ref="985"/>
                     </approaches>
                 </intersection>
-                <intersection id="40" externalid="3899037438" noderef="234" control="signalised" types="crossing">
+                <intersection id="40" externalid="13757743" noderef="965" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="230"/>
-                        <approach ref="760"/>
-                        <approach ref="957"/>
+                        <approach ref="597"/>
                     </approaches>
                 </intersection>
                 <intersection id="41" externalid="666758991,10188047675,10188047678,10188047679" noderef="7" control="signalised" types="junction">
@@ -23482,7 +23472,7 @@
                 </intersection>
                 <intersection id="52" externalid="9006017865,9006017868" noderef="943" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="2289"/>
+                        <approach ref="2291"/>
                         <approach ref="47"/>
                     </approaches>
                 </intersection>
@@ -23496,7 +23486,7 @@
                 <intersection id="54" externalid="10187679266,10245932148" noderef="153" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1718"/>
-                        <approach ref="2309"/>
+                        <approach ref="2311"/>
                     </approaches>
                 </intersection>
                 <intersection id="55" externalid="10187696067,10187696068,10187696069,10187696070" noderef="944" control="signalised" types="junction">
@@ -23580,7 +23570,7 @@
                 </intersection>
                 <intersection id="66" externalid="10197152344,10197152401,10197152402" noderef="45" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="2307"/>
+                        <approach ref="2309"/>
                         <approach ref="599"/>
                         <approach ref="660"/>
                     </approaches>
@@ -23592,18 +23582,17 @@
                         <approach ref="717"/>
                     </approaches>
                 </intersection>
-                <intersection id="68" externalid="10228256901,10228256914,10228256915,10228256916" noderef="72" control="signalised" types="junction">
+                <intersection id="68" externalid="10197152414" noderef="963" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="150"/>
+                    </approaches>
+                </intersection>
+                <intersection id="69" externalid="10228256901,10228256914,10228256915,10228256916" noderef="72" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1419"/>
                         <approach ref="637"/>
                         <approach ref="643"/>
                         <approach ref="71"/>
-                    </approaches>
-                </intersection>
-                <intersection id="69" externalid="10228256902,10228258023" noderef="71" control="signalised" types="junction">
-                    <approaches>
-                        <approach ref="218"/>
-                        <approach ref="72"/>
                     </approaches>
                 </intersection>
                 <intersection id="7" externalid="13887177" noderef="448" control="signalised" types="junction">
@@ -23612,63 +23601,63 @@
                         <approach ref="1485"/>
                     </approaches>
                 </intersection>
-                <intersection id="70" externalid="10228258022" noderef="794" control="signalised" types="junction">
+                <intersection id="70" externalid="10228256902,10228258023" noderef="71" control="signalised" types="junction">
+                    <approaches>
+                        <approach ref="218"/>
+                        <approach ref="72"/>
+                    </approaches>
+                </intersection>
+                <intersection id="71" externalid="10228258022" noderef="794" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1868"/>
                     </approaches>
                 </intersection>
-                <intersection id="71" externalid="10241424307,10241424308,10241448609" noderef="88" control="signalised" types="junction">
+                <intersection id="72" externalid="10241424307,10241424308,10241448609" noderef="88" control="signalised" types="junction">
                     <approaches>
                         <approach ref="582"/>
                         <approach ref="587"/>
                         <approach ref="91"/>
                     </approaches>
                 </intersection>
-                <intersection id="72" externalid="10245942937" noderef="280" control="signalised" types="junction">
+                <intersection id="73" externalid="10245942937" noderef="280" control="signalised" types="junction">
                     <approaches>
                         <approach ref="294"/>
                     </approaches>
                 </intersection>
-                <intersection id="73" externalid="10245942938" noderef="278" control="signalised" types="junction">
+                <intersection id="74" externalid="10245942938" noderef="278" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1333"/>
                     </approaches>
                 </intersection>
-                <intersection id="74" externalid="10245942939,10245942940" noderef="371" control="signalised" types="junction">
+                <intersection id="75" externalid="10245942939,10245942940" noderef="371" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1746"/>
                         <approach ref="411"/>
                     </approaches>
                 </intersection>
-                <intersection id="75" externalid="10245942941,10245942942" noderef="459" control="signalised" types="junction">
+                <intersection id="76" externalid="10245942941,10245942942" noderef="459" control="signalised" types="junction">
                     <approaches>
                         <approach ref="515"/>
                         <approach ref="581"/>
                     </approaches>
                 </intersection>
-                <intersection id="76" externalid="10245943060,10245943061,10245943062" noderef="59" control="signalised" types="junction">
+                <intersection id="77" externalid="10245943060,10245943061,10245943062" noderef="59" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1243"/>
                         <approach ref="586"/>
                         <approach ref="78"/>
                     </approaches>
                 </intersection>
-                <intersection id="77" externalid="8589583,651310555" noderef="713" control="signalised" types="crossing">
+                <intersection id="78" externalid="8589583,651310555" noderef="713" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1408"/>
                         <approach ref="983"/>
                     </approaches>
                 </intersection>
-                <intersection id="78" externalid="8589585,1655439114" noderef="979" control="signalised" types="crossing">
+                <intersection id="79" externalid="8589585,1655439114" noderef="979" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1589"/>
                         <approach ref="2184"/>
-                    </approaches>
-                </intersection>
-                <intersection id="79" externalid="1633391051" noderef="980" control="signalised" types="crossing">
-                    <approaches>
-                        <approach ref="2186"/>
-                        <approach ref="357"/>
                     </approaches>
                 </intersection>
                 <intersection id="8" externalid="15397462" noderef="368" control="signalised" types="junction">
@@ -23678,63 +23667,57 @@
                         <approach ref="748"/>
                     </approaches>
                 </intersection>
-                <intersection id="80" externalid="1986167706" noderef="981" control="signalised" types="crossing">
+                <intersection id="80" externalid="1633391051" noderef="980" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="2186"/>
+                        <approach ref="357"/>
+                    </approaches>
+                </intersection>
+                <intersection id="81" externalid="1986167706" noderef="981" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="519"/>
                     </approaches>
                 </intersection>
-                <intersection id="81" externalid="1986167726" noderef="982" control="signalised" types="crossing">
+                <intersection id="82" externalid="1986167726" noderef="982" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="205"/>
-                        <approach ref="2189"/>
                     </approaches>
                 </intersection>
-                <intersection id="82" externalid="2045043330" noderef="983" control="signalised" types="crossing">
+                <intersection id="83" externalid="2045043330" noderef="983" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1886"/>
-                        <approach ref="2191"/>
                     </approaches>
                 </intersection>
-                <intersection id="83" externalid="2045059225" noderef="630" control="signalised" types="crossing">
+                <intersection id="84" externalid="2045059225" noderef="630" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1004"/>
-                        <approach ref="842"/>
                     </approaches>
                 </intersection>
-                <intersection id="84" externalid="2268947005" noderef="984" control="signalised" types="crossing">
+                <intersection id="85" externalid="2268947005" noderef="984" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1245"/>
                         <approach ref="2193"/>
                     </approaches>
                 </intersection>
-                <intersection id="85" externalid="2281643758,10031673090" noderef="985" control="signalised" types="crossing">
+                <intersection id="86" externalid="2281643758,10031673090" noderef="985" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2195"/>
-                        <approach ref="2265"/>
+                        <approach ref="2263"/>
                     </approaches>
                 </intersection>
-                <intersection id="86" externalid="4417297891" noderef="350" control="signalised" types="crossing">
+                <intersection id="87" externalid="4417297891" noderef="350" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1836"/>
                         <approach ref="385"/>
                     </approaches>
                 </intersection>
-                <intersection id="87" externalid="5147320980" noderef="986" control="signalised" types="crossing">
+                <intersection id="88" externalid="5147320980" noderef="986" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2197"/>
                         <approach ref="841"/>
                     </approaches>
                 </intersection>
-                <intersection id="88" externalid="5641003455,10197152414" noderef="987" control="signalised" types="crossing">
-                    <approaches>
-                        <approach ref="150"/>
-                        <approach ref="2199"/>
-                    </approaches>
-                </intersection>
-                <intersection id="89" externalid="6038996875" noderef="988" control="signalised" types="crossing">
+                <intersection id="89" externalid="6038996875" noderef="987" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1313"/>
-                        <approach ref="2201"/>
                     </approaches>
                 </intersection>
                 <intersection id="9" externalid="15397477" noderef="102" control="signalised" types="junction">
@@ -23745,64 +23728,57 @@
                         <approach ref="851"/>
                     </approaches>
                 </intersection>
-                <intersection id="90" externalid="6337512681" noderef="989" control="signalised" types="crossing">
+                <intersection id="90" externalid="6337512681" noderef="988" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2203"/>
+                        <approach ref="2201"/>
                         <approach ref="353"/>
                     </approaches>
                 </intersection>
-                <intersection id="91" externalid="6936407757" noderef="990" control="signalised" types="crossing">
+                <intersection id="91" externalid="6936407757" noderef="989" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="2053"/>
-                        <approach ref="2205"/>
                     </approaches>
                 </intersection>
                 <intersection id="92" externalid="8608847049" noderef="790" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1129"/>
-                        <approach ref="1497"/>
                     </approaches>
                 </intersection>
-                <intersection id="93" externalid="10188047310,3516277352,10188047312" noderef="991" control="signalised" types="crossing">
+                <intersection id="93" externalid="10188047310,3516277352,10188047312" noderef="990" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2207"/>
+                        <approach ref="2205"/>
                         <approach ref="286"/>
                     </approaches>
                 </intersection>
-                <intersection id="94" externalid="10188047816" noderef="992" control="signalised" types="crossing">
+                <intersection id="94" externalid="10188047816" noderef="991" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2209"/>
+                        <approach ref="2207"/>
                         <approach ref="523"/>
                     </approaches>
                 </intersection>
-                <intersection id="95" externalid="2041295321" noderef="993" control="signalised" types="crossing">
+                <intersection id="95" externalid="10228258048" noderef="992" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2211"/>
+                        <approach ref="2113"/>
+                    </approaches>
+                </intersection>
+                <intersection id="96" externalid="2041295321" noderef="993" control="signalised" types="crossing">
+                    <approaches>
                         <approach ref="757"/>
                     </approaches>
                 </intersection>
-                <intersection id="96" externalid="9920391746" noderef="994" control="signalised" types="crossing">
+                <intersection id="97" externalid="9920391746" noderef="994" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1499"/>
-                        <approach ref="2213"/>
                     </approaches>
                 </intersection>
-                <intersection id="97" externalid="9920391761" noderef="995" control="signalised" types="crossing">
+                <intersection id="98" externalid="9920391761" noderef="995" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="2013"/>
-                        <approach ref="2215"/>
                     </approaches>
                 </intersection>
-                <intersection id="98" externalid="9920391791" noderef="996" control="signalised" types="crossing">
+                <intersection id="99" externalid="9920391791" noderef="996" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="1507"/>
-                        <approach ref="2217"/>
-                    </approaches>
-                </intersection>
-                <intersection id="99" externalid="10185680978,10188082779" noderef="997" control="signalised" types="crossing">
-                    <approaches>
-                        <approach ref="1657"/>
-                        <approach ref="2219"/>
                     </approaches>
                 </intersection>
             </intersections>

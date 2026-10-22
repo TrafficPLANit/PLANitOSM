@@ -9,6 +9,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
+import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.mode.PredefinedModeType;
@@ -50,6 +51,14 @@ public class OsmIntersectionConsolidationTest {
     @Override public void close() {}
   }
 
+  /** a reader of a scenario file with the given settings changes */
+  private static OsmNetworkReader readerOf(String scenario, Consumer<OsmNetworkReaderSettings> configure) {
+    var reader = OsmNetworkReaderFactory.create(
+        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenario + ".osm").toString(), CountryNames.AUSTRALIA);
+    configure.accept(reader.getSettings());
+    return reader;
+  }
+
   @BeforeEach
   public void setUp() {
     IdGenerator.reset();
@@ -58,14 +67,6 @@ public class OsmIntersectionConsolidationTest {
   @AfterEach
   public void tearDown() {
     IdGenerator.reset();
-  }
-
-  /** a reader of a scenario file with the given settings changes */
-  private static OsmNetworkReader readerOf(String scenario, Consumer<OsmNetworkReaderSettings> configure) {
-    var reader = OsmNetworkReaderFactory.create(
-        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenario + ".osm").toString(), CountryNames.AUSTRALIA);
-    configure.accept(reader.getSettings());
-    return reader;
   }
 
   /** Without consolidation, each of the four signalised nodes is its own intersection */
@@ -96,16 +97,37 @@ public class OsmIntersectionConsolidationTest {
     assertEquals(4, Set.copyOf(replaced).size());
   }
 
-  /** A vehicle signal for westbound traffic stands between the carriageways, between 2 and 1: once consolidated, that
-   * segment is an internal segment with a signal, and the others are plain */
+  /**
+   * A vehicle signal for westbound traffic stands between the carriageways, between 2 and 1: once consolidated, that
+   * segment is an internal segment with a signal, and the roads are otherwise plain. A footway runs from 1 to 2 north
+   * of the carriageway, and a cycleway crosses it at 30 with lights. No road or rail passes 30, so it is no
+   * intersection: no traffic it controls has an approach. The footway is a short connection between 1 and 2, so 30
+   * joins, and the footway segments into 30 become internal segments with a signal, for its lights
+   * <pre>
+   *               33    34
+   *                 \  /          cycleway 33-30-34
+   *        31 ~~~~~~ 30 ~~~~~~ 32   footway 1-31-30-32-2, about 8 m north of the carriageway, 31 m long; 31 and 32
+   *        ~                    ~   are shape points
+   *        1 <------ 21 <------ 2   21: the vehicle signal for westbound traffic
+   *        |                    ^
+   *        v                    |   the divided roads crossing of this class
+   *        3 -----------------> 4
+   * </pre>
+   */
   @Test
-  public void stopLineBetweenTheCarriagewaysBecomesAnInternalSegmentWithASignal() {
-    var reader = readerOf("divided_roads_crossing_stop_line_between_carriageways",
-        settings -> settings.setConsolidateIntersections(true));
+  public void stopLineBetweenTheCarriagewaysAndLightsOnAFootwayBecomeInternalSegmentsWithASignal() {
+    var reader = readerOf("divided_roads_crossing_stop_line_between_carriageways", settings -> {
+      settings.setConsolidateIntersections(true);
+      settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY);
+      settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
+    });
     var layer = reader.read().getTransportLayers().getFirst();
 
+    assertEquals(1, layer.getIntersections().size());
     var consolidated = (SpatialIntersection) layer.getIntersections().getFirst();
-    assertEquals(List.of(segment(layer, 2, 1)), consolidated.getInternalSegmentsWithSignal());
+    assertTrue(consolidated.hasMemberNode(nodeByOsmId(layer, 30)));
+    assertEquals(Set.of(segment(layer, 2, 1), segment(layer, 1, 30), segment(layer, 2, 30)),
+        Set.copyOf(consolidated.getInternalSegmentsWithSignal()));
     assertTrue(consolidated.getInternalSegments().containsAll(
         List.of(segment(layer, 1, 3), segment(layer, 4, 2), segment(layer, 2, 1), segment(layer, 3, 4))));
   }

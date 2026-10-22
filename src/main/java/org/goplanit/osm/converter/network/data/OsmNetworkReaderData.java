@@ -32,6 +32,11 @@ public class OsmNetworkReaderData {
   /** the logger  */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderData.class.getCanonicalName());
 
+  /** the distance that qualifies as being near to the network bounding area. USed to be used with
+   * cruder version of bounding area when this was tracked as rectagnular gounding box and not a polygon */
+  @Deprecated
+  public static final double BOUNDINGAREA_NEARNESS_DISTANCE_METERS = 200;
+
   /** temporary storage of osmWays before extracting either a single node, or multiple links to reflect the
    * roundabout/circular road */
   private final Map<Long, OsmWay> osmCircularWays =new HashMap<>();
@@ -80,11 +85,6 @@ public class OsmNetworkReaderData {
   
   /** track layer specific information and handler to delegate processing the parts of osm ways assigned to a layer */
   private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<>();
-  
-  /** the distance that qualifies as being near to the network bounding area. USed to be used with
-   * cruder version of bounding area when this was tracked as rectagnular gounding box and not a polygon */
-  @Deprecated
-  public static final double BOUNDINGAREA_NEARNESS_DISTANCE_METERS = 200;
   
   /**
    * initialise for each layer

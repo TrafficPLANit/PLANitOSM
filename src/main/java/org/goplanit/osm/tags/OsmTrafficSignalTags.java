@@ -178,7 +178,6 @@ public class OsmTrafficSignalTags {
    */
   public static String getRecognisedDirection(Map<String, String> tags) {
     var direction = tags.get(TRAFFIC_SIGNALS_DIRECTION);
-    return OsmDirectionTags.FORWARD.equals(direction) || OsmDirectionTags.BACKWARD.equals(direction) ||
-        OsmDirectionTags.BOTH.equals(direction) ? direction : null;
+    return OsmDirectionTags.isForwardOrBackward(direction) || OsmDirectionTags.BOTH.equals(direction) ? direction : null;
   }
 }

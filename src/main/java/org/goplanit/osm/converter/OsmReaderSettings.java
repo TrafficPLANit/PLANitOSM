@@ -20,6 +20,8 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
 
   private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
 
+  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
+
   /** input source to use */
   private URL inputSource;
   
@@ -34,8 +36,6 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    * entities, e.g., links, nodes.
    */
   private boolean retainOsmTags = DEFAULT_RETAIN_OSM_TAGS;
-
-  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
 
   /**
    * Default constructor with default locale (Global)

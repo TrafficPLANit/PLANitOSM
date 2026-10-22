@@ -41,6 +41,69 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderSettings.class.getCanonicalName());
 
+  /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
+  public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
+
+  /** Default modes for which dangling subnetworks are dealt with after parsing: car only.
+   * <p>
+   * Being able to both reach and leave is a property of a single mode rather than of infrastructure, so this is
+   * judged per mode. Car is the only mode treated by default, being the one whose network is routinely broken by
+   * one way restrictions, and because withdrawing a mode's access is a modelling decision that should be asked
+   * for rather than assumed for every mode present.
+   * </p>
+   * <p>
+   * Rail and water are deliberately absent: their networks are routinely in disconnected pieces in an extract, a
+   * branch line leaving the bounding area or a ferry crossing with nothing to connect to, without that indicating
+   * a defect. Bicycle and pedestrian are absent for a related reason, their networks being fragmented rather than
+   * directionally broken.
+   * </p> */
+  public static Set<PredefinedModeType> DEFAULT_DANGLING_SUBNETWORK_MODES = Set.of(PredefinedModeType.CAR);
+
+  /** Default minimum size of subnetwork for a mode to keep its access, in vertices. At its maximum value every
+   * subnetwork but the largest falls below it, which together with {@link #DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK}
+   * and {@link #DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY} leaves a mode with a single network it can route across
+   * in full. That is the safest default: anything less leaves subnetworks a trip can enter and then be unable to
+   * complete */
+  public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE = Integer.MAX_VALUE;
+
+  /** by default we always keep the largest subnetwork */
+  public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
+
+  /** Default notion of connectivity applied when removing dangling subnetworks: strong.
+   * <p>
+   * Weak connectivity asks only whether infrastructure is attached to the network, and so retains anything that
+   * cannot be both entered and left, e.g. a car park served by a single one way road pointing outwards. Such
+   * infrastructure cannot carry a route in either direction and is of no more use than a disconnected fragment,
+   * which is why the stricter notion is the default.
+   * </p>
+   * <p>
+   * Note that this does not by itself yield a network every part of which can serve as both origin and
+   * destination. Being able to enter and leave is a per mode property, whereas pruning is per track type: a
+   * pocket entered by a bus only segment and left by a car segment is strongly connected as road infrastructure
+   * while remaining unusable for car. Measured on a metropolitan extract the stricter notion removes on the order
+   * of a few hundred nodes, while an order of magnitude more remain unusable for an individual mode.
+   * </p> */
+  public static Connectivity DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY = Connectivity.STRONG;
+
+  /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
+  public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
+
+  /** by default intersections are parsed from traffic signals */
+  public static final boolean DEFAULT_PARSE_INTERSECTIONS = true;
+
+  /** by default a vehicle signal controls a junction at most 50 m away */
+  public static final double DEFAULT_MAX_VEHICLE_SIGNAL_TO_JUNCTION_DISTANCE_M = 50;
+
+  /** by default a signalised pedestrian crossing at most 30 m before a signalised junction is part of it */
+  public static final double DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M = 30;
+
+  /** by default links are not broken at isolated signalised pedestrian crossings, so parsing does not change the
+   * network */
+  public static final boolean DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS = false;
+
+  /** by default the parsed intersections are not consolidated, so each signalised node keeps its own intersection */
+  public static final boolean DEFAULT_CONSOLIDATE_INTERSECTIONS = false;
+
   /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
    * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
    * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
@@ -160,68 +223,48 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   protected boolean alwaysKeepLargestSubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
 
 
-  /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
-  public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
+  /**
+   * Construct the per mode defaults for dealing with dangling subnetworks
+   *
+   * @return configuration for each mode in {@code DEFAULT_DANGLING_SUBNETWORK_MODES}
+   */
+  private static Map<PredefinedModeType, DanglingSubnetworkConfig> createDefaultDanglingSubnetworkConfig(){
+    var configByMode = new EnumMap<PredefinedModeType, DanglingSubnetworkConfig>(PredefinedModeType.class);
+    for(var modeType : DEFAULT_DANGLING_SUBNETWORK_MODES){
+      configByMode.put(modeType, new DanglingSubnetworkConfig(
+          DEFAULT_MINIMUM_SUBNETWORK_SIZE, Integer.MAX_VALUE, DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY));
+    }
+    return configByMode;
+  }
 
-  /** Default modes for which dangling subnetworks are dealt with after parsing: car only.
-   * <p>
-   * Being able to both reach and leave is a property of a single mode rather than of infrastructure, so this is
-   * judged per mode. Car is the only mode treated by default, being the one whose network is routinely broken by
-   * one way restrictions, and because withdrawing a mode's access is a modelling decision that should be asked
-   * for rather than assumed for every mode present.
-   * </p>
-   * <p>
-   * Rail and water are deliberately absent: their networks are routinely in disconnected pieces in an extract, a
-   * branch line leaving the bounding area or a ferry crossing with nothing to connect to, without that indicating
-   * a defect. Bicycle and pedestrian are absent for a related reason, their networks being fragmented rather than
-   * directionally broken.
-   * </p> */
-  public static Set<PredefinedModeType> DEFAULT_DANGLING_SUBNETWORK_MODES = Set.of(PredefinedModeType.CAR);
-  
-  /** Default minimum size of subnetwork for a mode to keep its access, in vertices. At its maximum value every
-   * subnetwork but the largest falls below it, which together with {@link #DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK}
-   * and {@link #DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY} leaves a mode with a single network it can route across
-   * in full. That is the safest default: anything less leaves subnetworks a trip can enter and then be unable to
-   * complete */
-  public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE = Integer.MAX_VALUE;
-  
-  /** by default we always keep the largest subnetwork */
-  public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
+  /**
+   * Compile the effective access value classification by starting from the defaults and applying the user's
+   * overrides on top. Cached because it is consulted for every parsed OSM way carrying an access tag.
+   *
+   * @param classification to compile the value tags for
+   * @return effective access value tags for that classification
+   */
+  private String[] compileAccessValueTags(AccessValueClassification classification) {
+    var defaults = classification == AccessValueClassification.POSITIVE ?
+        OsmAccessTags.getDefaultPositiveAccessValueTags() : OsmAccessTags.getDefaultNegativeAccessValueTags();
 
-  /** Default notion of connectivity applied when removing dangling subnetworks: strong.
-   * <p>
-   * Weak connectivity asks only whether infrastructure is attached to the network, and so retains anything that
-   * cannot be both entered and left, e.g. a car park served by a single one way road pointing outwards. Such
-   * infrastructure cannot carry a route in either direction and is of no more use than a disconnected fragment,
-   * which is why the stricter notion is the default.
-   * </p>
-   * <p>
-   * Note that this does not by itself yield a network every part of which can serve as both origin and
-   * destination. Being able to enter and leave is a per mode property, whereas pruning is per track type: a
-   * pocket entered by a bus only segment and left by a car segment is strongly connected as road infrastructure
-   * while remaining unusable for car. Measured on a metropolitan extract the stricter notion removes on the order
-   * of a few hundred nodes, while an order of magnitude more remain unusable for an individual mode.
-   * </p> */
-  public static Connectivity DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY = Connectivity.STRONG;
+    var effective = new TreeSet<>(Arrays.asList(defaults));
+    for(var entry : overriddenAccessValueTags.entrySet()){
+      /* a value classified the other way by the user must no longer appear here, hence the removal irrespective
+       * of whether it is subsequently added */
+      effective.remove(entry.getKey());
+      if(entry.getValue() == classification){
+        effective.add(entry.getKey());
+      }
+    }
+    return effective.toArray(new String[0]);
+  }
 
-  /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
-  public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
-
-  /** by default intersections are parsed from traffic signals */
-  public static final boolean DEFAULT_PARSE_INTERSECTIONS = true;
-
-  /** by default a vehicle signal controls a junction at most 50 m away */
-  public static final double DEFAULT_MAX_VEHICLE_SIGNAL_TO_JUNCTION_DISTANCE_M = 50;
-
-  /** by default a signalised pedestrian crossing at most 30 m before a signalised junction is part of it */
-  public static final double DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M = 30;
-
-  /** by default links are not broken at isolated signalised pedestrian crossings, so parsing does not change the
-   * network */
-  public static final boolean DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS = false;
-
-  /** by default the parsed intersections are not consolidated, so each signalised node keeps its own intersection */
-  public static final boolean DEFAULT_CONSOLIDATE_INTERSECTIONS = false;
+  /** discard the compiled access value classification so it is rebuilt on next use */
+  private void invalidateCompiledAccessValueTags(){
+    this.compiledPositiveAccessValueTags = null;
+    this.compiledNegativeAccessValueTags = null;
+  }
 
   /**
    * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings.
@@ -330,14 +373,20 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
       int consolidationLevel = level + 1;
       var consolidatorSettings = getIntersectionConsolidatorSettings();
       LOGGER.info(LoggingUtils.settingsSection("Intersection consolidation", consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum internal link length (m)",
-          consolidatorSettings.getMaximumInternalLinkLengthMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum joining reach (m)",
+          consolidatorSettings.getMaximumJoiningReachMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Minimum coverage gain per member",
           consolidatorSettings.getMinimumCoverageGainPerMember(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Coverage tie margin",
           consolidatorSettings.getCoverageTieMargin(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum parsed intersections per intersection cluster",
-          consolidatorSettings.getMaximumParsedIntersectionsPerIntersectionCluster(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum parsed intersections to try every subdivision",
+          consolidatorSettings.getMaximumParsedIntersectionsToTryEverySubdivision(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Subdivisions kept per search step",
+          consolidatorSettings.getSubdivisionsKeptPerSearchStep(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Pull-in margin beyond radius (m)",
+          consolidatorSettings.getPullInMarginBeyondRadiusMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum pull-in connection length (m)",
+          consolidatorSettings.getMaximumPullInConnectionLengthMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Internal link length warning (m)",
           consolidatorSettings.getInternalLinkLengthWarningMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Maximum distance reached only through intersection (m)",
@@ -451,35 +500,6 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
      
   /**
-   * Compile the effective access value classification by starting from the defaults and applying the user's
-   * overrides on top. Cached because it is consulted for every parsed OSM way carrying an access tag.
-   *
-   * @param classification to compile the value tags for
-   * @return effective access value tags for that classification
-   */
-  private String[] compileAccessValueTags(AccessValueClassification classification) {
-    var defaults = classification == AccessValueClassification.POSITIVE ?
-        OsmAccessTags.getDefaultPositiveAccessValueTags() : OsmAccessTags.getDefaultNegativeAccessValueTags();
-
-    var effective = new TreeSet<>(Arrays.asList(defaults));
-    for(var entry : overriddenAccessValueTags.entrySet()){
-      /* a value classified the other way by the user must no longer appear here, hence the removal irrespective
-       * of whether it is subsequently added */
-      effective.remove(entry.getKey());
-      if(entry.getValue() == classification){
-        effective.add(entry.getKey());
-      }
-    }
-    return effective.toArray(new String[0]);
-  }
-
-  /** discard the compiled access value classification so it is rebuilt on next use */
-  private void invalidateCompiledAccessValueTags(){
-    this.compiledPositiveAccessValueTags = null;
-    this.compiledNegativeAccessValueTags = null;
-  }
-
-  /**
    * Classify an OSM access value tag, overriding how it would be treated by default. For example classifying
    * {@code private} as positive causes ways tagged {@code access=private} to retain their mode access rather than
    * having every mode stripped, which is often desirable since such ways are generally still traversable in
@@ -557,20 +577,6 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
       compiledNegativeAccessValueTags = compileAccessValueTags(AccessValueClassification.NEGATIVE);
     }
     return compiledNegativeAccessValueTags;
-  }
-
-  /**
-   * Construct the per mode defaults for dealing with dangling subnetworks
-   *
-   * @return configuration for each mode in {@code DEFAULT_DANGLING_SUBNETWORK_MODES}
-   */
-  private static Map<PredefinedModeType, DanglingSubnetworkConfig> createDefaultDanglingSubnetworkConfig(){
-    var configByMode = new EnumMap<PredefinedModeType, DanglingSubnetworkConfig>(PredefinedModeType.class);
-    for(var modeType : DEFAULT_DANGLING_SUBNETWORK_MODES){
-      configByMode.put(modeType, new DanglingSubnetworkConfig(
-          DEFAULT_MINIMUM_SUBNETWORK_SIZE, Integer.MAX_VALUE, DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY));
-    }
-    return configByMode;
   }
 
   /**
