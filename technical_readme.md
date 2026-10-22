@@ -660,8 +660,8 @@ complete absence of stop_positions in OSM, especially in the Ptv1 tagging scheme
 attempt to identify existing closeby links (via `findModeDistanceCompatibleStopLocationLinksForWaitingArea()`) 
 as eligible locations for a stop_position that  - even though not explicitly present - implicitly is assumed to 
 exist. From the found links (if any), the most likely one is selected if there are more than one via 
-`findMostAppropriateStopLocationLinkForWaitingArea()`. We find the closest one as well as the other links that are 
-close by to the closest link. This contingency is needed because OSM dictates the closest node to use, but PLANit 
+`findMostAppropriateVehicleStopConnectoidLinkForWaitingArea()`. We find the closest one as well as the other links 
+that are close by to the closest link. This contingency is needed because OSM dictates the closest node to use, but PLANit 
 requires a link segment to match. since the closest node can provide access to multiple link segments, all equally 
 close, or almost equal, this buffer distance is needed to perform futher filtering. If multiple options remain the 
 close by links are filtered based on being compatible in terms of the driving direction (if transfer zone is not rail 

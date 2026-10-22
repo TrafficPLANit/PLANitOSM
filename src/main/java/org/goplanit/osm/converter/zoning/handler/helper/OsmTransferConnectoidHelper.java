@@ -2,7 +2,7 @@ package org.goplanit.osm.converter.zoning.handler.helper;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
-import org.goplanit.converter.zoning.StopLocationOnLinkSegment;
+import org.goplanit.converter.zoning.VehicleStopConnectoidLocationOnLinkSegment;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
@@ -90,12 +90,13 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * Log that no stop location could be created on an access link for a waiting area
+   * Log that no vehicle stop connectoid location could be created on an access link for a waiting area
    *
-   * @param accessLink the stop location was looked for on
+   * @param accessLink the connectoid location was looked for on
    * @param transferZone of the waiting area
    */
-  private static void logStopLocationNotCreated(MacroscopicLink accessLink, TransferZone transferZone) {
+  private static void logVehicleStopConnectoidLocationNotCreated(
+      MacroscopicLink accessLink, TransferZone transferZone) {
     LOGGER.warning(
         String.format("DISCARD: Unable to create stop_location on identified access link %s, identified location is " +
             "likely too far from waiting area %s",accessLink.getExternalId(),transferZone.getExternalId()));
@@ -499,11 +500,13 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
             suppressLogging);
   }
 
-  /** extract a connectoid location on the link of the given access link segments: the stop location of each segment,
-   * see {@link #findStopLocationOnLinkSegment(TransferZone, MacroscopicLinkSegment, Mode, double)}, chosen among them
-   * by the distance to the waiting area, see {@link ZoningConverterUtils#chooseStopLocationOnAccessLink}. A location
-   * that is not the existing coordinate closest to the waiting area is inserted into the link's geometry, projected
-   * from the waiting area's centre.
+  /** extract a connectoid location on the link of the given access link segments: the connectoid location of each
+   * segment, see
+   * {@link #findVehicleStopConnectoidLocationOnLinkSegment(TransferZone, MacroscopicLinkSegment, Mode, double)}, chosen
+   * among them by the distance to the waiting area, see
+   * {@link ZoningConverterUtils#chooseVehicleStopConnectoidLocationOnAccessLink}. A location that is not the existing
+   * coordinate closest to the waiting area is inserted into the link's geometry, projected from the waiting area's
+   * centre.
    *
    * @param transferZone transfer zone to use
    * @param accessLinkSegments of one access link, the segments the stop may be on
@@ -521,12 +524,12 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       MacroscopicNetworkLayer networkLayer) {
 
     var accessLink = accessLinkSegments.first().getParent();
-    Point connectoidLocation = ZoningConverterUtils.chooseStopLocationOnAccessLink(
+    Point connectoidLocation = ZoningConverterUtils.chooseVehicleStopConnectoidLocationOnAccessLink(
         accessLinkSegments,
         accessLinkSegment -> {
-          var stopLocation = findStopLocationOnLinkSegment(
+          var locationOnSegment = findVehicleStopConnectoidLocationOnLinkSegment(
               transferZone, accessLinkSegment, accessMode, maxAllowedStopToTransferZoneDistanceMeters);
-          return stopLocation == null ? null : stopLocation.getLocation();
+          return locationOnSegment == null ? null : locationOnSegment.getLocation();
         },
         location -> getGeoUtils().getClosestDistanceInMeters(location.getCoordinate(), transferZone.getGeometry(true)),
         (accessLinkSegment, location) -> false);
@@ -585,7 +588,8 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
 
   /**
    * Find the access link segments of the given links for a stand-alone transfer zone, with the user's overwrites of
-   * the default stop location applied, see {@link ZoningConverterUtils#findAccessLinkSegmentsForWaitingAreaOnLinks}
+   * the default connectoid location applied, see
+   * {@link ZoningConverterUtils#findAccessLinkSegmentsForWaitingAreaOnLinks}
    *
    * @param transferZone of the waiting area
    * @param links to find access link segments on
@@ -608,17 +612,19 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
 
   /**
    * Find where the stop of a stand-alone transfer zone goes on an access link segment, with the user's overwrites of
-   * the default stop location applied, see {@link ZoningConverterUtils#findStopLocationForWaitingAreaOnLinkSegment}
+   * the default connectoid location applied, see
+   * {@link ZoningConverterUtils#findVehicleStopConnectoidLocationForWaitingAreaOnLinkSegment}
    *
    * @param transferZone of the waiting area
    * @param accessLinkSegment to find the location on
    * @param accessMode the stop serves
    * @param maxAllowedDistanceMeters the maximum allowed distance between stop and waiting area
-   * @return the stop location, null when the segment gives none
+   * @return the connectoid location, null when the segment gives none
    */
-  public StopLocationOnLinkSegment findStopLocationOnLinkSegment(TransferZone transferZone,
-      MacroscopicLinkSegment accessLinkSegment, Mode accessMode, double maxAllowedDistanceMeters) {
-    return ZoningConverterUtils.findStopLocationForWaitingAreaOnLinkSegment(
+  public VehicleStopConnectoidLocationOnLinkSegment findVehicleStopConnectoidLocationOnLinkSegment(
+      TransferZone transferZone, MacroscopicLinkSegment accessLinkSegment, Mode accessMode,
+      double maxAllowedDistanceMeters) {
+    return ZoningConverterUtils.findVehicleStopConnectoidLocationForWaitingAreaOnLinkSegment(
         transferZone.getExternalId(),
         transferZone.getGeometry(true),
         accessLinkSegment,
@@ -1061,7 +1067,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     var accessLinkSegments = findAccessLinkSegmentsForWaitingAreaOnLinks(transferZone, List.of(accessLink), accessMode);
     if(accessLinkSegments.isEmpty()) {
       if(!suppressLogging) {
-        logStopLocationNotCreated(accessLink, transferZone);
+        logVehicleStopConnectoidLocationNotCreated(accessLink, transferZone);
       }
       return;
     }
@@ -1103,7 +1109,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     Point connectoidLocation = extractTransferConnectoidLocationStandAloneTransferZoneOnAccessLinkSegments(
         transferZone, accessLinkSegments, accessMode, maxAllowedStopToTransferZoneDistanceMeters, networkLayer);
     if(!suppressLogging && connectoidLocation == null) {
-      logStopLocationNotCreated(accessLinkSegments.first().getParent(), transferZone);
+      logVehicleStopConnectoidLocationNotCreated(accessLinkSegments.first().getParent(), transferZone);
     }
     
     /* special case - user overwrite verification */

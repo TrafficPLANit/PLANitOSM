@@ -133,27 +133,29 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
   /** From the provided options, select the most appropriate based on proximity, mode compatibility, relative location
    * to transfer zone, and importance of the OSM way type, see
-   * {@link ZoningConverterUtils#findMostAppropriateStopLocationLinkByDistanceToStopLocation}. A link is judged by where
-   * its stop would go, see {@link OsmTransferConnectoidHelper#findStopLocationOnLinkSegment}, and the highest capacity
-   * is preferred for a road mode. The user's overwrites of the default stop location apply, so the access link segments
-   * returned are the ones the stop is placed on
+   * {@link ZoningConverterUtils#findMostAppropriateVehicleStopConnectoidLinkByDistanceToConnectoidLocation}. A link is
+   * judged by where its stop would go, see
+   * {@link OsmTransferConnectoidHelper#findVehicleStopConnectoidLocationOnLinkSegment}, and the highest capacity is
+   * preferred for a road mode. The user's overwrites of the default connectoid location apply, so the access link
+   * segments returned are the ones the stop is placed on
    *
    * @param transferZone under consideration
    * @param osmAccessMode access mode to use
    * @param eligibleLinks for connectoids
    * @return most appropriate link that is found with its access link segments, null when none is found
    */
-  private Pair<MacroscopicLink, SortedSet<MacroscopicLinkSegment>> findMostAppropriateStopLocationLinkForWaitingArea(
+  private Pair<MacroscopicLink, SortedSet<MacroscopicLinkSegment>>
+  findMostAppropriateVehicleStopConnectoidLinkForWaitingArea(
       TransferZone transferZone, String osmAccessMode, Collection<MacroscopicLink> eligibleLinks) {
 
     var accessModeType = getNetworkToZoningData().getNetworkSettings().getMappedPlanitModeType(osmAccessMode);
     var accessMode = getReferenceNetwork().getModes().get(accessModeType);
 
     var connectoidHelper = getTransferConnectoidHelper();
-    return ZoningConverterUtils.findMostAppropriateStopLocationLinkByDistanceToStopLocation(
+    return ZoningConverterUtils.findMostAppropriateVehicleStopConnectoidLinkByDistanceToConnectoidLocation(
         connectoidHelper.findAccessLinkSegmentsForWaitingAreaOnLinks(transferZone, eligibleLinks, accessMode),
         List.of(accessMode),
-        (accessLinkSegment, mode) -> connectoidHelper.findStopLocationOnLinkSegment(
+        (accessLinkSegment, mode) -> connectoidHelper.findVehicleStopConnectoidLocationOnLinkSegment(
             transferZone, accessLinkSegment, mode, getSettings().getStopToWaitingAreaSearchRadiusMeters()),
         OsmPublicTransportReaderSettings.DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M);
   }
@@ -227,7 +229,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
     /* #matches compatibility */
     TreeSet<MacroscopicLink> chosenLinksForStopLocations = new TreeSet<>();
     {
-      var idealAccessResult = findMostAppropriateStopLocationLinkForWaitingArea(
+      var idealAccessResult = findMostAppropriateVehicleStopConnectoidLinkForWaitingArea(
           transferZone, referenceOsmMode, flattenedDirModeSpatiallyCompatibleLinks);
       var idealAccessLink = idealAccessResult==null ? null : idealAccessResult.first();
       if(idealAccessLink==null) {
@@ -1004,7 +1006,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         
         /* based on candidates, now select the most appropriate option based on a multitude of criteria */
         var accessResult =
-            findMostAppropriateStopLocationLinkForWaitingArea(
+            findMostAppropriateVehicleStopConnectoidLinkForWaitingArea(
                 transferZone, osmAccessMode, flattenedSpatiallyMatchedLinks);
         if(accessResult != null) {
           selectedAccessLink = accessResult.first();
