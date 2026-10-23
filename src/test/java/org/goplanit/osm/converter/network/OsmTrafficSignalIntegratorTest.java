@@ -89,7 +89,7 @@ public class OsmTrafficSignalIntegratorTest {
   }
 
   /** An approach cut short by breaking its link at an isolated crossing keeps the signal it is an approach for, now
-   * recorded for the piece arriving at the junction (scenario and drawing: OsmTrafficSignalsTest,
+   * recorded for the new link segment arriving at the junction (scenario and drawing: OsmTrafficSignalsTest,
    * crossingBreaksJunctionApproach) */
   @Test
   public void signalFollowsApproachBrokenAtCrossing() {

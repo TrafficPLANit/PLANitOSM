@@ -13,9 +13,10 @@ import org.goplanit.utils.mode.TrackModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
-import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegmentUtils;
-import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkUtils;
 import org.goplanit.utils.network.layer.physical.Link;
+import org.goplanit.utils.network.layer.physical.LinkSegment;
+import org.goplanit.utils.network.layer.physical.LinkSegmentUtils;
+import org.goplanit.utils.network.layer.physical.LinkUtils;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.LineSegment;
@@ -74,7 +75,7 @@ public class PlanitLinkOsmUtils {
    * direction tagged on the node then means opposite directions along them
    *
    * @param node the links end at
-   * @param links pieces of the ways ending at the node
+   * @param links ending at the node, each part of an OSM way
    * @return true when there are two links and their ways disagree, false otherwise
    */
   public static boolean waysDisagreeOnOrientation(Node node, List<MacroscopicLink> links) {
@@ -85,19 +86,19 @@ public class PlanitLinkOsmUtils {
   /**
    * Verify if two links are on the same OSM way, or on OSM ways with the same name. This still holds after PLANit broke
    * an OSM way into several links. It compares the external ids, which are OSM way ids, and the names, see
-   * {@link MacroscopicLinkUtils#isSameExternalIdOrName(Link, Link)}.
+   * {@link LinkUtils#isSameExternalIdOrName(Link, Link)}.
    *
    * @param one link
    * @param other link
    * @return true when on the same OSM way or on OSM ways with the same name, false otherwise
    */
   public static boolean isSameOsmWayOrName(Link one, Link other) {
-    return MacroscopicLinkUtils.isSameExternalIdOrName(one, other);
+    return LinkUtils.isSameExternalIdOrName(one, other);
   }
 
   /**
    * The segment that continues an OSM way beyond the node a segment arrives at. It is the only allowed continuation,
-   * see {@link MacroscopicLinkSegmentUtils#findOnlySegmentOnward(MacroscopicLinkSegment, boolean, Predicate)}. When
+   * see {@link LinkSegmentUtils#findOnlySegmentOnward(LinkSegment, boolean, Predicate)}. When
    * only the same OSM way or name may continue, it must also be on the same OSM way, or on a way with the same name,
    * see {@link #isSameOsmWayOrName(Link, Link)}. When more than one segment qualifies, the way does not continue
    * clearly, and nothing is returned
@@ -111,7 +112,7 @@ public class PlanitLinkOsmUtils {
    */
   public static MacroscopicLinkSegment findContinuingLinkSegment(MacroscopicLinkSegment arriving,
       Predicate<? super MacroscopicLinkSegment> allowedContinuation, boolean sameOsmWayOrNameOnly) {
-    return MacroscopicLinkSegmentUtils.findOnlySegmentOnward(arriving, true,
+    return LinkSegmentUtils.findOnlySegmentOnward(arriving, true,
         leaving -> allowedContinuation.test(leaving) && (!sameOsmWayOrNameOnly ||
             isSameOsmWayOrName(leaving.getParent(), arriving.getParent())));
   }
