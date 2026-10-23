@@ -1,16 +1,15 @@
 package org.goplanit.osm.converter.intermodal;
 
 import org.goplanit.converter.ConverterReaderSettings;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitJtsUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Polygon;
 
 import java.net.URL;
+import java.util.logging.Logger;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -20,6 +19,9 @@ import java.net.URL;
  *
  */
 public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
+  
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReaderSettings.class.getCanonicalName());
   
   /** the network settings to use */
   protected final OsmNetworkReaderSettings networkSettings;
@@ -69,7 +71,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param networkSettings to use
    * @param zoningPtSettings to use
    */
-  public OsmIntermodalReaderSettings(final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
+  public OsmIntermodalReaderSettings(
+      final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
     this.networkSettings = networkSettings;
     this.zoningPtSettings = zoningPtSettings;
   } 
@@ -88,9 +91,10 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
-    networkSettings.logSettings();
-    zoningPtSettings.logSettings();
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsHeader("OSM Intermodal Reader Settings"));
+    networkSettings.logSettings(level+1);
+    zoningPtSettings.logSettings(level+1);
   }
 
   // GETTERS/SETTERS
@@ -111,7 +115,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
     return zoningPtSettings;
   }  
   
-  /** Set the inputSource  to use including for both the network and public transport settings (both should use the same source)
+  /** Set the inputSource  to use including for both the network and public transport settings
+   * (both should use the same source)
    * 
    * @param inputSource to use
    */
@@ -125,36 +130,18 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    */
   public void setInputFile(final String inputFile) {
     try{
-      setInputSource(UrlUtils.createFromLocalPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
     }catch(Exception e) {
       throw new PlanItRunTimeException("Unable to extract URL from input file location %s",inputFile);
     }
   }     
-  
-  /** Set a square bounding box based on provided envelope
-   * 
-   * @param x1, first x coordinate
-   * @param y1, first y coordinate
-   * @param x2, second x coordinate
-   * @param y2, second y coordinate
-   */
-  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) {
-    setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
-  }
-  
-  /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
-   * @param boundingBox to use
-   */
-  public final void setBoundingBox(Envelope boundingBox) {
-    setBoundingPolygon(PlanitJtsUtils.create2DPolygon(boundingBox));
-  }
-  
+
   /** Set a polygon based bounding box to restrict parsing to
-   * @param boundingPolygon to use
+   * @param osmBoundary to use
    */
-  public final void setBoundingPolygon(Polygon boundingPolygon) {
-    getNetworkSettings().setBoundingPolygon(boundingPolygon);
-    getPublicTransportSettings().setBoundingPolygon(boundingPolygon);
+  public final void setBoundingArea(OsmBoundary osmBoundary) {
+    getNetworkSettings().setBoundingArea(osmBoundary.deepClone());
+    getPublicTransportSettings().setBoundingArea(osmBoundary.deepClone());
   }   
   
 }

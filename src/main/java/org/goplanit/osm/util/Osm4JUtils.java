@@ -33,6 +33,8 @@ public class Osm4JUtils {
   
   /** osm PBF extension string */
   public static final String OSM_PBF_EXTENSION = "pbf";
+
+  private Osm4JUtils(){}
   
   /** Depending on the format create either an OSM or PBF reader based on local file specified by path
    * 

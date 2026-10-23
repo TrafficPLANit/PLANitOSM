@@ -31,7 +31,8 @@ public class OsmOneWayTags {
    * @return true when one way false otherwise
    */
   public static boolean isOneWay(Map<String,String> tags) {        
-    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmOneWayTags.ONEWAY, YES, ONE_WAY_REVERSE_DIRECTION, ALTERNATING, REVERSIBLE );
+    return OsmTagUtils.keyMatchesAnyValueTag(
+            tags, OsmOneWayTags.ONEWAY, YES, ONE_WAY_REVERSE_DIRECTION, ALTERNATING, REVERSIBLE );
   }
   
   /** verify if the tags indicate a reversed one way OSM way, i.e., the value is set to "-1" indicating the main direction flows in the opposite direction

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two-way primary road 1-2-3-4; tram track 10-11-2-12-13-14 crossing it at node 2, tram signal 11 about 15 m before
+     the crossing and tram signal 13 on the track more than 50 m from any road; cycleway 20-21-4 ending at the road's
+     end node 4, cycleway signal 21 about 10 m before it -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2080"/>
+  <node id="2" lat="-33.8700" lon="151.2100"/>
+  <node id="3" lat="-33.8700" lon="151.2120"/>
+  <node id="4" lat="-33.8700" lon="151.2140"/>
+  <node id="10" lat="-33.8712" lon="151.2100"/>
+  <node id="11" lat="-33.87014" lon="151.2100">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="12" lat="-33.8690" lon="151.2100"/>
+  <node id="13" lat="-33.8670" lon="151.2100">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="14" lat="-33.8660" lon="151.2100"/>
+  <node id="20" lat="-33.8710" lon="151.2140"/>
+  <node id="21" lat="-33.87009" lon="151.2140">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <way id="30">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/><nd ref="4"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="31">
+    <nd ref="10"/><nd ref="11"/><nd ref="2"/><nd ref="12"/><nd ref="13"/><nd ref="14"/>
+    <tag k="railway" v="tram"/>
+  </way>
+  <way id="32">
+    <nd ref="20"/><nd ref="21"/><nd ref="4"/>
+    <tag k="highway" v="cycleway"/>
+  </way>
+</osm>

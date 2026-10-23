@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vehicle signal on shape node 1 of way 10 (2-5-4-1-6-3) without a direction: service lane 11 (9-4) joins about
+     12 m west of it, primary way 12 (7-5-8) crosses about 30 m west, residential way 13 (10-6) joins about 15 m east;
+     way 10 primary, all ways two-way -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.20900">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.20800"/>
+  <node id="3" lat="-33.8700" lon="151.21000"/>
+  <node id="4" lat="-33.8700" lon="151.20887"/>
+  <node id="5" lat="-33.8700" lon="151.20868"/>
+  <node id="6" lat="-33.8700" lon="151.20916"/>
+  <node id="7" lat="-33.8691" lon="151.20868"/>
+  <node id="8" lat="-33.8709" lon="151.20868"/>
+  <node id="9" lat="-33.8709" lon="151.20887"/>
+  <node id="10" lat="-33.8691" lon="151.20916"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="5"/><nd ref="4"/><nd ref="1"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="9"/><nd ref="4"/>
+    <tag k="highway" v="service"/>
+  </way>
+  <way id="12">
+    <nd ref="7"/><nd ref="5"/><nd ref="8"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="13">
+    <nd ref="10"/><nd ref="6"/>
+    <tag k="highway" v="residential"/>
+  </way>
+</osm>
