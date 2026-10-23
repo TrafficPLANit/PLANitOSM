@@ -93,6 +93,8 @@ public class MelbourneOsm2PlanitTest {
           PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
+      /* spatial intersections with approaches, internal segments and movements, not collapsed */
+      inputSettings.getNetworkSettings().setConsolidateIntersections(true);
 
       // apply simple bounding box
       inputSettings.getNetworkSettings().setBoundingArea(OsmBoundary.of(MELBOURNE_SIMPLE_BOUNDING_BOX));
@@ -144,6 +146,8 @@ public class MelbourneOsm2PlanitTest {
       var outputSettings = new PlanitIntermodalWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
+      /* spatial intersections with approaches, internal segments and movements, not collapsed */
+      inputSettings.getNetworkSettings().setConsolidateIntersections(true);
 
       // apply a boundary area based on name (osm relation id: 3898547)
       inputSettings.setBoundingArea(
@@ -183,6 +187,8 @@ public class MelbourneOsm2PlanitTest {
       var outputSettings = new PlanitNetworkWriterSettings(PLANIT_OUTPUT_DIR, CountryNames.AUSTRALIA);
 
       inputSettings.setConsolidateLinkSegmentTypes(true);
+      /* spatial intersections with approaches, internal segments and movements, not collapsed */
+      inputSettings.setConsolidateIntersections(true);
 
       // Example filter
       FilterFactory ff = CommonFactoryFinder.getFilterFactory();

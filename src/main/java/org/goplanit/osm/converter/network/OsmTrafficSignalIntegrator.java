@@ -1859,7 +1859,7 @@ public class OsmTrafficSignalIntegrator {
     if (!approach.isAnyModeAllowed(Mode::isMotorisedRoadOrRailMode)) {
       return;
     }
-    if (intersection.addApproachSegment(approach)) {
+    if (intersection.addNewApproachSegment(approach)) {
       networkData.getPlanitEntityDiagnostics().registerApproachCreated();
     }
     var signals = signalsByApproach.computeIfAbsent(approach, segment -> new ArrayList<>(1));
