@@ -455,7 +455,8 @@ before collapse, since collapse can move the end of a link and so change the dir
 runs without consolidation, with one warning: a junction parsed as several intersections is then timed as several
 junctions. The divided roads crossing above gets two approaches at each of its four nodes, one of them the
 carriageway between two nodes, so traffic through it meets two reduced approaches instead of one. What it did is
-logged on one line, and each intersection whose green ratios could not be computed, because its phases leave no usable
+logged on one line, with how many junctions got each number of phases, for example "(1 phase at 13, 2 phases at 42,
+3 phases at 10)", and each intersection whose green ratios could not be computed, because its phases leave no usable
 green time, is recorded in the PLANit intersections diagnostics below. The values are written with the network, and
 the MATSim writer can reduce link capacities with them.
 
