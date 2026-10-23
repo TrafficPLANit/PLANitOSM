@@ -225,7 +225,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         osmNodeData.registerEligibleOsmNode(node);
 
         // 2. record the traffic signals among them, linked to junctions once the layers are complete
-        if(getSettings().isParseIntersections()) {
+        if(getSettings().isIntersectionParserActive()) {
           Map<String, String> tags = node.getNumberOfTags() > 0 ? OsmModelUtil.getTagsAsMap(node) : Map.of();
           if(OsmTrafficSignalTags.isTrafficSignals(tags)) {
             getNetworkData().registerTrafficSignalOsmNodeId(node.getId());
@@ -273,7 +273,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)) {
       /* any signalised crossing way, parsed or not, since its crossing signal may be tagged only on the way */
-      if(getSettings().isParseIntersections() && osmWay.getNumberOfTags() > 0 &&
+      if(getSettings().isIntersectionParserActive() && osmWay.getNumberOfTags() > 0 &&
           OsmTrafficSignalTags.isSignalisedCrossingWay(OsmModelUtil.getTagsAsMap(osmWay))) {
         getNetworkData().registerSignalisedCrossingWayNodes(osmWay);
       }

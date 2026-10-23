@@ -55,7 +55,7 @@ public class OsmTrafficSignalIntegratorTest {
   private static OsmNetworkReader createReaderWithinBoundingArea(String scenarioFile, OsmBoundary boundingArea) {
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenarioFile).toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     reader.getSettings().setBoundingArea(boundingArea);
     return reader;
   }
@@ -95,7 +95,7 @@ public class OsmTrafficSignalIntegratorTest {
   public void signalFollowsApproachBrokenAtCrossing() {
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("crossing_breaks_junction_approach.osm").toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     var layer = reader.read().getTransportLayers().getFirst();
     var signalsByApproach = reader.getNetworkReaderData().getLayerParsers().get(layer)
         .getTrafficSignalIntegrator().getSignalsByApproach();
@@ -112,7 +112,7 @@ public class OsmTrafficSignalIntegratorTest {
   public void outcomeRecordedPerSignal() {
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("crossing_near_signalised_junction.osm").toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     reader.read();
     var diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
 
@@ -210,8 +210,8 @@ public class OsmTrafficSignalIntegratorTest {
      */
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("signal_far_from_junction_on_shape_node.osm").toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
-    reader.getSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(40);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(40);
     reader.getSettings().setBoundingArea(OsmBoundary.of(151.2081, 151.2115, -33.8715, -33.8685));
     reader.read();
     var diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
@@ -233,7 +233,7 @@ public class OsmTrafficSignalIntegratorTest {
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signal_before_mid_block_crossing.osm").toString(),
         CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     var layer = reader.read().getTransportLayers().getFirst();
     var diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
     var signalsByApproach = reader.getNetworkReaderData().getLayerParsers().get(layer)
@@ -358,7 +358,7 @@ public class OsmTrafficSignalIntegratorTest {
      */
     var reader = createReaderWithinBoundingArea(
         "vehicle_signal_before_mid_block_crossing.osm", OsmBoundary.of(151.2060, 151.21027, -33.8715, -33.8685));
-    reader.getSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(40);
+    reader.getSettings().getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(40);
     var layer = reader.read().getTransportLayers().getFirst();
     var diagnostics = reader.getNetworkReaderData().getParseDiagnostics();
 
@@ -424,7 +424,7 @@ public class OsmTrafficSignalIntegratorTest {
     reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signal_before_isolated_crossing.osm").toString(),
         CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     layer = reader.read().getTransportLayers().getFirst();
     assertEquals(1, layer.getIntersections().size());
     var crossing = layer.getIntersections().stream().findFirst().orElseThrow();
@@ -506,7 +506,7 @@ public class OsmTrafficSignalIntegratorTest {
     reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signals_bracketing_crossing_between_junctions.osm").toString(),
         CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     layer = reader.read().getTransportLayers().getFirst();
     assertEquals(1, layer.getIntersections().size());
     var crossing = layer.getIntersections().stream().findFirst().orElseThrow();
@@ -605,7 +605,7 @@ public class OsmTrafficSignalIntegratorTest {
      */
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("ramp_meter.osm").toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+    reader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     var layer = reader.read().getTransportLayers().getFirst();
 
     assertEquals(1, layer.getLinks().size());
@@ -644,7 +644,7 @@ public class OsmTrafficSignalIntegratorTest {
     var settings = reader.getSettings();
     settings.activateRailwayParser(true);
     settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
-    settings.setBreakLinksAtIsolatedSignalisedCrossings(true);
+    settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
     var layer = reader.read().getTransportLayers().getFirst();
 
     assertEquals(5, layer.getLinks().size());
@@ -901,7 +901,7 @@ public class OsmTrafficSignalIntegratorTest {
     var reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("vehicle_signal_before_road_end_outside_parsed_area.osm").toString(),
         CountryNames.AUSTRALIA);
-    reader.getSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(20);
+    reader.getSettings().getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(20);
     var layer = reader.read().getTransportLayers().getFirst();
 
     assertTrue(layer.getIntersections().isEmpty());
@@ -964,7 +964,7 @@ public class OsmTrafficSignalIntegratorTest {
     IdGenerator.reset();
     reader = OsmNetworkReaderFactory.create(
         TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("signal_12m_before_junction.osm").toString(), CountryNames.AUSTRALIA);
-    reader.getSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(10);
+    reader.getSettings().getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(10);
     reader.read();
     assertEquals(1, reader.getNetworkReaderData().getParseDiagnostics()
         .getOccurrences(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_WITHOUT_JUNCTION_AHEAD));

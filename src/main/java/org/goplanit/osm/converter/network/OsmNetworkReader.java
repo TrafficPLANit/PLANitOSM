@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.algorithms.intersection.GreenRatioAlgorithmFactory;
 import org.goplanit.converter.network.NetworkReader;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
@@ -266,14 +267,14 @@ public class OsmNetworkReader implements NetworkReader {
 
   /**
    * Collapse the modes the settings set onto one node per spatial intersection of each layer, once consolidated, see
-   * {@link OsmNetworkReaderSettings#getIntersectionCollapserSettings()}. The modes now exist, so the PLANit collapse
+   * {@link OsmIntersectionSettings#getIntersectionCollapserSettings()}. The modes now exist, so the PLANit collapse
    * settings are built from the OSM ones, mapping OSM modes as the network settings do. What it did is logged, and a
    * node excluded from collapse is recorded as not found with the PLANit entity diagnostics only when no layer has it
    *
    * @param crs of the network
    */
   private void collapseIntersections(CoordinateReferenceSystem crs) {
-    var osmCollapserSettings = settings.getIntersectionCollapserSettings();
+    var osmCollapserSettings = settings.getIntersectionSettings().getIntersectionCollapserSettings();
     if(!osmCollapserSettings.hasCollapsedModes()) {
       return;
     }
@@ -287,6 +288,61 @@ public class OsmNetworkReader implements NetworkReader {
       notFoundOfEachLayer.add(collapseResult.getExcludedNodeIdsNotFound());
     }
     registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND, notFoundOfEachLayer);
+  }
+
+  /**
+   * Consolidate the intersections of each layer, see
+   * {@link OsmIntersectionSettings#setConsolidateIntersections(boolean)}. A segment turning internal gets a signal when
+   * it has a signal of its own, see {@link OsmTrafficSignalIntegrator#hasSignalOfItsOwn}, or when it is a footway or
+   * cycleway segment into a signalised crossing. What it did is logged, and recorded with the PLANit entity
+   * diagnostics. A node listed in the settings is recorded as not found only when no layer has it
+   *
+   * @param crs of the network
+   */
+  private void consolidateIntersections(CoordinateReferenceSystem crs) {
+    var notFoundOfEachLayer = new ArrayList<List<String>>();
+    for(var entry : networkData.getLayerParsers().entrySet()) {
+      var trafficSignalIntegrator = entry.getValue().getTrafficSignalIntegrator();
+      var result = entry.getKey().getLayerModifier().consolidateIntersections(crs,
+          settings.getIntersectionSettings().getIntersectionConsolidatorSettings(),
+          trafficSignalIntegrator::hasSignalOfItsOwn);
+      registerConsolidationResult(result);
+      LOGGER.info(String.format("Consolidated intersections: %s", result));
+      notFoundOfEachLayer.add(result.getListedNodeIdsNotFound());
+    }
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND, notFoundOfEachLayer);
+  }
+
+  /**
+   * Compute the green ratios and saturation flow factors of the approaches of each layer's intersections when the
+   * settings ask for it, see {@link OsmIntersectionSettings#setComputeGreenRatiosAndSaturationFlowFactors(boolean)}.
+   * Without consolidation it warns once, since a junction parsed as several intersections is timed as several
+   * junctions. What it did is logged on one line per layer, and each intersection that could not be computed is
+   * recorded with the PLANit entity diagnostics
+   *
+   * @param crs of the network, to measure the directions of the approaches in
+   */
+  private void computeGreenRatiosAndSaturationFlowFactors(CoordinateReferenceSystem crs) {
+    var intersectionSettings = settings.getIntersectionSettings();
+    if(!intersectionSettings.isComputeGreenRatiosAndSaturationFlowFactors()) {
+      return;
+    }
+    if(!intersectionSettings.isConsolidateIntersections()) {
+      LOGGER.warning("Green ratios are computed without consolidating intersections, so a junction parsed as " +
+          "several intersections is timed as several junctions and its green ratios can be far off");
+    }
+    var algorithm =
+        GreenRatioAlgorithmFactory.create(intersectionSettings.getGreenRatioAndSaturationFlowFactorSettings());
+    var crsUtils = new PlanitJtsCrsUtils(crs);
+    var diagnostics = networkData.getPlanitEntityDiagnostics();
+    for(var layer : networkData.getLayerParsers().keySet()) {
+      var result = algorithm.computeGreenRatiosAndSaturationFlowFactors(
+          layer.getIntersections().stream().collect(Collectors.toList()), crsUtils);
+      LOGGER.info(String.format("Green ratios and saturation flow factors: %s", result));
+      result.getNotComputableIntersections().forEach((intersection, usableGreenSeconds) -> diagnostics.registerIssue(
+          OsmPlanitEntityIssue.INTERSECTION_GREEN_RATIOS_NOT_COMPUTABLE, intersection.getExternalId(),
+          String.format("%.0f s usable green time", usableGreenSeconds)));
+    }
   }
 
   /**
@@ -471,36 +527,32 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Consolidate the intersections of each layer when the settings ask for it, see
-   * {@link OsmNetworkReaderSettings#setConsolidateIntersections(boolean)}. Meant to run once dangling subnetworks are
-   * removed, so only what remains is consolidated, and before ids are synced. A segment turning internal gets a signal
-   * when it has a signal of its own, see {@link OsmTrafficSignalIntegrator#hasSignalOfItsOwn}, or when it is a footway
-   * or cycleway segment into a signalised crossing. What it did is logged, and recorded with the PLANit entity
-   * diagnostics. A node listed in the settings is recorded as not found only when no layer has it. Once consolidated,
-   * the modes chosen are collapsed, see {@link OsmNetworkReaderSettings#getIntersectionCollapserSettings()}
+   * Complete the parsed intersections of each layer as the settings ask: consolidate them, see
+   * {@link OsmIntersectionSettings#setConsolidateIntersections(boolean)}, compute the green ratios and saturation flow
+   * factors of their approaches, see
+   * {@link OsmIntersectionSettings#setComputeGreenRatiosAndSaturationFlowFactors(boolean)}, and collapse the
+   * consolidated intersections for the modes chosen, see
+   * {@link OsmIntersectionSettings#getIntersectionCollapserSettings()}, in that order: collapsing can move the end of a
+   * link to a centre node, which changes the direction an approach arrives in. Meant to run once dangling subnetworks
+   * are removed, so only what remains is completed, and before ids are synced. Nothing runs when intersections are not
+   * parsed, with a warning when consolidation was asked for
    */
-  public void consolidateIntersections() {
-    if(!settings.isConsolidateIntersections()) {
-      return;
-    }
-    if(!settings.isParseIntersections()) {
-      LOGGER.warning("Intersections are not consolidated, since they are not parsed");
+  public void consolidateIntersectionsComputeGreenRatiosAndCollapse() {
+    var intersectionSettings = settings.getIntersectionSettings();
+    if(!settings.isIntersectionParserActive()) {
+      if(intersectionSettings.isConsolidateIntersections()) {
+        LOGGER.warning("Intersections are not consolidated, since they are not parsed");
+      }
       return;
     }
     var crs = getOsmNetworkToPopulate().getCoordinateReferenceSystem();
-    var notFoundOfEachLayer = new ArrayList<List<String>>();
-    for(var entry : networkData.getLayerParsers().entrySet()) {
-      var trafficSignalIntegrator = entry.getValue().getTrafficSignalIntegrator();
-      var result = entry.getKey().getLayerModifier().consolidateIntersections(
-          crs, settings.getIntersectionConsolidatorSettings(), trafficSignalIntegrator::hasSignalOfItsOwn);
-      registerConsolidationResult(result);
-      LOGGER.info(String.format("Consolidated intersections: %s", result));
-      notFoundOfEachLayer.add(result.getListedNodeIdsNotFound());
+    if(intersectionSettings.isConsolidateIntersections()) {
+      consolidateIntersections(crs);
     }
-    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND, notFoundOfEachLayer);
-
-    /* once consolidated, the modes chosen are collapsed onto one node per spatial intersection */
-    collapseIntersections(crs);
+    computeGreenRatiosAndSaturationFlowFactors(crs);
+    if(intersectionSettings.isConsolidateIntersections()) {
+      collapseIntersections(crs);
+    }
   }
 
   /** Collect the osm network to populate
@@ -590,13 +642,13 @@ public class OsmNetworkReader implements NetworkReader {
     }
 
     /* intersections, once pruning has settled what remains */
-    consolidateIntersections();
+    consolidateIntersectionsComputeGreenRatiosAndCollapse();
 
     // clean up ids to be contiguous
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(osmNetworkToPopulate);
 
     /* what became of the OSM entities read, and of the PLANit entities derived from them */
-    if(getSettings().isParseIntersections()) {
+    if(getSettings().isIntersectionParserActive()) {
       networkData.getParseDiagnostics().logSummary(LOGGER, "[STATS] OSM traffic signals",
           networkData.getTrafficSignalOsmNodeIds().size());
       networkData.getPlanitEntityDiagnostics().logSummary(LOGGER, "[STATS] PLANit intersections");

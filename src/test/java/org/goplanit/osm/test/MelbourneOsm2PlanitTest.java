@@ -94,7 +94,8 @@ public class MelbourneOsm2PlanitTest {
 
       inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      inputSettings.getNetworkSettings().setConsolidateIntersections(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       // apply simple bounding box
       inputSettings.getNetworkSettings().setBoundingArea(OsmBoundary.of(MELBOURNE_SIMPLE_BOUNDING_BOX));
@@ -113,7 +114,7 @@ public class MelbourneOsm2PlanitTest {
       OsmPtSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getPublicTransportSettings());
       /* isolated signalised crossings get their own intersection, as in the Sydney cases, see
        * SydneyOsmPlanitTest#testOsm2PlanitNetworkComprehensive. The other Melbourne cases keep the default */
-      inputSettings.getNetworkSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
 
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
 
@@ -147,7 +148,8 @@ public class MelbourneOsm2PlanitTest {
 
       inputSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      inputSettings.getNetworkSettings().setConsolidateIntersections(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       // apply a boundary area based on name (osm relation id: 3898547)
       inputSettings.setBoundingArea(
@@ -188,7 +190,8 @@ public class MelbourneOsm2PlanitTest {
 
       inputSettings.setConsolidateLinkSegmentTypes(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      inputSettings.setConsolidateIntersections(true);
+      inputSettings.getIntersectionSettings().setConsolidateIntersections(true);
+      inputSettings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       // Example filter
       FilterFactory ff = CommonFactoryFinder.getFilterFactory();

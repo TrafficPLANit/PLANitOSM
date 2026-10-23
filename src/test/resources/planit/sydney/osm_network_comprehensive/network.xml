@@ -90688,237 +90688,237 @@
             <intersections>
                 <intersection id="0" externalid="8965680" noderef="163" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1254"/>
-                        <approach ref="171"/>
-                        <approach ref="6559"/>
-                        <approach ref="891"/>
+                        <approach ref="1254" greenratio="0.4444444444444444"/>
+                        <approach ref="171" greenratio="0.4444444444444444"/>
+                        <approach ref="6559" greenratio="0.4444444444444444"/>
+                        <approach ref="891" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="1" externalid="13757741" noderef="417" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1619"/>
-                        <approach ref="1799"/>
-                        <approach ref="456"/>
+                        <approach ref="1619" greenratio="0.4444444444444444"/>
+                        <approach ref="1799" greenratio="0.4444444444444444"/>
+                        <approach ref="456" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="10" externalid="15449304" noderef="263" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="7255"/>
-                        <approach ref="9882"/>
+                        <approach ref="7255" greenratio="0.4444444444444444"/>
+                        <approach ref="9882" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="11" externalid="20827843" noderef="90" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="7385"/>
-                        <approach ref="9084"/>
+                        <approach ref="7385" greenratio="0.4444444444444444"/>
+                        <approach ref="9084" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="12" externalid="33165422" noderef="676" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1626"/>
+                        <approach ref="1626" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="13" externalid="85531511" noderef="603" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="3227"/>
-                        <approach ref="6333"/>
+                        <approach ref="3227" greenratio="0.9"/>
+                        <approach ref="6333" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="14" externalid="1614492632" noderef="269" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1621"/>
-                        <approach ref="9050"/>
+                        <approach ref="1621" greenratio="0.9444444444444444"/>
+                        <approach ref="9050" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="15" externalid="1614496946" noderef="49" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="52"/>
+                        <approach ref="52" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="16" externalid="1633391051" noderef="735" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="6421"/>
-                        <approach ref="737"/>
+                        <approach ref="6421" greenratio="0.9"/>
+                        <approach ref="737" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="17" externalid="1832328520" noderef="814" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1648"/>
-                        <approach ref="4259"/>
+                        <approach ref="1648" greenratio="0.4444444444444444"/>
+                        <approach ref="4259" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="18" externalid="1846152984" noderef="1214" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1617"/>
+                        <approach ref="1617" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="19" externalid="1849591645" noderef="50" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="8950"/>
+                        <approach ref="8950" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="2" externalid="15397462" noderef="747" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1644"/>
-                        <approach ref="3296"/>
-                        <approach ref="895"/>
+                        <approach ref="1644" greenratio="0.4444444444444444"/>
+                        <approach ref="3296" greenratio="0.4444444444444444"/>
+                        <approach ref="895" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="20" externalid="2281643758,10031673090" noderef="3572" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="7690"/>
+                        <approach ref="7690" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="21" externalid="3420655031" noderef="1222" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="3295"/>
-                        <approach ref="6803"/>
+                        <approach ref="3295" greenratio="0.9"/>
+                        <approach ref="6803" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="22" externalid="6038996875" noderef="3645" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="3353"/>
+                        <approach ref="3353" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="23" externalid="6337512681" noderef="1781" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="7266"/>
-                        <approach ref="733"/>
+                        <approach ref="7266" greenratio="0.9"/>
+                        <approach ref="733" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="24" externalid="10188047310,3516277352,10188047312" noderef="3857" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="9945"/>
-                        <approach ref="9974"/>
+                        <approach ref="9945" greenratio="0.9"/>
+                        <approach ref="9974" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="25" externalid="10188047816" noderef="3876" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="10021"/>
-                        <approach ref="1071"/>
+                        <approach ref="10021" greenratio="0.9"/>
+                        <approach ref="1071" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="26" externalid="13757743" noderef="3666" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1269"/>
+                        <approach ref="1269" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="27" externalid="3899037421" noderef="416" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1853" signal="false"/>
-                        <approach ref="454"/>
+                        <approach ref="1853" signal="false" satflowfactor="0.5"/>
+                        <approach ref="454" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="28" externalid="8589583,651310555" noderef="1650" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="2311"/>
-                        <approach ref="3790"/>
+                        <approach ref="2311" greenratio="0.9"/>
+                        <approach ref="3790" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="29" externalid="8589585,1655439114" noderef="3971" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="10401"/>
-                        <approach ref="4664"/>
+                        <approach ref="10401" greenratio="0.9"/>
+                        <approach ref="4664" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="3" externalid="15399164" noderef="255" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1829"/>
-                        <approach ref="264"/>
-                        <approach ref="3047"/>
+                        <approach ref="1829" greenratio="0.4444444444444444"/>
+                        <approach ref="264" greenratio="0.4444444444444444"/>
+                        <approach ref="3047" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="30" externalid="2045043330" noderef="3972" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="8042"/>
+                        <approach ref="8042" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="31" externalid="2045059225" noderef="1372" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="7994"/>
+                        <approach ref="7994" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="32" externalid="4417297891" noderef="674" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="6676"/>
-                        <approach ref="787"/>
+                        <approach ref="6676" greenratio="0.9"/>
+                        <approach ref="787" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="33" externalid="5147320980" noderef="3974" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="1879"/>
+                        <approach ref="1879" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="34" externalid="8965823" noderef="14" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="19"/>
-                        <approach ref="8044"/>
+                        <approach ref="19" greenratio="0.9"/>
+                        <approach ref="8044" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="35" externalid="15405025" noderef="71" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="7199"/>
+                        <approach ref="7199" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="36" externalid="15405030" noderef="1029" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="3627"/>
-                        <approach ref="7914"/>
+                        <approach ref="3627" greenratio="0.9"/>
+                        <approach ref="7914" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="37" externalid="15405041" noderef="3514" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="7916"/>
-                        <approach ref="8585"/>
+                        <approach ref="7916" greenratio="0.9"/>
+                        <approach ref="8585" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="38" externalid="26526386" noderef="3518" control="signalised" types="crossing">
                     <approaches>
-                        <approach ref="3624"/>
+                        <approach ref="3624" greenratio="0.9"/>
                     </approaches>
                 </intersection>
                 <intersection id="4" externalid="15401509" noderef="520" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="6474"/>
+                        <approach ref="6474" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="5" externalid="15405751" noderef="74" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="9058"/>
-                        <approach ref="9736"/>
+                        <approach ref="9058" greenratio="0.4444444444444444"/>
+                        <approach ref="9736" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="6" externalid="15405753" noderef="1681" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="2360"/>
+                        <approach ref="2360" greenratio="0.9444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="7" externalid="15406810" noderef="480" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1624"/>
-                        <approach ref="6069"/>
-                        <approach ref="7067"/>
+                        <approach ref="1624" greenratio="0.4444444444444444"/>
+                        <approach ref="6069" greenratio="0.4444444444444444"/>
+                        <approach ref="7067" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="8" externalid="15407240" noderef="1024" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="6462"/>
-                        <approach ref="6776"/>
+                        <approach ref="6462" greenratio="0.4444444444444444"/>
+                        <approach ref="6776" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <intersection id="9" externalid="15407248" noderef="188" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="2165"/>
-                        <approach ref="7251"/>
-                        <approach ref="9988"/>
+                        <approach ref="2165" greenratio="0.4444444444444444"/>
+                        <approach ref="7251" greenratio="0.4444444444444444"/>
+                        <approach ref="9988" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
                 <spatialintersection id="39" externalid="8965683,8965800,10245932196,10245943071" noderefs="13,3367,3369,3949,3970,672" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="12"/>
-                        <approach ref="1795"/>
-                        <approach ref="1960"/>
-                        <approach ref="785"/>
+                        <approach ref="12" greenratio="0.2777777777777778"/>
+                        <approach ref="1795" greenratio="0.2777777777777778"/>
+                        <approach ref="1960" greenratio="0.2777777777777778"/>
+                        <approach ref="785" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="10312,10314,10315,10396,10397,10398,5479,5480,6049,6050"/>
                     <internalsignalsegments>
@@ -90950,10 +90950,10 @@
                 </spatialintersection>
                 <spatialintersection id="40" externalid="13887177,3921252668,3921252674" noderefs="1340,1343,3790,847,848" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="1835"/>
-                        <approach ref="4226" signal="false"/>
-                        <approach ref="4240"/>
-                        <approach ref="4242"/>
+                        <approach ref="1835" greenratio="0.2777777777777778"/>
+                        <approach ref="4226" signal="false" satflowfactor="0.5"/>
+                        <approach ref="4240" greenratio="0.2777777777777778"/>
+                        <approach ref="4242" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="1033,1034,1832,4247,4248,9678,9679"/>
                     <internalsignalsegments>
@@ -90982,10 +90982,10 @@
                 </spatialintersection>
                 <spatialintersection id="41" externalid="3910190217,10188082774,3910190702,3910190701,10188082773,6766487605,10185680978,10188082779,10185680979" noderefs="112,2076,2093,2094,2096,2884,2885,2886,2889,3117,3147,3148,3149,3150,3151,3152,3153,3154,3155,3598,3600,3679,3694,3695,3830,3831,3832,3833,3891,478" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1324"/>
-                        <approach ref="6089"/>
-                        <approach ref="6511"/>
-                        <approach ref="8925"/>
+                        <approach ref="1324" greenratio="0.4444444444444444"/>
+                        <approach ref="6089" greenratio="0.4444444444444444"/>
+                        <approach ref="6511" greenratio="0.4444444444444444"/>
+                        <approach ref="8925" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10080,10081,10082,119,120,2874,2875,3012,3013,3040,3041,3045,4598,4599,4600,4601,4604,4605,5030,5031,5084,5085,5086,5087,5088,5089,5090,5092,5093,5094,526,527,5987,5988,7484,7485,7500,7501,8160,8161,8310,8311,8314,8315,8914,8915,8916,8917,8922,9236,9237,9296,9297,9298,9301,9302,9303,9839,9842,9843,9844,9845,9846,9848,9849,9852"/>
                     <internalsignalsegments>
@@ -91057,9 +91057,9 @@
                 </spatialintersection>
                 <spatialintersection id="42" externalid="6594605922,10188049454,10188049455,6038996874,6038996879,10188047745" noderefs="1328,1747,2282,3072,3073,3646,3873,524" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1803"/>
-                        <approach ref="2873"/>
-                        <approach ref="586"/>
+                        <approach ref="1803" greenratio="0.2777777777777778"/>
+                        <approach ref="2873" greenratio="0.2777777777777778"/>
+                        <approach ref="586" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="2459,3357,3358,4944,4945,4946,4947,5066,8272,8273,9106,9107,9108"/>
                     <internalsignalsegments>
@@ -91086,9 +91086,9 @@
                 </spatialintersection>
                 <spatialintersection id="43" externalid="10197020150,10197020151,10197020152,10187841588,10187841589,10187841590,10187841591" noderefs="1018,2985,2986,2989,2995,3851,3852,3853,3854,467" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="3272"/>
-                        <approach ref="3274"/>
-                        <approach ref="3309"/>
+                        <approach ref="3272" greenratio="0.2777777777777778"/>
+                        <approach ref="3274" greenratio="0.2777777777777778"/>
+                        <approach ref="3309" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="3271,4789,4802,4803,8219,8222,8223,9922,9923,9924,9926,9927,9929,9930,9931,9933"/>
                     <internalsignalsegments>
@@ -91118,9 +91118,9 @@
                 </spatialintersection>
                 <spatialintersection id="44" externalid="10228256902,10228258023,10228258022,6594385336,10228256905,10228256906,10228258019,10228258094" noderefs="122,1956,2077,3300,3301,3302,3313,3314,3315,3316,3317,3318,3319,3321,3322,3659,3662,3663,3675,3678,3923,3924,3927,3928,3934" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10227"/>
-                        <approach ref="6999"/>
-                        <approach ref="9850"/>
+                        <approach ref="10227" greenratio="0.4444444444444444"/>
+                        <approach ref="6999" greenratio="0.4444444444444444"/>
+                        <approach ref="9850" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10210,10212,10214,10215,10224,10228,10229,10252,10254,10255,129,130,1322,1323,2831,2832,2880,2881,3014,3015,5358,5359,5360,5380,5381,5382,5383,5384,5386,5387,5388,5393,5394,5395,5396,7486,7487,8430,8431,8432,8433,8438,8439,9158,9159,9170,9171,9172,9173,9174,9220,9221,9223,9232,9233,9235"/>
                     <internalsignalsegments>
@@ -91170,10 +91170,10 @@
                 </spatialintersection>
                 <spatialintersection id="45" externalid="10245942939,10245942940,10245942941,10245942942,10188095044" noderefs="3903,751,866" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10256"/>
-                        <approach ref="1053"/>
-                        <approach ref="6438"/>
-                        <approach ref="901"/>
+                        <approach ref="10256" greenratio="0.2777777777777778"/>
+                        <approach ref="1053" greenratio="0.2777777777777778"/>
+                        <approach ref="6438" greenratio="0.2777777777777778"/>
+                        <approach ref="901" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="10128,10129,3801,3802"/>
                     <movements>
@@ -91205,8 +91205,8 @@
                 </spatialintersection>
                 <spatialintersection id="46" externalid="10245942937,10245942938" noderefs="1949,2089,2345,3670,3672,3715,3716,3717,3738,562,563,565" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="3483"/>
-                        <approach ref="9304"/>
+                        <approach ref="3483" greenratio="0.9444444444444444"/>
+                        <approach ref="9304" greenratio="0.9444444444444444"/>
                     </approaches>
                     <internalsegments refs="2815,2816,3034,3035,3485,6316,6317,642,643,7371,7372,7728,7729,9202,9209,9210,9211,9380,9381,9382,9383,9384,9385,9386,9387,9472,9473,9474,9475"/>
                     <movements>
@@ -91224,9 +91224,9 @@
                 </spatialintersection>
                 <spatialintersection id="47" externalid="9006017849,9006017853,9006017854,1425901342,1570660660,9006017845,403820490,9006017848,9006017850,9006017851,9006017855" noderefs="2333,2458,2460,2461,2462,2950,2951,2952,2953,2954,2955,2956,2957,2958,2959,2961,2962,2964,3551,360,3756,3757,3758,3759,3760,548,87" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="3458"/>
-                        <approach ref="8735"/>
-                        <approach ref="924"/>
+                        <approach ref="3458" greenratio="0.2777777777777778"/>
+                        <approach ref="8735" greenratio="0.2777777777777778"/>
+                        <approach ref="924" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="1259,1260,3455,3456,3738,3742,3743,3744,4725,4727,4729,4730,4731,4732,4733,4734,4735,4736,4737,4739,4742,4743,4744,4745,5153,5154,5895,5896,5911,5912,622,623,6236,6237,8204,8205,8206,8207,8210,8211,8732,91,92,9544,9547,9548,9549,9557,9559,9560"/>
                     <internalsignalsegments>
@@ -91266,9 +91266,9 @@
                 </spatialintersection>
                 <spatialintersection id="48" externalid="10187841613,10187841617,10197020153,5692890291,10197020156,10197152388,10197152390,10197152393,10197152394" noderefs="1067,1676,1677,3005,3190,3207,3208,3209,3210,3211,3212,3213,3214,3217,3346,3543,3638,3639,3908,3909,3910,3911,3912,909" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10134"/>
-                        <approach ref="2146"/>
-                        <approach ref="4820"/>
+                        <approach ref="10134" greenratio="0.4444444444444444"/>
+                        <approach ref="2146" greenratio="0.4444444444444444"/>
+                        <approach ref="4820" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10148,10156,10158,10159,10160,10161,10162,1839,1840,2144,2145,2353,5155,5156,5190,5192,5193,5194,5195,5196,5197,5198,5200,5201,5202,5917,5918,6535,6536,8234,8235,8344,8345,8350,8351,8454,8455,8702,8703,9074,9075,9080"/>
                     <internalsignalsegments>
@@ -91333,10 +91333,10 @@
                 </spatialintersection>
                 <spatialintersection id="49" externalid="666758991,10188047675,10188047678,10188047679,13877961,10188047692,10188047693,10188047694,10188047696" noderefs="1805,1814,1815,19,3049,3050,3051,3052,3053,3054,3055,3056,3058,3061,3062,3063,3513,3654,3869,3870,3871,3872,80" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10003"/>
-                        <approach ref="1801"/>
-                        <approach ref="9993"/>
-                        <approach ref="9999"/>
+                        <approach ref="10003" greenratio="0.2777777777777778"/>
+                        <approach ref="1801" greenratio="0.2777777777777778"/>
+                        <approach ref="9993" greenratio="0.2777777777777778"/>
+                        <approach ref="9999" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="10000,10006,20,21,2545,2546,2558,3709,3710,4830,4831,4900,4901,4905,4907,4909,4910,4911,4912,4913,4914,4915,4918,4919,4920,4921,4922,4923,5949,5950,743,744,8264,8265,83,84,8580,8581,9140,9994"/>
                     <internalsignalsegments>
@@ -91414,10 +91414,10 @@
                 </spatialintersection>
                 <spatialintersection id="50" externalid="13757701,15401537,8608847048,8608847049,8608847061,8608847057" noderefs="1952,1953,2424,2425,2426,2427,2428,2429,2430,2431,2432,2433,2435,34,3748,3749,3750,831" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="2821"/>
-                        <approach ref="2825"/>
-                        <approach ref="3562"/>
-                        <approach ref="7588"/>
+                        <approach ref="2821" greenratio="0.2777777777777778"/>
+                        <approach ref="2825" greenratio="0.2777777777777778"/>
+                        <approach ref="3562" greenratio="0.2777777777777778"/>
+                        <approach ref="7588" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="2819,2820,3661,3662,3663,3664,3665,3668,3669,3671,3675,3676,3677,4224,4225,4251,4252,4254,4255,4256,4257,7774,7775,7776,7777,7780,7781,9512,9513,9514,9516,9518,9519,9520,9521,9522"/>
                     <internalsignalsegments>
@@ -91469,8 +91469,8 @@
                 </spatialintersection>
                 <spatialintersection id="51" externalid="9006017865,9006017868,403820498,9006017856,935792194,9006017867,9006017858,9006017859,9006017862,10187696156" noderefs="2965,2966,2967,2968,2969,2970,2978,2979,2980,2981,2982,2983,3345,3515,3550,3761,3762,3763,3764,3765,3766,3767,3848,549,88" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10150"/>
-                        <approach ref="9553"/>
+                        <approach ref="10150" greenratio="0.4444444444444444"/>
+                        <approach ref="9553" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="4751,4753,4754,4755,4756,4757,4758,4759,4774,4775,4777,4778,4779,4780,4781,4783,4784,4785,5933,5934,616,617,624,625,8452,8453,8588,8589,8590,8591,9562,9574,9580,9581,9582,9910,9911,9912"/>
                     <internalsignalsegments>
@@ -91538,9 +91538,9 @@
                 </spatialintersection>
                 <spatialintersection id="52" externalid="1070474087,1070474100,8203851685,9920391746,2268947005" noderefs="2214,2391,2392,250,2726,3544,3794,3973,490" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="3223"/>
-                        <approach ref="3229"/>
-                        <approach ref="4260"/>
+                        <approach ref="3223" greenratio="0.4444444444444444"/>
+                        <approach ref="3229" greenratio="0.4444444444444444"/>
+                        <approach ref="4260" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10404,10405,3477,3478,3582,3583,3585,4262,4263,541,7760,7761,8032,8033,9694,9695"/>
                     <internalsignalsegments>
@@ -91581,10 +91581,10 @@
                 </spatialintersection>
                 <spatialintersection id="53" externalid="1070474095,1070474110,9920391761,9920391791" noderefs="28,32,3545,3795,3797" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="4268"/>
-                        <approach ref="4270"/>
-                        <approach ref="8034"/>
-                        <approach ref="9030"/>
+                        <approach ref="4268" greenratio="0.4444444444444444"/>
+                        <approach ref="4270" greenratio="0.4444444444444444"/>
+                        <approach ref="8034" greenratio="0.4444444444444444"/>
+                        <approach ref="9030" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="30,31,4272,4273,9700,9701"/>
                     <internalsignalsegments>
@@ -91634,10 +91634,10 @@
                 </spatialintersection>
                 <spatialintersection id="54" externalid="15407245,1986167712,1986167726,1986167706" noderefs="1555,3564,3565,461,876" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1065"/>
-                        <approach ref="507"/>
-                        <approach ref="6262"/>
-                        <approach ref="6506"/>
+                        <approach ref="1065" greenratio="0.2777777777777778"/>
+                        <approach ref="507" greenratio="0.2777777777777778"/>
+                        <approach ref="6262" greenratio="0.2777777777777778"/>
+                        <approach ref="6506" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="1068,4502,4503,7059,7060"/>
                     <internalsignalsegments>
@@ -91669,11 +91669,11 @@
                 </spatialintersection>
                 <spatialintersection id="55" externalid="15401227,2843788700,2843788702,2843788698" noderefs="168,3577,3578,3579" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1642"/>
-                        <approach ref="173"/>
-                        <approach ref="1914"/>
-                        <approach ref="6123"/>
-                        <approach ref="6635"/>
+                        <approach ref="1642" greenratio="0.2777777777777778"/>
+                        <approach ref="173" greenratio="0.2777777777777778"/>
+                        <approach ref="1914" greenratio="0.2777777777777778"/>
+                        <approach ref="6123" greenratio="0.2777777777777778"/>
+                        <approach ref="6635" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="174,8839"/>
                     <internalsignalsegments>
@@ -91701,8 +91701,8 @@
                 </spatialintersection>
                 <spatialintersection id="56" externalid="20827844,3593631035,9885532914,9888821420,9888821423" noderefs="2336,2692,2694,2695,2697,2698,2699,2700,2702,2704,2705,2707,3588,3780,3782,3784,3785,3786,3787,91" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="6075"/>
-                        <approach ref="8000"/>
+                        <approach ref="6075" greenratio="0.4444444444444444"/>
+                        <approach ref="8000" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="4177,4181,4182,4183,4185,4186,4187,4188,4189,4196,4197,4198,4199,4475,4476,7722,7723,7998,7999,8003,8005,8008,8009,8874,8876,8877,9638,9646,9647,9648,9649,9654,9656,9657,9660,9666"/>
                     <internalsignalsegments>
@@ -91750,10 +91750,10 @@
                 </spatialintersection>
                 <spatialintersection id="57" externalid="10188047773,10188047774,10188047775,10188047776,3929903765,6038996868,6038996872,10188047779" noderefs="1745,1746,1748,1749,3077,3078,3081,3086,3087,3605,3644,3875,86" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10034"/>
-                        <approach ref="6509"/>
-                        <approach ref="6918"/>
-                        <approach ref="8943"/>
+                        <approach ref="10034" greenratio="0.2777777777777778"/>
+                        <approach ref="6509" greenratio="0.2777777777777778"/>
+                        <approach ref="6918" greenratio="0.2777777777777778"/>
+                        <approach ref="8943" greenratio="0.2777777777777778"/>
                     </approaches>
                     <internalsegments refs="10016,10017,10018,2454,2455,2457,3299,3300,4954,4955,4956,4957,4974,4975,4976,4977,8278,8279,8282,8283,8944,9098,9100,9101"/>
                     <internalsignalsegments>
@@ -91813,8 +91813,8 @@
                 </spatialintersection>
                 <spatialintersection id="58" externalid="8965827,10228258044,10228258045,4513015609,10228258048" noderefs="1033,1942,1975,1976,2135,2136,2890,3283,3284,3287,3288,3323,3324,3325,3326,3612,3657,3658,3834,3835,3836,3931,3932" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="2315"/>
-                        <approach ref="7023"/>
+                        <approach ref="2315" greenratio="0.9444444444444444"/>
+                        <approach ref="7023" greenratio="0.9444444444444444"/>
                     </approaches>
                     <internalsegments refs="10240,10241,10242,10244,10245,10247,2833,2834,2861,2862,3109,3110,4606,4607,5323,5324,5329,5330,5331,5332,5389,5390,5398,5399,5400,5401,5402,6615,6616,8404,8405,8408,8409,8442,8443,8970,8972,8973,9154,9155,9156,9157,9854,9855,9856,9857,9858,9859,9860,9861,9862,9863,9864,9865"/>
                     <internalsignalsegments>
@@ -91844,7 +91844,7 @@
                 </spatialintersection>
                 <spatialintersection id="59" externalid="10197152414,5641003455,6936407757" noderefs="264,3556,3637,3664,3700" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="272"/>
+                        <approach ref="272" greenratio="0.9444444444444444"/>
                     </approaches>
                     <internalsegments refs="1622,1623,8752,8753,9070,9071,9178,9179"/>
                     <movements>
@@ -91858,8 +91858,8 @@
                 </spatialintersection>
                 <spatialintersection id="60" externalid="5147327948,5147327949,6076031965" noderefs="1759,677" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10290"/>
-                        <approach ref="6498"/>
+                        <approach ref="10290" greenratio="0.4444444444444444"/>
+                        <approach ref="6498" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="6374,6375"/>
                     <movements>
@@ -91873,9 +91873,9 @@
                 </spatialintersection>
                 <spatialintersection id="61" externalid="10185379885,10185379886,10185379887,6337588985,9810727898,9810727901" noderefs="1639,1802,1906,20,2678,2877,2880,2881,3006,3066,3774,3775" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="6250"/>
-                        <approach ref="731"/>
-                        <approach ref="9621"/>
+                        <approach ref="6250" greenratio="0.4444444444444444"/>
+                        <approach ref="731" greenratio="0.4444444444444444"/>
+                        <approach ref="9621" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="1805,1806,2542,4145,4146,4585,4588,4589,4591,4596,4597,4822,4823,7335,7336,8236,8237,8268,8269,9614,9616,9617"/>
                     <internalsignalsegments>
@@ -91919,9 +91919,9 @@
                 </spatialintersection>
                 <spatialintersection id="62" externalid="10197152349,10197152350,10197152403,6936407779,6936407780,6936407781" noderefs="1203,2121,3192,3193,3194,3195,3197,3712,3713,488" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="6617"/>
-                        <approach ref="9362"/>
-                        <approach ref="9369"/>
+                        <approach ref="6617" greenratio="0.4444444444444444"/>
+                        <approach ref="9362" greenratio="0.4444444444444444"/>
+                        <approach ref="9369" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="1271,1272,1599,1600,5160,5161,5162,5164,5169,5170,6784,7528,7529,8340,8341,9370,9374,9375"/>
                     <internalsignalsegments>
@@ -91956,11 +91956,11 @@
                 </spatialintersection>
                 <spatialintersection id="63" externalid="15397477,8205512267,2041295317,2041295319,8205512261,8205512264,2041295321" noderefs="169,2393,2394,2395,2398,2399,2400,2401,2402,2403,2404,2405,2406,3569,3570,3742,3743,3744" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="1655"/>
-                        <approach ref="1893"/>
-                        <approach ref="9489"/>
-                        <approach ref="9493"/>
-                        <approach ref="996"/>
+                        <approach ref="1655" greenratio="0.4444444444444444"/>
+                        <approach ref="1893" greenratio="0.4444444444444444"/>
+                        <approach ref="9489" greenratio="0.4444444444444444"/>
+                        <approach ref="9493" greenratio="0.4444444444444444"/>
+                        <approach ref="996" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="1209,1210,175,176,2863,2864,3587,3601,3602,3603,3605,3607,3609,3610,3611,3612,3613,3614,3615,3616,3617,7764,7765,7766,7767,8802,8803,8804,9490,9494,9496,9497,9498"/>
                     <internalsignalsegments>
@@ -92021,9 +92021,9 @@
                 </spatialintersection>
                 <spatialintersection id="64" externalid="10245943060,10245943061,10245943062,9469982620,10245943025,10245943026,10245943027" noderefs="108,2787,3399,3400,3401,3402,3403,3404,3405,3406,3407,3409,3415,3416,3418,3419,3420,3770,3963,3964,3965" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10369"/>
-                        <approach ref="10379"/>
-                        <approach ref="7826"/>
+                        <approach ref="10369" greenratio="0.4444444444444444"/>
+                        <approach ref="10379" greenratio="0.4444444444444444"/>
+                        <approach ref="7826" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10370,10372,10374,10375,10376,115,116,1251,1252,141,142,5528,5530,5532,5534,5535,5536,5537,5538,5539,5540,5547,5548,5549,5550,5553,5554,5555,5556,5557,5558,6025,6026,8070,8071,8482,8483,8486,8487,9600"/>
                     <internalsignalsegments>
@@ -92074,9 +92074,9 @@
                 </spatialintersection>
                 <spatialintersection id="65" externalid="15405036,9885532912" noderefs="178,3778" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="4473"/>
-                        <approach ref="7986"/>
-                        <approach ref="940"/>
+                        <approach ref="4473" greenratio="0.4444444444444444"/>
+                        <approach ref="7986" greenratio="0.4444444444444444"/>
+                        <approach ref="940" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="9630,9631"/>
                     <movements>
@@ -92099,8 +92099,8 @@
                 </spatialintersection>
                 <spatialintersection id="66" externalid="26526387,9885532913" noderefs="1684,3779" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="3307"/>
-                        <approach ref="7225"/>
+                        <approach ref="3307" greenratio="0.4444444444444444"/>
+                        <approach ref="7225" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="9634,9635"/>
                     <movements>
@@ -92116,8 +92116,8 @@
                 </spatialintersection>
                 <spatialintersection id="67" externalid="10187679266,10245932148,10187679265,10245932144,10245932146,10245932147" noderefs="262,3348,3349,3350,3351,3352,3353,3354,3355,3502,3841,3939,3941,3942,3943,3944" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="6156"/>
-                        <approach ref="6324"/>
+                        <approach ref="6156" greenratio="0.4444444444444444"/>
+                        <approach ref="6324" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10272,10273,10274,10275,10280,10282,10283,10284,10285,10287,10288,10292,10294,10295,270,271,4410,4411,5441,5442,5444,5446,5448,5449,5450,5451,5452,5453,5454,8554,8555,9884"/>
                     <internalsignalsegments>
@@ -92151,10 +92151,10 @@
                 </spatialintersection>
                 <spatialintersection id="68" externalid="10187696067,10187696068,10187696069,10187696070,10187696063,10187696064,10187696065,10187696066" noderefs="2931,2932,2933,2934,2935,2936,2937,2938,2939,2944,2945,2946,3497,3517,3843,3844,3845,3846,3847" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="5147"/>
-                        <approach ref="620"/>
-                        <approach ref="9901"/>
-                        <approach ref="9905"/>
+                        <approach ref="5147" greenratio="0.4444444444444444"/>
+                        <approach ref="620" greenratio="0.4444444444444444"/>
+                        <approach ref="9901" greenratio="0.4444444444444444"/>
+                        <approach ref="9905" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="4689,4691,4693,4695,4696,4697,4704,4705,4706,4707,4708,4709,4710,4711,4712,4713,5887,5888,8200,8201,8546,8547,8596,8597,8598,8599,9892,9893,9894,9896,9897,9898,9902,9906,9908,9909"/>
                     <internalsignalsegments>
@@ -92216,10 +92216,10 @@
                 </spatialintersection>
                 <spatialintersection id="69" externalid="10188047617,10188047625,10188047626,10188047627,10188047621,10188047624,10188047632,10188047633" noderefs="3012,3013,3014,3015,3016,3017,3018,3019,3020,3021,3022,3025,3026,3027,3028,3029,3030,3859,3860,3861,3862,547" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="7169"/>
-                        <approach ref="9904"/>
-                        <approach ref="9953"/>
-                        <approach ref="9965"/>
+                        <approach ref="7169" greenratio="0.4444444444444444"/>
+                        <approach ref="9904" greenratio="0.4444444444444444"/>
+                        <approach ref="9953" greenratio="0.4444444444444444"/>
+                        <approach ref="9965" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="2166,2167,4408,4409,4839,4840,4841,4842,4843,4845,4847,4849,4850,4851,4854,4855,4856,4857,4858,4859,4860,4861,4862,4863,4864,4865,5905,5906,8242,8243,8248,8249,8250,8251,8252,8253,9954,9956,9958,9959,9960,9962,9963,9966"/>
                     <internalsignalsegments>
@@ -92281,10 +92281,10 @@
                 </spatialintersection>
                 <spatialintersection id="70" externalid="10197020144,10197020146,10197020147,10197020148,10188047649,10188047652,10188047659,10188047663,10197020145,10197020149" noderefs="187,3033,3034,3035,3036,3037,3038,3039,3040,3041,3042,3043,3044,3045,3046,3047,3048,3863,3864,3865,3866,3867,3868,550" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="9570"/>
-                        <approach ref="9952"/>
-                        <approach ref="9975"/>
-                        <approach ref="9989"/>
+                        <approach ref="9570" greenratio="0.4444444444444444"/>
+                        <approach ref="9952" greenratio="0.4444444444444444"/>
+                        <approach ref="9975" greenratio="0.4444444444444444"/>
+                        <approach ref="9989" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="195,196,2132,2133,4877,4879,4881,4883,4884,4885,4886,4887,4888,4889,4890,4891,4892,4893,4894,4895,4896,4897,4898,4899,5901,5902,5925,5926,5955,5956,626,627,8256,8257,9968,9970,9971,9978,9984,9986,9987,9990"/>
                     <internalsignalsegments>
@@ -92354,9 +92354,9 @@
                 </spatialintersection>
                 <spatialintersection id="71" externalid="10188047830,10188047867,10188047835,10188047836" noderefs="3092,3094,3243,3877,3878,561" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10029"/>
-                        <approach ref="1625"/>
-                        <approach ref="8816"/>
+                        <approach ref="10029" greenratio="0.4444444444444444"/>
+                        <approach ref="1625" greenratio="0.4444444444444444"/>
+                        <approach ref="8816" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10024,10026,10027,10030,1004,1005,4990,4991,8376,8377"/>
                     <internalsignalsegments>
@@ -92386,8 +92386,8 @@
                 </spatialintersection>
                 <spatialintersection id="72" externalid="5147304740,5147304741,10188047880,10188047883" noderefs="3098,3101,3102,3103,3879,3880,85" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10035"/>
-                        <approach ref="10062"/>
+                        <approach ref="10035" greenratio="0.4444444444444444"/>
+                        <approach ref="10062" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10036,10037,4999,5002,5003,5004,5005,5007,5971,5972,89,90"/>
                     <internalsignalsegments>
@@ -92411,10 +92411,10 @@
                 </spatialintersection>
                 <spatialintersection id="73" externalid="15406815,10188047896,10188047901,10188047925,10188082730" noderefs="3074,3109,3110,3111,3112,3113,3114,3115,3142,3143,3145,3146,3881,3882,3884,3890,79" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10053"/>
-                        <approach ref="10218"/>
-                        <approach ref="6922"/>
-                        <approach ref="81"/>
+                        <approach ref="10053" greenratio="0.4444444444444444"/>
+                        <approach ref="10218" greenratio="0.4444444444444444"/>
+                        <approach ref="6922" greenratio="0.4444444444444444"/>
+                        <approach ref="81" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10040,10041,10042,10044,10046,10047,10054,10076,10077,10078,3301,3302,5015,5017,5019,5020,5021,5022,5023,5024,5025,5026,5027,5074,5075,5076,5077,5078,5079,5080,8306,8307"/>
                     <internalsignalsegments>
@@ -92472,9 +92472,9 @@
                 </spatialintersection>
                 <spatialintersection id="74" externalid="15407247,10188047947,10188047948,10188047949,10188047950" noderefs="3124,3125,3126,3127,3128,3129,3130,3131,3132,3133,3134,3135,3136,3137,3138,3139,3885,3886,3887,3888,642" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10059"/>
-                        <approach ref="6460"/>
-                        <approach ref="9992"/>
+                        <approach ref="10059" greenratio="0.4444444444444444"/>
+                        <approach ref="6460" greenratio="0.4444444444444444"/>
+                        <approach ref="9992" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10056,10060,10064,10066,10067,10068,10070,10071,2103,2104,2105,2106,5043,5045,5047,5049,5050,5051,5052,5053,5054,5055,5056,5057,5058,5059,5060,5061,5062,5063,5064,5065,5945,5946,5977,5978,5991,5992,8298,8299"/>
                     <internalsignalsegments>
@@ -92525,9 +92525,9 @@
                 </spatialintersection>
                 <spatialintersection id="75" externalid="10188095039,10188095040,10188095041,10188082788,10188082796,10188082797,10188082798" noderefs="2824,3159,3160,3161,3162,3163,3164,3165,3166,3167,3168,3175,3176,3182,3183,3185,3723,3893,3894,3895,3896,3897,3898,92" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10101"/>
-                        <approach ref="2876"/>
-                        <approach ref="7404"/>
+                        <approach ref="10101" greenratio="0.4444444444444444"/>
+                        <approach ref="2876" greenratio="0.4444444444444444"/>
+                        <approach ref="7404" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10088,10090,10091,10093,10094,10095,10096,10097,10098,10102,10104,10111,1245,1246,5102,5103,5104,5106,5107,5108,5109,5110,5111,5112,5123,5124,5125,5126,5135,5136,5137,5138,5139,5140,5141,5142,5143,5144,8318,8319,8324,8325,8330,8331,9412,9413,9414,9415,97,98"/>
                     <internalsignalsegments>
@@ -92578,9 +92578,9 @@
                 </spatialintersection>
                 <spatialintersection id="76" externalid="10197152344,10197152401,10197152402,10197152378,10197152379,10197152380,10197152381" noderefs="3198,3199,3200,3201,3202,3203,3204,3205,3206,3215,3216,3218,3347,3904,3905,3906,3907,84" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10135"/>
-                        <approach ref="6464"/>
-                        <approach ref="9368"/>
+                        <approach ref="10135" greenratio="0.4444444444444444"/>
+                        <approach ref="6464" greenratio="0.4444444444444444"/>
+                        <approach ref="9368" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10132,10136,10138,10139,10140,10142,10143,10144,1371,1372,1373,1374,5174,5176,5177,5178,5180,5181,5182,5184,5185,5186,5187,5188,8342,8343,8346,8347,8348,8349,8352,8353,8456,8457"/>
                     <internalsignalsegments>
@@ -92622,10 +92622,10 @@
                 </spatialintersection>
                 <spatialintersection id="77" externalid="10228256901,10228256914,10228256915,10228256916,10228256893,10228256898,10228256909,10228256912" noderefs="123,3294,3295,3297,3298,3299,3303,3304,3305,3306,3307,3308,3309,3310,3311,3312,3921,3922,3925,3926" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10207"/>
-                        <approach ref="10219"/>
-                        <approach ref="10226"/>
-                        <approach ref="8102"/>
+                        <approach ref="10207" greenratio="0.4444444444444444"/>
+                        <approach ref="10219" greenratio="0.4444444444444444"/>
+                        <approach ref="10226" greenratio="0.4444444444444444"/>
+                        <approach ref="8102" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10200,10202,10203,10204,10216,10220,10221,10222,1320,1321,1326,1327,5348,5354,5355,5356,5361,5362,5364,5365,5366,5367,5368,5370,5371,5372,5373,5374,5375,5376,5377,5378,8414,8415,8420,8421,8422,8423"/>
                     <internalsignalsegments>
@@ -92687,9 +92687,9 @@
                 </spatialintersection>
                 <spatialintersection id="78" externalid="10241424307,10241424308,10241448609,10241424303,10241424304,10241424305,10241424306" noderefs="152,3337,3338,3339,3340,3341,3342,3343,3344,3935,3936,3937,3938" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10257"/>
-                        <approach ref="10334"/>
-                        <approach ref="1253"/>
+                        <approach ref="10257" greenratio="0.4444444444444444"/>
+                        <approach ref="10334" greenratio="0.4444444444444444"/>
+                        <approach ref="1253" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10258,10260,10261,10262,10264,10265,10266,10268,1247,1248,155,156,5422,5424,5426,5428,5429,5430,5431,5432,5433,5434,5435,5436"/>
                     <internalsignalsegments>
@@ -92716,10 +92716,10 @@
                 </spatialintersection>
                 <spatialintersection id="79" externalid="8965682,10245932171,10245932185,10245932186,10245932190" noderefs="3356,3357,3358,3359,3360,3361,3362,3363,3364,3945,3946,3947,3948,495" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10305"/>
-                        <approach ref="10309"/>
-                        <approach ref="10386"/>
-                        <approach ref="7237"/>
+                        <approach ref="10305" greenratio="0.4444444444444444"/>
+                        <approach ref="10309" greenratio="0.4444444444444444"/>
+                        <approach ref="10386" greenratio="0.4444444444444444"/>
+                        <approach ref="7237" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10296,10297,10298,10300,10302,10303,10306,10310,1255,1256,1314,1315,5458,5459,5460,5462,5464,5466,5467,5468,5469,5470,5471,5472,8458,8459"/>
                     <internalsignalsegments>
@@ -92761,8 +92761,8 @@
                 </spatialintersection>
                 <spatialintersection id="80" externalid="26526396,10245942972,10245942973,10245942974" noderefs="158,3383,3384,3385,3386,3387,3388,3389,3390,3433,3434,3954,3955,3956" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10339"/>
-                        <approach ref="6121"/>
+                        <approach ref="10339" greenratio="0.9444444444444444"/>
+                        <approach ref="6121" greenratio="0.9444444444444444"/>
                     </approaches>
                     <internalsegments refs="10332,10336,10340,10342,10343,165,166,5502,5504,5506,5507,5508,5509,5510,5511,5512,5575,5576,5577,5578,6009,6010,6033,6034,6113,6114"/>
                     <internalsignalsegments>
@@ -92790,10 +92790,10 @@
                 </spatialintersection>
                 <spatialintersection id="81" externalid="642998199,10245942987,10245942994,10245942995,10245942996" noderefs="1026,3391,3392,3393,3394,3395,3396,3397,3398,3436,3958,3959,3960,3961" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10338"/>
-                        <approach ref="10351"/>
-                        <approach ref="10361"/>
-                        <approach ref="3078"/>
+                        <approach ref="10338" greenratio="0.4444444444444444"/>
+                        <approach ref="10351" greenratio="0.4444444444444444"/>
+                        <approach ref="10361" greenratio="0.4444444444444444"/>
+                        <approach ref="3078" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10348,10352,10353,10354,10356,10358,10359,10362,1304,1305,3076,3077,5514,5516,5518,5520,5521,5522,5523,5524,5525,5526,5581,5582,6005,6006"/>
                     <internalsignalsegments>
@@ -92831,10 +92831,10 @@
                 </spatialintersection>
                 <spatialintersection id="82" externalid="26358753,10245943036,10245943037,10245943038,10245943039" noderefs="18,3421,3422,3423,3424,3425,3426,3427,3428,3429,3430,3431,3432,3439,3440,3966,3967,3968,3969" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10368"/>
-                        <approach ref="10387"/>
-                        <approach ref="10393"/>
-                        <approach ref="6668"/>
+                        <approach ref="10368" greenratio="0.4444444444444444"/>
+                        <approach ref="10387" greenratio="0.4444444444444444"/>
+                        <approach ref="10393" greenratio="0.4444444444444444"/>
+                        <approach ref="6668" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="10380,10382,10383,10384,10388,10390,10391,10394,546,547,548,549,5560,5562,5564,5566,5567,5568,5569,5570,5571,5572,5573,5574,5585,5586,5587,5588,5589,5590,6015,6016,8490,8491,8492,8493"/>
                     <internalsignalsegments>
@@ -92888,8 +92888,8 @@
                 </spatialintersection>
                 <spatialintersection id="83" externalid="1810714485,6766449270" noderefs="1077,2090" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="6567"/>
-                        <approach ref="9226"/>
+                        <approach ref="6567" greenratio="0.4444444444444444"/>
+                        <approach ref="9226" greenratio="0.4444444444444444"/>
                     </approaches>
                     <internalsegments refs="2882,2883"/>
                     <movements>

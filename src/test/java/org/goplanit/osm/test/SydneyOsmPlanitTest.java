@@ -94,7 +94,8 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().deactivateRemoveDanglingSubnetworks();
       readerSettings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      readerSettings.getNetworkSettings().setConsolidateIntersections(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       // ferry only
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
@@ -156,9 +157,10 @@ public class SydneyOsmPlanitTest {
       /* isolated signalised crossings get their own intersection in the Sydney cases, so a signal with no junction in
        * reach is kept, e.g. the one halfway along the slip lane of the Cahill Expressway Onramp. So does the Melbourne
        * bounding box case; the other Melbourne cases keep the default, so both remain covered */
-      osmReader.getSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      osmReader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      osmReader.getSettings().setConsolidateIntersections(true);
+      osmReader.getSettings().getIntersectionSettings().setConsolidateIntersections(true);
+      osmReader.getSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       /* PLANit writer */
       PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(
@@ -202,9 +204,10 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       /* isolated signalised crossings on, see the note in #testOsm2PlanitNetworkComprehensive */
-      readerSettings.getNetworkSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      readerSettings.getNetworkSettings().setConsolidateIntersections(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       // tested separately in #testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
@@ -261,9 +264,10 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       /* isolated signalised crossings on, see the note in #testOsm2PlanitNetworkComprehensive */
-      readerSettings.getNetworkSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
-      readerSettings.getNetworkSettings().setConsolidateIntersections(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());

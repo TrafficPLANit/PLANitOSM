@@ -858,7 +858,7 @@ public class OsmTrafficSignalIntegrator {
    * @return the signal with the junctions it reaches, not yet assigned
    */
   private PendingVehicleSignal collectVehicleSignal(SignalLocation location, String direction) {
-    var maxDistance = settings.getMaximumDistanceVehicleSignalToJunctionInMeters();
+    var maxDistance = settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionInMeters();
     if (OsmDirectionTags.isForwardOrBackward(direction) && location.isOnNode() &&
         PlanitLinkOsmUtils.waysDisagreeOnOrientation(location.node, location.getLinks().stream()
             .filter(LinkUtils.permitsMotorisedRoadModeOnAnySegment()).collect(Collectors.toList()))) {
@@ -930,7 +930,7 @@ public class OsmTrafficSignalIntegrator {
         false);
     double maxDistance = onTrack ?
         settings.getRailwaySettings().getMaximumDistanceTrackSignalToRoadCrossingInMeters() :
-        settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
     var reached = findSegmentsArrivingAtTargetsAlongRoad(location, null, maxDistance, lookAheadForRoadOrBranch);
     var nearest = reached.stream()
         .map(targets -> findRoadCrossingOrBranch(targets.get(0), maxDistance, lookAheadForRoadOrBranch))
@@ -1162,8 +1162,8 @@ public class OsmTrafficSignalIntegrator {
       VehicleSignalEvidence evidence,
       SecondPassResult secondPass) {
 
-    var crossingDistance = settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
-    var reach = settings.getMaximumDistanceVehicleSignalToJunctionInMeters();
+    var crossingDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+    var reach = settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionInMeters();
     var whereVehicleSignalsTaggedWithOneDirectionStand =
         findWhereVehicleSignalsTaggedWithOneDirectionStand(firstPass.vehicleSignalsNotOnJunctionNode);
     var farthestVehicleSignalByFirstArrival =
@@ -1284,7 +1284,7 @@ public class OsmTrafficSignalIntegrator {
         start,
         true,
         crossingToStartEnd,
-        settings.getMaximumDistanceVehicleSignalToJunctionInMeters(),
+        settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionInMeters(),
         lookAheadForJunctions.travels,
         (current, crossingToItsEnd) -> {
           if (isVehicleSignalFacingBackTowardsCrossingOn(current, crossingToItsEnd, whereVehicleSignalsStand)) {
@@ -1456,7 +1456,7 @@ public class OsmTrafficSignalIntegrator {
    * @return true when near such a crossing, false otherwise
    */
   private boolean isNearCrossingAtEdgeOfParsedArea(OsmNode vehicleSignal, List<OsmNode> crossingsAtEdge) {
-    var crossingDistance = settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+    var crossingDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
     var position = OsmNodeUtils.createPoint(vehicleSignal);
     return crossingsAtEdge.stream().anyMatch(crossing -> !Precision.greater(
         geoUtils.getDistanceInMetres(position, OsmNodeUtils.createPoint(crossing)), crossingDistance,
@@ -1491,8 +1491,8 @@ public class OsmTrafficSignalIntegrator {
            * that junction's intersection already holds it. No link is broken and nothing is added; only the outcome
            * is recorded */
           trackAsDiagnostic(OsmTrafficSignalOutcome.CROSSING_PART_OF_SIGNALISED_JUNCTION, crossingSignal);
-        } else if (isAtEdgeOfParsedArea(
-            crossingSignal, settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters())) {
+        } else if (isAtEdgeOfParsedArea(crossingSignal,
+            settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters())) {
           /* whether it is isolated is unknown: a junction it belongs to may be cut off by the edge. Nothing is added
            * and no link is broken */
           trackAsDiagnostic(OsmTrafficSignalOutcome.CROSSING_AT_EDGE_OF_PARSED_AREA, crossingSignal);
@@ -1514,7 +1514,8 @@ public class OsmTrafficSignalIntegrator {
       for (var vehicleSignal : secondPass.vehicleSignalsWithoutJunction) {
         if (addApproachToSignalisedCrossingAhead(vehicleSignal)) {
           trackAsDiagnostic(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_AT_CROSSING_AHEAD, vehicleSignal);
-        } else if (isAtEdgeOfParsedArea(vehicleSignal, settings.getMaximumDistanceVehicleSignalToJunctionInMeters()) ||
+        } else if (isAtEdgeOfParsedArea(
+            vehicleSignal, settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionInMeters()) ||
             isNearCrossingAtEdgeOfParsedArea(vehicleSignal, crossingsAtEdge)) {
           trackAsDiagnostic(OsmTrafficSignalOutcome.VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA, vehicleSignal);
         } else {
@@ -1543,7 +1544,7 @@ public class OsmTrafficSignalIntegrator {
    * @return true when part of a signalised junction, false otherwise
    */
   private boolean isPartOfSignalisedJunction(OsmNode signal) {
-    var maxDistance = settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+    var maxDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
     boolean onApproach = findFirstSegmentsArrivingAtTargetsAlongRoad(signal, null, maxDistance, lookAheadForJunctions)
         .stream().anyMatch(first -> {
           var intersection = intersectionsByOsmNodeId.get(PlanitOsmUtils.parseOsmId(first.getTargetNode()));
@@ -1632,7 +1633,8 @@ public class OsmTrafficSignalIntegrator {
   private boolean addApproachToSignalisedCrossingAhead(OsmNode signal) {
     var direction = OsmTrafficSignalTags.getRecognisedDirection(OsmModelUtil.getTagsAsMap(signal));
     var reached = findFirstSegmentsArrivingAtTargetsAlongRoad(signal, direction,
-        settings.getMaximumDistanceSignalisedCrossingToJunctionInMeters(), lookAheadForSignalisedCrossings);
+        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters(),
+        lookAheadForSignalisedCrossings);
     for (var crossing : reached) {
       addApproach(intersectionsByOsmNodeId.get(PlanitOsmUtils.parseOsmId(crossing.getTargetNode())),
           crossing.arriving, signal);
@@ -1655,7 +1657,7 @@ public class OsmTrafficSignalIntegrator {
    * @return true when the intersection was constructed, false when breaking links at isolated crossings is off
    */
   private boolean constructIntersectionAtSignalPosition(OsmNode signal) {
-    if (!settings.isBreakLinksAtIsolatedSignalisedCrossings()) {
+    if (!settings.getIntersectionSettings().isBreakLinksAtIsolatedSignalisedCrossings()) {
       return false;
     }
     var node = PlanitOsmNetworkLayerUtils.getOrCreatePopulateAndRegisterNode(

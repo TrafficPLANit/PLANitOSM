@@ -117,7 +117,7 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
       osmNetworkReader.removeDanglingSubNetworks(zoning, recreateIds);
     }
     /* intersections, once pruning has settled what remains */
-    osmNetworkReader.consolidateIntersections();
+    osmNetworkReader.consolidateIntersectionsComputeGreenRatiosAndCollapse();
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(network);
 
     recreateIds = false;
@@ -202,9 +202,13 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     var originalRemoveDanglingSubNetworkModes =
         new java.util.LinkedHashMap<>(osmNetworkReader.getSettings().getRemoveDanglingSubnetworkModes());
     osmNetworkReader.getSettings().deactivateRemoveDanglingSubnetworks();
-    /* consolidating intersections waits for the removal of dangling subnetworks */
-    boolean originalConsolidateIntersections = osmNetworkReader.getSettings().isConsolidateIntersections();
-    osmNetworkReader.getSettings().setConsolidateIntersections(false);
+    /* consolidating intersections and computing their green ratios wait for the removal of dangling subnetworks */
+    var intersectionSettings = osmNetworkReader.getSettings().getIntersectionSettings();
+    boolean originalConsolidateIntersections = intersectionSettings.isConsolidateIntersections();
+    boolean originalComputeGreenRatiosAndSaturationFlowFactors =
+        intersectionSettings.isComputeGreenRatiosAndSaturationFlowFactors();
+    intersectionSettings.setConsolidateIntersections(false);
+    intersectionSettings.setComputeGreenRatiosAndSaturationFlowFactors(false);
     
     PlanitOsmNetwork network = (PlanitOsmNetwork) osmNetworkReader.read();
 
@@ -235,7 +239,9 @@ public class OsmIntermodalReader implements IntermodalReader<ServiceNetwork, Rou
     originalRemoveDanglingSubNetworkModes.forEach(
         (modeType, config) -> osmNetworkReader.getSettings().activateRemoveDanglingSubnetworks(
             modeType, config.getBelowSize(), config.getAboveSize(), config.getConnectivity()));
-    osmNetworkReader.getSettings().setConsolidateIntersections(originalConsolidateIntersections);
+    intersectionSettings.setConsolidateIntersections(originalConsolidateIntersections);
+    intersectionSettings.setComputeGreenRatiosAndSaturationFlowFactors(
+        originalComputeGreenRatiosAndSaturationFlowFactors);
     osmZoningReader.getSettings().setRemoveDanglingZones(originalRemoveDanglingZones);
     osmZoningReader.getSettings().setRemoveDanglingTransferZoneGroups(originalRemoveDanglingTransferZoneGroups);
     /* ... remove dangling entities if indicated */

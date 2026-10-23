@@ -828,7 +828,7 @@ public class OsmNetworkLayerParser {
     
     this.layerData = new OsmNetworkReaderLayerData();    
     this.modeParser = new OsmNetworkLayerModeConversion(settings, networkLayer);
-    if(settings.isParseIntersections()) {
+    if(settings.isIntersectionParserActive()) {
       this.trafficSignalIntegrator =
           new OsmTrafficSignalIntegrator(networkLayer, layerData, networkData, settings, geoUtils);
     }
@@ -987,7 +987,7 @@ public class OsmNetworkLayerParser {
     breakLinksWithInternalConnections();
 
     /* intersections from traffic signals, now that every junction node exists */
-    if(settings.isParseIntersections()) {
+    if(settings.isIntersectionParserActive()) {
       trafficSignalIntegrator.execute();
     }
 

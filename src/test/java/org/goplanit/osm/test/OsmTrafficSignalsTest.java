@@ -227,7 +227,7 @@ public class OsmTrafficSignalsTest {
      *   1: highway=crossing, crossing=marked; breaking links at isolated signalised crossings on
      */
     var layer = parse("crossing_signal_on_crossing_way_only",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
 
     var intersection = onlyIntersection(layer);
     assertEquals(List.of(nodeByOsmId(layer, 1)), intersection.getMemberNodes());
@@ -349,7 +349,7 @@ public class OsmTrafficSignalsTest {
      *              |
      *              5
      */
-    var layer = parse("four_arm_junction_signal_on_centre", settings -> settings.setParseIntersections(false));
+    var layer = parse("four_arm_junction_signal_on_centre", settings -> settings.activateIntersectionParser(false));
 
     assertTrue(layer.getIntersections().isEmpty());
     assertEquals(5, layer.getNodes().size());
@@ -524,7 +524,7 @@ public class OsmTrafficSignalsTest {
      *   approach 5->6; backward, 5->2 reaches dead end 2, so nothing; no intersection at 5
      */
     var layer = parse("signal_with_two_link_node_before_junction",
-        settings -> settings.setMaximumDistanceVehicleSignalToJunctionInMeters(60));
+        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(60));
 
     var intersection = onlyIntersection(layer);
     assertEquals(List.of(nodeByOsmId(layer, 6)), intersection.getMemberNodes());
@@ -557,7 +557,7 @@ public class OsmTrafficSignalsTest {
 
     IdGenerator.reset();
     var on = parse("signal_far_from_junction_on_shape_node",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
     assertEquals(5, on.getLinks().size());
     var crossing = onlyIntersection(on);
     assertEquals(List.of(nodeByOsmId(on, 1)), crossing.getMemberNodes());
@@ -585,7 +585,7 @@ public class OsmTrafficSignalsTest {
 
     IdGenerator.reset();
     var on = parse("signal_far_from_junction_on_two_link_node",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
     assertEquals(2, on.getLinks().size());
     var crossing = onlyIntersection(on);
     assertEquals(List.of(nodeByOsmId(on, 1)), crossing.getMemberNodes());
@@ -613,7 +613,7 @@ public class OsmTrafficSignalsTest {
 
     IdGenerator.reset();
     var tighter = parse("signal_12m_before_junction",
-        settings -> settings.setMaximumDistanceVehicleSignalToJunctionInMeters(10));
+        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(10));
     assertTrue(tighter.getIntersections().isEmpty());
     assertEquals(4, tighter.getLinks().size());
   }
@@ -869,7 +869,8 @@ public class OsmTrafficSignalsTest {
     assertEquals(1, off.getLinks().size());
 
     IdGenerator.reset();
-    var on = parse("mid_block_crossing", settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var on = parse("mid_block_crossing",
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
     assertEquals(2, on.getLinks().size());
     var crossing = onlyIntersection(on);
     assertEquals(List.of(nodeByOsmId(on, 31)), crossing.getMemberNodes());
@@ -902,7 +903,7 @@ public class OsmTrafficSignalsTest {
      *   crossing intersection next to the junction's, approached along the road only: 2->31 and 1->31
      */
     var footwaysNotParsed = parse("crossing_near_signalised_junction",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
     assertEquals(4, footwaysNotParsed.getLinks().size());
     var junction = onlyIntersection(footwaysNotParsed);
     assertEquals(List.of(nodeByOsmId(footwaysNotParsed, 1)), junction.getMemberNodes());
@@ -941,14 +942,14 @@ public class OsmTrafficSignalsTest {
      *   10 m, junction 6 is out of reach and 31 is an isolated crossing
      */
     var withinReach = parse("crossing_on_exit_arm_of_signalised_junction",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
     assertEquals(4, withinReach.getLinks().size());
     assertEquals(List.of(nodeByOsmId(withinReach, 6)), onlyIntersection(withinReach).getMemberNodes());
 
     IdGenerator.reset();
     var beyondReach = parse("crossing_on_exit_arm_of_signalised_junction", settings -> {
-      settings.setBreakLinksAtIsolatedSignalisedCrossings(true);
-      settings.setMaximumDistanceSignalisedCrossingToJunctionInMeters(10);
+      settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      settings.getIntersectionSettings().setMaximumDistanceSignalisedCrossingToJunctionInMeters(10);
     });
     assertEquals(5, beyondReach.getLinks().size());
     assertEquals(2, beyondReach.getIntersections().size());
@@ -977,7 +978,7 @@ public class OsmTrafficSignalsTest {
      *   intersection with approaches 2->31 and 1->31; 1 gets no intersection
      */
     var layer = parse("crossing_near_unsignalised_junction",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
 
     assertEquals(5, layer.getLinks().size());
     var crossing = onlyIntersection(layer);
@@ -1005,7 +1006,7 @@ public class OsmTrafficSignalsTest {
      *   the piece arriving at it, 31->1, instead of 2->1
      */
     var layer = parse("crossing_breaks_junction_approach",
-        settings -> settings.setBreakLinksAtIsolatedSignalisedCrossings(true));
+        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
 
     assertEquals(5, layer.getLinks().size());
     assertEquals(2, layer.getIntersections().size());

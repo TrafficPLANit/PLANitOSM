@@ -117,8 +117,10 @@ unique even during the breaking of links.
 
 ### Traffic signals and intersections
 
-When parsing intersections is on (`setParseIntersections`, the default), the network reader turns OSM traffic signals
-into signalised intersections of the layer. An intersection has one or more member nodes, a kind (`junction`,
+When the intersection parser is active (`activateIntersectionParser`, the default), the network reader turns OSM
+traffic signals into signalised intersections of the layer. Its settings sit on the intersection settings of the reader
+settings, `getIntersectionSettings()`, set up like the highway, railway and waterway settings: the methods named in
+this section are found there. An intersection has one or more member nodes, a kind (`junction`,
 `crossing`, or both) and its approaches: the link segments entering it that its signals control, only those a
 motorised road or rail mode may use. A footway or cycleway entering a signalised crossing is no approach. Once all
 signals are handled, an intersection left without an approach is removed and recorded, such as a signalised crossing
@@ -414,9 +416,9 @@ crossing's signal when it turns internal. A road into the crossing does not, in 
 for the crossing on the road from outside, which stays an approach, and the road from inside the junction is run by
 the junction's own signals.
 
-The values that tune it are PLANit's `IntersectionConsolidatorSettings`, held by the reader settings: change them in
-place through `getIntersectionConsolidatorSettings()`, or switch consolidation on with settings of your own through
-`setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum joining reach 40 m, minimum
+The values that tune it are PLANit's `IntersectionConsolidatorSettings`, held by the intersection settings: change
+them in place through `getIntersectionConsolidatorSettings()`, or switch consolidation on with settings of your own
+through `setConsolidateIntersections(true, consolidatorSettings)`. The defaults: maximum joining reach 40 m, minimum
 coverage gain per member 0.05, coverage tie margin 0.05, every subdivision tried for clusters of up to 10 parsed
 intersections and a larger cluster subdivided step by step keeping 3 subdivisions per step, junctions pulled in
 within the radius plus 30 m over a connection of at most 80 m, internal link length
@@ -424,16 +426,38 @@ warning 100 m, maximum distance reached only through an intersection 60 m, and
 maximum distance from a crossing on a slip lane to its junction 60 m.
 
 The user can change the grouping by OSM node id, each call adding one list of at least two nodes:
-`addOsmNodeIdsToJoinIntoOneIntersection` and `addOsmNodeIdsToKeepInSeparateIntersections` on the reader settings.
+`addOsmNodeIdsToJoinIntoOneIntersection` and `addOsmNodeIdsToKeepInSeparateIntersections` on the intersection settings.
 Any node of an intersection stands for the whole intersection. Once the crossings have joined, the intersections
 holding the nodes of a list to join are joined into one, even where the grouping rules would keep them apart. No step
 puts nodes of one list to keep apart into one intersection, and keeping apart wins over joining.
 
 What to collapse is set on `getIntersectionCollapserSettings()`: predefined mode types (`setCollapsedModeTypes`), OSM
 modes (`setCollapsedOsmModes`), and OSM nodes whose intersection is not collapsed
-(`addOsmNodeIdsExcludedFromCollapse`). The consolidation values are logged with the other settings when consolidation
-is on, and the collapse settings as a section of their own. What consolidation and collapse did is logged on one line
+(`addOsmNodeIdsExcludedFromCollapse`). The intersection settings are logged as a section of their own,
+`Intersections`, next to the way sections, with the consolidation values, when consolidation is on, and the collapse
+settings as sections within it. What consolidation and collapse did is logged on one line
 each, and each entity is recorded in the PLANit intersections diagnostics below.
+
+With `setComputeGreenRatiosAndSaturationFlowFactors(true)` (off by default) the reader estimates how much of the time
+each approach of a signalised intersection has green, since OSM holds no signal timing. It uses PLANit's green ratio
+algorithm, tuned on `getGreenRatioAndSaturationFlowFactorSettings()`: approaches on the same axis, facing each other
+or arriving side by side such as a road and the tram track beside it, within `setSameAxisApproachToleranceDegrees`
+(default 30 degrees), share a phase. A junction with approaches on more axes than `setMaximumNumberOfPhases` (default
+4) has the phases whose axes are closest merged until it has that many, since a complex junction gives several
+approaches green together. The phases share the usable green time of
+the cycle, `setCycleTimeSeconds` (default 90 s) less `setLostTimePerPhaseChangeSeconds` (default 5 s) for each phase.
+`setAlgorithmType` chooses how: `EQUAL_SPLIT` (the default) gives each phase the same share, `CAPACITY_WEIGHTED` a
+share in proportion to its capacity. For example, a crossing of two equal roads, consolidated, gets two phases and a
+green ratio of (90 - 10) / 90 / 2, about 0.44, for each approach. Road traffic at an isolated signalised crossing gets
+`setIsolatedCrossingGreenRatio` (default 0.9), and an approach without a signal of its own at a signalised junction a
+saturation flow factor of `setApproachWithoutSignalSaturationFlowFactor` (default 0.5). It runs after consolidation and
+before collapse, since collapse can move the end of a link and so change the direction an approach arrives in. It also
+runs without consolidation, with one warning: a junction parsed as several intersections is then timed as several
+junctions. The divided roads crossing above gets two approaches at each of its four nodes, one of them the
+carriageway between two nodes, so traffic through it meets two reduced approaches instead of one. What it did is
+logged on one line, and each intersection whose green ratios could not be computed, because its phases leave no usable
+green time, is recorded in the PLANit intersections diagnostics below. The values are written with the network, and
+the MATSim writer can reduce link capacities with them.
 
 #### Turn restrictions
 
@@ -467,8 +491,9 @@ What happens is recorded where it is decided, in two stages, and logged at the e
   nodes joined, approaches made internal, long internal links, links reached only through their intersection,
   junctions pulled in within a radius, crossings joined (along the road or from a slip lane), approaches added
   without a signal (on a slip lane, or not)
-  and junctions with few lit arms. Also each OSM node id listed to join or keep apart, or excluded from collapse,
-  that no layer of the network has, once.
+  and junctions with few lit arms. With green ratios on, each intersection whose green ratios could not be computed,
+  with its usable green time. Also each OSM node id listed to join or keep apart, or excluded from collapse, that no
+  layer of the network has, once.
 
 The rules above are covered scenario by scenario in `OsmTrafficSignalsTest`, `OsmTrafficSignalIntegratorTest`,
 `OsmIntersectionConsolidationTest` and `OsmTurnRestrictionModesTest`, each hand-made `.osm` file under

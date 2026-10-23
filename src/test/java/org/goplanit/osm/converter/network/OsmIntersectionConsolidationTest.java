@@ -14,6 +14,8 @@ import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.network.layer.macroscopic.intersection.CapacityFactorOrigin;
+import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionSignalSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.SpatialIntersection;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +27,8 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.nodeByOsmId;
 import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 
 /**
- * Consolidating the intersections parsed from traffic signals, switched on in the reader settings. The scenario is
+ * Consolidating the intersections parsed from traffic signals, and computing the green ratios of their approaches, each
+ * switched on in the intersection settings of the reader. The scenario is
  * two divided roads crossing, with a traffic signal on each of the four nodes where the carriageways cross
  * <pre>
  *             11     14
@@ -76,7 +79,7 @@ public class OsmIntersectionConsolidationTest {
     var reader = readerOf("divided_roads_crossing", settings -> {});
     var layer = reader.read().getTransportLayers().getFirst();
 
-    assertFalse(reader.getSettings().isConsolidateIntersections());
+    assertFalse(reader.getSettings().getIntersectionSettings().isConsolidateIntersections());
     assertEquals(4, layer.getIntersections().size());
   }
 
@@ -84,7 +87,8 @@ public class OsmIntersectionConsolidationTest {
    * replaces are each recorded once */
   @Test
   public void consolidationSwitchedOnJoinsTheDividedRoadsCrossing() {
-    var reader = readerOf("divided_roads_crossing", settings -> settings.setConsolidateIntersections(true));
+    var reader = readerOf("divided_roads_crossing",
+        settings -> settings.getIntersectionSettings().setConsolidateIntersections(true));
     var layer = reader.read().getTransportLayers().getFirst();
 
     assertEquals(1, layer.getIntersections().size());
@@ -118,7 +122,7 @@ public class OsmIntersectionConsolidationTest {
   @Test
   public void stopLineBetweenTheCarriagewaysAndLightsOnAFootwayBecomeInternalSegmentsWithASignal() {
     var reader = readerOf("divided_roads_crossing_stop_line_between_carriageways", settings -> {
-      settings.setConsolidateIntersections(true);
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
       settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY);
       settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.CYCLEWAY);
     });
@@ -137,15 +141,16 @@ public class OsmIntersectionConsolidationTest {
   @Test
   public void collapsingPedestriansAddsACentreNode() {
     var reader = readerOf("divided_roads_crossing", settings -> {
-      settings.setConsolidateIntersections(true);
-      settings.getIntersectionCollapserSettings().setCollapsedModeTypes(PredefinedModeType.PEDESTRIAN);
+      var intersectionSettings = settings.getIntersectionSettings();
+      intersectionSettings.setConsolidateIntersections(true);
+      intersectionSettings.getIntersectionCollapserSettings().setCollapsedModeTypes(PredefinedModeType.PEDESTRIAN);
     });
     var network = reader.read();
     var consolidated = (SpatialIntersection) network.getTransportLayers().getFirst().getIntersections().getFirst();
     IdGenerator.reset();
     var notCollapsed = (SpatialIntersection) readerOf("divided_roads_crossing",
-        settings -> settings.setConsolidateIntersections(true)).read().getTransportLayers().getFirst()
-        .getIntersections().getFirst();
+        settings -> settings.getIntersectionSettings().setConsolidateIntersections(true))
+        .read().getTransportLayers().getFirst().getIntersections().getFirst();
 
     assertEquals(5, consolidated.getMemberNodes().size());
     assertEquals(notCollapsed.getMovements().size(), consolidated.getMovements().size());
@@ -156,8 +161,8 @@ public class OsmIntersectionConsolidationTest {
   @Test
   public void collapsingTheOsmModeFootCollapsesPedestrians() {
     var reader = readerOf("divided_roads_crossing", settings -> {
-      settings.setConsolidateIntersections(true);
-      settings.getIntersectionCollapserSettings().setCollapsedOsmModes(OsmRoadModeTags.FOOT);
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
+      settings.getIntersectionSettings().getIntersectionCollapserSettings().setCollapsedOsmModes(OsmRoadModeTags.FOOT);
     });
     var consolidated = (SpatialIntersection) reader.read().getTransportLayers().getFirst().getIntersections()
         .getFirst();
@@ -172,14 +177,14 @@ public class OsmIntersectionConsolidationTest {
     var logger = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
     logger.addHandler(counter);
     try {
-      readerOf("divided_roads_crossing", settings -> settings.setParseIntersections(false)).read();
+      readerOf("divided_roads_crossing", settings -> settings.activateIntersectionParser(false)).read();
       int warningsWithoutConsolidation = counter.warnings;
       counter.warnings = 0;
       IdGenerator.reset();
 
       var layer = readerOf("divided_roads_crossing", settings -> {
-        settings.setParseIntersections(false);
-        settings.setConsolidateIntersections(true);
+        settings.activateIntersectionParser(false);
+        settings.getIntersectionSettings().setConsolidateIntersections(true);
       }).read().getTransportLayers().getFirst();
 
       assertTrue(layer.getIntersections().isEmpty());
@@ -202,8 +207,8 @@ public class OsmIntersectionConsolidationTest {
   @Test
   public void nodesListedToKeepApartEndUpInSeparateIntersections() {
     var reader = readerOf("divided_roads_crossing", settings -> {
-      settings.setConsolidateIntersections(true);
-      settings.addOsmNodeIdsToKeepInSeparateIntersections(1, 4, 999);
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
+      settings.getIntersectionSettings().addOsmNodeIdsToKeepInSeparateIntersections(1, 4, 999);
     });
     var layer = reader.read().getTransportLayers().getFirst();
 
@@ -227,8 +232,8 @@ public class OsmIntersectionConsolidationTest {
   @Test
   public void nodesListedToJoinThatAreInOneIntersectionAlreadyChangeNothing() {
     var reader = readerOf("divided_roads_crossing", settings -> {
-      settings.setConsolidateIntersections(true);
-      settings.addOsmNodeIdsToJoinIntoOneIntersection(2, 3);
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
+      settings.getIntersectionSettings().addOsmNodeIdsToJoinIntoOneIntersection(2, 3);
     });
     var layer = reader.read().getTransportLayers().getFirst();
 
@@ -248,9 +253,10 @@ public class OsmIntersectionConsolidationTest {
   @Test
   public void nodeExcludedFromCollapseKeepsItsIntersectionFromCollapsing() {
     var reader = readerOf("divided_roads_crossing", settings -> {
-      settings.setConsolidateIntersections(true);
-      settings.getIntersectionCollapserSettings().setCollapsedModeTypes(PredefinedModeType.PEDESTRIAN);
-      settings.getIntersectionCollapserSettings().addOsmNodeIdsExcludedFromCollapse(1);
+      var intersectionSettings = settings.getIntersectionSettings();
+      intersectionSettings.setConsolidateIntersections(true);
+      intersectionSettings.getIntersectionCollapserSettings().setCollapsedModeTypes(PredefinedModeType.PEDESTRIAN);
+      intersectionSettings.getIntersectionCollapserSettings().addOsmNodeIdsExcludedFromCollapse(1);
     });
     var consolidated = (SpatialIntersection) reader.read().getTransportLayers().getFirst().getIntersections()
         .getFirst();
@@ -274,14 +280,85 @@ public class OsmIntersectionConsolidationTest {
   public void crossingListedToJoinThatTheCrossingRulesLeaveIsJoined() {
     var reader = readerOf("crossing_near_signalised_junction", settings -> {
       settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY);
-      settings.setConsolidateIntersections(true);
-      settings.getIntersectionConsolidatorSettings().setMaximumJoiningReachMeters(5);
-      settings.addOsmNodeIdsToJoinIntoOneIntersection(1, 31);
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
+      settings.getIntersectionSettings().getIntersectionConsolidatorSettings().setMaximumJoiningReachMeters(5);
+      settings.getIntersectionSettings().addOsmNodeIdsToJoinIntoOneIntersection(1, 31);
     });
     var layer = reader.read().getTransportLayers().getFirst();
 
     assertEquals(1, layer.getIntersections().size());
     var diagnostics = reader.getNetworkReaderData().getPlanitEntityDiagnostics();
     assertTrue(diagnostics.getEntityIds(OsmPlanitEntityIssue.CROSSING_JOINED_TO_JUNCTION).isEmpty());
+  }
+
+  /**
+   * With consolidation and green ratios on, the four approaches of the consolidated junction share its usable green
+   * time: two phases of opposite approaches, a 90 s cycle and 5 s lost at each phase change give each approach
+   * (90 - 10) / 90 / 2, about 0.44
+   */
+  @Test
+  public void greenRatiosOfTheConsolidatedJunctionShareItsUsableGreenTime() {
+    var layer = readerOf("divided_roads_crossing", settings -> {
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
+      settings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+    }).read().getTransportLayers().getFirst();
+
+    var consolidated = layer.getIntersections().getFirst();
+    assertEquals(4, consolidated.getApproaches().size());
+    for (var approach : consolidated.getApproaches()) {
+      var withSignal = (IntersectionSignalSegment) approach;
+      assertEquals(CapacityFactorOrigin.COMPUTED, withSignal.getGreenRatioOrigin());
+      assertEquals(80.0 / 90 / 2, withSignal.getGreenRatio(), 1e-9);
+    }
+  }
+
+  /**
+   * With green ratios on and consolidation off, each of the four parsed intersections gets values of its own, and one
+   * warning more is logged than without green ratios: a junction parsed as several intersections is timed as several
+   * junctions. Each node has two approaches at right angles, the road from outside and the carriageway from the next
+   * node, so two phases and about 0.44 each, and traffic through the junction meets two reduced approaches
+   */
+  @Test
+  public void greenRatiosWithoutConsolidationAreComputedPerParsedIntersectionWithOneWarning() {
+    var counter = new WarningCounter();
+    var logger = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
+    logger.addHandler(counter);
+    try {
+      readerOf("divided_roads_crossing", settings -> {}).read();
+      int warningsWithoutGreenRatios = counter.warnings;
+      counter.warnings = 0;
+      IdGenerator.reset();
+
+      var layer = readerOf("divided_roads_crossing",
+          settings -> settings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true))
+          .read().getTransportLayers().getFirst();
+
+      assertEquals(4, layer.getIntersections().size());
+      for (var intersection : layer.getIntersections()) {
+        assertEquals(2, intersection.getApproaches().size());
+        for (var approach : intersection.getApproaches()) {
+          var withSignal = (IntersectionSignalSegment) approach;
+          assertEquals(CapacityFactorOrigin.COMPUTED, withSignal.getGreenRatioOrigin());
+          assertEquals(80.0 / 90 / 2, withSignal.getGreenRatio(), 1e-9);
+        }
+      }
+      assertEquals(warningsWithoutGreenRatios + 1, counter.warnings);
+    } finally {
+      logger.removeHandler(counter);
+    }
+  }
+
+  /** With default settings no green ratio or saturation flow factor is computed, so no approach has a value */
+  @Test
+  public void noGreenRatiosByDefault() {
+    var reader = readerOf("divided_roads_crossing",
+        settings -> settings.getIntersectionSettings().setConsolidateIntersections(true));
+    var layer = reader.read().getTransportLayers().getFirst();
+
+    assertFalse(reader.getSettings().getIntersectionSettings().isComputeGreenRatiosAndSaturationFlowFactors());
+    for (var approach : layer.getIntersections().getFirst().getApproaches()) {
+      assertNull(((IntersectionSignalSegment) approach).getGreenRatioOrigin());
+      assertNull(approach.getSaturationFlowFactorOrigin());
+    }
   }
 }

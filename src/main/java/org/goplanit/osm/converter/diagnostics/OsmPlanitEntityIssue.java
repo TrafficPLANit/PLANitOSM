@@ -66,6 +66,10 @@ public enum OsmPlanitEntityIssue {
   /** a signalised junction where fewer than half of the road approaches have a signal of their own */
   JUNCTION_WITH_FEW_SIGNALISED_ARMS("signalised junctions where fewer than half of the road approaches have a signal"),
 
+  /** a signalised intersection whose green ratios could not be computed, since its phases leave no usable green time
+   * in the cycle; recorded with that usable green time */
+  INTERSECTION_GREEN_RATIOS_NOT_COMPUTABLE("signalised intersections whose green ratios could not be computed"),
+
   /** a node listed to join or to keep apart by its OSM node id that no layer of the network has */
   NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND("nodes listed to join or keep apart, not in the network"),
 
