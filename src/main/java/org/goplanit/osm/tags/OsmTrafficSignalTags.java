@@ -15,6 +15,28 @@ import org.goplanit.osm.util.OsmTagUtils;
  */
 public class OsmTrafficSignalTags {
 
+  /** Verify if the tags carry a {@code highway=*} value of a way that can be a crossing way, see
+   * {@link #CROSSING_WAY_HIGHWAY_TYPES}
+   *
+   * @param tags of the OSM way to check
+   * @return true when such a value is present, false otherwise
+   */
+  private static boolean hasCrossingWayHighwayType(Map<String, String> tags) {
+    return OsmTagUtils.keyMatchesAnyValueTag(
+        tags, OsmHighwayTags.HIGHWAY, CROSSING_WAY_HIGHWAY_TYPES.toArray(String[]::new));
+  }
+
+  /** Verify if the tags mark a traffic signal on a barrier, such as a bollard or gate: {@code highway=traffic_signals}
+   * with a {@code barrier=*} value other than {@code kerb} or {@code no}. It holds traffic at the barrier
+   *
+   * @param tags to check
+   * @return true when a traffic signal on a barrier, false otherwise
+   */
+  private static boolean isTrafficSignalOnBarrier(Map<String, String> tags) {
+    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, TRAFFIC_SIGNALS) &&
+        tags.containsKey(BARRIER) && !OsmTagUtils.keyMatchesAnyValueTag(tags, BARRIER, KERB, OsmTags.NO);
+  }
+
   /** value of {@code highway=traffic_signals}, a node with traffic signals */
   public static final String TRAFFIC_SIGNALS = "traffic_signals";
 
@@ -89,6 +111,18 @@ public class OsmTrafficSignalTags {
   public static final Set<String> NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES =
       Set.of(RAMP_METER, EMERGENCY, BLINKER, GATE, CONTROL_BOX, LEVEL_CROSSING);
 
+  /** key {@code barrier}, a barrier on a node, such as a bollard or gate */
+  public static final String BARRIER = "barrier";
+
+  /** value of {@code barrier=kerb}, a kerb, common on crossing nodes, which holds no traffic */
+  public static final String KERB = "kerb";
+
+  /** value of {@code highway=stop}, a node where a stop sign stands */
+  public static final String STOP = "stop";
+
+  /** value of {@code highway=give_way}, a node where a give way sign stands */
+  public static final String GIVE_WAY = "give_way";
+
   /** Verify if the tags carry {@code highway=traffic_signals} with a {@code traffic_signals=*} value in the given set
    *
    * @param tags to check
@@ -114,7 +148,8 @@ public class OsmTrafficSignalTags {
 
   /** Verify if the tags mark a crossing signal, a signalised pedestrian crossing: {@code crossing=traffic_signals},
    * {@code crossing:signals=yes}, or {@code highway=traffic_signals} with a {@code traffic_signals=*} value in
-   * {@link #CROSSING_TRAFFIC_SIGNAL_TYPES}
+   * {@link #CROSSING_TRAFFIC_SIGNAL_TYPES}. A traffic signal on a barrier, such as a bollard or gate, is one too, since
+   * it holds traffic at the barrier as a crossing does; being a vehicle signal as well, it has both kinds
    *
    * @param tags to check
    * @return true when a crossing signal, false otherwise
@@ -122,20 +157,47 @@ public class OsmTrafficSignalTags {
   public static boolean isCrossingTrafficSignals(Map<String, String> tags) {
     return OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING, CROSSING_TRAFFIC_SIGNALS) ||
         OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING_SIGNALS, OsmTags.YES) ||
-        hasTrafficSignalsSubTypeIn(tags, CROSSING_TRAFFIC_SIGNAL_TYPES);
+        hasTrafficSignalsSubTypeIn(tags, CROSSING_TRAFFIC_SIGNAL_TYPES) || isTrafficSignalOnBarrier(tags);
   }
 
-  /** Verify if the tags mark a signalised crossing way: a footway, cycleway or path tagged {@code
-   * crossing=traffic_signals} or {@code crossing:signals=yes}
+  /** Verify if the tags mark a signalised crossing way: a footway, cycleway, path, bridleway or pedestrian way, see
+   * {@link #CROSSING_WAY_HIGHWAY_TYPES}, tagged {@code crossing=traffic_signals} or {@code crossing:signals=yes}
    *
    * @param tags of the OSM way to check
    * @return true when a signalised crossing way, false otherwise
    */
   public static boolean isSignalisedCrossingWay(Map<String, String> tags) {
-    return OsmTagUtils.keyMatchesAnyValueTag(
-            tags, OsmHighwayTags.HIGHWAY, CROSSING_WAY_HIGHWAY_TYPES.toArray(String[]::new)) &&
+    return hasCrossingWayHighwayType(tags) &&
         (OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING, CROSSING_TRAFFIC_SIGNALS) ||
             OsmTagUtils.keyMatchesAnyValueTagAmongMultipleValues(tags, CROSSING_SIGNALS, OsmTags.YES));
+  }
+
+  /** Verify if the tags mark a way that can cross a road where it meets it, whatever its crossing tags: a footway,
+   * cycleway, path, bridleway or pedestrian way, unless it is an area, {@code area=yes}, such as a plaza's outline
+   *
+   * @param tags of the OSM way to check
+   * @return true when such a way, false otherwise
+   */
+  public static boolean isWayThatCanCrossRoad(Map<String, String> tags) {
+    return hasCrossingWayHighwayType(tags) && !OsmTags.isArea(tags);
+  }
+
+  /** Verify if the tags mark a crossing node: {@code highway=crossing}, whatever its other crossing tags
+   *
+   * @param tags to check
+   * @return true when a crossing node, false otherwise
+   */
+  public static boolean isCrossingNode(Map<String, String> tags) {
+    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, CROSSING);
+  }
+
+  /** Verify if the tags mark a stop or give way sign: {@code highway=stop} or {@code highway=give_way}
+   *
+   * @param tags to check
+   * @return true when a stop or give way sign, false otherwise
+   */
+  public static boolean isStopOrGiveWaySign(Map<String, String> tags) {
+    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, STOP, GIVE_WAY);
   }
 
   /** Verify if the tags state the crossing has no signals: {@code crossing:signals=no}, or a {@code crossing=*} value

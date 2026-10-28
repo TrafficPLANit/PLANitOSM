@@ -90833,46 +90833,36 @@
                         <approach ref="8042" greenratio="0.9"/>
                     </approaches>
                 </intersection>
-                <intersection id="31" externalid="2045059225" noderef="1372" control="signalised" types="crossing">
-                    <approaches>
-                        <approach ref="7994" greenratio="0.9"/>
-                    </approaches>
-                </intersection>
-                <intersection id="32" externalid="4417297891" noderef="674" control="signalised" types="crossing">
+                <intersection id="31" externalid="4417297891" noderef="674" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="6676" greenratio="0.9"/>
                         <approach ref="787" greenratio="0.9"/>
                     </approaches>
                 </intersection>
-                <intersection id="33" externalid="5147320980" noderef="3974" control="signalised" types="crossing">
-                    <approaches>
-                        <approach ref="1879" greenratio="0.9"/>
-                    </approaches>
-                </intersection>
-                <intersection id="34" externalid="8965823" noderef="14" control="signalised" types="crossing">
+                <intersection id="32" externalid="8965823" noderef="14" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="19" greenratio="0.9"/>
                         <approach ref="8044" greenratio="0.9"/>
                     </approaches>
                 </intersection>
-                <intersection id="35" externalid="15405025" noderef="71" control="signalised" types="crossing">
+                <intersection id="33" externalid="15405025" noderef="71" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="7199" greenratio="0.9"/>
                     </approaches>
                 </intersection>
-                <intersection id="36" externalid="15405030" noderef="1029" control="signalised" types="crossing">
+                <intersection id="34" externalid="15405030" noderef="1029" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="3627" greenratio="0.9"/>
                         <approach ref="7914" greenratio="0.9"/>
                     </approaches>
                 </intersection>
-                <intersection id="37" externalid="15405041" noderef="3514" control="signalised" types="crossing">
+                <intersection id="35" externalid="15405041" noderef="3514" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="7916" greenratio="0.9"/>
                         <approach ref="8585" greenratio="0.9"/>
                     </approaches>
                 </intersection>
-                <intersection id="38" externalid="26526386" noderef="3518" control="signalised" types="crossing">
+                <intersection id="36" externalid="26526386" noderef="3518" control="signalised" types="crossing">
                     <approaches>
                         <approach ref="3624" greenratio="0.9"/>
                     </approaches>
@@ -90913,7 +90903,7 @@
                         <approach ref="9988" greenratio="0.4444444444444444"/>
                     </approaches>
                 </intersection>
-                <spatialintersection id="39" externalid="8965683,8965800,10245932196,10245943071" noderefs="13,3367,3369,3949,3970,672" control="signalised" types="junction crossing">
+                <spatialintersection id="37" externalid="8965683,8965800,10245932196,10245943071" noderefs="13,3367,3369,3949,3970,672" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="12" greenratio="0.2777777777777778"/>
                         <approach ref="1795" greenratio="0.2777777777777778"/>
@@ -90948,7 +90938,7 @@
                         <movement id="9" fromlsref="1960" tolsref="5478" length="0.029440350901864393"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="40" externalid="13887177,3921252668,3921252674" noderefs="1340,1343,3790,847,848" control="signalised" types="junction">
+                <spatialintersection id="38" externalid="13887177,3921252668,3921252674" noderefs="1340,1343,3790,847,848" control="signalised" types="junction">
                     <approaches>
                         <approach ref="1835" greenratio="0.2777777777777778"/>
                         <approach ref="4226" signal="false" satflowfactor="0.5"/>
@@ -90980,7 +90970,7 @@
                         <movement id="37" fromlsref="4226" tolsref="9680" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="41" externalid="3910190217,10188082774,3910190702,3910190701,10188082773,6766487605,10185680978,10188082779,10185680979" noderefs="112,2076,2093,2094,2096,2884,2885,2886,2889,3117,3147,3148,3149,3150,3151,3152,3153,3154,3155,3598,3600,3679,3694,3695,3830,3831,3832,3833,3891,478" control="signalised" types="junction crossing">
+                <spatialintersection id="39" externalid="3910190217,10188082774,3910190702,3910190701,10188082773,6766487605,10185680978,10188082779,10185680979" noderefs="112,2076,2093,2094,2096,2884,2885,2886,2889,3117,3147,3148,3149,3150,3151,3152,3153,3154,3155,3598,3600,3679,3694,3695,3830,3831,3832,3833,3891,478" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="1324" greenratio="0.4444444444444444"/>
                         <approach ref="6089" greenratio="0.4444444444444444"/>
@@ -91055,7 +91045,7 @@
                         <movement id="89" fromlsref="6089" tolsref="9850" length="0.009466228530907771"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="42" externalid="6594605922,10188049454,10188049455,6038996874,6038996879,10188047745" noderefs="1328,1747,2282,3072,3073,3646,3873,524" control="signalised" types="junction crossing">
+                <spatialintersection id="40" externalid="6594605922,10188049454,10188049455,6038996874,6038996879,10188047745" noderefs="1328,1747,2282,3072,3073,3646,3873,524" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="1803" greenratio="0.2777777777777778"/>
                         <approach ref="2873" greenratio="0.2777777777777778"/>
@@ -91084,7 +91074,7 @@
                         <movement id="99" fromlsref="1803" tolsref="4950" length="0.008848134440135278"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="43" externalid="10197020150,10197020151,10197020152,10187841588,10187841589,10187841590,10187841591" noderefs="1018,2985,2986,2989,2995,3851,3852,3853,3854,467" control="signalised" types="junction crossing">
+                <spatialintersection id="41" externalid="10197020150,10197020151,10197020152,10187841588,10187841589,10187841590,10187841591" noderefs="1018,2985,2986,2989,2995,3851,3852,3853,3854,467" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="3272" greenratio="0.2777777777777778"/>
                         <approach ref="3274" greenratio="0.2777777777777778"/>
@@ -91116,7 +91106,7 @@
                         <movement id="117" fromlsref="3272" tolsref="9934" length="0.011153166560931687"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="44" externalid="10228256902,10228258023,10228258022,6594385336,10228256905,10228256906,10228258019,10228258094" noderefs="122,1956,2077,3300,3301,3302,3313,3314,3315,3316,3317,3318,3319,3321,3322,3659,3662,3663,3675,3678,3923,3924,3927,3928,3934" control="signalised" types="junction crossing">
+                <spatialintersection id="42" externalid="10228256902,10228258023,10228258022,6594385336,10228256905,10228256906,10228258019,10228258094" noderefs="122,1956,2077,3300,3301,3302,3313,3314,3315,3316,3317,3318,3319,3321,3322,3659,3662,3663,3675,3678,3923,3924,3927,3928,3934" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10227" greenratio="0.4444444444444444"/>
                         <approach ref="6999" greenratio="0.4444444444444444"/>
@@ -91168,7 +91158,7 @@
                         <movement id="147" fromlsref="9850" tolsref="10226" length="0.017618384377051953"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="45" externalid="10245942939,10245942940,10245942941,10245942942,10188095044" noderefs="3903,751,866" control="signalised" types="junction crossing">
+                <spatialintersection id="43" externalid="10245942939,10245942940,10245942941,10245942942,10188095044" noderefs="3903,751,866" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10256" greenratio="0.2777777777777778"/>
                         <approach ref="1053" greenratio="0.2777777777777778"/>
@@ -91203,7 +91193,7 @@
                         <movement id="171" fromlsref="1053" tolsref="10257" length="0.011684553276913987"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="46" externalid="10245942937,10245942938" noderefs="1949,2089,2345,3670,3672,3715,3716,3717,3738,562,563,565" control="signalised" types="junction">
+                <spatialintersection id="44" externalid="10245942937,10245942938" noderefs="1949,2089,2345,3670,3672,3715,3716,3717,3738,562,563,565" control="signalised" types="junction">
                     <approaches>
                         <approach ref="3483" greenratio="0.9444444444444444"/>
                         <approach ref="9304" greenratio="0.9444444444444444"/>
@@ -91222,7 +91212,7 @@
                         <movement id="181" fromlsref="3483" tolsref="9388" length="0.018392019810534087"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="47" externalid="9006017849,9006017853,9006017854,1425901342,1570660660,9006017845,403820490,9006017848,9006017850,9006017851,9006017855" noderefs="2333,2458,2460,2461,2462,2950,2951,2952,2953,2954,2955,2956,2957,2958,2959,2961,2962,2964,3551,360,3756,3757,3758,3759,3760,548,87" control="signalised" types="junction crossing">
+                <spatialintersection id="45" externalid="9006017849,9006017853,9006017854,1425901342,1570660660,9006017845,403820490,9006017848,9006017850,9006017851,9006017855" noderefs="2333,2458,2460,2461,2462,2950,2951,2952,2953,2954,2955,2956,2957,2958,2959,2961,2962,2964,3551,360,3756,3757,3758,3759,3760,548,87" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="3458" greenratio="0.2777777777777778"/>
                         <approach ref="8735" greenratio="0.2777777777777778"/>
@@ -91264,7 +91254,7 @@
                         <movement id="197" fromlsref="924" tolsref="9553" length="0.017535941384687"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="48" externalid="10187841613,10187841617,10197020153,5692890291,10197020156,10197152388,10197152390,10197152393,10197152394" noderefs="1067,1676,1677,3005,3190,3207,3208,3209,3210,3211,3212,3213,3214,3217,3346,3543,3638,3639,3908,3909,3910,3911,3912,909" control="signalised" types="junction crossing">
+                <spatialintersection id="46" externalid="10187841613,10187841617,10197020153,5692890291,10197020156,10197152388,10197152390,10197152393,10197152394" noderefs="1067,1676,1677,3005,3190,3207,3208,3209,3210,3211,3212,3213,3214,3217,3346,3543,3638,3639,3908,3909,3910,3911,3912,909" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10134" greenratio="0.4444444444444444"/>
                         <approach ref="2146" greenratio="0.4444444444444444"/>
@@ -91331,7 +91321,7 @@
                         <movement id="234" fromlsref="4820" tolsref="10164" length="0.008317924886510638"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="49" externalid="666758991,10188047675,10188047678,10188047679,13877961,10188047692,10188047693,10188047694,10188047696" noderefs="1805,1814,1815,19,3049,3050,3051,3052,3053,3054,3055,3056,3058,3061,3062,3063,3513,3654,3869,3870,3871,3872,80" control="signalised" types="junction crossing">
+                <spatialintersection id="47" externalid="666758991,10188047675,10188047678,10188047679,13877961,10188047692,10188047693,10188047694,10188047696" noderefs="1805,1814,1815,19,3049,3050,3051,3052,3053,3054,3055,3056,3058,3061,3062,3063,3513,3654,3869,3870,3871,3872,80" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10003" greenratio="0.2777777777777778"/>
                         <approach ref="1801" greenratio="0.2777777777777778"/>
@@ -91412,7 +91402,7 @@
                         <movement id="286" fromlsref="10003" tolsref="10004" length="0.028255785544653925"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="50" externalid="13757701,15401537,8608847048,8608847049,8608847061,8608847057" noderefs="1952,1953,2424,2425,2426,2427,2428,2429,2430,2431,2432,2433,2435,34,3748,3749,3750,831" control="signalised" types="junction crossing">
+                <spatialintersection id="48" externalid="13757701,15401537,8608847048,8608847049,8608847061,8608847057" noderefs="1952,1953,2424,2425,2426,2427,2428,2429,2430,2431,2432,2433,2435,34,3748,3749,3750,831" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="2821" greenratio="0.2777777777777778"/>
                         <approach ref="2825" greenratio="0.2777777777777778"/>
@@ -91467,7 +91457,7 @@
                         <movement id="318" fromlsref="7588" tolsref="9527" length="0.022784033928537503"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="51" externalid="9006017865,9006017868,403820498,9006017856,935792194,9006017867,9006017858,9006017859,9006017862,10187696156" noderefs="2965,2966,2967,2968,2969,2970,2978,2979,2980,2981,2982,2983,3345,3515,3550,3761,3762,3763,3764,3765,3766,3767,3848,549,88" control="signalised" types="junction crossing">
+                <spatialintersection id="49" externalid="9006017865,9006017868,403820498,9006017856,935792194,9006017867,9006017858,9006017859,9006017862,10187696156" noderefs="2965,2966,2967,2968,2969,2970,2978,2979,2980,2981,2982,2983,3345,3515,3550,3761,3762,3763,3764,3765,3766,3767,3848,549,88" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10150" greenratio="0.4444444444444444"/>
                         <approach ref="9553" greenratio="0.4444444444444444"/>
@@ -91536,7 +91526,7 @@
                         <movement id="348" fromlsref="9553" tolsref="10155" length="0.01984514853256401"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="52" externalid="1070474087,1070474100,8203851685,9920391746,2268947005" noderefs="2214,2391,2392,250,2726,3544,3794,3973,490" control="signalised" types="junction crossing">
+                <spatialintersection id="50" externalid="1070474087,1070474100,8203851685,9920391746,2268947005" noderefs="2214,2391,2392,250,2726,3544,3794,3973,490" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="3223" greenratio="0.4444444444444444"/>
                         <approach ref="3229" greenratio="0.4444444444444444"/>
@@ -91579,7 +91569,7 @@
                         <movement id="375" fromlsref="3223" tolsref="9696" length="0.023335267711610246"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="53" externalid="1070474095,1070474110,9920391761,9920391791" noderefs="28,32,3545,3795,3797" control="signalised" types="junction crossing">
+                <spatialintersection id="51" externalid="1070474095,1070474110,9920391761,9920391791" noderefs="28,32,3545,3795,3797" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="4268" greenratio="0.4444444444444444"/>
                         <approach ref="4270" greenratio="0.4444444444444444"/>
@@ -91632,7 +91622,7 @@
                         <movement id="411" fromlsref="4268" tolsref="9708" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="54" externalid="15407245,1986167712,1986167726,1986167706" noderefs="1555,3564,3565,461,876" control="signalised" types="junction crossing">
+                <spatialintersection id="52" externalid="15407245,1986167712,1986167726,1986167706" noderefs="1555,3564,3565,461,876" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="1065" greenratio="0.2777777777777778"/>
                         <approach ref="507" greenratio="0.2777777777777778"/>
@@ -91667,7 +91657,7 @@
                         <movement id="429" fromlsref="6262" tolsref="8787" length="0.012964580896446549"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="55" externalid="15401227,2843788700,2843788702,2843788698" noderefs="168,3577,3578,3579" control="signalised" types="junction crossing">
+                <spatialintersection id="53" externalid="15401227,2843788700,2843788702,2843788698" noderefs="168,3577,3578,3579" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="1642" greenratio="0.2777777777777778"/>
                         <approach ref="173" greenratio="0.2777777777777778"/>
@@ -91699,7 +91689,7 @@
                         <movement id="443" fromlsref="173" tolsref="8833" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="56" externalid="20827844,3593631035,9885532914,9888821420,9888821423" noderefs="2336,2692,2694,2695,2697,2698,2699,2700,2702,2704,2705,2707,3588,3780,3782,3784,3785,3786,3787,91" control="signalised" types="junction crossing">
+                <spatialintersection id="54" externalid="20827844,3593631035,9885532914,9888821420,9888821423" noderefs="2336,2692,2694,2695,2697,2698,2699,2700,2702,2704,2705,2707,3588,3780,3782,3784,3785,3786,3787,91" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="6075" greenratio="0.4444444444444444"/>
                         <approach ref="8000" greenratio="0.4444444444444444"/>
@@ -91748,7 +91738,7 @@
                         <movement id="463" fromlsref="6075" tolsref="9668" length="0.020474825434933536"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="57" externalid="10188047773,10188047774,10188047775,10188047776,3929903765,6038996868,6038996872,10188047779" noderefs="1745,1746,1748,1749,3077,3078,3081,3086,3087,3605,3644,3875,86" control="signalised" types="junction crossing">
+                <spatialintersection id="55" externalid="10188047773,10188047774,10188047775,10188047776,3929903765,6038996868,6038996872,10188047779" noderefs="1745,1746,1748,1749,3077,3078,3081,3086,3087,3605,3644,3875,86" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10034" greenratio="0.2777777777777778"/>
                         <approach ref="6509" greenratio="0.2777777777777778"/>
@@ -91811,7 +91801,7 @@
                         <movement id="507" fromlsref="10034" tolsref="8942" length="0.029034578570271256"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="58" externalid="8965827,10228258044,10228258045,4513015609,10228258048" noderefs="1033,1942,1975,1976,2135,2136,2890,3283,3284,3287,3288,3323,3324,3325,3326,3612,3657,3658,3834,3835,3836,3931,3932" control="signalised" types="junction crossing">
+                <spatialintersection id="56" externalid="8965827,10228258044,10228258045,4513015609,10228258048" noderefs="1033,1942,1975,1976,2135,2136,2890,3283,3284,3287,3288,3323,3324,3325,3326,3612,3657,3658,3834,3835,3836,3931,3932" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="2315" greenratio="0.9444444444444444"/>
                         <approach ref="7023" greenratio="0.9444444444444444"/>
@@ -91842,7 +91832,7 @@
                         <movement id="523" fromlsref="7023" tolsref="10191" length="0.007176468805284576"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="59" externalid="10197152414,5641003455,6936407757" noderefs="264,3556,3637,3664,3700" control="signalised" types="junction crossing">
+                <spatialintersection id="57" externalid="10197152414,5641003455,6936407757" noderefs="264,3556,3637,3664,3700" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="272" greenratio="0.9444444444444444"/>
                     </approaches>
@@ -91856,7 +91846,7 @@
                         <movement id="529" fromlsref="272" tolsref="9322" length="0.01854350856159189"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="60" externalid="5147327948,5147327949,6076031965" noderefs="1759,677" control="signalised" types="junction crossing">
+                <spatialintersection id="58" externalid="5147327948,5147327949,6076031965" noderefs="1759,677" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10290" greenratio="0.4444444444444444"/>
                         <approach ref="6498" greenratio="0.4444444444444444"/>
@@ -91871,7 +91861,7 @@
                         <movement id="535" fromlsref="6498" tolsref="10291" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="61" externalid="10185379885,10185379886,10185379887,6337588985,9810727898,9810727901" noderefs="1639,1802,1906,20,2678,2877,2880,2881,3006,3066,3774,3775" control="signalised" types="junction crossing">
+                <spatialintersection id="59" externalid="10185379885,10185379886,10185379887,6337588985,9810727898,9810727901" noderefs="1639,1802,1906,20,2678,2877,2880,2881,3006,3066,3774,3775" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="6250" greenratio="0.4444444444444444"/>
                         <approach ref="731" greenratio="0.4444444444444444"/>
@@ -91917,7 +91907,7 @@
                         <movement id="565" fromlsref="9621" tolsref="9618" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="62" externalid="10197152349,10197152350,10197152403,6936407779,6936407780,6936407781" noderefs="1203,2121,3192,3193,3194,3195,3197,3712,3713,488" control="signalised" types="junction crossing">
+                <spatialintersection id="60" externalid="10197152349,10197152350,10197152403,6936407779,6936407780,6936407781" noderefs="1203,2121,3192,3193,3194,3195,3197,3712,3713,488" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="6617" greenratio="0.4444444444444444"/>
                         <approach ref="9362" greenratio="0.4444444444444444"/>
@@ -91954,7 +91944,7 @@
                         <movement id="586" fromlsref="6617" tolsref="9372" length="0.022513476636055123"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="63" externalid="15397477,8205512267,2041295317,2041295319,8205512261,8205512264,2041295321" noderefs="169,2393,2394,2395,2398,2399,2400,2401,2402,2403,2404,2405,2406,3569,3570,3742,3743,3744" control="signalised" types="junction crossing">
+                <spatialintersection id="61" externalid="15397477,8205512267,2041295317,2041295319,8205512261,8205512264,2041295321" noderefs="169,2393,2394,2395,2398,2399,2400,2401,2402,2403,2404,2405,2406,3569,3570,3742,3743,3744" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="1655" greenratio="0.4444444444444444"/>
                         <approach ref="1893" greenratio="0.4444444444444444"/>
@@ -92019,7 +92009,7 @@
                         <movement id="626" fromlsref="1655" tolsref="9492" length="0.013753077322590982"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="64" externalid="10245943060,10245943061,10245943062,9469982620,10245943025,10245943026,10245943027" noderefs="108,2787,3399,3400,3401,3402,3403,3404,3405,3406,3407,3409,3415,3416,3418,3419,3420,3770,3963,3964,3965" control="signalised" types="junction crossing">
+                <spatialintersection id="62" externalid="10245943060,10245943061,10245943062,9469982620,10245943025,10245943026,10245943027" noderefs="108,2787,3399,3400,3401,3402,3403,3404,3405,3406,3407,3409,3415,3416,3418,3419,3420,3770,3963,3964,3965" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10369" greenratio="0.4444444444444444"/>
                         <approach ref="10379" greenratio="0.4444444444444444"/>
@@ -92072,7 +92062,7 @@
                         <movement id="659" fromlsref="10379" tolsref="10368" length="0.019066599112865054"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="65" externalid="15405036,9885532912" noderefs="178,3778" control="signalised" types="junction crossing">
+                <spatialintersection id="63" externalid="15405036,9885532912" noderefs="178,3778" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="4473" greenratio="0.4444444444444444"/>
                         <approach ref="7986" greenratio="0.4444444444444444"/>
@@ -92097,7 +92087,7 @@
                         <movement id="674" fromlsref="7986" tolsref="9637" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="66" externalid="26526387,9885532913" noderefs="1684,3779" control="signalised" types="junction crossing">
+                <spatialintersection id="64" externalid="26526387,9885532913" noderefs="1684,3779" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="3307" greenratio="0.4444444444444444"/>
                         <approach ref="7225" greenratio="0.4444444444444444"/>
@@ -92114,7 +92104,7 @@
                         <movement id="682" fromlsref="3307" tolsref="9636" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="67" externalid="10187679266,10245932148,10187679265,10245932144,10245932146,10245932147" noderefs="262,3348,3349,3350,3351,3352,3353,3354,3355,3502,3841,3939,3941,3942,3943,3944" control="signalised" types="junction crossing">
+                <spatialintersection id="65" externalid="10187679266,10245932148,10187679265,10245932144,10245932146,10245932147" noderefs="262,3348,3349,3350,3351,3352,3353,3354,3355,3502,3841,3939,3941,3942,3943,3944" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="6156" greenratio="0.4444444444444444"/>
                         <approach ref="6324" greenratio="0.4444444444444444"/>
@@ -92149,7 +92139,7 @@
                         <movement id="698" fromlsref="6156" tolsref="10290" length="0.01699529727745217"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="68" externalid="10187696067,10187696068,10187696069,10187696070,10187696063,10187696064,10187696065,10187696066" noderefs="2931,2932,2933,2934,2935,2936,2937,2938,2939,2944,2945,2946,3497,3517,3843,3844,3845,3846,3847" control="signalised" types="junction crossing">
+                <spatialintersection id="66" externalid="10187696067,10187696068,10187696069,10187696070,10187696063,10187696064,10187696065,10187696066" noderefs="2931,2932,2933,2934,2935,2936,2937,2938,2939,2944,2945,2946,3497,3517,3843,3844,3845,3846,3847" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="5147" greenratio="0.4444444444444444"/>
                         <approach ref="620" greenratio="0.4444444444444444"/>
@@ -92214,7 +92204,7 @@
                         <movement id="742" fromlsref="5147" tolsref="9904" length="0.020845639154421055"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="69" externalid="10188047617,10188047625,10188047626,10188047627,10188047621,10188047624,10188047632,10188047633" noderefs="3012,3013,3014,3015,3016,3017,3018,3019,3020,3021,3022,3025,3026,3027,3028,3029,3030,3859,3860,3861,3862,547" control="signalised" types="junction crossing">
+                <spatialintersection id="67" externalid="10188047617,10188047625,10188047626,10188047627,10188047621,10188047624,10188047632,10188047633" noderefs="3012,3013,3014,3015,3016,3017,3018,3019,3020,3021,3022,3025,3026,3027,3028,3029,3030,3859,3860,3861,3862,547" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="7169" greenratio="0.4444444444444444"/>
                         <approach ref="9904" greenratio="0.4444444444444444"/>
@@ -92279,7 +92269,7 @@
                         <movement id="786" fromlsref="9965" tolsref="9952" length="0.022340232644201815"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="70" externalid="10197020144,10197020146,10197020147,10197020148,10188047649,10188047652,10188047659,10188047663,10197020145,10197020149" noderefs="187,3033,3034,3035,3036,3037,3038,3039,3040,3041,3042,3043,3044,3045,3046,3047,3048,3863,3864,3865,3866,3867,3868,550" control="signalised" types="junction crossing">
+                <spatialintersection id="68" externalid="10197020144,10197020146,10197020147,10197020148,10188047649,10188047652,10188047659,10188047663,10197020145,10197020149" noderefs="187,3033,3034,3035,3036,3037,3038,3039,3040,3041,3042,3043,3044,3045,3046,3047,3048,3863,3864,3865,3866,3867,3868,550" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="9570" greenratio="0.4444444444444444"/>
                         <approach ref="9952" greenratio="0.4444444444444444"/>
@@ -92352,7 +92342,7 @@
                         <movement id="830" fromlsref="9989" tolsref="9974" length="0.01815643103762495"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="71" externalid="10188047830,10188047867,10188047835,10188047836" noderefs="3092,3094,3243,3877,3878,561" control="signalised" types="junction crossing">
+                <spatialintersection id="69" externalid="10188047830,10188047867,10188047835,10188047836" noderefs="3092,3094,3243,3877,3878,561" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10029" greenratio="0.4444444444444444"/>
                         <approach ref="1625" greenratio="0.4444444444444444"/>
@@ -92384,7 +92374,7 @@
                         <movement id="848" fromlsref="1625" tolsref="10028" length="0.009354826855011352"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="72" externalid="5147304740,5147304741,10188047880,10188047883" noderefs="3098,3101,3102,3103,3879,3880,85" control="signalised" types="junction crossing">
+                <spatialintersection id="70" externalid="5147304740,5147304741,10188047880,10188047883" noderefs="3098,3101,3102,3103,3879,3880,85" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10035" greenratio="0.4444444444444444"/>
                         <approach ref="10062" greenratio="0.4444444444444444"/>
@@ -92409,7 +92399,7 @@
                         <movement id="860" fromlsref="10062" tolsref="10038" length="0.0"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="73" externalid="15406815,10188047896,10188047901,10188047925,10188082730" noderefs="3074,3109,3110,3111,3112,3113,3114,3115,3142,3143,3145,3146,3881,3882,3884,3890,79" control="signalised" types="junction crossing">
+                <spatialintersection id="71" externalid="15406815,10188047896,10188047901,10188047925,10188082730" noderefs="3074,3109,3110,3111,3112,3113,3114,3115,3142,3143,3145,3146,3881,3882,3884,3890,79" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10053" greenratio="0.4444444444444444"/>
                         <approach ref="10218" greenratio="0.4444444444444444"/>
@@ -92470,7 +92460,7 @@
                         <movement id="900" fromlsref="10218" tolsref="10052" length="0.022605440399809506"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="74" externalid="15407247,10188047947,10188047948,10188047949,10188047950" noderefs="3124,3125,3126,3127,3128,3129,3130,3131,3132,3133,3134,3135,3136,3137,3138,3139,3885,3886,3887,3888,642" control="signalised" types="junction crossing">
+                <spatialintersection id="72" externalid="15407247,10188047947,10188047948,10188047949,10188047950" noderefs="3124,3125,3126,3127,3128,3129,3130,3131,3132,3133,3134,3135,3136,3137,3138,3139,3885,3886,3887,3888,642" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10059" greenratio="0.4444444444444444"/>
                         <approach ref="6460" greenratio="0.4444444444444444"/>
@@ -92523,7 +92513,7 @@
                         <movement id="933" fromlsref="6460" tolsref="10062" length="0.017011607702452386"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="75" externalid="10188095039,10188095040,10188095041,10188082788,10188082796,10188082797,10188082798" noderefs="2824,3159,3160,3161,3162,3163,3164,3165,3166,3167,3168,3175,3176,3182,3183,3185,3723,3893,3894,3895,3896,3897,3898,92" control="signalised" types="junction crossing">
+                <spatialintersection id="73" externalid="10188095039,10188095040,10188095041,10188082788,10188082796,10188082797,10188082798" noderefs="2824,3159,3160,3161,3162,3163,3164,3165,3166,3167,3168,3175,3176,3182,3183,3185,3723,3893,3894,3895,3896,3897,3898,92" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10101" greenratio="0.4444444444444444"/>
                         <approach ref="2876" greenratio="0.4444444444444444"/>
@@ -92576,7 +92566,7 @@
                         <movement id="966" fromlsref="10101" tolsref="10106" length="0.016958999061307926"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="76" externalid="10197152344,10197152401,10197152402,10197152378,10197152379,10197152380,10197152381" noderefs="3198,3199,3200,3201,3202,3203,3204,3205,3206,3215,3216,3218,3347,3904,3905,3906,3907,84" control="signalised" types="junction crossing">
+                <spatialintersection id="74" externalid="10197152344,10197152401,10197152402,10197152378,10197152379,10197152380,10197152381" noderefs="3198,3199,3200,3201,3202,3203,3204,3205,3206,3215,3216,3218,3347,3904,3905,3906,3907,84" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10135" greenratio="0.4444444444444444"/>
                         <approach ref="6464" greenratio="0.4444444444444444"/>
@@ -92620,7 +92610,7 @@
                         <movement id="990" fromlsref="6464" tolsref="10146" length="0.024677531540399915"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="77" externalid="10228256901,10228256914,10228256915,10228256916,10228256893,10228256898,10228256909,10228256912" noderefs="123,3294,3295,3297,3298,3299,3303,3304,3305,3306,3307,3308,3309,3310,3311,3312,3921,3922,3925,3926" control="signalised" types="junction crossing">
+                <spatialintersection id="75" externalid="10228256901,10228256914,10228256915,10228256916,10228256893,10228256898,10228256909,10228256912" noderefs="123,3294,3295,3297,3298,3299,3303,3304,3305,3306,3307,3308,3309,3310,3311,3312,3921,3922,3925,3926" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10207" greenratio="0.4444444444444444"/>
                         <approach ref="10219" greenratio="0.4444444444444444"/>
@@ -92685,7 +92675,7 @@
                         <movement id="999" fromlsref="8102" tolsref="10206" length="0.017532928332103338"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="78" externalid="10241424307,10241424308,10241448609,10241424303,10241424304,10241424305,10241424306" noderefs="152,3337,3338,3339,3340,3341,3342,3343,3344,3935,3936,3937,3938" control="signalised" types="junction crossing">
+                <spatialintersection id="76" externalid="10241424307,10241424308,10241448609,10241424303,10241424304,10241424305,10241424306" noderefs="152,3337,3338,3339,3340,3341,3342,3343,3344,3935,3936,3937,3938" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10257" greenratio="0.4444444444444444"/>
                         <approach ref="10334" greenratio="0.4444444444444444"/>
@@ -92714,7 +92704,7 @@
                         <movement id="1043" fromlsref="1253" tolsref="10335" length="0.017922267035089465"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="79" externalid="8965682,10245932171,10245932185,10245932186,10245932190" noderefs="3356,3357,3358,3359,3360,3361,3362,3363,3364,3945,3946,3947,3948,495" control="signalised" types="junction crossing">
+                <spatialintersection id="77" externalid="8965682,10245932171,10245932185,10245932186,10245932190" noderefs="3356,3357,3358,3359,3360,3361,3362,3363,3364,3945,3946,3947,3948,495" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10305" greenratio="0.4444444444444444"/>
                         <approach ref="10309" greenratio="0.4444444444444444"/>
@@ -92759,7 +92749,7 @@
                         <movement id="1067" fromlsref="10309" tolsref="10387" length="0.0241688942128601"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="80" externalid="26526396,10245942972,10245942973,10245942974" noderefs="158,3383,3384,3385,3386,3387,3388,3389,3390,3433,3434,3954,3955,3956" control="signalised" types="junction crossing">
+                <spatialintersection id="78" externalid="26526396,10245942972,10245942973,10245942974" noderefs="158,3383,3384,3385,3386,3387,3388,3389,3390,3433,3434,3954,3955,3956" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10339" greenratio="0.9444444444444444"/>
                         <approach ref="6121" greenratio="0.9444444444444444"/>
@@ -92788,7 +92778,7 @@
                         <movement id="1079" fromlsref="6121" tolsref="10338" length="0.01716328290986319"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="81" externalid="642998199,10245942987,10245942994,10245942995,10245942996" noderefs="1026,3391,3392,3393,3394,3395,3396,3397,3398,3436,3958,3959,3960,3961" control="signalised" types="junction crossing">
+                <spatialintersection id="79" externalid="642998199,10245942987,10245942994,10245942995,10245942996" noderefs="1026,3391,3392,3393,3394,3395,3396,3397,3398,3436,3958,3959,3960,3961" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10338" greenratio="0.4444444444444444"/>
                         <approach ref="10351" greenratio="0.4444444444444444"/>
@@ -92829,7 +92819,7 @@
                         <movement id="1099" fromlsref="10361" tolsref="10350" length="0.023063454274235458"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="82" externalid="26358753,10245943036,10245943037,10245943038,10245943039" noderefs="18,3421,3422,3423,3424,3425,3426,3427,3428,3429,3430,3431,3432,3439,3440,3966,3967,3968,3969" control="signalised" types="junction crossing">
+                <spatialintersection id="80" externalid="26358753,10245943036,10245943037,10245943038,10245943039" noderefs="18,3421,3422,3423,3424,3425,3426,3427,3428,3429,3430,3431,3432,3439,3440,3966,3967,3968,3969" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="10368" greenratio="0.4444444444444444"/>
                         <approach ref="10387" greenratio="0.4444444444444444"/>
@@ -92886,7 +92876,7 @@
                         <movement id="1135" fromlsref="10393" tolsref="10386" length="0.01710471174770518"/>
                     </movements>
                 </spatialintersection>
-                <spatialintersection id="83" externalid="1810714485,6766449270" noderefs="1077,2090" control="signalised" types="junction crossing">
+                <spatialintersection id="81" externalid="1810714485,6766449270" noderefs="1077,2090" control="signalised" types="junction crossing">
                     <approaches>
                         <approach ref="6567" greenratio="0.4444444444444444"/>
                         <approach ref="9226" greenratio="0.4444444444444444"/>
@@ -92899,6 +92889,15 @@
                         <movement id="1139" fromlsref="9226" tolsref="3036" length="0.005613482237341159"/>
                         <movement id="1140" fromlsref="9226" tolsref="6568" length="0.0"/>
                         <movement id="1141" fromlsref="9226" tolsref="7496" length="0.005613482237341159"/>
+                    </movements>
+                </spatialintersection>
+                <spatialintersection id="82" externalid="2045059225,5147320980" noderefs="1372,3974" control="signalised" types="crossing">
+                    <approaches>
+                        <approach ref="7994" greenratio="0.9"/>
+                    </approaches>
+                    <internalsegments refs="1879,1880"/>
+                    <movements>
+                        <movement id="1142" fromlsref="7994" tolsref="10406" length="0.019095360104557382"/>
                     </movements>
                 </spatialintersection>
             </intersections>

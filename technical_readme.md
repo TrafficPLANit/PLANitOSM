@@ -149,9 +149,9 @@ The rules live in `OsmTrafficSignalTags`:
   `traffic_signals=pedestrian_crossing` or `traffic_signals=crossing` (`CROSSING_TRAFFIC_SIGNAL_TYPES`). A `crossing` value
   listing several values, such as `traffic_signals;marked`, counts when one of them does.
 * **crossing signal on the crossing way** - many crossings carry their signals only on the crossing way, a footway,
-  cycleway or path tagged `crossing=traffic_signals` or `crossing:signals=yes`, not on the node where it crosses the road.
-  That node is then a crossing signal as well, also when footways are not parsed. The other nodes of the crossing way,
-  such as where it meets the kerb, are not on a road and are no signal. The crossing way is trusted over the node: where
+  cycleway, path, bridleway or pedestrian way tagged `crossing=traffic_signals` or `crossing:signals=yes`, not on the
+  node where it crosses the road. That node is then a crossing signal as well, also when footways are not parsed. The
+  other nodes of the crossing way, such as where it meets the kerb, are not on a road and are no signal. The crossing way is trusted over the node: where
   the node says the crossing has no signals (`crossing=zebra`, `uncontrolled`, `unmarked`, `informal` or `no`, or
   `crossing:signals=no`), it is still a crossing signal, but the case is counted as inconsistent and logged as a warning
   with the ids of the node and the way, so it can be checked in OSM.
@@ -159,7 +159,20 @@ The rules live in `OsmTrafficSignalTags`:
   `level_crossing` (`NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES`): ignored and counted.
 * A node tagged both `highway=traffic_signals` and `crossing=traffic_signals` is a vehicle signal and a crossing signal, each
   handled by its own rules. OSM uses this both for junctions mapped with signals at their stop lines and for pedestrian
-  signals, and no tag tells them apart, so both roles are kept.
+  signals, and no tag tells them apart, so both roles are kept. Between junctions, the crossing on its own node then
+  decides what its vehicle role does (second pass, below): where the junction it reaches shows no other signal, the
+  node is a crossing only; where the junction shows another signal, its vehicle role is that junction's stop line.
+  Tagged with `traffic_signals:direction=both` between junctions, it is a crossing signal only (4. below).
+* A traffic signal on a barrier, `barrier=*` other than `kerb` or `no`, such as a bollard or gate, holds traffic at the
+  barrier as a crossing does, so it has both kinds too and is handled as above. Example: the signal on the bollard where
+  Wilson Avenue meets Monash Road, at the University of Melbourne, is a crossing, since the service lane 20 m on shows no
+  other signal; Gate 4, where Monash Road meets Swanston Street, stays a stop line of that junction, which shows others.
+* **overridden in the settings** - `overrideTrafficSignalKind(osmNodeId, OsmTrafficSignalKind.VEHICLE_SIGNAL,
+  CROSSING_SIGNAL or NOT_A_SIGNAL)` on the intersection settings replaces all of the above for one node: it is that kind
+  of signal only, or no signal at all, whatever its tags. It also works for a node without signal tags, to add a signal
+  OSM lacks, such as a missing stop line. For example, a plain vehicle signal that only stops traffic for trams crossing
+  the road, overridden as a crossing signal, gets the crossing's green ratio. The direction can be overridden too, see
+  4. below. A node overridden that no layer has is recorded as not found.
 
 #### Junction nodes
 
@@ -183,9 +196,10 @@ file that declares none has no edge.
 #### The cases, in the order tried
 
 Each signal is handled by the first case that applies, cheapest check first. There are three passes, because later
-cases depend on what earlier ones create; the integrator lists the same cases on
-`discardPostponeOrConstructIntersection()`, `assignVehicleSignalsToJunctions()` and
-`integrateCrossingsAndUnassignedVehicleSignals()`.
+cases depend on what earlier ones create; the same cases are listed on
+`OsmTrafficSignalFirstPass.discardPostponeOrConstructIntersection()`,
+`OsmTrafficSignalSecondPass.assignVehicleSignalsToJunctions()` and
+`OsmTrafficSignalThirdPass.integrateCrossingsAndUnassignedVehicleSignals()`.
 
 First pass, per signal:
 
@@ -211,13 +225,19 @@ First pass, per signal:
    followed along its motorised segments, through nodes where it simply continues (crosswalks included), up to the
    maximum distance (`setMaximumDistanceVehicleSignalToJunctionInMeters`, default 50 m), in each direction the signal
    applies to:
-   * `traffic_signals:direction=forward` or `backward`, relative to the OSM way, only that direction; `both`, both; any
-     other value, such as a compass bearing, is handled as untagged and noted;
+   * `traffic_signals:direction=forward` or `backward`, relative to the OSM way, only that direction; any other value,
+     such as a compass bearing, is handled as untagged and noted;
+   * `traffic_signals:direction=both`: stopping both directions at one point between junctions is what a crossing does,
+     so the signal is handled as a crossing signal (7.), and noted to check in OSM: most likely a crossing tagged
+     without its crossing tags. A signal with crossing tags as well is a crossing signal anyway, and is not noted;
    * on a one-way road only the direction of travel;
    * no direction tag, or ways through the signal that disagree on their orientation (counted as a direction conflict):
      one direction only, the one whose first target is nearest (second pass).
-   Per direction the signal goes to the first eligible junction: one where only service lanes or living streets without
-   signals of their own join is passed over when a junction that counts follows within reach.
+   A direction overridden in the intersection settings for the signal's OSM node id
+   (`overrideTrafficSignalDirection(osmNodeId, OsmTrafficSignalDirection.FORWARD or BACKWARD)`) replaces the tagged one,
+   or gives an untagged signal one, for a signal that faces the wrong way. Per direction the signal goes to the first
+   eligible junction: one where only service lanes or living streets without signals of their own join is passed over
+   when a junction that counts follows within reach.
 5. Signal on a track, cycleway or footway (no road through its node): on a track or cycleway its own way is followed,
    on a cycleway only along segments that allow bicycles, to the nearest node a road meets. From a tram or light rail
    track, within the railway settings' maximum (`setMaximumDistanceTrackSignalToRoadCrossingInMeters`, default 50 m),
@@ -247,19 +267,105 @@ First pass, per signal:
    vehicle signal on it as well, it is both a `junction` and a `crossing`.
 7. Any other crossing signal is collected for the third pass.
 
+Then two checks salvage signals tagged wrongly, each noted to check in OSM:
+
+8. A crossing node without signal tags, the first one a vehicle signal of 4. reaches inside its link, in the direction
+   the signal applies to and within the crossing distance (below), is taken as a crossing signal and collected for the
+   third pass. The vehicle signal is the crossing's stop line, the crossing's own signal tags missing. A crossing node is
+   a node tagged `highway=crossing`, or a node where a footway, cycleway, path, bridleway or pedestrian way meets the
+   road, passing through or ending there, without any crossing tags. Pre-processing reads those ways whether they are
+   parsed or not, keeping only their node ids. An outline tagged `area=yes`, such as a plaza's, is no such way: where
+   its boundary cuts the road nobody crosses. A node whose kind is overridden in the settings is left as overridden.
+   Example: on Collins Street at Collins Landing, Melbourne, an untagged footway to the tram stop crosses both
+   carriageways 7 m past each signal; each crossing point is now a crossing with its signal as stop line, and Karlsruhe
+   Lane, 41 m on, is an ordinary junction.
+
+   ```
+                                     7
+                                     |
+        2 ------> 1 -> 31 ---------> 6 ------> 3      1: vehicle signal, direction forward
+                   ~9 m    ~18 m     |                31: highway=crossing, no signal tags
+                                     8                    taken as a crossing signal
+   ```
+
+9. A crossing signal collected for the third pass is dropped when, in either direction along the road, the first
+   junction reached within the crossing distance has a stop or give way sign (`highway=stop` or `give_way`) on the
+   link arriving there, between the crossing and the junction, facing the traffic that passes the crossing towards the
+   junction: its `direction` tag matches that traffic, or it has none. Traffic at a stop sign is not signal
+   controlled, so the crossing is taken as not signalised. It gets no intersection and shows no signal at the junction.
+
+   ```
+                 7
+                 |
+                 32               32: crossing=traffic_signals, footways not parsed
+                 |  ~10 m
+                 33               33: highway=stop, no direction
+                 |
+        2 ------ 6 ------ 3       6: junction, the side street stops at the main road
+                 |
+                 8
+   ```
+
+   Here 32 is dropped. With direction backward, stop sign 33 faces traffic leaving 6 northwards and 32 is kept.
+
 Second pass, per collected vehicle signal, once the signal evidence of every junction is known (a vehicle signal on its node, or
-a vehicle signal on another road reaching it first). First, a direction in which the signal reaches a signalised crossing
-with no junction within the crossing distance beyond it is dropped: the signal is that crossing's stop line, not the
-junction's. A junction where only service lanes or living streets of lower capacity than the road through join, with
-no signals of its own, does not count here. Before that, a signal without a usable direction keeps the direction whose
-first target is nearest: the junction it would be assigned to there, or an isolated crossing before it; within 10 m,
-the junction where the road of higher capacity crosses. A signal with no direction left is counted as such, takes no
+a vehicle signal on another road reaching it first). First, a direction in which the signal reaches an isolated
+signalised crossing is dropped: the signal is that crossing's stop line, not the junction's. A crossing on the signal's
+own node counts too: a node tagged both a vehicle signal and a crossing, or a vehicle signal where a signalised crossing
+way meets the road. The signal is then that crossing's own signal, held by the crossing's intersection, and counted as
+on an isolated crossing. As a salvage attempt, apart from the rules here, a vehicle signal tagged with its direction at
+most 5 m past an isolated crossing, with no isolated crossing ahead of it before its junction, counts the same: it is
+most likely a signal head on the crossing's far side, or its stop line mapped past it. Each salvaged signal is noted to
+check in OSM. A signal without a direction tag is never salvaged: right next to a crossing it is more likely the stop
+line before it, heading for a junction. Example: on Lonsdale Street by Melbourne Central, a signal 4 m past a footway
+crossing no longer makes a driveway 18 m on a signalised junction. A crossing is isolated unless a junction within the
+crossing distance beyond it shows a signal
+other than those along the crossing's own road:
+* a vehicle signal on its node, or a crossing signal on its node where the road branches;
+* a tram or light rail track meeting the road there, unless the track runs along the crossing's own road: on the same
+  OSM way, or on a way of the same name. Example: a side street's track, named after the side street, counts; at the
+  North Richmond tram stop in Melbourne, the eastbound track named Victoria Street touches the Victoria Street roadway
+  14 m past a crossing, and does not count;
+* on another of its entries, a vehicle signal reaching it first, or a signalised crossing within the crossing distance;
+* a vehicle signal on, or reaching first, a junction node within the joining reach of consolidation
+  (`IntersectionConsolidatorSettings.setMaximumJoiningReachMeters`, default 40 m), such as the other carriageway of a
+  divided road. One reaching it along the crossing's own road counts only when the node lies within the crossing
+  distance, or is reached without going along that road, such as straight across to the other carriageway;
+* when the junction node lies on a roundabout, a way tagged `junction=roundabout` or `circular`: a vehicle signal on, or
+  reaching first, any node of that roundabout, other than along the crossing's own road. A roundabout counts as one
+  junction, however large. Example: the Haymarket roundabout in Melbourne, parsed without tram tracks, whose nodes lie
+  42 to 61 m apart; a crossing on Flemington Road 20 m before its entry is part of it, its signal being the entry's stop
+  line. The other entries get no signal from this.
+
+The junctions passed on the way from the crossing do not count, nor do crossings near them, so the two halves of one
+crossing over a divided road do not vouch for each other. Nor does a crossing that lies between its own stop lines, two
+vehicle signals facing each other across it with no junction between, or its stop lines: they hold traffic for that
+crossing only, so another crossing is judged without them. Example: at the North Richmond tram stop one signalised
+crossing crosses the three roadways of Victoria Street; the middle roadway's part lies between two such signals, and its
+stop line reaching the merge of the roadways 23 m on does not make the north roadway's part of the crossing part of a
+junction there. So a side street beside a signalised crossing on the main road does not take the crossing's stop line:
+
+```
+                                     7
+                                     |
+        2 ------> 1 -> 31 ---------> 6 ------> 3      1: vehicle signal, direction forward
+                   ~9 m    ~18 m     |                31: crossing signal, footways not parsed
+                                     8                6: side street, showing no other signal
+```
+
+Here 1 is the stop line of crossing 31, and side street 6 gets nothing. Before that, a signal without a usable
+direction keeps the direction whose first target is nearest: the junction it would be assigned to there, or an
+isolated crossing before it; within 10 m, the junction where the road of higher capacity crosses. A signal with no direction left is counted as such, takes no
 part in the signal evidence and waits for the third pass. When every crossing it stops at is one the third pass
 ignores at the edge of the parsed area (third pass, 1.), it is ignored with them instead. Then:
 
 1. The junction ahead: in each direction, the segment arriving at the first junction reached becomes its approach. A
    junction where only service lanes or living streets of lower capacity join, with no signals of its own, is passed
-   over when another junction follows within the maximum distance. Any other junction takes the signal, even when a
+   over when another junction follows within the maximum distance. It is not passed over when such a lane crosses the
+   median, within the joining reach of consolidation, to the other carriageway of the same road (a way of the same
+   name) where the junction has a vehicle signal of its own: the two carriageways are one junction. Example: on Punt
+   Road, Melbourne, a southbound signal stops where a service lane crosses to the signalised Gate 6 junction on the
+   northbound carriageway, rather than going on to Richmond Terrace. Any other junction takes the signal, even when a
    road of higher capacity crosses further along:
 
    ```
@@ -335,7 +441,7 @@ Third pass:
    With the setting on, the link is broken at 31, which becomes a crossing with approaches 2->31 and 3->31.
 
 Links broken for an isolated crossing are broken through the layer modifier, so intersections registered before stay
-consistent, and a listener keeps the record of signals per approach on the pieces of a broken approach.
+consistent.
 
 Divided roads are not joined: each carriageway's crossing node is a junction of its own, with the approaches that reach
 it.
@@ -373,19 +479,23 @@ What consolidation does (PLANit's `IntersectionConsolidator`, next to the layer 
    links, is pulled in, and this repeats until nothing more is: a signal inside a junction belongs to it. A node on
    that connection in front of the junction, such as a fork with signalised branches, stays outside. A connection
    that crosses a tram or light rail track may reach 15 m further, about the width of a tram corridor.
-5. A crossing within 40 m of a junction along the road joins it; a crossing no road reaches, such as a footway
-   crossing a tram track, looks along any links instead. A crossing on a slip lane joins its junction when it
-   lies within 60 m of a member node in a straight line. Then nodes the intersection encloses join it, whatever their
-   links carry, such as the nodes of a tram crossover between member nodes: nodes within the intersection's radius
-   that connect two or more of its member nodes without leaving it, over links each within 40 m. A node only
-   footways, cycleways and the like use also joins when it lies on a connection of at most 50 m between two member
-   nodes through such nodes, such as a footway corner between two crossings, however far from the centre. The centre
-   and radius count only the member nodes roads and rails use, so footway nodes never widen them. This repeats until
-   no more nodes join. A link from an enclosed node to beyond the radius becomes an arm, and a node in front of the
-   junction stays out. So does a footway or cycleway node that would hang off the intersection, such as a pavement
-   leading away from a corner: one linked to fewer than two of its nodes, or cut off from its member nodes. A footway
-   or cycleway segment into a signalised crossing, or into the node of a signal where
-   no road or rail passes, becomes an internal segment with a signal.
+5. A crossing within 40 m of a junction along the road joins it; a crossing no road reaches, such as a footway crossing
+   a tram track, looks along any links instead. A crossing on a slip lane joins its junction when it lies within 60 m of
+   a member node in a straight line. Crossings still on their own then join each other when they lie side by side,
+   within 30 m along the road, with only nodes where the road simply continues, or nodes of other crossings, between
+   them, such as a cycle crossing beside a foot crossing. This repeats, so a row of crossings becomes one intersection.
+   In an intersection of crossings only, road traffic is held once, on the road entering it: a road segment between its
+   crossings never gets a signal, even with one of its own. Then nodes the intersection encloses join it, whatever their
+   links carry, such as the nodes of a tram crossover between member nodes: nodes within the intersection's radius that
+   connect two or more of its member nodes without leaving it, over links each within 40 m. A node only footways,
+   cycleways and the like use also joins when it lies on a connection of at most 50 m between two member nodes through
+   such nodes, such as a footway corner between two crossings, however far from the centre. The centre and radius count
+   only the member nodes roads and rails use, so footway nodes never widen them. This repeats until no more nodes join.
+   A link from an enclosed node to beyond the radius becomes an arm, and a node in front of the junction stays out. So
+   does a footway or cycleway node that would hang off the intersection, such as a pavement leading away from a corner:
+   one linked to fewer than two of its nodes, or cut off from its member nodes. A footway or cycleway segment into a
+   signalised crossing, or into the node of a signal where no road or rail passes, becomes an internal segment with a
+   signal.
 6. A road entering a signalised junction without being an approach, not on a slip lane, is traced back against the
    traffic, within 80 m, to the first signalised junction within the reach of step 4 plus 15 m. That junction is
    pulled in with the road between them, since the missing signal most likely sits there; the further 15 m apply
@@ -422,8 +532,9 @@ through `setConsolidateIntersections(true, consolidatorSettings)`. The defaults:
 coverage gain per member 0.05, coverage tie margin 0.05, every subdivision tried for clusters of up to 10 parsed
 intersections and a larger cluster subdivided step by step keeping 3 subdivisions per step, junctions pulled in
 within the radius plus 30 m over a connection of at most 80 m, internal link length
-warning 100 m, maximum distance reached only through an intersection 60 m, and
-maximum distance from a crossing on a slip lane to its junction 60 m.
+warning 100 m, maximum distance reached only through an intersection 60 m,
+maximum distance from a crossing on a slip lane to its junction 60 m, and maximum distance between crossings side by
+side 30 m.
 
 The user can change the grouping by OSM node id, each call adding one list of at least two nodes:
 `addOsmNodeIdsToJoinIntoOneIntersection` and `addOsmNodeIdsToKeepInSeparateIntersections` on the intersection settings.
@@ -446,10 +557,10 @@ or arriving side by side such as a road and the tram track beside it, within `se
 4) has the phases whose axes are closest merged until it has that many, since a complex junction gives several
 approaches green together. The phases share the usable green time of
 the cycle, `setCycleTimeSeconds` (default 90 s) less `setLostTimePerPhaseChangeSeconds` (default 5 s) for each phase.
-`setAlgorithmType` chooses how: `EQUAL_SPLIT` (the default) gives each phase the same share, `CAPACITY_WEIGHTED` a
-share in proportion to its capacity. For example, a crossing of two equal roads, consolidated, gets two phases and a
-green ratio of (90 - 10) / 90 / 2, about 0.44, for each approach. Road traffic at an isolated signalised crossing gets
-`setIsolatedCrossingGreenRatio` (default 0.9), and an approach without a signal of its own at a signalised junction a
+`setAlgorithmType` chooses how: `CAPACITY_WEIGHTED` (the default) gives each phase a share in proportion to its
+capacity, `EQUAL_SPLIT` each phase the same share. For example, a crossing of two equal roads, consolidated, gets two
+phases and, either way, a green ratio of (90 - 10) / 90 / 2, about 0.44, for each approach. Road traffic at an
+isolated signalised crossing gets `setIsolatedCrossingGreenRatio` (default 0.9), and an approach without a signal of its own at a signalised junction a
 saturation flow factor of `setApproachWithoutSignalSaturationFlowFactor` (default 0.5). It runs after consolidation and
 before collapse, since collapse can move the end of a link and so change the direction an approach arrives in. It also
 runs without consolidation, with one warning: a junction parsed as several intersections is then timed as several
@@ -482,19 +593,22 @@ What happens is recorded where it is decided, in two stages, and logged at the e
   node ids, logged per group (`OsmTrafficSignalOutcomeGroup`), each adding up: signals ignored before their kind
   matters, as a share of all signals recorded; one outcome per vehicle signal, as a share of the vehicle signals; one
   per crossing signal, as a share of the crossing signals, a node with both kinds counted in both; then the notes
-  recorded alongside an outcome (e.g. passing a junction joined only by service lanes or living streets, an
-  unrecognised direction), as counts only. For vehicle signals left as isolated crossings, a distribution of how far along the road the nearest
-  junction is, up to 200 m, follows.
+  recorded alongside an outcome (e.g. a crossing isolated past a junction showing no other signal, an unrecognised
+  direction, a vehicle signal for both directions between junctions taken as a crossing signal, a crossing node without
+  signal tags right after a vehicle signal taken as signalised, a node where a footway or cycleway meets the road without
+  crossing tags right after a vehicle signal taken as signalised, to check in OSM), as counts with a sample of their ids.
+  A crossing signal dropped before a stop or give way sign is one of the crossing signal outcomes. For vehicle signals
+  left as isolated crossings, a distribution of how far along the road the nearest junction is, up to 200 m, follows.
 * **PLANit intersections** (`OsmPlanitEntityDiagnostics`, `OsmPlanitEntityIssue`) - the intersections and approaches
   created, and their issues: an intersection lost when pruning removed all its approaches (read from the clean-up's
   result), and an intersection removed for having no approach a motorised road or rail mode can use. With
   consolidation on, also what it did, each entity once: intersections replaced, clusters subdivided step by step,
   nodes joined, approaches made internal, long internal links, links reached only through their intersection,
-  junctions pulled in within a radius, crossings joined (along the road or from a slip lane), approaches added
-  without a signal (on a slip lane, or not)
+  junctions pulled in within a radius, crossings joined (along the road, from a slip lane, or to a crossing side by
+  side), approaches added without a signal (on a slip lane, or not)
   and junctions with few lit arms. With green ratios on, each intersection whose green ratios could not be computed,
   with its usable green time. Also each OSM node id listed to join or keep apart, or excluded from collapse, that no
-  layer of the network has, once.
+  layer of the network has, and each one with a traffic signal override that no layer has, once.
 
 The rules above are covered scenario by scenario in `OsmTrafficSignalsTest`, `OsmTrafficSignalIntegratorTest`,
 `OsmIntersectionConsolidationTest` and `OsmTurnRestrictionModesTest`, each hand-made `.osm` file under

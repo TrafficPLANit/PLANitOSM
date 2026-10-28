@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two-way primary way 10 (2-6-3) with residential side street way 11 (7-32-33-6-8) crossing it at junction 6. On the
+     side street north of the junction, signalised crossing node 32 stands about 15 m from the junction, and stop sign
+     33 (direction forward, facing traffic heading south to the junction) about 5 m from it, between the two; no other
+     signal -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.2097"/>
+  <node id="7" lat="-33.8691" lon="151.2097"/>
+  <node id="8" lat="-33.8709" lon="151.2097"/>
+  <node id="32" lat="-33.86986" lon="151.2097">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <node id="33" lat="-33.86995" lon="151.2097">
+    <tag k="highway" v="stop"/>
+    <tag k="direction" v="forward"/>
+  </node>
+  <way id="10">
+    <nd ref="2"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="32"/><nd ref="33"/><nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+</osm>

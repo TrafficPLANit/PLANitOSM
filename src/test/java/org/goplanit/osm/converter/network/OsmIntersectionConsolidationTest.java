@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
@@ -301,6 +302,8 @@ public class OsmIntersectionConsolidationTest {
     var layer = readerOf("divided_roads_crossing", settings -> {
       settings.getIntersectionSettings().setConsolidateIntersections(true);
       settings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      settings.getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
     }).read().getTransportLayers().getFirst();
 
     var consolidated = layer.getIntersections().getFirst();
@@ -329,9 +332,11 @@ public class OsmIntersectionConsolidationTest {
       counter.warnings = 0;
       IdGenerator.reset();
 
-      var layer = readerOf("divided_roads_crossing",
-          settings -> settings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true))
-          .read().getTransportLayers().getFirst();
+      var layer = readerOf("divided_roads_crossing", settings -> {
+        settings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+        settings.getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+            .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
+      }).read().getTransportLayers().getFirst();
 
       assertEquals(4, layer.getIntersections().size());
       for (var intersection : layer.getIntersections()) {

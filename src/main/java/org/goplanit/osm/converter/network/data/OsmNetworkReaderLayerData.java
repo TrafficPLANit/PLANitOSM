@@ -73,7 +73,9 @@ public class OsmNetworkReaderLayerData {
       while(linksWithLocationInternal.hasNext()) {
         Link orginalLinkToBreak = linksWithLocationInternal.next(); 
         
-        Long osmOriginalWayId = PlanitOsmUtils.parseOsmId(orginalLinkToBreak);
+        /* a link the reader added itself, such as one connecting a dangling ferry stop, comes from no OSM way, so it
+         * was never broken into several links and stays as it is */
+        Long osmOriginalWayId = PlanitOsmUtils.parseOsmIdOrNull(orginalLinkToBreak);
         if(osmWaysWithMultiplePlanitLinks != null && osmWaysWithMultiplePlanitLinks.containsKey(osmOriginalWayId)) {
           
           /* link has been broken before, find out in which of its broken links the node to break at resides on */

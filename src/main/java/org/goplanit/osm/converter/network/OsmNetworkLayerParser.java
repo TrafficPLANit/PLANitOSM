@@ -8,6 +8,7 @@ import org.goplanit.network.layer.macroscopic.AccessGroupPropertiesFactory;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
+import org.goplanit.osm.converter.network.trafficsignal.OsmTrafficSignalIntegrator;
 import org.goplanit.network.layer.macroscopic.ModifiedLinkSegmentTypes;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
@@ -969,7 +970,10 @@ public class OsmNetworkLayerParser {
    */
   public void reset() {
     layerData.reset();
-    modifiedLinkSegmentTypes.reset();  
+    modifiedLinkSegmentTypes.reset();
+    if(trafficSignalIntegrator != null) {
+      trafficSignalIntegrator.reset();
+    }
     initialiseEventListeners();
   }
     

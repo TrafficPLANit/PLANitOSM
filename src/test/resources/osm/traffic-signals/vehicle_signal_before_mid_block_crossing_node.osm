@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- As vehicle_signal_before_mid_block_crossing, but crossing node 31 is tagged highway=crossing without signal tags:
+     vehicle signal 1 (forward) on one-way primary way 10 (2-1-31-3) about 18 m before it, with no junction anywhere -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2098">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2084"/>
+  <node id="3" lat="-33.8700" lon="151.2116"/>
+  <node id="31" lat="-33.8700" lon="151.2100">
+    <tag k="highway" v="crossing"/>
+  </node>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+</osm>

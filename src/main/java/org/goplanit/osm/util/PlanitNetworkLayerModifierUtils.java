@@ -24,6 +24,7 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  * Utilities regarding PLANit network layer modifier functionality with respect to parsing OSM entities for it
@@ -37,10 +38,11 @@ public class PlanitNetworkLayerModifierUtils {
 
   /**
    * Defautl behaviour of breaking edges returns in particular form that may not be ideal, this converts it to
-   * different mapping using passed in function
+   * different mapping using passed in function. A link the function gives no key for is left out, e.g. a link the
+   * reader added itself when grouping by OSM way
    *
    * @param localBrokenLinks to change container for
-   * @param mapToLinkKeyAsLong mapping
+   * @param mapToLinkKeyAsLong mapping, giving null for a link to leave out
    * @return newly mapped links
    */
   public static Map<Long, Set<MacroscopicLink>> convertBrokenLinksByGroupingThemWithCustomKey(
@@ -49,18 +51,11 @@ public class PlanitNetworkLayerModifierUtils {
 
     Map<Long, Set<MacroscopicLink>> groupNewLinksByOriginalLinkKey = new TreeMap<>();
     if(localBrokenLinks != null) {
-      localBrokenLinks.forEach((id, pair) -> {
-        // 1. Process the first link of the pair
-        var firstLink = pair.first();
-        groupNewLinksByOriginalLinkKey
-            .computeIfAbsent(mapToLinkKeyAsLong.apply(firstLink), k -> new HashSet<>())
-            .add(firstLink);
-
-        // 2. Process the second link of the pair
-        var secondLink = pair.second();
-        groupNewLinksByOriginalLinkKey
-            .computeIfAbsent(mapToLinkKeyAsLong.apply(secondLink), k -> new HashSet<>())
-            .add(secondLink);
+      localBrokenLinks.values().stream().flatMap(pair -> Stream.of(pair.first(), pair.second())).forEach(link -> {
+        var key = mapToLinkKeyAsLong.apply(link);
+        if(key != null) {
+          groupNewLinksByOriginalLinkKey.computeIfAbsent(key, k -> new HashSet<>()).add(link);
+        }
       });
     }
     return groupNewLinksByOriginalLinkKey;
@@ -96,7 +91,7 @@ public class PlanitNetworkLayerModifierUtils {
 
       var newOsmWaysWithMultipleLinks = convertBrokenLinksByGroupingThemWithCustomKey(
           brokenLinks,
-          PlanitOsmUtils::parseOsmId);
+          PlanitOsmUtils::parseOsmIdOrNull);
 
       /* update mapping since another osmWayId now has multiple PLANit links and this is needed in the layer
       data to be able to find the correct PLANit links for which osm nodes are internal */

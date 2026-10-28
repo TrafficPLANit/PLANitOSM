@@ -1,5 +1,6 @@
 package org.goplanit.osm.test;
 
+import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
 import org.goplanit.io.converter.intermodal.PlanitIntermodalWriterSettings;
 import org.goplanit.io.converter.network.PlanitNetworkWriterSettings;
 import org.goplanit.io.test.PlanitAssertionUtils;
@@ -96,6 +97,8 @@ public class MelbourneOsm2PlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       inputSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       inputSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       // apply simple bounding box
       inputSettings.getNetworkSettings().setBoundingArea(OsmBoundary.of(MELBOURNE_SIMPLE_BOUNDING_BOX));
@@ -112,6 +115,9 @@ public class MelbourneOsm2PlanitTest {
       /* minimise warnings Melbourne v2 */
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());
       OsmPtSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getPublicTransportSettings());
+      /* signals whose tags read wrong in OSM, overridden as reviewed */
+      OsmNetworkSettingsTestCaseUtils.melbourneOverrideVerifiedTrafficSignals(
+          inputSettings.getNetworkSettings().getIntersectionSettings());
       /* isolated signalised crossings get their own intersection, as in the Sydney cases, see
        * SydneyOsmPlanitTest#testOsm2PlanitNetworkComprehensive. The other Melbourne cases keep the default */
       inputSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
@@ -150,6 +156,8 @@ public class MelbourneOsm2PlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       inputSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       inputSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       // apply a boundary area based on name (osm relation id: 3898547)
       inputSettings.setBoundingArea(
@@ -158,6 +166,9 @@ public class MelbourneOsm2PlanitTest {
       /* minimise warnings Melbourne v2 */
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getNetworkSettings());
       OsmPtSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings.getPublicTransportSettings());
+      /* signals whose tags read wrong in OSM, overridden as reviewed */
+      OsmNetworkSettingsTestCaseUtils.melbourneOverrideVerifiedTrafficSignals(
+          inputSettings.getNetworkSettings().getIntersectionSettings());
 
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
 
@@ -192,6 +203,8 @@ public class MelbourneOsm2PlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       inputSettings.getIntersectionSettings().setConsolidateIntersections(true);
       inputSettings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      inputSettings.getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       // Example filter
       FilterFactory ff = CommonFactoryFinder.getFilterFactory();
@@ -211,6 +224,9 @@ public class MelbourneOsm2PlanitTest {
 
       /* minimise warnings Melbourne v2 */
       OsmNetworkSettingsTestCaseUtils.melbourneMinimiseVerifiedWarnings(inputSettings);
+      /* signals whose tags read wrong in OSM, overridden as reviewed */
+      OsmNetworkSettingsTestCaseUtils.melbourneOverrideVerifiedTrafficSignals(
+          inputSettings.getIntersectionSettings());
       Osm2PlanitConversionTemplates.osm2PlanitSettingsBased(inputSettings, outputSettings);
 
       PlanitAssertionUtils.assertNetworkFilesSimilar(PLANIT_OUTPUT_DIR, PLANIT_REF_DIR);

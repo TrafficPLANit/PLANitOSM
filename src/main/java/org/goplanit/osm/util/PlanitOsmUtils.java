@@ -80,6 +80,17 @@ public class PlanitOsmUtils {
   }
 
   /**
+   * The OSM id of a PLANit entity, see {@link #parseOsmId(ExternalIdAble)}, or null when it has no external id
+   * because the reader created it itself and not from an OSM entity, e.g. a link connecting a dangling ferry stop
+   *
+   * @param entity to get the OSM id of
+   * @return the OSM id, null when the entity has no external id
+   */
+  public static Long parseOsmIdOrNull(ExternalIdAble entity) {
+    return entity.getExternalId() != null ? parseOsmId(entity) : null;
+  }
+
+  /**
    * parse an OSM maxSpeedValue tag value and perform unit conversion to km/h if needed
    * @param maxSpeedValue string
    * @return parsed speed limit in km/h

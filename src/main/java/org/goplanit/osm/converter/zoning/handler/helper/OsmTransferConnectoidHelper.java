@@ -294,16 +294,17 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       /* break links and group resulting new links by original link's OSM id*/
       var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
 
+      var brokenLinks = networkLayer.getLayerModifier().breakAt(
+          linksToBreak, planitNode, referenceNetwork.getCoordinateReferenceSystem());
       var newlyBrokenLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
-          networkLayer.getLayerModifier().breakAt(
-              linksToBreak, planitNode, referenceNetwork.getCoordinateReferenceSystem()),
-          PlanitOsmUtils::parseOsmId);
+          brokenLinks, PlanitOsmUtils::parseOsmIdOrNull);
 
       /* TRACKING DATA CONSISTENCY - AFTER */
       {
-        /* insert created/updated links and their geometries to spatial index instead */
-        newlyBrokenLinks.forEach( (id, links) ->
-                getZoningReaderData().getPlanitConverterData().addLinksToSpatialLinkIndex(networkLayer, links));
+        /* insert created/updated links and their geometries to spatial index instead, also those the reader added
+         * itself, which come from no OSM way and so are not grouped by one */
+        brokenLinks.values().forEach(pair -> getZoningReaderData().getPlanitConverterData().addLinksToSpatialLinkIndex(
+            networkLayer, pair.first(), pair.second()));
 
         /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to
         be able to find the correct planit links for (internal) osm nodes */
@@ -579,8 +580,7 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       /* function that takes a node and collects any overwritten waiting area that is pre-specified for it. Used to
        *  override default mapping between waiting area and stop location when needed */
       this.getOverwrittenWaitingAreaSourceIdForNode = n -> {
-        var result = transferSettings.getOverwrittenWaitingAreaOfStopLocation(
-                n.getExternalId() != null ? PlanitOsmUtils.parseOsmId(n) : null);
+        var result = transferSettings.getOverwrittenWaitingAreaOfStopLocation(PlanitOsmUtils.parseOsmIdOrNull(n));
         return result!= null ? String.valueOf(result.second()) : null;
       };
     }

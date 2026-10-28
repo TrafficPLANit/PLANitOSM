@@ -11,6 +11,21 @@ public enum OsmPlanitEntityIssue {
   /** an intersection removed again when pruning dangling subnetworks, its infrastructure unusable by any mode */
   INTERSECTION_LOST_BY_PRUNING("intersections removed by pruning"),
 
+  /** a mode a connectoid's access zone entry allowed, removed when pruning dangling subnetworks withdrew it from every
+   * access link segment of the entry */
+  CONNECTOID_ALLOWED_MODE_LOST_BY_PRUNING("connectoid allowed modes removed by pruning"),
+
+  /** an access link segment of a connectoid's access zone entry, removed by pruning dangling subnetworks, or left
+   * allowing none of the modes it served */
+  CONNECTOID_ACCESS_LINK_SEGMENT_LOST_BY_PRUNING("connectoid access link segments removed by pruning"),
+
+  /** an access zone entry of a connectoid, left without access link segments or allowed modes by pruning dangling
+   * subnetworks */
+  CONNECTOID_ACCESS_ZONE_ENTRY_LOST_BY_PRUNING("connectoid access zone entries removed by pruning"),
+
+  /** a connectoid, left without access zone entries by pruning dangling subnetworks */
+  CONNECTOID_LOST_BY_PRUNING("connectoids removed by pruning"),
+
   /** an intersection removed once every signal is handled, for having no approach a motorised road or rail mode can
    * use, e.g. a crossing between paths */
   INTERSECTION_REMOVED_WITHOUT_CONTROLLED_APPROACH(
@@ -51,6 +66,9 @@ public enum OsmPlanitEntityIssue {
   /** a crossing intersection on a slip lane joined to its junction by consolidation */
   CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION("crossings on a slip lane joined to a junction"),
 
+  /** a crossing intersection joined to another crossing intersection side by side along the road, by consolidation */
+  CROSSING_JOINED_TO_CROSSING_SIDE_BY_SIDE("crossings joined to a crossing side by side"),
+
   /** a road segment entering a signalised junction from a slip lane, made an approach without a signal of its own by
    * consolidation; a slip lane often has no signal of its own */
   APPROACH_ON_SLIP_LANE_ADDED_WITHOUT_SIGNAL("approaches on a slip lane added without a signal of their own"),
@@ -74,7 +92,10 @@ public enum OsmPlanitEntityIssue {
   NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND("nodes listed to join or keep apart, not in the network"),
 
   /** a node excluded from collapse by its OSM node id that no layer of the network has */
-  NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND("nodes excluded from collapse, not in the network");
+  NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND("nodes excluded from collapse, not in the network"),
+
+  /** a node whose traffic signal direction or kind is overridden by its OSM node id that no layer of the network has */
+  TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND("traffic signals overridden in the settings, not in the network");
 
   /** label used when logging */
   private final String label;

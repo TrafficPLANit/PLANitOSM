@@ -1,7 +1,10 @@
 package org.goplanit.osm.converter.network;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -72,5 +75,46 @@ public class OsmIntersectionSettingsTest {
     assertEquals(IntersectionConsolidatorSettings.DEFAULT_MAXIMUM_JOINING_REACH_METERS,
         intersectionSettings.getIntersectionConsolidatorSettings().getMaximumJoiningReachMeters());
     assertFalse(intersectionSettings.getIntersectionCollapserSettings().hasCollapsedModes());
+  }
+
+  /** No traffic signal direction is overridden by default; a direction overridden is kept per OSM node id, overriding
+   * it again replaces it, and reset clears them */
+  @Test
+  public void trafficSignalDirectionOverridesAreKeptAndClearedByReset() {
+    var intersectionSettings = new OsmNetworkReaderSettings(CountryNames.AUSTRALIA).getIntersectionSettings();
+    assertTrue(intersectionSettings.getTrafficSignalDirectionOverrides().isEmpty());
+
+    intersectionSettings.overrideTrafficSignalDirection(12, OsmTrafficSignalDirection.FORWARD);
+    intersectionSettings.overrideTrafficSignalDirection(13, OsmTrafficSignalDirection.FORWARD);
+    intersectionSettings.overrideTrafficSignalDirection(13, OsmTrafficSignalDirection.BACKWARD);
+
+    assertEquals(OsmTrafficSignalDirection.FORWARD, intersectionSettings.getTrafficSignalDirectionOverride(12));
+    assertEquals(OsmTrafficSignalDirection.BACKWARD, intersectionSettings.getTrafficSignalDirectionOverride(13));
+    assertNull(intersectionSettings.getTrafficSignalDirectionOverride(14));
+    intersectionSettings.reset();
+    assertTrue(intersectionSettings.getTrafficSignalDirectionOverrides().isEmpty());
+  }
+
+  /** No traffic signal kind is overridden by default; a kind overridden is kept per OSM node id, overriding it again
+   * replaces it, the node ids with any override are those of both kinds of override, each once, and reset clears
+   * them */
+  @Test
+  public void trafficSignalKindOverridesAreKeptAndClearedByReset() {
+    var intersectionSettings = new OsmNetworkReaderSettings(CountryNames.AUSTRALIA).getIntersectionSettings();
+    assertTrue(intersectionSettings.getTrafficSignalKindOverrides().isEmpty());
+
+    intersectionSettings.overrideTrafficSignalKind(12, OsmTrafficSignalKind.VEHICLE_SIGNAL);
+    intersectionSettings.overrideTrafficSignalKind(13, OsmTrafficSignalKind.VEHICLE_SIGNAL);
+    intersectionSettings.overrideTrafficSignalKind(13, OsmTrafficSignalKind.NOT_A_SIGNAL);
+    intersectionSettings.overrideTrafficSignalDirection(13, OsmTrafficSignalDirection.FORWARD);
+    intersectionSettings.overrideTrafficSignalDirection(14, OsmTrafficSignalDirection.FORWARD);
+
+    assertEquals(OsmTrafficSignalKind.VEHICLE_SIGNAL, intersectionSettings.getTrafficSignalKindOverride(12));
+    assertEquals(OsmTrafficSignalKind.NOT_A_SIGNAL, intersectionSettings.getTrafficSignalKindOverride(13));
+    assertNull(intersectionSettings.getTrafficSignalKindOverride(14));
+    assertEquals(Set.of(12L, 13L, 14L), intersectionSettings.getOsmNodeIdsWithTrafficSignalOverride());
+    intersectionSettings.reset();
+    assertTrue(intersectionSettings.getTrafficSignalKindOverrides().isEmpty());
+    assertTrue(intersectionSettings.getOsmNodeIdsWithTrafficSignalOverride().isEmpty());
   }
 }

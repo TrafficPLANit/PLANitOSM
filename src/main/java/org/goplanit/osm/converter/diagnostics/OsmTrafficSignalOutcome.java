@@ -36,12 +36,19 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.VEHICLE_SIGNAL,
       "vehicle signals at the stop line of an isolated signalised crossing"),
 
+  /** a vehicle signal stands on the node of a signalised crossing that is isolated before the junction it reaches, as a
+   * node tagged both a vehicle signal and a crossing, or a vehicle signal where a signalised crossing way meets the
+   * road: the signal is that crossing's, held by its intersection, and is assigned to no junction past it */
+  VEHICLE_SIGNAL_ON_ISOLATED_CROSSING(
+      OsmTrafficSignalOutcomeGroup.VEHICLE_SIGNAL,
+      "vehicle signals on the node of an isolated signalised crossing"),
+
   /** a signalised crossing counts as isolated although a junction lies within the maximum distance from a crossing to a
-   * junction beyond it, since only service lanes or living streets of lower capacity join the road there; recorded
-   * besides the crossing's own outcome */
-  CROSSING_ISOLATED_PAST_LOWEST_ORDER_ROAD(
+   * junction beyond it, since that junction shows no signal other than those along the crossing's own road, such as
+   * where only a service lane joins; recorded besides the crossing's own outcome */
+  CROSSING_ISOLATED_PAST_JUNCTION_WITHOUT_OTHER_SIGNAL(
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
-      "crossing signals isolated with only a service lane or living street joining"),
+      "crossing signals isolated past a junction showing no other signal"),
 
   /** a signalised crossing counts as isolated although a junction lies within the maximum distance from a crossing to a
    * junction beyond it, since a vehicle signal passing it has a vehicle signal past it, before that junction, facing
@@ -104,11 +111,51 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL,
       "crossing signals without a junction at the edge of the parsed area, ignored"),
 
+  /** a crossing signal not on a junction node whose road traffic faces a stop or give way sign between the crossing and
+   * the first junction it reaches, within the maximum distance from a crossing to a junction: the sign shows the
+   * traffic there is not signal controlled, so it is taken as not signalised, no intersection is added and no link is
+   * broken. The tags contradict each other, worth checking in OSM */
+  CROSSING_SIGNAL_BEFORE_STOP_OR_GIVE_WAY_SIGN(
+      OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL,
+      "crossing signals before a stop or give way sign, taken as not signalised, check in OSM"),
+
   /** a vehicle signal whose direction is none of forward, backward or both, e.g. a compass bearing, is handled as
    * untagged */
   VEHICLE_SIGNAL_DIRECTION_UNRECOGNISED(
       OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
       "vehicle signals with a direction other than forward, backward or both, taken as untagged"),
+
+  /** a vehicle signal tagged with direction both on a road, but not on a junction node, stops both directions at one
+   * point, which is what a crossing does: it is handled as a crossing signal. Most likely a crossing tagged without its
+   * crossing tags, worth checking in OSM; recorded besides the outcome it gets as a crossing signal */
+  VEHICLE_SIGNAL_BOTH_DIRECTIONS_TAKEN_AS_CROSSING(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "vehicle signals with direction both between junctions, taken as crossing signals, check in OSM"),
+
+  /** a crossing node without signal tags, highway=crossing, that a vehicle signal not on a junction node reaches first
+   * along its link, within the maximum distance from a crossing to a junction, is taken as a crossing signal: the
+   * vehicle signal stands there for the crossing. Most likely a signalised crossing tagged without its signal tags,
+   * worth checking in OSM; recorded besides the outcome it gets as a crossing signal */
+  CROSSING_NODE_AFTER_VEHICLE_SIGNAL_TAKEN_AS_SIGNALISED(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "crossing nodes without signal tags right after a vehicle signal, taken as signalised, check in OSM"),
+
+  /** a node where a footway, cycleway or similar way meets the road, passing through or ending there, without any
+   * crossing tags, that a vehicle signal reaches first along its link within the maximum distance from a crossing to a
+   * junction, taken as a signalised crossing with that signal as its stop line: most likely a signalised crossing
+   * mapped as no more than the way crossing; recorded besides the crossing signal's own outcome */
+  CROSSING_WAY_NODE_AFTER_VEHICLE_SIGNAL_TAKEN_AS_SIGNALISED(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "nodes where a footway or cycleway meets the road without crossing tags, right after a vehicle signal, " +
+          "taken as signalised, check in OSM"),
+
+  /** a salvage attempt: a vehicle signal tagged with its direction, within a few metres past an isolated signalised
+   * crossing and with no isolated crossing ahead of it before the junction it reaches, taken as that crossing's signal,
+   * as one on the crossing's own node. Most likely a signal head on the far side of the crossing, or the crossing's
+   * stop line mapped past it; recorded besides its outcome, see {@link #VEHICLE_SIGNAL_ON_ISOLATED_CROSSING} */
+  VEHICLE_SIGNAL_PAST_ISOLATED_CROSSING_SALVAGED_AS_ITS_SIGNAL(
+      OsmTrafficSignalOutcomeGroup.NOTE_ALONGSIDE_OUTCOME,
+      "vehicle signals within 5 m past an isolated crossing, salvaged as its signal, check in OSM"),
 
   /** a vehicle signal tagged with a direction where OSM ways of opposite orientation meet, so its direction is not
    * usable: it keeps one direction, see {@link #VEHICLE_SIGNAL_ONE_DIRECTION_CHOSEN} */

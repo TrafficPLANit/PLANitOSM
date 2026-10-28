@@ -1,11 +1,16 @@
 package org.goplanit.osm.converter.network;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.goplanit.algorithms.intersection.GreenRatioAndSaturationFlowFactorSettings;
+import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.id.IdMapperType;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
@@ -68,6 +73,12 @@ public class OsmIntersectionSettings {
   private GreenRatioAndSaturationFlowFactorSettings greenRatioAndSaturationFlowFactorSettings =
       new GreenRatioAndSaturationFlowFactorSettings();
 
+  /** see {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}, by OSM node id, none by default */
+  private final Map<Long, OsmTrafficSignalDirection> trafficSignalDirectionOverrides = new TreeMap<>();
+
+  /** see {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, by OSM node id, none by default */
+  private final Map<Long, OsmTrafficSignalKind> trafficSignalKindOverrides = new TreeMap<>();
+
   /** by default intersections are parsed from traffic signals */
   public static final boolean DEFAULT_INTERSECTIONS_PARSER_ACTIVE = true;
 
@@ -124,6 +135,10 @@ public class OsmIntersectionSettings {
         getMaximumDistanceSignalisedCrossingToJunctionInMeters(), level));
     LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signalised crossings",
         isBreakLinksAtIsolatedSignalisedCrossings(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Traffic signal directions overridden",
+        trafficSignalDirectionOverrides.isEmpty() ? "none" : trafficSignalDirectionOverrides, level));
+    LOGGER.info(LoggingUtils.settingsValue("Traffic signal kinds overridden",
+        trafficSignalKindOverrides.isEmpty() ? "none" : trafficSignalKindOverrides, level));
     LOGGER.info(LoggingUtils.settingsValue("Consolidate intersections", isConsolidateIntersections(), level));
     if(isConsolidateIntersections()){
       int consolidationLevel = level + 2;
@@ -149,6 +164,8 @@ public class OsmIntersectionSettings {
           consolidatorSettings.getMaximumDistanceReachedOnlyThroughIntersectionMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Maximum distance slip lane crossing to junction (m)",
           consolidatorSettings.getMaximumDistanceSlipLaneCrossingToJunctionMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Maximum distance between crossings side by side (m)",
+          consolidatorSettings.getMaximumDistanceBetweenCrossingsSideBySideMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Nodes to join into one intersection",
           toLoggedNodeIds(consolidatorSettings.getNodeIdsToJoinIntoOneIntersection()), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Nodes to keep in separate intersections",
@@ -200,6 +217,8 @@ public class OsmIntersectionSettings {
     this.intersectionCollapserSettings = new OsmIntersectionCollapserSettings();
     this.computeGreenRatiosAndSaturationFlowFactors = DEFAULT_COMPUTE_GREEN_RATIOS_AND_SATURATION_FLOW_FACTORS;
     this.greenRatioAndSaturationFlowFactorSettings = new GreenRatioAndSaturationFlowFactorSettings();
+    this.trafficSignalDirectionOverrides.clear();
+    this.trafficSignalKindOverrides.clear();
   }
 
   /** Get the maximum distance from a vehicle signal to the junction it controls
@@ -373,5 +392,107 @@ public class OsmIntersectionSettings {
     /* the external id PLANit gives a node it parses from OSM is its OSM node id */
     intersectionConsolidatorSettings.addNodeIdsToKeepInSeparateIntersections(
         StringUtils.toStrings(osmNodeIds), IdMapperType.EXTERNAL_ID);
+  }
+
+  /** Override the direction of travel along its OSM way that a traffic signal applies to, in place of the one tagged
+   * with traffic_signals:direction, or of none tagged. For a signal that faces the wrong way, such as one tagged
+   * backward where its stop line faces forward, or an untagged one whose nearest junction is the wrong one. Overriding
+   * it again replaces the direction overridden before. An OSM node id that no layer has as a traffic signal is recorded
+   * as not found
+   *
+   * @param osmNodeId the OSM node id of the traffic signal
+   * @param direction it applies to, forward or backward along its OSM way
+   */
+  public void overrideTrafficSignalDirection(long osmNodeId, OsmTrafficSignalDirection direction) {
+    trafficSignalDirectionOverrides.put(osmNodeId, direction);
+  }
+
+  /** The direction of travel overridden for a traffic signal, see
+   * {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}
+   *
+   * @param osmNodeId the OSM node id of the traffic signal
+   * @return the direction overridden, null when not overridden
+   */
+  public OsmTrafficSignalDirection getTrafficSignalDirectionOverride(long osmNodeId) {
+    return trafficSignalDirectionOverrides.get(osmNodeId);
+  }
+
+  /** The directions of travel overridden for traffic signals, see
+   * {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}
+   *
+   * @return the directions overridden by OSM node id, unmodifiable, empty when none
+   */
+  public Map<Long, OsmTrafficSignalDirection> getTrafficSignalDirectionOverrides() {
+    return Collections.unmodifiableMap(trafficSignalDirectionOverrides);
+  }
+
+  /** Override the kind of signal a node is handled as: a vehicle signal or a crossing signal only, or no signal at all,
+   * in place of what its tags say. It also works for a node without any signal tags, to add a signal OSM lacks, such as
+   * a missing stop line, and it reduces a signal tagged as both kinds to one. For example, a plain vehicle signal that
+   * only stops traffic for trams crossing the road, overridden as a crossing signal, gets the crossing's green ratio,
+   * rather than making the junction beyond it signalised. Overriding it again replaces the kind overridden before. An
+   * OSM node id that no layer has as a node on its ways is recorded as not found
+   *
+   * @param osmNodeId the OSM node id of the node
+   * @param kind to handle it as
+   */
+  public void overrideTrafficSignalKind(long osmNodeId, OsmTrafficSignalKind kind) {
+    trafficSignalKindOverrides.put(osmNodeId, kind);
+  }
+
+  /** The kind of signal overridden for a node, see {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}
+   *
+   * @param osmNodeId the OSM node id of the node
+   * @return the kind overridden, null when not overridden
+   */
+  public OsmTrafficSignalKind getTrafficSignalKindOverride(long osmNodeId) {
+    return trafficSignalKindOverrides.get(osmNodeId);
+  }
+
+  /** The kinds of signal overridden for nodes, see {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}
+   *
+   * @return the kinds overridden by OSM node id, unmodifiable, empty when none
+   */
+  public Map<Long, OsmTrafficSignalKind> getTrafficSignalKindOverrides() {
+    return Collections.unmodifiableMap(trafficSignalKindOverrides);
+  }
+
+  /** Verify if a node is handled as a kind of traffic signal: as its kind is overridden, see
+   * {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, otherwise as its tags say, see
+   * {@link OsmTrafficSignalTags#isVehicleTrafficSignal(Map)},
+   * {@link OsmTrafficSignalTags#isCrossingTrafficSignals(Map)} and, for no signal,
+   * {@link OsmTrafficSignalTags#isTrafficSignals(Map)}. A signal tagged as both a vehicle signal and a crossing signal
+   * is handled as both, unless overridden
+   *
+   * @param osmNodeId the OSM node id of the node
+   * @param tags of the node
+   * @param kind to verify
+   * @return true when handled as that kind, false otherwise
+   */
+  public boolean isHandledAsTrafficSignalOfKind(long osmNodeId, Map<String, String> tags, OsmTrafficSignalKind kind) {
+    var overridden = trafficSignalKindOverrides.get(osmNodeId);
+    if (overridden != null) {
+      return overridden == kind;
+    }
+    switch (kind) {
+      case VEHICLE_SIGNAL:
+        return OsmTrafficSignalTags.isVehicleTrafficSignal(tags);
+      case CROSSING_SIGNAL:
+        return OsmTrafficSignalTags.isCrossingTrafficSignals(tags);
+      default:
+        return !OsmTrafficSignalTags.isTrafficSignals(tags);
+    }
+  }
+
+  /** The OSM node ids with a traffic signal override of any kind, see
+   * {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)} and
+   * {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}
+   *
+   * @return the node ids in increasing order, each once, empty when none
+   */
+  public Set<Long> getOsmNodeIdsWithTrafficSignalOverride() {
+    var osmNodeIds = new TreeSet<Long>(trafficSignalDirectionOverrides.keySet());
+    osmNodeIds.addAll(trafficSignalKindOverrides.keySet());
+    return Collections.unmodifiableSet(osmNodeIds);
   }
 }

@@ -21,6 +21,7 @@ import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
 import org.goplanit.osm.converter.network.handler.OsmNetworkPreProcessingHandler;
+import org.goplanit.osm.converter.network.trafficsignal.OsmTrafficSignalIntegrator;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmHandlerUtils;
@@ -34,8 +35,12 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.ApproachOutcome;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.IntersectionOutcome;
+import org.goplanit.utils.network.layer.modifier.event.LinkSegmentTypeModifierListener;
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
+import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnLinkSegmentChangeHandler;
+import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnLinkSegmentChangeResult;
+import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnLinkSegmentChangeResult.ConnectoidAccessLoss;
 import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnVertexRemovalHandler;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
@@ -56,6 +61,7 @@ public class OsmNetworkReader implements NetworkReader {
   private static final Map<IntersectionOutcome, OsmPlanitEntityIssue> ISSUE_OF_INTERSECTION_OUTCOME = Map.of(
       IntersectionOutcome.CROSSING_JOINED, OsmPlanitEntityIssue.CROSSING_JOINED_TO_JUNCTION,
       IntersectionOutcome.CROSSING_JOINED_FROM_SLIP_LANE, OsmPlanitEntityIssue.CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION,
+      IntersectionOutcome.CROSSING_JOINED_SIDE_BY_SIDE, OsmPlanitEntityIssue.CROSSING_JOINED_TO_CROSSING_SIDE_BY_SIDE,
       IntersectionOutcome.JUNCTION_PULLED_IN_WITHIN_RADIUS, OsmPlanitEntityIssue.JUNCTION_PULLED_IN_WITHIN_RADIUS,
       IntersectionOutcome.JUNCTION_PULLED_IN_TO_SALVAGE_APPROACH_WITHOUT_SIGNAL,
       OsmPlanitEntityIssue.JUNCTION_PULLED_IN_TO_SALVAGE_APPROACH_WITHOUT_SIGNAL,
@@ -69,6 +75,14 @@ public class OsmNetworkReader implements NetworkReader {
       OsmPlanitEntityIssue.APPROACH_NOT_ON_SLIP_LANE_ADDED_WITHOUT_SIGNAL,
       ApproachOutcome.ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD,
       OsmPlanitEntityIssue.APPROACH_ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD);
+
+  /** the issue each connectoid access loss of pruning is recorded as, by what was lost */
+  private static final Map<ConnectoidAccessLoss.Kind, OsmPlanitEntityIssue> ISSUE_OF_CONNECTOID_ACCESS_LOSS = Map.of(
+      ConnectoidAccessLoss.Kind.ALLOWED_MODE, OsmPlanitEntityIssue.CONNECTOID_ALLOWED_MODE_LOST_BY_PRUNING,
+      ConnectoidAccessLoss.Kind.ACCESS_LINK_SEGMENT,
+      OsmPlanitEntityIssue.CONNECTOID_ACCESS_LINK_SEGMENT_LOST_BY_PRUNING,
+      ConnectoidAccessLoss.Kind.ACCESS_ZONE_ENTRY, OsmPlanitEntityIssue.CONNECTOID_ACCESS_ZONE_ENTRY_LOST_BY_PRUNING,
+      ConnectoidAccessLoss.Kind.CONNECTOID, OsmPlanitEntityIssue.CONNECTOID_LOST_BY_PRUNING);
 
   /** network reader data tracked during parsing */
   private final OsmNetworkReaderData networkData;
@@ -249,6 +263,28 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
+   * Record what the connectoids lost when pruning dangling subnetworks with the PLANit entity diagnostics, each loss
+   * once, by the connectoid's external id, the OSM node of the stop
+   *
+   * @param result what the connectoids lost, see {@link UpdateConnectoidsOnLinkSegmentChangeHandler}
+   */
+  private void registerConnectoidAccessLosses(UpdateConnectoidsOnLinkSegmentChangeResult result) {
+    var diagnostics = networkData.getPlanitEntityDiagnostics();
+    for (var loss : result.getAccessLosses()) {
+      var detail = new StringBuilder("zone ").append(loss.getAccessZoneEntry().getAccessZone().getExternalId())
+          .append(", ").append(loss.getAccessZoneEntry().getType());
+      if (loss.getMode() != null) {
+        detail.append(", mode ").append(loss.getMode().getName());
+      }
+      if (loss.getAccessLinkSegment() != null && loss.getAccessLinkSegment().getParent() != null) {
+        detail.append(", link ").append(loss.getAccessLinkSegment().getParent().getExternalId());
+      }
+      diagnostics.registerIssue(ISSUE_OF_CONNECTOID_ACCESS_LOSS.get(loss.getKind()),
+          loss.getConnectoid().getExternalId(), detail.toString());
+    }
+  }
+
+  /**
    * Record, with the PLANit entity diagnostics, each OSM node id that every layer lists as not found. Each layer holds
    * only the nodes of its own modes, so a node of one layer is not found in the others
    *
@@ -263,6 +299,21 @@ public class OsmNetworkReader implements NetworkReader {
     notFoundOfEachLayer.forEach(notFoundInEveryLayer::retainAll);
     var diagnostics = networkData.getPlanitEntityDiagnostics();
     notFoundInEveryLayer.forEach(osmNodeId -> diagnostics.registerIssue(issue, osmNodeId));
+  }
+
+  /**
+   * Record, with the PLANit entity diagnostics, each OSM node id with a traffic signal override in the settings that no
+   * layer has, see {@link OsmTrafficSignalIntegrator#getOsmNodeIdsOverriddenNotFound()}. Nothing is recorded when
+   * intersections are not parsed
+   */
+  private void registerTrafficSignalOverridesNotFound() {
+    if(!settings.isIntersectionParserActive()) {
+      return;
+    }
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND,
+        networkData.getLayerParsers().values().stream()
+            .map(layerParser -> layerParser.getTrafficSignalIntegrator().getOsmNodeIdsOverriddenNotFound())
+            .collect(Collectors.toList()));
   }
 
   /**
@@ -451,9 +502,14 @@ public class OsmNetworkReader implements NetworkReader {
        *  avoid this problem possibly easier when this functionality
        * is not separate but dealt with within the zoning */
       DirectedGraphModifierListener listener = null;
+      /* connectoids also follow the access link segments they lose, and the modes withdrawn from them */
+      UpdateConnectoidsOnLinkSegmentChangeHandler linkSegmentChangeListener = null;
       if(zoning != null) {
         listener = new UpdateConnectoidsOnVertexRemovalHandler(zoning);
         layers.getFirst().getLayerModifier().addListener(listener);
+        linkSegmentChangeListener = new UpdateConnectoidsOnLinkSegmentChangeHandler(zoning);
+        layers.getFirst().getLayerModifier().addListener((DirectedGraphModifierListener) linkSegmentChangeListener);
+        layers.getFirst().getLayerModifier().addListener((LinkSegmentTypeModifierListener) linkSegmentChangeListener);
       }
 
       /* one pass per activated mode, since being able to both reach and leave is a property of a mode rather
@@ -492,6 +548,9 @@ public class OsmNetworkReader implements NetworkReader {
       var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
       cleanup.getRemovedIntersections().forEach(intersection -> planitEntityDiagnostics.registerIssue(
           OsmPlanitEntityIssue.INTERSECTION_LOST_BY_PRUNING, intersection.getExternalId()));
+      if(linkSegmentChangeListener != null) {
+        registerConnectoidAccessLosses(linkSegmentChangeListener.getResult());
+      }
       if(!cleanup.isEmpty()) {
         LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
       }
@@ -508,7 +567,10 @@ public class OsmNetworkReader implements NetworkReader {
       /* remove listener as it is currently meant for local use only due to expensive initialisation which is also
       not kept up to date */
       if(zoning != null) {
-        layers.getFirst().getLayerModifier().removeListener(listener);
+        var layerModifier = layers.getFirst().getLayerModifier();
+        layerModifier.removeListener(listener);
+        layerModifier.removeListener((DirectedGraphModifierListener) linkSegmentChangeListener);
+        layerModifier.removeListener((LinkSegmentTypeModifierListener) linkSegmentChangeListener);
       }
       
       /* logging stats  - after */
@@ -633,7 +695,8 @@ public class OsmNetworkReader implements NetworkReader {
     doPreprocessing();
     
     /* main processing  (always)*/
-    doMainProcessing();    
+    doMainProcessing();
+    registerTrafficSignalOverridesNotFound();
       
     /* dangling subnetworks */
     boolean recreateIds = false; // postpone to sync xml ids at same time afterwards

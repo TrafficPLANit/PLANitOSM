@@ -8,6 +8,7 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.osm.util.OsmNodeUtils;
@@ -45,6 +46,28 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
   private final LongAdder osmNodeCounter;
   private final LongAdder osmWayCounter;
+
+  /**
+   * Handle any OSM way in stage one, without the filtering of
+   * {@link #wrapHandleInfrastructureOsmWay(OsmWay, java.util.function.BiConsumer)}: its type need not be activated,
+   * and a way the settings exclude is handled too. For ways that matter even when they are not parsed themselves.
+   * When intersections are parsed, these are any signalised crossing way, since its crossing signal may be tagged only
+   * on the way, and any way that can cross a road, since where it meets the road may be a crossing without tags
+   *
+   * @param osmWay to handle
+   */
+  private void handleAnyOsmWayStageOne(OsmWay osmWay) {
+    if(!getSettings().isIntersectionParserActive() || osmWay.getNumberOfTags() == 0) {
+      return;
+    }
+    var tags = OsmModelUtil.getTagsAsMap(osmWay);
+    if(OsmTrafficSignalTags.isSignalisedCrossingWay(tags)) {
+      getNetworkData().registerSignalisedCrossingWayNodes(osmWay);
+    }
+    if(OsmTrafficSignalTags.isWayThatCanCrossRoad(tags)) {
+      getNetworkData().registerOsmNodesOfWayThatCanCrossRoad(osmWay);
+    }
+  }
 
   /**
    * Deal with situation if for this OSM way a manual override was provided
@@ -224,14 +247,18 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         // OSM ways' nodes or special cases
         osmNodeData.registerEligibleOsmNode(node);
 
-        // 2. record the traffic signals among them, linked to junctions once the layers are complete
+        // 2. record the traffic signals among them, linked to junctions once the layers are complete, as tagged unless
+        // the settings override the kind of signal a node is
         if(getSettings().isIntersectionParserActive()) {
           Map<String, String> tags = node.getNumberOfTags() > 0 ? OsmModelUtil.getTagsAsMap(node) : Map.of();
-          if(OsmTrafficSignalTags.isTrafficSignals(tags)) {
+          var intersectionSettings = getSettings().getIntersectionSettings();
+          if(!intersectionSettings.isHandledAsTrafficSignalOfKind(
+              node.getId(), tags, OsmTrafficSignalKind.NOT_A_SIGNAL)) {
             getNetworkData().registerTrafficSignalOsmNodeId(node.getId());
           }
           // 3. and the nodes whose crossing signal may be tagged only on the crossing way through them
           if(getNetworkData().getSignalisedCrossingWayId(node.getId()) != null &&
+              intersectionSettings.getTrafficSignalKindOverride(node.getId()) == null &&
               !OsmTrafficSignalTags.isCrossingTrafficSignals(tags)) {
             getNetworkData().registerOsmNodeOnSignalisedCrossingWayOnly(node.getId());
           }
@@ -272,11 +299,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
   public void handle(OsmWay osmWay) {
 
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)) {
-      /* any signalised crossing way, parsed or not, since its crossing signal may be tagged only on the way */
-      if(getSettings().isIntersectionParserActive() && osmWay.getNumberOfTags() > 0 &&
-          OsmTrafficSignalTags.isSignalisedCrossingWay(OsmModelUtil.getTagsAsMap(osmWay))) {
-        getNetworkData().registerSignalisedCrossingWayNodes(osmWay);
-      }
+      handleAnyOsmWayStageOne(osmWay);
       wrapHandleInfrastructureOsmWay(osmWay, this::handleEligibleOsmWayStageOne);
       osmWayCounter.increment();
     }else if(stage.equals(Stage.TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS)){

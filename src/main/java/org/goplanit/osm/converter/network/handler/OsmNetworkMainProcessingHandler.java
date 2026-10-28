@@ -738,7 +738,15 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * @param tags of the OSM way
    */
   protected void handleOsmWay(OsmWay osmWay, Map<String, String> tags) {
-    
+
+    /* a roundabout is told apart by its OSM ways once their links are created, see the traffic signal integration. Its
+     * ways are found by tag, junction=roundabout or circular, closed or not: a large roundabout is often several open
+     * ways. That differs from the circular ways below, found by shape, any way visiting a node twice, roundabout or
+     * not, whose links are created later */
+    if(getSettings().isIntersectionParserActive() && OsmJunctionTags.isPartOfCircularWayJunction(tags)) {
+      getNetworkData().registerOsmWayIdOfRoundabout(osmWay.getId());
+    }
+
     /* circular ways special case filter */
     if(OsmWayUtils.isCircularOsmWay(osmWay, tags, false)) {          
       

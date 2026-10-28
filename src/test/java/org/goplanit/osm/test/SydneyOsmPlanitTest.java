@@ -1,5 +1,6 @@
 package org.goplanit.osm.test;
 
+import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
 import org.goplanit.converter.network.NetworkConverter;
 import org.goplanit.converter.network.NetworkConverterFactory;
 import org.goplanit.geoio.converter.intermodal.GeometryIntermodalWriterFactory;
@@ -96,6 +97,8 @@ public class SydneyOsmPlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       // ferry only
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
@@ -161,6 +164,8 @@ public class SydneyOsmPlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       osmReader.getSettings().getIntersectionSettings().setConsolidateIntersections(true);
       osmReader.getSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      osmReader.getSettings().getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       /* PLANit writer */
       PlanitNetworkWriter planitWriter = PlanitNetworkWriterFactory.create(
@@ -208,6 +213,8 @@ public class SydneyOsmPlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       // tested separately in #testOsm2PlanitIntermodalNoServicesAddAccessEgressForFerryRailBus
       readerSettings.getPublicTransportSettings().setConnectFerryStopsToNearbyLandNetwork(false);
@@ -268,6 +275,8 @@ public class SydneyOsmPlanitTest {
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().getGreenRatioAndSaturationFlowFactorSettings()
+          .setAlgorithmType(GreenRatioAlgorithmType.EQUAL_SPLIT);
 
       /* reduce warnings based on verified situations that are identified as ok to ignore */
       OsmPtSettingsTestCaseUtils.sydney2023MinimiseVerifiedWarnings(readerSettings.getPublicTransportSettings());

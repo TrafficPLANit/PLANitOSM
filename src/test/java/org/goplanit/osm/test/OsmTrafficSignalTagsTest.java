@@ -102,6 +102,24 @@ public class OsmTrafficSignalTagsTest {
     assertTrue(OsmTrafficSignalTags.isCrossingTrafficSignals(tags));
   }
 
+  /** A traffic signal on a barrier, such as a bollard or gate, is both kinds, since it holds traffic at the barrier;
+   * one on a kerb, or tagged barrier=no, is a vehicle signal only */
+  @Test
+  public void signalOnBarrierIsBothKinds() {
+    for (var barrier : List.of("bollard", "gate")) {
+      var tags = tags(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS, OsmTrafficSignalTags.BARRIER,
+          barrier);
+      assertTrue(OsmTrafficSignalTags.isVehicleTrafficSignal(tags), barrier);
+      assertTrue(OsmTrafficSignalTags.isCrossingTrafficSignals(tags), barrier);
+    }
+    for (var barrier : List.of(OsmTrafficSignalTags.KERB, OsmTags.NO)) {
+      var tags = tags(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS, OsmTrafficSignalTags.BARRIER,
+          barrier);
+      assertTrue(OsmTrafficSignalTags.isVehicleTrafficSignal(tags), barrier);
+      assertFalse(OsmTrafficSignalTags.isCrossingTrafficSignals(tags), barrier);
+    }
+  }
+
   /** A vehicle signal tagged as a pedestrian crossing is a crossing signal */
   @Test
   public void crossingSubTypeIsCrossingSignal() {

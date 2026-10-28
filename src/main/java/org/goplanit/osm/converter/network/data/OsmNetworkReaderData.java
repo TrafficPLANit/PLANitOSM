@@ -19,6 +19,7 @@ import org.goplanit.utils.network.layer.physical.Node;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.LongStream;
 
 /**
  * Data specifically required in the network reader while parsing OSM data
@@ -31,6 +32,18 @@ public class OsmNetworkReaderData {
   
   /** the logger  */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderData.class.getCanonicalName());
+
+  /** OSM way ids of the roundabouts among the eligible OSM ways, those tagged junction=roundabout or circular, so that
+   * a roundabout can be told apart once its links are created. Recorded only when intersections are parsed */
+  private final Set<Long> osmWayIdsOfRoundabouts = new HashSet<>();
+
+  /** OSM node ids of the ways that can cross a road, collected while pre-processing, parsed or not, see
+   * {@link #registerOsmNodesOfWayThatCanCrossRoad(OsmWay)}; null once sorted on the first query */
+  private LongStream.Builder collectingOsmNodeIdsOfWaysThatCanCrossRoad = LongStream.builder();
+
+  /** the OSM node ids of the ways that can cross a road, sorted without duplicates on the first query, null before;
+   * a primitive array, since footways and cycleways have many nodes */
+  private long[] osmNodeIdsOfWaysThatCanCrossRoad = null;
 
   /** the distance that qualifies as being near to the network bounding area. USed to be used with
    * cruder version of bounding area when this was tracked as rectagnular gounding box and not a polygon */
@@ -120,6 +133,9 @@ public class OsmNetworkReaderData {
     trafficSignalOsmNodeIds.clear();
     signalisedCrossingWayIdByOsmNodeId.clear();
     osmNodeIdsOnSignalisedCrossingWayOnly.clear();
+    osmWayIdsOfRoundabouts.clear();
+    collectingOsmNodeIdsOfWaysThatCanCrossRoad = LongStream.builder();
+    osmNodeIdsOfWaysThatCanCrossRoad = null;
     parseDiagnostics.reset();
     planitEntityDiagnostics.reset();
   }
@@ -221,6 +237,54 @@ public class OsmNetworkReaderData {
    */
   public SortedSet<Long> getOsmNodeIdsOnSignalisedCrossingWayOnly(){
     return Collections.unmodifiableSortedSet(osmNodeIdsOnSignalisedCrossingWayOnly);
+  }
+
+  /**
+   * Record an eligible OSM way as part of a roundabout, tagged junction=roundabout or circular
+   *
+   * @param osmWayId to record
+   */
+  public void registerOsmWayIdOfRoundabout(long osmWayId){
+    osmWayIdsOfRoundabouts.add(osmWayId);
+  }
+
+  /**
+   * Verify if an OSM way is part of a roundabout, see {@link #registerOsmWayIdOfRoundabout(long)}
+   *
+   * @param osmWayId to verify
+   * @return true when part of a roundabout, false otherwise
+   */
+  public boolean isOsmWayIdOfRoundabout(long osmWayId){
+    return osmWayIdsOfRoundabouts.contains(osmWayId);
+  }
+
+  /**
+   * Record the OSM nodes of a way that can cross a road, a footway, cycleway or similar way that is not an area, parsed
+   * or not, so that a node where it meets a road can be told apart once the road's links are created. Recorded while
+   * pre-processing, before {@link #isOsmNodeOfWayThatCanCrossRoad(long)} is first used
+   *
+   * @param osmWay to record the nodes of
+   */
+  public void registerOsmNodesOfWayThatCanCrossRoad(OsmWay osmWay){
+    for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
+      collectingOsmNodeIdsOfWaysThatCanCrossRoad.add(osmWay.getNodeId(index));
+    }
+  }
+
+  /**
+   * Verify if an OSM node lies on a way that can cross a road, see
+   * {@link #registerOsmNodesOfWayThatCanCrossRoad(OsmWay)}
+   *
+   * @param osmNodeId to verify
+   * @return true when on such a way, false otherwise
+   */
+  public boolean isOsmNodeOfWayThatCanCrossRoad(long osmNodeId){
+    if (osmNodeIdsOfWaysThatCanCrossRoad == null) {
+      osmNodeIdsOfWaysThatCanCrossRoad =
+          collectingOsmNodeIdsOfWaysThatCanCrossRoad.build().sorted().distinct().toArray();
+      collectingOsmNodeIdsOfWaysThatCanCrossRoad = null;
+    }
+    return Arrays.binarySearch(osmNodeIdsOfWaysThatCanCrossRoad, osmNodeId) >= 0;
   }
 
   /**
