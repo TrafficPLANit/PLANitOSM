@@ -543,7 +543,7 @@ public class OsmNetworkLayerParser {
     *  consider moving this outside extraction function
     * */
     final Function<String, Integer> defaultLanesForWaterways = (waterWayKeyTag) ->
-        settings.getDefaultLanesPerDirection(waterWayKeyTag, tags.get(waterWayKeyTag), false);
+        settings.getDefaultLanesPerDirection(waterWayKeyTag, tags);
 
     Pair<Integer, Integer> lanesPair = null;
     String usedOsmWayKey = null;
@@ -558,9 +558,8 @@ public class OsmNetworkLayerParser {
           "possible tagging error, reverting to default bi-directional configuration",osmWay.getId()));
     }
 
-    /* the default lanes in each direction of this way, for a highway its total split as for the lanes tag */
-    var defaultLanesPerDirection = settings.getDefaultLanesPerDirection(usedOsmWayKey, tags.get(usedOsmWayKey),
-        OsmWayUtils.isOneWay(tags) || OsmWayUtils.isImpliedOneWay(tags));
+    /* the default lanes in each direction of this way, for a highway its total split over the directions */
+    var defaultLanesPerDirection = settings.getDefaultLanesPerDirection(usedOsmWayKey, tags);
 
     /* we assume that only when both are not set something went wrong or no information is ever available,
      * otherwise it is assumed it is a one-way link and it is properly configured */

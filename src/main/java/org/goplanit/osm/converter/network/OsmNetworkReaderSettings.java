@@ -688,17 +688,16 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return this.laneConfiguration;
   }  
 
-  /** Collect the default number of lanes/tracks in each direction of a way for a given OSM way key/value,
+  /** Collect the default number of lanes/tracks in each direction of a way for its OSM way key,
    * e.g. highway=value, railway=value based on the defaults provided, see
-   * {@link OsmLaneDefaults#getDefaultLanesPerDirection(String, String, boolean)}
+   * {@link OsmLaneDefaults#getDefaultLanesPerDirection(String, Map)}
    *
    * @param osmWayKey way key to collect default lanes for
-   * @param osmWayValue way value to collect default lanes for
-   * @param oneWay true when the way is one-way, by its tag or by implication such as a roundabout
+   * @param tags of the way, holding the value of the way key
    * @return number of default lanes in each direction
    */
-  public Integer getDefaultLanesPerDirection(String osmWayKey, String osmWayValue, boolean oneWay) {
-    return this.laneConfiguration.getDefaultLanesPerDirection(osmWayKey, osmWayValue, oneWay);
+  public Integer getDefaultLanesPerDirection(String osmWayKey, Map<String, String> tags) {
+    return this.laneConfiguration.getDefaultLanesPerDirection(osmWayKey, tags);
   }
   
   /** Collect the mapped OSM modes based on the provided PLANit mode

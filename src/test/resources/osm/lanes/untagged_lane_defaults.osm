@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Six ways without lane tags, each on its own pair of nodes: way 50 (1-2, two-way trunk), way 51 (3-4, one-way
      trunk), way 52 (5-6, one-way primary), way 53 (7-8, two-way primary), way 54 (9-10, one-way motorway_link) and
-     way 55 (11-12, two-way secondary) -->
+     way 55 (11-12, two-way secondary) and way 56 (13-14, one-way secondary) -->
 <osm version="0.6" generator="hand-made for PLANitOSM lanes tests">
   <node id="1" lat="-33.87" lon="151.21"/>
   <node id="2" lat="-33.87" lon="151.212"/>
@@ -15,6 +15,8 @@
   <node id="10" lat="-33.874" lon="151.212"/>
   <node id="11" lat="-33.875" lon="151.21"/>
   <node id="12" lat="-33.875" lon="151.212"/>
+  <node id="13" lat="-33.876" lon="151.21"/>
+  <node id="14" lat="-33.876" lon="151.212"/>
   <way id="50">
     <nd ref="1"/><nd ref="2"/>
     <tag k="highway" v="trunk"/>
@@ -41,5 +43,10 @@
   <way id="55">
     <nd ref="11"/><nd ref="12"/>
     <tag k="highway" v="secondary"/>
+  </way>
+  <way id="56">
+    <nd ref="13"/><nd ref="14"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="oneway" v="yes"/>
   </way>
 </osm>

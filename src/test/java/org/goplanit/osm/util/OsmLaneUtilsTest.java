@@ -5,9 +5,16 @@ import java.util.Map;
 import com.slimjars.dist.gnu.trove.list.array.TLongArrayList;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.impl.Way;
+import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.utils.misc.Pair;
 import org.junit.jupiter.api.Test;
 
+import static org.goplanit.osm.tags.OsmJunctionTags.JUNCTION;
+import static org.goplanit.osm.tags.OsmJunctionTags.ROUNDABOUT;
+import static org.goplanit.osm.tags.OsmLaneTags.LANES;
+import static org.goplanit.osm.tags.OsmOneWayTags.ONEWAY;
+import static org.goplanit.osm.tags.OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION;
+import static org.goplanit.osm.tags.OsmOneWayTags.YES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -24,13 +31,13 @@ public class OsmLaneUtilsTest {
   /** A two-way road tagged with an even total and no lanes per direction has half of them in each direction */
   @Test
   public void evenTotalOnTwoWayRoadIsSplitEvenly() {
-    assertEquals(Pair.of(2, 2), OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of("lanes", "4")));
+    assertEquals(Pair.of(2, 2), OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of(LANES, "4")));
   }
 
   /** A two-way road tagged with an odd total and no lanes per direction has it rounded up in each direction */
   @Test
   public void oddTotalOnTwoWayRoadIsRoundedUpInEachDirection() {
-    assertEquals(Pair.of(2, 2), OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of("lanes", "3")));
+    assertEquals(Pair.of(2, 2), OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of(LANES, "3")));
   }
 
   /** A roundabout or motorway without a oneway tag is one-way by implication, so all its lanes are in the direction
@@ -38,17 +45,16 @@ public class OsmLaneUtilsTest {
   @Test
   public void totalOnImpliedOneWayIsAllInEitherDirection() {
     assertEquals(Pair.of(2, 2),
-        OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of("lanes", "2", "junction", "roundabout")));
-    assertEquals(Pair.of(3, 3),
-        OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of("lanes", "3", "highway", "motorway")));
+        OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of(LANES, "2", JUNCTION, ROUNDABOUT)));
+    assertEquals(Pair.of(3, 3), OsmLaneUtils.extractDirectionalHighwayLanes(
+        WAY, Map.of(LANES, "3", OsmHighwayTags.getHighwayKeyTag(), OsmHighwayTags.MOTORWAY)));
   }
 
   /** A one-way road has all its lanes in its one direction, which is backward when it is reversed */
   @Test
   public void totalOnOneWayRoadIsAllInItsDirection() {
-    assertEquals(Pair.of(4, null),
-        OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of("lanes", "4", "oneway", "yes")));
+    assertEquals(Pair.of(4, null), OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of(LANES, "4", ONEWAY, YES)));
     assertEquals(Pair.of(null, 4),
-        OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of("lanes", "4", "oneway", "-1")));
+        OsmLaneUtils.extractDirectionalHighwayLanes(WAY, Map.of(LANES, "4", ONEWAY, ONE_WAY_REVERSE_DIRECTION)));
   }
 }

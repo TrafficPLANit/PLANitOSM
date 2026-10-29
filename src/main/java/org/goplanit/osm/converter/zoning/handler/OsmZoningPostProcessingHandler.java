@@ -685,7 +685,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         getNetworkToZoningData().getNetworkSettings().getWaterwaySettings().getDefaultSpeedLimitByOsmWaterwayType(
             waterWayValue);
     var lanes = getNetworkToZoningData().getNetworkSettings().getDefaultLanesPerDirection(
-        waterWayKey, waterWayValue, false);
+        waterWayKey, Map.of(waterWayKey, waterWayValue));
     /* a->b */
     PlanitOsmNetworkLayerUtils.createPopulateAndRegisterLinkSegment(
         ferryLink, true /* A->B */, linkSegmentType, speedLimit, lanes, networkLayer);

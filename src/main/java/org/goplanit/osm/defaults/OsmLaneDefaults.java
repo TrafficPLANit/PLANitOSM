@@ -5,18 +5,23 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.tags.OsmJunctionTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.osm.util.OsmLaneUtils;
+import org.goplanit.osm.util.OsmWayUtils;
 
 /**
  * Configure and retrieve the default configuration for the number of lanes for various osm way types, used when the
  * tags of a way give none. A highway default is the total lanes of a way, the same as the OSM lanes tag: all of them
- * in its one direction when it is one-way, by its tag or by implication such as a roundabout, half of them, an odd
- * total rounded up, in each direction when it is two-way. For example primary has 2: 2 lanes on a one-way carriageway
- * and 1 lane in each direction of a two-way road. Railway tracks and waterway lanes are per direction. The "default"
- * defaults for highway tags originate from <a href="https://wiki.openstreetmap.org/wiki/Key:lanes">OSM key:lanes</a>,
- * checked against the lanes tagged on each highway type in New South Wales, while the "default" defaults for
+ * in its one direction when it is one-way, by its tag or by implication such as a motorway, half of them, an odd total
+ * rounded up, in each direction when it is two-way, and on a roundabout, since most roundabouts have a single lane,
+ * also on roads whose one-way carriageways have two. For example primary has 2: 2 lanes on a one-way carriageway and 1
+ * lane in each direction of a two-way road or on a roundabout. Railway tracks and waterway lanes are per direction.
+ * The "default" defaults for highway tags originate from
+ * <a href="https://wiki.openstreetmap.org/wiki/Key:lanes">OSM key:lanes</a>, benchmarked against Sydney data: the
+ * through lanes of the Transport for NSW Sydney Region Carriageway data (state roads, 2020) and the lanes tagged on
+ * each highway type in New South Wales, while the "default" defaults for
  * railways, i.e., the number of tracks is based on <a href="https://wiki.openstreetmap.org/wiki/Key:railway#Tracks">
  * OSM key:railways tracks</a>. Waterways are given a single lane equivalent.
  *
@@ -40,14 +45,17 @@ public class OsmLaneDefaults {
 
   /**
    * Initialise the defaults to use, the total lanes of a way by highway type, based on "common sense" as outlined in
-   * <a href="https://wiki.openstreetmap.org/wiki/Key:lanes">OSM key:lanes</a>, each the number of lanes most often
-   * tagged on that highway type in New South Wales
+   * <a href="https://wiki.openstreetmap.org/wiki/Key:lanes">OSM key:lanes</a>, benchmarked against Sydney data: each
+   * the number of lanes most often found on that highway type, one-way and two-way, in the through lanes of the
+   * Transport for NSW Sydney Region Carriageway data and in the lanes tagged in New South Wales
    */
   protected static void populateDefaultRoadLanes(){
-    /* 2 lanes for larger roads: on a one-way carriageway 2 lanes, on a two-way road 1 lane in each direction */
+    /* 2 lanes for larger roads: on a one-way carriageway 2 lanes, on a two-way road or a roundabout 1 lane in each
+     * direction */
     defaultRoadLanes.put(OsmHighwayTags.MOTORWAY, 2);
     defaultRoadLanes.put(OsmHighwayTags.TRUNK, 2);
     defaultRoadLanes.put(OsmHighwayTags.PRIMARY, 2);
+    defaultRoadLanes.put(OsmHighwayTags.SECONDARY, 2);
     /* 1 lane for links between roads and for not too large roads, also 1 lane in each direction of a two-way road */
     defaultRoadLanes.put(OsmHighwayTags.MOTORWAY_LINK,  MINIMUM_LANES);
     defaultRoadLanes.put(OsmHighwayTags.TRUNK_LINK,     MINIMUM_LANES);
@@ -55,7 +63,6 @@ public class OsmLaneDefaults {
     defaultRoadLanes.put(OsmHighwayTags.TERTIARY,       MINIMUM_LANES);
     defaultRoadLanes.put(OsmHighwayTags.TERTIARY_LINK,  MINIMUM_LANES);
     defaultRoadLanes.put(OsmHighwayTags.BUSWAY,         MINIMUM_LANES);
-    defaultRoadLanes.put(OsmHighwayTags.SECONDARY,      MINIMUM_LANES);
     defaultRoadLanes.put(OsmHighwayTags.SECONDARY_LINK, MINIMUM_LANES);
     defaultRoadLanes.put(OsmHighwayTags.PRIMARY_LINK,   MINIMUM_LANES);
     /* 1 lane for even smaller roads */
@@ -180,19 +187,22 @@ public class OsmLaneDefaults {
   }
   
   /** collect the default number of lanes in each direction of a way based on its type, e.g. highway=type. For a
-   * highway it is the total lanes of the way, all of them when it is one-way, half of them, an odd total rounded up,
-   * when it is two-way. For a railway or waterway it is the default per direction. In case no number of lanes is
-   * specified for the type, we revert to the missing default
+   * highway it is the total lanes of the way, all of them when it is one-way, by its tag or by implication such as a
+   * motorway, half of them, an odd total rounded up, when it is two-way or a roundabout. For a railway or waterway it
+   * is the default per direction. In case no number of lanes is specified for the type, we revert to the missing
+   * default
    *
    * @param osmKey OSM key to identify the way type (highway, rail way, or water way)
-   * @param osmValue OSM key's value
-   * @param oneWay true when the way is one-way, by its tag or by implication such as a roundabout
+   * @param tags of the way, holding the value of the OSM key
    * @return number of lanes in each direction for this type (if any), otherwise null is returned
    */
-  public Integer getDefaultLanesPerDirection(String osmKey, String osmValue, boolean oneWay) {
+  public Integer getDefaultLanesPerDirection(String osmKey, Map<String, String> tags) {
+    var osmValue = tags.get(osmKey);
     if(OsmHighwayTags.isHighwayKeyTag(osmKey)) {
       int totalLanes = getDefaultLanesByHighwayType(osmValue);
-      return oneWay ? totalLanes : OsmLaneUtils.findLanesPerDirectionOfTwoWayTotal(totalLanes);
+      boolean allLanesInOneDirection = !OsmJunctionTags.isPartOfCircularWayJunction(tags) &&
+          (OsmWayUtils.isOneWay(tags) || OsmWayUtils.isImpliedOneWay(tags));
+      return allLanesInOneDirection ? totalLanes : OsmLaneUtils.findLanesPerDirectionOfTwoWayTotal(totalLanes);
     }else if(OsmRailwayTags.isRailwayKeyTag(osmKey)) {
       return getDefaultDirectionalRailwayTracks();
     }else if(OsmWaterwayTags.isWaterBasedWay(osmKey, osmValue)) {
