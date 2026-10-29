@@ -25,7 +25,7 @@
                     <linksegmenttype id="0" externalid="ferry=living_street">
                         <name>ferry=living_street</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>600.0</capacitylane>
+                        <capacitylane>300.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -55,7 +55,7 @@
                     <linksegmenttype id="11" externalid="ferry=tertiary">
                         <name>ferry=tertiary</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1000.0</capacitylane>
+                        <capacitylane>1400.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -65,7 +65,7 @@
                     <linksegmenttype id="12" externalid="ferry=tertiary_link">
                         <name>ferry=tertiary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>800.0</capacitylane>
+                        <capacitylane>1300.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -85,7 +85,7 @@
                     <linksegmenttype id="14" externalid="ferry=trunk">
                         <name>ferry=trunk</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>2000.0</capacitylane>
+                        <capacitylane>1800.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -145,7 +145,7 @@
                     <linksegmenttype id="4" externalid="ferry=primary">
                         <name>ferry=primary</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1600.0</capacitylane>
+                        <capacitylane>1700.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -155,7 +155,7 @@
                     <linksegmenttype id="5" externalid="ferry=primary_link">
                         <name>ferry=primary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1400.0</capacitylane>
+                        <capacitylane>1600.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -175,7 +175,7 @@
                     <linksegmenttype id="7" externalid="ferry=road">
                         <name>ferry=road</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>0.0</capacitylane>
+                        <capacitylane>600.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -185,7 +185,7 @@
                     <linksegmenttype id="8" externalid="ferry=secondary">
                         <name>ferry=secondary</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1200.0</capacitylane>
+                        <capacitylane>1500.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>
@@ -195,7 +195,7 @@
                     <linksegmenttype id="9" externalid="ferry=secondary_link">
                         <name>ferry=secondary_link</name>
                         <maxdensitylane>180.0</maxdensitylane>
-                        <capacitylane>1000.0</capacitylane>
+                        <capacitylane>1400.0</capacitylane>
                         <access>
                             <accessgroup moderefs="ferry">
 <maxspeed>20.0</maxspeed>

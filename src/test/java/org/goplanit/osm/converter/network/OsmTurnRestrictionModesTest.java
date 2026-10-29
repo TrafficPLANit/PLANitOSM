@@ -1,6 +1,7 @@
 package org.goplanit.osm.converter.network;
 
 import static org.goplanit.osm.test.OsmLayerTestUtils.TRAFFIC_SIGNAL_SCENARIO_DIR;
+import static org.goplanit.osm.test.OsmLayerTestUtils.bannedTurn;
 import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,8 +14,6 @@ import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
-import org.goplanit.utils.network.layer.macroscopic.MacroscopicBannedTurn;
-import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,13 +42,6 @@ public class OsmTurnRestrictionModesTest {
   /** its only layer */
   private MacroscopicNetworkLayer layer;
 
-  /** the banned turn from one segment onto another */
-  private MacroscopicBannedTurn bannedTurn(MacroscopicLinkSegment from, MacroscopicLinkSegment to) {
-    return layer.getBannedTurns().getBySegment(from).stream()
-        .filter(ban -> ban.getSegmentFrom() == from && ban.getSegmentTo() == to)
-        .map(MacroscopicBannedTurn.class::cast).findFirst().orElse(null);
-  }
-
   @BeforeEach
   public void setUp() {
     IdGenerator.reset();
@@ -67,7 +59,7 @@ public class OsmTurnRestrictionModesTest {
   /** A restriction tag with an except tag bans every mode of the layer but those excepted */
   @Test
   public void noLeftTurnExceptBuses() {
-    var ban = bannedTurn(segment(layer, 11, 1), segment(layer, 1, 14));
+    var ban = bannedTurn(layer, segment(layer, 11, 1), segment(layer, 1, 14));
 
     assertTrue(ban.hasExplicitlyBannedModes());
     assertTrue(ban.isModeBanned(network.getModes().get(PredefinedModeType.CAR)));
@@ -77,7 +69,7 @@ public class OsmTurnRestrictionModesTest {
   /** A restriction tag for one mode bans that mode only, where a plain restriction tag would be needed before */
   @Test
   public void restrictionForTrucksOnly() {
-    var ban = bannedTurn(segment(layer, 11, 1), segment(layer, 1, 13));
+    var ban = bannedTurn(layer, segment(layer, 11, 1), segment(layer, 1, 13));
 
     assertEquals(Set.of(network.getModes().get(PredefinedModeType.HEAVY_GOODS_VEHICLE)),
         ban.getExplicitlyBannedModes());
@@ -86,7 +78,7 @@ public class OsmTurnRestrictionModesTest {
   /** A restriction tag is for vehicles: it bans no mode that is not a vehicle, such as pedestrians */
   @Test
   public void restrictionLeavesOutModesThatAreNotVehicles() {
-    var ban = bannedTurn(segment(layer, 12, 1), segment(layer, 1, 12));
+    var ban = bannedTurn(layer, segment(layer, 12, 1), segment(layer, 1, 12));
 
     assertTrue(ban.isModeBanned(network.getModes().get(PredefinedModeType.CAR)));
     assertTrue(ban.isModeBanned(network.getModes().get(PredefinedModeType.BICYCLE)));
@@ -97,7 +89,7 @@ public class OsmTurnRestrictionModesTest {
    * out */
   @Test
   public void restrictionForModesAllowedOnBothSegmentsOnly() {
-    var ban = bannedTurn(segment(layer, 12, 1), segment(layer, 1, 14));
+    var ban = bannedTurn(layer, segment(layer, 12, 1), segment(layer, 1, 14));
 
     assertTrue(ban.isModeBanned(network.getModes().get(PredefinedModeType.CAR)));
     assertFalse(ban.isModeBanned(network.getModes().get(PredefinedModeType.HEAVY_GOODS_VEHICLE)));
@@ -106,7 +98,7 @@ public class OsmTurnRestrictionModesTest {
   /** A restriction tag that bans every mode that can make the turn names none */
   @Test
   public void restrictionForEveryModeThatCanMakeTheTurn() {
-    var ban = bannedTurn(segment(layer, 13, 1), segment(layer, 1, 13));
+    var ban = bannedTurn(layer, segment(layer, 13, 1), segment(layer, 1, 13));
 
     assertFalse(ban.hasExplicitlyBannedModes());
     assertEquals(5, layer.getBannedTurns().size());

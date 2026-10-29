@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A junction at node 1 of six ways: way 20 (11-1, north arm, primary), way 21 (1-12, south arm, primary), way 24
+     (1-14-15-16-14, east arm, residential, ending on its own node 14 so it visits that node twice), way 25 (1-13, west
+     arm, service, access=private), way 26 (1-17, footway) and way 27 (1-18, primary). Four turn restrictions via
+     node 1: relation 201 from the north arm onto way 24, relation 202 from the north arm onto way 25, relation 203 from
+     the south arm onto way 26, relation 204 from the south arm onto way 27 -->
+<osm version="0.6" generator="hand-made for PLANitOSM turn restriction tests">
+  <node id="1" lat="-33.87" lon="151.21"/>
+  <node id="11" lat="-33.8692" lon="151.21"/>
+  <node id="12" lat="-33.8708" lon="151.21"/>
+  <node id="13" lat="-33.87" lon="151.20903"/>
+  <node id="14" lat="-33.87" lon="151.21097"/>
+  <node id="15" lat="-33.8695" lon="151.2118"/>
+  <node id="16" lat="-33.8705" lon="151.2118"/>
+  <node id="17" lat="-33.8706" lon="151.2094"/>
+  <node id="18" lat="-33.8694" lon="151.2106"/>
+  <way id="20">
+    <nd ref="11"/><nd ref="1"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="21">
+    <nd ref="1"/><nd ref="12"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="24">
+    <nd ref="1"/><nd ref="14"/><nd ref="15"/><nd ref="16"/><nd ref="14"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="25">
+    <nd ref="1"/><nd ref="13"/>
+    <tag k="highway" v="service"/>
+    <tag k="access" v="private"/>
+  </way>
+  <way id="26">
+    <nd ref="1"/><nd ref="17"/>
+    <tag k="highway" v="footway"/>
+  </way>
+  <way id="27">
+    <nd ref="1"/><nd ref="18"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <relation id="201">
+    <member type="way" ref="20" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="24" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_left_turn"/>
+  </relation>
+  <relation id="202">
+    <member type="way" ref="20" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="25" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_right_turn"/>
+  </relation>
+  <relation id="203">
+    <member type="way" ref="21" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="26" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_left_turn"/>
+  </relation>
+  <relation id="204">
+    <member type="way" ref="21" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="27" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_right_turn"/>
+  </relation>
+</osm>

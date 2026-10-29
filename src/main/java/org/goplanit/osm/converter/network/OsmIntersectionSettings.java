@@ -166,6 +166,8 @@ public class OsmIntersectionSettings {
           consolidatorSettings.getMaximumDistanceSlipLaneCrossingToJunctionMeters(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Maximum distance between crossings side by side (m)",
           consolidatorSettings.getMaximumDistanceBetweenCrossingsSideBySideMeters(), consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Include active modes in movements",
+          consolidatorSettings.isIncludeActiveModesInMovements(), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Nodes to join into one intersection",
           toLoggedNodeIds(consolidatorSettings.getNodeIdsToJoinIntoOneIntersection()), consolidationLevel));
       LOGGER.info(LoggingUtils.settingsValue("Nodes to keep in separate intersections",

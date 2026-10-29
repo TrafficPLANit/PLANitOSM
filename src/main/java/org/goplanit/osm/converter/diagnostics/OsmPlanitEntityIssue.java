@@ -95,7 +95,22 @@ public enum OsmPlanitEntityIssue {
   NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND("nodes excluded from collapse, not in the network"),
 
   /** a node whose traffic signal direction or kind is overridden by its OSM node id that no layer of the network has */
-  TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND("traffic signals overridden in the settings, not in the network");
+  TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND("traffic signals overridden in the settings, not in the network"),
+
+  /** a banned turn not created, since a way of its OSM turn restriction is excluded by its id in the settings */
+  BANNED_TURN_SKIPPED_WAY_EXCLUDED_BY_ID("banned turns skipped, a way excluded by its id in the settings"),
+
+  /** a banned turn not created, since a way of its OSM turn restriction is of a type the settings do not activate */
+  BANNED_TURN_SKIPPED_WAY_TYPE_NOT_ACTIVATED("banned turns skipped, a way of a type not activated in the settings"),
+
+  /** a banned turn not created, since no activated mode may use a way of its OSM turn restriction, such as a service
+   * road tagged access=private */
+  BANNED_TURN_SKIPPED_NO_ACTIVATED_MODE_ON_WAY("banned turns skipped, no activated mode allowed on a way"),
+
+  /** a two-way road tagged with an odd total of lanes and no lanes per direction, e.g. lanes=3, its lanes rounded up in
+   * each direction, 2 each way; often a tagging error, the lanes in each direction tagged as the total, so to check */
+  LANES_ROUNDED_UP_FOR_ODD_TOTAL_ON_TWO_WAY_ROAD(
+      "two-way roads with an odd lanes total, rounded up in each direction, check if lanes per direction was meant");
 
   /** label used when logging */
   private final String label;

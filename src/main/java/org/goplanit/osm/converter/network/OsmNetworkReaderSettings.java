@@ -688,15 +688,17 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     return this.laneConfiguration;
   }  
 
-  /** Collect the number of lanes/tracks for a given OSM way key/value for either direction (not total), 
-   * e.g. highway=value, railway=value based on the defaults provided
-   * 
+  /** Collect the default number of lanes/tracks in each direction of a way for a given OSM way key/value,
+   * e.g. highway=value, railway=value based on the defaults provided, see
+   * {@link OsmLaneDefaults#getDefaultLanesPerDirection(String, String, boolean)}
+   *
    * @param osmWayKey way key to collect default lanes for
    * @param osmWayValue way value to collect default lanes for
-   * @return number of default lanes
+   * @param oneWay true when the way is one-way, by its tag or by implication such as a roundabout
+   * @return number of default lanes in each direction
    */
-  public Integer getDefaultDirectionalLanesByWayType(String osmWayKey, String osmWayValue) {
-    return this.laneConfiguration.getDefaultDirectionalLanesByWayType(osmWayKey, osmWayValue);    
+  public Integer getDefaultLanesPerDirection(String osmWayKey, String osmWayValue, boolean oneWay) {
+    return this.laneConfiguration.getDefaultLanesPerDirection(osmWayKey, osmWayValue, oneWay);
   }
   
   /** Collect the mapped OSM modes based on the provided PLANit mode
@@ -926,7 +928,8 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    *
    * @param osmWayKey to use
    * @param osmWayTypeValue to use
-   * @param numLanes default to use
+   * @param numLanes default to use, for a highway the total lanes of a way, see {@link OsmLaneDefaults}, for a railway
+   *                 or waterway per direction
    * @param speedLimitKmh default to use
    * @param capacityPerLanePcuH default to use
    * @param maxDensityPerLanePcuH max density to apply
@@ -947,12 +950,12 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
     /* deal with LANE configuration */
     if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
       settings = this.osmHighwaySettings;
-      if(laneConfiguration.containsDefaultDirectionalLanes(osmWayKey,osmWayTypeValue)){
+      if(laneConfiguration.containsDefaultLanes(osmWayKey,osmWayTypeValue)){
         LOGGER.warning(String.format("Not allowed to add an OSM type that already exists, ignored %s=%s",
             osmWayKey, osmWayTypeValue));
         return;
       }
-      success = laneConfiguration.setDefaultDirectionalLanesByHighwayType(osmWayTypeValue, numLanes) == null;
+      success = laneConfiguration.setDefaultLanesByHighwayType(osmWayTypeValue, numLanes) == null;
     }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)){
       settings = this.osmRailwaySettings;
       if(laneConfiguration.getDefaultDirectionalRailwayTracks() != numLanes){

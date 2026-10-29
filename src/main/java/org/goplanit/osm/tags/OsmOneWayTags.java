@@ -1,11 +1,7 @@
 package org.goplanit.osm.tags;
 
-import java.util.Map;
-
-import org.goplanit.osm.util.OsmTagUtils;
-
 /**
- * common OSM one way tags and some helper methods
+ * common OSM one way tags, see {@link org.goplanit.osm.util.OsmWayUtils} for verifying if tags make a way one way
  *
  */
 public class OsmOneWayTags {
@@ -24,25 +20,5 @@ public class OsmOneWayTags {
   public static final String REVERSIBLE = "reversible";
   
   public static final String ALTERNATING = "alternating";
-  
-  /** verify if the tags indicate a one way OSM way
-   * 
-   * @param tags to check
-   * @return true when one way false otherwise
-   */
-  public static boolean isOneWay(Map<String,String> tags) {        
-    return OsmTagUtils.keyMatchesAnyValueTag(
-            tags, OsmOneWayTags.ONEWAY, YES, ONE_WAY_REVERSE_DIRECTION, ALTERNATING, REVERSIBLE );
-  }
-  
-  /** verify if the tags indicate a reversed one way OSM way, i.e., the value is set to "-1" indicating the main direction flows in the opposite direction
-   * of the geometry (backward)
-   * 
-   * @param tags to check
-   * @return true when one way false otherwise
-   */
-  public static boolean isReversedOneWay(Map<String,String> tags) {        
-    return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmOneWayTags.ONEWAY, ONE_WAY_REVERSE_DIRECTION);
-  }  
-  
+
 }

@@ -506,8 +506,12 @@ What consolidation does (PLANit's `IntersectionConsolidator`, next to the layer 
    approaches become approaches without a signal of their own, so movements are stored from them too. Each is recorded as on a slip lane, which often has no signal, or not:
    a road entering a signalised junction without a signal is unusual, so a signal may be missing from OSM.
 7. Each spatial intersection stores every movement through it: from each approach to each exit its internal
-   segments connect, with its length. A movement stores only a ban placed on it directly; the modes that can make it,
-   after mode access and banned turns at member nodes, are worked out when needed.
+   segments connect for a motorised road or rail mode, with its length. So a road approach gives no movement onto a
+   footway, though pedestrians may walk it. With `IntersectionConsolidatorSettings.setIncludeActiveModesInMovements`
+   (off by default) movements are stored for active modes too, such as pedestrians and bicycles; collapsing an active
+   mode (8.) needs that, since a collapsed mode keeps only the turns its movements give it. A movement stores only a ban
+   placed on it directly; the modes that can make it, after mode access and banned turns at member nodes, are worked
+   out when needed.
 8. On request (none by default), the chosen modes are collapsed onto a new centre node per spatial intersection, once
    consolidation is done (the layer modifier's `collapseIntersectionsToNonSpatialForModes`). A spatial intersection
    with a node excluded from collapse is left as it is.
@@ -533,8 +537,8 @@ coverage gain per member 0.05, coverage tie margin 0.05, every subdivision tried
 intersections and a larger cluster subdivided step by step keeping 3 subdivisions per step, junctions pulled in
 within the radius plus 30 m over a connection of at most 80 m, internal link length
 warning 100 m, maximum distance reached only through an intersection 60 m,
-maximum distance from a crossing on a slip lane to its junction 60 m, and maximum distance between crossings side by
-side 30 m.
+maximum distance from a crossing on a slip lane to its junction 60 m, maximum distance between crossings side by side
+30 m, and movements for motorised road and rail modes only, active modes not included.
 
 The user can change the grouping by OSM node id, each call adding one list of at least two nodes:
 `addOsmNodeIdsToJoinIntoOneIntersection` and `addOsmNodeIdsToKeepInSeparateIntersections` on the intersection settings.

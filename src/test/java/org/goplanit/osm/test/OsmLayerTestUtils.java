@@ -2,18 +2,24 @@ package org.goplanit.osm.test;
 
 import java.nio.file.Path;
 
+import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
+import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
+import org.goplanit.utils.network.layer.macroscopic.MacroscopicBannedTurn;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 
 /**
- * Lookups for tests on a layer parsed from a hand-made OSM scenario: PLANit entities by the OSM nodes they were created
- * for
+ * Reading and lookups for tests on a layer parsed from a hand-made OSM scenario: PLANit entities by the OSM nodes they
+ * were created for
  */
 public final class OsmLayerTestUtils {
 
   /** directory of the hand-made traffic signal scenario files */
   public static final Path TRAFFIC_SIGNAL_SCENARIO_DIR = Path.of("src", "test", "resources", "osm", "traffic-signals");
+
+  /** directory of the hand-made lanes scenario files */
+  public static final Path LANES_SCENARIO_DIR = Path.of("src", "test", "resources", "osm", "lanes");
 
   /**
    * Not instantiable
@@ -46,5 +52,33 @@ public final class OsmLayerTestUtils {
     var to = nodeByOsmId(layer, toOsmNodeId);
     return layer.getLinkSegments().stream()
         .filter(ls -> ls.getUpstreamVertex() == from && ls.getDownstreamVertex() == to).findFirst().orElseThrow();
+  }
+
+  /**
+   * The banned turn from one link segment onto another
+   *
+   * @param layer holding the banned turns
+   * @param from link segment arriving at the node
+   * @param to link segment leaving it
+   * @return the banned turn, null when there is none
+   */
+  public static MacroscopicBannedTurn bannedTurn(
+      MacroscopicNetworkLayer layer, MacroscopicLinkSegment from, MacroscopicLinkSegment to) {
+    return layer.getBannedTurns().getBySegment(from).stream()
+        .filter(ban -> ban.getSegmentFrom() == from && ban.getSegmentTo() == to)
+        .map(MacroscopicBannedTurn.class::cast).findFirst().orElse(null);
+  }
+
+  /**
+   * Read the first layer of a scenario in Australia, keeping every way: dangling subnetworks are not removed, so a
+   * scenario of separate or one-way roads stays whole
+   *
+   * @param scenario path of the OSM file
+   * @return the first layer read
+   */
+  public static MacroscopicNetworkLayer readFirstLayerKeepingDanglingSubnetworks(String scenario) {
+    var reader = OsmNetworkReaderFactory.create(scenario, CountryNames.AUSTRALIA);
+    reader.getSettings().deactivateRemoveDanglingSubnetworks();
+    return reader.read().getTransportLayers().getFirst();
   }
 }

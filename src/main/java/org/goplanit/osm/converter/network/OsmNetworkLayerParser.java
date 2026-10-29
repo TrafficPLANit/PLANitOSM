@@ -543,7 +543,7 @@ public class OsmNetworkLayerParser {
     *  consider moving this outside extraction function
     * */
     final Function<String, Integer> defaultLanesForWaterways = (waterWayKeyTag) ->
-        settings.getDefaultDirectionalLanesByWayType(waterWayKeyTag, tags.get(waterWayKeyTag));
+        settings.getDefaultLanesPerDirection(waterWayKeyTag, tags.get(waterWayKeyTag), false);
 
     Pair<Integer, Integer> lanesPair = null;
     String usedOsmWayKey = null;
@@ -558,11 +558,14 @@ public class OsmNetworkLayerParser {
           "possible tagging error, reverting to default bi-directional configuration",osmWay.getId()));
     }
 
+    /* the default lanes in each direction of this way, for a highway its total split as for the lanes tag */
+    var defaultLanesPerDirection = settings.getDefaultLanesPerDirection(usedOsmWayKey, tags.get(usedOsmWayKey),
+        OsmWayUtils.isOneWay(tags) || OsmWayUtils.isImpliedOneWay(tags));
+
     /* we assume that only when both are not set something went wrong or no information is ever available,
      * otherwise it is assumed it is a one-way link and it is properly configured */
     if(Pair.isNullOrEmpty(lanesPair)) {
-      var lanesForward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
-      lanesPair = Pair.of(lanesForward,lanesForward);
+      lanesPair = Pair.of(defaultLanesPerDirection, defaultLanesPerDirection);
       layerData.getProfiler().incrementMissingLaneCounter();
     }
 
@@ -570,14 +573,12 @@ public class OsmNetworkLayerParser {
 
     // forward lane update
     if(lanesPair.first() == null && linkSegmentTypes.first()!=null) {
-      var lanesForward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
-      lanesPair = Pair.of(lanesForward, lanesPair.second());
+      lanesPair = Pair.of(defaultLanesPerDirection, lanesPair.second());
       layerData.getProfiler().incrementMissingLaneCounter();
     }
     // backward lane update
     if(lanesPair.second() == null && linkSegmentTypes.second()!=null) {
-      var lanesBackward = settings.getDefaultDirectionalLanesByWayType(usedOsmWayKey, tags.get(usedOsmWayKey));
-      lanesPair = Pair.of(lanesPair.first(), lanesBackward);
+      lanesPair = Pair.of(lanesPair.first(), defaultLanesPerDirection);
       layerData.getProfiler().incrementMissingLaneCounter();
     }
 
@@ -867,10 +868,11 @@ public class OsmNetworkLayerParser {
 
       if(isPartOfCircularWay && (
           OsmTagUtils.keyMatchesAnyValueTag(tags, OsmJunctionTags.JUNCTION, OsmJunctionTags.ROUNDABOUT) ||
-              OsmOneWayTags.isOneWay(tags))) {
+              (OsmWayUtils.isOneWay(tags) && !OsmWayUtils.isReversedOneWay(tags)))) {
 
         /* when circular and one-way, i.e. tagged as roundabout or explicitly so, we only accept one direction
-        as accessible regardless of what has been identified so far;
+        as accessible regardless of what has been identified so far. Not for oneway=-1: travelled against its
+        geometry, its direction already follows from the mode access of each direction;
          * clockwise equates to forward direction while anti-clockwise equates to backward direction
          * TODO: ideally we do better and allow for active modes/access modifiers to overrule --> this should
             therefore eventually be dealt with directly when we extract the link segment types instead */

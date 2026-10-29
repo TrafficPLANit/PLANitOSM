@@ -19,7 +19,6 @@ import org.goplanit.utils.network.layer.physical.Node;
 
 import java.util.*;
 import java.util.logging.Logger;
-import java.util.stream.LongStream;
 
 /**
  * Data specifically required in the network reader while parsing OSM data
@@ -38,12 +37,13 @@ public class OsmNetworkReaderData {
   private final Set<Long> osmWayIdsOfRoundabouts = new HashSet<>();
 
   /** OSM node ids of the ways that can cross a road, collected while pre-processing, parsed or not, see
-   * {@link #registerOsmNodesOfWayThatCanCrossRoad(OsmWay)}; null once sorted on the first query */
-  private LongStream.Builder collectingOsmNodeIdsOfWaysThatCanCrossRoad = LongStream.builder();
+   * {@link #registerOsmNodesOfWayThatCanCrossRoad(OsmWay)}; footways and cycleways have many nodes */
+  private final SortedOsmIdSet osmNodeIdsOfWaysThatCanCrossRoad = new SortedOsmIdSet();
 
-  /** the OSM node ids of the ways that can cross a road, sorted without duplicates on the first query, null before;
-   * a primitive array, since footways and cycleways have many nodes */
-  private long[] osmNodeIdsOfWaysThatCanCrossRoad = null;
+  /** OSM way ids of the road and rail ways the settings skip, by why they are skipped, so a turn restriction on such a
+   * way can say why it gives no banned turn, see {@link #registerOsmWaySkippedBySettings(long, OsmWaySkipReason)} */
+  private final Map<OsmWaySkipReason, SortedOsmIdSet> osmWayIdsSkippedBySettings =
+      new EnumMap<>(OsmWaySkipReason.class);
 
   /** the distance that qualifies as being near to the network bounding area. USed to be used with
    * cruder version of bounding area when this was tracked as rectagnular gounding box and not a polygon */
@@ -134,8 +134,8 @@ public class OsmNetworkReaderData {
     signalisedCrossingWayIdByOsmNodeId.clear();
     osmNodeIdsOnSignalisedCrossingWayOnly.clear();
     osmWayIdsOfRoundabouts.clear();
-    collectingOsmNodeIdsOfWaysThatCanCrossRoad = LongStream.builder();
-    osmNodeIdsOfWaysThatCanCrossRoad = null;
+    osmNodeIdsOfWaysThatCanCrossRoad.clear();
+    osmWayIdsSkippedBySettings.clear();
     parseDiagnostics.reset();
     planitEntityDiagnostics.reset();
   }
@@ -261,13 +261,13 @@ public class OsmNetworkReaderData {
   /**
    * Record the OSM nodes of a way that can cross a road, a footway, cycleway or similar way that is not an area, parsed
    * or not, so that a node where it meets a road can be told apart once the road's links are created. Recorded while
-   * pre-processing, before {@link #isOsmNodeOfWayThatCanCrossRoad(long)} is first used
+   * pre-processing
    *
    * @param osmWay to record the nodes of
    */
   public void registerOsmNodesOfWayThatCanCrossRoad(OsmWay osmWay){
     for (int index = 0; index < osmWay.getNumberOfNodes(); ++index) {
-      collectingOsmNodeIdsOfWaysThatCanCrossRoad.add(osmWay.getNodeId(index));
+      osmNodeIdsOfWaysThatCanCrossRoad.add(osmWay.getNodeId(index));
     }
   }
 
@@ -279,12 +279,28 @@ public class OsmNetworkReaderData {
    * @return true when on such a way, false otherwise
    */
   public boolean isOsmNodeOfWayThatCanCrossRoad(long osmNodeId){
-    if (osmNodeIdsOfWaysThatCanCrossRoad == null) {
-      osmNodeIdsOfWaysThatCanCrossRoad =
-          collectingOsmNodeIdsOfWaysThatCanCrossRoad.build().sorted().distinct().toArray();
-      collectingOsmNodeIdsOfWaysThatCanCrossRoad = null;
-    }
-    return Arrays.binarySearch(osmNodeIdsOfWaysThatCanCrossRoad, osmNodeId) >= 0;
+    return osmNodeIdsOfWaysThatCanCrossRoad.contains(osmNodeId);
+  }
+
+  /**
+   * Record a road or rail way the settings skip, so it gets no link, with why it is skipped
+   *
+   * @param osmWayId of the way
+   * @param reason why the settings skip it
+   */
+  public void registerOsmWaySkippedBySettings(long osmWayId, OsmWaySkipReason reason){
+    osmWayIdsSkippedBySettings.computeIfAbsent(reason, skipReason -> new SortedOsmIdSet()).add(osmWayId);
+  }
+
+  /**
+   * Why the settings skip a way, see {@link #registerOsmWaySkippedBySettings(long, OsmWaySkipReason)}
+   *
+   * @param osmWayId of the way
+   * @return why it is skipped, null when the settings do not skip it
+   */
+  public OsmWaySkipReason findWhyOsmWaySkippedBySettings(long osmWayId){
+    return osmWayIdsSkippedBySettings.entrySet().stream().filter(entry -> entry.getValue().contains(osmWayId))
+        .map(Map.Entry::getKey).findFirst().orElse(null);
   }
 
   /**

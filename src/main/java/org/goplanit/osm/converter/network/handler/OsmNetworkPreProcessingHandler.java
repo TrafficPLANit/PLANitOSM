@@ -300,7 +300,10 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
 
     if(stage.equals(Stage.ONE_PREPROCESSING_SPATIALLY_NODES_WAYS)) {
       handleAnyOsmWayStageOne(osmWay);
-      wrapHandleInfrastructureOsmWay(osmWay, this::handleEligibleOsmWayStageOne);
+      /* a way the settings skip is never judged spatially, so it is remembered with why here, for a turn restriction
+       * on it to say why it gives no banned turn */
+      wrapHandleInfrastructureOsmWay(osmWay, this::handleEligibleOsmWayStageOne,
+          (skippedOsmWay, reason) -> getNetworkData().registerOsmWaySkippedBySettings(skippedOsmWay.getId(), reason));
       osmWayCounter.increment();
     }else if(stage.equals(Stage.TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS)){
       wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWaySpecialCasesStageTwo);

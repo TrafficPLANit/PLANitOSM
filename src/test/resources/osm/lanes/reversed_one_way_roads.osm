@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two residential ways tagged oneway=-1 and lanes=2, so travelled against their geometry: way 40 (1-2) and way 41
+     (2-3-4-5-3, ending on its own node 3 so it visits that node twice, its loop 3-4-5 drawn clockwise and travelled
+     anticlockwise) -->
+<osm version="0.6" generator="hand-made for PLANitOSM lanes tests">
+  <node id="1" lat="-33.87" lon="151.21"/>
+  <node id="2" lat="-33.87" lon="151.212"/>
+  <node id="3" lat="-33.87" lon="151.214"/>
+  <node id="4" lat="-33.8695" lon="151.215"/>
+  <node id="5" lat="-33.8705" lon="151.215"/>
+  <way id="40">
+    <nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="residential"/>
+    <tag k="oneway" v="-1"/>
+    <tag k="lanes" v="2"/>
+  </way>
+  <way id="41">
+    <nd ref="2"/><nd ref="3"/><nd ref="4"/><nd ref="5"/><nd ref="3"/>
+    <tag k="highway" v="residential"/>
+    <tag k="oneway" v="-1"/>
+    <tag k="lanes" v="2"/>
+  </way>
+</osm>

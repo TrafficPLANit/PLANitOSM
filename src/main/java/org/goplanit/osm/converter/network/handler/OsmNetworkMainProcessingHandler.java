@@ -8,9 +8,11 @@ import java.util.logging.Logger;
 
 import de.topobyte.osm4j.core.model.iface.*;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerImpl;
+import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
+import org.goplanit.osm.converter.network.data.OsmWaySkipReason;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
@@ -46,6 +48,13 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkMainProcessingHandler.class.getCanonicalName());
 
+  /** the issue recorded for a turn restriction that gives no banned turn because the settings skip a way of it, by why
+   * the way is skipped */
+  private static final Map<OsmWaySkipReason, OsmPlanitEntityIssue> ISSUE_OF_TURN_RESTRICTION_ON_SKIPPED_WAY = Map.of(
+      OsmWaySkipReason.WAY_EXCLUDED_BY_ID, OsmPlanitEntityIssue.BANNED_TURN_SKIPPED_WAY_EXCLUDED_BY_ID,
+      OsmWaySkipReason.WAY_TYPE_NOT_ACTIVATED, OsmPlanitEntityIssue.BANNED_TURN_SKIPPED_WAY_TYPE_NOT_ACTIVATED,
+      OsmWaySkipReason.NO_ACTIVATED_MODE_ON_WAY, OsmPlanitEntityIssue.BANNED_TURN_SKIPPED_NO_ACTIVATED_MODE_ON_WAY);
+
   /**  Extract roles that define the relation restriction
    *
    * @param osmRelation to extract from
@@ -78,6 +87,13 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
     return Triple.of(fromMember, viaMembers, toMember);
   }
+
+  /** the turn restrictions on a way visiting a node twice, with their tags, handled once the circular ways are
+   * processed and such a way has its links, see {@link #complete()} */
+  private final List<Pair<OsmRelation, Map<String, String>>> turnRestrictionsOnCircularWays = new ArrayList<>();
+
+  /** true once the circular ways are processed, so their links exist */
+  private boolean circularWaysProcessed = false;
 
        
   /** Verify if there exist any layers where the node is active either as an extreme node or internal to a PLANit link
@@ -387,6 +403,41 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
+   * Record a turn restriction that gives no banned turn because the settings skip a way of it, with why, see
+   * {@link OsmNetworkReaderData#findWhyOsmWaySkippedBySettings(long)}
+   *
+   * @param osmRelation of the turn restriction
+   * @param osmWayId of its way without a link
+   * @return true when the settings skip the way, so the restriction is recorded, false otherwise
+   */
+  private boolean registerIssueIfWaySkippedBySettings(OsmRelation osmRelation, long osmWayId) {
+    var skipReason = getNetworkData().findWhyOsmWaySkippedBySettings(osmWayId);
+    if(skipReason == null) {
+      return false;
+    }
+    getNetworkData().getPlanitEntityDiagnostics().registerIssue(
+        ISSUE_OF_TURN_RESTRICTION_ON_SKIPPED_WAY.get(skipReason), String.valueOf(osmRelation.getId()),
+        String.format("way %d", osmWayId));
+    return true;
+  }
+
+  /**
+   * The link of an OSM way at the via node of a turn restriction: the link of the way ending at the node, or else the
+   * link registered for the way. A way visiting a node twice becomes several links, of which only the last stays
+   * registered, so the one ending at the via node is the one the restriction means
+   *
+   * @param osmWayId of the way
+   * @param viaNode the restriction turns at
+   * @return the link, null when the way has none
+   */
+  private MacroscopicLink findLinkOfOsmWayAt(long osmWayId, Node viaNode) {
+    var osmWayExternalId = String.valueOf(osmWayId);
+    return viaNode.<MacroscopicLink>getLinks().stream()
+        .filter(link -> osmWayExternalId.equals(link.getExternalId())).findFirst()
+        .orElseGet(() -> getNetworkData().findPlanitLinkByOsmWayId(osmWayId));
+  }
+
+  /**
    * Extract PLANit turn restriction from the given OSM relation
    *
    * @param osmRelation to extract from (which is assumed to reflect a turn restriction of some kind)
@@ -401,10 +452,15 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       return;
     }
 
-    // check for spatial eligibility
+    // check for spatial eligibility. A way the settings skip is never judged spatially: with the other way in the area,
+    // the restriction is counted with why it gives no banned turn
     var spatialEligibility = getNetworkData().getOsmSpatialEligibilityData();
-    if(!spatialEligibility.isOsmWaySpatiallyEligible(osmToMember.getId()) ||
-        !spatialEligibility.isOsmWaySpatiallyEligible(osmFromMember.getId())){
+    boolean fromEligible = spatialEligibility.isOsmWaySpatiallyEligible(osmFromMember.getId());
+    boolean toEligible = spatialEligibility.isOsmWaySpatiallyEligible(osmToMember.getId());
+    if(!fromEligible || !toEligible){
+      if(fromEligible || toEligible) {
+        registerIssueIfWaySkippedBySettings(osmRelation, fromEligible ? osmToMember.getId() : osmFromMember.getId());
+      }
       return;
     }
 
@@ -422,18 +478,30 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     if(osmViaMember.getType().equals(EntityType.Way)){
       return;
     }
+    // a way visiting a node twice gets its links only once the circular ways are processed: handled then
+    var circularWays = getNetworkData().getOsmCircularWays();
+    if(!circularWaysProcessed &&
+        (circularWays.containsKey(osmFromMember.getId()) || circularWays.containsKey(osmToMember.getId()))) {
+      turnRestrictionsOnCircularWays.add(Pair.of(osmRelation, tags));
+      return;
+    }
+
     // obtain PLANit parsed equivalents of banned turn elements
-    var planitFromLink = getNetworkData().findPlanitLinkByOsmWayId(osmFromMember.getId());
-    var planitToLink = getNetworkData().findPlanitLinkByOsmWayId(osmToMember.getId());
     var planitViaNode = getNetworkData().findPlanitNodeByOsmNode(
         getNetworkData().getOsmNodeData().getRegisteredOsmNode(osmViaMember.getId()));
-
     if(planitViaNode == null){
       LOGGER.warning(String.format(
           "OSM turn restriction via node (%d) not available in parser, this shouldn't happen", osmViaMember.getId()));
       return;
     }
+    var planitFromLink = findLinkOfOsmWayAt(osmFromMember.getId(), planitViaNode);
+    var planitToLink = findLinkOfOsmWayAt(osmToMember.getId(), planitViaNode);
     if(planitFromLink == null || planitToLink == null){
+      // a way the settings skip gets no link, so the restriction gives no banned turn: counted with why
+      if(registerIssueIfWaySkippedBySettings(
+          osmRelation, planitFromLink == null ? osmFromMember.getId() : osmToMember.getId())) {
+        return;
+      }
       LOGGER.severe(String.format("OSM turn restriction from (%d) or to (%d) link not available in parser " +
           "this shouldn't happen", osmFromMember.getId(), osmToMember.getId()));
       return;
@@ -747,6 +815,12 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       getNetworkData().registerOsmWayIdOfRoundabout(osmWay.getId());
     }
 
+    /* recorded here, once per way, since its lanes are parsed for each of its links, and a circular way in parts */
+    if(OsmLaneUtils.isOddLanesTotalOnTwoWayHighway(osmWay, tags)) {
+      getNetworkData().getPlanitEntityDiagnostics().registerIssue(
+          OsmPlanitEntityIssue.LANES_ROUNDED_UP_FOR_ODD_TOTAL_ON_TWO_WAY_ROAD, String.valueOf(osmWay.getId()));
+    }
+
     /* circular ways special case filter */
     if(OsmWayUtils.isCircularOsmWay(osmWay, tags, false)) {          
       
@@ -856,6 +930,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
           linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerDirectionPair);
         }
       }
+
+      /* its type is parsed, but its access tags deny every activated mode, so the way gets no link */
+      if(linkSegmentTypesByLayerByDirection.values().stream().noneMatch(Pair::anyIsNotNull)) {
+        getNetworkData().registerOsmWaySkippedBySettings(osmWay.getId(), OsmWaySkipReason.NO_ACTIVATED_MODE_ON_WAY);
+      }
     }
     return linkSegmentTypesByLayerByDirection;
   }
@@ -868,6 +947,12 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
 
     /* process circular ways */
     processCircularWays();
+    circularWaysProcessed = true;
+
+    /* turn restrictions on circular ways, now that their links exist */
+    turnRestrictionsOnCircularWays.forEach(
+        restriction -> extractOsmTurnRestriction(restriction.first(), restriction.second()));
+    turnRestrictionsOnCircularWays.clear();
             
     /* delegate to each layer handler present, do this in deterministic order to ensure any created
     PLANit links/segments

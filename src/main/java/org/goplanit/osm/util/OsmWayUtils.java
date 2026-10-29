@@ -10,6 +10,8 @@ import java.util.logging.Logger;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.tags.OsmJunctionTags;
+import org.goplanit.osm.tags.OsmOneWayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.exceptions.PlanItException;
@@ -169,8 +171,41 @@ public class OsmWayUtils {
     /* clockwise stands for forward direction, so when they do not match, all modes are to be excluded,
     the direction is closed */
     return isClockWise!=isForwardDirection;
-  } 
-  
+  }
+
+  /** verify if the tags indicate a one way OSM way. The value is compared as is: stripping special characters would
+   * turn "-1" into "1"
+   *
+   * @param tags to check
+   * @return true when one way false otherwise
+   */
+  public static boolean isOneWay(Map<String,String> tags) {
+    return tags.containsKey(OsmOneWayTags.ONEWAY) && OsmTagUtils.matchesAnyValueTag(tags.get(OsmOneWayTags.ONEWAY),
+        OsmOneWayTags.YES, OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION, OsmOneWayTags.ALTERNATING,
+        OsmOneWayTags.REVERSIBLE);
+  }
+
+  /** verify if the tags indicate a reversed one way OSM way, i.e., the value is set to "-1" indicating the main
+   * direction flows in the opposite direction of the geometry (backward)
+   *
+   * @param tags to check
+   * @return true when one way false otherwise
+   */
+  public static boolean isReversedOneWay(Map<String,String> tags) {
+    return OsmOneWayTags.ONE_WAY_REVERSE_DIRECTION.equals(tags.get(OsmOneWayTags.ONEWAY));
+  }
+
+  /** Verify if the tags imply a one way OSM way without a oneway tag: a roundabout or circular junction, or a
+   * motorway, see <a href="https://wiki.openstreetmap.org/wiki/Key:oneway#Implied_oneway_restriction">OSM key:oneway</a>
+   *
+   * @param tags to check
+   * @return true when implied one way, false otherwise
+   */
+  public static boolean isImpliedOneWay(Map<String,String> tags) {
+    return !tags.containsKey(OsmOneWayTags.ONEWAY) && (OsmJunctionTags.isPartOfCircularWayJunction(tags) ||
+        OsmHighwayTags.MOTORWAY.equals(tags.get(OsmHighwayTags.getHighwayKeyTag())));
+  }
+
   /** Based on the passed in osmWay collect the coordinates on that way as a coordinate array. In case something goes wrong and missing
    * nodes are found, the passed in consumer is called to deal with it. User can decide to throw an exception or do something else
    * entirely. If no exception is thrown, the nodes that could be parsed will be returned
