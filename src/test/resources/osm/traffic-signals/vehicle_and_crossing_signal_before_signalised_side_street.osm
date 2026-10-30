@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- As vehicle_and_crossing_signal_before_unsignalised_side_street, but side street way 11 (7-9-6-8) has a vehicle signal
+     of its own: node 9 (forward), about 11 m before junction 6, so the junction shows another signal -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2096">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="crossing" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.2097"/>
+  <node id="7" lat="-33.8691" lon="151.2097"/>
+  <node id="8" lat="-33.8709" lon="151.2097"/>
+  <node id="9" lat="-33.8699" lon="151.2097">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="9"/><nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+</osm>

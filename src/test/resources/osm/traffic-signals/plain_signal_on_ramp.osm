@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Plain vehicle signal on shape node 2 of one-way motorway on-ramp 1-2-3, about 150 m from either end, as a ramp
+     meter is sometimes tagged; no junction anywhere -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2084"/>
+  <node id="2" lat="-33.8700" lon="151.2100">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="3" lat="-33.8700" lon="151.2116"/>
+  <way id="10">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/>
+    <tag k="highway" v="motorway_link"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+</osm>

@@ -1,7 +1,8 @@
 package org.goplanit.osm.defaults;
 
 /**
- * A class containing instances for each of the OSM speed limit default categories: urban/non-urban highways and railways
+ * A class containing instances for each of the OSM speed limit default categories: urban/non-urban highways
+ * and railways
  * 
  * @author markr
  *
@@ -9,6 +10,15 @@ package org.goplanit.osm.defaults;
 
 public class OsmSpeedLimitDefaults {
   
+  /** in absence of OSM default, we create a global highway speed limit (km/h) available */
+  public static final double GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH = 50;  
+
+  /** in absence of OSM defined defaults, we make a global railway speed limit (km/h) available */
+  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
+
+  /* in absence of OSM defined defaults, we provide a global waterway speed limit (km/h) available */
+  public static final double GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH = 20;
+
   /**
    * urban highway speed limit defaults
    */
@@ -34,15 +44,6 @@ public class OsmSpeedLimitDefaults {
    */
   protected final OsmSpeedLimitDefaultsCategory waterwayDefaults;
   
-  
-  /** in absence of OSM default, we create a global highway speed limit (km/h) available */
-  public static final double GLOBAL_DEFAULT_HIGHWAY_SPEEDLIMIT_KMH = 50;  
-    
-  /** in absence of OSM defined defaults, we make a global railway speed limit (km/h) available */
-  public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
-
-  /* in absence of OSM defined defaults, we provide a global waterway speed limit (km/h) available */
-  public static final double GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH = 20;
   
   /** update country
    * 
@@ -137,9 +138,9 @@ public class OsmSpeedLimitDefaults {
   /**
    * clone
    * 
-   * @return shallow copy
+   * @return deep copy
    */
-  public OsmSpeedLimitDefaults shallowClone() {
+  public OsmSpeedLimitDefaults deepClone() {
     return new OsmSpeedLimitDefaults(this);
   }
   

@@ -10,12 +10,20 @@ import org.goplanit.utils.macroscopic.MacroscopicConstants;
  */
 public class OsmConstants {
 
+  /**
+   * Dummy constructor
+   */
+  private OsmConstants(){}
+
+  // MODELLING
+
   /** pcu/km/lane */
   public static final double DEFAULT_MAX_DENSITY_LANE= MacroscopicConstants.DEFAULT_MAX_DENSITY_PCU_KM_LANE;
   
-  /** pcu/h/lane */
-  public static final double DEFAULT_MINIMUM_CAPACITY_LANE = 600;  
-  
+  /** pcu/h/lane. The capacity defaults per lane below are the maximum flow before any green ratio is applied, e.g. the
+   * saturation flow of a lane at traffic signals, so the capacity entering an intersection */
+  public static final double DEFAULT_MINIMUM_CAPACITY_LANE = 600;
+
   /** default for this type in pcu/h/lane */
   public static final double MOTORWAY_CAPACITY = 2000;
   
@@ -23,28 +31,31 @@ public class OsmConstants {
   public static final double MOTORWAY_LINK_CAPACITY = 1800;
 
   /** default for this type in pcu/h/lane */
-  public static final double TRUNK_CAPACITY = 2000;
+  public static final double TRUNK_CAPACITY = 1800;
 
   /** default for this type in pcu/h/lane */
   public static final double TRUNK_LINK_CAPACITY = 1700;
 
   /** default for this type in pcu/h/lane */
-  public static final double PRIMARY_CAPACITY = 1600;
+  public static final double PRIMARY_CAPACITY = 1700;
 
   /** default for this type in pcu/h/lane */
-  public static final double PRIMARY_LINK_CAPACITY = 1400;  
-  
-  /** default for this type in pcu/h/lane */
-  public static final double SECONDARY_CAPACITY = 1200;
+  public static final double PRIMARY_LINK_CAPACITY = 1600;
 
   /** default for this type in pcu/h/lane */
-  public static final double SECONDARY_LINK_CAPACITY = 1000;
+  public static final double SECONDARY_CAPACITY = 1500;
 
   /** default for this type in pcu/h/lane */
-  public static final double TERTIARY_CAPACITY = 1000;
-  
+  public static final double SECONDARY_LINK_CAPACITY = 1400;
+
   /** default for this type in pcu/h/lane */
-  public static final double TERTIARY_LINK_CAPACITY = 800;
+  public static final double TERTIARY_CAPACITY = 1400;
+
+  /** default for this type in pcu/h/lane */
+  public static final double TERTIARY_LINK_CAPACITY = 1300;
+
+  /** default for this type in pcu/h/lane (given this is bus only capacity is likely not overly important */
+  public static final double BUSWAY_CAPACITY = 1000;
 
   /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
   public static final double UNCLASSIFIED_LINK_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
@@ -52,8 +63,8 @@ public class OsmConstants {
   /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
   public static final double RESIDENTIAL_LINK_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 
-  /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
-  public static final double LIVING_STREET_LINK_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
+  /** default for this type in pcu/h/lane, a shared zone with a speed limit of 10 km/h */
+  public static final double LIVING_STREET_LINK_CAPACITY = 300;
 
   /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
   public static final double SERVICE_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
@@ -64,8 +75,8 @@ public class OsmConstants {
   /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
   public static final double TRACK_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 
-  /** default for this type in pcu/h/lane */
-  public static final double ROAD_CAPACITY = 0;
+  /** default for this type in pcu/h/lane set to {@code DEFAULT_MINIMUM_CAPACITY_LANE}*/
+  public static final double ROAD_CAPACITY = DEFAULT_MINIMUM_CAPACITY_LANE;
 
   /** default capacity in pcu/h for railways, not that this is generally not used so merely here for consistency */
   public static final double RAILWAY_CAPACITY = 10000;
