@@ -63,6 +63,9 @@ public enum OsmPlanitEntityIssue {
   /** a crossing intersection joined to a junction by consolidation, along the road */
   CROSSING_JOINED_TO_JUNCTION("crossings joined to a junction"),
 
+  /** a ramp meter intersection joined to a junction by consolidation, along the road, in the same way as a crossing */
+  RAMP_METER_JOINED_TO_JUNCTION("ramp meters joined to a junction"),
+
   /** a crossing intersection on a slip lane joined to its junction by consolidation */
   CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION("crossings on a slip lane joined to a junction"),
 
@@ -97,15 +100,10 @@ public enum OsmPlanitEntityIssue {
   /** a node whose traffic signal direction or kind is overridden by its OSM node id that no layer of the network has */
   TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND("traffic signals overridden in the settings, not in the network"),
 
-  /** a banned turn not created, since a way of its OSM turn restriction is excluded by its id in the settings */
-  BANNED_TURN_SKIPPED_WAY_EXCLUDED_BY_ID("banned turns skipped, a way excluded by its id in the settings"),
-
-  /** a banned turn not created, since a way of its OSM turn restriction is of a type the settings do not activate */
-  BANNED_TURN_SKIPPED_WAY_TYPE_NOT_ACTIVATED("banned turns skipped, a way of a type not activated in the settings"),
-
-  /** a banned turn not created, since no activated mode may use a way of its OSM turn restriction, such as a service
-   * road tagged access=private */
-  BANNED_TURN_SKIPPED_NO_ACTIVATED_MODE_ON_WAY("banned turns skipped, no activated mode allowed on a way"),
+  /** a banned turn not created, since a way or the via node of its OSM turn restriction is not in the network: dropped
+   * while parsing, for example a way of a type not activated or one no activated mode may use, such as a service road
+   * tagged access=private, or outside the area parsed. The restriction is taken to be tagged correctly */
+  BANNED_TURN_IGNORED_INFRASTRUCTURE_DROPPED("banned turns ignored, infrastructure dropped during parsing"),
 
   /** a two-way road tagged with an odd total of lanes and no lanes per direction, e.g. lanes=3, its lanes rounded up in
    * each direction, 2 each way; often a tagging error, the lanes in each direction tagged as the total, so to check */

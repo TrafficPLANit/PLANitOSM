@@ -7,11 +7,9 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.goplanit.osm.converter.OsmBoundary;
-import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.utils.id.IdGenerator;
-import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.intersection.Intersection;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionControlType;
@@ -21,8 +19,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.goplanit.osm.test.OsmLayerTestUtils.TRAFFIC_SIGNAL_SCENARIO_DIR;
+import static org.goplanit.osm.converter.network.OsmTrafficSignalScenarioTestUtils.BREAK_LINKS_AT_ISOLATED_SIGNALS;
+import static org.goplanit.osm.converter.network.OsmTrafficSignalScenarioTestUtils.parseTrafficSignalScenario;
 import static org.goplanit.osm.test.OsmLayerTestUtils.nodeByOsmId;
+import static org.goplanit.osm.test.OsmLayerTestUtils.onlyIntersection;
 import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 
 /**
@@ -34,12 +34,7 @@ public class OsmTrafficSignalsTest {
 
   /** read a scenario file with the given settings changes, and return its only layer */
   private static MacroscopicNetworkLayer parse(String scenario, Consumer<OsmNetworkReaderSettings> configure) {
-    var reader = OsmNetworkReaderFactory.create(
-        TRAFFIC_SIGNAL_SCENARIO_DIR.resolve(scenario + ".osm").toString(), CountryNames.AUSTRALIA);
-    configure.accept(reader.getSettings());
-    var network = reader.read();
-    assertEquals(1, network.getTransportLayers().size());
-    return network.getTransportLayers().getFirst();
+    return parseTrafficSignalScenario(scenario, configure).layer();
   }
 
   /** read a scenario file with default settings */
@@ -52,12 +47,6 @@ public class OsmTrafficSignalsTest {
     var node = nodeByOsmId(layer, osmNodeId);
     return layer.getIntersections().stream()
         .filter(intersection -> intersection.hasMemberNode(node)).findFirst().orElseThrow();
-  }
-
-  /** the layer's only intersection */
-  private static Intersection onlyIntersection(MacroscopicNetworkLayer layer) {
-    assertEquals(1, layer.getIntersections().size());
-    return layer.getIntersections().stream().findFirst().orElseThrow();
   }
 
   /** location of the hand-made scenario files */
@@ -224,10 +213,9 @@ public class OsmTrafficSignalsTest {
      *     2 --->-- 1 --<--- 3      way 10: 2-1-3 primary, two-way (---); arrows mark the approaches
      *                               way 11: 4-1-5 footway crossing at 1, not parsed, crossing=traffic_signals
      *
-     *   1: highway=crossing, crossing=marked; breaking links at isolated signalised crossings on
+     *   1: highway=crossing, crossing=marked; breaking links at isolated signals on
      */
-    var layer = parse("crossing_signal_on_crossing_way_only",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var layer = parse("crossing_signal_on_crossing_way_only", BREAK_LINKS_AT_ISOLATED_SIGNALS);
 
     var intersection = onlyIntersection(layer);
     assertEquals(List.of(nodeByOsmId(layer, 1)), intersection.getMemberNodes());
@@ -532,7 +520,7 @@ public class OsmTrafficSignalsTest {
   }
 
   /** A vehicle signal with no junction within the maximum distance is an isolated crossing: with default settings
-   * it creates nothing and breaks no link, with breaking links at isolated crossings on the link is broken at it and it
+   * it creates nothing and breaks no link, with breaking links at isolated signals on the link is broken at it and it
    * is its own crossing intersection */
   @Test
   public void vehicleSignalFarFromAnyJunctionOnShapeNode() {
@@ -546,7 +534,7 @@ public class OsmTrafficSignalsTest {
      *   1: highway=traffic_signals, a shape node of way 10
      *   6: junction node, about 148 m from the signal, beyond the 50 m default maximum distance
      *   forward, junction 6 is out of reach; backward, dead end 2; so the signal is an isolated crossing
-     *   expected, default settings (breaking links at isolated signalised crossings off): no intersection and no link
+     *   expected, default settings (breaking links at isolated signals off): no intersection and no link
      *   broken: four links (2-6, 6-3, 7-6, 6-8)
      *   expected, setting on: way 10 broken at 1, five links; 1 is a signalised crossing intersection with approaches
      *   2->1 and 6->1 and external id 1
@@ -555,9 +543,7 @@ public class OsmTrafficSignalsTest {
     assertTrue(off.getIntersections().isEmpty());
     assertEquals(4, off.getLinks().size());
 
-    IdGenerator.reset();
-    var on = parse("signal_far_from_junction_on_shape_node",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var on = parse("signal_far_from_junction_on_shape_node", BREAK_LINKS_AT_ISOLATED_SIGNALS);
     assertEquals(5, on.getLinks().size());
     var crossing = onlyIntersection(on);
     assertEquals(List.of(nodeByOsmId(on, 1)), crossing.getMemberNodes());
@@ -575,7 +561,7 @@ public class OsmTrafficSignalsTest {
      *            ~150 m                ~150 m              no junction anywhere
      *
      *   1: highway=traffic_signals, where the two ways meet: a PLANit node with two links
-     *   expected, default settings (breaking links at isolated signalised crossings off): no intersection, two links
+     *   expected, default settings (breaking links at isolated signals off): no intersection, two links
      *   expected, setting on: 1 is a signalised crossing intersection with approaches 2->1 and 3->1; still two links,
      *   no break needed
      */
@@ -583,9 +569,7 @@ public class OsmTrafficSignalsTest {
     assertTrue(off.getIntersections().isEmpty());
     assertEquals(2, off.getLinks().size());
 
-    IdGenerator.reset();
-    var on = parse("signal_far_from_junction_on_two_link_node",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var on = parse("signal_far_from_junction_on_two_link_node", BREAK_LINKS_AT_ISOLATED_SIGNALS);
     assertEquals(2, on.getLinks().size());
     var crossing = onlyIntersection(on);
     assertEquals(List.of(nodeByOsmId(on, 1)), crossing.getMemberNodes());
@@ -611,7 +595,6 @@ public class OsmTrafficSignalsTest {
     var defaults = parse("signal_12m_before_junction");
     assertEquals(List.of(segment(defaults, 2, 6)), onlyIntersection(defaults).getApproachSegments());
 
-    IdGenerator.reset();
     var tighter = parse("signal_12m_before_junction",
         settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(10));
     assertTrue(tighter.getIntersections().isEmpty());
@@ -851,7 +834,7 @@ public class OsmTrafficSignalsTest {
   }
 
   /** A signalised pedestrian crossing along a road far from any junction is isolated: with breaking links at isolated
-   * signalised crossings off (the default) nothing changes; on, the link is broken at it and it becomes its own
+   * signals off (the default) nothing changes; on, the link is broken at it and it becomes its own
    * crossing intersection */
   @Test
   public void midBlockCrossing() {
@@ -868,9 +851,7 @@ public class OsmTrafficSignalsTest {
     assertTrue(off.getIntersections().isEmpty());
     assertEquals(1, off.getLinks().size());
 
-    IdGenerator.reset();
-    var on = parse("mid_block_crossing",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var on = parse("mid_block_crossing", BREAK_LINKS_AT_ISOLATED_SIGNALS);
     assertEquals(2, on.getLinks().size());
     var crossing = onlyIntersection(on);
     assertEquals(List.of(nodeByOsmId(on, 31)), crossing.getMemberNodes());
@@ -897,13 +878,12 @@ public class OsmTrafficSignalsTest {
      *
      *   footways not parsed (active modes off, the default here): 31 has only the road through it, so the crossing
      *   signal is isolated from the pedestrian network; being within 30 m of junction 1 along its approach 2->1, it is
-     *   part of that junction: even with breaking links at isolated crossings on, no link is broken at 31 and the
+     *   part of that junction: even with breaking links at isolated signals on, no link is broken at 31 and the
      *   junction's intersection is unchanged
      *   footways parsed: 31 is where the footway crosses the road, a junction node, so it is its own signalised
      *   crossing intersection next to the junction's, approached along the road only: 2->31 and 1->31
      */
-    var footwaysNotParsed = parse("crossing_near_signalised_junction",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var footwaysNotParsed = parse("crossing_near_signalised_junction", BREAK_LINKS_AT_ISOLATED_SIGNALS);
     assertEquals(4, footwaysNotParsed.getLinks().size());
     var junction = onlyIntersection(footwaysNotParsed);
     assertEquals(List.of(nodeByOsmId(footwaysNotParsed, 1)), junction.getMemberNodes());
@@ -912,7 +892,6 @@ public class OsmTrafficSignalsTest {
             segment(footwaysNotParsed, 8, 1), segment(footwaysNotParsed, 9, 1)),
         Set.copyOf(junction.getApproachSegments()));
 
-    IdGenerator.reset();
     var footwaysParsed = parse("crossing_near_signalised_junction",
         settings -> settings.getHighwaySettings().activateOsmHighwayType(OsmHighwayTags.FOOTWAY));
     assertEquals(2, footwaysParsed.getIntersections().size());
@@ -938,17 +917,15 @@ public class OsmTrafficSignalsTest {
      *   31: highway=crossing, crossing=traffic_signals, a shape node of way 10, ~15 m past 6 on its exit arm
      *
      *   within the 30 m crossing distance of junction 6, behind it against the traffic: part of that junction, so even
-     *   with breaking links at isolated crossings on, no link is broken at 31. With the crossing distance lowered to
+     *   with breaking links at isolated signals on, no link is broken at 31. With the crossing distance lowered to
      *   10 m, junction 6 is out of reach and 31 is an isolated crossing
      */
-    var withinReach = parse("crossing_on_exit_arm_of_signalised_junction",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var withinReach = parse("crossing_on_exit_arm_of_signalised_junction", BREAK_LINKS_AT_ISOLATED_SIGNALS);
     assertEquals(4, withinReach.getLinks().size());
     assertEquals(List.of(nodeByOsmId(withinReach, 6)), onlyIntersection(withinReach).getMemberNodes());
 
-    IdGenerator.reset();
     var beyondReach = parse("crossing_on_exit_arm_of_signalised_junction", settings -> {
-      settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      settings.getIntersectionSettings().setBreakLinksAtIsolatedSignals(true);
       settings.getIntersectionSettings().setMaximumDistanceSignalisedCrossingToJunctionInMeters(10);
     });
     assertEquals(5, beyondReach.getLinks().size());
@@ -974,11 +951,10 @@ public class OsmTrafficSignalsTest {
      *
      *   footways not parsed (active modes off, the default here): 31 has only the road through it, so the crossing
      *   signal is isolated from the pedestrian network; junction 1 has no intersection, so the crossing is not part of
-     *   it: with breaking links at isolated crossings on, way 10 is broken at 31 and 31 is its own signalised crossing
+     *   it: with breaking links at isolated signals on, way 10 is broken at 31 and 31 is its own signalised crossing
      *   intersection with approaches 2->31 and 1->31; 1 gets no intersection
      */
-    var layer = parse("crossing_near_unsignalised_junction",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var layer = parse("crossing_near_unsignalised_junction", BREAK_LINKS_AT_ISOLATED_SIGNALS);
 
     assertEquals(5, layer.getLinks().size());
     var crossing = onlyIntersection(layer);
@@ -1001,12 +977,11 @@ public class OsmTrafficSignalsTest {
      *   1: highway=traffic_signals, on the junction's centre: a signalised junction, approach 2->1 among its four
      *   31: highway=crossing, crossing=traffic_signals, a shape node of way 10, ~40 m before 1: beyond the 30 m for a
      *       crossing to count as part of the junction (the footway is not in the data, as when footways are not parsed)
-     *   expected, breaking links at isolated crossings on: way 10 broken at 31, five links; 31 is its own crossing
+     *   expected, breaking links at isolated signals on: way 10 broken at 31, five links; 31 is its own crossing
      *   intersection with approaches 2->31 and 1->31; junction 1 keeps four approaches, its approach from the west now
      *   the piece arriving at it, 31->1, instead of 2->1
      */
-    var layer = parse("crossing_breaks_junction_approach",
-        settings -> settings.getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true));
+    var layer = parse("crossing_breaks_junction_approach", BREAK_LINKS_AT_ISOLATED_SIGNALS);
 
     assertEquals(5, layer.getLinks().size());
     assertEquals(2, layer.getIntersections().size());

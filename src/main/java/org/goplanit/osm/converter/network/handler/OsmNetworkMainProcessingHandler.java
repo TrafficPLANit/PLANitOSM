@@ -12,7 +12,6 @@ import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
-import org.goplanit.osm.converter.network.data.OsmWaySkipReason;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
@@ -47,13 +46,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
    * The logger for this class
    */
   private static final Logger LOGGER = Logger.getLogger(OsmNetworkMainProcessingHandler.class.getCanonicalName());
-
-  /** the issue recorded for a turn restriction that gives no banned turn because the settings skip a way of it, by why
-   * the way is skipped */
-  private static final Map<OsmWaySkipReason, OsmPlanitEntityIssue> ISSUE_OF_TURN_RESTRICTION_ON_SKIPPED_WAY = Map.of(
-      OsmWaySkipReason.WAY_EXCLUDED_BY_ID, OsmPlanitEntityIssue.BANNED_TURN_SKIPPED_WAY_EXCLUDED_BY_ID,
-      OsmWaySkipReason.WAY_TYPE_NOT_ACTIVATED, OsmPlanitEntityIssue.BANNED_TURN_SKIPPED_WAY_TYPE_NOT_ACTIVATED,
-      OsmWaySkipReason.NO_ACTIVATED_MODE_ON_WAY, OsmPlanitEntityIssue.BANNED_TURN_SKIPPED_NO_ACTIVATED_MODE_ON_WAY);
 
   /**  Extract roles that define the relation restriction
    *
@@ -403,22 +395,16 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
-   * Record a turn restriction that gives no banned turn because the settings skip a way of it, with why, see
-   * {@link OsmNetworkReaderData#findWhyOsmWaySkippedBySettings(long)}
+   * Record a turn restriction that gives no banned turn because infrastructure it needs is not in the network: dropped
+   * while parsing, or outside the area parsed. The restriction is taken to be tagged correctly, so what is missing is
+   * counted as dropped without asking why
    *
    * @param osmRelation of the turn restriction
-   * @param osmWayId of its way without a link
-   * @return true when the settings skip the way, so the restriction is recorded, false otherwise
+   * @param missing what is missing, for example "way 25" or "via node 52"
    */
-  private boolean registerIssueIfWaySkippedBySettings(OsmRelation osmRelation, long osmWayId) {
-    var skipReason = getNetworkData().findWhyOsmWaySkippedBySettings(osmWayId);
-    if(skipReason == null) {
-      return false;
-    }
+  private void registerBannedTurnIgnoredInfrastructureDropped(OsmRelation osmRelation, String missing) {
     getNetworkData().getPlanitEntityDiagnostics().registerIssue(
-        ISSUE_OF_TURN_RESTRICTION_ON_SKIPPED_WAY.get(skipReason), String.valueOf(osmRelation.getId()),
-        String.format("way %d", osmWayId));
-    return true;
+        OsmPlanitEntityIssue.BANNED_TURN_IGNORED_INFRASTRUCTURE_DROPPED, String.valueOf(osmRelation.getId()), missing);
   }
 
   /**
@@ -438,7 +424,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
-   * Extract PLANit turn restriction from the given OSM relation
+   * Extract PLANit turn restriction from the given OSM relation. The relation is taken to be tagged correctly: when a
+   * way or the via node it needs is not in the network, it is counted as ignored for dropped infrastructure, see
+   * {@link #registerBannedTurnIgnoredInfrastructureDropped(OsmRelation, String)}
    *
    * @param osmRelation to extract from (which is assumed to reflect a turn restriction of some kind)
    * @param tags of the relation
@@ -452,14 +440,15 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       return;
     }
 
-    // check for spatial eligibility. A way the settings skip is never judged spatially: with the other way in the area,
-    // the restriction is counted with why it gives no banned turn
+    // check for spatial eligibility. A way the settings skip is never judged spatially. With one way in the area, the
+    // restriction is counted as dropped; with neither, it is outside the area altogether
     var spatialEligibility = getNetworkData().getOsmSpatialEligibilityData();
     boolean fromEligible = spatialEligibility.isOsmWaySpatiallyEligible(osmFromMember.getId());
     boolean toEligible = spatialEligibility.isOsmWaySpatiallyEligible(osmToMember.getId());
     if(!fromEligible || !toEligible){
       if(fromEligible || toEligible) {
-        registerIssueIfWaySkippedBySettings(osmRelation, fromEligible ? osmToMember.getId() : osmFromMember.getId());
+        registerBannedTurnIgnoredInfrastructureDropped(
+            osmRelation, String.format("way %d", fromEligible ? osmToMember.getId() : osmFromMember.getId()));
       }
       return;
     }
@@ -490,20 +479,14 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     var planitViaNode = getNetworkData().findPlanitNodeByOsmNode(
         getNetworkData().getOsmNodeData().getRegisteredOsmNode(osmViaMember.getId()));
     if(planitViaNode == null){
-      LOGGER.warning(String.format(
-          "OSM turn restriction via node (%d) not available in parser, this shouldn't happen", osmViaMember.getId()));
+      registerBannedTurnIgnoredInfrastructureDropped(osmRelation, String.format("via node %d", osmViaMember.getId()));
       return;
     }
     var planitFromLink = findLinkOfOsmWayAt(osmFromMember.getId(), planitViaNode);
     var planitToLink = findLinkOfOsmWayAt(osmToMember.getId(), planitViaNode);
     if(planitFromLink == null || planitToLink == null){
-      // a way the settings skip gets no link, so the restriction gives no banned turn: counted with why
-      if(registerIssueIfWaySkippedBySettings(
-          osmRelation, planitFromLink == null ? osmFromMember.getId() : osmToMember.getId())) {
-        return;
-      }
-      LOGGER.severe(String.format("OSM turn restriction from (%d) or to (%d) link not available in parser " +
-          "this shouldn't happen", osmFromMember.getId(), osmToMember.getId()));
+      registerBannedTurnIgnoredInfrastructureDropped(
+          osmRelation, String.format("way %d", planitFromLink == null ? osmFromMember.getId() : osmToMember.getId()));
       return;
     }
 
@@ -929,11 +912,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
         if(typesPerDirectionPair != null) {
           linkSegmentTypesByLayerByDirection.put(networkLayer, typesPerDirectionPair);
         }
-      }
-
-      /* its type is parsed, but its access tags deny every activated mode, so the way gets no link */
-      if(linkSegmentTypesByLayerByDirection.values().stream().noneMatch(Pair::anyIsNotNull)) {
-        getNetworkData().registerOsmWaySkippedBySettings(osmWay.getId(), OsmWaySkipReason.NO_ACTIVATED_MODE_ON_WAY);
       }
     }
     return linkSegmentTypesByLayerByDirection;

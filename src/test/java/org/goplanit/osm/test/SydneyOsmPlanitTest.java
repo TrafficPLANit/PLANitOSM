@@ -160,7 +160,7 @@ public class SydneyOsmPlanitTest {
       /* isolated signalised crossings get their own intersection in the Sydney cases, so a signal with no junction in
        * reach is kept, e.g. the one halfway along the slip lane of the Cahill Expressway Onramp. So does the Melbourne
        * bounding box case; the other Melbourne cases keep the default, so both remain covered */
-      osmReader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      osmReader.getSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignals(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       osmReader.getSettings().getIntersectionSettings().setConsolidateIntersections(true);
       osmReader.getSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
@@ -209,7 +209,7 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       /* isolated signalised crossings on, see the note in #testOsm2PlanitNetworkComprehensive */
-      readerSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignals(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
@@ -271,7 +271,7 @@ public class SydneyOsmPlanitTest {
       readerSettings.getNetworkSettings().activateRemoveDanglingSubnetworks(
           PredefinedModeType.CAR, 20, Integer.MAX_VALUE, Connectivity.WEAK);
       /* isolated signalised crossings on, see the note in #testOsm2PlanitNetworkComprehensive */
-      readerSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      readerSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignals(true);
       /* spatial intersections with approaches, internal segments and movements, not collapsed */
       readerSettings.getNetworkSettings().getIntersectionSettings().setConsolidateIntersections(true);
       readerSettings.getNetworkSettings().getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);

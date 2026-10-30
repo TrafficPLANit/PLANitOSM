@@ -60,6 +60,7 @@ public class OsmNetworkReader implements NetworkReader {
   /** the issue each intersection the consolidation lists is recorded as, by what happened to it */
   private static final Map<IntersectionOutcome, OsmPlanitEntityIssue> ISSUE_OF_INTERSECTION_OUTCOME = Map.of(
       IntersectionOutcome.CROSSING_JOINED, OsmPlanitEntityIssue.CROSSING_JOINED_TO_JUNCTION,
+      IntersectionOutcome.RAMP_METER_JOINED, OsmPlanitEntityIssue.RAMP_METER_JOINED_TO_JUNCTION,
       IntersectionOutcome.CROSSING_JOINED_FROM_SLIP_LANE, OsmPlanitEntityIssue.CROSSING_ON_SLIP_LANE_JOINED_TO_JUNCTION,
       IntersectionOutcome.CROSSING_JOINED_SIDE_BY_SIDE, OsmPlanitEntityIssue.CROSSING_JOINED_TO_CROSSING_SIDE_BY_SIDE,
       IntersectionOutcome.JUNCTION_PULLED_IN_WITHIN_RADIUS, OsmPlanitEntityIssue.JUNCTION_PULLED_IN_WITHIN_RADIUS,

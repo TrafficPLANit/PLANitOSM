@@ -313473,10 +313473,10 @@
                 <spatialintersection id="271" externalid="8552288752,8552288753,8552288754,8552288755,2188339982" noderefs="11721,11722,11723,11724,11865,11866,6198" control="signalised" types="junction">
                     <approaches>
                         <approach ref="31463" signal="false" satflowfactor="0.5"/>
-                        <approach ref="33167" greenratio="0.4444444444444444"/>
-                        <approach ref="34045" greenratio="0.4444444444444444"/>
-                        <approach ref="34051" greenratio="0.4444444444444444"/>
-                        <approach ref="34177" greenratio="0.4444444444444444"/>
+                        <approach ref="33167" greenratio="0.1"/>
+                        <approach ref="34045" greenratio="0.1"/>
+                        <approach ref="34051" greenratio="0.1"/>
+                        <approach ref="34177" greenratio="0.1"/>
                     </approaches>
                     <internalsegments refs="17176,30890,30891,30892,30893,30896,30897,30900,30901,31460,31461,31464,31465,7498,7499"/>
                     <internalsignalsegments>
@@ -314435,12 +314435,12 @@
                 </spatialintersection>
                 <spatialintersection id="86" externalid="6877749865,1283617960,1283617992,1283618027,6877749864" noderefs="11448,11449,11450,5194,5195" control="signalised" types="junction">
                     <approaches>
-                        <approach ref="12207" greenratio="0.4444444444444444"/>
-                        <approach ref="27495" greenratio="0.4444444444444444"/>
-                        <approach ref="29811" greenratio="0.4444444444444444"/>
-                        <approach ref="32442" greenratio="0.4444444444444444"/>
-                        <approach ref="5883" greenratio="0.4444444444444444"/>
-                        <approach ref="5897" greenratio="0.4444444444444444"/>
+                        <approach ref="12207" greenratio="0.36666666666666664"/>
+                        <approach ref="27495" greenratio="0.36666666666666664"/>
+                        <approach ref="29811" greenratio="0.1"/>
+                        <approach ref="32442" greenratio="0.1"/>
+                        <approach ref="5883" greenratio="0.36666666666666664"/>
+                        <approach ref="5897" greenratio="0.36666666666666664"/>
                     </approaches>
                     <internalsegments refs="29802,29803,29808,29809,29812,29813,5895,5896"/>
                     <movements>
@@ -314487,11 +314487,11 @@
                 </spatialintersection>
                 <spatialintersection id="88" externalid="2266562052,3543024081,3543024078,3543024079,3543024080" noderefs="11739,11740,11742,11746,11842,11843,12131,12132,12133,12134,12135,12136,12137,12138,12139,12140,12141,12142,12143,12144,12145,12146,6207,6213,6214,6491,6492" control="signalised" types="junction crossing">
                     <approaches>
-                        <approach ref="10450" greenratio="0.4444444444444444"/>
-                        <approach ref="10452" greenratio="0.4444444444444444"/>
-                        <approach ref="10750" greenratio="0.4444444444444444"/>
-                        <approach ref="10774" greenratio="0.4444444444444444"/>
-                        <approach ref="7836" greenratio="0.4444444444444444"/>
+                        <approach ref="10450" greenratio="0.36666666666666664"/>
+                        <approach ref="10452" greenratio="0.36666666666666664"/>
+                        <approach ref="10750" greenratio="0.36666666666666664"/>
+                        <approach ref="10774" greenratio="0.36666666666666664"/>
+                        <approach ref="7836" greenratio="0.1"/>
                     </approaches>
                     <internalsegments refs="10454,10455,10456,10457,30959,30960,30961,30962,30963,30964,30965,30966,30971,30972,30973,30974,30987,30988,30989,30990,31366,31367,31368,31369,31370,31371,31372,31373,32507,32508,32509,32510,32511,32512,32515,32516,32519,32520,32521,32522,32523,32524,32525,32526,32527,32528,32531,32532,32533,32534,32535,32536,32537,32538,32541,32542,32543,32544,32545,32546,32547,32548,32549,32550,32551,32552,32553,32554,32555,32556,32557,32558,32563,32564,32569,32570,7508,7509,7516,7517,7961,7962,9944,9945"/>
                     <movements>

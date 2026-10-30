@@ -21,7 +21,7 @@ import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsol
 /**
  * Settings of parsing intersections from the traffic signals of an OSM network: junctions controlled by vehicle
  * signals, and signalised pedestrian crossings. They say how far a signal may lie from the junction it controls,
- * whether links are broken at isolated signalised crossings, and whether the parsed intersections are consolidated and
+ * whether links are broken at isolated signals, and whether the parsed intersections are consolidated and
  * then collapsed for some modes. Activated like the highway, railway and waterway settings, and active by default
  *
  * @author markr
@@ -52,9 +52,8 @@ public class OsmIntersectionSettings {
   private double maximumDistanceSignalisedCrossingToJunctionInMeters =
       DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M;
 
-  /** break links at isolated signalised pedestrian crossings, see
-   * {@link #setBreakLinksAtIsolatedSignalisedCrossings(boolean)} */
-  private boolean breakLinksAtIsolatedSignalisedCrossings = DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS;
+  /** break links at isolated signals, see {@link #setBreakLinksAtIsolatedSignals(boolean)} */
+  private boolean breakLinksAtIsolatedSignals = DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALS;
 
   /** consolidate the parsed intersections, see {@link #setConsolidateIntersections(boolean)} */
   private boolean consolidateIntersections = DEFAULT_CONSOLIDATE_INTERSECTIONS;
@@ -88,9 +87,8 @@ public class OsmIntersectionSettings {
   /** by default a signalised pedestrian crossing at most 30 m before a signalised junction is part of it */
   public static final double DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M = 30;
 
-  /** by default links are not broken at isolated signalised pedestrian crossings, so parsing does not change the
-   * network */
-  public static final boolean DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS = false;
+  /** by default links are not broken at isolated signals, so parsing does not change the network */
+  public static final boolean DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALS = false;
 
   /** by default the parsed intersections are not consolidated, so each signalised node keeps its own intersection */
   public static final boolean DEFAULT_CONSOLIDATE_INTERSECTIONS = false;
@@ -133,8 +131,8 @@ public class OsmIntersectionSettings {
         getMaximumDistanceVehicleSignalToJunctionInMeters(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum signalised crossing to junction distance (m)",
         getMaximumDistanceSignalisedCrossingToJunctionInMeters(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signalised crossings",
-        isBreakLinksAtIsolatedSignalisedCrossings(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signals",
+        isBreakLinksAtIsolatedSignals(), level));
     LOGGER.info(LoggingUtils.settingsValue("Traffic signal directions overridden",
         trafficSignalDirectionOverrides.isEmpty() ? "none" : trafficSignalDirectionOverrides, level));
     LOGGER.info(LoggingUtils.settingsValue("Traffic signal kinds overridden",
@@ -198,6 +196,8 @@ public class OsmIntersectionSettings {
           greenRatioSettings.getLostTimePerPhaseChangeSeconds(), greenRatioLevel));
       LOGGER.info(LoggingUtils.settingsValue("Isolated crossing green ratio",
           greenRatioSettings.getIsolatedCrossingGreenRatio(), greenRatioLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Ramp meter green ratio",
+          greenRatioSettings.getRampMeterGreenRatio(), greenRatioLevel));
       LOGGER.info(LoggingUtils.settingsValue("Same axis approach tolerance (degrees)",
           greenRatioSettings.getSameAxisApproachToleranceDegrees(), greenRatioLevel));
       LOGGER.info(LoggingUtils.settingsValue("Maximum number of phases",
@@ -213,7 +213,7 @@ public class OsmIntersectionSettings {
     this.isParserActive = DEFAULT_INTERSECTIONS_PARSER_ACTIVE;
     this.maximumDistanceVehicleSignalToJunctionInMeters = DEFAULT_MAX_VEHICLE_SIGNAL_TO_JUNCTION_DISTANCE_M;
     this.maximumDistanceSignalisedCrossingToJunctionInMeters = DEFAULT_MAX_SIGNALISED_CROSSING_TO_JUNCTION_DISTANCE_M;
-    this.breakLinksAtIsolatedSignalisedCrossings = DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALISED_CROSSINGS;
+    this.breakLinksAtIsolatedSignals = DEFAULT_BREAK_LINKS_AT_ISOLATED_SIGNALS;
     this.consolidateIntersections = DEFAULT_CONSOLIDATE_INTERSECTIONS;
     this.intersectionConsolidatorSettings = new IntersectionConsolidatorSettings();
     this.intersectionCollapserSettings = new OsmIntersectionCollapserSettings();
@@ -251,7 +251,7 @@ public class OsmIntersectionSettings {
   /** Set the maximum distance for a signalised pedestrian crossing to count as part of a signalised junction. A
    * crossing whose walking or cycling infrastructure is not parsed, on a road leading within this distance to a
    * signalised junction along one of its approaches, is part of that junction and ignored. Beyond it, the crossing is
-   * isolated, see {@link #setBreakLinksAtIsolatedSignalisedCrossings(boolean)}
+   * isolated, see {@link #setBreakLinksAtIsolatedSignals(boolean)}
    *
    * @param distanceMeters distance to use
    */
@@ -259,28 +259,31 @@ public class OsmIntersectionSettings {
     this.maximumDistanceSignalisedCrossingToJunctionInMeters = distanceMeters;
   }
 
-  /** Verify if links are broken at isolated signalised pedestrian crossings
+  /** Verify if links are broken at isolated signals, see {@link #setBreakLinksAtIsolatedSignals(boolean)}
    *
    * @return true when broken, false otherwise
    */
-  public boolean isBreakLinksAtIsolatedSignalisedCrossings() {
-    return breakLinksAtIsolatedSignalisedCrossings;
+  public boolean isBreakLinksAtIsolatedSignals() {
+    return breakLinksAtIsolatedSignals;
   }
 
-  /** Break links at isolated signalised pedestrian crossings, so each becomes its own crossing intersection. A
-   * crossing is isolated when it is not part of a signalised junction: its walking or cycling infrastructure is not
+  /** Break links at isolated signals, so each becomes an intersection of its own: a signalised pedestrian crossing
+   * that is isolated becomes its own crossing intersection. A crossing is isolated when it is not part of a
+   * signalised junction: its walking or cycling infrastructure is not
    * parsed, and it is farther than {@link #getMaximumDistanceSignalisedCrossingToJunctionInMeters()} from any
    * signalised junction along one of its approaches. Crossings that are part of a signalised junction are never
    * broken at, and crossings whose walking or cycling infrastructure is parsed are always their own intersection,
    * whatever this setting. A vehicle signal with no junction within
    * {@link #getMaximumDistanceVehicleSignalToJunctionInMeters()} controls something other than cars crossing, and
    * counts as an isolated crossing too. An isolated crossing already on a node needs no link broken, but only becomes
-   * its own intersection when this is on. When off, isolated crossings are ignored and counted
+   * its own intersection when this is on. A ramp meter is an isolated signal too: the link is broken at it, and it
+   * becomes its own ramp meter intersection, which consolidation may join into a junction within reach, as it does a
+   * crossing. When off, isolated crossings and ramp meters are ignored and counted
    *
    * @param flag to set
    */
-  public void setBreakLinksAtIsolatedSignalisedCrossings(boolean flag) {
-    this.breakLinksAtIsolatedSignalisedCrossings = flag;
+  public void setBreakLinksAtIsolatedSignals(boolean flag) {
+    this.breakLinksAtIsolatedSignals = flag;
   }
 
   /** Verify if the parsed intersections are consolidated
@@ -428,8 +431,9 @@ public class OsmIntersectionSettings {
     return Collections.unmodifiableMap(trafficSignalDirectionOverrides);
   }
 
-  /** Override the kind of signal a node is handled as: a vehicle signal or a crossing signal only, or no signal at all,
-   * in place of what its tags say. It also works for a node without any signal tags, to add a signal OSM lacks, such as
+  /** Override the kind of signal a node is handled as: a vehicle signal, a crossing signal or a ramp meter only, or no
+   * signal at all, in place of what its tags say. For example, a ramp meter tagged as a plain signal, overridden as a
+   * ramp meter, is handled as one. It also works for a node without any signal tags, to add a signal OSM lacks, such as
    * a missing stop line, and it reduces a signal tagged as both kinds to one. For example, a plain vehicle signal that
    * only stops traffic for trams crossing the road, overridden as a crossing signal, gets the crossing's green ratio,
    * rather than making the junction beyond it signalised. Overriding it again replaces the kind overridden before. An
@@ -462,8 +466,8 @@ public class OsmIntersectionSettings {
   /** Verify if a node is handled as a kind of traffic signal: as its kind is overridden, see
    * {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, otherwise as its tags say, see
    * {@link OsmTrafficSignalTags#isVehicleTrafficSignal(Map)},
-   * {@link OsmTrafficSignalTags#isCrossingTrafficSignals(Map)} and, for no signal,
-   * {@link OsmTrafficSignalTags#isTrafficSignals(Map)}. A signal tagged as both a vehicle signal and a crossing signal
+   * {@link OsmTrafficSignalTags#isCrossingTrafficSignals(Map)}, {@link OsmTrafficSignalTags#isRampMeter(Map)} and, for
+   * no signal, {@link OsmTrafficSignalTags#isTrafficSignals(Map)}. A signal tagged as both a vehicle signal and a crossing signal
    * is handled as both, unless overridden
    *
    * @param osmNodeId the OSM node id of the node
@@ -481,6 +485,8 @@ public class OsmIntersectionSettings {
         return OsmTrafficSignalTags.isVehicleTrafficSignal(tags);
       case CROSSING_SIGNAL:
         return OsmTrafficSignalTags.isCrossingTrafficSignals(tags);
+      case RAMP_METER:
+        return OsmTrafficSignalTags.isRampMeter(tags);
       default:
         return !OsmTrafficSignalTags.isTrafficSignals(tags);
     }

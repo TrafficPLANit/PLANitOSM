@@ -7,7 +7,10 @@ import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicBannedTurn;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
+import org.goplanit.utils.network.layer.macroscopic.intersection.Intersection;
 import org.goplanit.utils.network.layer.physical.Node;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Reading and lookups for tests on a layer parsed from a hand-made OSM scenario: PLANit entities by the OSM nodes they
@@ -80,5 +83,16 @@ public final class OsmLayerTestUtils {
     var reader = OsmNetworkReaderFactory.create(scenario, CountryNames.AUSTRALIA);
     reader.getSettings().deactivateRemoveDanglingSubnetworks();
     return reader.read().getTransportLayers().getFirst();
+  }
+
+  /**
+   * The layer's only intersection
+   *
+   * @param layer holding one intersection
+   * @return the intersection
+   */
+  public static Intersection onlyIntersection(MacroscopicNetworkLayer layer) {
+    assertEquals(1, layer.getIntersections().size());
+    return layer.getIntersections().stream().findFirst().orElseThrow();
   }
 }

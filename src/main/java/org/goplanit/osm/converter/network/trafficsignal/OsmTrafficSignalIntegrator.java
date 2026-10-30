@@ -151,7 +151,8 @@ public class OsmTrafficSignalIntegrator {
    * what earlier ones create: {@link OsmTrafficSignalFirstPass#discardPostponeOrConstructIntersections()},
    * {@link OsmTrafficSignalSecondPass#assignVehicleSignalsToJunctions(OsmTrafficSignalFirstPassResult)} and
    * {@link OsmTrafficSignalThirdPass#integrateCrossingsAndUnassignedVehicleSignals(OsmTrafficSignalFirstPassResult,
-   * OsmTrafficSignalSecondPassResult)}.
+   * OsmTrafficSignalSecondPassResult)}, the third pass ending with the ramp meters, see
+   * {@link OsmTrafficSignalThirdPass#integrateRampMeters(OsmTrafficSignalFirstPassResult)}.
    */
   public void execute() {
     var parsedArea = OsmProjectedBoundingAreaOrExtentHelper.of(networkData, settings);
@@ -188,7 +189,7 @@ public class OsmTrafficSignalIntegrator {
         vehicleSignalPositions).assignVehicleSignalsToJunctions(firstPassResult);
 
     // pass three
-    new OsmTrafficSignalThirdPass(
+    var thirdPass = new OsmTrafficSignalThirdPass(
         settings,
         networkData,
         networkLayer,
@@ -197,7 +198,9 @@ public class OsmTrafficSignalIntegrator {
         parsedArea,
         lookAheadForJunctions,
         intersectionPreRegistration,
-        vehicleSignalPositions).integrateCrossingsAndUnassignedVehicleSignals(firstPassResult, secondPassResult);
+        vehicleSignalPositions);
+    thirdPass.integrateCrossingsAndUnassignedVehicleSignals(firstPassResult, secondPassResult);
+    thirdPass.integrateRampMeters(firstPassResult);
 
     // intersections that control no road or rail traffic
     removeIntersectionsWithoutApproach();

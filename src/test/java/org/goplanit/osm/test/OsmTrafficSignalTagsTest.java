@@ -131,7 +131,21 @@ public class OsmTrafficSignalTagsTest {
     }
   }
 
-  /** Signals controlling no junction or crossing, such as ramp meters, are neither kind, but still recorded */
+  /** A ramp meter is a signal of its own kind: no vehicle signal, no crossing signal and no signal controlling no
+   * traffic, but still recorded. A plain vehicle signal is no ramp meter */
+  @Test
+  public void rampMeterIsItsOwnKind() {
+    var tags = tags(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS,
+        OsmTrafficSignalTags.TRAFFIC_SIGNALS, OsmTrafficSignalTags.RAMP_METER);
+    assertTrue(OsmTrafficSignalTags.isRampMeter(tags));
+    assertFalse(OsmTrafficSignalTags.isVehicleTrafficSignal(tags));
+    assertFalse(OsmTrafficSignalTags.isCrossingTrafficSignals(tags));
+    assertFalse(OsmTrafficSignalTags.isNonControllingTrafficSignals(tags));
+    assertTrue(OsmTrafficSignalTags.isTrafficSignals(tags));
+    assertFalse(OsmTrafficSignalTags.isRampMeter(tags(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS)));
+  }
+
+  /** Signals controlling no junction or crossing, such as fire station signals, are neither kind, but still recorded */
   @Test
   public void nonControllingSubTypeIsNeitherKind() {
     for (var subType : OsmTrafficSignalTags.NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES) {

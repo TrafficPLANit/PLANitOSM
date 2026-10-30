@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter.network;
 
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -8,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
@@ -35,7 +38,7 @@ public class OsmIntersectionSettingsTest {
     assertTrue(intersectionSettings.isParserActive());
     assertEquals(50, intersectionSettings.getMaximumDistanceVehicleSignalToJunctionInMeters());
     assertEquals(30, intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionInMeters());
-    assertFalse(intersectionSettings.isBreakLinksAtIsolatedSignalisedCrossings());
+    assertFalse(intersectionSettings.isBreakLinksAtIsolatedSignals());
     assertFalse(intersectionSettings.isConsolidateIntersections());
     assertFalse(intersectionSettings.getIntersectionCollapserSettings().hasCollapsedModes());
   }
@@ -61,7 +64,7 @@ public class OsmIntersectionSettingsTest {
     var intersectionSettings = new OsmNetworkReaderSettings(CountryNames.AUSTRALIA).getIntersectionSettings();
     intersectionSettings.activateParser(false);
     intersectionSettings.setMaximumDistanceVehicleSignalToJunctionInMeters(80);
-    intersectionSettings.setBreakLinksAtIsolatedSignalisedCrossings(true);
+    intersectionSettings.setBreakLinksAtIsolatedSignals(true);
     intersectionSettings.setConsolidateIntersections(true);
     intersectionSettings.getIntersectionConsolidatorSettings().setMaximumJoiningReachMeters(60);
     intersectionSettings.getIntersectionCollapserSettings().setCollapsedModeTypes(PredefinedModeType.PEDESTRIAN);
@@ -70,7 +73,7 @@ public class OsmIntersectionSettingsTest {
 
     assertTrue(intersectionSettings.isParserActive());
     assertEquals(50, intersectionSettings.getMaximumDistanceVehicleSignalToJunctionInMeters());
-    assertFalse(intersectionSettings.isBreakLinksAtIsolatedSignalisedCrossings());
+    assertFalse(intersectionSettings.isBreakLinksAtIsolatedSignals());
     assertFalse(intersectionSettings.isConsolidateIntersections());
     assertEquals(IntersectionConsolidatorSettings.DEFAULT_MAXIMUM_JOINING_REACH_METERS,
         intersectionSettings.getIntersectionConsolidatorSettings().getMaximumJoiningReachMeters());
@@ -116,5 +119,30 @@ public class OsmIntersectionSettingsTest {
     intersectionSettings.reset();
     assertTrue(intersectionSettings.getTrafficSignalKindOverrides().isEmpty());
     assertTrue(intersectionSettings.getOsmNodeIdsWithTrafficSignalOverride().isEmpty());
+  }
+
+  /** A node tagged as a ramp meter is handled as one; a node overridden as a ramp meter is one whatever its tags, and
+   * a node tagged as a ramp meter but overridden as another kind is that kind */
+  @Test
+  public void rampMeterKindFromTagsUnlessOverridden() {
+    var intersectionSettings = new OsmNetworkReaderSettings(CountryNames.AUSTRALIA).getIntersectionSettings();
+    var rampMeterTags = Map.of(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS,
+        OsmTrafficSignalTags.TRAFFIC_SIGNALS, OsmTrafficSignalTags.RAMP_METER);
+    var vehicleSignalTags = Map.of(OsmHighwayTags.HIGHWAY, OsmTrafficSignalTags.TRAFFIC_SIGNALS);
+    intersectionSettings.overrideTrafficSignalKind(2, OsmTrafficSignalKind.RAMP_METER);
+    intersectionSettings.overrideTrafficSignalKind(3, OsmTrafficSignalKind.VEHICLE_SIGNAL);
+
+    assertTrue(intersectionSettings.isHandledAsTrafficSignalOfKind(1, rampMeterTags, OsmTrafficSignalKind.RAMP_METER));
+    assertFalse(
+        intersectionSettings.isHandledAsTrafficSignalOfKind(1, rampMeterTags, OsmTrafficSignalKind.VEHICLE_SIGNAL));
+    assertFalse(
+        intersectionSettings.isHandledAsTrafficSignalOfKind(1, vehicleSignalTags, OsmTrafficSignalKind.RAMP_METER));
+    assertTrue(
+        intersectionSettings.isHandledAsTrafficSignalOfKind(2, vehicleSignalTags, OsmTrafficSignalKind.RAMP_METER));
+    assertFalse(
+        intersectionSettings.isHandledAsTrafficSignalOfKind(2, vehicleSignalTags, OsmTrafficSignalKind.VEHICLE_SIGNAL));
+    assertFalse(intersectionSettings.isHandledAsTrafficSignalOfKind(3, rampMeterTags, OsmTrafficSignalKind.RAMP_METER));
+    assertTrue(
+        intersectionSettings.isHandledAsTrafficSignalOfKind(3, rampMeterTags, OsmTrafficSignalKind.VEHICLE_SIGNAL));
   }
 }

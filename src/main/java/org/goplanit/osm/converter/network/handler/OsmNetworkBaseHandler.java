@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 
 import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
-import org.goplanit.osm.converter.network.data.OsmWaySkipReason;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
@@ -105,23 +104,8 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
    * @param osmWayConsumer to apply to eligible OSM way
    */
   protected void wrapHandleInfrastructureOsmWay(OsmWay osmWay, BiConsumer<OsmWay, Map<String, String>> osmWayConsumer) {
-    wrapHandleInfrastructureOsmWay(osmWay, osmWayConsumer, (skippedOsmWay, reason) -> {});
-  }
-
-  /** Wrap the handling of OSM way by checking if it is eligible and catch any run time PLANit exceptions, if eligible
-   * delegate to consumer. A way the settings skip is handed to the skipped consumer with why: one excluded by its id,
-   * whatever it is, and a road or rail way of a type not activated. A way that is no road or rail, such as a building,
-   * or that is an area, is not handed over
-   *
-   * @param osmWay to parse
-   * @param osmWayConsumer to apply to eligible OSM way
-   * @param skippedOsmWayConsumer to tell of a way the settings skip, and why
-   */
-  protected void wrapHandleInfrastructureOsmWay(OsmWay osmWay, BiConsumer<OsmWay, Map<String, String>> osmWayConsumer,
-      BiConsumer<OsmWay, OsmWaySkipReason> skippedOsmWayConsumer) {
 
     if(settings.isOsmWayExcluded(osmWay.getId())) {
-      skippedOsmWayConsumer.accept(osmWay, OsmWaySkipReason.WAY_EXCLUDED_BY_ID);
       return;
     }
 
@@ -131,9 +115,6 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
       /* only parse ways that are potentially road/rail/ferry infrastructure */
       if(isActivatedRoadRailOrWaterwayBasedInfrastructure(tags)) {
         osmWayConsumer.accept(osmWay, tags);
-      }else if(!OsmTags.isArea(tags) &&
-          (OsmHighwayTags.hasHighwayKeyTag(tags) || OsmRailwayTags.hasRailwayKeyTag(tags))) {
-        skippedOsmWayConsumer.accept(osmWay, OsmWaySkipReason.WAY_TYPE_NOT_ACTIVATED);
       }
 
     } catch (PlanItRunTimeException e) {

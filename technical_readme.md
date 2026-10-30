@@ -126,7 +126,8 @@ motorised road or rail mode may use. A footway or cycleway entering a signalised
 signals are handled, an intersection left without an approach is removed and recorded, such as a signalised crossing
 where only a footway and a cycleway meet; its node keeps its signal for consolidation. Its external id lists
 the OSM node ids of the signals defining it, comma separated, e.g. the stop lines of its arms. Nothing else in the
-network changes, except that links can be broken at isolated signalised crossings when that setting is on (see below).
+network changes, except that links can be broken at isolated signals, isolated signalised crossings and ramp meters,
+when that setting is on (see below).
 
 Where it happens:
 
@@ -143,8 +144,8 @@ Where it happens:
 
 The rules live in `OsmTrafficSignalTags`:
 
-* **vehicle signal** - `highway=traffic_signals`, unless its `traffic_signals=*` value marks a crossing or a signal that
-  controls no traffic.
+* **vehicle signal** - `highway=traffic_signals`, unless its `traffic_signals=*` value marks a crossing, a ramp meter or
+  a signal that controls no traffic.
 * **crossing signal** - `crossing=traffic_signals`, `crossing:signals=yes`, or `highway=traffic_signals` with
   `traffic_signals=pedestrian_crossing` or `traffic_signals=crossing` (`CROSSING_TRAFFIC_SIGNAL_TYPES`). A `crossing` value
   listing several values, such as `traffic_signals;marked`, counts when one of them does.
@@ -155,8 +156,11 @@ The rules live in `OsmTrafficSignalTags`:
   the node says the crossing has no signals (`crossing=zebra`, `uncontrolled`, `unmarked`, `informal` or `no`, or
   `crossing:signals=no`), it is still a crossing signal, but the case is counted as inconsistent and logged as a warning
   with the ids of the node and the way, so it can be checked in OSM.
-* **not controlling traffic** - `traffic_signals=ramp_meter`, `emergency`, `blinker`, `gate`, `control_box` or
-  `level_crossing` (`NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES`): ignored and counted.
+* **ramp meter** - `highway=traffic_signals` with `traffic_signals=ramp_meter`: a signal holding traffic back on its
+  own, letting vehicles onto a motorway one or two at a time. It gets an intersection of its own, as an isolated
+  crossing does (third pass, 5.).
+* **not controlling traffic** - `traffic_signals=emergency`, `blinker`, `gate`, `control_box` or `level_crossing`
+  (`NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES`): ignored and counted.
 * A node tagged both `highway=traffic_signals` and `crossing=traffic_signals` is a vehicle signal and a crossing signal, each
   handled by its own rules. OSM uses this both for junctions mapped with signals at their stop lines and for pedestrian
   signals, and no tag tells them apart, so both roles are kept. Between junctions, the crossing on its own node then
@@ -266,6 +270,7 @@ First pass, per signal:
    or rail mode may use an approach; with a
    vehicle signal on it as well, it is both a `junction` and a `crossing`.
 7. Any other crossing signal is collected for the third pass.
+8. A ramp meter, whatever else its tags say, is collected for the third pass.
 
 Then two checks salvage signals tagged wrongly, each noted to check in OSM:
 
@@ -429,7 +434,7 @@ Third pass:
    crossings from the second pass join their crossing when it has an intersection, and create nothing otherwise.
 4. An isolated crossing becomes its own `crossing` intersection, every segment entering it that a motorised road or rail
    mode may use an approach, only when
-   breaking links at isolated signalised crossings is on (`setBreakLinksAtIsolatedSignalisedCrossings`, default off);
+   breaking links at isolated signals is on (`setBreakLinksAtIsolatedSignals`, default off);
    the link is then broken at the signal's node when it is not a PLANit node yet. With the setting off nothing is
    created and no link is broken.
 
@@ -439,9 +444,23 @@ Third pass:
    ```
 
    With the setting on, the link is broken at 31, which becomes a crossing with approaches 2->31 and 3->31.
+5. Per ramp meter, once the other signals are done: as an isolated crossing (4.), it becomes its own `ramp_meter`
+   intersection only when breaking links at isolated signals is on, the link broken at its node when it is not a
+   PLANit node yet, every road segment entering its node in its direction an approach. One whose node already belongs
+   to another intersection, such as a signalised crossing, makes none. Consolidation may later join it into a junction
+   within reach, as it does a crossing; unlike a crossing's, its approach then keeps its signal as an internal segment,
+   since a ramp meter is not run with the junction's signals. With the setting off nothing is created and no link is
+   broken.
 
-Links broken for an isolated crossing are broken through the layer modifier, so intersections registered before stay
-consistent.
+   ```
+        2 ------------------- 20 ------------------> 21     20: ramp meter on a one-way on-ramp, no junction near
+                  ~150 m               ~150 m
+   ```
+
+   With the setting on, the link is broken at 20, which becomes a ramp meter with approach 2->20.
+
+Links broken for an isolated crossing or a ramp meter are broken through the layer modifier, so intersections
+registered before stay consistent.
 
 Divided roads are not joined: each carriageway's crossing node is a junction of its own, with the approaches that reach
 it.
@@ -564,7 +583,8 @@ the cycle, `setCycleTimeSeconds` (default 90 s) less `setLostTimePerPhaseChangeS
 `setAlgorithmType` chooses how: `CAPACITY_WEIGHTED` (the default) gives each phase a share in proportion to its
 capacity, `EQUAL_SPLIT` each phase the same share. For example, a crossing of two equal roads, consolidated, gets two
 phases and, either way, a green ratio of (90 - 10) / 90 / 2, about 0.44, for each approach. Road traffic at an
-isolated signalised crossing gets `setIsolatedCrossingGreenRatio` (default 0.9), and an approach without a signal of its own at a signalised junction a
+isolated signalised crossing gets `setIsolatedCrossingGreenRatio` (default 0.9), road traffic at a ramp meter
+`setRampMeterGreenRatio` (default 0.9), and an approach without a signal of its own at a signalised junction a
 saturation flow factor of `setApproachWithoutSignalSaturationFlowFactor` (default 0.5). It runs after consolidation and
 before collapse, since collapse can move the end of a link and so change the direction an approach arrives in. It also
 runs without consolidation, with one warning: a junction parsed as several intersections is then timed as several

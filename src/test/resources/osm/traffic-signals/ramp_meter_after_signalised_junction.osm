@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ramp meter on shape node 20 of one-way motorway on-ramp 2-20-21, about 150 m after the signalised junction 2
+     where it leaves the two-way primary road 1-2-3; a traffic signal on node 2 -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2068"/>
+  <node id="2" lat="-33.8700" lon="151.2084">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="3" lat="-33.8700" lon="151.2100"/>
+  <node id="20" lat="-33.87135" lon="151.2084">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals" v="ramp_meter"/>
+  </node>
+  <node id="21" lat="-33.8727" lon="151.2084"/>
+  <way id="10">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="2"/><nd ref="20"/><nd ref="21"/>
+    <tag k="highway" v="motorway_link"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+</osm>

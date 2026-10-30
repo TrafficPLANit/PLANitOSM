@@ -20,7 +20,7 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.VEHICLE_SIGNAL, "vehicle signals snapped to a junction ahead"),
 
   /** a vehicle signal found no junction ahead in any direction, nor a signalised crossing within reach, handled as
-   * an isolated crossing: its own crossing intersection when breaking links at isolated crossings is on */
+   * an isolated crossing: its own crossing intersection when breaking links at isolated signals is on */
   VEHICLE_SIGNAL_WITHOUT_JUNCTION_AHEAD(
       OsmTrafficSignalOutcomeGroup.VEHICLE_SIGNAL, "vehicle signals without a junction ahead"),
 
@@ -100,9 +100,22 @@ public enum OsmTrafficSignalOutcome {
   ISOLATED_CROSSING_OWN_INTERSECTION(
       OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL, "isolated crossings given their own intersection"),
 
-  /** an isolated signalised crossing left without intersection, breaking links at isolated crossings being off */
+  /** an isolated signalised crossing left without intersection, breaking links at isolated signals being off */
   ISOLATED_CROSSING_NO_LINK_BROKEN(
       OsmTrafficSignalOutcomeGroup.CROSSING_SIGNAL, "isolated crossings where no link is broken"),
+
+  /** a ramp meter made its own ramp meter intersection, the link broken at it where needed */
+  RAMP_METER_OWN_INTERSECTION(
+      OsmTrafficSignalOutcomeGroup.RAMP_METER, "ramp meters given their own intersection"),
+
+  /** a ramp meter whose node already belongs to another intersection, such as a signalised crossing, makes no
+   * intersection of its own */
+  RAMP_METER_INSIDE_OTHER_INTERSECTION(
+      OsmTrafficSignalOutcomeGroup.RAMP_METER, "ramp meters inside another intersection"),
+
+  /** a ramp meter left without intersection, breaking links at isolated signals being off */
+  RAMP_METER_NO_LINK_BROKEN(
+      OsmTrafficSignalOutcomeGroup.RAMP_METER, "ramp meters where no link is broken"),
 
   /** a crossing signal not on a junction node and not part of a signalised junction lies outside the parsed area, or
    * inside within the maximum distance from a crossing to a junction of its edge. A junction it belongs to may be cut
@@ -192,7 +205,7 @@ public enum OsmTrafficSignalOutcome {
       OsmTrafficSignalOutcomeGroup.VEHICLE_SIGNAL,
       "traffic signals on a way that is not a road, track or cycleway, ignored"),
 
-  /** a signal controlling no junction or crossing, such as a ramp meter, is ignored */
+  /** a signal controlling no junction or crossing, such as a fire station signal, is ignored */
   SIGNAL_NOT_CONTROLLING_TRAFFIC(
       OsmTrafficSignalOutcomeGroup.SIGNAL_OF_ANY_KIND, "signals controlling no junction or crossing"),
 

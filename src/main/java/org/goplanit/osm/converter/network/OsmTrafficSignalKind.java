@@ -15,6 +15,9 @@ public enum OsmTrafficSignalKind {
   /** a signal of a signalised crossing, as tagged crossing=traffic_signals */
   CROSSING_SIGNAL,
 
+  /** a ramp meter, holding traffic back on its own, as tagged traffic_signals=ramp_meter */
+  RAMP_METER,
+
   /** no signal at all, whatever the node's tags */
   NOT_A_SIGNAL
 }

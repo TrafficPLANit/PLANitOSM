@@ -107,9 +107,10 @@ public class OsmTrafficSignalTags {
       Set.of(PEDESTRIAN_CROSSING_TRAFFIC_SIGNALS, CROSSING_TYPE_TRAFFIC_SIGNALS);
 
   /** values of {@code traffic_signals=*} on a {@code highway=traffic_signals} node marking signals that control no
-   * junction or crossing, such as ramp meters and fire station signals; such signals are ignored */
+   * junction or crossing, such as fire station signals; such signals are ignored. A ramp meter is a kind of its own,
+   * see {@link #isRampMeter(Map)} */
   public static final Set<String> NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES =
-      Set.of(RAMP_METER, EMERGENCY, BLINKER, GATE, CONTROL_BOX, LEVEL_CROSSING);
+      Set.of(EMERGENCY, BLINKER, GATE, CONTROL_BOX, LEVEL_CROSSING);
 
   /** key {@code barrier}, a barrier on a node, such as a bollard or gate */
   public static final String BARRIER = "barrier";
@@ -135,14 +136,14 @@ public class OsmTrafficSignalTags {
   }
 
   /** Verify if the tags mark a vehicle signal: {@code highway=traffic_signals}, unless its {@code traffic_signals=*}
-   * value marks a crossing or a signal controlling no junction or crossing
+   * value marks a crossing, a ramp meter or a signal controlling no junction or crossing
    *
    * @param tags to check
    * @return true when a vehicle signal, false otherwise
    */
   public static boolean isVehicleTrafficSignal(Map<String, String> tags) {
     return OsmTagUtils.keyMatchesAnyValueTag(tags, OsmHighwayTags.HIGHWAY, TRAFFIC_SIGNALS) &&
-        !hasTrafficSignalsSubTypeIn(tags, CROSSING_TRAFFIC_SIGNAL_TYPES) &&
+        !hasTrafficSignalsSubTypeIn(tags, CROSSING_TRAFFIC_SIGNAL_TYPES) && !isRampMeter(tags) &&
         !hasTrafficSignalsSubTypeIn(tags, NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES);
   }
 
@@ -222,14 +223,25 @@ public class OsmTrafficSignalTags {
     return hasTrafficSignalsSubTypeIn(tags, NON_CONTROLLING_TRAFFIC_SIGNAL_TYPES);
   }
 
-  /** Verify if the tags mark a traffic signal of any kind: a vehicle signal, a crossing signal, or a signal
-   * controlling no junction or crossing, which is recorded so what becomes of it can be accounted for
+  /** Verify if the tags mark a ramp meter: {@code highway=traffic_signals} with {@code traffic_signals=ramp_meter}, a
+   * signal holding traffic back on its own, letting vehicles onto a motorway one or two at a time
+   *
+   * @param tags to check
+   * @return true when a ramp meter, false otherwise
+   */
+  public static boolean isRampMeter(Map<String, String> tags) {
+    return hasTrafficSignalsSubTypeIn(tags, Set.of(RAMP_METER));
+  }
+
+  /** Verify if the tags mark a traffic signal of any kind: a vehicle signal, a crossing signal, a ramp meter, or a
+   * signal controlling no junction or crossing, which is recorded so what becomes of it can be accounted for
    *
    * @param tags to check
    * @return true when a traffic signal of any kind, false otherwise
    */
   public static boolean isTrafficSignals(Map<String, String> tags) {
-    return isVehicleTrafficSignal(tags) || isCrossingTrafficSignals(tags) || isNonControllingTrafficSignals(tags);
+    return isVehicleTrafficSignal(tags) || isCrossingTrafficSignals(tags) || isRampMeter(tags) ||
+        isNonControllingTrafficSignals(tags);
   }
 
   /** The direction a signal applies to, relative to its OSM way: a {@code traffic_signals:direction} of forward,

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.util.PlanitLinkOsmUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
@@ -123,16 +124,20 @@ final class OsmSignalIntersectionPreRegistration {
   }
 
   /**
-   * Add the segments entering a node as approaches of its intersection, for a signal, see
+   * Add the segments entering a node in a direction as approaches of its intersection, for a signal, see
    * {@link #addApproach(Intersection, MacroscopicLinkSegment, OsmNode)}
    *
    * @param intersection to add the approaches to
    * @param node whose entering segments to add
    * @param signal the OSM node of the signal
+   * @param direction the signal applies to, relative to the OSM way of each segment's link, null for every entering
+   *                  segment, see {@link PlanitLinkOsmUtils#isInOsmDirection(MacroscopicLinkSegment, String)}
    */
-  public void addEnteringSegmentsAsApproaches(Intersection intersection, Node node, OsmNode signal) {
+  public void addEnteringSegmentsAsApproaches(Intersection intersection, Node node, OsmNode signal, String direction) {
     for (MacroscopicLinkSegment entering : node.<MacroscopicLinkSegment>getEntryLinkSegments()) {
-      addApproach(intersection, entering, signal);
+      if (PlanitLinkOsmUtils.isInOsmDirection(entering, direction)) {
+        addApproach(intersection, entering, signal);
+      }
     }
   }
 
@@ -147,7 +152,7 @@ final class OsmSignalIntersectionPreRegistration {
    */
   public void integrateSignalOnNode(OsmNode signal, Node node, IntersectionType type) {
     addEnteringSegmentsAsApproaches(
-        getOrPreRegisterIntersection(PlanitOsmUtils.parseOsmId(node), node, type), node, signal);
+        getOrPreRegisterIntersection(PlanitOsmUtils.parseOsmId(node), node, type), node, signal, null);
   }
 
   /**

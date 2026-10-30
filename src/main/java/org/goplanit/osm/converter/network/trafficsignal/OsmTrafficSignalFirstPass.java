@@ -196,7 +196,9 @@ final class OsmTrafficSignalFirstPass {
    * every junction. A vehicle signal there tagged with direction both stops both directions at one point, which is what
    * a crossing does, so it is handled as a crossing signal instead, case (v), and noted to check in OSM. (v) A crossing
    * signal not on a junction node. It goes to the third pass. Whether it belongs to a signalised junction nearby
-   * depends on the intersections the first two passes construct.</li>
+   * depends on the intersections the first two passes construct. (vi) A ramp meter, whatever else its tags say. It
+   * goes to the third pass, once the other signals are done, so no look-ahead of theirs meets the node its intersection
+   * may need.</li>
    * </ul>
    * The kind of signal is what its tags say, unless the settings override it, see
    * {@link OsmIntersectionSettings#overrideTrafficSignalKind(long, OsmTrafficSignalKind)}.
@@ -226,6 +228,11 @@ final class OsmTrafficSignalFirstPass {
     var location = SignalOnPlanitLayer.locateAndCreate(osmNode, layerData);
     if (location == null) {
       networkData.getParseDiagnostics().register(OsmTrafficSignalOutcome.SIGNAL_NOT_IN_LAYER, osmNode);
+      return;
+    }
+    if (intersectionSettings.isHandledAsTrafficSignalOfKind(osmNodeId, tags, OsmTrafficSignalKind.RAMP_METER)) {
+      // case (vi), postponed: a ramp meter, collected for the third pass
+      firstPass.rampMeters.add(osmNode);
       return;
     }
 

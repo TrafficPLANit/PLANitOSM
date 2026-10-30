@@ -120,7 +120,7 @@ public class MelbourneOsm2PlanitTest {
           inputSettings.getNetworkSettings().getIntersectionSettings());
       /* isolated signalised crossings get their own intersection, as in the Sydney cases, see
        * SydneyOsmPlanitTest#testOsm2PlanitNetworkComprehensive. The other Melbourne cases keep the default */
-      inputSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignalisedCrossings(true);
+      inputSettings.getNetworkSettings().getIntersectionSettings().setBreakLinksAtIsolatedSignals(true);
 
       Osm2PlanitConversionTemplates.osm2PlanitIntermodalNoServices(inputSettings, outputSettings);
 

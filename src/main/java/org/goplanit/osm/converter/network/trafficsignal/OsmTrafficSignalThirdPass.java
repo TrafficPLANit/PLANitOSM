@@ -30,9 +30,9 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
  * It integrates what the first two passes left, once their intersections exist. A crossing signal not on a junction
  * node joins a signalised junction nearby, is ignored near or beyond the boundary of the parsed area, or else becomes
  * an isolated crossing. Stop lines of isolated crossings join their crossing. A vehicle signal without a junction joins
- * the signalised crossing ahead, is ignored near or beyond the boundary, or else becomes an isolated crossing. Example:
- * a pedestrian crossing 20 m before a signalised junction becomes part of it; one 200 m from any junction gets its own
- * intersection.
+ * the signalised crossing ahead, is ignored near or beyond the boundary, or else becomes an isolated crossing. A ramp
+ * meter gets an intersection of its own at its position, as an isolated crossing does. Example: a pedestrian crossing
+ * 20 m before a signalised junction becomes part of it; one 200 m from any junction gets its own intersection.
  *
  * @author markr
  */
@@ -192,28 +192,30 @@ final class OsmTrafficSignalThirdPass {
 
   /**
    * Construct an intersection at the signal's own position, for a signal with no junction to belong to: an isolated
-   * crossing signal, or a vehicle signal without a junction in reach. This is only done when breaking links at
-   * isolated crossings is on. Otherwise nothing is created. If the signal is not on a PLANit node yet, the link is
-   * broken there first. The intersection is of kind crossing: road traffic is held there for something crossing the
-   * road. Every segment entering it that a vehicle the signal controls can use becomes an approach, see
+   * crossing signal, a vehicle signal without a junction in reach, or a ramp meter. This is only done when breaking
+   * links at isolated signals is on. Otherwise nothing is created. If the signal is not on a PLANit node yet, the link
+   * is broken there first. Every segment entering it in the signal's direction that a vehicle the signal controls can
+   * use becomes an approach, see
    * {@link OsmSignalIntersectionPreRegistration#addApproach(Intersection, MacroscopicLinkSegment, OsmNode)}. A newly
    * created intersection is registered straight away. That keeps it consistent when links are broken for later
-   * crossings.
+   * signals.
    *
    * @param signal the OSM node of the signal
-   * @return true when the intersection was constructed, false when breaking links at isolated crossings is off
+   * @param type kind of intersection: a crossing, road traffic being held there for something crossing the road, or a
+   *             ramp meter
+   * @param direction the signal applies to, null for every entering segment, as for a crossing, which stops both
+   * @return true when the intersection was constructed, false when breaking links at isolated signals is off
    */
-  private boolean constructIntersectionAtSignalPosition(OsmNode signal) {
-    if (!settings.getIntersectionSettings().isBreakLinksAtIsolatedSignalisedCrossings()) {
+  private boolean constructIntersectionAtSignalPosition(OsmNode signal, IntersectionType type, String direction) {
+    if (!settings.getIntersectionSettings().isBreakLinksAtIsolatedSignals()) {
       return false;
     }
     var node = PlanitOsmNetworkLayerUtils.getOrCreatePopulateAndRegisterNode(
         signal, networkLayer, layerData, settings.isRetainOsmTags());
     PlanitNetworkLayerModifierUtils.breakLinksWithInternalNode(
         networkLayer, layerData, node, geoUtils.getCoordinateReferenceSystem());
-    var intersection =
-        intersectionPreRegistration.getOrPreRegisterIntersection(signal.getId(), node, IntersectionType.CROSSING);
-    intersectionPreRegistration.addEnteringSegmentsAsApproaches(intersection, node, signal);
+    var intersection = intersectionPreRegistration.getOrPreRegisterIntersection(signal.getId(), node, type);
+    intersectionPreRegistration.addEnteringSegmentsAsApproaches(intersection, node, signal, direction);
     intersectionPreRegistration.registerIfStillPreRegistered(intersection);
     return true;
   }
@@ -297,7 +299,8 @@ final class OsmTrafficSignalThirdPass {
             OsmTrafficSignalOutcome.CROSSING_AT_EDGE_OF_PARSED_AREA, crossingSignal);
         crossingsIgnoredAtBoundary.add(crossingSignal);
       } else {
-        networkData.getParseDiagnostics().register(constructIntersectionAtSignalPosition(crossingSignal) ?
+        networkData.getParseDiagnostics().register(
+            constructIntersectionAtSignalPosition(crossingSignal, IntersectionType.CROSSING, null) ?
             OsmTrafficSignalOutcome.ISOLATED_CROSSING_OWN_INTERSECTION :
             OsmTrafficSignalOutcome.ISOLATED_CROSSING_NO_LINK_BROKEN, crossingSignal);
       }
@@ -329,7 +332,35 @@ final class OsmTrafficSignalThirdPass {
           OsmTrafficSignalOutcome.VEHICLE_SIGNAL_WITHOUT_JUNCTION_AHEAD, vehicleSignal);
       networkData.getParseDiagnostics().registerNearestJunction(
           vehicleSignal, findNearestJunctionDistance(vehicleSignal));
-      constructIntersectionAtSignalPosition(vehicleSignal);
+      constructIntersectionAtSignalPosition(vehicleSignal, IntersectionType.CROSSING, null);
+    }
+  }
+
+  /**
+   * Give each ramp meter the first pass postponed an intersection of its own at its position, in the same way as an
+   * isolated crossing, see {@link #constructIntersectionAtSignalPosition(OsmNode, IntersectionType, String)}, its
+   * approaches the road segments entering its node in its direction. A ramp meter whose node already belongs to
+   * another intersection, such as a signalised crossing, makes none. Consolidation may later join a ramp meter into a
+   * junction within reach, as it does a crossing. Run after the other signals are integrated, so no look-ahead of
+   * theirs meets a node a ramp meter's link break creates
+   *
+   * @param firstPass holds the ramp meters the first pass postponed
+   */
+  public void integrateRampMeters(OsmTrafficSignalFirstPassResult firstPass) {
+    var parseDiagnostics = networkData.getParseDiagnostics();
+    for (var rampMeter : firstPass.rampMeters) {
+      var location = SignalOnPlanitLayer.locateAndCreate(rampMeter, layerData);
+      if (location != null && location.isOnNode() &&
+          networkLayer.getIntersections().getByMemberNode(location.node) != null) {
+        parseDiagnostics.register(OsmTrafficSignalOutcome.RAMP_METER_INSIDE_OTHER_INTERSECTION, rampMeter);
+        continue;
+      }
+      var direction = OsmTrafficSignalUtils.getDirectionOf(
+          rampMeter, OsmModelUtil.getTagsAsMap(rampMeter), settings.getIntersectionSettings());
+      parseDiagnostics.register(
+          constructIntersectionAtSignalPosition(rampMeter, IntersectionType.RAMP_METER, direction) ?
+              OsmTrafficSignalOutcome.RAMP_METER_OWN_INTERSECTION : OsmTrafficSignalOutcome.RAMP_METER_NO_LINK_BROKEN,
+          rampMeter);
     }
   }
 }
