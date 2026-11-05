@@ -14,6 +14,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>active</usedtotype>
+                    <drivertype>traveller</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="bus" externalid="bus" predefined="true">
@@ -27,6 +28,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>public</usedtotype>
+                    <drivertype>operator</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="car" externalid="motorcar" predefined="true">
@@ -40,6 +42,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>private</usedtotype>
+                    <drivertype>traveller</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="goods" externalid="goods" predefined="true">
@@ -53,6 +56,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>goods</usedtotype>
+                    <drivertype>traveller</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="hgv" externalid="hgv" predefined="true">
@@ -66,6 +70,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>goods</usedtotype>
+                    <drivertype>traveller</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="lhgv" externalid="hgv_articulated" predefined="true">
@@ -79,6 +84,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>goods</usedtotype>
+                    <drivertype>traveller</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="light_rail" externalid="light_rail" predefined="true">
@@ -92,6 +98,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>public</usedtotype>
+                    <drivertype>operator</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="motor_bike" externalid="motorcycle" predefined="true">
@@ -105,6 +112,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>private</usedtotype>
+                    <drivertype>traveller</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="pedestrian" externalid="foot" predefined="true">
@@ -118,6 +126,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>active</usedtotype>
+                    <drivertype>none</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="subway" externalid="subway" predefined="true">
@@ -131,6 +140,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>public</usedtotype>
+                    <drivertype>operator</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="train" externalid="narrow_gauge;train" predefined="true">
@@ -144,6 +154,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>public</usedtotype>
+                    <drivertype>operator</drivertype>
                 </usabilityfeatures>
             </mode>
             <mode id="tram" externalid="funicular;monorail;tram" predefined="true">
@@ -157,6 +168,7 @@
                 </physicalfeatures>
                 <usabilityfeatures>
                     <usedtotype>public</usedtotype>
+                    <drivertype>operator</drivertype>
                 </usabilityfeatures>
             </mode>
         </modes>
