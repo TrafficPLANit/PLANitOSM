@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.zoning.handler.helper;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.converter.zoning.VehicleStopConnectoidLocationOnLinkSegment;
+import org.goplanit.converter.zoning.ZoningConverterModifierUtils;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
@@ -14,7 +15,6 @@ import org.goplanit.utils.geo.PlanitEntityGeoUtils;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.graph.directed.DirectedVertex;
 import org.goplanit.utils.graph.directed.EdgeSegment;
-import org.goplanit.utils.graph.modifier.event.GraphModifierListener;
 import org.goplanit.utils.id.ExternalIdAble;
 import org.goplanit.utils.misc.IterableUtils;
 import org.goplanit.utils.misc.Pair;
@@ -27,11 +27,9 @@ import org.goplanit.utils.network.layer.physical.Link;
 import org.goplanit.utils.network.layer.physical.LinkSegment;
 import org.goplanit.utils.network.layer.physical.Node;
 import org.goplanit.utils.zoning.*;
-import org.goplanit.utils.zoning.connectoid.ConnectoidUtils;
 import org.goplanit.utils.zoning.connectoid.DirectedConnectoidAccessZoneEntry;
 import org.goplanit.utils.zoning.connectoid.TransferConnectoid;
 import org.goplanit.utils.zoning.connectoid.ZoneConnectoidType;
-import org.goplanit.zoning.modifier.event.handler.UpdateDirectedConnectoidsOnBreakLinkSegmentHandler;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
@@ -246,13 +244,10 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     entry.addAllowedModes(availableModes);
   }
 
-  /** break a PLANit link at the PLANit node location while also updating all OSM related tracking indices and/or
-   * PLANit network link and link segment reference that might be affected by this process:
-   * <ul>
-   * <li>tracking of OSM ways with multiple PLANit links</li>
-   * <li>connectoid access link segments affected by breaking of link (if any)</li>
-   * </ul>
-   * 
+  /** break a PLANit link at the PLANit node location, see {@link ZoningConverterModifierUtils#breakLinksAtNode}, which
+   * keeps the transfer connectoids on the broken links and the spatial index of links right, and then update the
+   * tracking of OSM ways with multiple PLANit links from the pieces
+   *
    * @param planitNode to break link at
    * @param networkLayer the node and link(s) reside on
    * @param linksToBreak the links to break
@@ -263,58 +258,13 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
       List<MacroscopicLink> linksToBreak){
 
     OsmNetworkReaderLayerData layerData = getNetworkToZoningData().getNetworkLayerData(networkLayer);
-  
-    /* track original combinations of linksegment/downstream vertex for each connectoid possibly affected by the links
-    we're about to break link (segments) if after breaking links this relation is modified, restore it by updating the
-    connectoid to the correct access link segment directly upstream of the original downstream vertex identified */
-    Set<TransferConnectoid> connectoidsOverlappingWithBreakLinks =
-        ConnectoidUtils.findDirectedConnectoidsReferencingLinks(
-            linksToBreak,
-            getZoningReaderData().getPlanitConverterData().getConnectoidData().getTransferConnectoidsByLocation(
-                networkLayer).values().stream().flatMap(Collection::stream));
-    
-    /* register additional actions on breaking link via listener for connectoid update (see above)
-     * TODO: refactor this so it does not require this whole preparing of data. Ideally this is handled more elegantly
-     *  than now
-     */
-    GraphModifierListener listener = null;
-    if(!connectoidsOverlappingWithBreakLinks.isEmpty()) {
-      listener = new UpdateDirectedConnectoidsOnBreakLinkSegmentHandler(connectoidsOverlappingWithBreakLinks);
-      networkLayer.getLayerModifier().addListener(listener);
-    }
-        
-    try {
-      /* LOCAL TRACKING DATA CONSISTENCY  - BEFORE */
-      {
-        /* remove links from spatial index when they are broken up and their geometry changes, after breaking more links
-        exist with smaller geometries... insert those after as replacements*/
-        getZoningReaderData().getPlanitConverterData().removeLinksFromSpatialLinkIndex(linksToBreak);
-      }
+    var brokenLinks = ZoningConverterModifierUtils.breakLinksAtNode(
+        getZoningReaderData().getPlanitConverterData(), planitNode, networkLayer, linksToBreak);
 
-      /* break links and group resulting new links by original link's OSM id*/
-      var referenceNetwork = getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
-
-      var brokenLinks = networkLayer.getLayerModifier().breakAt(
-          linksToBreak, planitNode, referenceNetwork.getCoordinateReferenceSystem());
-      var newlyBrokenLinks = PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
-          brokenLinks, PlanitOsmUtils::parseOsmIdOrNull);
-
-      /* TRACKING DATA CONSISTENCY - AFTER */
-      {
-        /* insert created/updated links and their geometries to spatial index instead, also those the reader added
-         * itself, which come from no OSM way and so are not grouped by one */
-        brokenLinks.values().forEach(pair -> getZoningReaderData().getPlanitConverterData().addLinksToSpatialLinkIndex(
-            networkLayer, pair.first(), pair.second()));
-
-        /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to
-        be able to find the correct planit links for (internal) osm nodes */
-        layerData.updateOsmWaysWithMultiplePlanitLinks(newlyBrokenLinks);
-      }
-    } finally {
-      if(listener != null) {
-        networkLayer.getLayerModifier().removeListener(listener);
-      }
-    }
+    /* update mapping since another osmWayId now has multiple planit links and this is needed in the layer data to
+    be able to find the correct planit links for (internal) osm nodes */
+    layerData.updateOsmWaysWithMultiplePlanitLinks(PlanitNetworkLayerModifierUtils.convertBrokenLinksByGroupingThemWithCustomKey(
+        brokenLinks, PlanitOsmUtils::parseOsmIdOrNull));
   }
 
   /** create directed connectoids, one per link segment provided, all related to the given transfer zone and with
