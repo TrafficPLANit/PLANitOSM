@@ -15,6 +15,9 @@ import org.goplanit.utils.locale.CountryNames;
  *
  */
 public class OsmNetworkReaderFactory {
+
+  /** factory, not to be instantiated */
+  private OsmNetworkReaderFactory(){}
   
   /** Create a PLANitOSMReader which will create its own macroscopic network and non-locale specific defaults for any right hand driving country
    * 

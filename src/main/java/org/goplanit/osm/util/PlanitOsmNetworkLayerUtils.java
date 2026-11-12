@@ -39,6 +39,9 @@ public class PlanitOsmNetworkLayerUtils {
 
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetworkLayerUtils.class.getCanonicalName());
 
+  /** utilities, not to be instantiated */
+  private PlanitOsmNetworkLayerUtils(){}
+
   /** Collect the layers where the OSM node is active in either as an extreme node or internal to a PLANit link
    *
    * @param osmNodeId to use

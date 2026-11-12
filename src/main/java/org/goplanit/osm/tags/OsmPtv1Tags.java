@@ -90,6 +90,8 @@ public class OsmPtv1Tags {
     AREA_BASED_PT_RAILWAY_VALUE_TAGS.add(TRAM_STOP);    
   }  
   
+  private OsmPtv1Tags(){}
+
   static {
     populateAreaBasedOsmHighwayPublicTransportValueTags();
     populateOsmHighwayPublicTransportValueTags();
@@ -129,6 +131,7 @@ public class OsmPtv1Tags {
     
   /* railway ways that are not tracks and not areas */
     
+  /** value of a railway way along the edge of a platform, {@code railway=platform_edge} */
   public static final String PLATFORM_EDGE = "platform_edge";    
   
   

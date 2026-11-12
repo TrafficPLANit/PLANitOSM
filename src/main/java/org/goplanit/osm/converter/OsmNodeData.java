@@ -18,6 +18,12 @@ public class OsmNodeData {
   /** temporary storage of osmNodes before converting the useful ones to actual nodes */
   private final Map<Long, OsmNode> osmNodes = new HashMap<>();
 
+  /**
+   * Constructor, with no OSM node pre-registered or registered
+   */
+  public OsmNodeData() {
+  }
+
   /** Collect the OSM nodes (unmodifiable)
    *
    * @return osm nodes
@@ -83,6 +89,11 @@ public class OsmNodeData {
     return osmNodes.containsKey(osmNodeId);
   }
 
+  /**
+   * The number of OSM nodes held, pre-registered or registered
+   *
+   * @return the number
+   */
   public int countPreregisteredOsmNodes(){
     return osmNodes.size();
   }
@@ -96,6 +107,7 @@ public class OsmNodeData {
     osmNodes.entrySet().removeIf(predicate);
   }
 
+  /** Remove every pre-registered and registered OSM node */
   public void reset(){
     osmNodes.clear();
   }

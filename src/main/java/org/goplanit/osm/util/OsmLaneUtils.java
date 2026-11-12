@@ -72,6 +72,9 @@ public class OsmLaneUtils {
     return Triple.of(lanesForward, lanesBackward, oddTotalRoundedUp);
   }
 
+  /** utilities, not to be instantiated */
+  private OsmLaneUtils(){}
+
   /**
    * Attempt to parse string as lane string either as iteger (expected) or fallback check on double changed to
    * int with warning

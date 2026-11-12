@@ -58,6 +58,8 @@ public class OsmRoadModeTags {
     MODE_TAGS.add(SHARE_TAXI);
     MODE_TAGS.add(MINI_BUS);
   }
+
+  private OsmRoadModeTags(){}
   
   static {
     populatePTModeTags();
@@ -66,10 +68,13 @@ public class OsmRoadModeTags {
 
   /* NO VEHICLE */
   
+  /** mode of pedestrians */
   public static final String FOOT = "foot";
   
+  /** mode of dogs, e.g. {@code dog=no} */
   public static final String DOG = "dog";
   
+  /** mode of horse riders */
   public static final String HORSE = "horse";
   
   /* VEHICLE  category */

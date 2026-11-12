@@ -37,6 +37,8 @@ public class OsmTrafficSignalTags {
         tags.containsKey(BARRIER) && !OsmTagUtils.keyMatchesAnyValueTag(tags, BARRIER, KERB, OsmTags.NO);
   }
 
+  private OsmTrafficSignalTags(){}
+
   /** value of {@code highway=traffic_signals}, a node with traffic signals */
   public static final String TRAFFIC_SIGNALS = "traffic_signals";
 

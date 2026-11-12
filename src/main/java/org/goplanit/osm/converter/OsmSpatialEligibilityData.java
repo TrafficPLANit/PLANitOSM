@@ -33,38 +33,92 @@ public class OsmSpatialEligibilityData {
   private final Set<Long> potentiallySpatiallyEligibleOsmNodesSpecialCases = new HashSet<>();
 
 
+  /**
+   * Constructor, with nothing marked yet
+   */
+  public OsmSpatialEligibilityData() {
+  }
+
+  /**
+   * Whether an OSM way is marked spatially eligible
+   *
+   * @param osmWayId to check
+   * @return true when marked
+   */
   public boolean isOsmWaySpatiallyEligible(long osmWayId){
     return spatiallyEligibleOsmWays.contains(osmWayId);
   }
 
+  /**
+   * Mark an OSM way spatially eligible
+   *
+   * @param osmWayId to mark
+   */
   public void markOsmWaySpatiallyEligible(long osmWayId){
     spatiallyEligibleOsmWays.add(osmWayId);
   }
 
+  /**
+   * Whether an OSM node is marked spatially eligible
+   *
+   * @param osmNodeId to check
+   * @return true when marked
+   */
   public boolean isOsmNodeSpatiallyEligible(long osmNodeId){
     return spatiallyEligibleOsmNodes.contains(osmNodeId);
   }
 
+  /**
+   * Mark an OSM node spatially eligible
+   *
+   * @param osmNodeId to mark
+   */
   public void markOsmNodeSpatiallyEligible(long osmNodeId){
     spatiallyEligibleOsmNodes.add(osmNodeId);
   }
 
+  /**
+   * Mark an OSM relation spatially eligible
+   *
+   * @param osmRelationId to mark
+   */
   public void markOsmRelationSpatiallyEligible(long osmRelationId) {
     spatiallyEligibleOsmRelations.add(osmRelationId);
   }
 
+  /**
+   * Whether an OSM relation is marked spatially eligible
+   *
+   * @param osmRelationId to check
+   * @return true when marked
+   */
   public boolean isOsmRelationSpatiallyEligible(long osmRelationId) {
     return spatiallyEligibleOsmRelations.contains(osmRelationId);
   }
 
+  /**
+   * The number of OSM nodes marked spatially eligible
+   *
+   * @return the number
+   */
   public int countSpatiallyEligibleNodes(){
     return spatiallyEligibleOsmNodes.size();
   }
 
+  /**
+   * The number of OSM ways marked spatially eligible
+   *
+   * @return the number
+   */
   public int countSpatiallyEligibleWays(){
     return spatiallyEligibleOsmWays.size();
   }
 
+  /**
+   * The number of OSM relations marked spatially eligible
+   *
+   * @return the number
+   */
   public int countSpatiallyEligibleRelations(){
     return spatiallyEligibleOsmRelations.size();
   }
@@ -85,6 +139,12 @@ public class OsmSpatialEligibilityData {
     return false;
   }
 
+  /**
+   * Mark an OSM way and its nodes as a special case: not spatially eligible themselves, but possibly made so in
+   * a later pass, such as a platform reaching just outside the bounding area
+   *
+   * @param osmWay to mark
+   */
   public void markOsmWayAndNodesPotentiallySpatiallyEligibleAsSpecialCase(OsmWay osmWay) {
     potentiallySpatiallyEligibleOsmWaysSpecialCases.add(osmWay.getId());
     for(int i=0; i<osmWay.getNumberOfNodes();i++) {
@@ -92,19 +152,34 @@ public class OsmSpatialEligibilityData {
     }
   }
 
+  /**
+   * Whether an OSM way is marked as a special case that may still become spatially eligible
+   *
+   * @param osmWayId to check
+   * @return true when marked
+   */
   public boolean isOsmWayPotentiallySpatiallyEligibleAsSpecialCase(long osmWayId){
     return potentiallySpatiallyEligibleOsmWaysSpecialCases.contains(osmWayId);
   }
 
+  /**
+   * Whether an OSM node is part of an OSM way marked as a special case that may still become spatially
+   * eligible
+   *
+   * @param osmNodeId to check
+   * @return true when it is
+   */
   public boolean isOsmNodePartOfPotentiallySpatiallyEligibleWayAsSpecialCase(long osmNodeId){
     return potentiallySpatiallyEligibleOsmNodesSpecialCases.contains(osmNodeId);
   }
 
+  /** Remove every mark, spatially eligible and special case alike */
   public void reset(){
     spatiallyEligibleOsmWays.clear();
     spatiallyEligibleOsmNodes.clear();
     spatiallyEligibleOsmRelations.clear();
     potentiallySpatiallyEligibleOsmWaysSpecialCases.clear();
+    potentiallySpatiallyEligibleOsmNodesSpecialCases.clear();
   }
 
 }

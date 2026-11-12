@@ -13,15 +13,21 @@ import org.goplanit.osm.util.OsmTagUtils;
  *
  */
 public class OsmPedestrianTags {
+
+  private OsmPedestrianTags(){}
   
+  /** values saying pedestrians may use the way */
   protected static String[] PEDESTRIAN_POSITIVE_VALUE_TAGS = {OsmPedestrianTags.YES, OsmPedestrianTags.SIDEWALK};
   
+  /** values saying pedestrians may not use the way, or use a separate way beside it */
   protected static String[] PEDESTRIAN_NEGATIVE_VALUE_TAGS =
           {OsmPedestrianTags.NO, OsmPedestrianTags.NONE, OsmPedestrianTags.SEPARATE};
       
+  /** values saying on which side, or sides, of the way pedestrians go */
   protected static String[] PEDESTRIAN_LOCATION_VALUE_TAGS =
           {OsmPedestrianTags.BOTH, OsmPedestrianTags.LEFT, OsmPedestrianTags.RIGHT};
   
+  /** values saying pedestrians may use the way, outright or on a side of it */
   protected static String[] PEDESTRIAN_POSITIVE_AND_LOCATION_VALUE_TAGS =
           Stream.concat(Stream.of(PEDESTRIAN_POSITIVE_VALUE_TAGS),
                   Stream.of(PEDESTRIAN_LOCATION_VALUE_TAGS)).toArray(String[]::new);

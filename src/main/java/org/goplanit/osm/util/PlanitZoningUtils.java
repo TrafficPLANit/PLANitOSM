@@ -12,6 +12,9 @@ import org.goplanit.zoning.Zoning;
  *
  */
 public class PlanitZoningUtils {
+
+  /** utilities, not to be instantiated */
+  private PlanitZoningUtils(){}
   
   /** the logger to use */
   public static final Logger LOGGER = Logger.getLogger(PlanitZoningUtils.class.getCanonicalName());                       

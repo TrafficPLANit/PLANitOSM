@@ -21,7 +21,9 @@ public class OsmWaterwayTags {
 
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmWaterwayTags.class.getCanonicalName());
-  
+
+  private OsmWaterwayTags(){}
+
   /** all currently available waterway tags that represent ways accessible to a water based mode by means of its route key tag*/
   static final Set<String> DEFAULT_ACTIVATED_WATERWAY_OSM_ROUTE_VALUE_TAGS = new HashSet<>();
 
@@ -61,10 +63,10 @@ public class OsmWaterwayTags {
     populateWaterBasedOsmWayValueTags();
   }
   
-  /* key */
+  /** key of a route, e.g. {@code route=ferry} */
   public static final String ROUTE = "route";
 
-  /* ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as
+  /** ferry is a complicated tag because it may be used to indicate a type of route, e.g., route=ferry, as well as
    *used as a way to indicate a ferry that replaces a type of highway, in which case it may be ferry=primary,
    * indicating a highway section that is a ferry. The latter may or may not have the route=ferry tagging, so, we
    * should support it separately as another valid ferry key

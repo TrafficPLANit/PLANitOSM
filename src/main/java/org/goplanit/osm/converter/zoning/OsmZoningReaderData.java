@@ -25,10 +25,10 @@ public class OsmZoningReaderData {
   
   /* UNPROCESSED OSM */
   
-  /* PLANit entity related tracking during parsing */
+  /** PLANit entity related tracking during parsing */
   protected final OsmZoningReaderPlanitConverterData planitData;
   
-  /* OSM entity related tracking during parsing */
+  /** OSM entity related tracking during parsing */
   protected final OsmZoningReaderOsmData osmConverterData = new OsmZoningReaderOsmData();
 
   /** the osmBoundary used during parsing.

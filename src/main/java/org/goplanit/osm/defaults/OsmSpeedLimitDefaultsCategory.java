@@ -22,6 +22,7 @@ public class OsmSpeedLimitDefaultsCategory {
    */
   protected final Map<String, Map<String,Double>> speedLimitDefaults;
       
+  /** defaults to use for a way type these defaults do not cover, may be null */
   protected final OsmSpeedLimitDefaultsCategory backupDefaults;
   
   /** country these defaults apply for */

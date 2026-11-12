@@ -30,6 +30,8 @@ public class OsmPtv2Tags {
   }  
   
   
+  private OsmPtv2Tags(){}
+
   static {
     populateOsmPublicTransportValueTags();
   }     

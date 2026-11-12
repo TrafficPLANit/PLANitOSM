@@ -19,6 +19,9 @@ public class OsmTagUtils {
 
   /** logegr to use */
   private static final Logger LOGGER = Logger.getLogger(OsmTagUtils.class.getCanonicalName());
+
+  /** utilities, not to be instantiated */
+  private OsmTagUtils(){}
   
   /** regular expression used to identify non-word characters (a-z any case, 0-9 or _) or whitespace*/
   public static final String VALUETAG_SPECIALCHAR_STRIP_REGEX = "[^\\w\\s]";

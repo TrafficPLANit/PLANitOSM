@@ -20,6 +20,7 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
 
   private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
 
+  /** the OSM tags are not kept on the PLANit entities unless asked for */
   public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
 
   /** input source to use */

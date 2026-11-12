@@ -19,6 +19,9 @@ public class OsmModeUtils {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmModeUtils.class.getCanonicalName());
+
+  /** utilities, not to be instantiated */
+  private OsmModeUtils(){}
  
   
   /** Collect all OSM modes with either {@code preFix:<OSM mode name>=} or {@code postFix:<OSM mode name>= any of the modeAccessValueTags that are passed in}. 

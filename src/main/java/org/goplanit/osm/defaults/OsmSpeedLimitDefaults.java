@@ -16,7 +16,7 @@ public class OsmSpeedLimitDefaults {
   /** in absence of OSM defined defaults, we make a global railway speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH = 70;
 
-  /* in absence of OSM defined defaults, we provide a global waterway speed limit (km/h) available */
+  /** in absence of OSM defined defaults, we provide a global waterway speed limit (km/h) available */
   public static final double GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH = 20;
 
   /**
@@ -144,20 +144,40 @@ public class OsmSpeedLimitDefaults {
     return new OsmSpeedLimitDefaults(this);
   }
   
+  /**
+   * The speed limit defaults of highways inside urban areas
+   *
+   * @return the defaults
+   */
   public OsmSpeedLimitDefaultsCategory getUrbanHighwayDefaults() {
     return urbanHighwayDefaults;
   }
 
 
+  /**
+   * The speed limit defaults of highways outside urban areas
+   *
+   * @return the defaults
+   */
   public OsmSpeedLimitDefaultsCategory getNonUrbanHighwayDefaults() {
     return nonUrbanHighwayDefaults;
   }
 
 
+  /**
+   * The speed limit defaults of railways
+   *
+   * @return the defaults
+   */
   public OsmSpeedLimitDefaultsCategory getRailwayDefaults() {
     return railwayDefaults;
   }
 
+  /**
+   * The speed limit defaults of waterways
+   *
+   * @return the defaults
+   */
   public OsmSpeedLimitDefaultsCategory getWaterwayDefaults() {
     return waterwayDefaults;
   }

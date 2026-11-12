@@ -20,13 +20,7 @@ public class OsmRailwayTags {
   /** all currently supported railway tags that represent geographic areas, e.g. stations, or platforms next or alongside tracks, this is a subset of
    * the {@code NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS} */
   private static final Set<String> AREABASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<>();
-    
-  /**
-   * the OSM railway values that are marked as non-rail types, i.e., they can never be activated to be converted into links
-   */
-  protected static final Set<String> NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<>();
-  
-  
+
   /**
    * populate the available value tags for key railway= that represent rail tracks of some sort
    * 
@@ -101,6 +95,13 @@ public class OsmRailwayTags {
     NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS.addAll(OsmPtv1Tags.getRailwayValueTags());    
   }  
   
+  private OsmRailwayTags(){}
+
+  /**
+   * the OSM railway values that are marked as non-rail types, i.e., they can never be activated to be converted into links
+   */
+  protected static final Set<String> NON_RAILBASED_OSM_RAILWAY_VALUE_TAGS = new HashSet<>();
+
   /**
    * populate the available railway tags
    */
@@ -111,32 +112,45 @@ public class OsmRailwayTags {
   }
   
   /* key */
+  /** key of a railway of any kind, e.g. {@code railway=rail} */
   public static final String RAILWAY = "railway";
   
   /* values of types of railways */
   
+  /** value of a railway whose tracks were taken away */
   public static final String ABANDONED = "abandoned";
   
+  /** value of a railway being built */
   public static final String CONSTRUCTION = "construction";
   
+  /** value of a railway that is proposed, not built */
   public static final String PROPOSED = "proposed";
   
+  /** value of a railway no longer used, its tracks still in place */
   public static final String DISUSED = "disused";
     
+  /** value of a funicular track, an inclined railway pulled by cable */
   public static final String FUNICULAR = "funicular";
   
+  /** value of a light rail track */
   public static final String LIGHT_RAIL = "light_rail";
   
+  /** value of a monorail track */
   public static final String MONO_RAIL = "monorail";
    
+  /** value of a narrow gauge track */
   public static final String NARROW_GAUGE = "narrow_gauge";
   
+  /** value of a heritage railway, kept for tourist trains */
   public static final String PRESERVED = "preserved";  
   
+  /** value of a full sized railway track */
   public static final String RAIL = "rail";
   
+  /** value of a subway track, a metro */
   public static final String SUBWAY = "subway";
   
+  /** value of a tram track */
   public static final String TRAM = "tram";  
     
   /** miniature railways, not actual railways */
@@ -150,18 +164,25 @@ public class OsmRailwayTags {
     
   /* areas non public_transport, but still valid railway tags*/
     
+  /** value of an area where locomotives take fuel */
   public static final String FUEL = "fuel";
 
+  /** value of a traverser, a platform moving rail vehicles sideways between tracks */
   public static final String TRAVERSER = "traverser";
 
+  /** value of an area where trains are washed */
   public static final String WASH = "wash";
 
-  public static final String ROUNDHOUSE = "roundahouse";
+  /** value of a roundhouse, a building where locomotives are kept and turned */
+  public static final String ROUNDHOUSE = "roundhouse";
 
+  /** value of a railway yard */
   public static final String YARD = "yard";
   
+  /** value of a signal box */
   public static final String SIGNAL_BOX = "signal_box";
   
+  /** value of a railway workshop */
   public static final String WORKSHOP = "workshop";
         
 

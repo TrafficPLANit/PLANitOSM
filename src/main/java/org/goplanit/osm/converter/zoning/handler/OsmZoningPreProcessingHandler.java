@@ -41,8 +41,11 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
    * Preprocessing of platform relations has three stages, identified by this enum
    */
   public enum Stage {
+    /** mark the entities inside the bounding area eligible, and identify the members of the eligible zoning relations */
     ONE_IDENTIFY_ZONING_RELATION_MEMBERS,
+    /** pre-register the nodes of zoning ways found in stage one, such as a platform outline, and the special case nodes near the bounding area */
     TWO_PREREGISTER_ZONING_WAY_NODES,
+    /** register the nodes pre-registered in the earlier stages */
     THREE_REGISTER_ZONING_NODES_AND_WAYS,
   }
 

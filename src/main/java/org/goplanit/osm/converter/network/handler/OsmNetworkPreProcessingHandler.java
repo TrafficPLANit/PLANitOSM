@@ -173,8 +173,11 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
    *
    */
   public enum Stage {
+    /** mark the nodes inside the bounding area eligible, and so the ways with at least one of them */
     ONE_PREPROCESSING_SPATIALLY_NODES_WAYS,
+    /** mark the special case nodes outside the bounding area but near it eligible, such as those of waterways */
     TWO_PREPROCESS_SPECIAL_CASE_NODES_WAYS,
+    /** register the pre-registered nodes found eligible, and record the traffic signals among them */
     THREE_FINALISE_PREPROCESSING_NODES_WAYS,
   }
 

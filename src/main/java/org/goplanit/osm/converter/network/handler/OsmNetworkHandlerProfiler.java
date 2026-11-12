@@ -57,6 +57,12 @@ public class OsmNetworkHandlerProfiler {
   private long moduloLoggingCounterBannedTurns = 500;
 
   /**
+   * Constructor, with every count at zero
+   */
+  public OsmNetworkHandlerProfiler() {
+  }
+
+  /**
    * Increment counter for passed in osm tag 
    * 
    * @param keyTag to increment counter for

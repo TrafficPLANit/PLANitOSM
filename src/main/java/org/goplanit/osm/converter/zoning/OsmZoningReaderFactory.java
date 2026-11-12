@@ -18,6 +18,9 @@ import org.goplanit.zoning.Zoning;
  */
 public class OsmZoningReaderFactory {   
 
+  /** factory, not to be instantiated */
+  private OsmZoningReaderFactory(){}
+
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
    * @param inputFile to use

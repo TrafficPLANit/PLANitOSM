@@ -108,6 +108,8 @@ public class OsmRoadModeCategoryTags {
       }
     }
   }
+
+  private OsmRoadModeCategoryTags(){}
  
   /** group indicating any vehicle type */
   public static final String VEHICLE = "vehicle";

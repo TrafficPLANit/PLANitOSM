@@ -137,7 +137,14 @@ public class OsmNetworkReaderLayerData {
   /** track mapping from osm way id to PLANit link for reverse look up */
   protected Map<Long, MacroscopicLink> osmWayIdToPlanitLink = new HashMap<>();
 
+  /** the OSM vertical layer index of each OSM way that has one, by its OSM way id */
   protected Map<String, Integer> osmVerticalLayerIndicesByOsmWayId = new HashMap<>();
+
+  /**
+   * Constructor, with nothing registered yet
+   */
+  public OsmNetworkReaderLayerData() {
+  }
 
   /** Collect the OSM vertical layer index for the link. Requires the link to have registered
    * its external id (OSM way id)

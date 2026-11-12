@@ -40,6 +40,9 @@ public class OsmModeAccessDefaultsByCountry {
   
   /** reference to the resource dir where we store the country specific mode access defaults */
   private static final String MODE_ACCESS_RESOURCE_DIR = "mode_access";
+
+  /** defaults by country, not to be instantiated */
+  private OsmModeAccessDefaultsByCountry(){}
   
   /** store the global defaults as fall back option */
   protected static OsmModeAccessDefaults globalModeAccessDefaults;

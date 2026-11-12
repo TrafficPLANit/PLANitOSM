@@ -123,10 +123,20 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
     return isCompatible;
   }
 
+  /**
+   * The network the zoning is built on
+   *
+   * @return the network
+   */
   protected PlanitOsmNetwork getReferenceNetwork(){
     return (PlanitOsmNetwork) getZoningReaderData().getPlanitConverterData().getReferenceNetwork();
   }
 
+  /**
+   * The helper holding the reader's bounding area in the network's projection
+   *
+   * @return the helper
+   */
   protected OsmProjectedBoundingAreaHelper getProjectedBoundingAreaHelper(){
     return projectedBoundingAreaHelper;
   }

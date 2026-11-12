@@ -344,6 +344,11 @@ public class OsmZoningReader implements ZoningReader {
     this.suppressSettingsLogging = true;
   }
 
+  /**
+   * The network the zoning is built on
+   *
+   * @return the network
+   */
   protected PlanitOsmNetwork getReferenceNetwork(){
     return referenceNetwork;
   }

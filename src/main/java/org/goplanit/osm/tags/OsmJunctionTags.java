@@ -9,15 +9,20 @@ import java.util.Map;
  *
  */
 public class OsmJunctionTags {
+
+  private OsmJunctionTags(){}
   
   /* key */
     
+  /** key of the kind of junction a way is part of, e.g. {@code junction=roundabout} */
   public static final String JUNCTION = "junction";
   
   /* values */
   
+  /** value of a roundabout: a circular way whose traffic has priority over the traffic joining it */
   public static final String ROUNDABOUT = "roundabout";
   
+  /** value of a circular way that is not a roundabout, such as one without priority for its traffic */
   public static final String CIRCULAR = "circular";
   
   /** verify if the tags indicate a circular way or a road that is part of a circular way by checking its

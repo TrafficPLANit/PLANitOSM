@@ -9,6 +9,7 @@ import java.util.*;
  *
  */
 public interface OsmInfrastructureConfiguration {
+  /** Log the way types that are deactivated */
   void logDeactivatedTypes();
 
   /**

@@ -15,6 +15,9 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
  */
 public class OsmPtVersionSchemeUtils {
 
+  /** utilities, not to be instantiated */
+  private OsmPtVersionSchemeUtils(){}
+
   /** the logger */
   static final Logger LOGGER = Logger.getLogger(OsmPtVersionSchemeUtils.class.getCanonicalName());
   

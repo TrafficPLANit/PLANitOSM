@@ -110,6 +110,7 @@ public class OsmHighwayTags {
     }
   
     /* key */
+    /** key of a highway, a road or path of any kind, e.g. {@code highway=primary} */
     public static final String HIGHWAY = "highway";
   
     /* values */

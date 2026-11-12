@@ -31,6 +31,9 @@ public class OsmNodeUtils {
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmNodeUtils.class.getCanonicalName());
 
+  /** utilities, not to be instantiated */
+  private OsmNodeUtils(){}
+
   /** Collect the coordinate from the osm node information
    * 
    * @param osmNode to use

@@ -50,6 +50,9 @@ public class OsmSpeedLimitDefaultsByCountry {
   /** reference to the resource dir where we store the country specific railway speed limit defaults (requires
    * forward slash due to being a resource/URI driven path)*/
   private static final String SPEED_LIMIT_RAILWAY_RESOURCE_DIR = SPEED_LIMIT_RESOURCE_DIR.concat("/railway");
+
+  /** defaults by country, not to be instantiated */
+  private OsmSpeedLimitDefaultsByCountry(){}
   
   /** store the global railway defaults as fall back option */
   protected static final OsmSpeedLimitDefaults GLOBAL_SPEED_LIMIT_DEFAULTS =

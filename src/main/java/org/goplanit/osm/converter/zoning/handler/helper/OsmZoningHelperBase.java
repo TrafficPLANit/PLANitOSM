@@ -63,6 +63,11 @@ class OsmZoningHelperBase {
   }
 
 
+  /**
+   * The data the zoning reader keeps while it parses
+   *
+   * @return the data
+   */
   protected OsmZoningReaderData getZoningReaderData() {
     return zoningReaderData;
   }

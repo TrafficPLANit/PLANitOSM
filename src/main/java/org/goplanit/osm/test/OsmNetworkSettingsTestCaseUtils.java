@@ -11,6 +11,9 @@ import org.goplanit.osm.tags.OsmRoadModeTags;
  */
 public class OsmNetworkSettingsTestCaseUtils {
 
+  /** utilities, not to be instantiated */
+  private OsmNetworkSettingsTestCaseUtils(){}
+
 
   /**
    * When applied to the 2023 PBF it suppresses and addresses warnings deemed issues that are NOT to be fixed in the parser

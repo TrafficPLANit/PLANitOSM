@@ -43,6 +43,9 @@ public class OsmWayUtils {
   
   /** the logger */
   private static final Logger LOGGER = Logger.getLogger(OsmWayUtils.class.getCanonicalName());
+
+  /** utilities, not to be instantiated */
+  private OsmWayUtils(){}
   
   /** find the closest PLANit entity to the way from the available entities. This method computes the actual distance between any location on any line segment of the 
    * geometry of the entity and any node on the way and it is therefore is very precise.

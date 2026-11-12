@@ -10,6 +10,9 @@ import org.goplanit.utils.misc.Triple;
  */
 public class OsmPtSettingsTestCaseUtils {
 
+  /** utilities, not to be instantiated */
+  private OsmPtSettingsTestCaseUtils(){}
+
 
   /**
    * When applied to the 2023 PBF it suppresses and addresses warnings deemed issues that are NOT to be fixed in the parser

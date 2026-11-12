@@ -95,6 +95,12 @@ public class OsmNetworkReaderData {
   private final Map<MacroscopicNetworkLayer, OsmNetworkLayerParser> osmLayerParsers = new HashMap<>();
   
   /**
+   * Constructor, with nothing registered yet
+   */
+  public OsmNetworkReaderData() {
+  }
+
+  /**
    * initialise for each layer
    * 
    * @param network to use

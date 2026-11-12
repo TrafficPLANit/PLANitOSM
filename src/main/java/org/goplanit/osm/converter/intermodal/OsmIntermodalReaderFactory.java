@@ -18,6 +18,9 @@ import org.goplanit.zoning.Zoning;
  *
  */
 public class OsmIntermodalReaderFactory {
+
+  /** factory, not to be instantiated */
+  private OsmIntermodalReaderFactory(){}
   
   /** Create a PLANitOsmIntermodalReader which will create its own macroscopic network, zoning and non-locale
    * specific defaults for any right hand driving country

@@ -13,6 +13,9 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
  *
  */
 public class OsmNetworkHandlerHelper {
+
+  /** utilities, not to be instantiated */
+  private OsmNetworkHandlerHelper(){}
   
   /** the logger to use */
   public static final Logger LOGGER = Logger.getLogger(OsmNetworkHandlerHelper.class.getCanonicalName());

@@ -28,6 +28,7 @@ public class OsmWaterwayTypeConfiguration implements OsmInfrastructureConfigurat
   /** default configuration for 'ferry=_some_highway_type_' configuration pertaining to ferries */
   protected static OsmInfrastructureConfiguration DEFAULT_FERRYHIGHWAY_CONFIGURATION = null;
 
+  /** configuration for 'route=' configuration pertaining to ferries */
   protected OsmInfrastructureConfiguration routeFerryConfiguration = null;
 
   /** configuration for 'ferry=_some_highway_type_' configuration pertaining to ferries */

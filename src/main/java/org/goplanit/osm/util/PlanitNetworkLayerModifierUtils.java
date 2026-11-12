@@ -36,6 +36,9 @@ public class PlanitNetworkLayerModifierUtils {
 
   private static final Logger LOGGER = Logger.getLogger(PlanitNetworkLayerModifierUtils.class.getCanonicalName());
 
+  /** utilities, not to be instantiated */
+  private PlanitNetworkLayerModifierUtils(){}
+
   /**
    * Defautl behaviour of breaking edges returns in particular form that may not be ideal, this converts it to
    * different mapping using passed in function. A link the function gives no key for is left out, e.g. a link the

@@ -21,6 +21,9 @@ public class OsmRelationUtils {
   @SuppressWarnings("unused")
   private static final Logger LOGGER = Logger.getLogger(OsmRelationUtils.class.getCanonicalName());
 
+  /** utilities, not to be instantiated */
+  private OsmRelationUtils(){}
+
   /** Find the first relation member with the given role
    * 
    * @param osmRelation to check

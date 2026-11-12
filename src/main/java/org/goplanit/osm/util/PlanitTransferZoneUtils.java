@@ -92,6 +92,9 @@ public class PlanitTransferZoneUtils {
   private static boolean hasTransferZoneOverarchingName(TransferZone transferZone) {
     return getTransferZoneOverarchingName(transferZone) != null;
   }
+
+  /** utilities, not to be instantiated */
+  private PlanitTransferZoneUtils(){}
   
   /** Find the zone (within any of the transfer zone groups) closest to the passed in OSM Entity
    * 

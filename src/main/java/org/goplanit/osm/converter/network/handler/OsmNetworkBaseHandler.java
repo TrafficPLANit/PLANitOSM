@@ -124,18 +124,38 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
   }
  
 
+  /**
+   * The settings of the network reader
+   *
+   * @return the settings
+   */
   protected OsmNetworkReaderSettings getSettings() {
     return settings;
   }
   
+  /**
+   * The data the network reader keeps while it parses
+   *
+   * @return the data
+   */
   protected OsmNetworkReaderData getNetworkData() {
     return networkData;
   }
 
+  /**
+   * The network being populated
+   *
+   * @return the network
+   */
   protected PlanitOsmNetwork getNetwork(){
     return this.networkToPopulate;
   }
 
+  /**
+   * The helper holding the reader's bounding area in the network's projection
+   *
+   * @return the helper
+   */
   protected ProjectedBoundingAreaHelper getProjectedBoundingAreaHelper(){
     return this.projectedBoundingAreaHelper;
   }

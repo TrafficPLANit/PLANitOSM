@@ -19,6 +19,8 @@ public class OsmWaterModeTags {
   private static void populateModeTags() {
     MODE_TAGS.add(FERRY);    
   }
+
+  private OsmWaterModeTags(){}
   
   static {
     populateModeTags();
@@ -26,6 +28,7 @@ public class OsmWaterModeTags {
 
   /* Water modes */
   
+  /** mode of a ferry */
   public static final String FERRY = "ferry";
        
   /** verify if passed in tag is indeed a mode tag

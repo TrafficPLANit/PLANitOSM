@@ -69,6 +69,12 @@ public class OsmZoningReaderOsmData {
 
 
   /**
+   * Constructor, with nothing registered yet
+   */
+  public OsmZoningReaderOsmData() {
+  }
+
+  /**
    * Access to OSM node data
    * @return OSM node data
    */

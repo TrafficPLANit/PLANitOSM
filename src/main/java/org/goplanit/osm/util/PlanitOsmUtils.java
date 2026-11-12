@@ -30,7 +30,10 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
  *
  */
 public class PlanitOsmUtils {
-  
+
+  /** utilities, not to be instantiated */
+  private PlanitOsmUtils(){}
+
   /** the logger */
   static final Logger LOGGER = Logger.getLogger(PlanitOsmUtils.class.getCanonicalName());
 
@@ -55,7 +58,7 @@ public class PlanitOsmUtils {
     default:
       throw new PlanItException(String.format("unit conversion to km/h not available from %s",unitString));
     }
-  }  
+  }
 
   /**
    * Create an external idea like "_key_=_value_". If key is empty or null just return "_value_"

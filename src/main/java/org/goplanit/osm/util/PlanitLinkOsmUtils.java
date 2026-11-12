@@ -29,6 +29,9 @@ import org.locationtech.jts.geom.LineSegment;
  */
 public class PlanitLinkOsmUtils {
 
+  /** utilities, not to be instantiated */
+  private PlanitLinkOsmUtils(){}
+
   /** Collect the closest by link (with the given OSM way id on the layer) to the provided geometry. This is a very slow method
    * as we lookup the link via the un-indexed external id. Use cautiously.
    * 
