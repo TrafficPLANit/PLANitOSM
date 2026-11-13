@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.diagnostics;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.goplanit.utils.misc.LogCollator;
 
@@ -24,6 +25,17 @@ public final class OsmPlanitEntityDiagnostics {
 
   /** the entities per issue, collated by the issue's label, every entity retained */
   private final LogCollator issues = LogCollator.create();
+
+  /**
+   * The entries recorded for an issue, in the order recorded
+   *
+   * @param issue to collect for
+   * @return the entries, empty when none
+   */
+  private Stream<LogCollator.Occurrence> occurrencesOf(OsmPlanitEntityIssue issue) {
+    var template = issues.getTemplate(issue.getLabel());
+    return template == null ? Stream.empty() : template.getRetainedOccurrences().stream();
+  }
 
   /**
    * Constructor, nothing recorded yet
@@ -82,9 +94,19 @@ public final class OsmPlanitEntityDiagnostics {
    * @return entity ids, empty when none
    */
   public List<String> getEntityIds(OsmPlanitEntityIssue issue) {
-    var template = issues.getTemplate(issue.getLabel());
-    return template == null ? List.of() : template.getRetainedOccurrences().stream()
-        .map(LogCollator.Occurrence::getEntityId).collect(Collectors.toList());
+    return occurrencesOf(issue).map(LogCollator.Occurrence::getEntityId).collect(Collectors.toList());
+  }
+
+  /**
+   * The detail recorded with an entity for an issue, such as the reason of an override not found
+   *
+   * @param issue recorded
+   * @param entityId of the entity
+   * @return the detail of its first entry, null when it has none or is not recorded for the issue
+   */
+  public String getDetail(OsmPlanitEntityIssue issue, String entityId) {
+    return occurrencesOf(issue).filter(occurrence -> entityId.equals(occurrence.getEntityId())).findFirst()
+        .map(LogCollator.Occurrence::getDetail).orElse(null);
   }
 
   /**

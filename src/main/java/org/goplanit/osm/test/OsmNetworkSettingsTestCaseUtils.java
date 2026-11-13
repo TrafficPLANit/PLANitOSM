@@ -1,7 +1,7 @@
 package org.goplanit.osm.test;
 
-import org.goplanit.osm.converter.network.OsmIntersectionSettings;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
 import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.tags.OsmRoadModeTags;

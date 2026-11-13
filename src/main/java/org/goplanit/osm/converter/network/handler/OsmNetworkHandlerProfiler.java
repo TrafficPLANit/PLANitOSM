@@ -177,7 +177,16 @@ public class OsmNetworkHandlerProfiler {
    * increment counter for missing lane information on parsed osmways/links
    */
   public void incrementMissingLaneCounter() {
-    missingLaneCounter.increment();    
+    missingLaneCounter.increment();
+  }
+
+  /**
+   * The number of directions of links given default lanes, as no lanes were known for them
+   *
+   * @return the count
+   */
+  public long getMissingLaneCount() {
+    return missingLaneCounter.longValue();
   }
 
 }

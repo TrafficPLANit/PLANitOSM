@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Primary roads whose lanes the tests override, each a way of its own apart from ways 63 and 64, which meet at node 8:
+     way 60 (1-2, two-way, no lanes tag), way 61 (3-4, two-way, lanes=2), way 62 (5-6, two-way, lanes=4), way 63
+     (7-8-9, two-way, no lanes tag), way 64 (8-10, two-way, no lanes tag), way 65 (11-12, one-way, no lanes tag), ways
+     66 (13-14) and 67 (15-16), both two-way with lanes=3, and way 68 (17-18), a railway -->
+<osm version="0.6" generator="hand-made for PLANitOSM lanes tests">
+  <node id="1" lat="-33.8700" lon="151.2100"/>
+  <node id="2" lat="-33.8700" lon="151.2120"/>
+  <node id="3" lat="-33.8705" lon="151.2100"/>
+  <node id="4" lat="-33.8705" lon="151.2120"/>
+  <node id="5" lat="-33.8710" lon="151.2100"/>
+  <node id="6" lat="-33.8710" lon="151.2120"/>
+  <node id="7" lat="-33.8715" lon="151.2100"/>
+  <node id="8" lat="-33.8715" lon="151.2110"/>
+  <node id="9" lat="-33.8715" lon="151.2120"/>
+  <node id="10" lat="-33.8720" lon="151.2110"/>
+  <node id="11" lat="-33.8725" lon="151.2100"/>
+  <node id="12" lat="-33.8725" lon="151.2120"/>
+  <node id="13" lat="-33.8730" lon="151.2100"/>
+  <node id="14" lat="-33.8730" lon="151.2120"/>
+  <node id="15" lat="-33.8735" lon="151.2100"/>
+  <node id="16" lat="-33.8735" lon="151.2120"/>
+  <node id="17" lat="-33.8740" lon="151.2100"/>
+  <node id="18" lat="-33.8740" lon="151.2120"/>
+  <way id="60">
+    <nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="61">
+    <nd ref="3"/><nd ref="4"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="2"/>
+  </way>
+  <way id="62">
+    <nd ref="5"/><nd ref="6"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="4"/>
+  </way>
+  <way id="63">
+    <nd ref="7"/><nd ref="8"/><nd ref="9"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="64">
+    <nd ref="8"/><nd ref="10"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="65">
+    <nd ref="11"/><nd ref="12"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="66">
+    <nd ref="13"/><nd ref="14"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+  </way>
+  <way id="67">
+    <nd ref="15"/><nd ref="16"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+  </way>
+  <way id="68">
+    <nd ref="17"/><nd ref="18"/>
+    <tag k="railway" v="rail"/>
+  </way>
+</osm>

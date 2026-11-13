@@ -1,4 +1,4 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.settings;
 
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;

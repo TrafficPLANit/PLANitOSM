@@ -1,4 +1,4 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.settings;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,8 +8,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.goplanit.algorithms.intersection.GreenRatioAndSaturationFlowFactorSettings;
+import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
+import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.id.IdMapperType;
 import org.goplanit.utils.misc.LoggingUtils;
@@ -17,6 +20,12 @@ import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
+import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
+import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
+import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
+import org.goplanit.utils.settings.annotations.SettingsRead;
+import org.goplanit.utils.settings.annotations.SettingsWrite;
 
 /**
  * Settings of parsing intersections from the traffic signals of an OSM network: junctions controlled by vehicle
@@ -73,10 +82,10 @@ public class OsmIntersectionSettings {
       new GreenRatioAndSaturationFlowFactorSettings();
 
   /** see {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}, by OSM node id, none by default */
-  private final Map<Long, OsmTrafficSignalDirection> trafficSignalDirectionOverrides = new TreeMap<>();
+  private final Map<Long, UserOverride<OsmTrafficSignalDirection>> trafficSignalDirectionOverrides = new TreeMap<>();
 
   /** see {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, by OSM node id, none by default */
-  private final Map<Long, OsmTrafficSignalKind> trafficSignalKindOverrides = new TreeMap<>();
+  private final Map<Long, UserOverride<OsmTrafficSignalKind>> trafficSignalKindOverrides = new TreeMap<>();
 
   /** by default intersections are parsed from traffic signals */
   public static final boolean DEFAULT_INTERSECTIONS_PARSER_ACTIVE = true;
@@ -408,7 +417,21 @@ public class OsmIntersectionSettings {
    * @param osmNodeId the OSM node id of the traffic signal
    * @param direction it applies to, forward or backward along its OSM way
    */
+  @CoveredBySettingsKey("trafficSignalDirectionOverrides")
   public void overrideTrafficSignalDirection(long osmNodeId, OsmTrafficSignalDirection direction) {
+    overrideTrafficSignalDirection(osmNodeId, UserOverride.of(direction));
+  }
+
+  /** Same as {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}, with the reason for it when one
+   * is given, which a record of the node not found shows
+   *
+   * @param osmNodeId the OSM node id of the traffic signal
+   * @param direction it applies to, forward or backward along its OSM way, with the reason when there is one
+   */
+  @SettingsWrite(key = "trafficSignalDirectionOverrides", effect = SettingsKeyEffect.PUT_EACH,
+      level = SettingsKeyLevel.UNCOMMON,
+      description = "Directions traffic signals apply to, by OSM node id, in place of their tags")
+  public void overrideTrafficSignalDirection(long osmNodeId, UserOverride<OsmTrafficSignalDirection> direction) {
     trafficSignalDirectionOverrides.put(osmNodeId, direction);
   }
 
@@ -416,18 +439,20 @@ public class OsmIntersectionSettings {
    * {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}
    *
    * @param osmNodeId the OSM node id of the traffic signal
-   * @return the direction overridden, null when not overridden
+   * @return the direction overridden, without its reason, null when not overridden
    */
   public OsmTrafficSignalDirection getTrafficSignalDirectionOverride(long osmNodeId) {
-    return trafficSignalDirectionOverrides.get(osmNodeId);
+    var direction = trafficSignalDirectionOverrides.get(osmNodeId);
+    return direction == null ? null : direction.getValue();
   }
 
-  /** The directions of travel overridden for traffic signals, see
-   * {@link #overrideTrafficSignalDirection(long, OsmTrafficSignalDirection)}
+  /** The directions of travel overridden for traffic signals, each with its reason, see
+   * {@link #overrideTrafficSignalDirection(long, UserOverride)}
    *
    * @return the directions overridden by OSM node id, unmodifiable, empty when none
    */
-  public Map<Long, OsmTrafficSignalDirection> getTrafficSignalDirectionOverrides() {
+  @SettingsRead(key = "trafficSignalDirectionOverrides")
+  public Map<Long, UserOverride<OsmTrafficSignalDirection>> getTrafficSignalDirectionOverrides() {
     return Collections.unmodifiableMap(trafficSignalDirectionOverrides);
   }
 
@@ -442,24 +467,41 @@ public class OsmIntersectionSettings {
    * @param osmNodeId the OSM node id of the node
    * @param kind to handle it as
    */
+  @CoveredBySettingsKey("trafficSignalKindOverrides")
   public void overrideTrafficSignalKind(long osmNodeId, OsmTrafficSignalKind kind) {
+    overrideTrafficSignalKind(osmNodeId, UserOverride.of(kind));
+  }
+
+  /** Same as {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, with the reason for it when one is given,
+   * which a record of the node not found shows
+   *
+   * @param osmNodeId the OSM node id of the node
+   * @param kind to handle it as, with the reason when there is one
+   */
+  @SettingsWrite(key = "trafficSignalKindOverrides", effect = SettingsKeyEffect.PUT_EACH,
+      level = SettingsKeyLevel.UNCOMMON,
+      description = "Kinds of traffic signal nodes are handled as, by OSM node id, in place of their tags")
+  public void overrideTrafficSignalKind(long osmNodeId, UserOverride<OsmTrafficSignalKind> kind) {
     trafficSignalKindOverrides.put(osmNodeId, kind);
   }
 
   /** The kind of signal overridden for a node, see {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}
    *
    * @param osmNodeId the OSM node id of the node
-   * @return the kind overridden, null when not overridden
+   * @return the kind overridden, without its reason, null when not overridden
    */
   public OsmTrafficSignalKind getTrafficSignalKindOverride(long osmNodeId) {
-    return trafficSignalKindOverrides.get(osmNodeId);
+    var kind = trafficSignalKindOverrides.get(osmNodeId);
+    return kind == null ? null : kind.getValue();
   }
 
-  /** The kinds of signal overridden for nodes, see {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}
+  /** The kinds of signal overridden for nodes, each with its reason, see
+   * {@link #overrideTrafficSignalKind(long, UserOverride)}
    *
    * @return the kinds overridden by OSM node id, unmodifiable, empty when none
    */
-  public Map<Long, OsmTrafficSignalKind> getTrafficSignalKindOverrides() {
+  @SettingsRead(key = "trafficSignalKindOverrides")
+  public Map<Long, UserOverride<OsmTrafficSignalKind>> getTrafficSignalKindOverrides() {
     return Collections.unmodifiableMap(trafficSignalKindOverrides);
   }
 
@@ -476,7 +518,7 @@ public class OsmIntersectionSettings {
    * @return true when handled as that kind, false otherwise
    */
   public boolean isHandledAsTrafficSignalOfKind(long osmNodeId, Map<String, String> tags, OsmTrafficSignalKind kind) {
-    var overridden = trafficSignalKindOverrides.get(osmNodeId);
+    var overridden = getTrafficSignalKindOverride(osmNodeId);
     if (overridden != null) {
       return overridden == kind;
     }
@@ -502,5 +544,20 @@ public class OsmIntersectionSettings {
     var osmNodeIds = new TreeSet<Long>(trafficSignalDirectionOverrides.keySet());
     osmNodeIds.addAll(trafficSignalKindOverrides.keySet());
     return Collections.unmodifiableSet(osmNodeIds);
+  }
+
+  /**
+   * The reasons given for overriding a node's traffic signal, its kind first, then its direction, such as for a record
+   * of the node not found
+   *
+   * @param osmNodeId the OSM node id
+   * @return the reasons, joined by "; ", null when neither override has one
+   */
+  public String getTrafficSignalOverrideReason(long osmNodeId) {
+    var reasons = Stream.<UserOverride<?>>of(trafficSignalKindOverrides.get(osmNodeId),
+            trafficSignalDirectionOverrides.get(osmNodeId))
+        .filter(override -> override != null && override.hasReason()).map(UserOverride::getReason)
+        .collect(Collectors.toList());
+    return reasons.isEmpty() ? null : String.join("; ", reasons);
   }
 }

@@ -3,7 +3,7 @@ package org.goplanit.osm.converter.intermodal;
 import java.net.URL;
 import java.nio.file.Paths;
 
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItException;

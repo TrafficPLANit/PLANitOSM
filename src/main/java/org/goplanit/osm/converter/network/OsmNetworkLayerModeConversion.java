@@ -8,6 +8,7 @@ import java.util.Set;
 import org.goplanit.osm.converter.OsmModeConversionBase;
 import org.goplanit.osm.converter.helper.OsmLanesModeTaggingSchemeHelper;
 import org.goplanit.osm.converter.helper.OsmModeLanesTaggingSchemeHelper;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.OsmModeUtils;
 import org.goplanit.osm.util.OsmTagUtils;

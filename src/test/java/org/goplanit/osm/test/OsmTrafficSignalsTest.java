@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.OsmBoundary;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;

@@ -100,6 +100,9 @@ public enum OsmPlanitEntityIssue {
   /** a node whose traffic signal direction or kind is overridden by its OSM node id that no layer of the network has */
   TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND("traffic signals overridden in the settings, not in the network"),
 
+  /** an OSM way whose lanes are overridden by its OSM way id that no layer of the network turns into links */
+  OSM_WAY_LANE_OVERRIDE_NOT_FOUND("ways with lanes overridden in the settings, not in the network"),
+
   /** a banned turn not created, since a way or the via node of its OSM turn restriction is not in the network: dropped
    * while parsing, for example a way of a type not activated or one no activated mode may use, such as a service road
    * tagged access=private, or outside the area parsed. The restriction is taken to be tagged correctly */

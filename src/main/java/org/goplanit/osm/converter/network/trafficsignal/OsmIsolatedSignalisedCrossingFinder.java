@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
 import org.goplanit.osm.converter.diagnostics.OsmTrafficSignalOutcome;
-import org.goplanit.osm.converter.network.OsmIntersectionSettings;
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.tags.OsmDirectionTags;

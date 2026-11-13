@@ -20,6 +20,7 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionType;
 import org.goplanit.utils.network.layer.macroscopic.intersection.SpatialIntersection;
 import org.goplanit.utils.network.layer.physical.Node;
+import org.goplanit.utils.settings.UserOverride;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -611,6 +612,32 @@ public class OsmTrafficSignalIntegratorTest {
     layer = parseTrafficSignalScenario("both_kinds_on_centre", settings -> settings
         .getIntersectionSettings().overrideTrafficSignalKind(1, OsmTrafficSignalKind.CROSSING_SIGNAL)).layer();
     assertEquals(Set.of(IntersectionType.CROSSING), onlyIntersection(layer).getTypes());
+  }
+
+  /**
+   * A traffic signal override for a node no layer has is recorded as not found with the reason of its override; a node
+   * with both its kind and its direction overridden has both reasons, and one overridden without a reason has none
+   */
+  @Test
+  public void signalOverrideNotFoundWithItsReason() {
+    var parsed = parseTrafficSignalScenario("signal_12m_before_junction", settings -> {
+      var intersectionSettings = settings.getIntersectionSettings();
+      intersectionSettings.overrideTrafficSignalKind(997,
+          UserOverride.of(OsmTrafficSignalKind.NOT_A_SIGNAL, "on site 2026-10-30"));
+      intersectionSettings.overrideTrafficSignalKind(998,
+          UserOverride.of(OsmTrafficSignalKind.RAMP_METER, "on site 2026-10-30"));
+      intersectionSettings.overrideTrafficSignalDirection(998,
+          UserOverride.of(OsmTrafficSignalDirection.FORWARD, "checked on imagery"));
+      intersectionSettings.overrideTrafficSignalKind(999, OsmTrafficSignalKind.NOT_A_SIGNAL);
+    });
+    var diagnostics = parsed.networkReaderData().getPlanitEntityDiagnostics();
+    var issue = OsmPlanitEntityIssue.TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND;
+
+    assertEquals(Set.of("997", "998", "999"), parsed.entityIds(issue));
+    assertEquals("on site 2026-10-30", diagnostics.getDetail(issue, "997"));
+    assertTrue(diagnostics.getDetail(issue, "998").contains("on site 2026-10-30"));
+    assertTrue(diagnostics.getDetail(issue, "998").contains("checked on imagery"));
+    assertNull(diagnostics.getDetail(issue, "999"));
   }
 
   /**

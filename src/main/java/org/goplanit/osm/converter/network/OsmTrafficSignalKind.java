@@ -1,5 +1,7 @@
 package org.goplanit.osm.converter.network;
 
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
+
 /**
  * The kind of traffic signal a node is handled as when the user overrides it, see
  * {@link OsmIntersectionSettings#overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, in place of what its tags say

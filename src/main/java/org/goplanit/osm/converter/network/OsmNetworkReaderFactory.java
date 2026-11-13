@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.network;
 import java.net.URL;
 import java.nio.file.Paths;
 
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.id.IdGroupingToken;

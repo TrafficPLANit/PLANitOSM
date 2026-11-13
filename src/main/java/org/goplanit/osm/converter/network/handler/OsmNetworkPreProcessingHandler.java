@@ -7,7 +7,7 @@ import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;

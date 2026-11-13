@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter.network;
 
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;

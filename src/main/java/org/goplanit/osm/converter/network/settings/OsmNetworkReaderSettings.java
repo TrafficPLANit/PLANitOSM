@@ -1,6 +1,7 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.settings;
 
-import org.goplanit.osm.converter.OsmReaderSettings;
+import org.goplanit.osm.converter.settings.OsmReaderSettings;
+import org.goplanit.osm.converter.network.settings.override.OsmWayLaneOverride;
 import org.goplanit.osm.defaults.*;
 import org.goplanit.osm.tags.OsmAccessTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -9,11 +10,19 @@ import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.utils.graph.directed.Connectivity;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.locale.LocaleUtils;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
+import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
+import org.goplanit.utils.settings.annotations.SettingsRead;
+import org.goplanit.utils.settings.annotations.SettingsRootValue;
+import org.goplanit.utils.settings.annotations.SettingsSection;
+import org.goplanit.utils.settings.annotations.SettingsWrite;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import java.net.URL;
@@ -33,6 +42,7 @@ import static org.goplanit.converter.utils.ProjectedBoundingAreaHelper.DEFAULT_M
  * @author markr
  *
  */
+@SettingsSection(key = "network", level = SettingsKeyLevel.STANDARD)
 public class OsmNetworkReaderSettings extends OsmReaderSettings{
     
   /**
@@ -42,6 +52,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
 
   /** all settings specific to parsing intersections from OSM traffic signals */
   protected OsmIntersectionSettings osmIntersectionSettings = new OsmIntersectionSettings();
+
+  /** see {@link #overrideOsmWayLanes(long, UserOverride)}, by OSM way id, none by default */
+  protected final Map<Long, UserOverride<OsmWayLaneOverride>> osmWayLaneOverrides = new TreeMap<>();
 
   /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
   public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
@@ -243,7 +256,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
    * @param countryName the full country name to use speed limit data for, see also the
    *                    OsmSpeedLimitDefaultsByCountry class
    */
-  public OsmNetworkReaderSettings(String countryName) {
+  public OsmNetworkReaderSettings(@SettingsRootValue(key = COUNTRY_KEY) String countryName) {
     this((URL) null, countryName);
   }
 
@@ -260,16 +273,22 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   }
 
   /**
-   * Constructor with country to base (i) default speed limits and (ii) mode access on, 
+   * Constructor with country to base (i) default speed limits and (ii) mode access on,
    * for various OSM highway types in case maximum speed limit information is missing
-   * 
+   * <p>
+   * A country that is not a known country name, such as a misspelt one, is warned about, with the name given.
+   * </p>
+   *
    * @param inputSource to use
    * @param countryName the full country name to use speed limit data for, see also
    *                    the OsmSpeedLimitDefaultsByCountry class
    */
   public OsmNetworkReaderSettings(URL inputSource, String countryName) {
     super(inputSource, countryName);
-    
+    if (!CountryNames.GLOBAL.equals(countryName) && LocaleUtils.getIso2CountryCodeByName(countryName) == null) {
+      LOGGER.warning(String.format("Country '%s' is not a known country name, check its spelling", countryName));
+    }
+
     /* general */
     this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
     this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create(countryName);
@@ -333,6 +352,9 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
           overriddenAccessValueTags.entrySet().stream().map(
               e -> String.format("%s=%s", e.getKey(), e.getValue().name().toLowerCase())).collect(
                   Collectors.joining(", ")), level));
+    }
+    if(!osmWayLaneOverrides.isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Lanes overridden by OSM way id", osmWayLaneOverrides, level));
     }
     LOGGER.info(LoggingUtils.settingsSection("Highway", level + 1));
     getHighwaySettings().logSettings(level + 1);
@@ -1073,6 +1095,54 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   public final Set<String> getModeAccessOverwrittenByOsmWayId(Number osmWayId) {
     return overwriteOsmWayModeAccess.get(osmWayId.longValue());
   }   
+
+  /**
+   * Override the lanes of an OSM way in each direction along it, in place of what its tags or the defaults give, such
+   * as where its tags are missing or wrong. A direction the way has no traffic in keeps no link segment, so lanes given
+   * for it change nothing. Overriding the way again replaces the override given before, its reason included. An OSM
+   * way id that no layer turns into links is recorded as not found, with the reason as its detail
+   *
+   * @param osmWayId the OSM way id
+   * @param lanes forward and backward along the way, at least one direction given, with the reason when there is one
+   * @throws IllegalArgumentException naming the way, storing nothing, when neither direction is given or a direction
+   *     has fewer than one lane
+   */
+  @SettingsWrite(key = "osmWayLaneOverrides", effect = SettingsKeyEffect.PUT_EACH, level = SettingsKeyLevel.UNCOMMON,
+      description = "Lanes forward and backward along OSM ways, by way id, in place of their tags or the defaults")
+  public void overrideOsmWayLanes(long osmWayId, UserOverride<OsmWayLaneOverride> lanes) {
+    var forward = lanes.getValue().getLanesForward();
+    var backward = lanes.getValue().getLanesBackward();
+    if (forward == null && backward == null) {
+      throw new IllegalArgumentException(
+          String.format("Lanes of OSM way %d overridden in neither direction", osmWayId));
+    }
+    if ((forward != null && forward < 1) || (backward != null && backward < 1)) {
+      throw new IllegalArgumentException(
+          String.format("Fewer than one lane overridden in a direction of OSM way %d: %s", osmWayId, lanes.getValue()));
+    }
+    osmWayLaneOverrides.put(osmWayId, lanes);
+  }
+
+  /**
+   * The lanes overridden for an OSM way, see {@link #overrideOsmWayLanes(long, UserOverride)}
+   *
+   * @param osmWayId the OSM way id
+   * @return the lanes overridden, without the reason, null when not overridden
+   */
+  public OsmWayLaneOverride getOsmWayLaneOverride(long osmWayId) {
+    var lanes = osmWayLaneOverrides.get(osmWayId);
+    return lanes == null ? null : lanes.getValue();
+  }
+
+  /**
+   * Every lanes override with its reason, see {@link #overrideOsmWayLanes(long, UserOverride)}
+   *
+   * @return the overrides by OSM way id, in increasing way id order, unmodifiable, empty when none
+   */
+  @SettingsRead(key = "osmWayLaneOverrides")
+  public Map<Long, UserOverride<OsmWayLaneOverride>> getOsmWayLaneOverrides() {
+    return Collections.unmodifiableMap(osmWayLaneOverrides);
+  }
   
   /**
    * Log all de-activated OSM way types
@@ -1113,6 +1183,7 @@ public class OsmNetworkReaderSettings extends OsmReaderSettings{
   /** provide the settings of parsing intersections from traffic signals, consolidating and collapsing them
    * @return intersection settings
    */
+  @SettingsSection(key = "intersections", level = SettingsKeyLevel.COMMON)
   public OsmIntersectionSettings getIntersectionSettings() {
     return osmIntersectionSettings;
   }

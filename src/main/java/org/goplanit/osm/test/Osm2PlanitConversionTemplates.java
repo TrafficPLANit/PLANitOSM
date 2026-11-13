@@ -16,7 +16,7 @@ import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.exceptions.PlanItException;

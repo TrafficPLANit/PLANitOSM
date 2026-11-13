@@ -7,7 +7,7 @@ import org.goplanit.io.test.PlanitAssertionUtils;
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmBoundaryTags;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;

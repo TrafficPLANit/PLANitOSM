@@ -1,7 +1,7 @@
 package org.goplanit.osm.converter.network.trafficsignal;
 
 import org.goplanit.osm.converter.helper.OsmProjectedBoundingAreaHelper;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.util.OsmNodeUtils;
 import org.goplanit.osm.util.PlanitOsmUtils;

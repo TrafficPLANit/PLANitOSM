@@ -2,7 +2,7 @@ package org.goplanit.osm.converter.network.data;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import org.goplanit.osm.converter.OsmBoundary;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.NetworkLayer;
 

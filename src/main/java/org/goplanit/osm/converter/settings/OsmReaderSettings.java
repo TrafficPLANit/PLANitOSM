@@ -1,27 +1,33 @@
-package org.goplanit.osm.converter;
+package org.goplanit.osm.converter.settings;
 
 import java.net.URL;
 import java.util.logging.Logger;
 
 import org.goplanit.converter.ConverterReaderSettings;
+import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.settings.annotations.SettingsHeader;
 
 /**
- * Settings relevant for a Planit Xml reader
- * 
+ * Settings every OSM reader takes: the input, the country its defaults come from, the area to read, and whether OSM
+ * tags are kept
+ * <p>
+ * The settings of each OSM reader extend them, so these are given the same way for every reader. Those filling a
+ * section of an OSM settings source ({@link OsmReaderSettingsSchema}) take sources starting with
+ * {@code planitOsmConverterSettings: 1}.
+ * </p>
+ *
  * @author markr
  *
  */
+@SettingsHeader(key = "planitOsmConverterSettings", version = 1)
 public abstract class OsmReaderSettings implements ConverterReaderSettings {
 
   private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
-
-  /** the OSM tags are not kept on the PLANit entities unless asked for */
-  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
 
   /** input source to use */
   private URL inputSource;
@@ -37,6 +43,12 @@ public abstract class OsmReaderSettings implements ConverterReaderSettings {
    * entities, e.g., links, nodes.
    */
   private boolean retainOsmTags = DEFAULT_RETAIN_OSM_TAGS;
+
+  /** the OSM tags are not kept on the PLANit entities unless asked for */
+  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
+
+  /** key at the root of a settings source giving the country, which the constructors of the readers' settings take */
+  public static final String COUNTRY_KEY = "country";
 
   /**
    * Default constructor with default locale (Global)

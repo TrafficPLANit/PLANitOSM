@@ -10,8 +10,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.goplanit.osm.converter.diagnostics.OsmTrafficSignalOutcome;
-import org.goplanit.osm.converter.network.OsmIntersectionSettings;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;

@@ -12,7 +12,7 @@ import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
@@ -798,8 +798,11 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
       getNetworkData().registerOsmWayIdOfRoundabout(osmWay.getId());
     }
 
-    /* recorded here, once per way, since its lanes are parsed for each of its links, and a circular way in parts */
-    if(OsmLaneUtils.isOddLanesTotalOnTwoWayHighway(osmWay, tags)) {
+    /* recorded here, once per way, since its lanes are parsed for each of its links, and a circular way in parts; not
+     * for a way with its lanes overridden in both directions, as its tagged total is not used */
+    var laneOverride = getSettings().getOsmWayLaneOverride(osmWay.getId());
+    if(OsmLaneUtils.isOddLanesTotalOnTwoWayHighway(osmWay, tags) &&
+        (laneOverride == null || !laneOverride.hasLanesForwardAndBackward())) {
       getNetworkData().getPlanitEntityDiagnostics().registerIssue(
           OsmPlanitEntityIssue.LANES_ROUNDED_UP_FOR_ODD_TOTAL_ON_TWO_WAY_ROAD, String.valueOf(osmWay.getId()));
     }

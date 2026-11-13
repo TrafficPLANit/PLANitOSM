@@ -8,9 +8,11 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.zoning.AccessEgressInjectionSettings;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
-import org.goplanit.osm.converter.OsmReaderSettings;
+import org.goplanit.osm.converter.settings.OsmReaderSettings;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
+import org.goplanit.utils.settings.annotations.SettingsSection;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import org.goplanit.utils.misc.Triple;
@@ -24,6 +26,7 @@ import org.goplanit.utils.misc.UrlUtils;
  * @author markr
  *
  */
+@SettingsSection(key = "publicTransport", level = SettingsKeyLevel.COMMON)
 public class OsmPublicTransportReaderSettings extends OsmReaderSettings {
   
   /** logger to use */

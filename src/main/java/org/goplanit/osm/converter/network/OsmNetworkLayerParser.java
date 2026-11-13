@@ -10,6 +10,7 @@ import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
 import org.goplanit.osm.converter.network.trafficsignal.OsmTrafficSignalIntegrator;
 import org.goplanit.network.layer.macroscopic.ModifiedLinkSegmentTypes;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.*;
 import org.goplanit.osm.util.*;
 import org.goplanit.utils.arrays.ArrayUtils;
@@ -90,6 +91,9 @@ public class OsmNetworkLayerParser {
    * OSM network by XML id,  we do not have duplicate ids */
   private final SyncXmlIdToIdBreakEdgeSegmentHandler syncXmlIdToIdOnBreakLinkSegment =
       new SyncXmlIdToIdBreakEdgeSegmentHandler();
+
+  /** OSM ids of the ways a lane override was applied to, see {@link #getOsmWayIdsWithLaneOverrideNotFound()} */
+  private final Set<Long> osmWayIdsWithLaneOverrideApplied = new HashSet<>();
 
   /**
    * Collect the default speed limit for a given highway/railway/waterway tag value, where we extract the key and value
@@ -558,6 +562,17 @@ public class OsmNetworkLayerParser {
           "possible tagging error, reverting to default bi-directional configuration",osmWay.getId()));
     }
 
+    /* an override takes the place of the tags in each direction it gives, before the defaults fill what is left */
+    var laneOverride = settings.getOsmWayLaneOverride(osmWay.getId());
+    if(laneOverride != null) {
+      osmWayIdsWithLaneOverrideApplied.add(osmWay.getId());
+      var taggedForward = lanesPair == null ? null : lanesPair.first();
+      var taggedBackward = lanesPair == null ? null : lanesPair.second();
+      lanesPair = Pair.of(
+          laneOverride.getLanesForward() != null ? laneOverride.getLanesForward() : taggedForward,
+          laneOverride.getLanesBackward() != null ? laneOverride.getLanesBackward() : taggedBackward);
+    }
+
     /* the default lanes in each direction of this way, for a highway its total split over the directions */
     var defaultLanesPerDirection = settings.getDefaultLanesPerDirection(usedOsmWayKey, tags);
 
@@ -972,6 +987,7 @@ public class OsmNetworkLayerParser {
   public void reset() {
     layerData.reset();
     modifiedLinkSegmentTypes.reset();
+    osmWayIdsWithLaneOverrideApplied.clear();
     if(trafficSignalIntegrator != null) {
       trafficSignalIntegrator.reset();
     }
@@ -1028,6 +1044,19 @@ public class OsmNetworkLayerParser {
    */
   public OsmNetworkLayerModeConversion getModeConversion() {
     return modeParser;
+  }
+
+  /**
+   * Get the OSM way ids with a lane override in the settings that this layer did not turn into links, see
+   * {@link OsmNetworkReaderSettings#getOsmWayLaneOverrides()}. A layer parses only the ways of its own modes, so a way
+   * of one layer is not found in the others
+   *
+   * @return the way ids in increasing order, empty when none
+   */
+  public List<String> getOsmWayIdsWithLaneOverrideNotFound() {
+    return settings.getOsmWayLaneOverrides().keySet().stream()
+        .filter(osmWayId -> !osmWayIdsWithLaneOverrideApplied.contains(osmWayId)).map(String::valueOf)
+        .collect(Collectors.toList());
   }
 
 }

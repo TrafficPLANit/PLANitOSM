@@ -9,7 +9,7 @@ import org.goplanit.network.MacroscopicNetworkModifierUtils;
 import org.goplanit.network.ServiceNetwork;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmZoningReader;
 import org.goplanit.osm.converter.zoning.OsmZoningReaderFactory;

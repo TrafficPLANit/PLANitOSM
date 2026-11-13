@@ -1,8 +1,11 @@
 package org.goplanit.osm.test;
 
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
+import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicBannedTurn;
@@ -73,6 +76,22 @@ public final class OsmLayerTestUtils {
   }
 
   /**
+   * A reader of a scenario in Australia, keeping every way: dangling subnetworks are not removed, so a scenario of
+   * separate or one-way roads stays whole. For a test that changes more settings, or reads the reader's data after
+   *
+   * @param scenario path of the OSM file
+   * @param settingsChange made to the settings after dangling subnetworks are kept, such as overrides
+   * @return the reader, not read yet
+   */
+  public static OsmNetworkReader createReaderKeepingDanglingSubnetworks(
+      String scenario, Consumer<OsmNetworkReaderSettings> settingsChange) {
+    var reader = OsmNetworkReaderFactory.create(scenario, CountryNames.AUSTRALIA);
+    reader.getSettings().deactivateRemoveDanglingSubnetworks();
+    settingsChange.accept(reader.getSettings());
+    return reader;
+  }
+
+  /**
    * Read the first layer of a scenario in Australia, keeping every way: dangling subnetworks are not removed, so a
    * scenario of separate or one-way roads stays whole
    *
@@ -80,9 +99,7 @@ public final class OsmLayerTestUtils {
    * @return the first layer read
    */
   public static MacroscopicNetworkLayer readFirstLayerKeepingDanglingSubnetworks(String scenario) {
-    var reader = OsmNetworkReaderFactory.create(scenario, CountryNames.AUSTRALIA);
-    reader.getSettings().deactivateRemoveDanglingSubnetworks();
-    return reader.read().getTransportLayers().getFirst();
+    return createReaderKeepingDanglingSubnetworks(scenario, settings -> { }).read().getTransportLayers().getFirst();
   }
 
   /**

@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,8 @@ import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.converter.network.handler.OsmNetworkMainProcessingHandler;
 import org.goplanit.osm.converter.network.handler.OsmNetworkPreProcessingHandler;
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.trafficsignal.OsmTrafficSignalIntegrator;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.osm.util.Osm4JUtils;
@@ -286,35 +289,63 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Record, with the PLANit entity diagnostics, each OSM node id that every layer lists as not found. Each layer holds
-   * only the nodes of its own modes, so a node of one layer is not found in the others
+   * Record, with the PLANit entity diagnostics, each OSM id that every layer lists as not found, without a detail, see
+   * {@link #registerNotFoundInEveryLayer(OsmPlanitEntityIssue, List, Function)}
    *
    * @param issue to record each with
-   * @param notFoundOfEachLayer per layer, the OSM node ids it did not find
+   * @param notFoundOfEachLayer per layer, the OSM ids it did not find
    */
   private void registerNotFoundInEveryLayer(OsmPlanitEntityIssue issue, List<List<String>> notFoundOfEachLayer) {
+    registerNotFoundInEveryLayer(issue, notFoundOfEachLayer, osmId -> null);
+  }
+
+  /**
+   * Record, with the PLANit entity diagnostics, each OSM id that every layer lists as not found, with its detail. Each
+   * layer holds only the nodes and ways of its own modes, so an entity of one layer is not found in the others
+   *
+   * @param issue to record each with
+   * @param notFoundOfEachLayer per layer, the OSM ids it did not find
+   * @param detailOfOsmId gives the detail of an id, such as the reason of its override, null for none
+   */
+  private void registerNotFoundInEveryLayer(
+      OsmPlanitEntityIssue issue, List<List<String>> notFoundOfEachLayer, Function<String, String> detailOfOsmId) {
     if(notFoundOfEachLayer.isEmpty()) {
       return;
     }
     var notFoundInEveryLayer = new LinkedHashSet<>(notFoundOfEachLayer.get(0));
     notFoundOfEachLayer.forEach(notFoundInEveryLayer::retainAll);
     var diagnostics = networkData.getPlanitEntityDiagnostics();
-    notFoundInEveryLayer.forEach(osmNodeId -> diagnostics.registerIssue(issue, osmNodeId));
+    notFoundInEveryLayer.forEach(osmId -> diagnostics.registerIssue(issue, osmId, detailOfOsmId.apply(osmId)));
   }
 
   /**
    * Record, with the PLANit entity diagnostics, each OSM node id with a traffic signal override in the settings that no
-   * layer has, see {@link OsmTrafficSignalIntegrator#getOsmNodeIdsOverriddenNotFound()}. Nothing is recorded when
-   * intersections are not parsed
+   * layer has, see {@link OsmTrafficSignalIntegrator#getOsmNodeIdsOverriddenNotFound()}, with the reasons of its
+   * overrides as the detail. Nothing is recorded when intersections are not parsed
    */
   private void registerTrafficSignalOverridesNotFound() {
     if(!settings.isIntersectionParserActive()) {
       return;
     }
+    var intersectionSettings = settings.getIntersectionSettings();
     registerNotFoundInEveryLayer(OsmPlanitEntityIssue.TRAFFIC_SIGNAL_OVERRIDE_NOT_FOUND,
         networkData.getLayerParsers().values().stream()
             .map(layerParser -> layerParser.getTrafficSignalIntegrator().getOsmNodeIdsOverriddenNotFound())
-            .collect(Collectors.toList()));
+            .collect(Collectors.toList()),
+        osmNodeId -> intersectionSettings.getTrafficSignalOverrideReason(Long.parseLong(osmNodeId)));
+  }
+
+  /**
+   * Record, with the PLANit entity diagnostics, each OSM way id with a lane override in the settings that no layer
+   * turned into links, see {@link OsmNetworkLayerParser#getOsmWayIdsWithLaneOverrideNotFound()}, with the reason of
+   * its override as the detail
+   */
+  private void registerOsmWayLaneOverridesNotFound() {
+    var overrides = settings.getOsmWayLaneOverrides();
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.OSM_WAY_LANE_OVERRIDE_NOT_FOUND,
+        networkData.getLayerParsers().values().stream()
+            .map(OsmNetworkLayerParser::getOsmWayIdsWithLaneOverrideNotFound).collect(Collectors.toList()),
+        osmWayId -> overrides.get(Long.valueOf(osmWayId)).getReason());
   }
 
   /**
@@ -698,6 +729,7 @@ public class OsmNetworkReader implements NetworkReader {
     /* main processing  (always)*/
     doMainProcessing();
     registerTrafficSignalOverridesNotFound();
+    registerOsmWayLaneOverridesNotFound();
       
     /* dangling subnetworks */
     boolean recreateIds = false; // postpone to sync xml ids at same time afterwards

@@ -2,11 +2,14 @@ package org.goplanit.osm.converter.intermodal;
 
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.converter.OsmBoundary;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.settings.OsmReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.settings.annotations.SettingsRootValue;
 
 import java.net.URL;
 import java.util.logging.Logger;
@@ -28,13 +31,21 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   
   /** the zoning PT settings to use */
   protected final OsmPublicTransportReaderSettings zoningPtSettings;
-  
+
+  /**
+   * Constructor without a country, so the defaults are the global ones
+   */
+  public OsmIntermodalReaderSettings() {
+    this(CountryNames.GLOBAL);
+  }
+
   /**
    * Constructor
-   * 
+   *
    * @param countryName to use
    */
-  public OsmIntermodalReaderSettings(final String countryName) {
+  public OsmIntermodalReaderSettings(
+      @SettingsRootValue(key = OsmReaderSettings.COUNTRY_KEY) final String countryName) {
     this((URL) null, countryName);
   }
 

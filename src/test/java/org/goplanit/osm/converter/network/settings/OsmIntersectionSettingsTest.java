@@ -1,4 +1,4 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.settings;
 
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.goplanit.logging.Logging;
+import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
+import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.locale.CountryNames;

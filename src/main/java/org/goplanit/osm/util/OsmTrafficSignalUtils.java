@@ -2,7 +2,7 @@ package org.goplanit.osm.util;
 
 import java.util.Map;
 
-import org.goplanit.osm.converter.network.OsmIntersectionSettings;
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
 import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
 

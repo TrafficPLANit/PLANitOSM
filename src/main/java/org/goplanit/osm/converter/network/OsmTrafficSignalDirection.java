@@ -1,5 +1,6 @@
 package org.goplanit.osm.converter.network;
 
+import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
 import org.goplanit.osm.tags.OsmDirectionTags;
 
 /**

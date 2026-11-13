@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.util.PlanitLinkOsmUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.network.layer.physical.Link;

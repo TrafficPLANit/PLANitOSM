@@ -5,7 +5,7 @@ import java.util.*;
 import de.topobyte.osm4j.core.model.iface.EntityType;
 import de.topobyte.osm4j.core.model.iface.OsmEntity;
 import org.goplanit.osm.converter.OsmModeConversionBase;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.osm.util.Osm4JUtils;
 import org.goplanit.osm.util.OsmModeUtils;

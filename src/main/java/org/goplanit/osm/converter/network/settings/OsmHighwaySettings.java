@@ -1,4 +1,4 @@
-package org.goplanit.osm.converter.network;
+package org.goplanit.osm.converter.network.settings;
 
 import java.util.*;
 import java.util.logging.Logger;

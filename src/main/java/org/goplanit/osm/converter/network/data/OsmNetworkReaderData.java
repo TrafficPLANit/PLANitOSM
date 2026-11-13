@@ -9,7 +9,7 @@ import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.OsmNodeData;
 import org.goplanit.osm.converter.OsmSpatialEligibilityData;
 import org.goplanit.osm.converter.network.OsmNetworkLayerParser;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;

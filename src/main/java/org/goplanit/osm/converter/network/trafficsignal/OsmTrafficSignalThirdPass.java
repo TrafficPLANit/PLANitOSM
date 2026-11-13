@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.goplanit.osm.converter.diagnostics.OsmNearestJunctionBucket;
 import org.goplanit.osm.converter.diagnostics.OsmTrafficSignalOutcome;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderLayerData;
 import org.goplanit.osm.util.OsmNodeUtils;

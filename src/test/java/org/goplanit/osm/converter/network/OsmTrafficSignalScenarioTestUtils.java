@@ -7,6 +7,7 @@ import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.diagnostics.OsmTrafficSignalOutcome;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;

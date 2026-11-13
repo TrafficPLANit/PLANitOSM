@@ -3,7 +3,7 @@ package org.goplanit.osm.converter.helper;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmLaneTags;
 import org.goplanit.osm.util.OsmTagUtils;
