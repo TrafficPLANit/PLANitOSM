@@ -4,8 +4,10 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -15,6 +17,7 @@ import org.goplanit.utils.network.layer.macroscopic.intersection.Intersection;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionControlType;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionType;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +35,9 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
  */
 public class OsmTrafficSignalsTest {
 
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
   /** read a scenario file with the given settings changes, and return its only layer */
   private static MacroscopicNetworkLayer parse(String scenario, Consumer<OsmNetworkReaderSettings> configure) {
     return parseTrafficSignalScenario(scenario, configure).layer();
@@ -47,6 +53,24 @@ public class OsmTrafficSignalsTest {
     var node = nodeByOsmId(layer, osmNodeId);
     return layer.getIntersections().stream()
         .filter(intersection -> intersection.hasMemberNode(node)).findFirst().orElseThrow();
+  }
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmTrafficSignalsTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
   }
 
   /** location of the hand-made scenario files */

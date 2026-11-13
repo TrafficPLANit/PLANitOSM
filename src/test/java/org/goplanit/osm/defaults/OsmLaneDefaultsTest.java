@@ -15,9 +15,13 @@ import static org.goplanit.osm.tags.OsmOneWayTags.YES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,6 +30,9 @@ import org.junit.jupiter.api.Test;
  * @author markr
  */
 public class OsmLaneDefaultsTest {
+
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
 
   /** the highway key */
   private static final String HIGHWAY = OsmHighwayTags.getHighwayKeyTag();
@@ -38,6 +45,24 @@ public class OsmLaneDefaultsTest {
    */
   private static Integer defaultLanesPerDirectionOfHighway(Map<String, String> tags) {
     return new OsmLaneDefaults().getDefaultLanesPerDirection(HIGHWAY, tags);
+  }
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUp() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmLaneDefaultsTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDown() {
+    Logging.closeLogger(LOGGER);
   }
 
   /** A highway default is a total for the way: all of it in the one direction of a one-way way, half of it, rounded

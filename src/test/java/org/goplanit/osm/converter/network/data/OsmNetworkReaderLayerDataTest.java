@@ -3,12 +3,16 @@ package org.goplanit.osm.converter.network.data;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.id.IdGroupingToken;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -19,6 +23,27 @@ import org.locationtech.jts.geom.Coordinate;
  * @author markr
  */
 public class OsmNetworkReaderLayerDataTest {
+
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmNetworkReaderLayerDataTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
+  }
 
   @BeforeEach
   public void setUp() {

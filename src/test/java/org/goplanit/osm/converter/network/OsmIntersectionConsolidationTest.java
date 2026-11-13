@@ -8,6 +8,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
@@ -16,7 +17,9 @@ import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.intersection.CapacityFactorOrigin;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionSignalSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.SpatialIntersection;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +56,27 @@ public class OsmIntersectionConsolidationTest {
     @Override public void publish(LogRecord record) { if (record.getLevel() == Level.WARNING) { ++warnings; } }
     @Override public void flush() {}
     @Override public void close() {}
+  }
+
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmIntersectionConsolidationTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
   }
 
   @BeforeEach

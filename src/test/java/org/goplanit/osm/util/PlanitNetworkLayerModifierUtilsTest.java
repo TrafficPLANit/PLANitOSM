@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.network.MacroscopicNetwork;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.id.IdGenerator;
@@ -13,7 +15,9 @@ import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLink;
 import org.goplanit.utils.network.layer.physical.Node;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +28,9 @@ import org.junit.jupiter.api.Test;
  * @author markr
  */
 public class PlanitNetworkLayerModifierUtilsTest {
+
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
 
   /** the layer the links are on */
   private MacroscopicNetworkLayer layer;
@@ -40,6 +47,24 @@ public class PlanitNetworkLayerModifierUtilsTest {
     var link = layer.getLinks().getFactory().registerNew(node(x, 0), node(x + 1, 0), 0.001, true);
     link.setExternalId(osmWayId);
     return link;
+  }
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(PlanitNetworkLayerModifierUtilsTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
   }
 
   @BeforeEach

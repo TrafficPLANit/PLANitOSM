@@ -1,12 +1,16 @@
 package org.goplanit.osm.util;
 
 import java.util.Map;
+import java.util.logging.Logger;
 
 import com.slimjars.dist.gnu.trove.list.array.TLongArrayList;
 import de.topobyte.osm4j.core.model.iface.OsmWay;
 import de.topobyte.osm4j.core.model.impl.Way;
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.utils.misc.Pair;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.goplanit.osm.tags.OsmJunctionTags.JUNCTION;
@@ -25,8 +29,29 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class OsmLaneUtilsTest {
 
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
   /** an OSM way to parse, its tags are passed separately */
   private static final OsmWay WAY = new Way(1, new TLongArrayList(new long[] {1, 2}));
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUp() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmLaneUtilsTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDown() {
+    Logging.closeLogger(LOGGER);
+  }
 
   /** A two-way road tagged with an even total and no lanes per direction has half of them in each direction */
   @Test

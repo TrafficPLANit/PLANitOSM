@@ -7,12 +7,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
+import java.util.logging.Logger;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,9 +42,30 @@ import org.junit.jupiter.api.Test;
  */
 public class OsmTurnRestrictionOnSkippedOrCircularWayTest {
 
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
   /** the scenario */
   private static final String SCENARIO =
       TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("turn_restriction_onto_skipped_or_circular_way.osm").toString();
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmTurnRestrictionOnSkippedOrCircularWayTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
+  }
 
   /**
    * Reset the ids before each test

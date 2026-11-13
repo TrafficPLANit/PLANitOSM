@@ -2,6 +2,7 @@ package org.goplanit.osm.converter.network;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -9,11 +10,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -23,6 +27,27 @@ import org.junit.jupiter.api.Test;
  * @author markr
  */
 public class OsmIntersectionSettingsTest {
+
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUp() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmIntersectionSettingsTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDown() {
+    Logging.closeLogger(LOGGER);
+  }
 
   /**
    * The intersection settings are active by default: a vehicle signal controls a junction at most 50 m away, a

@@ -3,8 +3,10 @@ package org.goplanit.osm.converter.network;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.diagnostics.OsmNearestJunctionBucket;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
@@ -18,7 +20,9 @@ import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionType;
 import org.goplanit.utils.network.layer.macroscopic.intersection.SpatialIntersection;
 import org.goplanit.utils.network.layer.physical.Node;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +40,9 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
  */
 public class OsmTrafficSignalIntegratorTest {
 
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
   /**
    * The segments entering a node that a motorised road or rail mode may use: the approaches a signal on the node gives
    *
@@ -46,6 +53,24 @@ public class OsmTrafficSignalIntegratorTest {
     return node.streamEntrySegments().map(MacroscopicLinkSegment.class::cast)
         .filter(segment -> segment.isAnyModeAllowed(Mode::isMotorisedRoadOrRailMode))
         .collect(Collectors.toSet());
+  }
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmTrafficSignalIntegratorTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
   }
 
   /**

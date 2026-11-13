@@ -2,11 +2,15 @@ package org.goplanit.osm.test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.osm.tags.OsmDirectionTags;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmTags;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,6 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class OsmTrafficSignalTagsTest {
 
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
   /** tags from alternating keys and values */
   private static Map<String, String> tags(String... keyValues) {
     var tags = new java.util.HashMap<String, String>();
@@ -26,6 +33,24 @@ public class OsmTrafficSignalTagsTest {
       tags.put(keyValues[i], keyValues[i + 1]);
     }
     return tags;
+  }
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUp() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmTrafficSignalTagsTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDown() {
+    Logging.closeLogger(LOGGER);
   }
 
   @Test

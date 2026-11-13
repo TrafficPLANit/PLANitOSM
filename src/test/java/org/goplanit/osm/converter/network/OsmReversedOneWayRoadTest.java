@@ -6,10 +6,14 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.goplanit.logging.Logging;
 import org.goplanit.utils.id.IdGenerator;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +30,29 @@ import org.junit.jupiter.api.Test;
  */
 public class OsmReversedOneWayRoadTest {
 
+  /** the logger, giving the log output PLANit's format */
+  private static Logger LOGGER = null;
+
   /** the scenario */
   private static final String SCENARIO = LANES_SCENARIO_DIR.resolve("reversed_one_way_roads.osm").toString();
+
+  /**
+   * Create the logger once for all tests of the class
+   *
+   * @throws Exception when the log file cannot be opened
+   */
+  @BeforeAll
+  public static void setUpLogger() throws Exception {
+    if (LOGGER == null) {
+      LOGGER = Logging.createLogger(OsmReversedOneWayRoadTest.class);
+    }
+  }
+
+  /** Close the logger after all tests of the class */
+  @AfterAll
+  public static void tearDownLogger() {
+    Logging.closeLogger(LOGGER);
+  }
 
   /**
    * Reset the ids before each test
