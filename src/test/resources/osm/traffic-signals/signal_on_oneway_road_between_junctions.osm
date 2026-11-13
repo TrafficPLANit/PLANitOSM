@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Untagged vehicle signal on shape node 1 of one-way way 10 (2-6-1-8-3, west to east), about 20 m east of junction 6
+     and 40 m west of junction 8, where two-way ways 11 (7-6-5) and 12 (9-8-4) cross it; all primary -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.209717">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2089"/>
+  <node id="3" lat="-33.8700" lon="151.2111"/>
+  <node id="4" lat="-33.8709" lon="151.21015"/>
+  <node id="5" lat="-33.8709" lon="151.2095"/>
+  <node id="6" lat="-33.8700" lon="151.2095"/>
+  <node id="7" lat="-33.8691" lon="151.2095"/>
+  <node id="8" lat="-33.8700" lon="151.21015"/>
+  <node id="9" lat="-33.8691" lon="151.21015"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="6"/><nd ref="1"/><nd ref="8"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="6"/><nd ref="5"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="12">
+    <nd ref="9"/><nd ref="8"/><nd ref="4"/>
+    <tag k="highway" v="primary"/>
+  </way>
+</osm>

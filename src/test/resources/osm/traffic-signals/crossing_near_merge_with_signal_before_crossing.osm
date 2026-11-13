@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- As crossing_near_merge_with_crossing_between_its_stop_lines, but node 22 is no signal: signalised crossing 32 on way
+     20 has vehicle signal 21 (forward) before it, but no signal facing back towards it -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.20915">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="4" lat="-33.8701" lon="151.2080"/>
+  <node id="5" lat="-33.8701" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.20925"/>
+  <node id="7" lat="-33.8701" lon="151.20870"/>
+  <node id="8" lat="-33.8697" lon="151.20925"/>
+  <node id="9" lat="-33.8704" lon="151.20870"/>
+  <node id="12" lat="-33.8701" lon="151.20940"/>
+  <node id="21" lat="-33.8701" lon="151.20910">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="22" lat="-33.8701" lon="151.20920"/>
+  <node id="31" lat="-33.8700" lon="151.20920">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <node id="32" lat="-33.8701" lon="151.20915">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="6"/><nd ref="12"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="13">
+    <nd ref="7"/><nd ref="9"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="20">
+    <nd ref="4"/><nd ref="7"/><nd ref="21"/><nd ref="32"/><nd ref="22"/><nd ref="12"/><nd ref="5"/>
+    <tag k="highway" v="tertiary"/>
+  </way>
+</osm>

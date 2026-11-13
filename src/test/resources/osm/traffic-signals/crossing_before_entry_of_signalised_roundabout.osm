@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Roundabout way 20 (junction=roundabout, closed, clockwise 41-42-43-44-41), radius about 40 m, so its nodes lie about
+     57 m apart along the ring, beyond the joining reach. One-way entry way 10 (2-1-31-41) from the west: vehicle signal
+     1 about 25 m before entry node 41, signalised crossing 31 about 20 m before it. One-way entry way 11 (7-9-42) from
+     the north: vehicle signal 9 (forward) about 10 m before entry node 42. One-way exits: way 12 (43-3) east, way 13
+     (44-8) south -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2092965">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2085"/>
+  <node id="3" lat="-33.8700" lon="151.2115"/>
+  <node id="7" lat="-33.8689" lon="151.2100"/>
+  <node id="8" lat="-33.8712" lon="151.2100"/>
+  <node id="9" lat="-33.869551" lon="151.2100">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="31" lat="-33.8700" lon="151.2093506">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <node id="41" lat="-33.8700" lon="151.209567"/>
+  <node id="42" lat="-33.869641" lon="151.2100"/>
+  <node id="43" lat="-33.8700" lon="151.210433"/>
+  <node id="44" lat="-33.870359" lon="151.2100"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="41"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="9"/><nd ref="42"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="12">
+    <nd ref="43"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="13">
+    <nd ref="44"/><nd ref="8"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="20">
+    <nd ref="41"/><nd ref="42"/><nd ref="43"/><nd ref="44"/><nd ref="41"/>
+    <tag k="highway" v="primary"/>
+    <tag k="junction" v="roundabout"/>
+  </way>
+</osm>

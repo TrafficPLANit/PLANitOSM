@@ -2,6 +2,27 @@
 
 PLANitOSM release log.
 
+## 0.5.0
+
+**Enhancements**
+
+#56 (partial/in-progress) Support named bounding areas to move to more dynamic way of defining the area of interest to extract
+#59 (done/review) when creating link segment types they could end up being identical except for external id and name. This can now be consolidated
+#60 (done/review) Added support for highway=busway to be parsed as a bus only road out of the box
+#61 (done/review) Added option to register and configure (new) OSM ways to be parsed if the parser does not (yet) support them out of the box
+#62( partial/in-progress) Support storing original OSM tag information as a custom property to retain it in PLANit
+[GENERAL] improved logging and formatting of output
+
+**Bug fixes**
+
+#55 only force one-way on circular roads that are tagged as roundabout, otherwise they follow general tagging information now
+[GENERAL] Null pointer exception issue that could occur for ferries has been fixed
+[GENERAL] Improved lane parsing when invalid input is provided (fractional numbers for lanes)
+[GENERAL] Fixed a bug where waterways were given two lanes per direction, now changed to 1
+
+**Tasks**
+[GENERAL] updated to newer GeoTools version
+
 ## 0.4.0
 
 **Enhancements**

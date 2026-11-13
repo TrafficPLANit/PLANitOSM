@@ -11,9 +11,10 @@ import de.topobyte.osm4j.core.model.iface.OsmNode;
 
 /**
  * An item visitor for quadtree spatial index to filter out osm nodes in a quadtree that truly intersect with the
- * given bounding box provided in the query. Since spatial granularity of the "squares" in the quadtree might be too coarse 
- * it may select a too large a set of matches for any given bounding box. By providing this visitor we explicitly check the provided subset
- * if it indeed intersects with the given filer, i.e., bounding box that we are searching for.
+ * given bounding box provided in the query. Since spatial granularity of the "squares" in the quadtree might be
+ * too coarse it may select a too large a set of matches for any given bounding box. By providing this visitor
+ * we explicitly check the provided subset if it indeed intersects with the given filer, i.e., bounding box that
+ * we are searching for.
  * 
  * @author markr
  *
@@ -24,10 +25,10 @@ public class PlanitJtsIntersectOsmNodeVisitor implements ItemVisitor{
     private static final Logger LOGGER = Logger.getLogger(PlanitJtsIntersectOsmNodeVisitor.class.getCanonicalName());
 
     /** result to populate */  
-    private Collection<OsmNode> filteredResultToPopulate;
+    private final Collection<OsmNode> filteredResultToPopulate;
     
     /** filter to apply, i.e., the area to filter intersection test on */
-    private Polygon geometryFilter;
+    private final Polygon geometryFilter;
       
     /** Constructor
      * 

@@ -12,25 +12,39 @@ import org.goplanit.osm.util.OsmTagUtils;
  */
 public class OsmLaneTags {
 
+  private OsmLaneTags(){}
+
    /* keys */
   
+  /** key of the number of lanes of a way, both directions together */
   public static final String LANES = "lanes";
 
+  /** key of the number of lanes in the way's direction, {@code lanes:forward} */
   public static final String LANES_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES, OsmDirectionTags.FORWARD);
 
+  /** key of the number of lanes against the way's direction, {@code lanes:backward} */
   public static final String LANES_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES, OsmDirectionTags.BACKWARD);
   
-  public static String LANES_PSV = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
+  /** key of the number of lanes for public service vehicles, {@code lanes:psv} */
+  public static final String LANES_PSV =
+          OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeCategoryTags.PUBLIC_SERVICE_VEHICLE);
   
-  public static String LANES_BUS = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeTags.BUS);
+  /** key of the number of bus lanes, {@code lanes:bus} */
+  public static final String LANES_BUS = OsmTagUtils.createCompositeOsmKey(LANES, OsmRoadModeTags.BUS);
   
+  /** key of the number of lanes for public service vehicles in the way's direction, {@code lanes:psv:forward} */
   public static final String LANES_PSV_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
   
-  public static final String LANES_PSV_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
+  /** key of the number of lanes for public service vehicles against the way's direction, {@code lanes:psv:backward} */
+  public static final String LANES_PSV_BACKWARD =
+          OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);
   
-public static final String LANES_BUS_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.FORWARD);
+  /** key of the number of bus lanes in the way's direction, {@code lanes:bus:forward} */
+  public static final String LANES_BUS_FORWARD = OsmTagUtils.createCompositeOsmKey(LANES_BUS, OsmDirectionTags.FORWARD);
   
-  public static final String LANES_BUS_BACKWARD = OsmTagUtils.createCompositeOsmKey(LANES_PSV, OsmDirectionTags.BACKWARD);  
+  /** key of the number of bus lanes against the way's direction, {@code lanes:bus:backward} */
+  public static final String LANES_BUS_BACKWARD =
+          OsmTagUtils.createCompositeOsmKey(LANES_BUS, OsmDirectionTags.BACKWARD);
   
   /* value tags */
   

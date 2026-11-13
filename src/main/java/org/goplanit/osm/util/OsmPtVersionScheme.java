@@ -8,8 +8,11 @@ package org.goplanit.osm.util;
  */
 public enum OsmPtVersionScheme {
 
+  /** the first public transport tagging scheme, Ptv1 */
   VERSION_1("Ptv1"),
+  /** the second public transport tagging scheme, Ptv2, of stop positions, platforms and stop areas */
   VERSION_2("Ptv2"),
+  /** no public transport tagging scheme */
   NONE("none");
   
   

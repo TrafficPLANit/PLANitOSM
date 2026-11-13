@@ -1,0 +1,550 @@
+package org.goplanit.osm.converter.network.settings;
+
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.goplanit.converter.utils.ExternalToPlanitModeMapping;
+import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
+import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
+import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.misc.Pair;
+import org.goplanit.utils.mode.PredefinedModeType;
+
+/**
+ * Base class with shared settings across different types of Osm ways (highway, railway)
+ * 
+ * @author markr
+ *
+ */
+public abstract class OsmWaySettings {
+
+  private static final Logger LOGGER = Logger.getLogger(OsmWaySettings.class.getCanonicalName());
+  
+  /* defaults config */
+
+  /**
+   * speed limit defaults for the ways represented by these settings
+   */
+  private OsmSpeedLimitDefaultsCategory speedLimitDefaults; 
+  
+  /**
+   * mode access defaults for the ways represented by these settings
+   */
+  private OsmModeAccessDefaultsCategory osmModeAccessDefaults;
+  
+  /**
+   * Configuration options regarding the activation/deactivation of specific OSM way types in the parser
+   */
+  private final OsmInfrastructureConfiguration infrastructureTypeConfiguration;
+
+  /** track mapping from OSM mode string to PLANit defined modes */
+  private final ExternalToPlanitModeMapping osmModeMapping = new ExternalToPlanitModeMapping();
+
+  /* overwriting of defaults */
+  
+  /**
+   * track overwrite values for OSM way types where we want different defaults for capacity and max density
+   */
+  protected final Map<String, Pair<Double,Double>> overwriteOsmWayTypeCapacityDensityDefaults = new TreeMap<>();
+    
+  /* other */
+
+  /** flag indicating if the settings for this parser matter, by indicating if the parser for it is active or not */
+  private Boolean isParserActive = null;
+  
+  /* protected */
+
+  /**
+   * explicitly exclude all osmWay type:value in case none of the passed in osmModes is marked as mapped
+   * 
+   * @param osmWayValue to check
+   * @param osmModes of which at least one should be active on the key:value pair
+   */
+  private void excludeOsmWayTypesWithoutModes(String osmWayValue, Collection<String> osmModes) {
+    
+    boolean hasMappedMode = false;
+    if(osmModes != null) {
+      for(String osmMode : osmModes) {
+        if(isOsmModeActivated(osmMode)) {
+          hasMappedMode = true;
+          break;
+        }
+      } 
+    }
+    
+    if(!hasMappedMode) {
+      deactivateOsmWayType(osmWayValue);      
+    } 
+  }
+
+  /** Add a new default the speed limit for a currently unregistered key value way tag value, e.g. railway=typeValue.
+   * Only to be used for custom tags that are added on-the-fly by the user, otherwise we should go through the
+   * "normal" default initialisation procedure.
+   *
+   * @param osmWayKey key to use
+   * @param osmWayValue way value type to collect default speed limit for
+   * @param speedLimitKmH in km/h
+   * @return true when added, false otherwise
+   */
+  private boolean addDefaultSpeedLimit(String osmWayKey, String osmWayValue, double speedLimitKmH){
+    if(speedLimitDefaults.containsSpeedLimit(osmWayKey, osmWayValue)){
+      LOGGER.warning("unable to add default speed limit because a default is already available, consider " +
+              "overwriting the default via settings instead");
+      return false;
+    }
+    speedLimitDefaults.setSpeedLimitDefault(osmWayKey, osmWayValue, speedLimitKmH);
+    return true;
+  }
+
+
+  /** Constructor
+   * 
+   * @param infrastructureTypeConfiguration to use
+   * @param speedLimitDefaults to use
+   * @param osmModeAccessDefaults to use
+   */
+  protected OsmWaySettings(OsmInfrastructureConfiguration infrastructureTypeConfiguration,
+                           OsmSpeedLimitDefaultsCategory speedLimitDefaults,
+                           OsmModeAccessDefaultsCategory osmModeAccessDefaults) {
+    this.infrastructureTypeConfiguration = infrastructureTypeConfiguration;
+    this.speedLimitDefaults = speedLimitDefaults;
+    this.osmModeAccessDefaults = osmModeAccessDefaults;
+  }
+
+  /**
+   * explicitly exclude all osmWay types that are included but have no more activated modes due to deactivation of
+   * their default assigned modes. Doing so avoids the reader to log warnings that supported way types cannot be
+   * injected in the network because they have no viable modes attached
+   * 
+   */
+  public void excludeOsmWayTypesWithoutActivatedModes() {
+    var originallySupportedTypes = getSetOfActivatedOsmWayLikeTypes();
+    var activatedOsmModes = getAcivatedOsmModes();
+    if(originallySupportedTypes != null) {
+      for(var entry : originallySupportedTypes.entrySet()) {
+        for(var supportedKeyValueType : entry.getValue()) {
+          Collection<String> allowedOsmModes = collectAllowedOsmWayModes(
+              entry.getKey(), supportedKeyValueType, activatedOsmModes);
+          excludeOsmWayTypesWithoutModes(supportedKeyValueType, allowedOsmModes);
+        }
+      }
+    }
+  }    
+    
+  /* way types */
+  
+  /**
+   * Verify if the passed in OSM way type is explicitly deactivated. Deactivated types will be ignored
+   * when processing ways.
+   * 
+   * @param osmWayValueType railway value type of representing way key (railway, highway, etc)
+   * @return true when unSupported, false if not (which means it is either supported, or not registered)
+   */
+  protected boolean isOsmWayTypeDeactivated(final String osmWayValueType) {
+      return !isParserActive() || !isOsmWayTypeActivated(osmWayValueType);
+  }
+    
+  /**
+   * Verify if the passed in OSM way value type is explicitly activated. Activated types will be processed 
+   * and converted into link(segments).
+   * 
+   * @param osmWayValue, e.g. primary, road
+   * @return true when supported, false if not (which means it is unsupported, or not registered)
+   */
+  protected boolean isOsmWayTypeActivated(String osmWayValue) {
+    return isParserActive() && infrastructureTypeConfiguration.isActivated(osmWayValue);
+  }  
+  
+  /**
+   * Choose to not parse the given way valuetype, e.g. railway=rail, highway=primary, etc.
+   * 
+   * @param osmWayValue to use
+   */
+  protected void deactivateOsmWayType(String osmWayValue) {
+    infrastructureTypeConfiguration.deactivate(osmWayValue);      
+  } 
+  
+  /**
+   * Choose to add given way value type to parsed types on top of the defaults, e.g. railway=rail, highway=primary, etc.
+   * Activates parser implicitly as well as it is assumed any activation of a type requires parsing it
+   * 
+   * @param osmWayValue to use
+   */
+  protected void activateOsmWayType(String osmWayValue) {
+    infrastructureTypeConfiguration.activate(osmWayValue);
+    activateParser(true);
+  }  
+  
+  /** Activate all passed in way types
+   * 
+   * @param osmWayValueTypes to activate
+   */
+  protected void activateOsmWayTypes(String... osmWayValueTypes) {
+    activateOsmWayTypes(Arrays.asList(osmWayValueTypes));
+  }   
+  
+  /** Activate all passed in way types
+   * 
+   * @param osmWayValueTypes to activate
+   */
+  protected void activateOsmWayTypes(List<String> osmWayValueTypes) {
+    osmWayValueTypes.forEach(this::activateOsmWayType);
+  }    
+  
+  /**
+   * Activate all known OSM railway types 
+   */
+  protected void activateAllOsmWayTypes() {
+    infrastructureTypeConfiguration.getDeactivatedTypes().values().stream().flatMap(Collection::stream).forEach(
+            this::activateOsmWayType);
+    activateParser(true);
+  }   
+  
+  /**
+   * Deactivate all types for the infrastructure type we represent.
+   * Also deactivates the parser since if no types are activate, the parser should not parse anything
+   */
+  protected void deactivateAllOsmWayTypes() {
+    infrastructureTypeConfiguration.deactivateAll();
+    activateParser(false);
+  } 
+  
+  /* overwrite */
+  
+  /**
+   * Log all de-activated OSM way types (irrespective of parser being active or not)
+   */  
+  protected void logUnsupportedOsmWayTypes() {
+    infrastructureTypeConfiguration.logDeactivatedTypes();
+  }
+  
+  /* overwrite */  
+
+  /**
+   * Choose to overwrite the given highway type defaults with the given values.
+   * 
+   * @param osmWayKey the way key
+   * @param osmWayType the value type to set these values for
+   * @param capacityPerLanePerHour new value in pcu/lane/h
+   * @param maxDensityPerLane new value pcu/km/lane
+   */
+  protected void overwriteOsmWayTypeDefaultCapacityMaxDensity(
+          String osmWayKey, String osmWayType, double capacityPerLanePerHour, double maxDensityPerLane) {
+    overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.of(capacityPerLanePerHour,maxDensityPerLane));
+    LOGGER.info(String.format("Custom defaults for OSM road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
+  }          
+  
+  /**
+   * Check if defaults should be overwritten
+   * 
+   * @param osmWayType to check
+   * @return true when new defaults are provided, false otherwise
+   */
+  protected boolean isDefaultCapacityOrMaxDensityOverwrittenByOsmWayType(String osmWayType) {
+    return overwriteOsmWayTypeCapacityDensityDefaults.containsKey(osmWayType);
+  }
+
+  /**
+   * collect the overwrite type values that should be used
+   * 
+   * @param osmWayType to collect overwrite values for
+   * @return the new values capacity (pcu/lane/h) and maxDensity (pcu/km/lane)
+   */
+  protected final Pair<Double,Double> getOverwrittenCapacityMaxDensityByOsmWayType(String osmWayType) {
+    return overwriteOsmWayTypeCapacityDensityDefaults.get(osmWayType);
+  }    
+  
+  /* speed limits */
+    
+  /** Collect the speed limit for a given way tag value, e.g. railway=typeValue, based on the defaults provided
+   * (typically set by country)
+   *
+   * @param osmWayKey key to use
+   * @param osmWayValue way value type to collect default speed limit for
+   * @return speedLimit in km/h
+   */
+  protected double getDefaultSpeedLimitByOsmTypeValue(String osmWayKey, String osmWayValue){
+    return speedLimitDefaults.getSpeedLimit(osmWayKey, osmWayValue);
+  }  
+  
+  /** Collect the default speed limit for a given way tag value, where we extract the key and value from the
+   * passed in tags, if available
+   * 
+   * @param osmWayKey that is considered valid and should be used to collect way type value
+   * @param tags to extract way key value pair from (highway,railway keys currently supported)
+   * @return speedLimit in km/h 
+   */  
+  protected Double getDefaultSpeedLimitByOsmWayType(String osmWayKey, Map<String, String> tags){
+    if(tags.containsKey(osmWayKey)){
+      return getDefaultSpeedLimitByOsmTypeValue(osmWayKey, tags.get(osmWayKey));
+    }else {
+      throw new PlanItRunTimeException("No key %s contained in provided osmTags when collecting default speed limit",
+          osmWayKey);
+    }    
+  }   
+  
+  /* modes */
+  
+  /** set mapping from OSM mode to PLANit mode (only predefined modes supported for now), these are not automatically
+   * activated, that is done separately
+   *
+   * @param osmMode to map from
+   * @param planitModeType mode to map to
+   */
+  protected void setOsmMode2PlanitPredefinedModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
+    osmModeMapping.setDefaultMapping(osmMode, planitModeType);
+  } 
+
+  /**
+   * Set mappings from OSM modes to PLANit predefined mode types in bulk.
+   *
+   * @param osmModeMappings mappings to set
+   */
+  protected void setOsmMode2PlanitPredefinedModeTypeMappings(Map<String, PredefinedModeType> osmModeMappings) {
+    osmModeMappings.forEach(this::setOsmMode2PlanitPredefinedModeTypeMapping);
+  }
+  
+  /** Activate an OSM mode based on its default mapping to a PLANit mode
+   * 
+   * @param osmMode to map from
+   */
+  protected void activateOsmMode(String osmMode) {
+    osmModeMapping.activate(osmMode);
+  }   
+
+  /**
+   * Activate the provided OSM modes.
+   *
+   * @param osmModes to activate
+   */
+  protected void activateOsmModes(Collection<String> osmModes) {
+    osmModes.forEach(this::activateOsmMode);
+  }
+  
+  /** Add/overwrite a mapping from OSM mode to PLANit mode type. This means that the osmMode will be added to the
+   * PLANit network once parsing commences
+   * 
+   * @param osmMode to set
+   * @param planitModeType to map it to
+   */
+  protected void setOsmMode2PlanitModeTypeMapping(String osmMode, PredefinedModeType planitModeType) {
+    if(osmMode == null) {
+      LOGGER.warning("OSM mode is null, cannot add it to OSM to PLANit mode mapping for OSM mode, ignored");
+      return;
+    }
+    osmModeMapping.overrideMapping(osmMode, planitModeType);
+  }   
+  
+  /** Deactivate an OSM mode. This means that the osmMode will not be added to the PLANit network
+   * You can only remove a mode when it is already added.
+   * 
+   * @param osmMode to remove
+   */
+  protected void deactivateOsmMode(String osmMode) {
+    if(osmMode == null) {
+      LOGGER.warning("OSM mode is null, cannot deactivate, ignored");
+      return;
+    }
+    osmModeMapping.deactivate(osmMode);
+  }
+  
+  /**Remove all provided modes from mapping
+   * 
+   * @param osmModes to deactivate
+   */
+  protected void deactivateOsmModes(Collection<String> osmModes) {
+    for(String osmMode : osmModes) {
+      deactivateOsmMode(osmMode);
+    }
+  } 
+  
+  /** remove all road modes from mapping except for the passed in ones
+   * 
+   * @param toBeRemovedModes remove all these modes, except...
+   * @param remainingOsmRoadModes to explicitly keep from the osmModesToRemove
+   */
+  protected void deactivateAllModesExcept(
+      final Collection<String> toBeRemovedModes, final List<String> remainingOsmRoadModes) {
+    Collection<String> remainingRoadModes = remainingOsmRoadModes==null ? new ArrayList<>() : remainingOsmRoadModes;
+    Collection<String> finalToBeRemovedModes = new TreeSet<>(toBeRemovedModes);
+    finalToBeRemovedModes.removeAll(remainingRoadModes);
+    deactivateOsmModes(finalToBeRemovedModes);
+  }     
+  
+  /** Convenience method that collects the currently mapped PLANit mode for the given OSM mode if the parser is active
+   * otherwise null is returned
+   * 
+   * @param osmMode to collect mapped mode for (if any)
+   * @return mapped PLANit mode type, if not available or parser is not active null is returned
+   */
+  protected PredefinedModeType getPlanitModeTypeIfActivated(final String osmMode) {
+    // todo move this to reader as mode instances should not be part of the settings
+    return osmModeMapping.getMappedMode(osmMode);
+  }
+  
+  /** Convenience method that collects the currently mapped OSM modes for the given PLANit mode
+   * 
+   * @param planitModeType to collect mapped OSM modes for this type (if any)
+   * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
+   */  
+  protected Set<String> getAcivatedOsmModes(final PredefinedModeType planitModeType) {
+    return osmModeMapping.getActiveExternalModes(planitModeType);
+  }
+
+  /** Verify if a particular osm mode is allowed on the provided osm way type
+   *  e.g., is train allowed on rail?
+   *
+   * @param osmWayKey to use
+   * @param osmWayTypeValue to use
+   * @param osmMode to check
+   * @return true when allowed, false, otherwise
+   */
+  protected boolean isModeAllowedOnOsmWay(String osmWayKey, String osmWayTypeValue, String osmMode) {
+    return osmModeAccessDefaults.isAllowed(osmWayKey, osmWayTypeValue, osmMode);
+  }
+
+  /**
+   * Collect all Osm modes from the passed in options that are allowed for the given osmWay type
+   *
+   * @param osmWayKey to use
+   * @param osmWayValueType to use
+   * @param osmModesToCheck modes to select from
+   * @return allowed OsmModes found
+   */
+  protected Set<String> collectAllowedOsmWayModes(
+      String osmWayKey, String osmWayValueType, Collection<String> osmModesToCheck) {
+    return osmModesToCheck.stream().filter( osmMode ->
+        isModeAllowedOnOsmWay(osmWayKey, osmWayValueType, osmMode)).collect(Collectors.toSet());
+  }  
+  
+  /** Add allowed osm modes to OSM way type
+   *
+   * @param osmWayKey to use
+   * @param osmWayTypeValue to use
+   * @param osmModes to allow
+   */
+  protected void addAllowedOsmWayModes(String osmWayKey, String osmWayTypeValue, final List<String> osmModes) {
+    osmModeAccessDefaults.addAllowedModes(osmWayKey, osmWayTypeValue, osmModes);
+  }
+
+  /** register a custom new way key-value pair with defaults to parse outside the default supported tags. It is
+   * assumed it has been verified that this combination does not exist in the regular tagging that is supported
+   * beforehand, so it will just be added without further checking at this point.
+   *
+   * @param osmWayKey to use
+   * @param osmWayTypeValue to use
+   * @param speedLimitKmh default to use
+   * @param capacityPerLanePcuH default to use
+   * @param maxDensityPerLanePcuH default to use
+   * @param allowedOsmModes default allowed mode(s) to use
+   * @return true when registration was successful, false otherwise
+   */
+  protected boolean registerNewSupportedOsmWayType(
+          String osmWayKey, String osmWayTypeValue, double speedLimitKmh, double capacityPerLanePcuH,
+          double maxDensityPerLanePcuH, String... allowedOsmModes) {
+
+    this.infrastructureTypeConfiguration.activate(osmWayTypeValue);
+    boolean success = addDefaultSpeedLimit(osmWayKey, osmWayTypeValue, speedLimitKmh);
+    addAllowedOsmWayModes(osmWayKey, osmWayTypeValue, Arrays.asList(allowedOsmModes));
+    overwriteOsmWayTypeDefaultCapacityMaxDensity(
+        osmWayKey, osmWayTypeValue, capacityPerLanePcuH, maxDensityPerLanePcuH);
+    return success;
+  }
+  
+  /* public */
+
+  /**
+   * Log the active mode mappings for this way category.
+   *
+   * @param level indentation level to apply
+   */
+  protected void logModeMappings(int level) {
+    osmModeMapping.logActiveMapping("Mode mappings", level);
+  }
+
+  /**
+   * Log way specific settings for derived classes.
+   *
+   * @param level indentation level to apply
+   */
+  public abstract void logSettings(int level);
+
+  /** Determine whether the ways represented by these settings should be parsed or not. It has no impact
+   * on the settings themselves, except that all queries related to whether or not modes or types are activated
+   * will respond negatively when the parser is deactived, despite the underlying settings remaining in memory and
+   * will be reinstated when the parser is re-activated.
+   * 
+   * @param activate parser when true, deactivate otherwise
+   */
+  public void activateParser(boolean activate) {
+    this.isParserActive = activate;
+    osmModeMapping.setActive(activate);
+  }
+
+  /** verifies if the parser for these settings is active or not
+   * @return true when active, false otherwise
+   */
+  public boolean isParserActive() {
+    return this.isParserActive;
+  }
+
+  /**
+   * Overrides or registers a mapping from an OSM road mode tag to a PLANit predefined mode.
+   * This allows external configuration of mode conversions.
+   *
+   * @param osmRoadMode The OSM mode tag string (e.g., OsmRoadModeTags.MOTOR_CAR or custom "moped")
+   * @param planitMode  The target PLANit predefined mode type
+   */
+  public void overrideAndActivateOsmRoadModeMapping(String osmRoadMode, PredefinedModeType planitMode) {
+    setOsmMode2PlanitPredefinedModeTypeMapping(osmRoadMode, planitMode);
+    activateOsmMode(osmRoadMode);
+  }
+  
+  /** Verify if the passed in osmMode is mapped to a mode, i.e., if it is actively included when
+   * reading the network. When the parser is not active false is returned in all cases
+   * 
+   * @param osmMode to verify
+   * @return true if mapped and parser is active, false otherwise
+   */
+  public boolean isOsmModeActivated(final String osmMode) {
+    return getPlanitModeTypeIfActivated(osmMode) != null;
+  }
+
+  /** convenience method that collects all currently activated OSM modes
+   *
+   * @return mapped osm modes, if not available (due to lack of mapping or inactive parser) empty collection is returned
+   */
+  public Collection<String> getAcivatedOsmModes() {
+    return osmModeMapping.getActiveExternalModes();
+  }
+  
+  /** Verify if any mode other than the passed in OSM mode is active (in case the parser is active)
+   * @param osmMode to check
+   * @return true when other mapped mode is present (and parser is active), false otherwise
+   */
+  public boolean hasActivatedOsmModeOtherThan(final String osmMode) {
+    return osmModeMapping.getActiveExternalModes().stream().anyMatch(mode -> (!mode.equals(osmMode)));
+  }   
+    
+  /** Collect all activated types (by key) as a set (copy) in case the parser is active
+   * 
+   * @return map of currently activated OSM way types (when parser is active), modifications to this
+   * set have no effect on configuration, null if not applicable
+   */
+  public final SortedMap<String, SortedSet<String>> getSetOfActivatedOsmWayLikeTypes(){
+    return isParserActive() ? infrastructureTypeConfiguration.getActivatedTypes() : null;
+  }
+
+  /**
+   * Create a stream of  currently activated planit mode types
+   *
+   * @return activated PLANitModeTypes, i.e., they are mapped and activated
+   */
+  public Stream<PredefinedModeType> getActivatedPlanitModeTypesStream() {
+    return osmModeMapping.getActivePlanitModesStream();
+  }
+
+}

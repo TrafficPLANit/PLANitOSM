@@ -1,0 +1,1299 @@
+package org.goplanit.osm.converter.network.settings;
+
+import org.goplanit.osm.converter.settings.OsmReaderSettings;
+import org.goplanit.osm.converter.network.settings.override.OsmWayLaneOverride;
+import org.goplanit.osm.defaults.*;
+import org.goplanit.osm.tags.OsmAccessTags;
+import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.osm.tags.OsmWaterwayTags;
+import org.goplanit.utils.geo.PlanitJtsCrsUtils;
+import org.goplanit.utils.graph.directed.Connectivity;
+import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.locale.LocaleUtils;
+import org.goplanit.utils.misc.CollectionUtils;
+import org.goplanit.utils.misc.LoggingUtils;
+import org.goplanit.utils.misc.StringUtils;
+import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
+import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
+import org.goplanit.utils.settings.annotations.SettingsRead;
+import org.goplanit.utils.settings.annotations.SettingsRootValue;
+import org.goplanit.utils.settings.annotations.SettingsSection;
+import org.goplanit.utils.settings.annotations.SettingsWrite;
+import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
+
+import java.net.URL;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.goplanit.converter.utils.ProjectedBoundingAreaHelper.DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
+
+/**
+ * All general settings (and sub-settings classes) for the OSM reader pertaining to parsing  network infrastructure.
+ * contains additional settings for highway and railway (e.g., highway settings and railway settings members,
+ * respectively).
+ * 
+ * @author markr
+ *
+ */
+@SettingsSection(key = "network", level = SettingsKeyLevel.STANDARD)
+public class OsmNetworkReaderSettings extends OsmReaderSettings{
+    
+  /**
+   * The logger
+   */
+  private static final Logger LOGGER = Logger.getLogger(OsmNetworkReaderSettings.class.getCanonicalName());
+
+  /** all settings specific to parsing intersections from OSM traffic signals */
+  protected OsmIntersectionSettings osmIntersectionSettings = new OsmIntersectionSettings();
+
+  /** see {@link #overrideOsmWayLanes(long, UserOverride)}, by OSM way id, none by default */
+  protected final Map<Long, UserOverride<OsmWayLaneOverride>> osmWayLaneOverrides = new TreeMap<>();
+
+  /** the default crs is set to {@code  PlanitJtsUtils.DEFAULT_GEOGRAPHIC_CRS} */
+  public static CoordinateReferenceSystem DEFAULT_SOURCE_CRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
+
+  /** Default modes for which dangling subnetworks are dealt with after parsing: car only.
+   * <p>
+   * Being able to both reach and leave is a property of a single mode rather than of infrastructure, so this is
+   * judged per mode. Car is the only mode treated by default, being the one whose network is routinely broken by
+   * one way restrictions, and because withdrawing a mode's access is a modelling decision that should be asked
+   * for rather than assumed for every mode present.
+   * </p>
+   * <p>
+   * Rail and water are deliberately absent: their networks are routinely in disconnected pieces in an extract, a
+   * branch line leaving the bounding area or a ferry crossing with nothing to connect to, without that indicating
+   * a defect. Bicycle and pedestrian are absent for a related reason, their networks being fragmented rather than
+   * directionally broken.
+   * </p> */
+  public static Set<PredefinedModeType> DEFAULT_DANGLING_SUBNETWORK_MODES = Set.of(PredefinedModeType.CAR);
+
+  /** Default minimum size of subnetwork for a mode to keep its access, in vertices. At its maximum value every
+   * subnetwork but the largest falls below it, which together with {@link #DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK}
+   * and {@link #DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY} leaves a mode with a single network it can route across
+   * in full. That is the safest default: anything less leaves subnetworks a trip can enter and then be unable to
+   * complete */
+  public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE = Integer.MAX_VALUE;
+
+  /** by default we always keep the largest subnetwork */
+  public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
+
+  /** Default notion of connectivity applied when removing dangling subnetworks: strong.
+   * <p>
+   * Weak connectivity asks only whether infrastructure is attached to the network, and so retains anything that
+   * cannot be both entered and left, e.g. a car park served by a single one way road pointing outwards. Such
+   * infrastructure cannot carry a route in either direction and is of no more use than a disconnected fragment,
+   * which is why the stricter notion is the default.
+   * </p>
+   * <p>
+   * Note that this does not by itself yield a network every part of which can serve as both origin and
+   * destination. Being able to enter and leave is a per mode property, whereas pruning is per track type: a
+   * pocket entered by a bus only segment and left by a car segment is strongly connected as road infrastructure
+   * while remaining unusable for car. Measured on a metropolitan extract the stricter notion removes on the order
+   * of a few hundred nodes, while an order of magnitude more remain unusable for an individual mode.
+   * </p> */
+  public static Connectivity DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY = Connectivity.STRONG;
+
+  /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
+  public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
+
+  /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
+   * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
+   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
+   * the specified distance outside the bounding polygon and still be included. */
+  protected double maximumDistanceFerryOutsideBoundingPolygonInMeters =
+      DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
+
+  /** all settings specific to osm railway tags */
+  protected OsmRailwaySettings osmRailwaySettings;
+  
+  /** all settings specific to osm highway tags*/
+  protected OsmHighwaySettings osmHighwaySettings;
+
+  /** all settings specific to OSM waterway (ferry) tags*/
+  protected OsmWaterwaySettings osmWaterwaySettings;
+
+  /** the default speed limits used in case no explicit information is available on the OSM way's tags */
+  protected final OsmSpeedLimitDefaults speedLimitConfiguration;
+  
+  /** the default mode access configuration used in case no explicit access information is available on the
+   * OSM way's tags */
+  protected final OsmModeAccessDefaults modeAccessConfiguration;  
+  
+  /** the default number of lanes used in case no explicit information is available on the OSM way's tags */
+  protected final OsmLaneDefaults laneConfiguration = new OsmLaneDefaults();  
+      
+  /** allow users to provide OSM way ids for ways that we are not to parse, for example when we know the original
+   * coding or tagging is problematic */
+  protected final Set<Long>  excludedOsmWays = new HashSet<>();
+  
+  /** Allow users to provide OSM way ids for ways that we are to keep even if they fall (partially) outside a
+   * bounding polygon, for example when we know the OSM way meanders in and outside the polygon, and we want to
+   * have a connected network and proper lengths for this way */
+  protected final Set<Long>  includedOutsideBoundingPolygonOsmWays = new HashSet<>();
+  
+  /** Allow users to provide OSM node ids for nodes that we are not to keep even if they fall outside
+   * a bounding polygon */
+  protected final Set<Long>  includedOutsideBoundingPolygonOsmNodes = new HashSet<>();
+ 
+    
+  /**
+   * track overwritten mode access values for specific osm ways by osm id. Can be used in case the OSM file
+   * is incorrectly tagged which causes problems in the memory model. Here one can be manually
+   * overwrite the allowable modes for this particular way.
+   */
+  protected final Map<Long, Set<String>> overwriteOsmWayModeAccess = new HashMap<>();
+
+  /**
+   * How an OSM access value tag is to be interpreted during parsing
+   */
+  public enum AccessValueClassification {
+    /** the value grants access */
+    POSITIVE,
+    /** the value denies access */
+    NEGATIVE
+  }
+
+  /** user supplied classification of OSM access value tags, overriding the defaults. Kept as a single map keyed by
+   * the access value so that a value can never end up classified both positively and negatively at once */
+  protected final Map<String, AccessValueClassification> overriddenAccessValueTags = new TreeMap<>();
+
+  /** compiled positive access value tags, defaults combined with user overrides. Null when it needs recompiling */
+  private String[] compiledPositiveAccessValueTags = null;
+
+  /** compiled negative access value tags, defaults combined with user overrides. Null when it needs recompiling */
+  private String[] compiledNegativeAccessValueTags = null;
+
+  /* SETTINGS */
+
+  /** the crs of the OSM source */
+  protected CoordinateReferenceSystem sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
+
+  private boolean consolidateLinkSegmentTypes = DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES;
+
+  /** flag per track type indicating if dangling subnetworks of that track type should be removed after parsing
+   * the network. OSM networks often have small roads that appear to be connected to larger roads, but in fact are
+   * not. All subnetworks that are not part of the largest subnetwork of their track type will be removed.
+   * <p>
+   * Pruning is per track type because road, rail and water infrastructure share a single PLANit layer while being
+   * separate networks in practice. A rail line is not dangling merely because it is unreachable by car, so judging
+   * connectivity across all track types at once would discard legitimate infrastructure.
+   * </p>
+   * */
+  protected final Map<PredefinedModeType, DanglingSubnetworkConfig> danglingSubnetworkConfigByMode =
+      createDefaultDanglingSubnetworkConfig();
+  
+  
+  /**
+   * indicate whether to keep the largest subnetwork when {@code removeDanglingSubNetworks} even when it does
+   * not adhere to the criteria of {@code discardSubNetworkBelowSize} and/or {@code discardSubNetworkAbovesize} 
+   */
+  protected boolean alwaysKeepLargestSubNetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
+
+
+  /**
+   * Construct the per mode defaults for dealing with dangling subnetworks
+   *
+   * @return configuration for each mode in {@code DEFAULT_DANGLING_SUBNETWORK_MODES}
+   */
+  private static Map<PredefinedModeType, DanglingSubnetworkConfig> createDefaultDanglingSubnetworkConfig(){
+    var configByMode = new EnumMap<PredefinedModeType, DanglingSubnetworkConfig>(PredefinedModeType.class);
+    for(var modeType : DEFAULT_DANGLING_SUBNETWORK_MODES){
+      configByMode.put(modeType, new DanglingSubnetworkConfig(
+          DEFAULT_MINIMUM_SUBNETWORK_SIZE, Integer.MAX_VALUE, DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY));
+    }
+    return configByMode;
+  }
+
+  /**
+   * Compile the effective access value classification by starting from the defaults and applying the user's
+   * overrides on top. Cached because it is consulted for every parsed OSM way carrying an access tag.
+   *
+   * @param classification to compile the value tags for
+   * @return effective access value tags for that classification
+   */
+  private String[] compileAccessValueTags(AccessValueClassification classification) {
+    var defaults = classification == AccessValueClassification.POSITIVE ?
+        OsmAccessTags.getDefaultPositiveAccessValueTags() : OsmAccessTags.getDefaultNegativeAccessValueTags();
+
+    var effective = new TreeSet<>(Arrays.asList(defaults));
+    for(var entry : overriddenAccessValueTags.entrySet()){
+      /* a value classified the other way by the user must no longer appear here, hence the removal irrespective
+       * of whether it is subsequently added */
+      effective.remove(entry.getKey());
+      if(entry.getValue() == classification){
+        effective.add(entry.getKey());
+      }
+    }
+    return effective.toArray(new String[0]);
+  }
+
+  /** discard the compiled access value classification so it is rebuilt on next use */
+  private void invalidateCompiledAccessValueTags(){
+    this.compiledPositiveAccessValueTags = null;
+    this.compiledNegativeAccessValueTags = null;
+  }
+
+  /**
+   * Default constructor. Here no specific locale is provided, meaning that all defaults will use global settings.
+   * This is especially relevant for speed limits and mode access restrictions (unless manually adjusted by the user)
+   *
+   */
+  public OsmNetworkReaderSettings() {
+    this(CountryNames.GLOBAL);
+  }
+
+  /**
+   * Constructor with country to base (i) default speed limits and (ii) mode access on, 
+   * for various OSM highway types in case maximum speed limit information is missing
+   * 
+   * @param countryName the full country name to use speed limit data for, see also the
+   *                    OsmSpeedLimitDefaultsByCountry class
+   */
+  public OsmNetworkReaderSettings(@SettingsRootValue(key = COUNTRY_KEY) String countryName) {
+    this((URL) null, countryName);
+  }
+
+  /**
+   * Constructor with country to base (i) default speed limits and (ii) mode access on,
+   * for various OSM highway types in case maximum speed limit information is missing
+   *
+   * @param inputSource to use, expected local file location
+   * @param countryName the full country name to use speed limit data for, see also
+   *                    the OsmSpeedLimitDefaultsByCountry class
+   */
+  public OsmNetworkReaderSettings(String inputSource, String countryName) {
+    this(UrlUtils.createFromLocalAbsoluteOrRelativePath(Path.of(inputSource)), countryName);
+  }
+
+  /**
+   * Constructor with country to base (i) default speed limits and (ii) mode access on,
+   * for various OSM highway types in case maximum speed limit information is missing
+   * <p>
+   * A country that is not a known country name, such as a misspelt one, is warned about, with the name given.
+   * </p>
+   *
+   * @param inputSource to use
+   * @param countryName the full country name to use speed limit data for, see also
+   *                    the OsmSpeedLimitDefaultsByCountry class
+   */
+  public OsmNetworkReaderSettings(URL inputSource, String countryName) {
+    super(inputSource, countryName);
+    if (!CountryNames.GLOBAL.equals(countryName) && LocaleUtils.getIso2CountryCodeByName(countryName) == null) {
+      LOGGER.warning(String.format("Country '%s' is not a known country name, check its spelling", countryName));
+    }
+
+    /* general */
+    this.speedLimitConfiguration = OsmSpeedLimitDefaultsByCountry.create(countryName);
+    this.modeAccessConfiguration = OsmModeAccessDefaultsByCountry.create(countryName);
+    
+    /* settings by sub-type */
+    this.osmHighwaySettings = new OsmHighwaySettings(
+        this.speedLimitConfiguration.getUrbanHighwayDefaults(), 
+        this.speedLimitConfiguration.getNonUrbanHighwayDefaults(),
+        this.modeAccessConfiguration.getHighwayModeAccessDefaults());
+    this.osmRailwaySettings = new OsmRailwaySettings(
+        this.speedLimitConfiguration.getRailwayDefaults(), 
+        this.modeAccessConfiguration.getRailwayModeAccessDefaults());
+    this.osmWaterwaySettings = new OsmWaterwaySettings(
+        this.speedLimitConfiguration.getWaterwayDefaults(),
+        this.modeAccessConfiguration.getWaterwayModeAccessDefaults());
+  }   
+        
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void reset() {
+    // TODO    
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsHeader("OSM Network Reader Settings"));
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Source CRS",
+        getSourceCRS().getName(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types",
+        isConsolidateLinkSegmentTypes(), level));
+    /* every activated mode's configuration is logged in full rather than a flag alone, since the thresholds and
+     * the notion of connectivity together decide what a pass actually does and are easily overlooked. The absence
+     * of any activated mode is logged too, so that it is visible rather than merely unstated */
+    if(getRemoveDanglingSubnetworkModes().isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks", "deactivated for all modes", level));
+    }else{
+      for(var entry : getRemoveDanglingSubnetworkModes().entrySet()){
+        LOGGER.info(LoggingUtils.settingsValue(
+            String.format("Remove dangling subnetworks (%s)", entry.getKey().value()),
+            entry.getValue().toString(), level));
+      }
+    }
+    LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork",
+        isAlwaysKeepLargestSubnetwork(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
+        getMaximumDistanceFerryOutsideBoundingPolygonInMeters(), level));
+    /* the effective classification is logged in full, defaults and user overrides combined, so that what is
+     * reported is what parsing applies rather than requiring the reader to merge the two in their head */
+    LOGGER.info(LoggingUtils.settingsValue("Access value tags granting access",
+        String.join(", ", getPositiveAccessValueTags()), level));
+    LOGGER.info(LoggingUtils.settingsValue("Access value tags denying access",
+        String.join(", ", getNegativeAccessValueTags()), level));
+    if(!overriddenAccessValueTags.isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Access value tags reclassified by user",
+          overriddenAccessValueTags.entrySet().stream().map(
+              e -> String.format("%s=%s", e.getKey(), e.getValue().name().toLowerCase())).collect(
+                  Collectors.joining(", ")), level));
+    }
+    if(!osmWayLaneOverrides.isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Lanes overridden by OSM way id", osmWayLaneOverrides, level));
+    }
+    LOGGER.info(LoggingUtils.settingsSection("Highway", level + 1));
+    getHighwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Railway", level + 1));
+    getRailwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Waterway", level + 1));
+    getWaterwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Intersections", level + 1));
+    getIntersectionSettings().logSettings(level + 1);
+  }
+
+  /** activate the parsing of railways
+   * @param activate when true activate railway parsing, when false deactivate
+   * @return railway settings that are activated, null when deactivated
+   */
+  public OsmRailwaySettings activateRailwayParser(boolean activate) {
+    osmRailwaySettings.activateParser(activate);
+    return getRailwaySettings();      
+  }
+
+  /** activate the parsing of waterways
+   * @param activate when true activate waterway parsing, when false deactivate
+   * @return waterway settings that are activated, null when deactivated
+   */
+  public OsmWaterwaySettings activateWaterwayParser(boolean activate) {
+    osmWaterwaySettings.activateParser(activate);
+    return getWaterwaySettings();
+  }
+  
+  /** activate the parsing of highways
+   * @param activate when true activate highway parsing, when false deactivate
+   * @return highway settings that are activated, null when deactivated
+   */
+  public OsmHighwaySettings activateHighwayParser(boolean activate) {
+    osmHighwaySettings.activateParser(activate);
+    return getHighwaySettings();
+  }
+
+  /** activate the parsing of intersections from traffic signals
+   * @param activate when true activate intersection parsing, when false deactivate
+   * @return intersection settings, activated or deactivated
+   */
+  public OsmIntersectionSettings activateIntersectionParser(boolean activate) {
+    osmIntersectionSettings.activateParser(activate);
+    return getIntersectionSettings();
+  }
+  
+  /** Verify if railway parser is active
+   * 
+   * @return true when active false otherwise
+   */
+  public boolean isRailwayParserActive() {
+    return osmRailwaySettings.isParserActive();
+  }
+  
+  /** Verify if railway parser is active
+   * 
+   * @return true when active false otherwise
+   */
+  public boolean isHighwayParserActive() {
+    return osmHighwaySettings.isParserActive();
+  }
+
+  /** Verify if waterway parser is active
+   *
+   * @return true when active false otherwise
+   */
+  public boolean isWaterwayParserActive() {
+    return osmWaterwaySettings.isParserActive();
+  }
+
+  /** Verify if intersection parser is active
+   *
+   * @return true when active false otherwise
+   */
+  public boolean isIntersectionParserActive() {
+    return osmIntersectionSettings.isParserActive();
+  }
+
+  /** Chosen crs, default is {@code PlanitGeoUtils.DEFAULT_GEOGRAPHIC_CRS}
+   * 
+   * @return source CRS
+   */
+  public final CoordinateReferenceSystem getSourceCRS() {
+    return sourceCRS;
+  }
+
+  /**
+   * Override source CRS
+   * 
+   * @param sourceCRS to use
+   */
+  public void setSourceCRS(final CoordinateReferenceSystem sourceCRS) {
+    this.sourceCRS = sourceCRS;
+  }
+    
+  /**
+   * explicitly exclude all osmWay types that are included but have no more activated modes due to
+   * deactivation of their default assigned modes. Doing so avoids the reader to log warnings that supported
+   * way types cannot be injected in the network because they have no viable modes attached
+   * 
+   * :TODO move somewhere else, not used from perspective of user
+   */
+  public void excludeOsmWayTypesWithoutActivatedModes() {
+    osmHighwaySettings.excludeOsmWayTypesWithoutActivatedModes();
+    osmRailwaySettings.excludeOsmWayTypesWithoutActivatedModes();
+    osmWaterwaySettings.excludeOsmWayTypesWithoutActivatedModes();
+  }
+     
+  /**
+   * Classify an OSM access value tag, overriding how it would be treated by default. For example classifying
+   * {@code private} as positive causes ways tagged {@code access=private} to retain their mode access rather than
+   * having every mode stripped, which is often desirable since such ways are generally still traversable in
+   * practice even though they are formally restricted.
+   * <p>
+   * A value can only carry one classification, so classifying it replaces any earlier choice for that value.
+   * Values that are not recognised OSM access values are accepted, but a warning is logged since their effect
+   * cannot be verified.
+   * </p>
+   *
+   * @param osmAccessValueTag to classify, e.g. {@code private}
+   * @param classification to apply
+   */
+  public void classifyAccessValueTag(final String osmAccessValueTag, final AccessValueClassification classification) {
+    if(StringUtils.isNullOrBlank(osmAccessValueTag)){
+      LOGGER.warning("IGNORE: null or blank OSM access value tag provided for classification");
+      return;
+    }
+    if(!OsmAccessTags.getAllKnownAccessValueTags().contains(osmAccessValueTag)){
+      LOGGER.warning(String.format(
+          "OSM access value tag '%s' is not a recognised access value, classifying it as %s regardless, at the " +
+              "user's own risk", osmAccessValueTag, classification));
+    }
+    overriddenAccessValueTags.put(osmAccessValueTag, classification);
+    invalidateCompiledAccessValueTags();
+  }
+
+  /** Classify an OSM access value tag as granting access, see
+   * {@link #classifyAccessValueTag(String, AccessValueClassification)}
+   *
+   * @param osmAccessValueTag to treat as granting access
+   */
+  public void classifyAccessValueTagAsPositive(final String osmAccessValueTag) {
+    classifyAccessValueTag(osmAccessValueTag, AccessValueClassification.POSITIVE);
+  }
+
+  /** Classify an OSM access value tag as denying access, see
+   * {@link #classifyAccessValueTag(String, AccessValueClassification)}
+   *
+   * @param osmAccessValueTag to treat as denying access
+   */
+  public void classifyAccessValueTagAsNegative(final String osmAccessValueTag) {
+    classifyAccessValueTag(osmAccessValueTag, AccessValueClassification.NEGATIVE);
+  }
+
+  /** Remove any user classification for the given access value tag, restoring default behaviour for it
+   *
+   * @param osmAccessValueTag to restore to its default treatment
+   */
+  public void resetAccessValueTagClassification(final String osmAccessValueTag) {
+    if(overriddenAccessValueTags.remove(osmAccessValueTag) != null){
+      invalidateCompiledAccessValueTags();
+    }
+  }
+
+  /** The access value tags that grant access during parsing, defaults combined with any user classification.
+   * This is what parsing applies, as opposed to the defaults on {@code OsmAccessTags}
+   *
+   * @return effective positive access value tags
+   */
+  public String[] getPositiveAccessValueTags() {
+    if(compiledPositiveAccessValueTags == null){
+      compiledPositiveAccessValueTags = compileAccessValueTags(AccessValueClassification.POSITIVE);
+    }
+    return compiledPositiveAccessValueTags;
+  }
+
+  /** The access value tags that deny access during parsing, defaults combined with any user classification.
+   * This is what parsing applies, as opposed to the defaults on {@code OsmAccessTags}
+   *
+   * @return effective negative access value tags
+   */
+  public String[] getNegativeAccessValueTags() {
+    if(compiledNegativeAccessValueTags == null){
+      compiledNegativeAccessValueTags = compileAccessValueTags(AccessValueClassification.NEGATIVE);
+    }
+    return compiledNegativeAccessValueTags;
+  }
+
+  /**
+   * How a single mode's dangling subnetworks are to be dealt with.
+   *
+   * @author markr
+   */
+  public static class DanglingSubnetworkConfig {
+
+    private final int belowSize;
+
+    private final int aboveSize;
+
+    private final Connectivity connectivity;
+
+    /**
+     * Constructor
+     *
+     * @param belowSize withdraw the mode's access on subnetworks smaller than this
+     * @param aboveSize withdraw the mode's access on subnetworks larger than this
+     * @param connectivity what constitutes a subnetwork of the mode
+     */
+    public DanglingSubnetworkConfig(int belowSize, int aboveSize, Connectivity connectivity) {
+      this.belowSize = belowSize;
+      this.aboveSize = aboveSize;
+      this.connectivity = connectivity;
+    }
+
+    /**
+     * Size below which a subnetwork loses the mode's access
+     *
+     * @return size
+     */
+    public int getBelowSize() {
+      return belowSize;
+    }
+
+    /**
+     * Size above which a subnetwork loses the mode's access
+     *
+     * @return size
+     */
+    public int getAboveSize() {
+      return aboveSize;
+    }
+
+    /**
+     * What constitutes a subnetwork of this mode
+     *
+     * @return connectivity
+     */
+    public Connectivity getConnectivity() {
+      return connectivity;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String toString() {
+      return String.format("below %s, above %s, %s connectivity",
+          belowSize == Integer.MAX_VALUE ? "infinite" : String.valueOf(belowSize),
+          aboveSize == Integer.MAX_VALUE ? "infinite" : String.valueOf(aboveSize),
+          connectivity.name().toLowerCase());
+    }
+  }
+
+  /**
+   * Activate dealing with dangling subnetworks for a mode using the safest configuration, being a single
+   * subnetwork the mode can route across in full, see {@link #DEFAULT_MINIMUM_SUBNETWORK_SIZE}
+   *
+   * @param modeType to activate for
+   */
+  public void activateRemoveDanglingSubnetworks(PredefinedModeType modeType) {
+    activateRemoveDanglingSubnetworks(
+        modeType, DEFAULT_MINIMUM_SUBNETWORK_SIZE, Integer.MAX_VALUE, DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY);
+  }
+
+  /**
+   * Activate dealing with dangling subnetworks for a mode with an explicit configuration.
+   * <p>
+   * Each mode is judged on its own network, and where that network does not meet the criteria the mode's access is
+   * withdrawn rather than the infrastructure removed. Infrastructure only disappears once no mode is left that can
+   * use it. This matters because a link one mode cannot use is typically carrying another perfectly well: a one
+   * way street usually still permits pedestrians against the flow, which is also why judging this per track type
+   * cannot work.
+   * </p>
+   * <p>
+   * Under {@link Connectivity#STRONG} a subnetwork is what the mode can both reach and leave, which is what
+   * routing requires. Under {@link Connectivity#WEAK} it is what hangs together when direction is ignored, which
+   * reports a one way trap as perfectly healthy.
+   * </p>
+   *
+   * @param modeType to activate for
+   * @param belowSize withdraw the mode's access on subnetworks smaller than this, in vertices
+   * @param aboveSize withdraw the mode's access on subnetworks larger than this, typically the maximum value
+   * @param connectivity what constitutes a subnetwork of this mode
+   */
+  public void activateRemoveDanglingSubnetworks(
+      PredefinedModeType modeType, int belowSize, int aboveSize, Connectivity connectivity) {
+    this.danglingSubnetworkConfigByMode.put(
+        modeType, new DanglingSubnetworkConfig(belowSize, aboveSize, connectivity));
+  }
+
+  /**
+   * Deactivate dealing with dangling subnetworks for a single mode, leaving any other mode untouched
+   *
+   * @param modeType to deactivate for
+   */
+  public void deactivateRemoveDanglingSubnetworks(PredefinedModeType modeType) {
+    this.danglingSubnetworkConfigByMode.remove(modeType);
+  }
+
+  /**
+   * Deactivate dealing with dangling subnetworks for every mode.
+   * <p>
+   * There is deliberately no blanket counterpart activating every mode at once. Doing so would withdraw access
+   * from ferry and rail networks, which legitimately consist of disconnected pieces, and from bicycle networks,
+   * which are routinely fragmented. Each mode has to be asked for.
+   * </p>
+   */
+  public void deactivateRemoveDanglingSubnetworks() {
+    this.danglingSubnetworkConfigByMode.clear();
+  }
+
+  /** Verify if dangling subnetworks are dealt with for at least one mode
+   *
+   * @return true when any mode is configured, false otherwise
+   */
+  public boolean isRemoveDanglingSubnetworks() {
+    return !this.danglingSubnetworkConfigByMode.isEmpty();
+  }
+
+  /** Verify if dangling subnetworks are dealt with for the given mode
+   *
+   * @param modeType to verify
+   * @return true when configured, false otherwise
+   */
+  public boolean isRemoveDanglingSubnetworks(PredefinedModeType modeType) {
+    return this.danglingSubnetworkConfigByMode.containsKey(modeType);
+  }
+
+  /** Collect the configuration for dealing with a mode's dangling subnetworks
+   *
+   * @param modeType to collect for
+   * @return configuration, null when not activated for this mode
+   */
+  public DanglingSubnetworkConfig getRemoveDanglingSubnetworksConfig(PredefinedModeType modeType) {
+    return this.danglingSubnetworkConfigByMode.get(modeType);
+  }
+
+  /** Collect the modes for which dangling subnetworks are dealt with, together with their configuration
+   *
+   * @return configuration by mode, empty when none are activated
+   */
+  public Map<PredefinedModeType, DanglingSubnetworkConfig> getRemoveDanglingSubnetworkModes() {
+    return Collections.unmodifiableMap(this.danglingSubnetworkConfigByMode);
+  }
+       
+  
+  /** collect the current configuration setup for applying number of lanes in case the lanes tag is not
+   * available on the parsed osmway
+   * @return lane configuration containing all defaults for various osm highway types
+   */
+  public OsmLaneDefaults getLaneConfiguration() {
+    return this.laneConfiguration;
+  }  
+
+  /** Collect the default number of lanes/tracks in each direction of a way for its OSM way key,
+   * e.g. highway=value, railway=value based on the defaults provided, see
+   * {@link OsmLaneDefaults#getDefaultLanesPerDirection(String, Map)}
+   *
+   * @param osmWayKey way key to collect default lanes for
+   * @param tags of the way, holding the value of the way key
+   * @return number of default lanes in each direction
+   */
+  public Integer getDefaultLanesPerDirection(String osmWayKey, Map<String, String> tags) {
+    return this.laneConfiguration.getDefaultLanesPerDirection(osmWayKey, tags);
+  }
+  
+  /** Collect the mapped OSM modes based on the provided PLANit mode
+   * 
+   * @param planitModeType to get mapped PLANit modes for
+   * @return mapped OSM modes, empty if no matches
+   */  
+  public Set<String> getMappedOsmModes(PredefinedModeType planitModeType) {
+    var theModes  = osmHighwaySettings.getMappedOsmRoadModes(planitModeType);
+    var theOsmRailModes = osmRailwaySettings.getMappedOsmRailModes(planitModeType);
+    theModes.addAll(theOsmRailModes);
+    var theOsmWaterModes = osmWaterwaySettings.getMappedOsmWaterModes(planitModeType);
+    theModes.addAll(theOsmWaterModes);
+    return theModes;
+  }  
+  
+  /** Collect the mapped OSM modes based on the provided PLANit mode types (if any)
+   * 
+   * @param planitModeTypes to get mapped OSM modes for
+   * @return mapped OSM modes, empty if no matches
+   */
+  public Set<String> getMappedOsmModes(Collection<PredefinedModeType> planitModeTypes) {
+    Set<String> mappedOsmModes = new TreeSet<>();
+    
+    if(planitModeTypes == null) {
+      return mappedOsmModes;
+    } 
+    
+    for(var planitModeType : planitModeTypes) {
+      Collection<String> theModes = getMappedOsmModes(planitModeType);
+      if(theModes != null) {
+        mappedOsmModes.addAll(theModes);
+      }
+    }    
+    return mappedOsmModes; 
+  }   
+    
+  /** convenience method that collects the currently mapped PLANit mode (road or rail) for the given OSM mode
+   * 
+   * @param osmMode to collect mapped mode for (if any)
+   * @return mapped PLANit mode, if not available null is returned
+   */
+  public PredefinedModeType getMappedPlanitModeType(final String osmMode) {
+    var theMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
+    if(theMode != null) {
+      return theMode;
+    }
+    theMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
+    if(theMode != null) {
+      return theMode;
+    }
+
+    return osmWaterwaySettings.getMappedPlanitWaterMode(osmMode);
+  } 
+  
+  /** convenience method that collects the currently mapped PLANit modes (road or rail) for the given OSM modes
+   * 
+   * @param osmModes to collect mapped mode for (if any)
+   * @return mapped PLANit modes, if not available empty set is returned
+   */
+  public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes(final Collection<String> osmModes) {
+    TreeSet<PredefinedModeType> mappedPlanitModes = new TreeSet<>();
+    if(CollectionUtils.nullOrEmpty(osmModes)) {
+      return mappedPlanitModes;
+    }
+
+    for(String osmMode : osmModes) {
+      var theMode = getMappedPlanitModeType(osmMode);
+      if(theMode != null) {
+        mappedPlanitModes.add(theMode);
+      }
+    }    
+    return mappedPlanitModes;  
+  }
+
+  /**
+   * Convenience method that collects all currently mapped PLANit mode types (road, rail, water)
+   *
+   * @return mapped PLANit mode types, if not available empty set is returned
+   */
+  public SortedSet<PredefinedModeType> getActivatedPlanitModeTypes() {
+    Stream<PredefinedModeType> highWayModes =
+        isHighwayParserActive() ? getHighwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
+
+    Stream<PredefinedModeType> railwayModes =
+        isRailwayParserActive() ? getRailwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
+
+    Stream<PredefinedModeType> waterwayModes =
+        isWaterwayParserActive() ? getWaterwaySettings().getActivatedPlanitModeTypesStream() : Stream.empty();
+
+    return Stream.concat(Stream.concat(highWayModes, railwayModes), waterwayModes).collect(
+        Collectors.toCollection(TreeSet::new));
+  }
+
+  /**
+   * Check if any walk or cycle modes are activated
+   *
+   * @return true when active false otherwise
+   */
+  public boolean isAnyActivatedPlanitModeActiveMode() {
+    return (isHighwayParserActive() ? getHighwaySettings().getActivatedPlanitModeTypesStream() :
+            Stream.<PredefinedModeType>empty()).anyMatch(
+            m -> m.equals(PredefinedModeType.BICYCLE) || m.equals(PredefinedModeType.PEDESTRIAN));
+  }
+    
+  /** Verify if the passed in osmMode is mapped (either to road or rail mode type), i.e.,
+   * if it is actively included when reading the network
+   * @param osmMode to verify
+   * @return true if mapped, false otherwise
+   */
+  public boolean hasMappedPlanitModeType(final String osmMode) {
+    var mappedMode = osmHighwaySettings.getMappedPlanitRoadMode(osmMode);
+    if(mappedMode == null) {
+      mappedMode = osmRailwaySettings.getMappedPlanitRailMode(osmMode);
+    }
+    if(mappedMode == null) {
+      mappedMode = osmWaterwaySettings.getMappedPlanitWaterMode(osmMode);
+    }
+    return mappedMode != null;
+  }
+  
+  /** Verify if any of the passed in osmModes are mapped, i.e., if it is actively included when reading the network
+   * @param osmModes to verify
+   * @return true if any is mapped, false otherwise
+   */  
+  public boolean hasAnyMappedPlanitModeType(final String... osmModes) {
+    for (String osmMode : osmModes) {
+      if (hasMappedPlanitModeType(osmMode)) {
+        return true;
+      }
+    }
+    return false;
+  }  
+  
+  /** Verify if any of the passed in osmModes are mapped, i.e., if it is actively included when reading the network
+   * @param osmModes to verify
+   * @return true if any is mapped, false otherwise
+   */  
+  public boolean hasAnyMappedPlanitModeType(final Collection<String> osmModes) {
+    if(osmModes==null) {
+      return false;
+    }
+
+    for(String osmMode : osmModes) {
+      if(hasMappedPlanitModeType(osmMode)) {
+        return true;
+      }
+    }
+    return false;
+  }  
+
+  
+  /** Verify if the largest subnetwork is always kept when we are removing dangling subnetworks
+   * 
+   * @return true when kept false otherwise
+   */
+  public boolean isAlwaysKeepLargestSubnetwork() {
+    return alwaysKeepLargestSubNetwork;
+  }
+
+  /** indicate to keep the largest subnetwork always even when removing dangling subnetworks and the largest one
+   * does not fit the set criteria
+   * 
+   * @param alwaysKeepLargestSubnetwork when true we always keep it, otherwise not
+   */
+  public void setAlwaysKeepLargestSubnetwork(boolean alwaysKeepLargestSubnetwork) {
+    this.alwaysKeepLargestSubNetwork = alwaysKeepLargestSubnetwork;
+  }
+
+  /** Get the maximum distance outside the bounding area PLANit will still include ferry routes
+   *
+   * @return distance set
+   */
+  public double getMaximumDistanceFerryOutsideBoundingPolygonInMeters() {
+    return maximumDistanceFerryOutsideBoundingPolygonInMeters;
+  }
+
+  /** Set the maximum distance outside the bounding area PLANit will still include ferry routes
+   *
+   * @param distanceMeters distance to use
+   */
+  public void setMaximumDistanceFerryOutsideBoundingPolygonInMeters(double distanceMeters) {
+    this.maximumDistanceFerryOutsideBoundingPolygonInMeters = distanceMeters;
+  }
+
+  /**
+   * deactivate all types for both rail and highway
+   */
+  public void deactivateAllOsmWayTypes() {    
+    osmHighwaySettings.deactivateAllOsmHighwayTypes();
+    osmRailwaySettings.deactivateAllOsmRailwayTypes();
+  }
+
+  /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
+   * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
+   * across both railways and highways. If you want to do this within highways only, use the same method
+   * under highway settings.
+   * 
+   * @param osmWaytypes to mark as activated
+   */
+  public void deactivateAllOsmWayTypesExcept(String... osmWaytypes) {
+    deactivateAllOsmWayTypesExcept(Arrays.asList(osmWaytypes));
+  }
+  
+  /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
+   * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
+   * across railways, waterways, and highways. If you want to do this within highways only, use similar method
+   * provided under highway/railway/waterway settings.
+   * 
+   * @param osmWayTypes to mark as activated
+   */
+  public void deactivateAllOsmWayTypesExcept(List<String> osmWayTypes) {
+    deactivateAllOsmWayTypes();
+    for(String osmWayType : osmWayTypes) {
+      if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
+        osmHighwaySettings.activateOsmHighwayTypes(osmWayType);
+      }else if(OsmRailwayTags.isRailBasedRailway(osmWayType)) {
+        osmRailwaySettings.activateOsmRailwayType(osmWayType);
+      }else if(OsmWaterwayTags.isWaterWayBasedValueTag(osmWayType)){
+        osmWaterwaySettings.activateOsmWaterwayType(osmWayType);
+      }
+    }
+  }
+
+  /** register a custom new way key value tag with defaults to parse in addition to the default supported.configured
+   * tags.
+   *
+   * @param osmWayKey to use
+   * @param osmWayTypeValue to use
+   * @param numLanes default to use, for a highway the total lanes of a way, see {@link OsmLaneDefaults}, for a railway
+   *                 or waterway per direction
+   * @param speedLimitKmh default to use
+   * @param capacityPerLanePcuH default to use
+   * @param maxDensityPerLanePcuH max density to apply
+   * @param allowedOsmModes default allowed mode(s) to use
+   */
+  public void registerNewOsmWayType(
+          String osmWayKey,
+          String osmWayTypeValue,
+          int numLanes,
+          double speedLimitKmh,
+          double capacityPerLanePcuH,
+          double maxDensityPerLanePcuH,
+          String... allowedOsmModes) {
+
+    boolean success = true;
+    OsmWaySettings settings = null;
+
+    /* deal with LANE configuration */
+    if(OsmHighwayTags.isHighwayKeyTag(osmWayKey)) {
+      settings = this.osmHighwaySettings;
+      if(laneConfiguration.containsDefaultLanes(osmWayKey,osmWayTypeValue)){
+        LOGGER.warning(String.format("Not allowed to add an OSM type that already exists, ignored %s=%s",
+            osmWayKey, osmWayTypeValue));
+        return;
+      }
+      success = laneConfiguration.setDefaultLanesByHighwayType(osmWayTypeValue, numLanes) == null;
+    }else if(OsmRailwayTags.isRailwayKeyTag(osmWayKey)){
+      settings = this.osmRailwaySettings;
+      if(laneConfiguration.getDefaultDirectionalRailwayTracks() != numLanes){
+        LOGGER.warning(String.format("Custom railway=%s number of tracks set to %d (instead of %d), " +
+                "this is a global setting, overwrite globally to change it",
+                osmWayTypeValue, laneConfiguration.getDefaultDirectionalRailwayTracks(), numLanes));
+      }
+    }else if(OsmWaterwayTags.isAnyWaterwayKeyTag(osmWayKey)) {
+      settings = this.osmWaterwaySettings;
+      if (laneConfiguration.getDefaultDirectionalWaterwayLanes() != numLanes) {
+        LOGGER.warning(String.format("Custom waterway [%s=%s] waterway lanes set to %d (instead of %d)," +
+                " this is a global setting, overwrite globally to change it",
+                osmWayKey, osmWayTypeValue, laneConfiguration.getDefaultDirectionalRailwayTracks(), numLanes));
+      }
+    }else{
+      LOGGER.warning(String.format("Custom way type for %s=%s is not allowed due to key not being a known" +
+          " or supported OSM way type", osmWayKey, osmWayTypeValue));
+      return;
+    }
+
+    if(!success){
+      LOGGER.warning(String.format("Unable to register new OsmWay type %s=%s due to issue regarding lane " +
+          "configuration", osmWayKey, osmWayTypeValue));
+      return;
+    }
+
+    /* deal with remainder of WAY TYPE configuration */
+    success = settings.registerNewSupportedOsmWayType(
+            osmWayKey, osmWayTypeValue, speedLimitKmh, capacityPerLanePcuH, maxDensityPerLanePcuH, allowedOsmModes);
+    if(!success){
+      LOGGER.warning(String.format("Unable to register new OsmWaytype %s=%s due to issue regarding way " +
+          "type configuration", osmWayKey, osmWayTypeValue));
+    }
+  }
+  
+  /**
+   * exclude specific OSM ways from being parsed based on their id
+   * 
+   * @param osmWayId to mark as excluded (int or long)
+   */
+  public void excludeOsmWayFromParsing(Number osmWayId) {
+    if(osmWayId.longValue() <= 0) {
+      LOGGER.warning(String.format("invalid OSM way id (%d) provided to be excluded, ignored", osmWayId.longValue()));
+      return;
+    }
+    excludedOsmWays.add(osmWayId.longValue());
+  }
+  
+  /**
+   * exclude specific OSM ways from being parsed based on their id
+   * 
+   * @param osmWayIds to mark as excluded (int or long)
+   */
+  public void excludeOsmWaysFromParsing(Number... osmWayIds) {
+    excludeOsmWaysFromParsing(Arrays.asList(osmWayIds));
+  }  
+
+  /**
+   * exclude specific OSM ways from being parsed based on their id. It is expected that the
+   * way ids are either an integer or long
+   * 
+   * @param osmWayIds to mark as excluded
+   */
+  public void excludeOsmWaysFromParsing(List<Number> osmWayIds) {
+    if(osmWayIds==null) {
+      LOGGER.warning("OSM way ids are null, ignored excluding them");
+      return;
+    }    
+    osmWayIds.forEach(osmWayId -> excludeOsmWayFromParsing(osmWayId.longValue()));
+  }
+  
+
+  /** Verify if provided way id is excluded or not
+   * 
+   * @param osmWayId to verify (int or long)
+   * @return true if excluded, false otherwise
+   */
+  public boolean isOsmWayExcluded(Number osmWayId) {
+    return excludedOsmWays.contains(osmWayId.longValue());
+  }
+  
+  /** set the mode access for the given osm way id
+   * 
+   * @param osmWayId this mode access will be applied on (int or long)
+   * @param allowedOsmModes to set as the only modes allowed
+   */
+  public void overwriteModeAccessByOsmWayId(Number osmWayId, String...allowedOsmModes) {
+    overwriteModeAccessByOsmWayId(osmWayId, Arrays.asList(allowedOsmModes));    
+  }  
+  
+  /** set the mode access for the given osm way id
+   * 
+   * @param osmWayId this mode access will be applied on (int or long)
+   * @param allowedOsmModes to set as the only modes allowed
+   */
+  public void overwriteModeAccessByOsmWayId(Number osmWayId, List<String> allowedOsmModes) {
+    this.overwriteOsmWayModeAccess.put(osmWayId.longValue(), Set.copyOf(allowedOsmModes));
+  }   
+  
+  /**
+   * check if defaults should be overwritten
+   * 
+   * @param osmWayId to check (int or long)
+   * @return true when alternative mode access is provided, false otherwise
+   */
+  public boolean isModeAccessOverwrittenByOsmWayId(Number osmWayId) {
+    return overwriteOsmWayModeAccess.containsKey(osmWayId.longValue());
+  }
+
+  /**
+   * collect the overwrite type values that should be used
+   * 
+   * @param osmWayId to collect overwrite values for (int or long)
+   * @return the osm modes with allowed access
+   */
+  public final Set<String> getModeAccessOverwrittenByOsmWayId(Number osmWayId) {
+    return overwriteOsmWayModeAccess.get(osmWayId.longValue());
+  }   
+
+  /**
+   * Override the lanes of an OSM way in each direction along it, in place of what its tags or the defaults give, such
+   * as where its tags are missing or wrong. A direction the way has no traffic in keeps no link segment, so lanes given
+   * for it change nothing. Overriding the way again replaces the override given before, its reason included. An OSM
+   * way id that no layer turns into links is recorded as not found, with the reason as its detail
+   *
+   * @param osmWayId the OSM way id
+   * @param lanes forward and backward along the way, at least one direction given, with the reason when there is one
+   * @throws IllegalArgumentException naming the way, storing nothing, when neither direction is given or a direction
+   *     has fewer than one lane
+   */
+  @SettingsWrite(key = "osmWayLaneOverrides", effect = SettingsKeyEffect.PUT_EACH, level = SettingsKeyLevel.UNCOMMON,
+      description = "Lanes forward and backward along OSM ways, by way id, in place of their tags or the defaults")
+  public void overrideOsmWayLanes(long osmWayId, UserOverride<OsmWayLaneOverride> lanes) {
+    var forward = lanes.getValue().getLanesForward();
+    var backward = lanes.getValue().getLanesBackward();
+    if (forward == null && backward == null) {
+      throw new IllegalArgumentException(
+          String.format("Lanes of OSM way %d overridden in neither direction", osmWayId));
+    }
+    if ((forward != null && forward < 1) || (backward != null && backward < 1)) {
+      throw new IllegalArgumentException(
+          String.format("Fewer than one lane overridden in a direction of OSM way %d: %s", osmWayId, lanes.getValue()));
+    }
+    osmWayLaneOverrides.put(osmWayId, lanes);
+  }
+
+  /**
+   * The lanes overridden for an OSM way, see {@link #overrideOsmWayLanes(long, UserOverride)}
+   *
+   * @param osmWayId the OSM way id
+   * @return the lanes overridden, without the reason, null when not overridden
+   */
+  public OsmWayLaneOverride getOsmWayLaneOverride(long osmWayId) {
+    var lanes = osmWayLaneOverrides.get(osmWayId);
+    return lanes == null ? null : lanes.getValue();
+  }
+
+  /**
+   * Every lanes override with its reason, see {@link #overrideOsmWayLanes(long, UserOverride)}
+   *
+   * @return the overrides by OSM way id, in increasing way id order, unmodifiable, empty when none
+   */
+  @SettingsRead(key = "osmWayLaneOverrides")
+  public Map<Long, UserOverride<OsmWayLaneOverride>> getOsmWayLaneOverrides() {
+    return Collections.unmodifiableMap(osmWayLaneOverrides);
+  }
+  
+  /**
+   * Log all de-activated OSM way types
+   */  
+  public void logUnsupportedOsmWayTypes() {
+    if(isHighwayParserActive()) {
+      osmHighwaySettings.logUnsupportedOsmHighwayTypes();
+    }
+    if(isRailwayParserActive()) {
+      osmRailwaySettings.logUnsupportedOsmRailwayTypes();
+    }
+    if(isWaterwayParserActive()) {
+      osmWaterwaySettings.logUnsupportedOsmWayTypes();
+    }
+  }
+
+  /** provide railway specific settings
+   * @return railway settings
+   */
+  public OsmRailwaySettings getRailwaySettings() {
+    return osmRailwaySettings;
+  }
+  
+  /** provide highway specific settings
+   * @return highway settings
+   */
+  public OsmHighwaySettings getHighwaySettings() {
+    return osmHighwaySettings;
+  }
+
+  /** provide waterway specific settings
+   * @return waterway settings
+   */
+  public OsmWaterwaySettings getWaterwaySettings() {
+    return osmWaterwaySettings;
+  }
+
+  /** provide the settings of parsing intersections from traffic signals, consolidating and collapsing them
+   * @return intersection settings
+   */
+  @SettingsSection(key = "intersections", level = SettingsKeyLevel.COMMON)
+  public OsmIntersectionSettings getIntersectionSettings() {
+    return osmIntersectionSettings;
+  }
+
+  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such
+   * OSM ways
+   * the complete geometry is available, but this is not known to the parser since it only considers nodes within
+   * the bounding box (from which
+   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it
+   * is truncated for the portions
+   * outside the bounding box. This method allows the user to explicitly state the full geometry needs to be retained.
+   * 
+   * @param osmWays to keep geometry even if it falls (partially) outside the bounding polygon (int or long)
+   */
+  public void setKeepOsmWaysOutsideBoundingPolygon(Number... osmWays) {
+    setKeepOsmWaysOutsideBoundingPolygon(Arrays.asList(osmWays));
+  }
+  
+  /** When a bounding polygon is set, some ways might partially be in and/or outside this bounding box. For such
+   * OSM ways
+   * the complete geometry is available, but this is not known to the parser since it only considers nodes within
+   * the bounding box (from which
+   * the OSM ways are constructed). Hence without explicitly stating this OSM way needs to be preserved in full it
+   * is truncated for the portions
+   * outside the bounding box. This method allows the user to explicitly state the full geometry needs to be retained.
+   * 
+   * @param osmWays to keep geometry even if it falls (partially) outside the bounding polygon (int or long)
+   */  
+  public void setKeepOsmWaysOutsideBoundingPolygon(List<Number> osmWays) {
+    includedOutsideBoundingPolygonOsmWays.addAll(osmWays.stream().map(Number::longValue).collect(Collectors.toList()));
+  }  
+  
+  /** check if any OSM ways are marked for keeping outside bounding polygon
+   * 
+   * @return true when present, false otherwise
+   */  
+  public boolean hasKeepOsmWaysOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmWays!=null && !includedOutsideBoundingPolygonOsmWays.isEmpty();
+  }   
+  
+  /** check if OSM way is marked for keeping outside bounding polygon
+   * 
+   * @param osmWayId to verify (int or long)
+   * @return true when present, false otherwise
+   */  
+  public boolean isKeepOsmWayOutsideBoundingPolygon(Number osmWayId) {
+    return includedOutsideBoundingPolygonOsmWays.contains(osmWayId.longValue());
+  }
+  
+  /** When a bounding polygon is set, some nodes might reside outside this bounding box but you want to make
+   * them available anyway for some reason.
+   * For such OSM nodes this method allows the user to explicitly include the OSM node even if it falls outside
+   * the bounding polygon
+   * 
+   * @param osmNodeId to keep
+   */
+  public void setKeepOsmNodeOutsideBoundingPolygon(Number osmNodeId) {
+    includedOutsideBoundingPolygonOsmNodes.add(osmNodeId.longValue());
+  }
+  
+  /** count number of marked OSM nodes to keep
+   * 
+   * @return count
+   */
+  public int getNumberOfKeepOsmNodesOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmNodes.size();
+  }
+  
+  /** count number of marked OSM ways to keep
+   * 
+   * @return count
+   */
+  public long getNumberOfKeepOsmWaysOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmWays.size();
+  }    
+  
+  /** check if any OSM nodes are marked for keeping outside bounding polygon
+   * 
+   * @return true when present, false otherwise
+   */  
+  public boolean hasKeepOsmNodesOutsideBoundingPolygon() {
+    return includedOutsideBoundingPolygonOsmNodes!=null && !includedOutsideBoundingPolygonOsmNodes.isEmpty();
+  }   
+  
+  /** check if OSM node is marked for keeping outside bounding polygon
+   * 
+   * @param osmNodeId to verify (int or long)
+   * @return true when present, false otherwise
+   */  
+  public boolean isKeepOsmNodeOutsideBoundingPolygon(Number osmNodeId) {
+    return includedOutsideBoundingPolygonOsmNodes.contains(osmNodeId.longValue());
+  }
+
+  /** Flag on whether to consolidate functionally equivalent link segment types for various OSM way types into a single
+   * PLANit type
+   *
+   * @return flag set
+   */
+  public boolean isConsolidateLinkSegmentTypes() {
+    return consolidateLinkSegmentTypes;
+  }
+
+  /** Flag on whether to consolidate functionally equivalent link segment types for various OSM way types into a single
+   * PLANit type
+   *
+   * @param flag to set
+   * */
+  public void setConsolidateLinkSegmentTypes(boolean flag) {
+    this.consolidateLinkSegmentTypes = flag;
+  }
+
+}
+

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- One-way primary way 10 (2-1-31-6-3): vehicle signal 1 (forward) about 9 m before node 31, where footway way 12
+     (40-31-41) crosses the road without any crossing tags, which lies about 18 m before junction 6 with residential side
+     street way 11 (7-6-8); no other signal -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2094">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.2097"/>
+  <node id="7" lat="-33.8691" lon="151.2097"/>
+  <node id="8" lat="-33.8709" lon="151.2097"/>
+  <node id="31" lat="-33.8700" lon="151.2095"/>
+  <node id="40" lat="-33.8697" lon="151.2095"/>
+  <node id="41" lat="-33.8703" lon="151.2095"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="12">
+    <nd ref="40"/><nd ref="31"/><nd ref="41"/>
+    <tag k="highway" v="footway"/>
+  </way>
+</osm>

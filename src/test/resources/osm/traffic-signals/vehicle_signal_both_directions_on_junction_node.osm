@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vehicle signal (traffic_signals:direction=both) on junction node 6, where residential side street way 11 (7-6-8)
+     crosses two-way tertiary way 10 (2-6-3) -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.2097">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="both"/>
+  </node>
+  <node id="7" lat="-33.8691" lon="151.2097"/>
+  <node id="8" lat="-33.8709" lon="151.2097"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="tertiary"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+</osm>

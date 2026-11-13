@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two-way primary 1-2-6-5 ending at node 5, about 65 m outside the declared bounds (east edge at lon 151.2120); vehicle signal on shape node 6, about 28 m outside, facing forward towards 5, about 37 m away; side street 2-4 at node 2, far behind -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <bounds minlat="-33.8720" minlon="151.2060" maxlat="-33.8680" maxlon="151.2120"/>
+  <node id="1" lat="-33.8700" lon="151.2080"/>
+  <node id="2" lat="-33.8700" lon="151.2100"/>
+  <node id="4" lat="-33.8690" lon="151.2100"/>
+  <node id="6" lat="-33.8700" lon="151.2123">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="5" lat="-33.8700" lon="151.2127"/>
+  <way id="10">
+    <nd ref="1"/><nd ref="2"/><nd ref="6"/><nd ref="5"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="2"/><nd ref="4"/>
+    <tag k="highway" v="secondary"/>
+  </way>
+</osm>

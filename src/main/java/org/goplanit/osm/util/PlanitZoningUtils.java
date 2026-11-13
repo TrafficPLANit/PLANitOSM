@@ -12,6 +12,9 @@ import org.goplanit.zoning.Zoning;
  *
  */
 public class PlanitZoningUtils {
+
+  /** utilities, not to be instantiated */
+  private PlanitZoningUtils(){}
   
   /** the logger to use */
   public static final Logger LOGGER = Logger.getLogger(PlanitZoningUtils.class.getCanonicalName());                       
@@ -20,24 +23,28 @@ public class PlanitZoningUtils {
    * remove any dangling zones
    * 
    * @param zoning to remove them from
+   * @param recreateManagedIds when true recreate ids, otherwise not
    */
-  public static void removeDanglingZones(Zoning zoning) {
+  public static void removeDanglingZones(Zoning zoning, boolean recreateManagedIds) {
     /* delegate to zoning modifier */
     int originalNumberOfTransferZones = zoning.getTransferZones().size();
-    zoning.getZoningModifier().removeDanglingZones();
-    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)", zoning.getTransferZones().size(), originalNumberOfTransferZones));
+    zoning.getZoningModifier().removeDanglingZones(recreateManagedIds);
+    LOGGER.info(String.format("Removed dangling transfer zones, remaining number of zones %d (original: %d)",
+            zoning.getTransferZones().size(), originalNumberOfTransferZones));
   }  
   
   /**
    * remove any dangling transfer zone groups
    * 
    * @param zoning to remove them from
+   * @param recreateManagedIds when true recreate ids, otherwise not
    */  
-  public static void removeDanglingTransferZoneGroups(Zoning zoning) {
+  public static void removeDanglingTransferZoneGroups(Zoning zoning, boolean recreateManagedIds) {
     /* delegate to zoning modifier */
     int originalNumberOfTransferZoneGroups = zoning.getTransferZoneGroups().size();
-    zoning.getZoningModifier().removeDanglingTransferZoneGroups();    
-    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)", zoning.getTransferZoneGroups().size(), originalNumberOfTransferZoneGroups));    
+    zoning.getZoningModifier().removeDanglingTransferZoneGroups(recreateManagedIds);
+    LOGGER.info(String.format("Removed dangling transfer zone groups, remaining number of groups %d (original: %d)",
+            zoning.getTransferZoneGroups().size(), originalNumberOfTransferZoneGroups));
   }    
   
   

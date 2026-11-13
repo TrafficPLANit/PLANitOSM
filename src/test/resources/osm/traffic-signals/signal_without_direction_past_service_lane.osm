@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vehicle signal on shape node 1 of way 10 (2-4-5-1-6-3) without a direction: one-way driveway way 12 (5-10)
+     leaves it about 5 m west of it, residential way 11 (9-4) about 33 m west, residential way 13 (7-6) about 22 m east; way 10
+     primary, all ways two-way -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.20900">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.20800"/>
+  <node id="3" lat="-33.8700" lon="151.21000"/>
+  <node id="4" lat="-33.8700" lon="151.20864"/>
+  <node id="5" lat="-33.8700" lon="151.20895"/>
+  <node id="6" lat="-33.8700" lon="151.20924"/>
+  <node id="7" lat="-33.8691" lon="151.20924"/>
+  <node id="9" lat="-33.8709" lon="151.20864"/>
+  <node id="10" lat="-33.8709" lon="151.20895"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="4"/><nd ref="5"/><nd ref="1"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="9"/><nd ref="4"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="12">
+    <nd ref="5"/><nd ref="10"/>
+    <tag k="highway" v="service"/>
+    <tag k="service" v="driveway"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="13">
+    <nd ref="7"/><nd ref="6"/>
+    <tag k="highway" v="residential"/>
+  </way>
+</osm>

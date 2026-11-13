@@ -20,12 +20,12 @@ public class OsmPtv1Tags {
   /**
    * all highway key related value tags that pertain to public transport and may reflect an area
    */
-  private static final Set<String> AREA_BASED_PT_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+  private static final Set<String> AREA_BASED_PT_HIGHWAY_VALUE_TAGS = new HashSet<>();
   
   /**
    * all highway key related value tags that pertain to public transport
    */
-  private static final Set<String> PT_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+  private static final Set<String> PT_HIGHWAY_VALUE_TAGS = new HashSet<>();
 
   /**
    * all highway key related value tags that pertain to public transport and may reflect an area
@@ -62,7 +62,8 @@ public class OsmPtv1Tags {
     PT_RAILWAY_VALUE_TAGS.add(PLATFORM_EDGE);
     PT_RAILWAY_VALUE_TAGS.add(SUBWAY_ENTRANCE);
     PT_RAILWAY_VALUE_TAGS.addAll(AREA_BASED_PT_RAILWAY_VALUE_TAGS);
-    PT_RAILWAY_VALUE_TAGS.add(OsmRailwayTags.CONSTRUCTION); /* can be any of the above after construction, so should be included */
+    /* can be any of the above after construction, so should be included */
+    PT_RAILWAY_VALUE_TAGS.add(OsmRailwayTags.CONSTRUCTION);
   }    
 
   
@@ -89,6 +90,8 @@ public class OsmPtv1Tags {
     AREA_BASED_PT_RAILWAY_VALUE_TAGS.add(TRAM_STOP);    
   }  
   
+  private OsmPtv1Tags(){}
+
   static {
     populateAreaBasedOsmHighwayPublicTransportValueTags();
     populateOsmHighwayPublicTransportValueTags();
@@ -128,6 +131,7 @@ public class OsmPtv1Tags {
     
   /* railway ways that are not tracks and not areas */
     
+  /** value of a railway way along the edge of a platform, {@code railway=platform_edge} */
   public static final String PLATFORM_EDGE = "platform_edge";    
   
   

@@ -10,6 +10,8 @@ package org.goplanit.osm.tags;
  */
 public class OsmRailFeatureTags {
 
-  /* the number of tracks of a railway */
+  private OsmRailFeatureTags(){}
+
+  /** key of the number of tracks of a railway */
   public static final String TRACKS = "tracks";
 }

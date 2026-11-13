@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.tags.OsmRoadModeCategoryTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;

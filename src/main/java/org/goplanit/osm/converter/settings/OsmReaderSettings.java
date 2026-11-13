@@ -1,0 +1,198 @@
+package org.goplanit.osm.converter.settings;
+
+import java.net.URL;
+import java.util.logging.Logger;
+
+import org.goplanit.converter.ConverterReaderSettings;
+import org.goplanit.osm.converter.OsmBoundary;
+import org.goplanit.utils.exceptions.PlanItException;
+import org.goplanit.utils.exceptions.PlanItRunTimeException;
+import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.misc.LoggingUtils;
+import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.settings.annotations.SettingsHeader;
+
+/**
+ * Settings every OSM reader takes: the input, the country its defaults come from, the area to read, and whether OSM
+ * tags are kept
+ * <p>
+ * The settings of each OSM reader extend them, so these are given the same way for every reader. Those filling a
+ * section of an OSM settings source ({@link OsmReaderSettingsSchema}) take sources starting with
+ * {@code planitOsmConverterSettings: 1}.
+ * </p>
+ *
+ * @author markr
+ *
+ */
+@SettingsHeader(key = "planitOsmConverterSettings", version = 1)
+public abstract class OsmReaderSettings implements ConverterReaderSettings {
+
+  private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
+
+  /** input source to use */
+  private URL inputSource;
+  
+  /** country name to use to initialise OSM defaults for */
+  private final String countryName;
+
+  /** OsmBoundary to apply, if null no restriction is applied */
+  private OsmBoundary osmBoundary = null;
+
+  /**
+   * Flag to indicate if OSM tags are to be retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   */
+  private boolean retainOsmTags = DEFAULT_RETAIN_OSM_TAGS;
+
+  /** the OSM tags are not kept on the PLANit entities unless asked for */
+  public static final boolean DEFAULT_RETAIN_OSM_TAGS = false;
+
+  /** key at the root of a settings source giving the country, which the constructors of the readers' settings take */
+  public static final String COUNTRY_KEY = "country";
+
+  /**
+   * Default constructor with default locale (Global)
+   */
+  public OsmReaderSettings() {
+    this((URL)null, CountryNames.GLOBAL);
+  }
+  
+  /**
+   * Constructor
+   * 
+   *  @param countryName to use
+   */
+  public OsmReaderSettings(final String countryName) {
+    this((URL) null, countryName);
+  }
+
+  /**
+   * Constructor
+   *
+   *  @param inputSource to use
+   *  @param countryName to use
+   */
+  public OsmReaderSettings(final String inputSource, final String countryName) {
+    setInputSource(inputSource);
+    this.countryName = countryName;
+  }
+
+  /**
+   * Constructor
+   * 
+   *  @param inputSource to use
+   *  @param countryName to use
+   */
+  public OsmReaderSettings(final URL inputSource, final String countryName) {
+    this.inputSource = inputSource;
+    this.countryName = countryName;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), level));
+  }
+  
+  /** The input source used 
+   * 
+   * @return input source used
+   */
+  public final URL getInputSource() {
+    return this.inputSource;
+  }
+  
+  /** Set the input source  to use
+   * 
+   * @param inputSource to use
+   */
+  public void setInputSource(final URL inputSource) {
+    this.inputSource = inputSource;
+  }  
+  
+  /** Set the input source  to use, we attempt to extract a URL from the String directly here
+   * 
+   * @param inputSource to use
+   */
+  public void setInputSource(final String inputSource) {
+    try {
+      setInputSource(UrlUtils.createFrom(inputSource));
+    }catch (Exception e) {
+      throw new PlanItRunTimeException("Unable to extract URL from input source %s",inputSource);
+    }
+  }    
+  
+  /** Set the input file to use, which is internally converted into a URL
+   * 
+   * @param inputFile to use
+   * @throws PlanItException thrown if error
+   */
+  public void setInputFile(final String inputFile) throws PlanItException {
+    try{
+      setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
+    }catch(Exception e) {
+      throw new PlanItException("Unable to extract URL from input file location %s",inputFile);
+    }
+  }    
+  
+  /** The country name used to initialise OSM defaults for
+   * 
+   * @return country name
+   */
+  public final String getCountryName() {
+    return this.countryName;
+  }
+
+
+  /**
+   * boundary to restrict parsing to
+   *
+   * @param osmBoundary to apply
+   */
+  public void setBoundingArea(final OsmBoundary osmBoundary){
+    this.osmBoundary = osmBoundary;
+  }
+
+  /**
+   * The OsmBoundary configured by the user
+   *
+   * @return osmBoundary
+   */
+  public OsmBoundary getBoundingArea(){
+    return this.osmBoundary;
+  }
+
+  /** Set a polygon based bounding box to restrict parsing to
+   * 
+   * @return boundingPolygon used, can be null
+   */
+  public final boolean hasBoundingBoundary() {
+    return this.osmBoundary!=null;
+  }
+
+  /**
+   * Flag to indicate if OSM tags are retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   *
+   * @return flag
+   */
+  public boolean isRetainOsmTags() {
+    return retainOsmTags;
+  }
+
+  /**
+   * Flag to indicate if OSM tags are to be retained as is as part of parsing for relevant
+   * entities, e.g., links, nodes.
+   *
+   * @param retainOsmTags flag to set
+   */
+  public void setRetainOsmTags(boolean retainOsmTags) {
+    this.retainOsmTags = retainOsmTags;
+  }
+}
+
