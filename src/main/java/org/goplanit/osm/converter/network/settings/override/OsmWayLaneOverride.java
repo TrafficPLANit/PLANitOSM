@@ -8,9 +8,17 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
 /**
  * The lanes of one OSM way in each direction along it, in place of what its tags or the defaults give
  * <p>
- * Forward is the direction of the way's nodes, as {@code lanes:forward} counts it, and backward the other. A direction
- * left null keeps what the tags or the defaults give. For example, 2 forward and null backward gives the way's forward
- * link segments 2 lanes and leaves its backward ones as tagged. It is the value of a lanes override, see
+ * Forward and backward are the two directions along the way as it is drawn in OSM, not compass directions. Forward
+ * runs from the first node of the way to its last, in the order OSM lists its nodes, which is the direction the OSM
+ * tags {@code lanes:forward} and {@code oneway=yes} refer to; backward runs the other way. For example, for a way drawn
+ * from south to north, 2 forward and 3 backward gives 2 lanes northbound and 3 southbound. Two ways of one road can be
+ * drawn in opposite directions, so the same lanes can be forward on one way and backward on the next. The page of a
+ * way on openstreetmap.org lists its nodes from first to last; in PLANit, forward is from node A to node B of the
+ * links made from the way.
+ * </p>
+ * <p>
+ * A direction left null keeps what the tags or the defaults give. For example, 2 forward and null backward gives the
+ * way's forward link segments 2 lanes and leaves its backward ones as tagged. It is the value of a lanes override, see
  * {@link OsmNetworkReaderSettings#overrideOsmWayLanes(long, org.goplanit.utils.settings.UserOverride)}, which checks
  * the counts when the override is stored; this class takes any count, so a settings file can fill it one key at a
  * time.
@@ -57,7 +65,8 @@ public class OsmWayLaneOverride {
    * @param lanesForward the lanes, null to keep what the tags or the defaults give
    */
   @SettingsWrite(key = "lanesForward", level = SettingsKeyLevel.UNCOMMON,
-      description = "Lanes forward along the way, in the direction of its nodes")
+      description = "Lanes from the first node of the way to its last, in the order OSM lists its nodes, as " +
+          "lanes:forward; not a compass direction")
   public void setLanesForward(Integer lanesForward) {
     this.lanesForward = lanesForward;
   }
@@ -78,7 +87,8 @@ public class OsmWayLaneOverride {
    * @param lanesBackward the lanes, null to keep what the tags or the defaults give
    */
   @SettingsWrite(key = "lanesBackward", level = SettingsKeyLevel.UNCOMMON,
-      description = "Lanes backward along the way, against the direction of its nodes")
+      description = "Lanes from the last node of the way to its first, against the order OSM lists its nodes, as " +
+          "lanes:backward; not a compass direction")
   public void setLanesBackward(Integer lanesBackward) {
     this.lanesBackward = lanesBackward;
   }

@@ -2,21 +2,19 @@ package org.goplanit.osm.converter.network;
 
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.tags.OsmRoadModeTags;
+import org.goplanit.osm.test.WarningRecorder;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.intersection.CapacityFactorOrigin;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionSignalSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.SpatialIntersection;
+import org.goplanit.utils.settings.UserOverride;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -49,14 +47,6 @@ import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
  * @author markr
  */
 public class OsmIntersectionConsolidationTest {
-
-  /** records the warnings the reader logs */
-  private static class WarningCounter extends Handler {
-    int warnings = 0;
-    @Override public void publish(LogRecord record) { if (record.getLevel() == Level.WARNING) { ++warnings; } }
-    @Override public void flush() {}
-    @Override public void close() {}
-  }
 
   /** the logger, giving the log output PLANit's format */
   private static Logger LOGGER = null;
@@ -170,31 +160,33 @@ public class OsmIntersectionConsolidationTest {
     assertEquals(notCollapsed.getMovements().size(), consolidated.getMovements().size());
   }
 
-  /** Collapsing the OSM mode foot collapses the mode it is mapped to, pedestrians, so a centre node is added as in
-   * {@link #collapsingPedestriansAddsACentreNode()} */
+  /** A node excluded from collapse that the network does not have is recorded as not found, its reason the detail */
   @Test
-  public void collapsingTheOsmModeFootCollapsesPedestrians() {
+  public void nodeExcludedFromCollapseNotFoundWithAReason() {
     var reader = createTrafficSignalScenarioReader("divided_roads_crossing", settings -> {
-      settings.getIntersectionSettings().setConsolidateIntersections(true);
-      settings.getIntersectionSettings().getIntersectionCollapserSettings().setCollapsedOsmModes(OsmRoadModeTags.FOOT);
+      var intersectionSettings = settings.getIntersectionSettings();
+      intersectionSettings.setConsolidateIntersections(true);
+      var collapserSettings = intersectionSettings.getIntersectionCollapserSettings();
+      collapserSettings.setCollapsedModeTypes(PredefinedModeType.PEDESTRIAN);
+      collapserSettings.excludeOsmNodeFromCollapse(UserOverride.of(999999L, "checked on imagery"));
     });
-    var consolidated = (SpatialIntersection) reader.read().getTransportLayers().getFirst().getIntersections()
-        .getFirst();
+    reader.read();
 
-    assertEquals(5, consolidated.getMemberNodes().size());
+    assertEquals("checked on imagery", reader.getNetworkReaderData().getPlanitEntityDiagnostics()
+        .getDetail(OsmPlanitEntityIssue.NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND, "999999"));
   }
 
   /** Consolidation switched on while intersections are not parsed does not run, and a warning says so */
   @Test
   public void consolidationNeedsParsedIntersections() {
-    var counter = new WarningCounter();
+    var counter = new WarningRecorder();
     var logger = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
     logger.addHandler(counter);
     try {
       createTrafficSignalScenarioReader("divided_roads_crossing", settings -> settings.activateIntersectionParser(false))
           .read();
-      int warningsWithoutConsolidation = counter.warnings;
-      counter.warnings = 0;
+      int warningsWithoutConsolidation = counter.getCount();
+      counter.reset();
 
       var layer = createTrafficSignalScenarioReader("divided_roads_crossing", settings -> {
         settings.activateIntersectionParser(false);
@@ -202,7 +194,7 @@ public class OsmIntersectionConsolidationTest {
       }).read().getTransportLayers().getFirst();
 
       assertTrue(layer.getIntersections().isEmpty());
-      assertEquals(warningsWithoutConsolidation + 1, counter.warnings);
+      assertEquals(warningsWithoutConsolidation + 1, counter.getCount());
     } finally {
       logger.removeHandler(counter);
     }
@@ -231,6 +223,20 @@ public class OsmIntersectionConsolidationTest {
     var diagnostics = reader.getNetworkReaderData().getPlanitEntityDiagnostics();
     assertEquals(List.of("999"),
         diagnostics.getEntityIds(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND));
+  }
+
+  /** A node listed to keep apart that no layer has is recorded as not found, the reason of its group the detail */
+  @Test
+  public void nodeListedNotFoundWithAReason() {
+    var reader = createTrafficSignalScenarioReader("divided_roads_crossing", settings -> {
+      settings.getIntersectionSettings().setConsolidateIntersections(true);
+      settings.getIntersectionSettings().keepOsmNodesInSeparateIntersections(
+          UserOverride.of(Set.of(1L, 999L), "two controllers"));
+    });
+    reader.read();
+
+    assertEquals("two controllers", reader.getNetworkReaderData().getPlanitEntityDiagnostics()
+        .getDetail(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND, "999"));
   }
 
   /**
@@ -336,13 +342,13 @@ public class OsmIntersectionConsolidationTest {
    */
   @Test
   public void greenRatiosWithoutConsolidationAreComputedPerParsedIntersectionWithOneWarning() {
-    var counter = new WarningCounter();
+    var counter = new WarningRecorder();
     var logger = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
     logger.addHandler(counter);
     try {
       createTrafficSignalScenarioReader("divided_roads_crossing", settings -> {}).read();
-      int warningsWithoutGreenRatios = counter.warnings;
-      counter.warnings = 0;
+      int warningsWithoutGreenRatios = counter.getCount();
+      counter.reset();
 
       var layer = createTrafficSignalScenarioReader("divided_roads_crossing", settings -> {
         settings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
@@ -359,7 +365,7 @@ public class OsmIntersectionConsolidationTest {
           assertEquals(80.0 / 90 / 2, withSignal.getGreenRatio(), 1e-9);
         }
       }
-      assertEquals(warningsWithoutGreenRatios + 1, counter.warnings);
+      assertEquals(warningsWithoutGreenRatios + 1, counter.getCount());
     } finally {
       logger.removeHandler(counter);
     }

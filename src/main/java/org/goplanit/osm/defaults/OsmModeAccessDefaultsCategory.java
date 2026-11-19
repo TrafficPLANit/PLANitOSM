@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.*;
+import org.goplanit.osm.util.OsmModeUtils;
+import org.goplanit.utils.exceptions.ExceptionUtils;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 
@@ -40,17 +42,6 @@ public class OsmModeAccessDefaultsCategory {
   /** country for which these defaults hold */
   private String countryName;
 
-  private boolean isValidOsmModes(List<String> osmModes) {
-    for(String osmModeValueTag : osmModes) {
-      if(!(OsmRoadModeTags.isRoadModeTag(osmModeValueTag) ||
-          OsmRailModeTags.isRailModeTag(osmModeValueTag) ||
-          OsmWaterModeTags.isWaterModeTag(osmModeValueTag))){
-        return false;
-      }
-    }
-    return true;
-  }
-
   private boolean isValidOsmKeyValueCombination(Pair<String,String> keyValue) {
     return isValidOsmKeyValueCombination(keyValue.first(), keyValue.second());
   }
@@ -72,7 +63,7 @@ public class OsmModeAccessDefaultsCategory {
    * @param osmKeyValueType key value combination to use
    * @param osmModes to add
    */
-  void addDefaultAllowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+  protected void addDefaultAllowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
    addAllowedModes(osmKeyValueType.first(), osmKeyValueType.second(), false /* do not log */, Arrays.asList(osmModes));
   }
   
@@ -83,25 +74,21 @@ public class OsmModeAccessDefaultsCategory {
    *   We must use key and type, because type alone does not uniquely define a situation, e.g., ferry=primary and
    *   highway=primary both exist, but ref;ect different road/waterway types
    * </p>
+   * <p>
+   *   The type is taken as given, also when parsing does not support it by default: a type registered as new, such as
+   *   highway=escape, gets its modes here
+   * </p>
    *
    * @param key to use
    * @param type to use
    * @param logChanges when true changes are logged, otherwise not
-   * @param osmModes to add
+   * @param osmModes to add, each an OSM mode
+   * @throws IllegalArgumentException naming the first that is not an OSM mode, adding none of the modes
    */
   protected void addAllowedModes(String key, String type, boolean logChanges, List<String> osmModes) {
-    boolean validKeyValueCombination = isValidOsmKeyValueCombination(key, type);
-    if(!validKeyValueCombination){
-      LOGGER.warning(String.format(
-          "IGNORE: Unsupported way %s=%s when adding modes %s to allowed modes access defaults", key, type, osmModes));
-    }
-
-    boolean isValidModes = isValidOsmModes(osmModes);
-    if(!isValidModes) {
-      LOGGER.warning(String.format(
-          "IGNORE: Unsupported mode(s) provided in %s when adding default modes for %s=%s", osmModes, key, type));
-      return;
-    }
+    var unsupportedMode = osmModes.stream().filter(osmMode -> !OsmModeUtils.isOsmModeTag(osmMode)).findFirst();
+    ExceptionUtils.throwIllegalArgumentIf(unsupportedMode.isPresent(), "Unsupported mode %s provided in %s when " +
+        "adding default modes for %s=%s", unsupportedMode.orElse(null), osmModes, key, type);
 
     allowedModesByKeyAndType.putIfAbsent(key, new HashMap<>());
     var allowedModesByType = allowedModesByKeyAndType.get(key);
@@ -128,7 +115,7 @@ public class OsmModeAccessDefaultsCategory {
       return;
     }
 
-    boolean isValidModes = isValidOsmModes(osmModes);
+    boolean isValidModes = osmModes.stream().allMatch(OsmModeUtils::isOsmModeTag);
     if(!isValidModes) {
       LOGGER.warning(String.format(
           "IGNORE: Unsupported mode(s) provided in [%s] when setting default modes for %s=%s", osmModes, key, type));
@@ -153,7 +140,7 @@ public class OsmModeAccessDefaultsCategory {
    * @param osmKeyValueType key value combination to use
    * @param osmModeCategories to add
    */
-  void addDefaultAllowedModeCategories(Pair<String,String> osmKeyValueType, String... osmModeCategories) {
+  protected void addDefaultAllowedModeCategories(Pair<String,String> osmKeyValueType, String... osmModeCategories) {
     addAllowedModeCategories(osmKeyValueType.first(), osmKeyValueType.second(), false, osmModeCategories);
   }  
   
@@ -245,7 +232,7 @@ public class OsmModeAccessDefaultsCategory {
    * @param wayType to use
    * @param osmModes to remove
    */
-  void removeDefaultAllowedModes(String key, String wayType, boolean logChanges, String... osmModes) {
+  protected void removeDefaultAllowedModes(String key, String wayType, boolean logChanges, String... osmModes) {
     removeAllowedModes(key, wayType, false, osmModes);
   }
   
@@ -264,7 +251,7 @@ public class OsmModeAccessDefaultsCategory {
       return;
     }
 
-    boolean isValidModes = isValidOsmModes(Arrays.asList(osmModes));
+    boolean isValidModes = Arrays.stream(osmModes).allMatch(OsmModeUtils::isOsmModeTag);
     if(!isValidModes) {
       LOGGER.warning(String.format(
           "IGNORE: Unsupported mode(s) provided in [%s] when setting default modes for %s=%s",
@@ -290,7 +277,7 @@ public class OsmModeAccessDefaultsCategory {
    * @param osmKeyValueType key value combination to use
    * @param osmModes to disallow
    */
-  void addDefaultDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+  protected void addDefaultDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
     addDisallowedModes(osmKeyValueType.first(), osmKeyValueType.second(), false, osmModes);
   }   
   
@@ -312,7 +299,7 @@ public class OsmModeAccessDefaultsCategory {
       return;
     }
 
-    boolean isValidModes = isValidOsmModes(Arrays.asList(osmModes));
+    boolean isValidModes = Arrays.stream(osmModes).allMatch(OsmModeUtils::isOsmModeTag);
     if(!isValidModes) {
       LOGGER.warning(String.format("IGNORE: Unsupported OSM mode(s) provided in [%s] when disallowing modes for %s=%s",
           Arrays.toString(osmModes), key, wayType));
@@ -336,7 +323,7 @@ public class OsmModeAccessDefaultsCategory {
    * @param osmKeyValueType key value combination to use
    * @param osmModes to remove from disallowing
    */
-  void removeDefaultDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
+  protected void removeDefaultDisallowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
     removeDisallowedModes(osmKeyValueType.first(), osmKeyValueType.second(), false, osmModes);
   }    
   
@@ -355,7 +342,7 @@ public class OsmModeAccessDefaultsCategory {
       return;
     }
 
-    boolean isValidModes = isValidOsmModes(Arrays.asList(osmModes));
+    boolean isValidModes = Arrays.stream(osmModes).allMatch(OsmModeUtils::isOsmModeTag);
     if(!isValidModes) {
       LOGGER.warning(String.format(
           "IGNORE: Unsupported OSM mode(s) provided in [%s] when removing disallowed modes for %s=%s",
@@ -484,6 +471,7 @@ public class OsmModeAccessDefaultsCategory {
    *
    * @param osmKeyValueType key value combination to use
    * @param osmModes to add
+   * @throws IllegalArgumentException naming the first mode that is not an OSM mode, adding none of the modes
    */
   public void addAllowedModes(Pair<String,String> osmKeyValueType, String... osmModes) {
    addAllowedModes(osmKeyValueType.first(), osmKeyValueType.second(), Arrays.asList(osmModes));
@@ -498,6 +486,7 @@ public class OsmModeAccessDefaultsCategory {
    * @param key to use
    * @param wayType to use
    * @param osmModes to add
+   * @throws IllegalArgumentException naming the first mode that is not an OSM mode, adding none of the modes
    */
   public void addAllowedModes(String key, String wayType, List<String> osmModes) {
    addAllowedModes(key, wayType, true /* log changes*/, osmModes);

@@ -12,14 +12,20 @@ import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 
 /**
- * All highway specific settings
- * 
+ * All highway specific settings. The keys a settings file can set are on {@link OsmHighwayYamlKeyedSettings}.
+ * <p>
+ * Roads carry the most varied traffic in OSM, from motorways to footpaths, and their speed limits differ inside and
+ * outside urban areas. These settings say which highway types and road modes are parsed, how OSM road modes such as
+ * motorcar map to PLANit modes, and which speed limit defaults apply where a road's tags give none
+ * </p>
+ *
  * @author markr
  *
  */
-public class OsmHighwaySettings extends OsmWaySettings {
+public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
   
   /** the logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmHighwaySettings.class.getCanonicalName());
@@ -27,25 +33,13 @@ public class OsmHighwaySettings extends OsmWaySettings {
   /** immutable default road mode mappings used to initialise each instance */
   private static final Map<String, PredefinedModeType> DEFAULT_OSM_ROAD_MODE_MAPPINGS =
       Collections.unmodifiableMap(createDefaultOsmRoadModeMappings());
-     
-  /**  default value whether speed limits are based on urban area defaults: true */
-  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;   
 
   /** by default the highway parser is activated */
   public static boolean DEFAULT_HIGHWAYS_PARSER_ACTIVE = true;  
 
   /** non-urban speed limit defaults (urban defaults placed on base class) */
   OsmSpeedLimitDefaultsCategory nonUrbanSpeedLimitDefaults;
-     
-  /**
-   * track overwrite values for OSM highway types where we want different defaults for capacity and max density
-   */
-  protected final Map<String, Pair<Double,Double>> overwriteByOsmHighwayType = new HashMap<>();
 
-  /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area
-   * speed limits (or non-urban), default is true */
-  protected boolean speedLimitDefaultsBasedOnUrbanArea = DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA;  
-    
   /**
    * Create the immutable default OSM road mode mappings used to initialise each instance.
    *
@@ -181,73 +175,47 @@ public class OsmHighwaySettings extends OsmWaySettings {
   }
     
   /**
-   * Choose to not parse the given highway type, e.g. highway=road.
-   * 
-   * @param osmWayValue to use
-   */
-  public void deactivateOsmHighwayType(String osmWayValue) {
-    deactivateOsmWayType(osmWayValue);
-  }  
-  
-  /**
    * deactivate all types for highway
    */
+  @CoveredBySettingsKey("types")
   public void deactivateAllOsmHighwayTypes() {
     deactivateAllOsmWayTypes();
-  }   
-  
+  }
+
   /** deactivate all types for highway except the ones provides
-   * 
+   *
    * @param osmHighwayTypes to not deactivate
    */
+  @CoveredBySettingsKey("types")
   public void deactivateAllOsmHighwayTypesExcept(String... osmHighwayTypes) {
     deactivateAllOsmHighwayTypesExcept(List.of(osmHighwayTypes));
-  } 
-  
-  /** deactivate all types for highway except the ones provides
-   * 
-   * @param osmHighwayTypes to not deactivate
+  }
+
+  /** Activate all passed in highway types
+   *
+   * @param osmHighwayValueTypes to activate
    */
-  public void deactivateAllOsmHighwayTypesExcept(List<String> osmHighwayTypes) {
-    deactivateAllOsmHighwayTypes();
-    for(String osmWayType : osmHighwayTypes) {
-      if(OsmHighwayTags.isRoadBasedHighwayValueTag(osmWayType)) {
-       activateOsmHighwayTypes(osmWayType);
-      }
-    }
+  @CoveredBySettingsKey("types+")
+  public void activateOsmHighwayTypes(final String... osmHighwayValueTypes) {
+    activateOsmHighwayTypes(Arrays.asList(osmHighwayValueTypes));
+  }
+
+  /** Activate all passed in highway types
+   *
+   * @param osmHighwayValueTypes to activate
+   */
+  @CoveredBySettingsKey("types+")
+  public void activateOsmHighwayTypes(final List<String> osmHighwayValueTypes) {
+    activateOsmWayTypes(osmHighwayValueTypes);
   }
 
   /**
-   * Choose to add given highway type to parsed types on top of the defaults, e.g. highway=road
-   * 
-   * @param osmWayValue to use
+   * Activate all known OSM highway types
    */
-  public void activateOsmHighwayType(String osmWayValue) {
-    activateOsmWayType(osmWayValue);
-  }  
-  
-  /** Activate all passed in highway types
-   * 
-   * @param osmHighwayValueTypes to activate
-   */
-  public void activateOsmHighwayTypes(final String... osmHighwayValueTypes) {
-    activateOsmHighwayTypes(Arrays.asList(osmHighwayValueTypes));
-  }  
-  
-  /** Activate all passed in highway types
-   * 
-   * @param osmHighwayValueTypes to activate
-   */
-  public void activateOsmHighwayTypes(final List<String> osmHighwayValueTypes) {
-    activateOsmWayTypes(osmHighwayValueTypes);
-  }   
-  
-  /**
-   * Activate all known OSM highway types 
-   */
+  @CoveredBySettingsKey("types")
   public void activateAllOsmHighwayTypes() {
-    activateAllOsmWayTypes();    
-  }   
+    activateAllOsmWayTypes();
+  }
     
   /**
    * Choose to overwrite the given highway type defaults with the given values
@@ -256,11 +224,12 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
    */
+  @CoveredBySettingsKey("capacityMaxDensity")
   public void overwriteCapacityMaxDensityDefaults(
       final String osmHighwayType, Number capacityPerLanePerHour, Number maxDensityPerLane) {
-    overwriteOsmWayTypeDefaultCapacityMaxDensity(
-        OsmHighwayTags.HIGHWAY, osmHighwayType, capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue());
-  }    
+    overwriteCapacityMaxDensityDefaults(osmHighwayType, new OsmWayTypeCapacityMaxDensity(
+        capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue()));
+  }
   
   /**
    * Collect the overwrite type values that should be used
@@ -282,23 +251,6 @@ public class OsmHighwaySettings extends OsmWaySettings {
     return isDefaultCapacityOrMaxDensityOverwrittenByOsmWayType(osmWayType);
   }     
   
-  /** collect state of flag indicating to use urban or non-urban default
-   * speed limits when speed limit information is missing
-   * 
-   * @return flag value
-   */
-  public boolean isSpeedLimitDefaultsBasedOnUrbanArea() {
-    return speedLimitDefaultsBasedOnUrbanArea;
-  }
-
-  /** set state of flag indicating to use urban or non-urban default speed limits when speed limit information is missing
-   * 
-   * @param speedLimitDefaultsBasedOnUrbanArea flag value
-   */  
-  public void setSpeedLimitDefaultsBasedOnUrbanArea(boolean speedLimitDefaultsBasedOnUrbanArea) {
-    this.speedLimitDefaultsBasedOnUrbanArea = speedLimitDefaultsBasedOnUrbanArea;
-  }
-  
   /** Collect the speed limit for a given highway tag value, e.g. highway=typeValue,
    * based on the defaults provided (typically set by country)
    * 
@@ -314,41 +266,13 @@ public class OsmHighwaySettings extends OsmWaySettings {
     }     
   }
 
-  /** activate OSM road mode based on its default mapping to PLANit mode. This means that the osmMode
-   * will be added to the PLANit network, but also any of its restrictions
-   *  will be imposed on the PLANit mode that is provided. 
-   * 
-   * @param osmRoadMode to set
-   */
-  public void activateOsmRoadMode(final String osmRoadMode) {
-    if(!OsmRoadModeTags.isRoadModeTag(osmRoadMode)) {
-      LOGGER.warning(String.format("OSM road mode %s is not recognised when adding it to OSM to PLANit " +
-          "mode mapping, ignored", osmRoadMode));
-      return;
-    }
-    activateOsmMode(osmRoadMode);
-  }  
-  
-  /** deactivate an OSM road mode from parsing. This means that the osmMode will not be added to the PLANit network
-   * You can only remove a mode when it is already added.
-   * 
-   * @param osmRoadMode to remove
-   */
-  public void deactivateOsmRoadMode(final String osmRoadMode) {
-    if(!OsmRoadModeTags.isRoadModeTag(osmRoadMode)) {
-      LOGGER.warning(String.format("osm road mode %s is not recognised when removing it from OSM to " +
-          "PLANit mode mapping, ignored", osmRoadMode));
-      return;
-    }
-    deactivateOsmMode(osmRoadMode);
-  }
-  
   /** Remove a mapping from OSM road modes to PLANit modes. This means that the osmModes will not be added
    *  to the PLANit network.
    * You can only remove modes when they are already added, either manually or through the default mapping
-   * 
+   *
    * @param osmRoadModes to remove
    */
+  @CoveredBySettingsKey("modes-")
   public void deactivateOsmRoadModes(final List<String> osmRoadModes) {
     if(osmRoadModes == null) {
       return;
@@ -361,6 +285,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * 
    * @param deactivateAllRoadModesExcept to explicitly keep if present
    */
+  @CoveredBySettingsKey("modes")
   public void deactivateAllOsmRoadModesExcept(final String... deactivateAllRoadModesExcept) {
     List<String> exceptionList = null;
     if(deactivateAllRoadModesExcept==null) {
@@ -371,19 +296,11 @@ public class OsmHighwaySettings extends OsmWaySettings {
     deactivateAllOsmRoadModesExcept(exceptionList);
   }   
   
-  /** remove all road modes from mapping except for the passed in ones
-   * 
-   * @param remainingOsmRoadModes to explicitly keep if present
-   */
-  public void deactivateAllOsmRoadModesExcept(final List<String> remainingOsmRoadModes) {
-    Collection<String> toBeRemovedModes = OsmRoadModeTags.getSupportedRoadModeTags();
-    deactivateAllModesExcept(toBeRemovedModes, remainingOsmRoadModes);
-  }  
-  
   /** deactivate provided road modes
-   * 
+   *
    * @param osmRoadModes to explicitly deactivate
    */
+  @CoveredBySettingsKey("modes-")
   public void deactivateOsmRoadModes(final String... osmRoadModes) {
     deactivateOsmRoadModes(Arrays.asList(osmRoadModes));
   } 
@@ -391,6 +308,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
   /**
    * remove all road modes from the network when parsing
    */
+  @CoveredBySettingsKey("modes")
   public void removeAllRoadModes() {
     deactivateAllOsmRoadModesExcept((String[])null);
   }
@@ -413,7 +331,7 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * @return mapped osm modes, if not available empty collection is returned
    */  
   public final Set<String> getMappedOsmRoadModes(final PredefinedModeType planitModeType) {
-    return getAcivatedOsmModes(planitModeType);
+    return getActivatedOsmModes(planitModeType);
   }      
 
   /**
@@ -430,18 +348,12 @@ public class OsmHighwaySettings extends OsmWaySettings {
    * 
    * @param osmHighwayType to use
    * @param osmModes to allow
+   * @throws IllegalArgumentException naming the type or mode, allowing none of the modes, when the type is not known
+   *     or a mode is not an OSM mode
    */
+  @CoveredBySettingsKey("allowedModesByType")
   public void addAllowedOsmHighwayModes(final String osmHighwayType, final String... osmModes) {
     addAllowedOsmHighwayModes(osmHighwayType, Arrays.asList(osmModes));
-  }
-  
-  /** add allowed osm modes to highwaytype
-   * 
-   * @param osmHighwayType to use
-   * @param osmModes to allow
-   */
-  public void addAllowedOsmHighwayModes(final String osmHighwayType, final List<String> osmModes) {
-    addAllowedOsmWayModes(OsmHighwayTags.getHighwayKeyTag(), osmHighwayType, osmModes);
   }
     
   /**

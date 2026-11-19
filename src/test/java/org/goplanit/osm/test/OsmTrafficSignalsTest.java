@@ -536,7 +536,7 @@ public class OsmTrafficSignalsTest {
      *   approach 5->6; backward, 5->2 reaches dead end 2, so nothing; no intersection at 5
      */
     var layer = parse("signal_with_two_link_node_before_junction",
-        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(60));
+        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionMeters(60));
 
     var intersection = onlyIntersection(layer);
     assertEquals(List.of(nodeByOsmId(layer, 6)), intersection.getMemberNodes());
@@ -620,7 +620,7 @@ public class OsmTrafficSignalsTest {
     assertEquals(List.of(segment(defaults, 2, 6)), onlyIntersection(defaults).getApproachSegments());
 
     var tighter = parse("signal_12m_before_junction",
-        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(10));
+        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionMeters(10));
     assertTrue(tighter.getIntersections().isEmpty());
     assertEquals(4, tighter.getLinks().size());
   }
@@ -950,7 +950,7 @@ public class OsmTrafficSignalsTest {
 
     var beyondReach = parse("crossing_on_exit_arm_of_signalised_junction", settings -> {
       settings.getIntersectionSettings().setBreakLinksAtIsolatedSignals(true);
-      settings.getIntersectionSettings().setMaximumDistanceSignalisedCrossingToJunctionInMeters(10);
+      settings.getIntersectionSettings().setMaximumDistanceSignalisedCrossingToJunctionMeters(10);
     });
     assertEquals(5, beyondReach.getLinks().size());
     assertEquals(2, beyondReach.getIntersections().size());

@@ -110,6 +110,15 @@ public final class OsmPlanitEntityDiagnostics {
   }
 
   /**
+   * Whether nothing is recorded: no intersection created and no issue
+   *
+   * @return true when nothing is recorded
+   */
+  public boolean isEmpty() {
+    return intersectionsCreated == 0 && issues.isEmpty();
+  }
+
+  /**
    * Log the intersections and approaches created, then one line per issue that occurred, most frequent first, with a
    * sample of the entities' ids
    *

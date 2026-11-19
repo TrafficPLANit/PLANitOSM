@@ -18,7 +18,7 @@ import org.goplanit.utils.settings.SettingsYamlLoader;
  * <pre>
  * var inCode = OsmReaderSettingsFactory.createNetworkReaderSettings(CountryNames.AUSTRALIA);
  * var fromFiles = OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(
- *     SettingsSource.ofFile(Path.of("gma_network.yaml")), SettingsSource.ofFile(Path.of("sydney_corrections.yaml"))));
+ *     SettingsSource.ofFile(Path.of("gma_network.yaml")), SettingsSource.ofFile(Path.of("sydney_overrides.yaml"))));
  * fromFiles.setInputSource(pbfFile);
  * var reader = OsmNetworkReaderFactory.create(fromFiles);
  * </pre>
@@ -176,6 +176,19 @@ public final class OsmReaderSettingsFactory {
    */
   public static OsmIntermodalReaderSettings createIntermodalReaderSettings(URL inputSource, String countryName) {
     return new OsmIntermodalReaderSettings(inputSource, countryName);
+  }
+
+  /**
+   * Intermodal reader settings holding network and public transport settings made before, such as network settings
+   * made from YAML
+   *
+   * @param networkSettings to hold
+   * @param publicTransportSettings to hold, for the same input and country
+   * @return the settings
+   */
+  public static OsmIntermodalReaderSettings createIntermodalReaderSettings(OsmNetworkReaderSettings networkSettings,
+      OsmPublicTransportReaderSettings publicTransportSettings) {
+    return new OsmIntermodalReaderSettings(networkSettings, publicTransportSettings);
   }
 
   /**

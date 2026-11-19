@@ -116,7 +116,7 @@ public class OsmZoningReaderFactory {
     return create(
         inputSource,
         countryName,
-        new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()),
+        new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork),
         referenceNetwork,
         network2ZoningData);
   }   

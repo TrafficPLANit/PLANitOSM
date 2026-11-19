@@ -523,4 +523,14 @@ public class OsmModeUtils {
     return modeResult != null && modeResult.second() != null && !modeResult.second().isEmpty();
   }
 
+  /** Find out if the mode is an OSM mode of a road, rail or water way, such as motorcar, tram or ferry
+   *
+   * @param osmMode to check
+   * @return true when it is, false otherwise
+   */
+  public static boolean isOsmModeTag(String osmMode) {
+    return OsmRoadModeTags.isRoadModeTag(osmMode) || OsmRailModeTags.isRailModeTag(osmMode) ||
+        OsmWaterModeTags.isWaterModeTag(osmMode);
+  }
+
 }

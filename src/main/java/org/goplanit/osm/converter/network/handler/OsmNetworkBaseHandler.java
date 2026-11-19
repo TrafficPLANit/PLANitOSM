@@ -60,7 +60,7 @@ public abstract class OsmNetworkBaseHandler extends DefaultOsmHandler {
         getNetworkData().getBoundingArea(),
         settings.getSourceCRS(),
         settings.getCountryName(),
-        settings.getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
+        settings.getMaximumDistanceFerryOutsideBoundingPolygonMeters());
   }
 
   /** verify if tags represent a highway or railway that is specifically aimed at road-based or rail based

@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.goplanit.osm.tags.OsmSpeedTags;
+import org.goplanit.utils.exceptions.ExceptionUtils;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
@@ -91,6 +92,25 @@ public class PlanitOsmUtils {
    */
   public static Long parseOsmIdOrNull(ExternalIdAble entity) {
     return entity.getExternalId() != null ? parseOsmId(entity) : null;
+  }
+
+  /** Refuse an id no OSM entity has: OSM numbers its nodes, ways and relations from one up
+   *
+   * @param osmId to check
+   * @throws IllegalArgumentException naming the id when it is zero or less
+   */
+  public static void throwIfNotPositiveOsmId(long osmId) {
+    ExceptionUtils.throwIllegalArgumentIf(osmId <= 0, "OSM id %d is not positive, which no OSM entity has", osmId);
+  }
+
+  /** Refuse an entity type other than a node or way, such as for a waiting area, which is never a relation
+   *
+   * @param entityType to check
+   * @throws IllegalArgumentException naming the type when it is neither, or missing
+   */
+  public static void throwIfNeitherNodeNorWay(EntityType entityType) {
+    ExceptionUtils.throwIllegalArgumentIf(entityType != EntityType.Node && entityType != EntityType.Way,
+        "OSM entity type %s is neither Node nor Way", entityType);
   }
 
   /**

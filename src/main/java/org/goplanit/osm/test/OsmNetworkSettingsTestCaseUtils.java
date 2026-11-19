@@ -36,7 +36,7 @@ public class OsmNetworkSettingsTestCaseUtils {
   public static void melbourneMinimiseVerifiedWarnings(OsmNetworkReaderSettings settings) {
 
     /* wrongly tagged in OSM as per 26/2/2020. Road has no access to motor vehicles, yet bus_stop exists */
-    settings.overwriteModeAccessByOsmWayId(
+    settings.overrideOsmWayModeAccess(
             777286561L, OsmRoadModeTags.BUS, OsmRoadModeTags.FOOT, OsmRoadModeTags.BICYCLE);
 
   }

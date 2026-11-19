@@ -2,6 +2,7 @@ package org.goplanit.osm.test;
 
 import org.goplanit.logging.Logging;
 import org.goplanit.network.MacroscopicNetwork;
+import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReader;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderFactory;
 import org.goplanit.osm.converter.network.OsmNetworkReader;
@@ -10,6 +11,7 @@ import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.utils.graph.Edge;
+import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.graph.directed.Connectivity;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,6 +46,9 @@ public class BasicOsmReaderTest {
 
   private static final String SYDNEYCBD_2023_OSM =
       Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm").toString();
+
+  private static final String STOPS_REACHING_NETWORK_IN_PART_ONCE_PRUNED_OSM = Path.of(
+      RESOURCE_DIR,"osm","public-transport","stops_reaching_network_in_part_once_pruned.osm").toString();
   
   private static final String SYDNEYCBD_2023_PBF =
       Path.of(RESOURCE_DIR,"osm","sydney-cbd","sydneycbd_2023.osm.pbf").toString();
@@ -66,7 +72,7 @@ public class BasicOsmReaderTest {
     /* activate railways */
     osmReader.getSettings().getNetworkSettings().activateRailwayParser(true);
   }
-  
+
   @BeforeAll
   public static void setUp() throws Exception {
     if (LOGGER == null) {
@@ -212,6 +218,13 @@ public class BasicOsmReaderTest {
        * survive, since the infrastructure does */
       assertEquals(94, accessEgressZoneEntries);
 
+      /* the transfer zones reaching the network only in part once the read has finished */
+      var planitEntityDiagnostics = osmReader.getPlanitEntityDiagnostics();
+      assertEquals(List.of(), planitEntityDiagnostics.getEntityIds(
+          OsmPlanitEntityIssue.TRANSFER_ZONE_ACCESS_EGRESS_WITHOUT_STOP));
+      assertEquals(List.of(), planitEntityDiagnostics.getEntityIds(
+          OsmPlanitEntityIssue.TRANSFER_ZONE_STOP_WITHOUT_ACCESS_EGRESS));
+
       assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.BUS));
       assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.TRAIN));
       assertTrue(network.getTransportLayers().getFirst().supports(PredefinedModeType.TRAM));
@@ -223,6 +236,48 @@ public class BasicOsmReaderTest {
       e.printStackTrace();
       fail();      
     }
+  }
+
+  /**
+   * Transfer zones reaching the network only in part once pruning has run, on a hand-made file where buses and
+   * pedestrians keep only their largest network:
+   * <pre>
+   *   side street (residential), the largest pedestrian network, but a bus network of its own
+   *
+   *                14
+   *                |
+   *     11 ------- 12 ------- 13
+   *          102
+   *
+   *   main road (primary, foot=no), the largest bus network, about 550 m south
+   *
+   *                                   6
+   *                                   |
+   *      1 ------- 2 ------- 3 ------- 4
+   *          101             |
+   *       201---202          5
+   *       footway, a pedestrian network of its own
+   * </pre>
+   * Buses lose the side street, so stop 102 keeps its access and egress but loses its stop. Pedestrians lose the
+   * footway, the only walkable way within reach of stop 101, so it keeps its stop but loses its access and egress
+   */
+  @Test
+  public void osmReaderRecordsTransferZonesReachingNetworkInPartOncePruned() throws PlanItException {
+    OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(
+        STOPS_REACHING_NETWORK_IN_PART_ONCE_PRUNED_OSM, CountryNames.AUSTRALIA);
+    var networkSettings = osmReader.getSettings().getNetworkSettings();
+    networkSettings.getHighwaySettings().activateOsmHighwayTypes(OsmHighwayTags.FOOTWAY);
+    networkSettings.deactivateRemoveDanglingSubnetworks();
+    networkSettings.activateRemoveDanglingSubnetworks(PredefinedModeType.BUS);
+    networkSettings.activateRemoveDanglingSubnetworks(PredefinedModeType.PEDESTRIAN);
+
+    osmReader.read();
+
+    var planitEntityDiagnostics = osmReader.getPlanitEntityDiagnostics();
+    assertEquals(List.of("102"), planitEntityDiagnostics.getEntityIds(
+        OsmPlanitEntityIssue.TRANSFER_ZONE_ACCESS_EGRESS_WITHOUT_STOP));
+    assertEquals(List.of("101"), planitEntityDiagnostics.getEntityIds(
+        OsmPlanitEntityIssue.TRANSFER_ZONE_STOP_WITHOUT_ACCESS_EGRESS));
   }
 
   /**

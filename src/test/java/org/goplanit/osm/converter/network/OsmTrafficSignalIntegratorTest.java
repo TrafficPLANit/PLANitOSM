@@ -195,7 +195,7 @@ public class OsmTrafficSignalIntegratorTest {
      */
     var parsed = parseTrafficSignalScenario("signal_far_from_junction_on_shape_node",
         breakLinksAtIsolatedSignalsParsingOnlyWithin(OsmBoundary.of(151.2081, 151.2115, -33.8715, -33.8685)).andThen(
-            settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(40)));
+            settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionMeters(40)));
     assertEquals(Set.of("1"), parsed.signalIds(VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA));
     assertEquals(Set.of(), parsed.signalIds(VEHICLE_SIGNAL_WITHOUT_JUNCTION_AHEAD));
     assertEquals(0, parsed.networkReaderData().getPlanitEntityDiagnostics().getIntersectionsCreated());
@@ -323,7 +323,7 @@ public class OsmTrafficSignalIntegratorTest {
      */
     var parsed = parseTrafficSignalScenario("vehicle_signal_before_mid_block_crossing",
         breakLinksAtIsolatedSignalsParsingOnlyWithin(OsmBoundary.of(151.2060, 151.21027, -33.8715, -33.8685)).andThen(
-            settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(40)));
+            settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionMeters(40)));
 
     assertEquals(Set.of("31"), parsed.signalIds(CROSSING_AT_EDGE_OF_PARSED_AREA));
     assertEquals(Set.of("1"), parsed.signalIds(VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA));
@@ -1499,7 +1499,7 @@ public class OsmTrafficSignalIntegratorTest {
      *   junction lowered to 20 m, so the road end 5 is out of reach
      */
     var parsed = parseTrafficSignalScenario("vehicle_signal_before_road_end_outside_parsed_area",
-        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(20));
+        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionMeters(20));
 
     assertTrue(parsed.layer().getIntersections().isEmpty());
     assertEquals(Set.of("6"), parsed.signalIds(VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA));
@@ -1550,7 +1550,7 @@ public class OsmTrafficSignalIntegratorTest {
     assertEquals(Set.of("31"), parsed.signalIds(ISOLATED_CROSSING_NO_LINK_BROKEN));
 
     parsed = parseTrafficSignalScenario("signal_12m_before_junction",
-        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionInMeters(10));
+        settings -> settings.getIntersectionSettings().setMaximumDistanceVehicleSignalToJunctionMeters(10));
     assertEquals(1, parsed.networkReaderData().getParseDiagnostics()
         .getOccurrences(VEHICLE_SIGNAL_WITHOUT_JUNCTION_AHEAD));
   }

@@ -122,7 +122,7 @@ final class OsmTrafficSignalFirstPass {
    */
   private void takeCrossingNodesAfterVehicleSignalsAsSignalised(OsmTrafficSignalFirstPassResult firstPass) {
     double crossingDistance =
-        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters();
     Predicate<OsmNode> crossingNodeWithoutSignals = osmNode ->
         (OsmTrafficSignalTags.isCrossingNode(OsmModelUtil.getTagsAsMap(osmNode)) ||
             networkData.isOsmNodeOfWayThatCanCrossRoad(osmNode.getId())) &&
@@ -164,7 +164,7 @@ final class OsmTrafficSignalFirstPass {
    */
   private void dropCrossingSignalsBeforeStopOrGiveWaySign(OsmTrafficSignalFirstPassResult firstPass) {
     double crossingDistance =
-        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters();
     for (var crossing : List.copyOf(firstPass.crossingSignalsNotOnJunctionNode)) {
       boolean beforeSign = lookAheadForJunctions.findSegmentsArrivingAtTargetsOnwardFromSignal(crossing, null,
           crossingDistance).stream().map(junctions -> junctions.get(0)).anyMatch(first ->
@@ -349,7 +349,7 @@ final class OsmTrafficSignalFirstPass {
    * @return the signal with the junctions it reaches, not yet assigned
    */
   private PendingOsmVehicleSignal collectVehicleSignal(SignalOnPlanitLayer location, String direction) {
-    var maxDistance = settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionInMeters();
+    var maxDistance = settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionMeters();
     if (OsmDirectionTags.isForwardOrBackward(direction) && location.isOnNode() &&
         PlanitLinkOsmUtils.waysDisagreeOnOrientation(location.node, location.getLinks().stream()
             .filter(LinkUtils.permitsMotorisedRoadModeOnAnySegment()).collect(Collectors.toList()))) {
@@ -391,8 +391,8 @@ final class OsmTrafficSignalFirstPass {
         segment -> segment.isAnyModeAllowed(isBicycleMode);
     var lookAheadForRoadOrBranch = LookAhead.createForRoadOrBranch(travels, geoUtils, layerData);
     double maxDistance = onTrack ?
-        settings.getRailwaySettings().getMaximumDistanceTrackSignalToRoadCrossingInMeters() :
-        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+        settings.getRailwaySettings().getMaximumDistanceTrackSignalToRoadCrossingMeters() :
+        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters();
     var reached = lookAheadForRoadOrBranch.findSegmentsArrivingAtTargetsOnwardFromSignal(location, null, maxDistance);
     var nearest = reached.stream()
         .map(targets -> lookAheadForRoadOrBranch.findRoadCrossingOrBranch(targets.get(0), maxDistance))

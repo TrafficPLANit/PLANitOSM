@@ -3,12 +3,16 @@ package org.goplanit.osm.converter.intermodal;
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.osm.converter.OsmBoundary;
 import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
-import org.goplanit.osm.converter.settings.OsmReaderSettings;
+import org.goplanit.osm.converter.settings.OsmReaderSettingsSchema;
+import org.goplanit.osm.converter.settings.OsmReaderYamlKeyedSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
+import org.goplanit.utils.settings.SettingsSchema;
+import org.goplanit.utils.settings.YamlWriteSettingsSupport;
+import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsRootValue;
 
 import java.net.URL;
@@ -21,7 +25,7 @@ import java.util.logging.Logger;
  * @author markr
  *
  */
-public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
+public class OsmIntermodalReaderSettings implements ConverterReaderSettings, YamlWriteSettingsSupport {
   
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReaderSettings.class.getCanonicalName());
@@ -45,7 +49,9 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(
-      @SettingsRootValue(key = OsmReaderSettings.COUNTRY_KEY) final String countryName) {
+      @SettingsRootValue(key = OsmReaderYamlKeyedSettings.COUNTRY_KEY,
+          description = OsmReaderYamlKeyedSettings.COUNTRY_DESCRIPTION)
+      final String countryName) {
     this((URL) null, countryName);
   }
 
@@ -108,6 +114,17 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
     zoningPtSettings.logSettings(level+1);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * @return the schema of every OSM reader settings source, whose network and public transport sections these settings
+   *     hold
+   */
+  @Override
+  public SettingsSchema getSettingsSchema() {
+    return OsmReaderSettingsSchema.SCHEMA;
+  }
+
   // GETTERS/SETTERS
   
   /** Provide access to the network reader settings
@@ -131,6 +148,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * 
    * @param inputSource to use
    */
+  @CoveredBySettingsKey("inputSource")
   public void setInputSource(final URL inputSource) {
     getNetworkSettings().setInputSource(inputSource);
     getPublicTransportSettings().setInputSource(inputSource);
@@ -139,6 +157,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   /** Set the input file to use, which is internally converted into a URL
    * @param inputFile to use
    */
+  @CoveredBySettingsKey("inputSource")
   public void setInputFile(final String inputFile) {
     try{
       setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
@@ -150,6 +169,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   /** Set a polygon based bounding box to restrict parsing to
    * @param osmBoundary to use
    */
+  @CoveredBySettingsKey("boundingArea")
   public final void setBoundingArea(OsmBoundary osmBoundary) {
     getNetworkSettings().setBoundingArea(osmBoundary.deepClone());
     getPublicTransportSettings().setBoundingArea(osmBoundary.deepClone());

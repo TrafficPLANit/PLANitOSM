@@ -3,17 +3,16 @@ package org.goplanit.osm.converter.settings;
 import static org.goplanit.osm.test.OsmLayerTestUtils.LANES_SCENARIO_DIR;
 import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.goplanit.logging.Logging;
@@ -23,9 +22,11 @@ import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.settings.override.OsmWayLaneOverride;
 import org.goplanit.osm.tags.OsmHighwayTags;
+import org.goplanit.osm.test.WarningRecorder;
 import org.goplanit.utils.exceptions.SettingsProblemsException;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.settings.SettingsFileContentType;
 import org.goplanit.utils.settings.SettingsSource;
 import org.goplanit.utils.settings.UserOverride;
 import org.junit.jupiter.api.AfterAll;
@@ -33,16 +34,27 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Tests of {@link OsmReaderSettingsFactory}: OSM reader settings made in code, and made from settings text, the
  * country taken first, changed in code afterwards like settings made in code, one shape of text for the network and
- * intermodal readers, and the corrections of the OSM data as keys with optional reasons, the lanes of a way and the
- * kind and direction of a traffic signal
+ * intermodal readers, the corrections of the OSM data as keys with optional reasons, the lanes of a way and the
+ * kind and direction of a traffic signal, and settings written to a settings file made again from it: the file of
+ * every key at its global default, and a file changing every key, both written out unchanged
  *
  * @author markr
  */
 public class OsmReaderSettingsFactoryTest {
+
+  /** folder of the settings files kept with the tests */
+  private static final Path SETTINGS_FILES_DIR = Path.of("src", "test", "resources", "settings");
+
+  /** every key of the intermodal settings at its global default, with descriptions */
+  private static final Path GLOBAL_DEFAULTS_FILE = SETTINGS_FILES_DIR.resolve("osm_settings_global_defaults.yaml");
+
+  /** every key of the intermodal settings changed from its default, with descriptions */
+  private static final Path EVERY_KEY_CHANGED_FILE = SETTINGS_FILES_DIR.resolve("osm_settings_every_key_changed.yaml");
 
   /** the logger, giving the log output PLANit's format */
   private static Logger LOGGER = null;
@@ -54,7 +66,7 @@ public class OsmReaderSettingsFactoryTest {
    * @return the source
    */
   private static SettingsSource text(String body) {
-    return SettingsSource.ofText("planitOsmConverterSettings: 1\n" + body);
+    return SettingsSource.ofText(OsmReaderSettingsSchema.SCHEMA, body);
   }
 
   /**
@@ -74,6 +86,10 @@ public class OsmReaderSettingsFactoryTest {
   public static void tearDownLogger() {
     Logging.closeLogger(LOGGER);
   }
+
+  /** folder for the test files */
+  @TempDir
+  public Path tempDir;
 
   /**
    * Reset the ids before each test
@@ -113,6 +129,98 @@ public class OsmReaderSettingsFactoryTest {
         OsmReaderSettingsFactory.createIntermodalReaderSettings().getNetworkSettings().getCountryName());
   }
 
+  /**
+   * Network settings written to a settings file with the keys differing from the defaults are made again from it, with
+   * their country and the key changed
+   */
+  @Test
+  public void networkSettingsMadeAgainFromTheirSettingsFile() throws Exception {
+    var settings = OsmReaderSettingsFactory.createNetworkReaderSettings(CountryNames.AUSTRALIA);
+    settings.setConsolidateLinkSegmentTypes(false);
+    var file = tempDir.resolve("network_settings.yaml");
+    settings.writeSettingsFile(file, SettingsFileContentType.KEYS_DIFFERING_FROM_DEFAULTS, true);
+
+    var madeAgain = OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(SettingsSource.ofFile(file)));
+    assertEquals(CountryNames.AUSTRALIA, madeAgain.getCountryName());
+    assertFalse(madeAgain.isConsolidateLinkSegmentTypes());
+  }
+
+  /**
+   * Intermodal settings written to a settings file with the keys differing from the defaults are made again from it,
+   * with their country and the keys changed in their network and public transport settings
+   */
+  @Test
+  public void intermodalSettingsMadeAgainFromTheirSettingsFile() throws Exception {
+    var settings = OsmReaderSettingsFactory.createIntermodalReaderSettings(CountryNames.AUSTRALIA);
+    settings.getNetworkSettings().setConsolidateLinkSegmentTypes(false);
+    settings.getPublicTransportSettings().setRemoveDanglingZones(false);
+    var file = tempDir.resolve("intermodal_settings.yaml");
+    settings.writeSettingsFile(file, SettingsFileContentType.KEYS_DIFFERING_FROM_DEFAULTS, true);
+
+    var madeAgain =
+        OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(List.of(SettingsSource.ofFile(file)));
+    assertEquals(CountryNames.AUSTRALIA, madeAgain.getNetworkSettings().getCountryName());
+    assertEquals(CountryNames.AUSTRALIA, madeAgain.getPublicTransportSettings().getCountryName());
+    assertFalse(madeAgain.getNetworkSettings().isConsolidateLinkSegmentTypes());
+    assertFalse(madeAgain.getPublicTransportSettings().isRemoveDanglingZones());
+  }
+
+  /**
+   * Intermodal settings at their global defaults write the file kept of every key with its description, and settings
+   * made from that file write it again
+   */
+  @Test
+  public void globalDefaultsWrittenAsTheFileKept() throws Exception {
+    var file = tempDir.resolve("global_defaults.yaml");
+    OsmReaderSettingsFactory.createIntermodalReaderSettings()
+        .writeSettingsFile(file, SettingsFileContentType.ALL_KEYS, true);
+    assertEquals(Files.readAllLines(GLOBAL_DEFAULTS_FILE), Files.readAllLines(file));
+
+    var madeAgain = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(
+        List.of(SettingsSource.ofFile(GLOBAL_DEFAULTS_FILE)));
+    var fileAgain = tempDir.resolve("global_defaults_again.yaml");
+    madeAgain.writeSettingsFile(fileAgain, SettingsFileContentType.ALL_KEYS, true);
+    assertEquals(Files.readAllLines(GLOBAL_DEFAULTS_FILE), Files.readAllLines(fileAgain));
+  }
+
+  /**
+   * Settings made from the file kept that changes every key write that file again, with every key and with only the
+   * keys differing from the defaults, as every key differs; written without descriptions, they are made again into
+   * settings writing the same file
+   */
+  @Test
+  public void everyKeyChangedWrittenAsTheFileKept() throws Exception {
+    var settings = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(
+        List.of(SettingsSource.ofFile(EVERY_KEY_CHANGED_FILE)));
+    var everyKey = tempDir.resolve("every_key.yaml");
+    settings.writeSettingsFile(everyKey, SettingsFileContentType.ALL_KEYS, true);
+    assertEquals(Files.readAllLines(EVERY_KEY_CHANGED_FILE), Files.readAllLines(everyKey));
+
+    var keysDiffering = tempDir.resolve("keys_differing.yaml");
+    settings.writeSettingsFile(keysDiffering, SettingsFileContentType.KEYS_DIFFERING_FROM_DEFAULTS, true);
+    assertEquals(Files.readAllLines(EVERY_KEY_CHANGED_FILE), Files.readAllLines(keysDiffering));
+
+    var withoutDescriptions = tempDir.resolve("without_descriptions.yaml");
+    settings.writeSettingsFile(withoutDescriptions, SettingsFileContentType.ALL_KEYS, false);
+    var madeAgain = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(
+        List.of(SettingsSource.ofFile(withoutDescriptions)));
+    var fileAgain = tempDir.resolve("every_key_again.yaml");
+    madeAgain.writeSettingsFile(fileAgain, SettingsFileContentType.ALL_KEYS, true);
+    assertEquals(Files.readAllLines(EVERY_KEY_CHANGED_FILE), Files.readAllLines(fileAgain));
+  }
+
+  /** Intermodal settings made of network settings made from text and public transport settings hold those settings */
+  @Test
+  public void intermodalSettingsOfSettingsMadeBefore() {
+    var network = OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(
+        text("country: Australia\nnetwork:\n  osmWayLaneOverrides:\n    1: {lanesForward: 2}\n")));
+    var publicTransport = OsmReaderSettingsFactory.createPublicTransportReaderSettings(CountryNames.AUSTRALIA);
+
+    var intermodal = OsmReaderSettingsFactory.createIntermodalReaderSettings(network, publicTransport);
+    assertSame(network, intermodal.getNetworkSettings());
+    assertSame(publicTransport, intermodal.getPublicTransportSettings());
+  }
+
   /** The country comes from the last source giving one, with its defaults, such as its speed limits */
   @Test
   public void countryFromTheLastSourceGivingOne() {
@@ -133,35 +241,19 @@ public class OsmReaderSettingsFactoryTest {
    */
   @Test
   public void unknownCountryIsWarnedAbout() {
-    var warnings = new ArrayList<LogRecord>();
-    var handler = new Handler() {
-      @Override
-      public void publish(LogRecord record) {
-        if (record.getLevel() == Level.WARNING) {
-          warnings.add(record);
-        }
-      }
-
-      @Override
-      public void flush() {
-      }
-
-      @Override
-      public void close() {
-      }
-    };
+    var warnings = new WarningRecorder();
     var settingsLogger = Logger.getLogger(OsmNetworkReaderSettings.class.getCanonicalName());
-    settingsLogger.addHandler(handler);
+    settingsLogger.addHandler(warnings);
     try {
       var settings = OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(text("country: Austrlia\n")));
       assertEquals("Austrlia", settings.getCountryName());
-      assertEquals(1, warnings.size());
+      assertEquals(1, warnings.getCount());
       OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(text("country: Australia\n")));
-      assertEquals(1, warnings.size());
+      assertEquals(1, warnings.getCount());
       OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(List.of(text("country: Austrlia\n")));
-      assertEquals(2, warnings.size());
+      assertEquals(2, warnings.getCount());
     } finally {
-      settingsLogger.removeHandler(handler);
+      settingsLogger.removeHandler(warnings);
     }
   }
 

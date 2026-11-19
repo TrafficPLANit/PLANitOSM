@@ -237,7 +237,7 @@ public class OsmNetworkPreProcessingHandler extends OsmNetworkBaseHandler {
         // NOTE: currently the only special case is for water related entities, if we get more types make our check
         // aware of the type and less implicitly baked in as there is no specific check on waterways here currently
         // (as not needed)
-        if(projectedDistance < getSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters()){
+        if(projectedDistance < getSettings().getMaximumDistanceFerryOutsideBoundingPolygonMeters()){
           getNetworkData().getOsmSpatialEligibilityData().markOsmNodeSpatiallyEligible(node.getId());
         }
       }

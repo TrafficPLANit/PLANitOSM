@@ -17,6 +17,7 @@ import org.goplanit.network.MacroscopicNetworkLayerConfigurator;
 import org.goplanit.network.MacroscopicNetworkModifierUtils;
 import org.goplanit.osm.converter.OsmBoundaryManager;
 import org.goplanit.osm.converter.OsmBoundingBoundaryPreProcessingHandler;
+import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityDiagnostics;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
 import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
@@ -31,20 +32,14 @@ import org.goplanit.osm.util.OsmHandlerUtils;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.geo.PlanitJtsCrsUtils;
 import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
-import org.goplanit.utils.graph.modifier.event.DirectedGraphModifierListener;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.ApproachOutcome;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidationModifierResult.IntersectionOutcome;
-import org.goplanit.utils.network.layer.modifier.event.LinkSegmentTypeModifierListener;
 import org.goplanit.utils.network.layers.MacroscopicNetworkLayers;
 import org.goplanit.zoning.Zoning;
-import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnLinkSegmentChangeHandler;
-import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnLinkSegmentChangeResult;
-import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnLinkSegmentChangeResult.ConnectoidAccessLoss;
-import org.goplanit.zoning.modifier.event.handler.UpdateConnectoidsOnVertexRemovalHandler;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
 import de.topobyte.osm4j.core.access.OsmReader;
@@ -80,14 +75,6 @@ public class OsmNetworkReader implements NetworkReader {
       ApproachOutcome.ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD,
       OsmPlanitEntityIssue.APPROACH_ADDED_WITH_SIGNAL_TAGGED_ON_NODE_AHEAD);
 
-  /** the issue each connectoid access loss of pruning is recorded as, by what was lost */
-  private static final Map<ConnectoidAccessLoss.Kind, OsmPlanitEntityIssue> ISSUE_OF_CONNECTOID_ACCESS_LOSS = Map.of(
-      ConnectoidAccessLoss.Kind.ALLOWED_MODE, OsmPlanitEntityIssue.CONNECTOID_ALLOWED_MODE_LOST_BY_PRUNING,
-      ConnectoidAccessLoss.Kind.ACCESS_LINK_SEGMENT,
-      OsmPlanitEntityIssue.CONNECTOID_ACCESS_LINK_SEGMENT_LOST_BY_PRUNING,
-      ConnectoidAccessLoss.Kind.ACCESS_ZONE_ENTRY, OsmPlanitEntityIssue.CONNECTOID_ACCESS_ZONE_ENTRY_LOST_BY_PRUNING,
-      ConnectoidAccessLoss.Kind.CONNECTOID, OsmPlanitEntityIssue.CONNECTOID_LOST_BY_PRUNING);
-
   /** network reader data tracked during parsing */
   private final OsmNetworkReaderData networkData;
 
@@ -97,8 +84,9 @@ public class OsmNetworkReader implements NetworkReader {
   /** settings to use */
   private final OsmNetworkReaderSettings settings;
 
-  /** when set, this reader does not log its own settings, see {@link #suppressSettingsLogging()} */
-  private boolean suppressSettingsLogging = false;
+  /** when set, this reader logs neither its own settings nor its diagnostics summary, see
+   * {@link #suppressSettingsAndDiagnosticsLogging()} */
+  private boolean suppressSettingsAndDiagnosticsLogging = false;
   
   /**
    * Helper to create an OSM4jReader, handler for a given stage and perform the parsing
@@ -125,7 +113,7 @@ public class OsmNetworkReader implements NetworkReader {
    */
   private void logInfo() {
 
-    if(suppressSettingsLogging){
+    if(suppressSettingsAndDiagnosticsLogging){
       /* a composing reader reports the configuration on our behalf */
       return;
     }
@@ -267,39 +255,6 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Record what the connectoids lost when pruning dangling subnetworks with the PLANit entity diagnostics, each loss
-   * once, by the connectoid's external id, the OSM node of the stop
-   *
-   * @param result what the connectoids lost, see {@link UpdateConnectoidsOnLinkSegmentChangeHandler}
-   */
-  private void registerConnectoidAccessLosses(UpdateConnectoidsOnLinkSegmentChangeResult result) {
-    var diagnostics = networkData.getPlanitEntityDiagnostics();
-    for (var loss : result.getAccessLosses()) {
-      var detail = new StringBuilder("zone ").append(loss.getAccessZoneEntry().getAccessZone().getExternalId())
-          .append(", ").append(loss.getAccessZoneEntry().getType());
-      if (loss.getMode() != null) {
-        detail.append(", mode ").append(loss.getMode().getName());
-      }
-      if (loss.getAccessLinkSegment() != null && loss.getAccessLinkSegment().getParent() != null) {
-        detail.append(", link ").append(loss.getAccessLinkSegment().getParent().getExternalId());
-      }
-      diagnostics.registerIssue(ISSUE_OF_CONNECTOID_ACCESS_LOSS.get(loss.getKind()),
-          loss.getConnectoid().getExternalId(), detail.toString());
-    }
-  }
-
-  /**
-   * Record, with the PLANit entity diagnostics, each OSM id that every layer lists as not found, without a detail, see
-   * {@link #registerNotFoundInEveryLayer(OsmPlanitEntityIssue, List, Function)}
-   *
-   * @param issue to record each with
-   * @param notFoundOfEachLayer per layer, the OSM ids it did not find
-   */
-  private void registerNotFoundInEveryLayer(OsmPlanitEntityIssue issue, List<List<String>> notFoundOfEachLayer) {
-    registerNotFoundInEveryLayer(issue, notFoundOfEachLayer, osmId -> null);
-  }
-
-  /**
    * Record, with the PLANit entity diagnostics, each OSM id that every layer lists as not found, with its detail. Each
    * layer holds only the nodes and ways of its own modes, so an entity of one layer is not found in the others
    *
@@ -351,8 +306,8 @@ public class OsmNetworkReader implements NetworkReader {
   /**
    * Collapse the modes the settings set onto one node per spatial intersection of each layer, once consolidated, see
    * {@link OsmIntersectionSettings#getIntersectionCollapserSettings()}. The modes now exist, so the PLANit collapse
-   * settings are built from the OSM ones, mapping OSM modes as the network settings do. What it did is logged, and a
-   * node excluded from collapse is recorded as not found with the PLANit entity diagnostics only when no layer has it
+   * settings are built from the OSM ones. What it did is logged, and a node excluded from collapse is recorded as not
+   * found with the PLANit entity diagnostics only when no layer has it, with the reason of its exclusion as the detail
    *
    * @param crs of the network
    */
@@ -362,7 +317,7 @@ public class OsmNetworkReader implements NetworkReader {
       return;
     }
     var collapserSettings = osmCollapserSettings.createIntersectionCollapserSettings(
-        settings::getMappedPlanitModeType, getOsmNetworkToPopulate().getModes());
+        getOsmNetworkToPopulate().getModes());
     var notFoundOfEachLayer = new ArrayList<List<String>>();
     for(var layer : networkData.getLayerParsers().keySet()) {
       var collapseResult = layer.getLayerModifier().collapseIntersectionsToNonSpatialForModes(
@@ -370,7 +325,9 @@ public class OsmNetworkReader implements NetworkReader {
       LOGGER.info(String.format("Collapsed intersections: %s", collapseResult));
       notFoundOfEachLayer.add(collapseResult.getExcludedNodeIdsNotFound());
     }
-    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND, notFoundOfEachLayer);
+    var excluded = osmCollapserSettings.getOsmNodeIdsExcludedFromCollapse();
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_EXCLUDED_FROM_COLLAPSE_NOT_FOUND, notFoundOfEachLayer,
+        osmNodeId -> excluded.get(Long.valueOf(osmNodeId)).getReason());
   }
 
   /**
@@ -378,7 +335,8 @@ public class OsmNetworkReader implements NetworkReader {
    * {@link OsmIntersectionSettings#setConsolidateIntersections(boolean)}. A segment turning internal gets a signal when
    * it has a signal of its own, see {@link OsmTrafficSignalIntegrator#hasSignalOfItsOwn}, or when it is a footway or
    * cycleway segment into a signalised crossing. What it did is logged, and recorded with the PLANit entity
-   * diagnostics. A node listed in the settings is recorded as not found only when no layer has it
+   * diagnostics. A node listed in the settings is recorded as not found only when no layer has it, with the reasons of
+   * the groups holding it as the detail
    *
    * @param crs of the network
    */
@@ -393,7 +351,9 @@ public class OsmNetworkReader implements NetworkReader {
       LOGGER.info(String.format("Consolidated intersections: %s", result));
       notFoundOfEachLayer.add(result.getListedNodeIdsNotFound());
     }
-    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND, notFoundOfEachLayer);
+    var intersectionSettings = settings.getIntersectionSettings();
+    registerNotFoundInEveryLayer(OsmPlanitEntityIssue.NODE_LISTED_TO_JOIN_OR_KEEP_APART_NOT_FOUND, notFoundOfEachLayer,
+        osmNodeId -> intersectionSettings.getReasonOfOsmNodeListedToJoinOrKeepApart(Long.parseLong(osmNodeId)));
   }
 
   /**
@@ -427,6 +387,84 @@ public class OsmNetworkReader implements NetworkReader {
           String.format("%.0f s usable green time", usableGreenSeconds)));
     }
   }
+
+  /**
+   * Suppress the logging of this reader's settings and of its diagnostics summary. Intended for a composing reader that
+   * logs the configuration on this reader's behalf, so it appears once and in one place rather than piecemeal per
+   * sub-reader, and that runs some of this reader's steps itself after the read, so it logs the diagnostics summary
+   * once those have run, see {@link #logDiagnosticsSummary()}. Package private so only the factory can apply it at
+   * creation time.
+   */
+  protected void suppressSettingsAndDiagnosticsLogging() {
+    this.suppressSettingsAndDiagnosticsLogging = true;
+  }
+
+  /** Collect the network data gathered
+   * 
+   * @return network data
+   */
+  protected OsmNetworkReaderData getNetworkReaderData() {
+    return networkData;
+  }
+
+  /** Remove dangling subnetworks when settings dictate it
+   *
+   * @param recreateManagedIds when true recreate ids, otherwise not
+   */
+  protected void removeDanglingSubNetworks(boolean recreateManagedIds) {
+    removeDanglingSubNetworks(null, recreateManagedIds);
+  }
+
+  /** Collect the osm network to populate
+   *
+   * @return osm network
+   */
+  protected PlanitOsmNetwork getOsmNetworkToPopulate() {
+    return this.osmNetworkToPopulate;
+  }
+
+  /**
+   * Constructor 
+   * 
+   * @param osmNetwork network to populate 
+   */
+  protected OsmNetworkReader(final PlanitOsmNetwork osmNetwork){
+    this(CountryNames.GLOBAL, osmNetwork);
+  }  
+
+  /**
+   * Constructor 
+   * 
+   * @param countryName to use
+   * @param osmNetwork network to populate
+   */
+  protected OsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork){
+    this(null, countryName, osmNetwork);
+  }  
+
+  /**
+   * Constructor 
+   * 
+   * @param inputSource to use
+   * @param countryName to use
+   * @param osmNetworkToPopulate network to populate
+   */
+  protected OsmNetworkReader(
+      final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate){
+    this(new OsmNetworkReaderSettings(inputSource, countryName), osmNetworkToPopulate);
+  }    
+
+  /**
+   * Constructor 
+   *  
+   * @param settings for populating the network
+   * @param osmNetworkToPopulate network to populate
+   */
+  protected OsmNetworkReader(OsmNetworkReaderSettings settings, final PlanitOsmNetwork osmNetworkToPopulate){
+    this.settings = settings;   
+    this.networkData = new OsmNetworkReaderData();
+    this.osmNetworkToPopulate = osmNetworkToPopulate;
+  }  
 
   /**
    * Call this BEFORE we parse the OSM network to initialise the handler(s) properly
@@ -469,39 +507,13 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
-   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
-   * private so only the factory can apply it at creation time.
-   */
-  protected void suppressSettingsLogging() {
-    this.suppressSettingsLogging = true;
-  }
-
-
-  /** Collect the network data gathered
-   * 
-   * @return network data
-   */
-  protected OsmNetworkReaderData getNetworkReaderData() {
-    return networkData;
-  }
-  
-  /** Remove dangling subnetworks when settings dictate it
+   * Remove dangling subnetworks when settings dictate it. The connectoids of a zoning attached to the network follow the
+   * removal by themselves; zones left dangling are for the caller to remove afterwards.
    *
+   * @param zoning attached to the network, whose transfer connectoids are counted in the log and renumbered with the
+   *               network's ids when asked, may be null
    * @param recreateManagedIds when true recreate ids, otherwise not
    */
-  protected void removeDanglingSubNetworks(boolean recreateManagedIds) {
-    removeDanglingSubNetworks(null, recreateManagedIds);
-  }
-  
-  /**
-   * Remove dangling subnetworks when settings dictate it. In case the removal of subnetworks causes zones to
-   * become dangling the user is required to remove those afterwards themselves, by providing the zoning, only
-   * the directly impacted connectoids are removed if affected.
-   * 
-   * @param zoning to also remove connectoids from when they reference removed road/rail subnetworks
-   * @param recreateManagedIds when true recreate ids, otherwise not
-   */  
   public void removeDanglingSubNetworks(Zoning zoning, boolean recreateManagedIds) {
     if(settings.isRemoveDanglingSubnetworks()) {
 
@@ -523,31 +535,13 @@ public class OsmNetworkReader implements NetworkReader {
       if(layers.size()!=1) {
         LOGGER.warning("Currently OSM networks only support a single infrastructure layer in PLANit");
       }
-      
-      /* account for the connectoids that are to be removed as well in case they reside on a dangling network 
-       * TODO: refactor this listener and instead make sure it is automatically dealt with by the zoning as an
-       *  internal listener in some way
-       * as this always needs to happen not only in OSM 
-       * TODO: this listener and zoning in general does not properly support layers since vertices across layers
-       *  might have the same id whereas
-       * zone connectoids are now globally stored on the zoning and not per layer. This should be changed to
-       *  avoid this problem possibly easier when this functionality
-       * is not separate but dealt with within the zoning */
-      DirectedGraphModifierListener listener = null;
-      /* connectoids also follow the access link segments they lose, and the modes withdrawn from them */
-      UpdateConnectoidsOnLinkSegmentChangeHandler linkSegmentChangeListener = null;
-      if(zoning != null) {
-        listener = new UpdateConnectoidsOnVertexRemovalHandler(zoning);
-        layers.getFirst().getLayerModifier().addListener(listener);
-        linkSegmentChangeListener = new UpdateConnectoidsOnLinkSegmentChangeHandler(zoning);
-        layers.getFirst().getLayerModifier().addListener((DirectedGraphModifierListener) linkSegmentChangeListener);
-        layers.getFirst().getLayerModifier().addListener((LinkSegmentTypeModifierListener) linkSegmentChangeListener);
-      }
 
       /* one pass per activated mode, since being able to both reach and leave is a property of a mode rather
        * than of infrastructure. A one way street usually still permits pedestrians against the flow, so judging
        * this per track type cannot see a car trap at all. Access is withdrawn rather than infrastructure removed,
-       * because the link a car cannot use is typically carrying another mode perfectly well */
+       * because the link a car cannot use is typically carrying another mode perfectly well. Under strong
+       * connectivity the parsed turn restrictions count as well: a way they leave with no allowed turn onto it or
+       * off it loses the mode like a one way trap, and they stay as banned turns */
       var layer = layers.getFirst();
       for(var entry : settings.getRemoveDanglingSubnetworkModes().entrySet()) {
         var mode = getOsmNetworkToPopulate().getModes().get(entry.getKey());
@@ -580,9 +574,6 @@ public class OsmNetworkReader implements NetworkReader {
       var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
       cleanup.getRemovedIntersections().forEach(intersection -> planitEntityDiagnostics.registerIssue(
           OsmPlanitEntityIssue.INTERSECTION_LOST_BY_PRUNING, intersection.getExternalId()));
-      if(linkSegmentChangeListener != null) {
-        registerConnectoidAccessLosses(linkSegmentChangeListener.getResult());
-      }
       if(!cleanup.isEmpty()) {
         LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
       }
@@ -594,17 +585,12 @@ public class OsmNetworkReader implements NetworkReader {
       }
       if(recreateManagedIds) {
         layer.getLayerModifier().recreateManagedIdEntities();
+        /* removing connectoids leaves their ids as they are, so they are renumbered here as well */
+        if(zoning != null) {
+          zoning.getZoningModifier().recreateConnectoidIds();
+        }
       }
-      
-      /* remove listener as it is currently meant for local use only due to expensive initialisation which is also
-      not kept up to date */
-      if(zoning != null) {
-        var layerModifier = layers.getFirst().getLayerModifier();
-        layerModifier.removeListener(listener);
-        layerModifier.removeListener((DirectedGraphModifierListener) linkSegmentChangeListener);
-        layerModifier.removeListener((LinkSegmentTypeModifierListener) linkSegmentChangeListener);
-      }
-      
+
       /* logging stats  - after */
       {
         if(zoning == null) {
@@ -649,57 +635,6 @@ public class OsmNetworkReader implements NetworkReader {
     }
   }
 
-  /** Collect the osm network to populate
-   *
-   * @return osm network
-   */
-  protected PlanitOsmNetwork getOsmNetworkToPopulate() {
-    return this.osmNetworkToPopulate;
-  }
-  
-  /**
-   * Constructor 
-   * 
-   * @param osmNetwork network to populate 
-   */
-  protected OsmNetworkReader(final PlanitOsmNetwork osmNetwork){
-    this(CountryNames.GLOBAL, osmNetwork);
-  }  
-  
-  /**
-   * Constructor 
-   * 
-   * @param countryName to use
-   * @param osmNetwork network to populate
-   */
-  protected OsmNetworkReader(final String countryName, final PlanitOsmNetwork osmNetwork){
-    this(null, countryName, osmNetwork);
-  }  
-  
-  /**
-   * Constructor 
-   * 
-   * @param inputSource to use
-   * @param countryName to use
-   * @param osmNetworkToPopulate network to populate
-   */
-  protected OsmNetworkReader(
-      final URL inputSource, final String countryName, final PlanitOsmNetwork osmNetworkToPopulate){
-    this(new OsmNetworkReaderSettings(inputSource, countryName), osmNetworkToPopulate);
-  }    
-    
-  /**
-   * Constructor 
-   *  
-   * @param settings for populating the network
-   * @param osmNetworkToPopulate network to populate
-   */
-  protected OsmNetworkReader(OsmNetworkReaderSettings settings, final PlanitOsmNetwork osmNetworkToPopulate){
-    this.settings = settings;   
-    this.networkData = new OsmNetworkReaderData();
-    this.osmNetworkToPopulate = osmNetworkToPopulate;
-  }  
-     
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
    * given the configuration options that have been set
@@ -743,11 +678,8 @@ public class OsmNetworkReader implements NetworkReader {
     // clean up ids to be contiguous
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(osmNetworkToPopulate);
 
-    /* what became of the OSM entities read, and of the PLANit entities derived from them */
-    if(getSettings().isIntersectionParserActive()) {
-      networkData.getParseDiagnostics().logSummary(LOGGER, "[STATS] OSM traffic signals",
-          networkData.getTrafficSignalOsmNodeIds().size());
-      networkData.getPlanitEntityDiagnostics().logSummary(LOGGER, "[STATS] PLANit intersections");
+    if(!suppressSettingsAndDiagnosticsLogging) {
+      logDiagnosticsSummary();
     }
     LOGGER.info("OSM full network parsing...DONE");
     
@@ -762,6 +694,30 @@ public class OsmNetworkReader implements NetworkReader {
    */
   public OsmNetworkReaderSettings getSettings() {
     return settings;
+  }
+
+  /**
+   * The diagnostics on the PLANit entities of the last read, such as the intersections pruning removed
+   *
+   * @return the diagnostics
+   */
+  public OsmPlanitEntityDiagnostics getPlanitEntityDiagnostics() {
+    return networkData.getPlanitEntityDiagnostics();
+  }
+
+  /**
+   * Log what became of the OSM entities read, and of the PLANit entities derived from them: the traffic signals when
+   * intersections are parsed, and the PLANit entities when intersections are parsed or any issue is recorded on them
+   */
+  public void logDiagnosticsSummary() {
+    if(getSettings().isIntersectionParserActive()) {
+      networkData.getParseDiagnostics().logSummary(LOGGER, "[STATS] OSM traffic signals",
+          networkData.getTrafficSignalOsmNodeIds().size());
+    }
+    var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
+    if(getSettings().isIntersectionParserActive() || !planitEntityDiagnostics.isEmpty()) {
+      planitEntityDiagnostics.logSummary(LOGGER, "[STATS] PLANit entities");
+    }
   }
 
   /**

@@ -1659,7 +1659,7 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
       var accessEgressExecutor = new TransferZoningInjectAccessEgressExecutor(
           getProjectedBoundingAreaHelper(),
           getZoningReaderData().getPlanitConverterData());
-      accessEgressExecutor.execute(OsmZoningReaderData.getAccessEgressInjectionSettingsFrom(getSettings()));
+      accessEgressExecutor.execute(getSettings().getAccessEgressInjectionSettings());
 
     }catch(PlanItException e) {
       LOGGER.severe(e.getMessage());

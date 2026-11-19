@@ -11,14 +11,21 @@ import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 
 /**
- * Settings specific to railways when parsing OSM files and converting them to a PLANit memory model
+ * Settings specific to railways when parsing OSM files and converting them to a PLANit memory model. The keys a
+ * settings file can set are on {@link OsmRailwayYamlKeyedSettings}.
+ * <p>
+ * Rail in OSM ranges from main lines to trams in the street and disused track. These settings say which railway types
+ * and rail modes are parsed, how OSM rail modes such as light_rail map to PLANit modes, and how far a signal on a
+ * tram track may be from the road it crosses to hold car traffic there
+ * </p>
  * 
  * @author markr
  *
  */
-public class OsmRailwaySettings extends OsmWaySettings {
+public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
   
   private static final Logger LOGGER = Logger.getLogger(OsmRailwaySettings.class.getCanonicalName());
 
@@ -28,13 +35,6 @@ public class OsmRailwaySettings extends OsmWaySettings {
 
   /** by default the railway parser is deactivated */
   public static boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
-
-  /** default maximum distance from a traffic signal on a tram or light rail track to the road it crosses, in metres */
-  public static final double DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M = 50;
-
-  /** maximum distance from a traffic signal on a track to the road it crosses, see
-   * {@link #setMaximumDistanceTrackSignalToRoadCrossingInMeters(double)} */
-  private double maximumDistanceTrackSignalToRoadCrossingInMeters = DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M;
     
   /**
    * Create the immutable default OSM rail mode mappings used to initialise each instance.
@@ -126,72 +126,46 @@ public class OsmRailwaySettings extends OsmWaySettings {
     return isOsmWayTypeActivated(osmWayValue);
   }  
   
-  /**
-   * Choose to not parse the given railway type, e.g. railway=rail.
-   * 
-   * @param osmWayValue to use
-   */
-  public void deactivateOsmRailwayType(String osmWayValue) {
-    deactivateOsmWayType(osmWayValue);      
-  } 
-  
   /** deactivate all types for railway except the ones provides
-   * 
+   *
    * @param osmRailwayTypes to not deactivate
    */
+  @CoveredBySettingsKey("types")
   public void deactivateAllOsmRailwayTypesExcept(String... osmRailwayTypes) {
     deactivateAllOsmRailwayTypesExcept(Arrays.asList(osmRailwayTypes));
-  }  
-  
-  /** deactivate all types for railway except the ones provides
-   * 
-   * @param osmRailwayTypes to not deactivate
-   */
-  public void deactivateAllOsmRailwayTypesExcept(List<String> osmRailwayTypes) {
-    deactivateAllOsmRailwayTypes();
-    for(String osmWayType : osmRailwayTypes) {
-      if(OsmRailwayTags.isRailBasedRailway(osmWayType)) {
-       activateOsmRailwayType(osmWayType);
-      }
-    }
-  }    
-  
-  /**
-   * Choose to add given railway type to parsed types on top of the defaults, e.g. railway=rail.
-   * 
-   * @param osmWayValue to use
-   */
-  public void activateOsmRailwayType(String osmWayValue) {
-    activateOsmWayType(osmWayValue);
-  }  
-  
+  }
+
   /** activate all passed in railway types
    * @param osmRailwayValueTypes to activate
    */
+  @CoveredBySettingsKey("types+")
   public void activateOsmRailwayTypes(String... osmRailwayValueTypes) {
     activateOsmWayTypes(osmRailwayValueTypes);
-  }  
-  
+  }
+
   /** activate all passed in railway types
    * @param osmRailwayValueTypes to activate
    */
+  @CoveredBySettingsKey("types+")
   public void activateOsmRailwayTypes(List<String> osmRailwayValueTypes) {
     activateOsmWayTypes(osmRailwayValueTypes);
-  }   
-  
+  }
+
   /**
-   * activate all known OSM railway types 
+   * activate all known OSM railway types
    */
+  @CoveredBySettingsKey("types")
   public void activateAllOsmRailwayTypes() {
-    activateAllOsmWayTypes();    
-  } 
-  
+    activateAllOsmWayTypes();
+  }
+
   /**
    * deactivate all types for rail
    */
+  @CoveredBySettingsKey("types")
   public void deactivateAllOsmRailwayTypes() {
     deactivateAllOsmWayTypes();
-  } 
+  }
   
   /**
    * Log all de-activated OSM railway types
@@ -209,11 +183,12 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @param capacityPerLanePerHour new value in pcu/lane/h
    * @param maxDensityPerLane new value pcu/km/lane
    */
+  @CoveredBySettingsKey("capacityMaxDensity")
   public void overwriteCapacityMaxDensityDefaults(
       String osmRailwayType, Number capacityPerLanePerHour, Number maxDensityPerLane) {
-    overwriteOsmWayTypeDefaultCapacityMaxDensity(
-        OsmRailwayTags.RAILWAY, osmRailwayType, capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue());
-  }    
+    overwriteCapacityMaxDensityDefaults(osmRailwayType, new OsmWayTypeCapacityMaxDensity(
+        capacityPerLanePerHour.doubleValue(), maxDensityPerLane.doubleValue()));
+  }
   
   /**
    * check if defaults should be overwritten
@@ -248,44 +223,14 @@ public class OsmRailwaySettings extends OsmWaySettings {
   }  
 
   /* mode */
-  
-  /** activate an OSM rail mode based on its (default) mapping to a PLANit mode. This means that the osmMode
-   *  will be added to the PLANit network
-   * 
-   * @param osmRailMode to activate
-   */
-  public void activateOsmRailMode(String osmRailMode) {
-    String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);
-    if(!OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
-      LOGGER.warning(String.format("osm rail mode %s is not recognised when adding it to OSM to PLANit" +
-          " mode mapping, ignored", osmRailMode));
-      return;
-    }
-    activateOsmMode(osmRailMode);
-  }   
-  
-  /** Remove a mapping from OSM road mode to PLANit mode. This means that the osmMode will not be added to
-   *  the PLANit network
-   * You can only remove a mode when it is already added, either manually or through the default mapping
-   * 
-   * @param osmRailMode to remove
-   */
-  public void deactivateOsmRailMode(String osmRailMode) {
-    String convertedOsmMode = OsmRailModeTags.convertModeToRailway(osmRailMode);
-    if(!OsmRailwayTags.isRailBasedRailway(convertedOsmMode)) {
-      LOGGER.warning(String.format("osm rail mode %s is not recognised when removing it from OSM to PLANit" +
-          " mode mapping, ignored", osmRailMode));
-      return;
-    }
-    deactivateOsmMode(osmRailMode);
-  }
-  
+
   /** remove a mapping from OSM rail modes to PLANit modes. This means that the osmModes will not be added to
    * the PLANit network
    * You can only remove modes when they are already added, either manually or through the default mapping
-   * 
+   *
    * @param osmRailModes to remove
    */
+  @CoveredBySettingsKey("modes-")
   public void deactivateOsmRailModes(final List<String> osmRailModes) {
     if(osmRailModes == null) {
       return;
@@ -297,33 +242,27 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * 
    * @param osmRailModes to explicitly deactivate
    */
+  @CoveredBySettingsKey("modes-")
   public void deactivateOsmRailModes(final String... osmRailModes) {
     deactivateOsmRailModes(Arrays.asList(osmRailModes));
   }
 
   /** remove all rail modes from mapping
-   * 
+   *
    */
+  @CoveredBySettingsKey("modes")
   public void deactivateAllOsmRailModes() {
-    deactivateOsmModes(OsmRailModeTags.getSupportedRailModeTags());
-  }    
-  
+    deactivateAllOsmRailModesExcept(List.of());
+  }
+
   /** remove all rail modes from mapping except for the passed in ones
-   * 
+   *
    * @param remainingOsmRailModes to explicitly keep if present
    */
+  @CoveredBySettingsKey("modes")
   public void deactivateAllOsmRailModesExcept(final String... remainingOsmRailModes) {
     deactivateAllOsmRailModesExcept(Arrays.asList(remainingOsmRailModes));
-  } 
-  
-  /** remove all rail modes from mapping except for the passed in ones
-   * 
-   * @param remainingOsmRailModes to explicitly keep if present
-   */
-  public void deactivateAllOsmRailModesExcept(final List<String> remainingOsmRailModes) {
-    Collection<String> toBeRemovedModes = OsmRailModeTags.getSupportedRailModeTags();
-    deactivateAllModesExcept(toBeRemovedModes, remainingOsmRailModes);
-  }   
+  }
   
   /** convenience method that collects the currently mapped PLANit mode for the given OSM mode
    * 
@@ -343,7 +282,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
    * @return mapped osm modes, if not available empty collection is returned
    */  
   public final Set<String> getMappedOsmRailModes(final PredefinedModeType planitModeType) {
-    return getAcivatedOsmModes(planitModeType);
+    return getActivatedOsmModes(planitModeType);
   }   
     
   /**
@@ -356,24 +295,6 @@ public class OsmRailwaySettings extends OsmWaySettings {
     return collectAllowedOsmWayModes(osmRailwayValueType);    
   }
 
-  /** Get the maximum distance from a traffic signal on a tram or light rail track to the road it crosses
-   *
-   * @return distance in metres
-   */
-  public double getMaximumDistanceTrackSignalToRoadCrossingInMeters() {
-    return maximumDistanceTrackSignalToRoadCrossingInMeters;
-  }
-
-  /** Set the maximum distance from a traffic signal on a tram or light rail track to the road it crosses. Such a
-   * signal, with no road through its node, makes the node where its track crosses a road within this distance along
-   * the track a signalised junction, car traffic being held there for the tram; beyond it the signal is ignored
-   *
-   * @param distanceMeters distance to use
-   */
-  public void setMaximumDistanceTrackSignalToRoadCrossingInMeters(double distanceMeters) {
-    this.maximumDistanceTrackSignalToRoadCrossingInMeters = distanceMeters;
-  }
-
   /**
    * {@inheritDoc}
    */
@@ -381,7 +302,7 @@ public class OsmRailwaySettings extends OsmWaySettings {
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum track signal to road crossing distance (m)",
-        getMaximumDistanceTrackSignalToRoadCrossingInMeters(), level));
+        getMaximumDistanceTrackSignalToRoadCrossingMeters(), level));
     logModeMappings(level + 1);
   }
 }

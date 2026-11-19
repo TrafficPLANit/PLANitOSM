@@ -378,11 +378,11 @@ public class OsmNetworkLayerParser {
     Set<Mode> toBeRemovedModes;
     
     /* check if modes are overwritten by user settings directly */
-    if(settings.isModeAccessOverwrittenByOsmWayId(osmWay.getId())) {
-      
+    var overriddenOsmModes = settings.getOsmWayModeAccessOverride(osmWay.getId());
+    if(overriddenOsmModes != null) {
+
       /* use OSM modes given to identify to be added and removed modes */
-      var allowedPlanitModes = modeParser.getActivatedPlanitModes(
-          settings.getModeAccessOverwrittenByOsmWayId(osmWay.getId()));
+      var allowedPlanitModes = modeParser.getActivatedPlanitModes(overriddenOsmModes);
       /* reduce included modes to only the predefined modes supported by the layer the link segment type resides on,
       expensive, but overwrites are rare so ok */
       if(!allowedPlanitModes.isEmpty()) {

@@ -11,20 +11,13 @@ public enum OsmPlanitEntityIssue {
   /** an intersection removed again when pruning dangling subnetworks, its infrastructure unusable by any mode */
   INTERSECTION_LOST_BY_PRUNING("intersections removed by pruning"),
 
-  /** a mode a connectoid's access zone entry allowed, removed when pruning dangling subnetworks withdrew it from every
-   * access link segment of the entry */
-  CONNECTOID_ALLOWED_MODE_LOST_BY_PRUNING("connectoid allowed modes removed by pruning"),
+  /** a transfer zone with access or egress entries but no stop entry once the intermodal read has finished: travellers
+   * can reach it, but no vehicle stops there */
+  TRANSFER_ZONE_ACCESS_EGRESS_WITHOUT_STOP("transfer zones with access or egress but no stop"),
 
-  /** an access link segment of a connectoid's access zone entry, removed by pruning dangling subnetworks, or left
-   * allowing none of the modes it served */
-  CONNECTOID_ACCESS_LINK_SEGMENT_LOST_BY_PRUNING("connectoid access link segments removed by pruning"),
-
-  /** an access zone entry of a connectoid, left without access link segments or allowed modes by pruning dangling
-   * subnetworks */
-  CONNECTOID_ACCESS_ZONE_ENTRY_LOST_BY_PRUNING("connectoid access zone entries removed by pruning"),
-
-  /** a connectoid, left without access zone entries by pruning dangling subnetworks */
-  CONNECTOID_LOST_BY_PRUNING("connectoids removed by pruning"),
+  /** a transfer zone with a stop entry, which had access or egress entries when the zoning was read and has none once
+   * the intermodal read has finished: vehicles stop there, but travellers can no longer reach it */
+  TRANSFER_ZONE_STOP_WITHOUT_ACCESS_EGRESS("transfer zones whose stop lost its access and egress"),
 
   /** an intersection removed once every signal is handled, for having no approach a motorised road or rail mode can
    * use, e.g. a crossing between paths */

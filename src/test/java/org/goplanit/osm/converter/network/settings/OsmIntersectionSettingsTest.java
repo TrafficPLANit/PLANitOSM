@@ -63,8 +63,8 @@ public class OsmIntersectionSettingsTest {
 
     assertTrue(settings.isIntersectionParserActive());
     assertTrue(intersectionSettings.isParserActive());
-    assertEquals(50, intersectionSettings.getMaximumDistanceVehicleSignalToJunctionInMeters());
-    assertEquals(30, intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionInMeters());
+    assertEquals(50, intersectionSettings.getMaximumDistanceVehicleSignalToJunctionMeters());
+    assertEquals(30, intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionMeters());
     assertFalse(intersectionSettings.isBreakLinksAtIsolatedSignals());
     assertFalse(intersectionSettings.isConsolidateIntersections());
     assertFalse(intersectionSettings.getIntersectionCollapserSettings().hasCollapsedModes());
@@ -90,7 +90,7 @@ public class OsmIntersectionSettingsTest {
   public void resetRestoresTheDefaults() {
     var intersectionSettings = new OsmNetworkReaderSettings(CountryNames.AUSTRALIA).getIntersectionSettings();
     intersectionSettings.activateParser(false);
-    intersectionSettings.setMaximumDistanceVehicleSignalToJunctionInMeters(80);
+    intersectionSettings.setMaximumDistanceVehicleSignalToJunctionMeters(80);
     intersectionSettings.setBreakLinksAtIsolatedSignals(true);
     intersectionSettings.setConsolidateIntersections(true);
     intersectionSettings.getIntersectionConsolidatorSettings().setMaximumJoiningReachMeters(60);
@@ -99,7 +99,7 @@ public class OsmIntersectionSettingsTest {
     intersectionSettings.reset();
 
     assertTrue(intersectionSettings.isParserActive());
-    assertEquals(50, intersectionSettings.getMaximumDistanceVehicleSignalToJunctionInMeters());
+    assertEquals(50, intersectionSettings.getMaximumDistanceVehicleSignalToJunctionMeters());
     assertFalse(intersectionSettings.isBreakLinksAtIsolatedSignals());
     assertFalse(intersectionSettings.isConsolidateIntersections());
     assertEquals(IntersectionConsolidatorSettings.DEFAULT_MAXIMUM_JOINING_REACH_METERS,

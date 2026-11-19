@@ -83,7 +83,7 @@ final class OsmTrafficSignalThirdPass {
    */
   private boolean isWithinCrossingDistanceOfCrossingIgnoredAtBoundary(
       OsmNode vehicleSignal, List<OsmNode> crossingsIgnoredAtBoundary) {
-    var crossingDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+    var crossingDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters();
     var position = OsmNodeUtils.createPoint(vehicleSignal);
     return crossingsIgnoredAtBoundary.stream().anyMatch(crossing -> !Precision.greater(
         geoUtils.getDistanceInMetres(position, OsmNodeUtils.createPoint(crossing)), crossingDistance,
@@ -101,7 +101,7 @@ final class OsmTrafficSignalThirdPass {
    * @return true when part of a signalised junction, false otherwise
    */
   private boolean isPartOfSignalisedJunction(OsmNode signal) {
-    var maxDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+    var maxDistance = settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters();
     boolean onApproach = lookAheadForJunctions.findFirstSegmentsArrivingAtTargetsOnwardFromSignal(
         signal, null, maxDistance).stream().anyMatch(first -> {
           var intersection = intersectionPreRegistration.findIntersectionCreatedAt(first.getTargetNode());
@@ -181,7 +181,7 @@ final class OsmTrafficSignalThirdPass {
     var direction = OsmTrafficSignalUtils.getDirectionOf(
         signal, OsmModelUtil.getTagsAsMap(signal), settings.getIntersectionSettings());
     var reached = lookAheadForSignalisedCrossings.findFirstSegmentsArrivingAtTargetsOnwardFromSignal(signal, direction,
-        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters());
+        settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters());
     for (var crossing : reached) {
       intersectionPreRegistration.addApproach(
           intersectionPreRegistration.findIntersectionCreatedAt(crossing.getTargetNode()), crossing.arriving, signal);
@@ -292,7 +292,7 @@ final class OsmTrafficSignalThirdPass {
         networkData.getParseDiagnostics().register(
             OsmTrafficSignalOutcome.CROSSING_PART_OF_SIGNALISED_JUNCTION, crossingSignal);
       } else if (parsedArea.isNearOrBeyondBoundary(crossingSignal,
-          settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionInMeters())) {
+          settings.getIntersectionSettings().getMaximumDistanceSignalisedCrossingToJunctionMeters())) {
         /* whether it is isolated is unknown: a junction it belongs to may be cut off by the boundary. Nothing is
          * added and no link is broken */
         networkData.getParseDiagnostics().register(
@@ -319,7 +319,7 @@ final class OsmTrafficSignalThirdPass {
         networkData.getParseDiagnostics().register(
             OsmTrafficSignalOutcome.VEHICLE_SIGNAL_AT_CROSSING_AHEAD, vehicleSignal);
       } else if (parsedArea.isNearOrBeyondBoundary(
-          vehicleSignal, settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionInMeters()) ||
+          vehicleSignal, settings.getIntersectionSettings().getMaximumDistanceVehicleSignalToJunctionMeters()) ||
           isWithinCrossingDistanceOfCrossingIgnoredAtBoundary(vehicleSignal, crossingsIgnoredAtBoundary)) {
         networkData.getParseDiagnostics().register(
             OsmTrafficSignalOutcome.VEHICLE_SIGNAL_AT_EDGE_OF_PARSED_AREA, vehicleSignal);

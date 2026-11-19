@@ -112,21 +112,24 @@ public class OsmNetworkReaderFactory {
     return new OsmNetworkReader(settings, new PlanitOsmNetwork(IdGroupingToken.collectGlobalToken()));
   }
 
-  /** Identical to {@link #create(OsmNetworkReaderSettings)} except that the reader will not log its own settings.
+  /** Identical to {@link #create(OsmNetworkReaderSettings)} except that the reader will log neither its own settings
+   * nor its diagnostics summary.
    * <p>
    * For use by a composing reader that reports the configuration itself, so the user is presented with a single
    * settings block covering the whole parse rather than one per sub-reader. A composing reader may also alter
    * these settings for the duration of the parse, in which case logging them here would show values that do not
-   * reflect what the user configured.
+   * reflect what the user configured. Likewise, a composing reader that runs some of the reader's steps itself after
+   * the read, such as removing dangling subnetworks, logs the diagnostics summary once those have run, see
+   * {@link OsmNetworkReader#logDiagnosticsSummary()}.
    * </p>
    *
    * @param settings to use, make sure they are consistent with the network and country provided here otherwise
    *                 an exception will be thrown
    * @return created osm reader
    */
-  public static OsmNetworkReader createWithoutSettingsLogging(OsmNetworkReaderSettings settings) {
+  public static OsmNetworkReader createWithoutSettingsAndDiagnosticsLogging(OsmNetworkReaderSettings settings) {
     var osmNetworkReader = create(settings);
-    osmNetworkReader.suppressSettingsLogging();
+    osmNetworkReader.suppressSettingsAndDiagnosticsLogging();
     return osmNetworkReader;
   }
 

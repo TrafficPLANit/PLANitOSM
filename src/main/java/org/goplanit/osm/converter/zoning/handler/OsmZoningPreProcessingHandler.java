@@ -232,7 +232,7 @@ public class OsmZoningPreProcessingHandler extends OsmZoningHandlerBase {
     double projectedDistance = getProjectedBoundingAreaHelper().calculateProjectedDistanceToBoundingPolygon(
         OsmNodeUtils.createPoint(node), true);
     return projectedDistance < getNetworkToZoningData().getNetworkSettings().
-        getMaximumDistanceFerryOutsideBoundingPolygonInMeters();
+        getMaximumDistanceFerryOutsideBoundingPolygonMeters();
   }
 
   /**

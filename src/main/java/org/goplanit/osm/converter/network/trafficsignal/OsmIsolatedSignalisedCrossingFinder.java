@@ -146,7 +146,7 @@ final class OsmIsolatedSignalisedCrossingFinder {
     /* a vehicle signal on, or arriving at, the junction or a junction node near it, other than along the crossing's
      * own segment */
     double reach = intersectionSettings.getIntersectionConsolidatorSettings().getMaximumJoiningReachMeters();
-    double crossingDistance = intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
+    double crossingDistance = intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionMeters();
     var crossingRoad = junction.arriving.getParent();
     var road = LinkUtils.permitsMotorisedRoadModeOnAnySegment();
     Predicate<Edge> offCrossingRoad =
@@ -253,7 +253,7 @@ final class OsmIsolatedSignalisedCrossingFinder {
         start,
         true,
         crossingToStartEnd,
-        intersectionSettings.getMaximumDistanceVehicleSignalToJunctionInMeters(),
+        intersectionSettings.getMaximumDistanceVehicleSignalToJunctionMeters(),
         lookAheadForJunctions.travels,
         (current, crossingToItsEnd) -> {
           if (isVehicleSignalFacingBackTowardsCrossingOn(current, crossingToItsEnd, whereVehicleSignalsStand)) {
@@ -324,8 +324,8 @@ final class OsmIsolatedSignalisedCrossingFinder {
       findIsolatedCrossingsByJunctionArrival(
           OsmTrafficSignalFirstPassResult firstPass, VehicleSignalEvidence evidence) {
 
-    var crossingDistance = intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionInMeters();
-    var reach = intersectionSettings.getMaximumDistanceVehicleSignalToJunctionInMeters();
+    var crossingDistance = intersectionSettings.getMaximumDistanceSignalisedCrossingToJunctionMeters();
+    var reach = intersectionSettings.getMaximumDistanceVehicleSignalToJunctionMeters();
     var whereVehicleSignalsTaggedWithOneDirectionStand =
         findWhereVehicleSignalsTaggedWithOneDirectionStand(firstPass.vehicleSignalsNotOnJunctionNode);
     var vehicleSignalsByFirstArrival = findVehicleSignalsByFirstArrival(firstPass.vehicleSignalsNotOnJunctionNode);

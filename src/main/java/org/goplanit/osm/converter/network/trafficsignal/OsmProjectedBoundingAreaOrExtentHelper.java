@@ -51,7 +51,7 @@ final class OsmProjectedBoundingAreaOrExtentHelper {
     var parsedAreaBoundary = networkData.getBoundingArea() != null ?
         networkData.getBoundingArea() : networkData.getInputFileBounds();
     var parsedArea = OsmProjectedBoundingAreaHelper.ofNullable(parsedAreaBoundary, settings.getSourceCRS(),
-        settings.getCountryName(), settings.getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
+        settings.getCountryName(), settings.getMaximumDistanceFerryOutsideBoundingPolygonMeters());
     return new OsmProjectedBoundingAreaOrExtentHelper(parsedArea, networkData);
   }
 

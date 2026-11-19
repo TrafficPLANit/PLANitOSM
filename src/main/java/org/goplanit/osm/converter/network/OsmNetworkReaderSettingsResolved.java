@@ -50,19 +50,19 @@ public final class OsmNetworkReaderSettingsResolved {
     if (settings.isHighwayParserActive()) {
       populateResolvedWayTypes(
           settings.getHighwaySettings().getSetOfActivatedOsmWayLikeTypes(),
-          settings.getHighwaySettings().getAcivatedOsmModes(),
+          settings.getHighwaySettings().getActivatedOsmModes(),
           settings.getHighwaySettings()::collectAllowedOsmHighwayModes);
     }
     if (settings.isRailwayParserActive()) {
       populateResolvedWayTypes(
           settings.getRailwaySettings().getSetOfActivatedOsmWayLikeTypes(),
-          settings.getRailwaySettings().getAcivatedOsmModes(),
+          settings.getRailwaySettings().getActivatedOsmModes(),
           settings.getRailwaySettings()::collectAllowedOsmRailwayModes);
     }
     if (settings.isWaterwayParserActive()) {
       populateResolvedWayTypes(
           settings.getWaterwaySettings().getSetOfActivatedOsmWayLikeTypes(),
-          settings.getWaterwaySettings().getAcivatedOsmModes(),
+          settings.getWaterwaySettings().getActivatedOsmModes(),
           settings.getWaterwaySettings()::collectAllowedOsmWaterwayModes);
     }
   }

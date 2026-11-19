@@ -506,7 +506,7 @@ public abstract class OsmZoningHandlerBase extends DefaultOsmHandler {
         getZoningReaderData().getBoundingArea(),
         network2ZoningData.getNetworkSettings().getSourceCRS(),
         transferSettings.getCountryName(),
-        getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonInMeters());
+        getNetworkToZoningData().getNetworkSettings().getMaximumDistanceFerryOutsideBoundingPolygonMeters());
 
     /* gis initialisation */
     this.geoUtils = new PlanitJtsCrsUtils(getReferenceNetwork().getCoordinateReferenceSystem());

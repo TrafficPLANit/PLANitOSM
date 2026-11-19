@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.logging.Logger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Tests reading the OSM id of a PLANit entity created from an OSM entity
@@ -61,5 +63,13 @@ public class PlanitOsmUtilsTest {
     node.setExternalId("6581009093");
 
     assertEquals(6581009093L, PlanitOsmUtils.parseOsmId(node));
+  }
+
+  /** An id of zero or less is refused, as OSM numbers its entities from one up; a positive id passes */
+  @Test
+  public void notPositiveOsmIdIsRefused() {
+    assertThrows(IllegalArgumentException.class, () -> PlanitOsmUtils.throwIfNotPositiveOsmId(0));
+    assertThrows(IllegalArgumentException.class, () -> PlanitOsmUtils.throwIfNotPositiveOsmId(-3));
+    assertDoesNotThrow(() -> PlanitOsmUtils.throwIfNotPositiveOsmId(6581009093L));
   }
 }
