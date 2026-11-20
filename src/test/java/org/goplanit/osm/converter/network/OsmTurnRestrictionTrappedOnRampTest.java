@@ -3,6 +3,7 @@ package org.goplanit.osm.converter.network;
 import static org.goplanit.osm.test.OsmLayerTestUtils.TRAFFIC_SIGNAL_SCENARIO_DIR;
 import static org.goplanit.osm.test.OsmLayerTestUtils.bannedTurn;
 import static org.goplanit.osm.test.OsmLayerTestUtils.createReaderKeepingDanglingSubnetworks;
+import static org.goplanit.osm.test.OsmLayerTestUtils.isModeAllowedOnWay;
 import static org.goplanit.osm.test.OsmLayerTestUtils.segment;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,9 +14,7 @@ import java.util.logging.Logger;
 import org.goplanit.logging.Logging;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
-import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.mode.PredefinedModeType;
-import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -51,19 +50,6 @@ public class OsmTurnRestrictionTrappedOnRampTest {
   /** path of the scenario */
   private static final String SCENARIO =
       TRAFFIC_SIGNAL_SCENARIO_DIR.resolve("turn_restriction_trapping_on_ramp.osm").toString();
-
-  /**
-   * Verify whether any link segment of an OSM way allows a mode
-   *
-   * @param layer to search
-   * @param mode to verify
-   * @param osmWayId id of the OSM way, the external id of its links
-   * @return true when a link segment of the way allows the mode, false otherwise, also when the way has no links
-   */
-  private static boolean isModeAllowedOnWay(MacroscopicNetworkLayer layer, Mode mode, String osmWayId) {
-    return layer.getLinkSegments().stream().anyMatch(
-        segment -> osmWayId.equals(segment.getParent().getExternalId()) && segment.isModeAllowed(mode));
-  }
 
   /**
    * Create the logger once for all tests of the class

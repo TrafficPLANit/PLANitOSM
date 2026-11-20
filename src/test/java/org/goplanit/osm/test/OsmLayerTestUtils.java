@@ -7,6 +7,7 @@ import org.goplanit.osm.converter.network.OsmNetworkReader;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.mode.Mode;
 import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicBannedTurn;
 import org.goplanit.utils.network.layer.macroscopic.MacroscopicLinkSegment;
@@ -21,17 +22,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public final class OsmLayerTestUtils {
 
-  /** directory of the hand-made traffic signal scenario files */
-  public static final Path TRAFFIC_SIGNAL_SCENARIO_DIR = Path.of("src", "test", "resources", "osm", "traffic-signals");
-
-  /** directory of the hand-made lanes scenario files */
-  public static final Path LANES_SCENARIO_DIR = Path.of("src", "test", "resources", "osm", "lanes");
-
   /**
    * Not instantiable
    */
   private OsmLayerTestUtils() {
   }
+
+  /** directory of the hand-made traffic signal scenario files */
+  public static final Path TRAFFIC_SIGNAL_SCENARIO_DIR = Path.of("src", "test", "resources", "osm", "traffic-signals");
+
+  /** directory of the hand-made lanes scenario files */
+  public static final Path LANES_SCENARIO_DIR = Path.of("src", "test", "resources", "osm", "lanes");
 
   /**
    * The PLANit node created for an OSM node
@@ -76,6 +77,33 @@ public final class OsmLayerTestUtils {
   }
 
   /**
+   * Verify whether any link segment of an OSM way allows a mode
+   *
+   * @param layer to search
+   * @param mode to verify
+   * @param osmWayId id of the OSM way, the external id of its links
+   * @return true when a link segment of the way allows the mode, false otherwise, also when the way has no links
+   */
+  public static boolean isModeAllowedOnWay(MacroscopicNetworkLayer layer, Mode mode, String osmWayId) {
+    return layer.getLinkSegments().stream().anyMatch(
+        segment -> osmWayId.equals(segment.getParent().getExternalId()) && segment.isModeAllowed(mode));
+  }
+
+  /**
+   * A reader of a scenario in Australia with the default settings, changed as given. For a test that changes settings,
+   * or reads the reader's data after
+   *
+   * @param scenario path of the OSM file
+   * @param settingsChange made to the default settings, such as overrides
+   * @return the reader, not read yet
+   */
+  public static OsmNetworkReader createReader(String scenario, Consumer<OsmNetworkReaderSettings> settingsChange) {
+    var reader = OsmNetworkReaderFactory.create(scenario, CountryNames.AUSTRALIA);
+    settingsChange.accept(reader.getSettings());
+    return reader;
+  }
+
+  /**
    * A reader of a scenario in Australia, keeping every way: dangling subnetworks are not removed, so a scenario of
    * separate or one-way roads stays whole. For a test that changes more settings, or reads the reader's data after
    *
@@ -85,10 +113,10 @@ public final class OsmLayerTestUtils {
    */
   public static OsmNetworkReader createReaderKeepingDanglingSubnetworks(
       String scenario, Consumer<OsmNetworkReaderSettings> settingsChange) {
-    var reader = OsmNetworkReaderFactory.create(scenario, CountryNames.AUSTRALIA);
-    reader.getSettings().deactivateRemoveDanglingSubnetworks();
-    settingsChange.accept(reader.getSettings());
-    return reader;
+    return createReader(scenario, settings -> {
+      settings.deactivateRemoveDanglingSubnetworks();
+      settingsChange.accept(settings);
+    });
   }
 
   /**

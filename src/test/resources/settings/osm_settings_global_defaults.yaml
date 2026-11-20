@@ -205,6 +205,8 @@ network:
   newOsmWayTypes: {}
   # OSM nodes kept where they lie outside the bounding polygon, by node id (adds to the list)
   osmNodesKeptOutsideBoundingPolygon: []
+  # OSM relations not to parse, such as wrong turn restrictions, by relation id (adds to the list)
+  osmRelationsExcludedFromParsing: []
   # Lanes forward and backward along OSM ways, by way id, in place of their tags or the defaults (adds or replaces by
   # key)
   osmWayLaneOverrides: {}

@@ -14,6 +14,7 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
+import org.goplanit.osm.converter.settings.OsmReaderSettingsFactory;
 import org.goplanit.osm.converter.settings.OsmSettingsTestUtils;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -76,12 +77,13 @@ public class OsmNetworkReaderYamlKeyedSettingsTest {
   }
 
   /**
-   * The keys correcting single OSM ways and nodes by id, each written plainly or with a reason: each reads back with
-   * its reason, and the getters for one id see it
+   * The keys correcting single OSM ways, nodes and relations by id, each written plainly or with a reason: each reads
+   * back with its reason, the relations in increasing id order, and the getters for one id see it
    */
   @Test
   public void osmIdCorrectionsReadBack() {
     var settings = fromNetworkSection(
+        "  osmRelationsExcludedFromParsing: [34, {value: 12, reason: no left turn for through traffic only}]\n" +
         "  osmWaysExcludedFromParsing: [12, {value: 34, reason: duplicate carriageway}]\n" +
         "  osmWaysKeptOutsideBoundingPolygon: [56]\n" +
         "  osmNodesKeptOutsideBoundingPolygon: [{value: 78, reason: station entrance}]\n" +
@@ -89,6 +91,9 @@ public class OsmNetworkReaderYamlKeyedSettingsTest {
         "    90: [foot, bicycle]\n" +
         "    91: {value: [bus], reason: bus only}\n");
 
+    assertEquals(Map.of(12L, UserOverride.of(12L, "no left turn for through traffic only"), 34L, UserOverride.of(34L)),
+        settings.getOsmRelationsExcludedFromParsing());
+    assertEquals(List.of(12L, 34L), List.copyOf(settings.getOsmRelationsExcludedFromParsing().keySet()));
     assertEquals(Map.of(12L, UserOverride.of(12L), 34L, UserOverride.of(34L, "duplicate carriageway")),
         settings.getOsmWaysExcludedFromParsing());
     assertEquals(Map.of(56L, UserOverride.of(56L)), settings.getOsmWaysKeptOutsideBoundingPolygon());
@@ -108,6 +113,24 @@ public class OsmNetworkReaderYamlKeyedSettingsTest {
   @Test
   public void invalidOsmWayIdToExcludeIsRefused() {
     assertOneValueRefused("  osmWaysExcludedFromParsing: [0]\n");
+  }
+
+  /** A relation excluded again keeps only its second reason */
+  @Test
+  public void osmRelationExcludedAgainKeepsTheLastReason() {
+    var settings = fromNetworkSection("  osmRelationsExcludedFromParsing: [{value: 12, reason: checked on imagery}, " +
+        "{value: 12, reason: changed in OSM}]\n");
+
+    assertEquals(Map.of(12L, UserOverride.of(12L, "changed in OSM")), settings.getOsmRelationsExcludedFromParsing());
+  }
+
+  /** An OSM relation id of zero or less is refused, and nothing is stored: no OSM relation has one */
+  @Test
+  public void invalidOsmRelationIdToExcludeIsRefused() {
+    assertOneValueRefused("  osmRelationsExcludedFromParsing: [0]\n");
+    var settings = OsmReaderSettingsFactory.createNetworkReaderSettings();
+    assertThrows(IllegalArgumentException.class, () -> settings.excludeOsmRelationFromParsing(UserOverride.of(0L)));
+    assertTrue(settings.getOsmRelationsExcludedFromParsing().isEmpty());
   }
 
   /**

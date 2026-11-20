@@ -83,6 +83,9 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   /** see {@link #excludeOsmWayFromParsing(UserOverride)}, by OSM way id, none by default */
   private final Map<Long, UserOverride<Long>> osmWaysExcludedFromParsing = new TreeMap<>();
 
+  /** see {@link #excludeOsmRelationFromParsing(UserOverride)}, by OSM relation id, none by default */
+  private final Map<Long, UserOverride<Long>> osmRelationsExcludedFromParsing = new TreeMap<>();
+
   /** see {@link #setKeepOsmWayOutsideBoundingPolygon(UserOverride)}, by OSM way id, none by default */
   private final Map<Long, UserOverride<Long>> osmWaysKeptOutsideBoundingPolygon = new TreeMap<>();
 
@@ -231,6 +234,33 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   @SettingsRead(key = "osmWaysExcludedFromParsing")
   public Map<Long, UserOverride<Long>> getOsmWaysExcludedFromParsing() {
     return Collections.unmodifiableMap(osmWaysExcludedFromParsing);
+  }
+
+  /**
+   * Exclude an OSM relation from parsing, such as a turn restriction that is wrong in a way no setting can fix. An
+   * excluded turn restriction makes no banned turn, so the turn it would ban is allowed, and a road it would trap is
+   * judged without it when dangling subnetworks are removed. An id that no relation in the OSM input has is recorded as
+   * not found, with the reason as its detail. Excluding the relation again replaces the reason given before
+   *
+   * @param osmRelationId the OSM relation id, with the reason when there is one
+   * @throws IllegalArgumentException naming the id, storing nothing, when it is zero or less, which no OSM relation has
+   */
+  @SettingsWrite(key = "osmRelationsExcludedFromParsing", effect = SettingsKeyEffect.ADD_EACH,
+      level = SettingsKeyLevel.UNCOMMON,
+      description = "OSM relations not to parse, such as wrong turn restrictions, by relation id")
+  public void excludeOsmRelationFromParsing(UserOverride<Long> osmRelationId) {
+    PlanitOsmUtils.throwIfNotPositiveOsmId(osmRelationId.getValue());
+    osmRelationsExcludedFromParsing.put(osmRelationId.getValue(), osmRelationId);
+  }
+
+  /**
+   * Every OSM relation excluded from parsing with its reason, see {@link #excludeOsmRelationFromParsing(UserOverride)}
+   *
+   * @return the excluded relations by OSM relation id, in increasing relation id order, unmodifiable, empty when none
+   */
+  @SettingsRead(key = "osmRelationsExcludedFromParsing")
+  public Map<Long, UserOverride<Long>> getOsmRelationsExcludedFromParsing() {
+    return Collections.unmodifiableMap(osmRelationsExcludedFromParsing);
   }
 
   /**

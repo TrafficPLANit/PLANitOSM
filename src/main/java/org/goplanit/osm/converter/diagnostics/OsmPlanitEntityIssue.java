@@ -96,6 +96,10 @@ public enum OsmPlanitEntityIssue {
   /** an OSM way whose lanes are overridden by its OSM way id that no layer of the network turns into links */
   OSM_WAY_LANE_OVERRIDE_NOT_FOUND("ways with lanes overridden in the settings, not in the network"),
 
+  /** an OSM relation excluded from parsing by its OSM relation id that no relation in the OSM input has, such as a
+   * mistyped id, or one of a relation no longer in OSM */
+  OSM_RELATION_EXCLUDED_NOT_FOUND("relations excluded from parsing in the settings, not in the OSM input"),
+
   /** a banned turn not created, since a way or the via node of its OSM turn restriction is not in the network: dropped
    * while parsing, for example a way of a type not activated or one no activated mode may use, such as a service road
    * tagged access=private, or outside the area parsed. The restriction is taken to be tagged correctly */

@@ -87,6 +87,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   /** true once the circular ways are processed, so their links exist */
   private boolean circularWaysProcessed = false;
 
+  /** the OSM relation ids the settings exclude from parsing whose relation has not been handled yet, in increasing id
+   * order; those left once every relation is handled are not in the OSM input */
+  private final Set<Long> osmRelationIdsExcludedNotSeenYet;
+
        
   /** Verify if there exist any layers where the node is active either as an extreme node or internal to a PLANit link
    * @param osmNodeId to use
@@ -405,6 +409,18 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   private void registerBannedTurnIgnoredInfrastructureDropped(OsmRelation osmRelation, String missing) {
     getNetworkData().getPlanitEntityDiagnostics().registerIssue(
         OsmPlanitEntityIssue.BANNED_TURN_IGNORED_INFRASTRUCTURE_DROPPED, String.valueOf(osmRelation.getId()), missing);
+  }
+
+  /**
+   * Record an OSM relation the settings exclude from parsing that is not in the OSM input, such as a mistyped id, with
+   * the reason of its exclusion as the detail
+   *
+   * @param osmRelationId of the excluded relation not found
+   */
+  private void registerOsmRelationExcludedNotFound(long osmRelationId) {
+    getNetworkData().getPlanitEntityDiagnostics().registerIssue(
+        OsmPlanitEntityIssue.OSM_RELATION_EXCLUDED_NOT_FOUND, String.valueOf(osmRelationId),
+        getSettings().getOsmRelationsExcludedFromParsing().get(osmRelationId).getReason());
   }
 
   /**
@@ -824,65 +840,6 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
   }
 
-  /**
-   * Constructor
-   *
-   * @param networkToPopulate the network to populate
-   * @param networkData the data used for populating the network
-   * @param settings for the handler
-   */
-  public OsmNetworkMainProcessingHandler(
-      final PlanitOsmNetwork networkToPopulate,
-      final OsmNetworkReaderData networkData,
-      final OsmNetworkReaderSettings settings) {
-    super(networkToPopulate, networkData, settings);
-  }
-   
-
-  /**
-   * construct PLANit nodes from OSM nodes
-   * 
-   * @param osmNode node to parse
-   */
-  @Override
-  public void handle(OsmNode osmNode) {
-    // no longer needed, pre-processing has dealt with full eligibility already (refactored 18/7/26)
-  }
-
-  /**
-   * parse an OSM way to extract link and link segments (including type). If insufficient information
-   * is available the handler will try to infer the missing data by using defaults set by the user
-   */
-  @Override
-  public void handle(OsmWay osmWay) throws IOException {
-
-    /* filter out OSMWays that have been spatially deemed ineligible */
-    if(!getNetworkData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
-      return;
-    }
-
-    wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWay);
-            
-  }
-
-  /**
-   * parse network relations, i.e., banned turn movements
-   */
-  @Override
-  public void handle(OsmRelation osmRelation) throws IOException {
-    var tags = OsmModelUtil.getTagsAsMap(osmRelation);
-    if(!tags.containsKey(OsmTags.TYPE)){
-      return;
-    }
-
-    // process explicitly tagged (turn) restrictions
-    if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmTags.TYPE, OsmRelationTypeTags.RESTRICTION) &&
-        OsmRelationRestrictionTags.hasRestriction(tags)){
-      extractOsmTurnRestriction(osmRelation, tags);
-    }
-  }
-
-
   /** extract the correct link segment type based on the configuration of supported modes, the defaults for the given
    * OSM way and any
    * modifications to the mode access based on the passed in tags of the OSM way
@@ -921,6 +878,74 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
+   * Constructor
+   *
+   * @param networkToPopulate the network to populate
+   * @param networkData the data used for populating the network
+   * @param settings for the handler
+   */
+  public OsmNetworkMainProcessingHandler(
+      final PlanitOsmNetwork networkToPopulate,
+      final OsmNetworkReaderData networkData,
+      final OsmNetworkReaderSettings settings) {
+    super(networkToPopulate, networkData, settings);
+    this.osmRelationIdsExcludedNotSeenYet = new TreeSet<>(settings.getOsmRelationsExcludedFromParsing().keySet());
+  }
+   
+
+  /**
+   * construct PLANit nodes from OSM nodes
+   * 
+   * @param osmNode node to parse
+   */
+  @Override
+  public void handle(OsmNode osmNode) {
+    // no longer needed, pre-processing has dealt with full eligibility already (refactored 18/7/26)
+  }
+
+  /**
+   * parse an OSM way to extract link and link segments (including type). If insufficient information
+   * is available the handler will try to infer the missing data by using defaults set by the user
+   */
+  @Override
+  public void handle(OsmWay osmWay) throws IOException {
+
+    /* filter out OSMWays that have been spatially deemed ineligible */
+    if(!getNetworkData().getOsmSpatialEligibilityData().isOsmWaySpatiallyEligible(osmWay.getId())){
+      return;
+    }
+
+    wrapHandleInfrastructureOsmWay(osmWay, this::handleOsmWay);
+            
+  }
+
+  /**
+   * parse network relations, i.e., banned turn movements. A relation the settings exclude from parsing is left out
+   * before anything else, wherever it lies, see
+   * {@link org.goplanit.osm.converter.network.settings.OsmNetworkReaderYamlKeyedSettings#excludeOsmRelationFromParsing}
+   */
+  @Override
+  public void handle(OsmRelation osmRelation) throws IOException {
+    var excluded = getSettings().getOsmRelationsExcludedFromParsing();
+    if(!excluded.isEmpty() && excluded.containsKey(osmRelation.getId())){
+      osmRelationIdsExcludedNotSeenYet.remove(osmRelation.getId());
+      return;
+    }
+
+    var tags = OsmModelUtil.getTagsAsMap(osmRelation);
+    if(!tags.containsKey(OsmTags.TYPE)){
+      return;
+    }
+
+    // process explicitly tagged (turn) restrictions
+    if(OsmTagUtils.keyMatchesAnyValueTag(tags, OsmTags.TYPE, OsmRelationTypeTags.RESTRICTION) &&
+        OsmRelationRestrictionTags.hasRestriction(tags)){
+      extractOsmTurnRestriction(osmRelation, tags);
+    }
+  }
+
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -934,6 +959,9 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     turnRestrictionsOnCircularWays.forEach(
         restriction -> extractOsmTurnRestriction(restriction.first(), restriction.second()));
     turnRestrictionsOnCircularWays.clear();
+
+    /* every relation is handled, so an excluded relation not handled is not in the OSM input */
+    osmRelationIdsExcludedNotSeenYet.forEach(this::registerOsmRelationExcludedNotFound);
             
     /* delegate to each layer handler present, do this in deterministic order to ensure any created
     PLANit links/segments
