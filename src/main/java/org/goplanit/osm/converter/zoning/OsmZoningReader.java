@@ -61,20 +61,6 @@ public class OsmZoningReader implements ZoningReader {
   /** zoning to populate */
   private Zoning zoning;
 
-  /** when set, this reader does not log its own settings, see {@link #suppressSettingsLogging()} */
-  private boolean suppressSettingsLogging = false;
-       
-  /**
-   * Log some information about this reader's configuration
-   */
-  private void logInfo() {
-    if(suppressSettingsLogging){
-      /* a composing reader reports the configuration on our behalf */
-      return;
-    }
-    getSettings().logSettings();
-  }
-
   /** Make sure that if a bounding area is available on the network, any explicitly defined zoning bounding polygon
    * should ideally not exceed the network bounding area since it makes little sense to try and parse pt infrastructure
    * outside the network's geographically parsed area. If it does exceed, log a warning and replace it with the network
@@ -338,12 +324,40 @@ public class OsmZoningReader implements ZoningReader {
   }
 
   /**
-   * Suppress the logging of this reader's settings. Intended for a composing reader that logs the configuration
-   * on this reader's behalf, so it appears once and in one place rather than piecemeal per sub-reader. Package
-   * private so only the factory can apply it at creation time.
+   * Log the settings, at the start of {@link #read()}, before parsing. The zoning reader of an intermodal read, see
+   * {@link org.goplanit.osm.converter.intermodal.OsmIntermodalReader}, leaves this out, since the intermodal reader
+   * logs the settings of the whole read once
    */
-  protected void suppressSettingsLogging() {
-    this.suppressSettingsLogging = true;
+  protected void logSettingsAtStartOfRead() {
+    getSettings().logSettings();
+  }
+
+  /**
+   * Finalise the parsed zoning as the settings ask: remove dangling zones, such as transfer zones left without a
+   * connectoid, then dangling transfer zone groups. These are the steps on the parsed zoning as a whole, so a step added
+   * later that works on the parsed zoning as a whole goes here too.
+   * <p>
+   * {@link #read()} finalises the zoning itself once parsing is done, see {@link #finaliseAtEndOfRead()}. An intermodal
+   * read, see {@link org.goplanit.osm.converter.intermodal.OsmIntermodalReader}, finalises it once it has finalised the
+   * network, since removing dangling subnetworks there can leave more zones dangling
+   * </p>
+   */
+  protected void finaliseParsedZoning() {
+    boolean recreateIds = false; // done afterwards, with the xml ids synced
+    if(getSettings().isRemoveDanglingZones()) {
+      PlanitZoningUtils.removeDanglingZones(zoning, recreateIds);
+    }
+    if(getSettings().isRemoveDanglingTransferZoneGroups()) {
+      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning, recreateIds);
+    }
+  }
+
+  /**
+   * Finalise the parsed zoning at the end of {@link #read()}, see {@link #finaliseParsedZoning()}. The zoning reader of
+   * an intermodal read leaves this out: the intermodal reader finalises the zoning once it has finalised the network
+   */
+  protected void finaliseAtEndOfRead() {
+    finaliseParsedZoning();
   }
 
   /**
@@ -415,7 +429,14 @@ public class OsmZoningReader implements ZoningReader {
   /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a PLANit Zoning instance given the configuration options
    * that have been set
-   * 
+   * <p>
+   * Logs the settings, see {@link #logSettingsAtStartOfRead()}, parses, finalises the parsed zoning, see
+   * {@link #finaliseAtEndOfRead()}, and syncs the ids. The zoning reader of an intermodal read leaves out the logging
+   * and finalising steps: the intermodal reader logs the settings of the whole read itself, and finalises the zoning
+   * once it has finalised the network. So a step that works on the parsed zoning as a whole goes in
+   * {@link #finaliseParsedZoning()}, not here
+   * </p>
+   *
    * @return macroscopic zoning that has been parsed
    */
   @Override
@@ -444,7 +465,7 @@ public class OsmZoningReader implements ZoningReader {
     initialiseBeforeParsing(boundaryManager);
     
     OsmZoningHandlerProfiler handlerProfiler = new OsmZoningHandlerProfiler();
-    logInfo();
+    logSettingsAtStartOfRead();
 
     // Named bounding boundary extraction (if needed)
     performBoundingAreaPreProcessing(boundaryManager);
@@ -460,17 +481,9 @@ public class OsmZoningReader implements ZoningReader {
     
     /* log stats */
     handlerProfiler.logProcessingStats(zoningReaderData, zoning);
-    
+
     /* remove any dangling zones, e g., transfer zones without connectoids etc. */
-    boolean recreateIds = false; // do after with XML id syncing
-    if(getSettings().isRemoveDanglingZones()) {
-      PlanitZoningUtils.removeDanglingZones(zoning, recreateIds);
-    }
-    
-    /* remove any dangling zones, e g., transfer zones without connectoids etc. */
-    if(getSettings().isRemoveDanglingTransferZoneGroups()) {    
-      PlanitZoningUtils.removeDanglingTransferZoneGroups(zoning, recreateIds);
-    }
+    finaliseAtEndOfRead();
 
     // recreate and sync ids (except virtual network)
     ZoningModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(zoning);

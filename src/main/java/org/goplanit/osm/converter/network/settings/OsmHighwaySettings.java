@@ -266,21 +266,6 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
     }     
   }
 
-  /** Remove a mapping from OSM road modes to PLANit modes. This means that the osmModes will not be added
-   *  to the PLANit network.
-   * You can only remove modes when they are already added, either manually or through the default mapping
-   *
-   * @param osmRoadModes to remove
-   */
-  @CoveredBySettingsKey("modes-")
-  public void deactivateOsmRoadModes(final List<String> osmRoadModes) {
-    if(osmRoadModes == null) {
-      return;
-    }
-    osmRoadModes.forEach(this::deactivateOsmRoadMode);
-  }  
-  
-  
   /** Remove all road modes from mapping except for the passed in ones
    * 
    * @param deactivateAllRoadModesExcept to explicitly keep if present
@@ -294,23 +279,6 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
       exceptionList = Arrays.asList(deactivateAllRoadModesExcept);
     }    
     deactivateAllOsmRoadModesExcept(exceptionList);
-  }   
-  
-  /** deactivate provided road modes
-   *
-   * @param osmRoadModes to explicitly deactivate
-   */
-  @CoveredBySettingsKey("modes-")
-  public void deactivateOsmRoadModes(final String... osmRoadModes) {
-    deactivateOsmRoadModes(Arrays.asList(osmRoadModes));
-  } 
-    
-  /**
-   * remove all road modes from the network when parsing
-   */
-  @CoveredBySettingsKey("modes")
-  public void removeAllRoadModes() {
-    deactivateAllOsmRoadModesExcept((String[])null);
   }
   
   /** convenience method that collects the currently mapped PLANit road mode for the given OSM mode

@@ -198,36 +198,6 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
   
   /* mode */
 
-  /** remove a mapping from OSM water modes to PLANit modes. This means that the osmModes will not be added to the PLANit network
-   * You can only remove modes when they are already added, either manually or through the default mapping
-   *
-   * @param osmWaterModes to remove
-   */
-  @CoveredBySettingsKey("modes-")
-  public void deactivateOsmWaterModes(final List<String> osmWaterModes) {
-    if(osmWaterModes == null) {
-      return;
-    }
-    osmWaterModes.forEach(this::deactivateOsmWaterMode);
-  }   
-  
-  /** deactivate provided water modes
-   * 
-   * @param osmWaterModes to explicitly deactivate
-   */
-  @CoveredBySettingsKey("modes-")
-  public void deactivateOsmWaterModes(final String... osmWaterModes) {
-    deactivateOsmWaterModes(Arrays.asList(osmWaterModes));
-  }
-
-  /** remove all water modes from mapping
-   *
-   */
-  @CoveredBySettingsKey("modes")
-  public void deactivateAllOsmWaterModes() {
-    deactivateAllOsmWaterModesExcept(List.of());
-  }
-
   /** remove all water modes from mapping except for the passed in ones
    *
    * @param remainingOsmWaterModes to explicitly keep if present

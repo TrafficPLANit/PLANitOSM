@@ -427,19 +427,6 @@ public class OsmPublicTransportReaderSettings extends OsmPublicTransportReaderYa
   }
 
   /**
-   * Set  search radius for ferry stop to land network
-   * @param searchRadiusFerryStopToLandNetworkMeters  search radius, above 0
-   * @throws IllegalArgumentException naming the value, the setting unchanged, when it is missing or not above 0
-   */
-  @CoveredBySettingsKey("accessEgressInjection.ferryStopToLandNetworkSearchRadiusMeters")
-  public void setFerryStopToLandNetworkSearchRadiusMeters(Number searchRadiusFerryStopToLandNetworkMeters) {
-    ExceptionUtils.throwIllegalSettingValueIf(searchRadiusFerryStopToLandNetworkMeters == null,
-        "Ferry stop to land network search radius", null, "given");
-    getAccessEgressInjectionSettings().setFerryStopToLandNetworkSearchRadiusMeters(
-        searchRadiusFerryStopToLandNetworkMeters.doubleValue());
-  }
-
-  /**
    * flag for connecting bus based stops to nearby passenger network if not already connected
    * @return true when active, false otherwise
    */

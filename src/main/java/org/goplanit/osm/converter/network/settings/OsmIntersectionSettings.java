@@ -14,7 +14,6 @@ import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.misc.CollectionUtils;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
-import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 
@@ -134,18 +133,6 @@ public class OsmIntersectionSettings extends OsmIntersectionYamlKeyedSettings {
   @Override
   public void reset() {
     super.reset();
-  }
-
-  /** Consolidate the parsed intersections or not, see {@link #setConsolidateIntersections(boolean)}, with the given
-   * settings in place of those held
-   *
-   * @param flag to set
-   * @param consolidatorSettings to tune consolidation with
-   */
-  @CoveredBySettingsKey({"consolidateIntersections", "intersectionConsolidator"})
-  public void setConsolidateIntersections(boolean flag, IntersectionConsolidatorSettings consolidatorSettings) {
-    setConsolidateIntersections(flag);
-    setIntersectionConsolidatorSettings(consolidatorSettings);
   }
 
   /** Same as {@link #joinOsmNodesIntoOneIntersection(UserOverride)}, without a reason

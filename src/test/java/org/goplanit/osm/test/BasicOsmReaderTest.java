@@ -17,6 +17,7 @@ import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.SettingsFileContentType;
 import org.goplanit.utils.zoning.connectoid.DirectedConnectoidAccessZoneEntry;
 import org.goplanit.utils.zoning.connectoid.ZoneConnectoidType;
 import org.goplanit.zoning.Zoning;
@@ -24,8 +25,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Logger;
@@ -278,6 +282,64 @@ public class BasicOsmReaderTest {
         OsmPlanitEntityIssue.TRANSFER_ZONE_ACCESS_EGRESS_WITHOUT_STOP));
     assertEquals(List.of("101"), planitEntityDiagnostics.getEntityIds(
         OsmPlanitEntityIssue.TRANSFER_ZONE_STOP_WITHOUT_ACCESS_EGRESS));
+  }
+
+  /**
+   * An intermodal read with the public transport parser switched off gives no result and leaves the parser off
+   */
+  @Test
+  public void osmIntermodalReaderReturnsNullWithPublicTransportOff() throws PlanItException {
+    OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(
+        STOPS_REACHING_NETWORK_IN_PART_ONCE_PRUNED_OSM, CountryNames.AUSTRALIA);
+    osmReader.getSettings().getPublicTransportSettings().activateParser(false);
+
+    assertNull(osmReader.read());
+    assertFalse(osmReader.getSettings().getPublicTransportSettings().isParserActive());
+  }
+
+  /**
+   * An intermodal read whose network and public transport settings name different OSM files gives no result, and each
+   * keeps its own file
+   */
+  @Test
+  public void osmIntermodalReaderReturnsNullWithDifferentInputSources() throws PlanItException {
+    OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(
+        STOPS_REACHING_NETWORK_IN_PART_ONCE_PRUNED_OSM, CountryNames.AUSTRALIA);
+    var networkInputSource = osmReader.getSettings().getNetworkSettings().getInputSource();
+    osmReader.getSettings().getPublicTransportSettings().setInputSource(SYDNEYCBD_2023_OSM);
+    var publicTransportInputSource = osmReader.getSettings().getPublicTransportSettings().getInputSource();
+
+    assertNull(osmReader.read());
+    assertEquals(networkInputSource, osmReader.getSettings().getNetworkSettings().getInputSource());
+    assertEquals(publicTransportInputSource, osmReader.getSettings().getPublicTransportSettings().getInputSource());
+  }
+
+  /**
+   * An intermodal read that removes dangling subnetworks, consolidates intersections, computes green ratios and
+   * removes dangling zones leaves every setting as it was given: the settings written with every key before and after
+   * the read are the same
+   *
+   * @param tempDir folder for the settings files written
+   */
+  @Test
+  public void osmIntermodalReaderLeavesSettingsAsGiven(@TempDir Path tempDir) throws PlanItException, IOException {
+    OsmIntermodalReader osmReader = OsmIntermodalReaderFactory.create(
+        STOPS_REACHING_NETWORK_IN_PART_ONCE_PRUNED_OSM, CountryNames.AUSTRALIA);
+    var networkSettings = osmReader.getSettings().getNetworkSettings();
+    networkSettings.getHighwaySettings().activateOsmHighwayTypes(OsmHighwayTags.FOOTWAY);
+    networkSettings.deactivateRemoveDanglingSubnetworks();
+    networkSettings.activateRemoveDanglingSubnetworks(PredefinedModeType.BUS);
+    networkSettings.activateRemoveDanglingSubnetworks(PredefinedModeType.PEDESTRIAN);
+    networkSettings.getIntersectionSettings().setConsolidateIntersections(true);
+    networkSettings.getIntersectionSettings().setComputeGreenRatiosAndSaturationFlowFactors(true);
+    var settingsBefore = tempDir.resolve("settings_before.yaml");
+    osmReader.getSettings().writeSettingsFile(settingsBefore, SettingsFileContentType.ALL_KEYS, true);
+
+    assertNotNull(osmReader.read());
+
+    var settingsAfter = tempDir.resolve("settings_after.yaml");
+    osmReader.getSettings().writeSettingsFile(settingsAfter, SettingsFileContentType.ALL_KEYS, true);
+    assertEquals(Files.readAllLines(settingsBefore), Files.readAllLines(settingsAfter));
   }
 
   /**

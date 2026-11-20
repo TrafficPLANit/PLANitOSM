@@ -84,10 +84,6 @@ public class OsmNetworkReader implements NetworkReader {
   /** settings to use */
   private final OsmNetworkReaderSettings settings;
 
-  /** when set, this reader logs neither its own settings nor its diagnostics summary, see
-   * {@link #suppressSettingsAndDiagnosticsLogging()} */
-  private boolean suppressSettingsAndDiagnosticsLogging = false;
-  
   /**
    * Helper to create an OSM4jReader, handler for a given stage and perform the parsing
    *
@@ -106,19 +102,6 @@ public class OsmNetworkReader implements NetworkReader {
         networkData,
         settings);
     OsmHandlerUtils.readWithHandler(osmReader, osmHandler);
-  }
-
-  /**
-   * Log some information about this reader's configuration
-   */
-  private void logInfo() {
-
-    if(suppressSettingsAndDiagnosticsLogging){
-      /* a composing reader reports the configuration on our behalf */
-      return;
-    }
-    getSettings().logSettings();
-
   }
 
   /**
@@ -357,8 +340,8 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Compute the green ratios and saturation flow factors of the approaches of each layer's intersections when the
-   * settings ask for it, see {@link OsmIntersectionSettings#setComputeGreenRatiosAndSaturationFlowFactors(boolean)}.
+   * Compute the green ratios and saturation flow factors of the approaches of each layer's intersections, as asked for
+   * with {@link OsmIntersectionSettings#setComputeGreenRatiosAndSaturationFlowFactors(boolean)}.
    * Without consolidation it warns once, since a junction parsed as several intersections is timed as several
    * junctions. What it did is logged on one line per layer, and each intersection that could not be computed is
    * recorded with the PLANit entity diagnostics
@@ -367,9 +350,6 @@ public class OsmNetworkReader implements NetworkReader {
    */
   private void computeGreenRatiosAndSaturationFlowFactors(CoordinateReferenceSystem crs) {
     var intersectionSettings = settings.getIntersectionSettings();
-    if(!intersectionSettings.isComputeGreenRatiosAndSaturationFlowFactors()) {
-      return;
-    }
     if(!intersectionSettings.isConsolidateIntersections()) {
       LOGGER.warning("Green ratios are computed without consolidating intersections, so a junction parsed as " +
           "several intersections is timed as several junctions and its green ratios can be far off");
@@ -389,30 +369,130 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Suppress the logging of this reader's settings and of its diagnostics summary. Intended for a composing reader that
-   * logs the configuration on this reader's behalf, so it appears once and in one place rather than piecemeal per
-   * sub-reader, and that runs some of this reader's steps itself after the read, so it logs the diagnostics summary
-   * once those have run, see {@link #logDiagnosticsSummary()}. Package private so only the factory can apply it at
-   * creation time.
+   * Remove dangling subnetworks, for each mode the settings configure, see
+   * {@link OsmNetworkReaderSettings#getRemoveDanglingSubnetworkModes()}. The connectoids of a zoning attached to the
+   * network follow the removal by themselves; zones left dangling are for the caller to remove afterwards.
+   * <p>
+   * OSM holds roads and tracks that a mode can reach but not leave, or leave but not reach, such as a car park mapped
+   * without its exit, or an on-ramp whose only way on is a banned turn. A router cannot use them, and demand placed on
+   * them has nowhere to go. So per mode configured, the mode is taken off every link segment outside the subnetworks
+   * kept, and only infrastructure no mode can use any more is removed. The size thresholds and the connectivity per
+   * mode say which subnetworks are kept; the log lists their sizes so a threshold can be chosen from one run
+   * </p>
+   *
+   * @param zoning attached to the network, whose transfer connectoids are counted in the log, may be null
    */
-  protected void suppressSettingsAndDiagnosticsLogging() {
-    this.suppressSettingsAndDiagnosticsLogging = true;
+  private void removeDanglingSubNetworks(Zoning zoning) {
+    boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
+
+    /* logging stats  - before */
+    MacroscopicNetworkLayers layers = getOsmNetworkToPopulate().getTransportLayers();
+    {
+      if(zoning == null) {
+        LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d",
+                layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
+      }else {
+        LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d, connectoids %d",
+                layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(),
+                zoning.getTransferConnectoids().size()));
+      }
+    }
+
+    if(layers.size()!=1) {
+      LOGGER.warning("Currently OSM networks only support a single infrastructure layer in PLANit");
+    }
+
+    /* one pass per activated mode, since being able to both reach and leave is a property of a mode rather
+     * than of infrastructure. A one way street usually still permits pedestrians against the flow, so judging
+     * this per track type cannot see a car trap at all. Access is withdrawn rather than infrastructure removed,
+     * because the link a car cannot use is typically carrying another mode perfectly well. Under strong
+     * connectivity the parsed turn restrictions count as well: a way they leave with no allowed turn onto it or
+     * off it loses the mode like a one way trap, and they stay as banned turns */
+    var layer = layers.getFirst();
+    for(var entry : settings.getRemoveDanglingSubnetworkModes().entrySet()) {
+      var mode = getOsmNetworkToPopulate().getModes().get(entry.getKey());
+      if(mode == null) {
+        /* the defaults cover modes a given parse may not have activated at all, which is not worth reporting:
+         * there is simply no network of that mode to judge. Logged at fine for anyone chasing why a mode they
+         * did configure explicitly appears to have been skipped */
+        LOGGER.fine(String.format(
+            "Dangling subnetworks configured for mode %s which is not part of this network, skipped",
+            entry.getKey().value()));
+        continue;
+      }
+      var config = entry.getValue();
+      var result = MacroscopicNetworkLayerUtils.restrictModeAccessToConnectedSubNetworks(
+          layer, mode, config.getBelowSize(), config.getAboveSize(), keepLargest,
+          config.getConnectivity(), null);
+      LOGGER.info(String.format("Dangling subnetworks (%s): %s", config, result));
+      /* the size distribution rather than the totals alone, since it is what makes a size threshold choosable
+       * from a single run instead of requiring one run per candidate value. Indented beneath the line reporting
+       * the pruning itself, a line per bin, rather than run together on one line which becomes unreadable as
+       * soon as more than a couple of bins are populated */
+      for(var binLine : result.getSizeBinSummaryLines()) {
+        LOGGER.info(String.format("  %s", binLine));
+      }
+    }
+
+    /* only once every mode has been dealt with is it settled what nothing can use any more; the intersections this
+     * removes are recorded as lost */
+    var cleanup = layer.getLayerModifier().removeInfrastructureWithoutModeAccess();
+    var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
+    cleanup.getRemovedIntersections().forEach(intersection -> planitEntityDiagnostics.registerIssue(
+        OsmPlanitEntityIssue.INTERSECTION_LOST_BY_PRUNING, intersection.getExternalId()));
+    if(!cleanup.isEmpty()) {
+      LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
+    }
+    /* withdrawing access creates a link segment type variant per original type and mode withdrawn, and many of
+     * those end up identical to each other or to a type already present. Consolidation only runs on the default
+     * types at initialisation, so without repeating it here every variant persists into the written network */
+    if(settings.isConsolidateLinkSegmentTypes()) {
+      getOsmNetworkToPopulate().consolidateFunctionallyEquivalentLinkSegmentTypes();
+    }
+
+    /* logging stats  - after */
+    {
+      if(zoning == null) {
+        LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d",
+                layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
+      }else {
+        LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d, connectoids %d",
+                layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(),
+                zoning.getTransferConnectoids().size()));
+      }
+    }
+  }
+
+  /**
+   * Complete the parsed intersections of each layer as the settings ask: consolidate them, see
+   * {@link OsmIntersectionSettings#setConsolidateIntersections(boolean)}, compute the green ratios and saturation flow
+   * factors of their approaches, see
+   * {@link OsmIntersectionSettings#setComputeGreenRatiosAndSaturationFlowFactors(boolean)}, and collapse the
+   * consolidated intersections for the modes chosen, see
+   * {@link OsmIntersectionSettings#getIntersectionCollapserSettings()}, in that order: collapsing can move the end of a
+   * link to a centre node, which changes the direction an approach arrives in. Meant to run once dangling subnetworks
+   * are removed, so only what remains is completed, and before ids are synced, and only when intersections are parsed
+   */
+  private void consolidateIntersectionsComputeGreenRatiosAndCollapse() {
+    var intersectionSettings = settings.getIntersectionSettings();
+    var crs = getOsmNetworkToPopulate().getCoordinateReferenceSystem();
+    if(intersectionSettings.isConsolidateIntersections()) {
+      consolidateIntersections(crs);
+    }
+    if(intersectionSettings.isComputeGreenRatiosAndSaturationFlowFactors()) {
+      computeGreenRatiosAndSaturationFlowFactors(crs);
+    }
+    if(intersectionSettings.isConsolidateIntersections()) {
+      collapseIntersections(crs);
+    }
   }
 
   /** Collect the network data gathered
-   * 
+   *
    * @return network data
    */
   protected OsmNetworkReaderData getNetworkReaderData() {
     return networkData;
-  }
-
-  /** Remove dangling subnetworks when settings dictate it
-   *
-   * @param recreateManagedIds when true recreate ids, otherwise not
-   */
-  protected void removeDanglingSubNetworks(boolean recreateManagedIds) {
-    removeDanglingSubNetworks(null, recreateManagedIds);
   }
 
   /** Collect the osm network to populate
@@ -421,6 +501,75 @@ public class OsmNetworkReader implements NetworkReader {
    */
   protected PlanitOsmNetwork getOsmNetworkToPopulate() {
     return this.osmNetworkToPopulate;
+  }
+
+  /**
+   * Log the settings, at the start of {@link #read()}, before parsing. The network reader of an intermodal read, see
+   * {@link org.goplanit.osm.converter.intermodal.OsmIntermodalReader}, leaves this out, since the intermodal reader
+   * logs the settings of the whole read once
+   */
+  protected void logSettingsAtStartOfRead() {
+    getSettings().logSettings();
+  }
+
+  /**
+   * Finalise the parsed network as the settings ask: remove dangling subnetworks, then, when intersections are parsed,
+   * consolidate them, compute their green ratios and saturation flow factors and collapse them; consolidation asked for
+   * without parsed intersections is warned about. These are the steps on the parsed network as a whole, each run when
+   * its setting asks for it, so a step added later that works on the parsed network as a whole goes here too.
+   * <p>
+   * {@link #read()} finalises the network itself once parsing is done, without a zoning, see
+   * {@link #finaliseAtEndOfRead()}. An intermodal read, see
+   * {@link org.goplanit.osm.converter.intermodal.OsmIntermodalReader}, finalises it once the public transport
+   * infrastructure is parsed as well, with that zoning: removing dangling subnetworks then also deals with the
+   * connectoids of the stops on what it removes, and the intersections are completed once that has settled the
+   * network
+   * </p>
+   *
+   * @param zoning attached to the network, whose transfer connectoids follow the removal of dangling subnetworks, null
+   *               when there is none
+   */
+  protected void finaliseParsedNetwork(Zoning zoning) {
+    if(settings.isRemoveDanglingSubnetworks()) {
+      removeDanglingSubNetworks(zoning);
+    }
+    if(settings.isIntersectionParserActive()) {
+      consolidateIntersectionsComputeGreenRatiosAndCollapse();
+    }else if(settings.getIntersectionSettings().isConsolidateIntersections()) {
+      LOGGER.warning("Intersections are not consolidated, since they are not parsed");
+    }
+  }
+
+  /**
+   * Finalise the parsed network at the end of {@link #read()}, see {@link #finaliseParsedNetwork(Zoning)}. The network
+   * reader of an intermodal read leaves this out: the intermodal reader finalises the network once the public transport
+   * infrastructure is parsed as well
+   */
+  protected void finaliseAtEndOfRead() {
+    finaliseParsedNetwork(null);
+  }
+
+  /**
+   * Log the diagnostics summary at the end of {@link #read()}, see {@link #logDiagnosticsSummary()}. The network reader
+   * of an intermodal read leaves this out: the intermodal reader logs the summary once it has finalised the network
+   */
+  protected void logDiagnosticsSummaryAtEndOfRead() {
+    logDiagnosticsSummary();
+  }
+
+  /**
+   * Log what became of the OSM entities read, and of the PLANit entities derived from them: the traffic signals when
+   * intersections are parsed, and the PLANit entities when intersections are parsed or any issue is recorded on them
+   */
+  protected void logDiagnosticsSummary() {
+    if(getSettings().isIntersectionParserActive()) {
+      networkData.getParseDiagnostics().logSummary(LOGGER, "[STATS] OSM traffic signals",
+          networkData.getTrafficSignalOsmNodeIds().size());
+    }
+    var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
+    if(getSettings().isIntersectionParserActive() || !planitEntityDiagnostics.isEmpty()) {
+      planitEntityDiagnostics.logSummary(LOGGER, "[STATS] PLANit entities");
+    }
   }
 
   /**
@@ -507,138 +656,17 @@ public class OsmNetworkReader implements NetworkReader {
   }
 
   /**
-   * Remove dangling subnetworks when settings dictate it. The connectoids of a zoning attached to the network follow the
-   * removal by themselves; zones left dangling are for the caller to remove afterwards.
-   *
-   * @param zoning attached to the network, whose transfer connectoids are counted in the log and renumbered with the
-   *               network's ids when asked, may be null
-   * @param recreateManagedIds when true recreate ids, otherwise not
-   */
-  public void removeDanglingSubNetworks(Zoning zoning, boolean recreateManagedIds) {
-    if(settings.isRemoveDanglingSubnetworks()) {
-
-      boolean keepLargest = settings.isAlwaysKeepLargestSubnetwork();
-      
-      /* logging stats  - before */
-      MacroscopicNetworkLayers layers = getOsmNetworkToPopulate().getTransportLayers();
-      {
-        if(zoning == null) {
-          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d",
-                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
-        }else {
-          LOGGER.info(String.format("Original number of nodes %d, links %d, link segments %d, connectoids %d",
-                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(),
-                  zoning.getTransferConnectoids().size()));
-        }
-      }      
-           
-      if(layers.size()!=1) {
-        LOGGER.warning("Currently OSM networks only support a single infrastructure layer in PLANit");
-      }
-
-      /* one pass per activated mode, since being able to both reach and leave is a property of a mode rather
-       * than of infrastructure. A one way street usually still permits pedestrians against the flow, so judging
-       * this per track type cannot see a car trap at all. Access is withdrawn rather than infrastructure removed,
-       * because the link a car cannot use is typically carrying another mode perfectly well. Under strong
-       * connectivity the parsed turn restrictions count as well: a way they leave with no allowed turn onto it or
-       * off it loses the mode like a one way trap, and they stay as banned turns */
-      var layer = layers.getFirst();
-      for(var entry : settings.getRemoveDanglingSubnetworkModes().entrySet()) {
-        var mode = getOsmNetworkToPopulate().getModes().get(entry.getKey());
-        if(mode == null) {
-          /* the defaults cover modes a given parse may not have activated at all, which is not worth reporting:
-           * there is simply no network of that mode to judge. Logged at fine for anyone chasing why a mode they
-           * did configure explicitly appears to have been skipped */
-          LOGGER.fine(String.format(
-              "Dangling subnetworks configured for mode %s which is not part of this network, skipped",
-              entry.getKey().value()));
-          continue;
-        }
-        var config = entry.getValue();
-        var result = MacroscopicNetworkLayerUtils.restrictModeAccessToConnectedSubNetworks(
-            layer, mode, config.getBelowSize(), config.getAboveSize(), keepLargest,
-            config.getConnectivity(), null);
-        LOGGER.info(String.format("Dangling subnetworks (%s): %s", config, result));
-        /* the size distribution rather than the totals alone, since it is what makes a size threshold choosable
-         * from a single run instead of requiring one run per candidate value. Indented beneath the line reporting
-         * the pruning itself, a line per bin, rather than run together on one line which becomes unreadable as
-         * soon as more than a couple of bins are populated */
-        for(var binLine : result.getSizeBinSummaryLines()) {
-          LOGGER.info(String.format("  %s", binLine));
-        }
-      }
-
-      /* only once every mode has been dealt with is it settled what nothing can use any more; the intersections this
-       * removes are recorded as lost */
-      var cleanup = layer.getLayerModifier().removeInfrastructureWithoutModeAccess();
-      var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
-      cleanup.getRemovedIntersections().forEach(intersection -> planitEntityDiagnostics.registerIssue(
-          OsmPlanitEntityIssue.INTERSECTION_LOST_BY_PRUNING, intersection.getExternalId()));
-      if(!cleanup.isEmpty()) {
-        LOGGER.info(String.format("Dangling subnetworks: %s", cleanup));
-      }
-      /* withdrawing access creates a link segment type variant per original type and mode withdrawn, and many of
-       * those end up identical to each other or to a type already present. Consolidation only runs on the default
-       * types at initialisation, so without repeating it here every variant persists into the written network */
-      if(settings.isConsolidateLinkSegmentTypes()) {
-        getOsmNetworkToPopulate().consolidateFunctionallyEquivalentLinkSegmentTypes();
-      }
-      if(recreateManagedIds) {
-        layer.getLayerModifier().recreateManagedIdEntities();
-        /* removing connectoids leaves their ids as they are, so they are renumbered here as well */
-        if(zoning != null) {
-          zoning.getZoningModifier().recreateConnectoidIds();
-        }
-      }
-
-      /* logging stats  - after */
-      {
-        if(zoning == null) {
-          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d",
-                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments()));
-        }else {
-          LOGGER.info(String.format("Remaining number of nodes %d, links %d, link segments %d, connectoids %d",
-                  layers.getNumberOfNodes(), layers.getNumberOfLinks(),layers.getNumberOfLinkSegments(),
-                  zoning.getTransferConnectoids().size()));
-        }
-      }
-            
-    }
-  }
-
-  /**
-   * Complete the parsed intersections of each layer as the settings ask: consolidate them, see
-   * {@link OsmIntersectionSettings#setConsolidateIntersections(boolean)}, compute the green ratios and saturation flow
-   * factors of their approaches, see
-   * {@link OsmIntersectionSettings#setComputeGreenRatiosAndSaturationFlowFactors(boolean)}, and collapse the
-   * consolidated intersections for the modes chosen, see
-   * {@link OsmIntersectionSettings#getIntersectionCollapserSettings()}, in that order: collapsing can move the end of a
-   * link to a centre node, which changes the direction an approach arrives in. Meant to run once dangling subnetworks
-   * are removed, so only what remains is completed, and before ids are synced. Nothing runs when intersections are not
-   * parsed, with a warning when consolidation was asked for
-   */
-  public void consolidateIntersectionsComputeGreenRatiosAndCollapse() {
-    var intersectionSettings = settings.getIntersectionSettings();
-    if(!settings.isIntersectionParserActive()) {
-      if(intersectionSettings.isConsolidateIntersections()) {
-        LOGGER.warning("Intersections are not consolidated, since they are not parsed");
-      }
-      return;
-    }
-    var crs = getOsmNetworkToPopulate().getCoordinateReferenceSystem();
-    if(intersectionSettings.isConsolidateIntersections()) {
-      consolidateIntersections(crs);
-    }
-    computeGreenRatiosAndSaturationFlowFactors(crs);
-    if(intersectionSettings.isConsolidateIntersections()) {
-      collapseIntersections(crs);
-    }
-  }
-
-  /**
    * Parse a local *.osm or *.osm.pbf file and convert it into a Macroscopic network
    * given the configuration options that have been set
-   * 
+   * <p>
+   * In order: log the settings, see {@link #logSettingsAtStartOfRead()}, parse, finalise the parsed network, see
+   * {@link #finaliseAtEndOfRead()}, sync the ids, and log the diagnostics summary, see
+   * {@link #logDiagnosticsSummaryAtEndOfRead()}. The network reader of an intermodal read leaves out those three steps:
+   * the intermodal reader logs the settings of the whole read itself, and finalises the network and logs the summary
+   * once the public transport infrastructure is parsed as well. So a step that works on the parsed network as a whole
+   * goes in {@link #finaliseParsedNetwork(Zoning)}, not here
+   * </p>
+   *
    * @return macroscopic network that has been parsed
    */
   @Override
@@ -650,8 +678,8 @@ public class OsmNetworkReader implements NetworkReader {
     PlanItRunTimeException.throwIfNull(getOsmNetworkToPopulate(),
         "PLANit network to populate not set for OSM network to parse");
 
-    logInfo();
-    
+    logSettingsAtStartOfRead();
+
     /* initialise */
     initialiseBeforeParsing();
 
@@ -665,22 +693,14 @@ public class OsmNetworkReader implements NetworkReader {
     doMainProcessing();
     registerTrafficSignalOverridesNotFound();
     registerOsmWayLaneOverridesNotFound();
-      
-    /* dangling subnetworks */
-    boolean recreateIds = false; // postpone to sync xml ids at same time afterwards
-    if(getSettings().isRemoveDanglingSubnetworks()) {
-      removeDanglingSubNetworks(recreateIds);
-    }
 
-    /* intersections, once pruning has settled what remains */
-    consolidateIntersectionsComputeGreenRatiosAndCollapse();
+    /* dangling subnetworks, then intersections once pruning has settled what remains */
+    finaliseAtEndOfRead();
 
     // clean up ids to be contiguous
     MacroscopicNetworkModifierUtils.updateAndSyncManagedIdEntitiesContainerXmlIdsToIds(osmNetworkToPopulate);
 
-    if(!suppressSettingsAndDiagnosticsLogging) {
-      logDiagnosticsSummary();
-    }
+    logDiagnosticsSummaryAtEndOfRead();
     LOGGER.info("OSM full network parsing...DONE");
     
     /* return result */
@@ -703,21 +723,6 @@ public class OsmNetworkReader implements NetworkReader {
    */
   public OsmPlanitEntityDiagnostics getPlanitEntityDiagnostics() {
     return networkData.getPlanitEntityDiagnostics();
-  }
-
-  /**
-   * Log what became of the OSM entities read, and of the PLANit entities derived from them: the traffic signals when
-   * intersections are parsed, and the PLANit entities when intersections are parsed or any issue is recorded on them
-   */
-  public void logDiagnosticsSummary() {
-    if(getSettings().isIntersectionParserActive()) {
-      networkData.getParseDiagnostics().logSummary(LOGGER, "[STATS] OSM traffic signals",
-          networkData.getTrafficSignalOsmNodeIds().size());
-    }
-    var planitEntityDiagnostics = networkData.getPlanitEntityDiagnostics();
-    if(getSettings().isIntersectionParserActive() || !planitEntityDiagnostics.isEmpty()) {
-      planitEntityDiagnostics.logSummary(LOGGER, "[STATS] PLANit entities");
-    }
   }
 
   /**

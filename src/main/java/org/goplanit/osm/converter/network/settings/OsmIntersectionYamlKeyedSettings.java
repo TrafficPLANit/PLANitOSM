@@ -110,14 +110,6 @@ public abstract class OsmIntersectionYamlKeyedSettings {
     trafficSignalKindOverrides.clear();
   }
 
-  /** Replace the consolidation settings held, see {@link #getIntersectionConsolidatorSettings()}
-   *
-   * @param consolidatorSettings to hold in their place
-   */
-  protected void setIntersectionConsolidatorSettings(IntersectionConsolidatorSettings consolidatorSettings) {
-    this.intersectionConsolidatorSettings = consolidatorSettings;
-  }
-
   /** by default intersections are parsed from traffic signals */
   public static final boolean DEFAULT_INTERSECTIONS_PARSER_ACTIVE = true;
 

@@ -224,37 +224,6 @@ public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
 
   /* mode */
 
-  /** remove a mapping from OSM rail modes to PLANit modes. This means that the osmModes will not be added to
-   * the PLANit network
-   * You can only remove modes when they are already added, either manually or through the default mapping
-   *
-   * @param osmRailModes to remove
-   */
-  @CoveredBySettingsKey("modes-")
-  public void deactivateOsmRailModes(final List<String> osmRailModes) {
-    if(osmRailModes == null) {
-      return;
-    }
-    osmRailModes.forEach(this::deactivateOsmRailMode);
-  }   
-  
-  /** deactivate provided rail modes
-   * 
-   * @param osmRailModes to explicitly deactivate
-   */
-  @CoveredBySettingsKey("modes-")
-  public void deactivateOsmRailModes(final String... osmRailModes) {
-    deactivateOsmRailModes(Arrays.asList(osmRailModes));
-  }
-
-  /** remove all rail modes from mapping
-   *
-   */
-  @CoveredBySettingsKey("modes")
-  public void deactivateAllOsmRailModes() {
-    deactivateAllOsmRailModesExcept(List.of());
-  }
-
   /** remove all rail modes from mapping except for the passed in ones
    *
    * @param remainingOsmRailModes to explicitly keep if present
