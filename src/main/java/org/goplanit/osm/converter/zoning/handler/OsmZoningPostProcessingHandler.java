@@ -44,19 +44,15 @@ import org.locationtech.jts.linearref.LinearLocation;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 
 /**
- * Handler that conducts final parsing round where all stop_positions in relations are mapped to the now parsed
- * transfer zones. This is done separately because transfer zones are sometimes also part of relations, and it is
- * not guaranteed that all transfer zones are available when encountering a stop_position in a relation. So we
- * parse them in another pass.
+ * Handler that conducts the final parsing round, mapping all stop_positions in relations to the now parsed transfer
+ * zones. This is a separate pass because transfer zones are sometimes also part of relations, so not all transfer
+ * zones are guaranteed to be available when a stop_position in a relation is encountered.
  * <p>
- * Also, all unprocessed stations that are not part of any relation are converted into transfer zones and
- * transfer connectoids here since
- * we can now guarantee they are not part of a relation, i.e., stop_area
+ * Also, all unprocessed stations are converted into transfer zones and transfer connectoids here, since they are now
+ * known not to be part of a relation, i.e., stop_area
  * </p>
- * 
- * @author markr
- * 
  *
+ * @author markr
  */
 public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
@@ -65,16 +61,16 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
    */
   private static final Logger LOGGER = Logger.getLogger(OsmZoningPostProcessingHandler.class.getCanonicalName());
         
-  /** to be able to find OSM nodes internal to parsed PLANit links that we want to break to for example create stop
-   * locations for stand alone station, we must be able to spatially find those nodes spatially because they are not
-   * referenced by the station or PLANit link explicitly, this is what we do here. It is not placed in the zoning
-   * data as it is only utilised in post-processing */
+  /** spatial index of the OSM nodes internal to parsed PLANit links, to find the nodes to break the links at, for
+   * example to create stop locations for a stand alone station. These nodes must be found spatially, because neither
+   * the station nor the PLANit link references them explicitly. Not in the zoning data, as it is only used in
+   * post-processing */
   private Map<MacroscopicNetworkLayer, Quadtree> spatiallyIndexedOsmNodesInternalToPlanitLinks = null;
 
-  /** A stand alone station can either support a single platform when it is road based or two stop_locations for
-   * rail (on either side). This is reflected in the returned max matches. The search distance is based on the
-   * settings where a road based station utilises the stop to waiting
-   * area search distance whereas a rail based one uses the station to waiting area search distance
+  /** A stand alone station supports either a single platform when it is road based, or two stop_locations for rail (on
+   * either side), as reflected in the max matches returned. The search distance comes from the settings: the stop to
+   * waiting area search distance for a road based station, the station to waiting area search distance for a rail
+   * based one
    * 
    * @param osmStationId to use
    * @param settings to obtain search distance for
@@ -313,13 +309,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * Try to extract a station from the entity. In case no existing platforms/stop_positions can be found nearby we
-   * create them fro this station because the station
-   * represents both platform(s), station, and potentially stop_positions. In case existing platforms/stop_positions
-   * can be found, it is likely the station is a legacy
-   * tag that is not yet properly added to an existing stop_area, or the tagging itself only provides platforms
-   * without a stop_area. Either way, in this case the station is
-   * to be discarded since appropriate infrastructure is already available.
+   * Try to extract a station from the entity. When no existing platforms/stop_positions are found nearby, they are
+   * created for this station, as it then represents platform(s), station, and potentially stop_positions. When existing
+   * platforms/stop_positions are found, the station is likely a legacy tag not yet properly added to an existing
+   * stop_area, or the tagging only provides platforms without a stop_area. Either way, the station is then discarded,
+   * since appropriate infrastructure is already available.
    *
    * @param osmStation                to identify non stop_area station for
    * @param eligibleOsmModes          to consider
@@ -558,12 +552,11 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * Process remaining ferry terminal that has not been regularly processed due to either non-conformity or not part
-   * of a relation.
+   * Process a remaining ferry terminal not processed regularly, as it does not conform or is not part of a relation.
    * <p>
-   *   Note that we have isolated those if they were a platform from regular platform  processing because it behaves
-   *   somewhat similar to stations and halts as they may intersect with the ferry infrastructure and need special
-   *   treatment to account for various existing combinations and tagging issues that exist
+   *   Ferry terminals that are platforms are kept out of regular platform processing, as they behave somewhat like
+   *   stations and halts: they may intersect with the ferry infrastructure, and need special treatment for the various
+   *   combinations and tagging issues that exist
    * </p>
    *
    * @param osmFerryTerminal     to process
@@ -614,9 +607,8 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
 
   /**
    * Given a ferry stop location and the mode (ferry) to use, construct a new link and link segments attaching the
-   * ferry terminal location to the nearest ferry route (within acceptable search radius). We utilise the closest
-   * existing ferry link's closest existing node as the
-   * attachment point.
+   * ferry terminal location to the nearest ferry route (within acceptable search radius), at the closest existing node
+   * of the closest existing ferry link.
    *
    * @param osmFerryStopLocation to use
    * @param osmEntityId id of Osm entity used for this location (may not be a node)
@@ -697,11 +689,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * process any remaining unprocessed Ptv1 ferry terminals that are not part of any stop_area.
-   * This generally means the ferry terminal reflects both the transfer zone and stop position in a single node.
-   * It lacks the public_transport=x key. Hence, we aim for fully constructing both stop position and transfer zone
-   * from the single node. It is not allowed to be a way. If it is a way we ignore and treat it as an incomplete Ptv2
-   * tagged ferry terminal later when dealing with Ptv2 version of this
+   * process any remaining unprocessed Ptv1 ferry terminals that are not part of any stop_area. Such a ferry terminal
+   * generally reflects both the transfer zone and stop position in a single node, and lacks the public_transport=x
+   * key. So both stop position and transfer zone are constructed from the single node. A way is ignored here, and
+   * treated later as an incomplete Ptv2 tagged ferry terminal, with the Ptv2 ones
    */
   private void processPtv1FerryTerminalsNotPartOfStopArea() {
     OsmZoningReaderOsmData osmData = getZoningReaderData().getOsmConverterData();
@@ -743,12 +734,12 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * Process remaining ferry terminals that have not been regularly processed due to non-conformity but are Ptv2 like
-   * (have a platform geometry directly adjacent to a route or nearby)
+   * Process remaining ferry terminals that are Ptv2 like (have a platform geometry directly adjacent to a route or
+   * nearby) but were not processed regularly, as they do not conform
    * <p>
-   *   Note that if they were tagged as regular platforms as well they already would have been processed earlier in
-   *   a standard way. So either they are not tagged fully or adequately or they represent a stop position of a nearby
-   *   platform but are not part of an explicit area
+   *   Had they also been tagged as regular platforms, they would have been processed earlier in the standard way. So
+   *   either they are not tagged fully or adequately, or they represent a stop position of a nearby platform but are
+   *   not part of an explicit area
    * </p>
    */
   private void processPtv2LikeFerryTerminalsNotPartOfStopArea() {
@@ -1059,10 +1050,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * All transfer zones that were created without connectoids AND were found to not be linked to any stop_positions
-   * in a stop_area will still have no connectoids. Connectoids need to be created based on implicit stop_position
-   * of vehicles which by OSM standards is defined as based on the nearest node. This is what we will do here.
-   *
+   * Create the connectoids of the transfer zones created without connectoids AND not linked to any stop_positions in
+   * a stop_area, which still have none. They are created at the implicit stop_position of vehicles, which OSM defines
+   * as the nearest node.
    */
   private void processIncompleteTransferZones() {
     processIncompleteTransferZones(
@@ -1259,11 +1249,10 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
   }
 
   /**
-   * Process the remaining unprocessed Osm entities that were marked for processing, or were identified as not
-   * having explicit stop_position, i.e., no connectoids have yet been created.
-   * Now that we have successfully parsed all relations (stop_areas) and removed Osm entities part of relations,
-   * the remaining entities are guaranteed to not be part of any relation and require
-   * stand-alone treatment to finalise them. 
+   * Process the remaining unprocessed Osm entities that were marked for processing, or were identified as not having
+   * an explicit stop_position, i.e., with no connectoids created yet. All relations (stop_areas) are now parsed and
+   * the Osm entities part of them removed, so the remaining entities are part of no relation and are finalised on
+   * their own.
    * 
    * @throws PlanItException thrown if error
    */
@@ -1333,10 +1322,9 @@ public class OsmZoningPostProcessingHandler extends OsmZoningHandlerBase {
         transferZoneGroup, suppressLogging);
   }  
 
-  /** extract a Ptv2 stop position part of a stop_area relation but not yet identified in the regular phase of
-   * parsing as a stop_position. Hence, it is not properly tagged. In this method we try to salvage it by
-   * inferring its properties (eligible modes, vertical plane). We do so, by mapping it to the nearest compatible
-   * transfer zone available on the stop_area (if any) as a last resort attempt
+  /** extract a Ptv2 stop position part of a stop_area relation but not identified as a stop_position in the regular
+   * phase of parsing, so not properly tagged. As a last resort, we try to salvage it by inferring its properties
+   * (eligible modes, vertical plane), mapping it to the nearest compatible transfer zone on the stop_area (if any)
    * 
    * @param osmNode node of unknown stop position
    * @param tags of the node

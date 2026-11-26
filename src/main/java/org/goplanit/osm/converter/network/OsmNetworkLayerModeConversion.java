@@ -78,7 +78,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
         OsmModeUtils.getPrefixedOsmRoadModesWithValueTag(OsmOneWayTags.ONEWAY, tags, OsmOneWayTags.NO));
   }
 
-  /** Collect explicitly included modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
+  /** Collect explicitly included modes for a bi-directional OSMway, that is NOT a one way.
    * 
    * <ul>
    * <li>bicycle: when cycleway=/<positive access value/></li>
@@ -128,7 +128,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
     return includedModes;
   }
 
-  /** Collect explicitly excluded modes for a bi-directional OSMway, i.e., so specifically NOT a one way. 
+  /** Collect explicitly excluded modes for a bi-directional OSMway, that is NOT a one way.
    * 
    * <ul>
    * <li>bicycle: when cycleway:<driving_location>=/<negative access value/></li>
@@ -292,8 +292,7 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
   }
 
   /** Collect explicitly excluded modes from the passed in tags but only for modes explicitly excluded in the
-   * opposite direction of a one way OSM way. In this case
-   * These are always and only:
+   * opposite direction of a one way OSM way. These are always and only:
    * 
    * <ul>
    * <li>all vehicular modes</li>
@@ -662,12 +661,11 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
     return excludedModes;
   }
   
-  /** Update the included and excluded mode sets passed in based on the key/value information available in the
-   * access=? tag.
+  /** Update the passed in included and excluded mode sets from the access=? tag.
    *
    * <p>
-   *   Note that provided included/excluded modes are assumed to be more important than newly found access restrictions/
-   *   relaxations. so we check against those when updating
+   *   The modes already included/excluded take precedence over newly found access restrictions/relaxations, which are
+   *   checked against them when updating
    * </p>
    *
    * @param accessKeyToUse        the specific OSM tag key to retrieve (e.g., ACCESS or access:lanes if value
@@ -688,12 +686,12 @@ public class OsmNetworkLayerModeConversion extends OsmModeConversionBase {
   }
 
   /**
-   * Updates mode restrictions based on lane-specific access values containing pipes (e.g., destination|yes|no),
-   * evaluating each lane individually using the access key value helper and combining them via
-   * a union of inclusions and intersection of exclusions.
+   * Updates mode restrictions from lane-specific access values separated by pipes (e.g., destination|yes|no). Each
+   * lane is evaluated on its own using the access key value helper, and the lanes are combined as the union of their
+   * inclusions and the intersection of their exclusions.
    * <p>
-   *   Note that provided included/excluded modes are assumed to be more important than newly found access restrictions/
-   *   relaxations. so we check against those when updating
+   *   The modes already included/excluded take precedence over newly found access restrictions/relaxations, which are
+   *   checked against them when updating
    * </p>
    *
    * @param accessKeyToUse        the specific OSM tag key being evaluated (e.g., access or access:lanes)

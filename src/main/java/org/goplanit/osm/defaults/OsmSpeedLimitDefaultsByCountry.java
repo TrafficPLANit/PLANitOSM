@@ -17,21 +17,20 @@ import org.goplanit.utils.locale.LocaleUtils;
 import org.goplanit.utils.misc.Pair;
 
 /**
- * Convenience class for quickly collecting the speed limits for various countries, where possible
- * based on <a href="https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed">OSM max speed</a> (highway types)
+ * Collects the speed limits for various countries, where possible based on
+ * <a href="https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed">OSM max speed</a> (highway types)
  * <p>
- * Note that a distinction is made between inside or outside a place, which refers to the road being
- * inside or outside an urban area. this significantly impacts the speed limit.
+ * A distinction is made between inside or outside a place, that is the road being inside or outside an urban area,
+ * which significantly impacts the speed limit.
  * </p><p>
- * Unfortunately, the link cannot judge if it is inside or outside. So, we leave it to the user
- * of this class to indicate which of the two values should be used (if there are two available).
+ * The link cannot judge if it is inside or outside, so the user of this class indicates which of the two values to
+ * use (if there are two).
  * </p><p>
- * Note 1: railway speed limits are not known in OSM, so we use a global default for all types, which the user
- * may override if required. Also no distinction is made between inside or outside an urban area.
+ * Note 1: railway speed limits are not known in OSM, so a global default is used for all types, which the user may
+ * override if required. Also no distinction is made between inside or outside an urban area.
  * </p>
  *
  * @author markr
- *
  */
 public class OsmSpeedLimitDefaultsByCountry {
   
@@ -333,12 +332,11 @@ public class OsmSpeedLimitDefaultsByCountry {
   }
   
   /**
-   * populate the global defaults for railway types in case the country is not available, or in case the railway type
-   * for that country is not available.
-   * 
-   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} as the default for
-   * all modes.
-   * This can overwritten by the user if required
+   * populate the global defaults for railway types, used when the country, or the railway type for that country, is
+   * not available.
+   *
+   * Currently, {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_RAILWAY_SPEEDLIMIT_KMH} is the default for all modes. The
+   * user can overwrite this if required
    */
   protected static void populateGlobalDefaultRailwaySpeedLimits(){
     /* GLOBAL */    
@@ -346,13 +344,11 @@ public class OsmSpeedLimitDefaultsByCountry {
   }
 
   /**
-   * populate the global defaults for waterway types in case the country is not available, or in case the waterway type
-   * for that country is not available.
+   * populate the global defaults for waterway types, used when the country, or the waterway type for that country, is
+   * not available.
    *
-   * Currently, we set the {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH} as the default
-   * for all modes.
-   * This can overwritten by the user if required
-   *
+   * Currently, {@code OsmSpeedLimitDefaults.GLOBAL_DEFAULT_WATERWAY_SPEEDLIMIT_KMH} is the default for all modes. The
+   * user can overwrite this if required
    */
   protected static void populateGlobalDefaultWaterwaySpeedLimits() {
     /* GLOBAL */

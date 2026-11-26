@@ -34,21 +34,20 @@ public class OsmNetworkReaderLayerData {
   /** profiler for the network layer */
   private final OsmNetworkHandlerProfiler profiler = new OsmNetworkHandlerProfiler();
   
-  /** track osmways with multiple planit links if they are created due to circular ways or breaking of links. Only
-   * track globally when
-   * part of intermodal reader where follow up components require this information, otherwise it is locally discarded
-   * after use */
+  /** track osmways with multiple planit links, created due to circular ways or breaking of links. Only tracked
+   * globally when part of an intermodal reader, whose follow up components need this information, otherwise it is
+   * discarded locally after use */
   protected Map<Long, Set<MacroscopicLink>> osmWaysWithMultiplePlanitLinks = new HashMap<>();
   
-  /** Identify which links truly have the passed in node as an internal node. whenever we have started with breaking
-   * links, or processing cirular ways
-   * we can no longer rely on the original internal node mapping. Instead, we must use a two step process:
+  /** Identify which links truly have the passed in node as an internal node. Once links have been broken, or circular
+   * ways processed, the original internal node mapping can no longer be relied on. Instead, a two step process is
+   * used:
    * 1) identify the original osmWayId the node was internal to
-   * 2) use the known broken links by osmWayId, track the planit link that represents part of the original osmway
+   * 2) use the known broken links by osmWayId, find the planit link that represents part of the original osmway
    * and mark that as a link with the node as internal.
-   * 
-   * That is what this method does by updating the linksWithNodeInternallyToUpdate list based on the
-   * osmWaysWithMultiplePlanitLinks given the reference node
+   *
+   * This method does so by updating the passed in list of links based on the osmWaysWithMultiplePlanitLinks given the
+   * reference node
    * 
    * @param location the point to break at
    * @param osmWaysWithMultiplePlanitLinks known osm ways with multiple planit links due to earlier breaking of links
@@ -115,22 +114,20 @@ public class OsmNetworkReaderLayerData {
   }  
   
   /**
-   * track the PLANit nodes created on this layer by their location (which reflects either an OSM node, or an
-   * auto-generated stop_location, not related to an osm node in the latter case, no osm node is available) so they can
-   * be collected when needed, for example when breaking PLANit links
+   * track the PLANit nodes created on this layer by their location, so they can be collected when needed, for example
+   * when breaking PLANit links. A location is either an OSM node or an auto-generated stop_location, for which no OSM
+   * node is available
    */
   protected final Map<Point, Pair<Node, OsmNode>> planitNodesByLocation = new HashMap<>();
   
-  /** Mapping from locations (representing known OSM nodes or auto-generated PLANit nodes without OSM node, in the
-   * latter case, no OSM node is stored in the pair) to the links they are internal to. When initial parsing is done,
-   * we verify if any entry in the map contains more than one link in which case the two link intersect at a point other
-   * than the extremes and we must break the link. Also, in case any existing link's extreme node is internal to any
-   * other link, the link where this location is internal to must be split into two because a PLANit network requires
-   * all intersections of links to occur at the end or start of a link. Since during breaking of links, the mapping
-   * between known locations (osm nodes/auto-generated planit nodes) and planit links is no longer correct
-   * we use a separate mapping via {@link #osmWaysWithMultiplePlanitLinks} to track how original osm ways
-   * (links) are now split allowing us to map any previously registered location to the correct planit link even
-   * after breaking of links
+  /** Mapping from locations (known OSM nodes, or auto-generated PLANit nodes for which no OSM node is stored in the
+   * pair) to the links they are internal to. When initial parsing is done, an entry with more than one link means
+   * those links intersect at a point other than their extremes, so the link must be broken. Also, when a link's
+   * extreme node is internal to another link, that other link must be broken in two, because a PLANit network requires
+   * all intersections of links to be at the start or end of a link. Breaking links makes the mapping between known
+   * locations (osm nodes/auto-generated planit nodes) and planit links incorrect, so the separate mapping
+   * {@link #osmWaysWithMultiplePlanitLinks} tracks how original osm ways (links) are broken, allowing any previously
+   * registered location to be mapped to the correct planit link even after breaking of links
    */
   protected Map<Point, Pair<List<MacroscopicLink>,OsmNode>> originalLinkInternalAvailableLocations = new HashMap<>();
 

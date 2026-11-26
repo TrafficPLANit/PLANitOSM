@@ -63,10 +63,10 @@ public class OsmPtVersionSchemeUtils {
     return OsmPtVersionScheme.NONE;
   }    
   
-  /** Verify if the passed on OSM node that is assumed to be recognised as a Ptv2 stop_location is in fact also a
-   * Ptv1 stop, either a highway=tram_stop or highway=bus_stop. This is effectively wrongly tagged, but does occur
-   * due to confusion regarding the tagging schemes. Therefore we identify this situation allowing the parser to
-   * change its behaviour and if it is a Patv1 stop, process it as such if deemed necessary
+  /** Verify if the passed in OSM node, assumed to be recognised as a Ptv2 stop_location, is also a Ptv1 stop, either a
+   * highway=tram_stop or highway=bus_stop. That is wrong tagging, but it occurs due to confusion about the tagging
+   * schemes. Identifying it allows the parser to change its behaviour and process a Ptv1 stop as such if deemed
+   * necessary
    * 
    * @param osmNode that is classified as Ptv2 stop_location
    * @param tags of the stop_location

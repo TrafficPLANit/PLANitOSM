@@ -56,9 +56,8 @@ public class OsmRailwayTags {
   
   
   /**
-   * populate the available railway area tags. These area tags are here to identify ways that are in fact NOT
-   * railways in the traditional sense, yet they are provided as such and have tags to indicate they represent something
-   * else than tracks
+   * populate the available railway area tags. They identify ways tagged as railways that are NOT railways in the
+   * traditional sense, their tags showing they represent something else than tracks
    * 
    * <ul>
    * <li>platform</li>

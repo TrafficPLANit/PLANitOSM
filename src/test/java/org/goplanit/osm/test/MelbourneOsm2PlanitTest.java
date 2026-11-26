@@ -74,10 +74,9 @@ public class MelbourneOsm2PlanitTest {
   }
 
   /**
-   * Test that attempts to extract PLANit network and PT infrastructure from OSM. Limited to smaller bounding box as
-   * this tests output is also used as input to other tests that ingest Melbourne PLANit network and export it
-   * in a different format. Hence, results are to be small enough to be in repo resources.
-   * read from disk and then persist the result in the PLANit data format
+   * Extract a PLANit network and PT infrastructure from OSM, read from disk, and persist the result in the PLANit data
+   * format. Limited to a smaller bounding box, as the output is also input to other tests that read the Melbourne
+   * PLANit network and write it in a different format, so it must be small enough to be in repo resources.
    */
   @Test
   public void osm2PlanitIntermodalNoServicesBoundingBoxTest() {
@@ -136,9 +135,8 @@ public class MelbourneOsm2PlanitTest {
   }
 
   /**
-   * Test that is identical to {@link this.osm2PlanitIntermodalNoServicesBoundingBoxTest} only now we use a named
-   * bounding box for the "Melbourne District" which is a political boundary applied both to the network and zoning
-   * (pt infrastructure)
+   * As {@link this.osm2PlanitIntermodalNoServicesBoundingBoxTest}, but with a named bounding box for the "Melbourne
+   * District", a political boundary applied to both the network and zoning (pt infrastructure)
    */
   @Test
   public void osm2PlanitIntermodalNoServicesNamedBoundingBoxTest() {

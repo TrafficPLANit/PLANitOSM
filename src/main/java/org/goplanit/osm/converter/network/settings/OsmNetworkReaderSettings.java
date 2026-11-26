@@ -29,9 +29,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * All general settings (and sub-settings classes) for the OSM reader pertaining to parsing  network infrastructure.
- * contains additional settings for highway and railway (e.g., highway settings and railway settings members,
- * respectively). The keys a settings file can set are on {@link OsmNetworkReaderYamlKeyedSettings}.
+ * All general settings (and sub-settings classes) of the OSM reader for parsing network infrastructure, including the
+ * highway settings and railway settings members. The keys a settings file can set are on
+ * {@link OsmNetworkReaderYamlKeyedSettings}.
  * <p>
  * OSM holds far more than a transport network needs, tagged unevenly from place to place. These settings say what to
  * keep and how to read it: which ways and modes to parse, what to assume where tags are missing (speed limits, lanes
@@ -373,9 +373,9 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
   /**
    * Deactivate dealing with dangling subnetworks for every mode.
    * <p>
-   * There is deliberately no blanket counterpart activating every mode at once. Doing so would withdraw access
-   * from ferry and rail networks, which legitimately consist of disconnected pieces, and from bicycle networks,
-   * which are routinely fragmented. Each mode has to be asked for.
+   * There is no counterpart activating every mode at once. It would withdraw access from ferry and rail networks,
+   * which are normally in disconnected pieces, and from bicycle networks, which are routinely fragmented. Each mode
+   * has to be asked for.
    * </p>
    */
   @CoveredBySettingsKey("removeDanglingSubnetworks")
@@ -581,9 +581,8 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
     getWaterwaySettings().deactivateAllOsmWaterwayTypes();
   }
 
-  /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
-   * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
-   * across both railways and highways. If you want to do this within highways only, use the same method
+  /** deactivate all osm way types except the ones indicated, which are activated if they are not already. This
+   * deactivates all types across both railways and highways. To do this within highways only, use the same method
    * under highway settings.
    * 
    * @param osmWaytypes to mark as activated
@@ -593,10 +592,9 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
     deactivateAllOsmWayTypesExcept(Arrays.asList(osmWaytypes));
   }
   
-  /** deactivate all osm way types except the ones indicated, meaning that if the ones passed in
-   * are not already active, they will be marked as activate afterwards. Note that this deactivates all types
-   * across railways, waterways, and highways. If you want to do this within highways only, use similar method
-   * provided under highway/railway/waterway settings.
+  /** deactivate all osm way types except the ones indicated, which are activated if they are not already. This
+   * deactivates all types across railways, waterways, and highways. To do this within highways only, use the similar
+   * method under highway/railway/waterway settings.
    * 
    * @param osmWayTypes to mark as activated, each a known type of one family, the first family knowing it in the
    *     order highway, railway, waterway

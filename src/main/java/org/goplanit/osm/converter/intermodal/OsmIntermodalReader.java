@@ -27,16 +27,15 @@ import org.goplanit.zoning.Zoning;
 import org.goplanit.zoning.ZoningModifierUtils;
 
 /**
- * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit intermodal network which includes the
- * transfer zones of a zoning instance. By default an intermodal reader will activate parsing transfer
- * infrastructure as well as the network infrastructure (including rail which for a "regular" network reader is
- * turned off by default, since we assume that more often than not, once desires to include rail when parsing
- * pt networks. One can manually change these defaults via the various settings made available.
+ * Parse OSM input in *.osm or *.osm.pbf format into a PLANit intermodal network, including the transfer zones of a
+ * zoning. By default an intermodal reader parses the transfer infrastructure as well as the network infrastructure,
+ * including rail, as rail is usually wanted when parsing pt networks; a "regular" network reader leaves rail out by
+ * default. The settings can change these defaults.
  * <p>
  * The network and the public transport infrastructure are read from the same source by a network reader and a zoning
  * reader, but their last steps cannot run inside their own reads. Finalising the network removes dangling
  * subnetworks, which must also deal with the connectoids of the stops on what it removes, and then completes the
- * intersections once that has settled the network; finalising the zoning removes dangling zones, which must wait
+ * intersections once that has settled the network. Finalising the zoning removes dangling zones, which must wait
  * until the network is finalised. Yet the zoning can only be parsed once the network is. So this reader has the
  * network parsed, then the zoning, and only then finalises the network, with the zoning, and then the zoning.
  * </p>

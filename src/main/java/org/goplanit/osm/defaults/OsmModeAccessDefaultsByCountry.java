@@ -12,11 +12,11 @@ import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.StringUtils;
 
 /**
- * The defaults for the mode access in case no specific restrictions are indicated on the highway=type way.
- * Based on the information provided on <a href="https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions">access restrictions</a>
+ * The defaults for the mode access when the highway=type way indicates no specific restrictions, based on
+ * <a href="https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access_restrictions">access restrictions</a>
  * <p>
- * Note: not all highway types have defaults following the references wiki page. Those missing types are listed below with the assigned defaults based on
- * PLANit's own rules:
+ * Not all highway types have defaults on the referenced wiki page. The missing types are listed below, with the
+ * defaults assigned by PLANit's own rules:
  * <ul>
  * <li>highway:service, same as road</li>
  * <li>track, same as road</li>

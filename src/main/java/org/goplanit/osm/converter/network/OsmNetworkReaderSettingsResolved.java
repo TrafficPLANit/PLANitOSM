@@ -9,8 +9,8 @@ import java.util.logging.Logger;
  * Resolved network reader settings derived from the configured {@link OsmNetworkReaderSettings}.
  *
  * <p>
- * In this first pass we only resolve the effective activated OSM way types by excluding configured way types that
- * have no remaining activated OSM modes attached. The configured settings instance remains untouched.
+ * For now only the activated OSM way types in effect are resolved: configured way types without any activated OSM
+ * mode left are excluded. The configured settings instance is not changed.
  * </p>
  */
 public final class OsmNetworkReaderSettingsResolved {

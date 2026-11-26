@@ -16,12 +16,10 @@ import org.goplanit.osm.util.OsmPtVersionScheme;
 import org.goplanit.utils.misc.StringUtils;
 
 /**
- * Handler that is applied before we conduct the actual handling of the zones by exploring the OSM relations
- * in the file and highlighting a subset of ways that we are supposed to retain even though they are not tagged
- * by themselves in a way that warrants keeping them in the context of OSM zoning. However, because they are
- * vital to the OSM relations that are considered as part of the zoning parsing we should  keep them. In addition,
- * we only consider such relations and their member entities if they fall at least partly within the bounds
- * specified (if any) by mean sof being marked as spatially eligible.
+ * Handler applied before the actual handling of the zones. It explores the OSM relations in the file and marks the
+ * ways to retain although their own tags do not warrant keeping them for OSM zoning, because they are vital to the
+ * OSM relations the zoning parsing considers. Such relations and their member entities are only considered if they
+ * fall at least partly within the bounds specified (if any), by marking them spatially eligible.
  * <p>
  *     For pre-processing the relations relevant to the zoning parsing, three stages are conducted,
  *     where we start with IDENTIFY_PLATFORM_AS_RELATIONS, only spatially eligible platform relations are considered

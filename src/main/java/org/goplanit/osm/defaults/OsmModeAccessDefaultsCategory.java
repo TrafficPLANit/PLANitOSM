@@ -11,15 +11,13 @@ import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.Pair;
 
 /**
- * Class representing the default mode access restrictions/allowance for modes for a given
- * category of OSM ways, e.g. highway, railway etc., although the class itself is agnostic to what category it belongs
- * 
- * Disallowed modes take precedence over any other setting, allowed modes take precedence over mode category settings
- * and mode category settings define groups of allowed modes (when not present, it is assumed the category is not
- * allowed as a whole)
- * 
- * @author markr
+ * The default mode access restrictions/allowance for a given category of OSM ways, e.g. highway, railway etc.,
+ * although the class itself is agnostic to what category it belongs to
  *
+ * Disallowed modes take precedence over any other setting, and allowed modes over mode category settings. Mode
+ * category settings define groups of allowed modes; a category not present is not allowed as a whole
+ *
+ * @author markr
  */
 public class OsmModeAccessDefaultsCategory {
   
@@ -72,7 +70,7 @@ public class OsmModeAccessDefaultsCategory {
    * i.e., this takes precedence over the categories.
    * <p>
    *   We must use key and type, because type alone does not uniquely define a situation, e.g., ferry=primary and
-   *   highway=primary both exist, but ref;ect different road/waterway types
+   *   highway=primary both exist, but reflect different road/waterway types
    * </p>
    * <p>
    *   The type is taken as given, also when parsing does not support it by default: a type registered as new, such as

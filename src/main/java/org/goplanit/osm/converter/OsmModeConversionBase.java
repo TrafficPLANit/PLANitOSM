@@ -123,11 +123,10 @@ public class OsmModeConversionBase {
     return theMode;
   }
   
-  /** find out if link osmModesToCheck are compatible with the passed in reference osm modes. Mode compatible means at
-   * least one overlapping mode that is mapped to a planit mode. When one allows for pseudo compatibility we relax
-   * the restrictions such that any rail/road/water mode is considered a match with any other rail/road/water mode.
-   * This can be useful when you do not want to make super strict matches but still want to filter out definite
-   * non-matches.
+  /** find out if link osmModesToCheck are compatible with the passed in reference osm modes, meaning at least one
+   * overlapping mode is mapped to a PLANit mode. Allowing pseudo compatibility relaxes this, so any rail/road/water
+   * mode matches any other rail/road/water mode. That is useful to filter out definite non-matches without super
+   * strict matching.
    *  
    * @param osmModesToCheck to check
    * @param referenceOsmModes to map against (may be null)
@@ -153,11 +152,10 @@ public class OsmModeConversionBase {
     return false;    
   }  
   
-  /** Find out if PLANit link is mode compatible with the passed in reference OSM modes. Mode compatible means at
-   * least one overlapping mode that is mapped to a PLANit mode. If the zone has no known modes, it is by definition
-   * not mode compatible. When one allows for pseudo compatibility we relax the restrictions such that any
-   * rail/road/water mode is considered a match with any other rail/road/water mode. This can be useful when you do
-   * not want to make super strict matches but still want to filter out definite non-matches.
+  /** Find out if PLANit link is mode compatible with the passed in reference OSM modes, meaning at least one
+   * overlapping mode is mapped to a PLANit mode. If the zone has no known modes, it is by definition not mode
+   * compatible. Allowing pseudo compatibility relaxes this, so any rail/road/water mode matches any other
+   * rail/road/water mode. That is useful to filter out definite non-matches without super strict matching.
    *  
    * @param link to verify
    * @param referenceOsmModes to map against (may be null)

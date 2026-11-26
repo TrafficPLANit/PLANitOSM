@@ -71,9 +71,9 @@ public class OsmHighwayTags {
     }
     
     /**
-     * populate the available highway area tags. These area tags are here to identify ways that are in fact NOT
-     * highways in the traditional sense, yet they are provided as such and have tags to indicate they represent
-     * something else than a road. This is a subset of the non road based highway value tags
+     * populate the available highway area tags. They identify ways tagged as highways that are NOT highways in the
+     * traditional sense, their tags showing they represent something else than a road. A subset of the non road based
+     * highway value tags
      * 
      * <ul>
      * <li>platform</li>
@@ -89,11 +89,9 @@ public class OsmHighwayTags {
     }      
     
     /**
-     * Since we are building a macroscopic network based on OSM, but some OSM highway types are in fact not roads at
-     * all we list such non-road types as well so we can avoid generating warning messages in case a highway type
-     * cannot be matched to either an activated or deactivated type, i.e., when neither it is an unknown type or a
-     * non-road type, in the latter case these can be filtered out using this listing. Note that area based highway
-     * value tags are a subset of the non road based highway tags.
+     * Some OSM highway types are not roads at all. They are listed here to avoid warnings for a highway type that
+     * matches neither an activated nor a deactivated type: such a type is either unknown or a non-road type, and this
+     * listing filters out the latter. Area based highway value tags are a subset of the non road based highway tags.
      * 
      * <ul>
      * <li>BUS_STOP</li>

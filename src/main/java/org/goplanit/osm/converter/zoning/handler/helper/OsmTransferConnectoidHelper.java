@@ -138,12 +138,11 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * Find the link segments that are accessible for the given access link, node, mode combination taking into account
-   * the relative location of the transfer zone if needed,
-   * mode compatibility, and vertical plane compatibility. OSM layaer tagging is patch and inconsistent. So For the
-   * latter,
-   * we ONLY enforce compatibility if ignoreOsmVerticalLayerCompatibility==false and the transfer zone has an explicit
-   * layer tagged. If either is not the case, then in our experience there is too much risk enforcing this restriction.
+   * Find the link segments that are accessible for the given access link, node, mode combination, taking into account
+   * the relative location of the transfer zone if needed, mode compatibility, and vertical plane compatibility. OSM
+   * layer tagging is patchy and inconsistent, so vertical plane compatibility is ONLY enforced if
+   * ignoreOsmVerticalLayerCompatibility==false and the transfer zone has an explicit layer tagged. Otherwise, in our
+   * experience, enforcing this restriction is too risky.
    *
    * @param transferZone                        these link segments pertain to
    * @param accessLink                          that is nominated
@@ -663,11 +662,9 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
     return true;
   }
 
-  /** Create directed connectoids for transfer zones that reside on OSM ways. For such transfer zones, we simply
-   * create connectoids in both directions for all eligible incoming link segments. This is a special case because
-   * due to residing on the OSM way it is not possible to distinguish what intended direction of the OSM way is
-   * serviced (it is neither left nor right of the way). Therefore, any attempt to extract this information
-   * is bypassed here.
+  /** Create directed connectoids for transfer zones that reside on OSM ways, in both directions, for all eligible
+   * incoming link segments. On the OSM way, a transfer zone is neither left nor right of the way, so which direction
+   * of the way it serves cannot be told, and is not attempted here.
    *
    * @param connectoidExternalId external id (allowed to be null)
    * @param transferZone residing on an osm way
@@ -758,13 +755,12 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
   }
 
 
-  /** create and/or update directed connectoids for the given mode and layer based on the passed in location where the
-   * connectoids access link segments are extracted for. Each of the connectoids is related to the passed in
-   * transfer zone. Generally a single connectoid is created for the most likely link segment identified, i.e., if
-   * the transfer zone is placed on the left of the infrastructure, the closest by incoming link segment to the
-   * given location is used. Since the geometry of a link applies to both link segments we define closest based on
-   * the driving position of the country, so a left-hand drive country will use the incoming link segment where
-   * the transfer zone is placed on the left, etc.
+  /** create and/or update directed connectoids for the given mode and layer, on the access link segments found for the
+   * passed in location. Each connectoid is related to the passed in transfer zone. Generally a single connectoid is
+   * created, for the most likely link segment, i.e., if the transfer zone is on the left of the infrastructure, the
+   * closest incoming link segment to the given location is used. As the geometry of a link applies to both its link
+   * segments, closest is defined by the driving position of the country, so a left-hand drive country uses the
+   * incoming link segment where the transfer zone is on the left, etc.
    *
    * @param connectoidExternalId external id (allowed to be null)
    * @param location to create the access point for as PLANit node (one or more upstream planit link segments will act
@@ -1026,10 +1022,10 @@ public class OsmTransferConnectoidHelper extends OsmZoningHelperBase {
         networkLayer, suppressLogging);
   }
 
-  /** create connectoids not based on OSM node location but based on auto-generated geographic location on the link of
-   * the provided access link segments, by finding either a close enough existing coordinate (OSM node), or if not close
-   * enough a newly created coordinate at the appropriate position. Then create connectoids accordingly by breaking the
-   * link in these locations. This is assumed to become connectoids for a vehicle stop location of some sort.
+  /** create connectoids not at an OSM node location but at an auto-generated location on the link of the provided
+   * access link segments: a close enough existing coordinate (OSM node), or else a new coordinate at the appropriate
+   * position. The connectoids are then created by breaking the link at these locations. They are assumed to be
+   * connectoids for a vehicle stop location of some sort.
    *
    * @param osmWaitingAreaId the waiting area pertains to
    * @param waitingAreaGeometry geometry of the waiting area

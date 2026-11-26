@@ -20,11 +20,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
- * Builder for OSM bounding boundaries. This class has a number of methods and internal state to be able to construct
- * an OsmBoundary instance with a polygon constructed from OSM ways based on the description provided in an OSMBoundary
- * without a polygon present but with the naming and other related information required to extract the polygon from
- * an OSM file. the builder can track this information and finally build a new OsmBoundary instance with the required
- * information
+ * Builder for OSM bounding boundaries. It constructs an OsmBoundary instance with a polygon made of OSM ways, from an
+ * OSMBoundary without a polygon but with the name and other information needed to extract the polygon from an OSM
+ * file. It tracks what it finds and finally builds a new OsmBoundary instance with it
  *
  * @author markr
  */
@@ -39,9 +37,8 @@ public class OsmBoundaryManager {
   private OsmBoundary finalBoundaryWithPolygon;
 
   /**
-   * OSMWay ids that make up the outer polygon of the to be constructed osmBoundingArea (if any), contiguous nature of
-   * these can be reconstructed by ordering them by their integer value which is incrementally created upon adding
-   * entries.
+   * OSMWay ids that make up the outer polygon of the osmBoundingArea to construct (if any). Their order along the
+   * polygon is found by sorting them by their integer value, which is incremented as entries are added.
    */
   private final Map<Long, Pair<Integer, OsmWay>> osmBoundaryOsmWayTracker = new HashMap<>();
 
@@ -84,9 +81,8 @@ public class OsmBoundaryManager {
   }
 
   /**
-   * Register actual OsmWay  portion of the named OSM boundary to construct a single coherent polygon during regular
-   * pre-processing stage but before main processing (as main processing relies on the boundary to be finalised to do
-   * the actual parsing).
+   * Register the actual OsmWay part of the named OSM boundary, to construct a single coherent polygon during regular
+   * pre-processing, before main processing, which needs the boundary finalised to do the actual parsing.
    * <p> Requires the osmWayId to have been registered already in stage 1 of preprocessing </p>
    *
    * @param osmWay to update registered entry with as part of the future OSM boundary
@@ -237,11 +233,10 @@ public class OsmBoundaryManager {
   }
 
   /**
-   * Construct bounding boundary based on registered OSM ways. It is assumed these OSM ways are contiguous based on the
-   * numbering assigned to them. It is assumed this forms a complete polygon (will be checked) and it is assumed this
-   * adheres to the bounding boundary configuration (without a polygon) configured by the user in the network settings.
-   * The result is a new OsmBoundingBoundary that will be used in the actual processing
-   *
+   * Construct the bounding boundary from the registered OSM ways. These OSM ways are assumed to be contiguous in the
+   * order of the numbers assigned to them, to form a complete polygon (which is checked), and to match the bounding
+   * boundary configuration (without a polygon) the user set in the network settings. The result is a new
+   * OsmBoundingBoundary used in the actual processing
    */
   public void stepThreeCompleteConstructionBoundingBoundary() {
     if(!isConfigured()){

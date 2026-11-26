@@ -16,8 +16,8 @@ import java.util.logging.Logger;
 /**
  * Preprocessing Handler that has three stages to extract a bounding boundary polygon based on an OSM relation name
  *<p>
- *  ONE_IDENTIFY_BOUNDARY_BY_NAME: We only register all the members of the boundary relation matching the boundary name
- *  for parsing in the next stage (as these are OSM ways). Required to be able to construct the spatial boundary.
+ *  ONE_IDENTIFY_BOUNDARY_BY_NAME: register the members (OSM ways) of the boundary relation matching the boundary name,
+ *  to parse in the next stage, as the spatial boundary is constructed from them.
  *</p>
  * <p>
  *   IDENTIFY_WAYS_FOR_BOUNDARY: preregister the nodes of the identified OSM boundary relation ways and register the

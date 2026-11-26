@@ -121,9 +121,9 @@ public class OsmNetworkLayerParser {
   }
   
   /**
-   * Initialise the layer specific event listeners, for example when modifications are made to the underlying network
-   * and based on user configuration
-   * additional action by this parser is required to maintain a consistent network layer result during parsing or after
+   * Initialise the layer specific event listeners, for example for when modifications are made to the underlying
+   * network and, based on user configuration, this parser must take additional action to keep the network layer
+   * consistent during parsing or after
    */
   private void initialiseEventListeners() {
     networkLayer.getLayerModifier().removeAllNonInternalListeners();
@@ -240,10 +240,9 @@ public class OsmNetworkLayerParser {
     }   
   }   
   
-  /** create and populate link if it does not already exists for the given two PLANit nodes based on the passed in
-   * osmWay information. In case a new link is to be created but internal nodes of the geometry are missing due to
-   * the meandering road falling outside the bounding box that is being parsed, null is returned and the link is
-   * not created
+  /** create and populate a link from the passed in osmWay, if none exists yet for the given two PLANit nodes. When a
+   * new link is needed but internal nodes of its geometry are missing, because the meandering road falls outside the
+   * parsed bounding box, null is returned and no link is created
    * 
    * @param osmWay to populate link data with
    * @param tags to populate link data with
@@ -347,9 +346,8 @@ public class OsmNetworkLayerParser {
     return link;      
   }  
   
-  /** given the OSM way tags we construct or find the appropriate link segment type, if no better alternative could
-   * be found
-   * than the one that is passed in is used, which is assumed to be the default link segment type for the OSM way.
+  /** given the OSM way tags we construct or find the appropriate link segment type. If no better alternative is found,
+   * the one passed in is used, which is assumed to be the default link segment type for the OSM way.
    * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag is
    * available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
    * 
@@ -361,10 +359,9 @@ public class OsmNetworkLayerParser {
    *  <li>yes</li>
    *  </ul>
    *  
-   *  If other access values are found it is assumed all modes are excluded unless specific inclusions are provided.
-   *  Note that it is very well possible  that due to the configuration chosen a modified link segment type is created
-   *  that has no modes that are supported. In which case  the link segment type is still created, but it is left to
-   *  the user to identify the absence of supported planit modes and take appropriate action.
+   *  For other access values all modes are assumed excluded unless specific inclusions are provided.
+   *  Depending on the configuration, a modified link segment type may well be created without any supported modes. It
+   *  is still created, and it is left to the user to identify the absence of supported planit modes and act on it.
    *  
    * @param osmWay the tags belong to
    * @param tags of the OSM way to extract the link segment type for
@@ -781,9 +778,9 @@ public class OsmNetworkLayerParser {
     return link;
   }  
   
-  /** given the OSM way tags and settings we construct or find the appropriate link segment types for both directions,
-   * if no better alternative could be found than the one that is passed in is used, which is assumed to be the default
-   * link segment type for the OSM way.
+  /** given the OSM way tags and settings we construct or find the appropriate link segment types for both directions.
+   * If no better alternative is found, the one passed in is used, which is assumed to be the default link segment type
+   * for the OSM way.
    * <b>It is not assumed that changes to mode access are ALWAYS accompanied by an access=X. However when this tag
    * is available we apply its umbrella result to either include or exclude all supported modes as a starting point</b>
    *  
@@ -854,12 +851,12 @@ public class OsmNetworkLayerParser {
 
 
   /**
-   * extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being a
-   * (partial) section of a circular way, then we only allow the presumed one way direction applicable when creating
-   * directional link segments. The result is a newly registered link, its nodes, and link segment(s) on
-   * the network layer. The parser will try to infer missing/default data by using defaults set by the user.
-   * The provided link segment types are based on the osmWay data and are assumed to be readily available and
-   * provided by the PlanitOsmHandler when identifying the correct layer (this layer)
+   * extract OSM way's PLANit infrastructure for the indicated part of the way. When it is marked as a (partial)
+   * section of a circular way, only the presumed one way direction is allowed when creating directional link segments.
+   * The result is a newly registered link, its nodes, and link segment(s) on the network layer. The parser will try to
+   * infer missing/default data by using defaults set by the user. The link segment types passed in are based on the
+   * osmWay data, and are assumed to be provided by the PlanitOsmHandler when it identifies the correct layer (this
+   * layer)
    * 
    * @param osmWay to parse
    * @param tags related to the OSM way
@@ -916,18 +913,16 @@ public class OsmNetworkLayerParser {
   }
     
   /**
-   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
-   * on an existing link but also an internal link on another node, we break the links where this node
-   * is internal. the end result is a situations where all nodes used by more than one link are extreme
-   * nodes, i.e., start/end nodes.
+   * whenever an internal node is used by more than one link, OR a node is an extreme node on an existing link but
+   * also an internal node on another link, we break the links where this node is internal. In the end, all nodes used
+   * by more than one link are extreme nodes, i.e., start/end nodes.
    * <p>
-   * Osm ways with multiple planit links associated with them can cause problems because in the handler we only register
-   * nodes internal to the original way to link mapping. If a link is broken we adjust the original link and create
-   * an additional link causing the original mapping between internal nodes and PLANit link to be potentially incorrect.
-   * We require the osmWaysWithMultiplePlanitLinks map to track these changes so that we can always identify
-   * which of multiple PLANit links an internal node currently resides on.
-   * 
-   */ 
+   * Osm ways with multiple planit links can cause problems, because the handler only registers the nodes internal to
+   * the original way to link mapping. Breaking a link adjusts the original link and creates an additional one, so the
+   * original mapping between internal nodes and PLANit link may become incorrect. The osmWaysWithMultiplePlanitLinks
+   * map tracks these changes, so we can always identify which of multiple PLANit links an internal node is on.
+   * </p>
+   */
   protected void breakLinksWithInternalConnections() {
     LOGGER.info("Breaking OSM ways with internal connections into multiple links ...");
 

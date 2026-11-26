@@ -26,15 +26,13 @@ import org.goplanit.zoning.ZoningModifierUtils;
 import org.locationtech.jts.geom.TopologyException;
 
 /**
- * Parse OSM input in either *.osm or *.osm.pbf format and return PLANit zoning instance comprising of the identified transfer zones.
- * Note that OSM data does not contain any information regarding OD zones, so this will be empty.
+ * Parse OSM input in *.osm or *.osm.pbf format into a PLANit zoning instance holding the identified transfer zones.
+ * OSM data holds no information on OD zones, so those are empty.
  * <p>
- * Further note that because a PLANit zoning relies on the network, we must first initialise the zoning reader
- * before calling the read() method with the necessary data obtained by the related Osm network reader, otherwise
- * parsing the zoning information will fail.
+ * A PLANit zoning relies on the network, so before calling read() the zoning reader must be initialised with the data
+ * of the related Osm network reader, otherwise parsing the zoning information fails.
  *
  * @author markr
- *
  */
 public class OsmZoningReader implements ZoningReader {
   
@@ -61,18 +59,14 @@ public class OsmZoningReader implements ZoningReader {
   /** zoning to populate */
   private Zoning zoning;
 
-  /** Make sure that if a bounding area is available on the network, any explicitly defined zoning bounding polygon
-   * should ideally not exceed the network bounding area since it makes little sense to try and parse pt infrastructure
-   * outside the network's geographically parsed area. If it does exceed, log a warning and replace it with the network
-   * bounding area instead.
+  /** When the network has a bounding area, an explicitly defined zoning bounding polygon should not exceed it, as
+   * parsing pt infrastructure outside the network's parsed area makes little sense. If it does exceed it, a warning is
+   * logged and it is replaced with the network bounding area.
    * <p>
-   *   In case the bounding area for the zoning is based on a name rather than a polygon, we cannot yet detect such
-   *   a mismatch
-   *   as the polygon for the zoning is yet to be extracted from the OSM data. In such a case this check is ignored.
-   *   Instead
-   *   we see if we can copy the polygon from the network to the zoning if the two bounding areas are identically
-   *   defined in
-   *   the settings
+   *   When the bounding area for the zoning is based on a name rather than a polygon, such a mismatch cannot yet be
+   *   detected, as the polygon for the zoning is yet to be extracted from the OSM data, so this check is skipped.
+   *   Instead, the polygon of the network is copied to the zoning when the two bounding areas are defined identically
+   *   in the settings
    * </p>
    *
    * @param boundaryManager bounding area manager for zoning
@@ -147,10 +141,9 @@ public class OsmZoningReader implements ZoningReader {
     syncAndValidateZoningBoundingArea(boundaryManager);
   }
 
-  /** it is possible some preregistered OSM nodes part of ways are not available, for example when the way crosses
-   *  the bounding box and is only partly present. In those cases we want to prune those nodes from the pre-registered
-   *  nodes to avoid issues later on where the index exists, but not the actual value. This method is to be
-   *  called after the processing of all OSM nodes but before we do OSM ways
+  /** prune the preregistered OSM nodes, part of ways, that are not available, for example when the way crosses the
+   *  bounding box and is only partly present, to avoid issues later on where the index exists but not the actual
+   *  value. To be called after processing all OSM nodes but before the OSM ways
    */
   private void pruneUnavailablePreregisteredOsmNodes() {
     this.zoningReaderData.getOsmConverterData().getOsmNodeData().removeRegisteredOsmNodesIf(

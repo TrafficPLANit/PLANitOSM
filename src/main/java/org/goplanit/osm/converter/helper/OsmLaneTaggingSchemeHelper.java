@@ -14,13 +14,11 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * The tagging scheme helper is the base class for different lane based tagging schemes. Currently there exist two different type of mode specific lane based tagging schemes
- * namely a ModeLaneBased one and a LaneModeBased one. 
- * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
+ * The base class for lane based tagging schemes. Currently there are two mode specific lane based tagging schemes,
+ * a ModeLaneBased one and a LaneModeBased one.
+ * https://wiki.openstreetmap.org/wiki/Bus_lanes gives a good example and comparison of the schemes for buses.
  *
- * 
  * @author markr
- *
  */
 public class OsmLaneTaggingSchemeHelper{
   
@@ -37,8 +35,8 @@ public class OsmLaneTaggingSchemeHelper{
   /** track the public service vehicle modes that are eligible for this instance */
   protected final Set<String> eligiblePublicServiceVehicleModes;  
   
-  /** Verify if any modes that can be identified via a currently derived tagging scheme are activated via the settings making it worthwhile to utilise the (derived) tagging scheme. 
-   * Currently we only consider:
+  /** Verify if any modes that can be identified via a derived tagging scheme are activated in the settings, making it
+   * worthwhile to use the (derived) tagging scheme. Currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
@@ -62,7 +60,7 @@ public class OsmLaneTaggingSchemeHelper{
     return false;
   }  
   
-  /** collect activated modes that are utilised via all derived tagging schemes. currently we only consider:
+  /** collect the activated modes used by all derived tagging schemes. Currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>

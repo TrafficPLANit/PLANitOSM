@@ -35,14 +35,12 @@ import de.topobyte.osm4j.core.model.util.OsmModelUtil;
 import static org.goplanit.osm.util.OsmModeUtils.identifyPtv1DefaultMode;
 
 /**
- * Handler that handles, i.e., converts, nodes, ways, and relations to the relevant transfer zones. This handler
- * conducts the main processing pass whereas there also exist a pre- and post-processing handlers to initialise and
- * finalise the parsing when the ordering of how OSM entities are parsed from file and
- * offered to the handlers do not allow us to parse the OSM data in a single pass due to interdependencies.
- * 
- * @author markr
- * 
+ * Handler that converts nodes, ways, and relations to the relevant transfer zones. This handler conducts the main
+ * processing pass. A pre- and a post-processing handler initialise and finalise the parsing, as the order in which
+ * OSM entities are read from file and offered to the handlers does not allow parsing the OSM data in a single pass,
+ * due to interdependencies.
  *
+ * @author markr
  */
 public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
@@ -179,10 +177,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     return true;
   }  
   
-  /** process a stop_area member that has no role tag identifying its purpose but it is a Ptv1 supporting entity
-   * for highways. Based on already parsed entities we attempt to register it on the transfer group if possible.
-   * For example, if it is a bus_stop, then we obtain the node and parsed transfer zone
-   * and register that transfer zone to the group so it is properly available
+  /** process a stop_area member that has no role tag identifying its purpose but is a Ptv1 supporting entity for
+   * highways. From the entities already parsed, we try to register it on the transfer group. For example, for a
+   * bus_stop we obtain the node and its parsed transfer zone, and register that transfer zone to the group so it is
+   * available
    * 
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
@@ -220,11 +218,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     
   }  
   
-  /** Process a stop_area member that has no role tag identifying its purpose but it is a Ptv1 supporting entity
-   * for railways. Based on already parsed entities we attempt
-   * to register it on the transfer group if possible. For example, if it is a platform, then we obtain the node
-   * and parsed transfer zone
-   * and register that transfer zone to the group so it is properly available
+  /** Process a stop_area member that has no role tag identifying its purpose but is a Ptv1 supporting entity for
+   * railways. From the entities already parsed, we try to register it on the transfer group. For example, for a
+   * platform we obtain the node and its parsed transfer zone, and register that transfer zone to the group so it is
+   * available
    * 
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
@@ -283,11 +280,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     
   }  
 
-  /** process a stop_area member that has no role tag identifying its purpose but it is a Ptv1 supporting entity.
-   * Based on already parsed entities we attempt
-   * to register it on the transfer group if possible. For example, if it is a bus_stop, then we obtain the node
-   * and parsed transfer zone
-   * and register that transfer zone to the group so it is properly available
+  /** process a stop_area member that has no role tag identifying its purpose but is a Ptv1 supporting entity. From the
+   * entities already parsed, we try to register it on the transfer group. For example, for a bus_stop we obtain the
+   * node and its parsed transfer zone, and register that transfer zone to the group so it is available
    * 
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
@@ -345,11 +340,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
   }  
   
-  /** process a stop_area member node that has no role tag identifying its purpose. Based on already parsed entities
-   * we attempt
-   * to register it on the transfer group if possible. For example, if it is a bus_stop, then we obtain the node and
-   * parsed transfer zone
-   * and register that transfer zone to the group so it is properly available
+  /** process a stop_area member node that has no role tag identifying its purpose. From the entities already parsed, we
+   * try to register it on the transfer group. For example, for a bus_stop we obtain the node and its parsed transfer
+   * zone, and register that transfer zone to the group so it is available
    * 
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
@@ -403,11 +396,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     getProfiler().incrementOsmTagCounter(ptVersion, OsmPtv1Tags.STATION);    
   }
   
-  /** process a stop_area member way that has no role tag identifying its purpose. Based on already parsed
-   * entities we attempt
-   * to extract relevant information related to its transfer group if possible. For example, if it is a station,
-   * we obtain its name, if it is a platform
-   * we register its related transfer zone to the group so it is properly available.
+  /** process a stop_area member way that has no role tag identifying its purpose. From the entities already parsed, we
+   * try to extract information for its transfer group. For example, for a station we obtain its name, for a platform
+   * we register its transfer zone to the group so it is available.
    * 
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
@@ -450,11 +441,9 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }  
   }   
 
-  /** Process a stop_area member that has no role tag identifying its purpose. Based on already parsed entities
-   * we attempt
-   * to register it on the transfer group if possible. For example, if it is a bus_stop, then we obtain the node
-   * and parsed transfer zone
-   * and register that transfer zone to the group so it is properly available
+  /** Process a stop_area member that has no role tag identifying its purpose. From the entities already parsed, we try
+   * to register it on the transfer group. For example, for a bus_stop we obtain the node and its parsed transfer zone,
+   * and register that transfer zone to the group so it is available
    * 
    * @param transferZoneGroup the member relates to 
    * @param osmRelation relating to the group
@@ -632,10 +621,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
 
   }
   
-  /** Extract a ptv2 platform for a given OSM node. When this node is on the road infrastructure we create a
-   * transfer zone and connectoids (discouraged tagging behaviour), but in most cases, a platform is separated from
-   * the road infrastructure, in which case we create a transfer zone without connectoids and stop_locations
-   * (connectoids) will be attached during the parsing of stop_locations, stop_areas, or spatially in post-processing
+  /** Extract a ptv2 platform for a given OSM node. When this node is on the road infrastructure we create a transfer
+   * zone and connectoids (discouraged tagging behaviour). In most cases, however, a platform is separate from the road
+   * infrastructure: we then create a transfer zone without connectoids, and stop_locations (connectoids) are attached
+   * when parsing stop_locations, stop_areas, or spatially in post-processing
    * 
    * @param osmNode the platform is represented by
    * @param tags tags of the OSM node
@@ -1088,11 +1077,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
         
   }
 
-  /** Extract stop area relation of Ptv2 scheme. We create transfer zone groups for each valid stop_area, connect it
-   * to the transfer zones but do not yet created connectoids for the stop positions. This is left to post-processing.
-   * We also mark processed stations, platforms, etc., such that after all stop_areas have been processed, we can
-   * extract planit instances for the remaining unprocessed osm entities, knowing they do not belong to any stop_area
-   * and constitute their own separate entity.
+  /** Extract stop area relation of Ptv2 scheme. We create a transfer zone group for each valid stop_area and connect
+   * it to the transfer zones, leaving the connectoids for the stop positions to post-processing. We also mark processed
+   * stations, platforms, etc., so once all stop_areas are processed, planit instances can be extracted for the
+   * remaining unprocessed osm entities, known to belong to no stop_area and to be separate entities.
    * 
    * @param osmRelation to extract stop_area for
    * @param tags of the stop_area relation
@@ -1164,11 +1152,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
                 
   }
   
-  /** Extract a platform relation's member that is specified as the outer role, i.e. contains the
-   *  geometry of the platform boundary. Use this to create
-   * the platform. Can be part of a multi-polygon, or a platform relation within a stop_area.
-   * Both are very uncommon but do occasionally surface in case entries to the platform
-   * are modelled explicitly as holes (inner boundary) within the platform
+  /** Extract a platform relation's member with the outer role, i.e. holding the geometry of the platform boundary, and
+   * create the platform from it. It can be part of a multi-polygon, or a platform relation within a stop_area. Both
+   * are very uncommon, but occasionally occur when entries to the platform are modelled explicitly as holes (inner
+   * boundary) within the platform
    * 
    * @param osmRelation of the platform
    * @param member representing the outer boundary
@@ -1195,12 +1182,10 @@ public class OsmZoningMainProcessingHandler extends OsmZoningHandlerBase {
     }
   }
 
-  /** Extract Ptv2 platforms from the multi-polygon. Do not create connectoids for them as the stop_positions
-   * might not have been parsed yet. For multi-polygons we use the outer polygon as their shape and ignore the rest.
-   * Since this shape is modelled as an Osmway, we must find it. Since the Osmway is not tagged as public
-   * transport (likely), we must use
-   * the unprocessed ways we identified for this purpose in pre-processing. For the found OsmWay
-   * we create a transfer zone (without connectoids)
+  /** Extract Ptv2 platforms from the multi-polygon, without connectoids, as the stop_positions might not have been
+   * parsed yet. For multi-polygons the outer polygon is used as their shape and the rest is ignored. This shape is an
+   * Osmway, likely not tagged as public transport, so it is found among the unprocessed ways identified for this
+   * purpose in pre-processing. For the OsmWay found, a transfer zone (without connectoids) is created
    * 
    * @param osmRelation to extract platform from
    * @param tags to use

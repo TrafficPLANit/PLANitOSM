@@ -34,10 +34,9 @@ public abstract class OsmWayYamlKeyedSettings {
   protected OsmWayYamlKeyedSettings() {
   }
 
-  /** Determine whether the ways represented by these settings should be parsed or not. It has no impact
-   * on the settings themselves, except that all queries related to whether or not modes or types are activated
-   * will respond negatively when the parser is deactived, despite the underlying settings remaining in memory and
-   * will be reinstated when the parser is re-activated.
+  /** Determine whether the ways of these settings are parsed. The settings themselves are not changed, except that
+   * while the parser is deactivated every query on whether modes or types are activated answers no. The settings stay
+   * in memory and apply again once the parser is re-activated.
    *
    * @param activate parser when true, deactivate otherwise
    */

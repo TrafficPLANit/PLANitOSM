@@ -35,9 +35,9 @@ public class OsmPublicTransportReaderSettings extends OsmPublicTransportReaderYa
   private static final Logger LOGGER = Logger.getLogger(OsmPublicTransportReaderSettings.class.getCanonicalName());
 
   /**
-   * The default buffer distance when looking for edges within a distance of the closest edge to create
-   * connectoids (stop_locations) on for transfer zones. In case multiple candidates are close just selecting
-   * the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
+   * The default buffer distance when looking for edges within a distance of the closest edge to create connectoids
+   * (stop_locations) on for transfer zones. When multiple candidates are close, just selecting the closest can lead to
+   * problems. It is only used to exclude clearly inadequate options.
    */
   public static final double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
     
@@ -169,10 +169,9 @@ public class OsmPublicTransportReaderSettings extends OsmPublicTransportReaderYa
   }
 
   /**
-   * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole,
-   * station, halt, stop, etc. (by entity type and osm id). This overrides the parser's mapping functionality
-   * and immediately maps the stop location to this osm entity. Can be useful to avoid warnings or wrong mapping of
-   * stop locations in case of tagging errors.
+   * Provide explicit mapping for stop_locations (by osm node id) to the waiting area, e.g., platform, pole, station,
+   * halt, stop, etc. (by entity type and osm id). This overrides the parser's mapping and maps the stop location to
+   * this osm entity straight away, which can avoid warnings or wrong mapping of stop locations with tagging errors.
    * 
    * @param stopLocationOsmNodeId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to
@@ -242,9 +241,9 @@ public class OsmPublicTransportReaderSettings extends OsmPublicTransportReaderYa
   
   /**
    * Provide explicit mapping for waiting areas (platform, bus_stop, pole, station) to a nominated osm way (by OSM id).
-   * This overrides the parser's mapping functionality and forces the parser to create a stop location on the
-   * nominated OSM way. Only use in case the platform has no stop_location and no stop_location maps to
-   * this waiting area. One cannot use this method and also use this waiting area in overriding stop_location mappings.
+   * This overrides the parser's mapping and forces it to create a stop location on the nominated OSM way. Only use
+   * when the platform has no stop_location and no stop_location maps to this waiting area. A waiting area given here
+   * cannot also be used in overriding stop_location mappings.
    * 
    * @param waitingAreaOsmId osm node id of stop location (int or long)
    * @param waitingAreaEntityType entity type of waiting area to map to

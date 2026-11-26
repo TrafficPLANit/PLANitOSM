@@ -153,10 +153,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     }
   }  
   
-  /** Recursive method that processes osm ways that have at least one circular section in it, but this might not be
-   * perfect, i.e., the final node might not connect to the initial node. to deal with this, we first identify
-   * the non-circular section(s), extract separate links for them, and then process
-   * the remaining (perfectly) circular component of the OSM way via {@code handlePerfectCircularWay}
+  /** Recursively process an osm way with at least one circular section, which might not be perfect: the final node
+   * might not connect to the initial node. So we first identify the non-circular section(s) and extract separate links
+   * for them, then process the remaining (perfectly) circular part of the OSM way via
+   * {@code handlePerfectCircularWay}
    * 
    * @param circularOsmWay to process
    * @param osmWayTags tags of the way
@@ -714,12 +714,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
     return linkSegmentTypes;
   }  
   
-  /** process all registered circular ways after parsing of basic nodes and ways is complete. Because circular
-   * ways are transformed into multiple
-   * links, they in effect yield multiple links per original OSM way (id). In case such an OSMway is referenced
-   * later it no longer maps to a single
-   * PLANit link, hence we return how each OSMway is mapped to the set of links created for the circular way
-   *   
+  /** process all registered circular ways after parsing of basic nodes and ways is complete. Circular ways become
+   * multiple links, so they yield multiple links per original OSM way (id). An OSMway referenced later then no longer
+   * maps to a single PLANit link, hence we return how each OSMway is mapped to the set of links created for the
+   * circular way
    */
   protected  void processCircularWays() {
     
@@ -756,11 +754,10 @@ public class OsmNetworkMainProcessingHandler extends OsmNetworkBaseHandler {
   }
 
   /**
-   * Extract OSM way's PLANit infrastructure for the part of the way that is indicated. When it is marked as being
-   * a (partial) section of a circular way, then
-   * we only allow the presumed one way direction applicable when creating directional link segments. The result is
-   * a newly registered link, its nodes, and link segment(s) on
-   * the network. The parser will try to infer missing/default data by using defaults set by the user.
+   * Extract OSM way's PLANit infrastructure for the indicated part of the way. When it is marked as a (partial)
+   * section of a circular way, only the presumed one way direction is allowed when creating directional link segments.
+   * The result is a newly registered link, its nodes, and link segment(s) on the network. The parser will try to infer
+   * missing/default data by using defaults set by the user.
    * 
    * @param osmWay to parse
    * @param tags related to the OSM way

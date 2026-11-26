@@ -360,9 +360,9 @@ public class OsmModeUtils {
     return identifyPtv1DefaultMode(osmId, tags, null, false);
   }
 
-  /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be supported.
-   *  We are slightly more tolerant to ferries due to their high likelihood of erroneous or incomplete tagging. In those
-   *  cases we verify a few more tags than one would normally do
+  /** If the tags contain Ptv1 related tagging, we use it to identify the most likely mode that is expected to be
+   *  supported. We are slightly more tolerant to ferries, as their tagging is often wrong or incomplete: for them a few
+   *  more tags are checked than one normally would
    *
    * <ul>
    * <li>highway=bus_stop gives bus</li>
@@ -447,10 +447,9 @@ public class OsmModeUtils {
     return identifyPtv1DefaultMode(osmId, tags, backupDefaultMode, false);
   }
 
-  /** Find out if modes to check are compatible with the reference OSM modes. Mode compatible means at least one overlapping
-   * OSM mode. When one allows for pseudo compatibility we relax the restrictions such that any rail/road/water mode
-   * is considered a match with any other rail/road/water mode. This can be useful when you do not want to make super strict matches but still want
-   * to filter out definite non-matches.
+  /** Find out if modes to check are compatible with the reference OSM modes, meaning at least one OSM mode overlaps.
+   * Allowing pseudo compatibility relaxes this, so any rail/road/water mode matches any other rail/road/water mode.
+   * That is useful to filter out definite non-matches without super strict matching.
    *  
    * @param osmModesToCheck the modes to check
    * @param referenceOsmModes modes to check against

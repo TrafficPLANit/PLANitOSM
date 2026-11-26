@@ -149,11 +149,10 @@ public class OsmWayUtils {
     return DrivingDirectionDefaultByCountry.isLeftHandDrive(countryName);
   }
 
-  /** assuming the tags represent an OSM way that is tagged as a junction=roundabout or circular, this method
-   * verifies the driving direction on this way based on the country it resides in or an explicit override
-   * of the clockwise or anticlockwise direction tags. Because OSM implicitly assumes these ways are one way and they
-   * comply with country specific direction defaults we must utilise this method to find out what the actual driving
-   * direction is
+  /** assuming the tags represent an OSM way tagged as junction=roundabout or circular, verify the driving direction on
+   * this way, based on the country it is in, or on clockwise or anticlockwise direction tags overriding it explicitly.
+   * OSM implicitly assumes these ways are one way, in the default direction of the country, so this method finds the
+   * actual driving direction
    * 
    * @param tags to use
    * @param isForwardDirection the direction that we want to verify if it is closed

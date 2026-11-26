@@ -33,8 +33,8 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationI
      
     
   /**
-   * Since we are building a macroscopic network based on OSM, we provide a mapping from
-   * the common OSM highway types to macroscopic link segment types that we explicitly do include, i.e., support.
+   * Provide a mapping from the common OSM highway types to macroscopic link segment types that we explicitly do
+   * include, i.e., support.
    * 
    * <ul>
    * <li>MOTORWAY</li>
@@ -80,8 +80,8 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationI
   }
   
   /**
-   * Since we are building a macroscopic network based on OSM, we provide a mapping from
-   * the common OSM highway types to macroscopic link segment types that we explicitly do not include
+   * Provide a mapping from the common OSM highway types to macroscopic link segment types that we explicitly do not
+   * include
    * 
    * <ul>
    * <li>FOOTWAY</li>

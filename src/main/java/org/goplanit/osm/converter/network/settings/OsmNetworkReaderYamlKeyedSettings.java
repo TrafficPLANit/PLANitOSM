@@ -111,10 +111,9 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   /** see {@link #setAlwaysKeepLargestSubnetwork(boolean)} */
   private boolean alwaysKeepLargestSubnetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
 
-  /** By default we allow ferry route OSM ways to be a fair way outside any bounding polygon and still be included.
-   * We do so because often water bodies are not part of a zoning system and would therefore not include connecting
-   * ferries. This is generally unwanted behaviour and therefore we automatically include all ferries within
-   * the specified distance outside the bounding polygon and still be included. */
+  /** Ferry route OSM ways within this distance outside the bounding polygon are still included. Water bodies are often
+   * not part of a zoning system, so the ferries connecting to it would otherwise be left out, which is generally
+   * unwanted. */
   private double maximumDistanceFerryOutsideBoundingPolygonMeters = DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
 
   /**
@@ -176,7 +175,7 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
    * for rather than assumed for every mode present.
    * </p>
    * <p>
-   * Rail and water are deliberately absent: their networks are routinely in disconnected pieces in an extract, a
+   * Rail and water are absent: their networks are routinely in disconnected pieces in an extract, a
    * branch line leaving the bounding area or a ferry crossing with nothing to connect to, without that indicating
    * a defect. Bicycle and pedestrian are absent for a related reason, their networks being fragmented rather than
    * directionally broken.
@@ -369,10 +368,9 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   }
 
   /**
-   * Classify an OSM access value tag, overriding how it would be treated by default. For example classifying
-   * {@code private} as positive causes ways tagged {@code access=private} to retain their mode access rather than
-   * having every mode stripped, which is often desirable since such ways are generally still traversable in
-   * practice even though they are formally restricted.
+   * Classify an OSM access value tag, overriding how it would be treated by default. For example, classifying
+   * {@code private} as positive keeps the mode access of ways tagged {@code access=private} instead of removing every
+   * mode. That is often wanted, as such ways are formally restricted but generally still traversable in practice.
    * <p>
    * A value can only carry one classification, so classifying it replaces any earlier choice for that value.
    * Values that are not recognised OSM access values are accepted, but a warning is logged since their effect
@@ -414,9 +412,8 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
    * <p>
    * Each mode is judged on its own network, and where that network does not meet the criteria the mode's access is
    * withdrawn rather than the infrastructure removed. Infrastructure only disappears once no mode is left that can
-   * use it. This matters because a link one mode cannot use is typically carrying another perfectly well: a one
-   * way street usually still permits pedestrians against the flow, which is also why judging this per track type
-   * cannot work.
+   * use it. This matters because a link one mode cannot use typically serves another well: a one way street usually
+   * still allows pedestrians against the flow, which is also why judging this per track type cannot work.
    * </p>
    * <p>
    * Under {@link Connectivity#STRONG} a subnetwork is what the mode can both reach and leave, which is what

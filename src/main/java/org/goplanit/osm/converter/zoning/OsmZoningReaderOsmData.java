@@ -284,10 +284,9 @@ public class OsmZoningReaderOsmData {
     }
   }   
   
-  /** mark an osm way to be kept even if it is not recognised as
-   * as valid PT supporting way. This occurs when a way is part of for example a multi-polygon relation
-   * where the way itself has no tags, but the relation is a PT supporting entity. In that case the way member
-   * still holds information that we require when parsing the relation.
+  /** mark an osm way to be kept even if it is not recognised as a valid PT supporting way. This occurs when a way is
+   * part of, for example, a multi-polygon relation, where the way itself has no tags but the relation is a PT
+   * supporting entity. The way member then still holds information needed when parsing the relation.
    * 
    * @param osmWayId to mark
    */
@@ -351,10 +350,10 @@ public class OsmZoningReaderOsmData {
     return osmOuterRoleOsmWaysToKeep.size();
   }  
     
-  /** add identified OSM entity to be ignored if it pops up as a stop_area stop_position. For example, it was deemed
-   *  incorrectly tagged already, or it pertains to a mode that is not being supported. The latter might not be verifiable
-   *  when encountered as part of a relation, hence mark it here as such. It will then be skipped without further
-   *  issue or warning
+  /** add identified OSM entity to be ignored if it comes up as a stop_area stop_position, for example because it was
+   *  already deemed incorrectly tagged, or it is of a mode that is not supported. The latter might not be verifiable
+   *  when encountered as part of a relation, hence it is marked here. It is then skipped without further issue or
+   *  warning
    * 
    * @param type entity type
    * @param osmId osm entity to mark as invalid stop_position

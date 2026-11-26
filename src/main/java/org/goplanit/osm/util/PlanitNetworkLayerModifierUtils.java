@@ -65,16 +65,14 @@ public class PlanitNetworkLayerModifierUtils {
   }
 
   /**
-   * whenever we find that internal nodes are used by more than one link OR a node is an extreme node
-   * on an existing link but also an internal link on another node, we break the links where this node
-   * is internal. the end result is a situations where all nodes used by more than one link are extreme
-   * nodes, i.e., start/end nodes.
+   * whenever an internal node is used by more than one link, OR a node is an extreme node on an existing link but
+   * also an internal node on another link, we break the links where this node is internal. In the end, all nodes used
+   * by more than one link are extreme nodes, i.e., start/end nodes.
    * <p>
-   * Osm ways with multiple PLANit links associated with them can cause problems because in the handler we only
-   * register nodes internal to the original way to link mapping. If a link is broken we adjust the original link
-   * and create an additional link causing the original mapping between internal nodes and PLANit link to be
-   * potentially incorrect. We require the osmWaysWithMultiplePlanitLinks map to track these changes so that
-   * we can always identify which of multiple PLANit links an internal node currently resides on.
+   * Osm ways with multiple PLANit links can cause problems, because the handler only registers the nodes internal to
+   * the original way to link mapping. Breaking a link adjusts the original link and creates an additional one, so the
+   * original mapping between internal nodes and PLANit link may become incorrect. The osmWaysWithMultiplePlanitLinks
+   * map tracks these changes, so we can always identify which of multiple PLANit links an internal node is on.
    *
    * @param networkLayer the links are on
    * @param layerData of the layer, tracking which links locations are internal to

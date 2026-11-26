@@ -3,9 +3,9 @@ package org.goplanit.osm.tags;
 import org.goplanit.osm.util.OsmTagUtils;
 
 /**
- * Commonly used tags in relation to busways
- * 
- * Note that buses and/or public service vehicles have three different possible tagging schemes that are supported by open street maps, namely:
+ * Commonly used tags for busways
+ *
+ * OpenStreetMap supports three tagging schemes for buses and/or public service vehicles:
  * 
  * <ul>
  * <li>busway scheme</li>

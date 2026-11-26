@@ -137,9 +137,9 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
   public static final boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
 
   /**
-   * default search radius in meters for mapping ferry stops to ferry routes. When found and
-   * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true then a new link to the nearest waterway
-   * running the ferry is created to avoid the ferry stop to be dangling
+   * default search radius in meters for mapping ferry stops to ferry routes. When one is found and
+   * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true, a new link to the nearest waterway running the
+   * ferry is created, so the ferry stop is not dangling
    */
   public static final double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
 

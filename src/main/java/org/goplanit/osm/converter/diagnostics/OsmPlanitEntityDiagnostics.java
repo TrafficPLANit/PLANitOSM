@@ -9,9 +9,9 @@ import org.goplanit.utils.misc.LogCollator;
 
 /**
  * What became of the PLANit entities derived from OSM, for now the intersections from traffic signals: how many were
- * created, and the issues found with them, collated per issue with the entities' ids, so they are logged once with
- * their totals and a sample of ids, and can be queried per issue. What became of the OSM entities they derive from is
- * accounted for separately
+ * created, and the issues found with them. The entities' ids are collated per issue, so each issue is logged once with
+ * its total and a sample of ids, and can be queried. What became of the OSM entities they derive from is accounted
+ * for separately
  *
  * @author markr
  */

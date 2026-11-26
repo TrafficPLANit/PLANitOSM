@@ -99,10 +99,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return planitLinksToCheck;
   }
 
-  /** Verify if the provided transfer zone supports more than a single stop_position. Transfer zones that reside
-   * next to the road
-   * do, but point based transfer zones that reside on the road do not, because they are a stop_position and
-   * therefore only support that
+  /** Verify if the provided transfer zone supports more than a single stop_position. Transfer zones next to the road
+   * do, but point based transfer zones on the road do not: they are a stop_position, so they only support that
    * stop_position.
    * 
    * @param transferZone to verify if supports multiple stop positions
@@ -130,9 +128,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;
   }
 
-  /** create a transfer zone based on the passed in osm entity, tags for feature extraction and access.
-   * Note that we attempt to also
-   * parse its reference tags. Currently we look for keys:
+  /** create a transfer zone based on the passed in osm entity, tags for feature extraction and access. Its reference
+   * tags are parsed too. Currently we look for keys:
    * <ul>
    * <li>ref</li>
    * <li>loc_ref</li>
@@ -237,12 +234,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;
   }
   
-  /** create a subset of transfer zones from the passed in ones, removing all transfer zones for which we can be
-   * certain they are located on the wrong side of the road infrastructure.
-   * This is verified by checking if the stop_location resides on a one-way link. If so, we can be sure (based on
-   * the driving direction of the country) if a transfer zone is located on
-   * the near or far side of the road, i.e., do people have to cross the road to egt to the stop position. If so,
-   * it is not eligible and we remove it, otherwise we keep it.
+  /** create a subset of the passed in transfer zones, without those certainly on the wrong side of the road
+   * infrastructure. This is checked when the stop_location is on a one-way link: then, given the driving direction of
+   * the country, we can be sure whether a transfer zone is on the near or far side of the road, i.e., whether people
+   * have to cross the road to get to the stop position. If so, it is not eligible and removed, otherwise it is kept.
    * 
    * @param osmNode representing the stop location
    * @param transferZones to create subset for
@@ -283,11 +278,9 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return matchedTransferZones;
   }
 
-  /** Verify based on the stop_position location that is assumed to be located on earlier parsed road infrastructure,
-   * if the transfer zone is located
-   * on an eligible side of the road. Meaning that the closest experienced driving direction of the nearby road is
-   * the logical one, i.e., when
-   * transfer zone is on the left the closest driving direction should be left hand drive and vice versa.
+  /** Verify, from the stop_position location, assumed to be on earlier parsed road infrastructure, if the transfer zone
+   * is on an eligible side of the road, meaning the closest driving direction of the nearby road is the logical one,
+   * i.e., when the transfer zone is on the left the closest driving direction should be left hand drive and vice versa.
    * 
    * @param location representation stop_location
    * @param transferZone representing waiting area
@@ -321,11 +314,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     
   }
 
-  /** Find out if transfer zone is mode compatible with the passed in reference OSM modes. Mode compatible means at
-   * least one overlapping mode that is mapped to a PLANit mode.If the zone has no known modes, it is by definition
-   * not mode compatible. When one allows for pseudo compatibility we relax the restrictions such that any
-   * rail/road/water mode is considered a match with any other rail/road/water mode. This can be useful when
-   * you do not want to make super strict matches but still want to filter out definite non-matches.
+  /** Find out if transfer zone is mode compatible with the passed in reference OSM modes, meaning at least one
+   * overlapping mode is mapped to a PLANit mode. If the zone has no known modes, it is by definition not mode
+   * compatible. Allowing pseudo compatibility relaxes this, so any rail/road/water mode matches any other
+   * rail/road/water mode. That is useful to filter out definite non-matches without super strict matching.
    *  
    * @param transferZone to verify
    * @param referenceOsmModes to match against
@@ -361,19 +353,15 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
    * <li>local_ref</li>
    * </ul>
    * <p>
-   * In case multiple zones are found with the exact same reference, we select the zone that is closest by. In case
-   * multiple zones are found with unique references
-   * (when the reference value contains multiple reference, e.g. 1;2), then we keep all zones, since each one
-   * represents the closest by unique reference
+   * When several zones have the exact same reference, the closest one is selected. When zones are found with unique
+   * references (the reference value holds several references, e.g. 1;2), all are kept, since each one is the closest
+   * for its reference
    * <p>
-   * Further the zone should be mode compatible with the referenceOsmModes. Compatible here implies that there is
-   * direct overlap between modes. If not, then we attempt to salvage
-   * accounting for likely tagging errors, e.g. a train platform is created for tram, this will be allowed because
-   * it often happens and both are of type rail, given their is a reference
-   * match this is likely still correct. However, if a rail mode and road mode is found across the two without
-   * overlap then we must assume there is an error in the reference used and we do
-   * not allow the mapping and inform the user. If the zone lacks any mode information, we also allow the mapping
-   * because we rather have too many matches than missing them.
+   * The zone should also be mode compatible with the referenceOsmModes, meaning their modes overlap directly. If not,
+   * we allow for likely tagging errors: a train platform created for a tram, for example, is allowed, as this often
+   * happens, both are rail, and with a matching reference it is likely still correct. However, a rail mode and a road
+   * mode without overlap is taken as an error in the reference: the mapping is not allowed and the user is informed.
+   * A zone without any mode information is mapped too, as too many matches are better than missing ones.
    * 
    * 
    * @param osmNode referring to zero or more transfer zones via its tags
@@ -590,10 +578,8 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   }
 
   /** Find the closest and/or most likely transfer zone for the given osm node and its tags (with or without a
-   * reference
-   * for additional information for mapping). Use the search radius from the settings to identify eligible transfer
-   * zones and then
-   * use information on modes, references and spatial proximity to choose the most likely option. 
+   * reference for additional information for mapping). The search radius from the settings identifies eligible
+   * transfer zones, then modes, references and spatial proximity choose the most likely option.
    * 
    * @param osmNode representing a stop position
    * @param tags of the node
@@ -796,13 +782,12 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
         tz, eligibleOsmModes, allowPseudoModeMatches, allowModelessTransferZoneMatches)).collect(Collectors.toSet());
   }
 
-  /** Attempt to create a new transfer zone and register it, do not yet create connectoids for it. This is postponed
-   * because likely at this point in time it is not possible to best determine where they should reside. Find eligible
-   * access modes as input properties as well which can be used later to map stop_positions more easily. Note that
-   * one can provide a default osm mode that is deemed eligible in case no tags are provided on the osm entity. In case
-   * no mode information can be extracted a warning is issued but the transfer zone is still created because this is a
-   * tagging error and we might be able to salvage later on. If there are osm modes but none of them are mapped, then
-   * we should not create the zone since it will not be of use.
+  /** Attempt to create a new transfer zone and register it, without connectoids yet: at this point it is likely not
+   * yet possible to tell where they should be. Its eligible access modes are found too, as input properties, to map
+   * stop_positions more easily later. A default osm mode can be given, deemed eligible when the osm entity has no
+   * tags. When no mode information can be extracted, a warning is issued but the transfer zone is still created, as
+   * this is a tagging error that might be salvaged later on. When there are osm modes but none of them is mapped, the
+   * zone is not created, as it would be of no use.
    * 
    * @param osmEntity to extract transfer zone for
    * @param tags to use
@@ -864,10 +849,10 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
     return transferZone;
   }
 
-  /** Method that will attempt to create both a transfer zone and its connectoids at the location of the OSM node.
-   * This is only relevant for very specific types of OSM pt nodes, such as tram_stop, some bus_stops that are tagged
-   * on the road, and potentially halts and/or stations. In case no existing transfer zone in this location exists,
-   * we create one first using the default transfer zone type provided, otherwise we utilise the existing transfer zone
+  /** Attempt to create both a transfer zone and its connectoids at the location of the OSM node. This is only relevant
+   * for very specific types of OSM pt nodes, such as tram_stop, some bus_stops tagged on the road, and potentially
+   * halts and/or stations. When no transfer zone exists in this location, one is created first with the default
+   * transfer zone type provided, otherwise the existing transfer zone is used
    * 
    * @param osmNode for the location to create both a transfer zone and connectoid(s)
    * @param tags of the node
@@ -1059,10 +1044,9 @@ public class TransferZoneHelper extends OsmZoningHelperBase {
   }
 
   /**
-   * Filter (retain) only the links that are vertical layer index compatible, i.e., have the same vertical
-   * layer index (or both adopt the default).
-   * In case the transfer zone has no explicit layer specified, it depends on the user whether we would assume
-   * the default layer or we assume the layer is in fact unknown
+   * Filter (retain) only the links that are vertical layer index compatible, i.e., have the same vertical layer index
+   * (or both adopt the default). When the transfer zone has no explicit layer, the user decides whether the default
+   * layer is assumed or the layer is taken as unknown
    *
    * @param transferZone to match against
    * @param linksByLayerToFilter the links to filter

@@ -23,10 +23,9 @@ public class OsmInfrastructureConfigurationImpl implements OsmInfrastructureConf
   protected final Set<String> activatedOsmTypes;
   
   /**
-   * the OSM types that are marked as deactivate OSM types, i.e., will be ignored when parsing unless activated.
-   * This differs from unactivatable OsmTypes because deactivatesOsmTypes can in fact be activated whereas
-   * unactivatable OsmTypes cannot (unless
-   * they are explicitly newly registered with their required defaults)
+   * the OSM types marked as deactivated, i.e., ignored when parsing unless activated. Unlike unactivatable OsmTypes,
+   * deactivated OsmTypes can be activated; unactivatable OsmTypes cannot, unless explicitly registered as new with
+   * their required defaults
    */
   protected final Set<String> deactivatedOsmTypes;
    

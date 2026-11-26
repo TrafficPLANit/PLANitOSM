@@ -12,16 +12,15 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import java.util.Set;
 
 /**
- * The lanesMode tagging scheme is one of a number of tagging schemes used by OSM to identify dedicated lanes for specific modes. It does not allow
- * to identify which of the lanes belongs to a mode but it does allow one to identify how many lanes (and possibly in what direction) are dedicated to a mode.
- * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
+ * The lanesMode tagging scheme is one of several OSM tagging schemes for lanes dedicated to specific modes. It does not
+ * tell which lanes belong to a mode, but it does tell how many lanes (and possibly in what direction) are dedicated to
+ * it. https://wiki.openstreetmap.org/wiki/Bus_lanes gives a good example and comparison of the schemes for buses.
  * <p>
- * Methods that help identify modes specified using the {@code lanes:<mode>:*=*} scheme. since this scheme applies across a number of modes
- * it is useful to group the functionality in a separate class
+ * Methods that help identify modes specified using the {@code lanes:<mode>:*=*} scheme. As this scheme applies to a
+ * number of modes, they are grouped in a separate class
  * </p>
- * 
- * @author markr
  *
+ * @author markr
  */
 public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
       
@@ -49,12 +48,10 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     }
   }
   
-  /** Verify if any modes that can be identified via the {@code lanes:<mode>} tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme.
-   * Note that if the passed in layer does not support the activated PLANit mode the helper is not required either, since the layer will not support
-   * any of these modes.
-   * 
-   * Currently we only consider:
-   * 
+  /** Verify if any modes that can be identified via the {@code lanes:<mode>} tagging scheme are activated in the
+   * settings, making it worthwhile to use this tagging scheme. If the passed in layer does not support the activated
+   * PLANit mode, the helper is not required either, since the layer supports none of these modes. Currently we only
+   * consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
@@ -69,7 +66,8 @@ public class OsmLanesModeTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings, networkLayer);
   }    
   
-  /** collect activated modes that can be identified via the {@code lanes:<mode>} tagging scheme are currently supported. currently we only consider:
+  /** collect the activated modes, supported by the layer, that can be identified via the {@code lanes:<mode>} tagging
+   * scheme. Currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>

@@ -12,15 +12,14 @@ import org.goplanit.utils.network.layer.MacroscopicNetworkLayer;
 import java.util.Set;
 
 /**
- * The modeLanes tagging scheme is one of a number of tagging schemes used by OSM to identify dedicated lanes for specific modes. It allows
- * to identify which and how many lanes (and indirectly in what direction) are dedicated to a mode.
- * A good example and comparison of different schemes can be found for buses via https://wiki.openstreetmap.org/wiki/Bus_lanes
+ * The modeLanes tagging scheme is one of several OSM tagging schemes for lanes dedicated to specific modes. It tells
+ * which and how many lanes (and indirectly in what direction) are dedicated to a mode.
+ * https://wiki.openstreetmap.org/wiki/Bus_lanes gives a good example and comparison of the schemes for buses.
  * <p>
- * Methods that help identify modes specified using the {@code <mode>:lanes:*=*} scheme. since this scheme applies across a number of modes
- * it is useful to group the functionality in a separate class
- * 
- * @author markr
+ * Methods that help identify modes specified using the {@code <mode>:lanes:*=*} scheme. As this scheme applies to a
+ * number of modes, they are grouped in a separate class
  *
+ * @author markr
  */
 public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     
@@ -47,8 +46,8 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     }
   }
   
-  /** Verify if any modes that can be identified via the {@code <mode>:lanes} tagging scheme are currently activated via the settings making it worthwhile to utilise this tagging scheme. 
-   * Currently we only consider:
+  /** Verify if any modes that can be identified via the {@code <mode>:lanes} tagging scheme are activated in the
+   * settings, making it worthwhile to use this tagging scheme. Currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>
@@ -63,7 +62,8 @@ public class OsmModeLanesTaggingSchemeHelper extends OsmLaneTaggingSchemeHelper{
     return OsmLaneTaggingSchemeHelper.requireTaggingSchemeHelper(settings, networkLayer);
   }  
   
-  /** collect activated modes(and their mode categories) that can be identified via the {@code <mode>:lanes} tagging scheme are currently supported. currently we only consider:
+  /** collect the activated modes (and their mode categories), supported by the layer, that can be identified via the
+   * {@code <mode>:lanes} tagging scheme. Currently we only consider:
    * <ul>
    * <li>bus (and therefore psv)</li>
    * <li>bicycle</li>

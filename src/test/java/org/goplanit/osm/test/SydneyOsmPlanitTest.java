@@ -244,11 +244,11 @@ public class SydneyOsmPlanitTest {
   }
 
   /**
-   * Test case which parses an OSM network file, loads it into PLANit memory model and persists it as a PLANit network
-   * and zoning (containing stops but no services). We do so for rail, bus, and ferry.
+   * Read an OSM network file for rail, bus, and ferry, and persist it as a PLANit network and zoning (with stops but no
+   * services).
    * <p>
-   * In addition, we explicitly create mode compatible connectoids to their access/egress modes
-   * for ferry, rail, and bus stops
+   * In addition, mode compatible connectoids to their access/egress modes are created explicitly for ferry, rail, and
+   * bus stops
    * </p>
    */
   @Test

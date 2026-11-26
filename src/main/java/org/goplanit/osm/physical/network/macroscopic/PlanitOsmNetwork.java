@@ -46,11 +46,11 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
    */
   private static final Logger LOGGER = Logger.getLogger(PlanitOsmNetwork.class.getCanonicalName());
 
-  /** Create a link segment type on the network based on the passed in OSM highway value tags. In case PLANit modes
-   * on different network layers exist, then we must register multiple link segment types, differentiated by their
-   * modes. For example an OSM link that supports pedestrians and cars, could require mapping to an active network
-   * layer and an on-street layer requiring a active layer link segment type version and one for on-street, the
-   * former supporting the active modes on that layer and the latter the on-street modes.
+  /** Create a link segment type on the network based on the passed in OSM highway value tags. When the PLANit modes are
+   * on different network layers, multiple link segment types are registered, differentiated by their modes. For
+   * example, an OSM link supporting pedestrians and cars could map to an active network layer and an on-street layer,
+   * needing one link segment type for the active layer, supporting its active modes, and one for the on-street layer,
+   * supporting its on-street modes.
    * 
    * @param highwayTypeValue of OSM way key
    * @param maxSpeed to utilise for this OSM highway type
@@ -1081,7 +1081,7 @@ public class PlanitOsmNetwork extends MacroscopicNetwork {
   }
 
 
-  /** when we find functionally equivalent link segment types so aggregate them into a single one by
+  /** aggregate functionally equivalent link segment types into a single one:
    * - identify duplicates in network
    * - update extern id and name, so we retain original OSM information
    * - recreate the ids on the container
