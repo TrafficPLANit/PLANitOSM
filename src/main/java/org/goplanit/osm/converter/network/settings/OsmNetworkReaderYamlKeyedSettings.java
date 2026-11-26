@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.goplanit.osm.converter.network.settings.override.OsmWayLaneOverride;
 import org.goplanit.osm.converter.settings.OsmReaderSettings;
@@ -22,6 +23,7 @@ import org.goplanit.osm.tags.OsmWaterwayTags;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.exceptions.ExceptionUtils;
 import org.goplanit.utils.graph.directed.Connectivity;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.UserOverride;
@@ -141,6 +143,23 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   protected OsmNetworkReaderYamlKeyedSettings(URL inputSource, String countryName) {
     super(inputSource, countryName);
     createWaySettings(countryName);
+  }
+
+  /**
+   * Log the highway, railway, waterway and intersection settings these settings hold, each in a section of its own,
+   * so that settings extending these can log what they add before the sections
+   *
+   * @param level indentation level of these settings, the sections one deeper
+   */
+  protected void logNestedSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsSection("Highway", level + 1));
+    getHighwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Railway", level + 1));
+    getRailwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Waterway", level + 1));
+    getWaterwaySettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsSection("Intersections", level + 1));
+    getIntersectionSettings().logSettings(level + 1);
   }
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
@@ -607,6 +626,41 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
       description = "Furthest a ferry route may run outside the bounding area and still be kept, in metres")
   public void setMaximumDistanceFerryOutsideBoundingPolygonMeters(double distanceMeters) {
     this.maximumDistanceFerryOutsideBoundingPolygonMeters = distanceMeters;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings(int level) {
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types",
+        isConsolidateLinkSegmentTypes(), level));
+    /* every activated mode's configuration is logged in full rather than a flag alone, since the thresholds and
+     * the notion of connectivity together decide what a pass actually does and are easily overlooked. The absence
+     * of any activated mode is logged too, so that it is visible rather than merely unstated */
+    if(getRemoveDanglingSubnetworkModes().isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks", "deactivated for all modes", level));
+    }else{
+      for(var entry : getRemoveDanglingSubnetworkModes().entrySet()){
+        LOGGER.info(LoggingUtils.settingsValue(
+            String.format("Remove dangling subnetworks (%s)", entry.getKey().value()),
+            entry.getValue().toString(), level));
+      }
+    }
+    LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork",
+        isAlwaysKeepLargestSubnetwork(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
+        getMaximumDistanceFerryOutsideBoundingPolygonMeters(), level));
+    if(!getOsmWayLaneOverrides().isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Lanes overridden by OSM way id", getOsmWayLaneOverrides(), level));
+    }
+    if(!getAccessValueClassification().isEmpty()){
+      LOGGER.info(LoggingUtils.settingsValue("Access value tags reclassified by user",
+          getAccessValueClassification().entrySet().stream().map(
+              e -> String.format("%s=%s", e.getKey(), e.getValue().name().toLowerCase())).collect(
+                  Collectors.joining(", ")), level));
+    }
   }
 
   /**

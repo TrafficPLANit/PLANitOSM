@@ -5,14 +5,12 @@ import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.defaults.OsmWaterwayTypeConfiguration;
 import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
-import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 import org.goplanit.utils.settings.annotations.NoSettingsKey;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Settings specific to waterways when parsing OSM files and converting them to a PLANit memory model. The keys a
@@ -27,8 +25,6 @@ import java.util.logging.Logger;
  *
  */
 public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
-
-  private static final Logger LOGGER = Logger.getLogger(OsmWaterwaySettings.class.getCanonicalName());
 
   /** immutable default water mode mappings used to initialise each instance */
   private static final Map<String, PredefinedModeType> DEFAULT_OSM_WATER_MODE_MAPPINGS =
@@ -232,8 +228,8 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
     
   /**
    * Collect all OSM modes that are allowed for the given OSM waterway type as configured by the user. Note we allow
-   * tagging values related to the key route=_mode_, e.g., ferry, as well as the de-facto standard where the 'ferry' is used
-   * as keyword and the way type reflects the equivalent of highway options, e.g., trunk, as in ferry=trunk.
+   * tagging values related to the key route=_mode_, e.g., ferry, as well as the de-facto standard where the 'ferry' is
+   * used as keyword and the way type reflects the equivalent of highway options, e.g., trunk, as in ferry=trunk.
    * 
    * @param osmWaterwayType to use
    * @return allowed OsmModes found, empty if none
@@ -254,7 +250,7 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
   @Override
   @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
-    LOGGER.info(LoggingUtils.settingsValue("Waterway parser activated", isParserActive(), level));
+    super.logSettings(level);
     logModeMappings(level + 1);
   }
 }

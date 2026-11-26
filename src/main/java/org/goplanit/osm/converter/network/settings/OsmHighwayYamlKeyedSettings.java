@@ -5,13 +5,16 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 
 import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
 import org.goplanit.utils.settings.annotations.SettingsRead;
@@ -28,6 +31,9 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
  * @author markr
  */
 public abstract class OsmHighwayYamlKeyedSettings extends OsmWaySettings {
+
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmHighwayYamlKeyedSettings.class.getCanonicalName());
 
   /**  when speed limit information is missing, use predefined speed limits for highway types mapped to urban area
    * speed limits (or non-urban), default is true */
@@ -241,5 +247,16 @@ public abstract class OsmHighwayYamlKeyedSettings extends OsmWaySettings {
           "tags give no speed limit")
   public void setSpeedLimitDefaultsBasedOnUrbanArea(boolean speedLimitDefaultsBasedOnUrbanArea) {
     this.speedLimitDefaultsBasedOnUrbanArea = speedLimitDefaultsBasedOnUrbanArea;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  @NoSettingsKey(reason = "logs the settings")
+  public void logSettings(int level) {
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue(
+        "Speed limit defaults based on urban area", isSpeedLimitDefaultsBasedOnUrbanArea(), level));
   }
 }

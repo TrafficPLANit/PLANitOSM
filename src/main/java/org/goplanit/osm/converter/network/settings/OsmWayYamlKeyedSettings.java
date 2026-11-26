@@ -1,5 +1,9 @@
 package org.goplanit.osm.converter.network.settings;
 
+import java.util.logging.Logger;
+
+import org.goplanit.utils.misc.LoggingUtils;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
 import org.goplanit.utils.settings.annotations.SettingsRead;
 import org.goplanit.utils.settings.annotations.SettingsWrite;
@@ -17,6 +21,9 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
  * @author markr
  */
 public abstract class OsmWayYamlKeyedSettings {
+
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmWayYamlKeyedSettings.class.getCanonicalName());
 
   /** see {@link #activateParser(boolean)} */
   private boolean parserActive;
@@ -45,5 +52,15 @@ public abstract class OsmWayYamlKeyedSettings {
   @SettingsRead(key = "active")
   public boolean isParserActive() {
     return parserActive;
+  }
+
+  /**
+   * Log the settings of the ways of this kind
+   *
+   * @param level indentation level to apply
+   */
+  @NoSettingsKey(reason = "logs the settings")
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Parser activated", isParserActive(), level));
   }
 }

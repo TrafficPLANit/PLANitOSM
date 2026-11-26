@@ -238,7 +238,9 @@ public abstract class OsmWaySettings extends OsmWayYamlKeyedSettings {
   protected void overwriteOsmWayTypeDefaultCapacityMaxDensity(
           String osmWayKey, String osmWayType, double capacityPerLanePerHour, double maxDensityPerLane) {
     overwriteOsmWayTypeCapacityDensityDefaults.put(osmWayType, Pair.of(capacityPerLanePerHour,maxDensityPerLane));
-    LOGGER.info(String.format("Custom defaults for OSM road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
+    LOGGER.info(String.format(
+        "Custom defaults for OSM road type %s:%s to capacity: %.2f (pcu/h/lane), max density %.2f (pcu/km)",
+        osmWayKey, osmWayType, capacityPerLanePerHour, maxDensityPerLane));
   }          
   
   /**
@@ -540,13 +542,6 @@ public abstract class OsmWaySettings extends OsmWayYamlKeyedSettings {
       LOGGER.info(LoggingUtils.settingsEntry("Mapping inactive", level + 1));
     }
   }
-
-  /**
-   * Log way specific settings for derived classes.
-   *
-   * @param level indentation level to apply
-   */
-  public abstract void logSettings(int level);
 
   /** Verify if the passed in osmMode is mapped to a mode, i.e., if it is actively included when
    * reading the network. When the parser is not active false is returned in all cases

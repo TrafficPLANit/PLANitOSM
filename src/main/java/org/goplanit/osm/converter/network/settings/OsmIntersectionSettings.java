@@ -4,16 +4,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
 import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.tags.OsmTrafficSignalTags;
 import org.goplanit.utils.misc.CollectionUtils;
-import org.goplanit.utils.misc.LoggingUtils;
-import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 import org.goplanit.utils.settings.annotations.NoSettingsKey;
@@ -35,99 +31,10 @@ import org.goplanit.utils.settings.annotations.NoSettingsKey;
  */
 public class OsmIntersectionSettings extends OsmIntersectionYamlKeyedSettings {
 
-  /** the logger */
-  private static final Logger LOGGER = Logger.getLogger(OsmIntersectionSettings.class.getCanonicalName());
-
   /**
    * Constructor, every setting at its default
    */
   public OsmIntersectionSettings() {
-  }
-
-  /**
-   * Log the settings, the consolidation and collapse settings each as a section of its own
-   *
-   * @param level to indent the values at
-   */
-  @NoSettingsKey(reason = "logs the settings")
-  public void logSettings(int level) {
-    LOGGER.info(LoggingUtils.settingsValue("Intersection parser activated", isParserActive(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Maximum vehicle signal to junction distance (m)",
-        getMaximumDistanceVehicleSignalToJunctionMeters(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Maximum signalised crossing to junction distance (m)",
-        getMaximumDistanceSignalisedCrossingToJunctionMeters(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signals",
-        isBreakLinksAtIsolatedSignals(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Traffic signal directions overridden",
-        LoggingUtils.noneIfEmpty(getTrafficSignalDirectionOverrides()), level));
-    LOGGER.info(LoggingUtils.settingsValue("Traffic signal kinds overridden",
-        LoggingUtils.noneIfEmpty(getTrafficSignalKindOverrides()), level));
-    LOGGER.info(LoggingUtils.settingsValue("Consolidate intersections", isConsolidateIntersections(), level));
-    if(isConsolidateIntersections()){
-      int consolidationLevel = level + 2;
-      var consolidatorSettings = getIntersectionConsolidatorSettings();
-      LOGGER.info(LoggingUtils.settingsSection("Intersection consolidation", level + 1));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum joining reach (m)",
-          consolidatorSettings.getMaximumJoiningReachMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Minimum coverage gain per member",
-          consolidatorSettings.getMinimumCoverageGainPerMember(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Coverage tie margin",
-          consolidatorSettings.getCoverageTieMargin(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum parsed intersections to try every subdivision",
-          consolidatorSettings.getMaximumParsedIntersectionsToTryEverySubdivision(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Subdivisions kept per search step",
-          consolidatorSettings.getSubdivisionsKeptPerSearchStep(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Pull-in margin beyond radius (m)",
-          consolidatorSettings.getPullInMarginBeyondRadiusMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum pull-in connection length (m)",
-          consolidatorSettings.getMaximumPullInConnectionLengthMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Internal link length warning (m)",
-          consolidatorSettings.getInternalLinkLengthWarningMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum distance reached only through intersection (m)",
-          consolidatorSettings.getMaximumDistanceReachedOnlyThroughIntersectionMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum distance slip lane crossing to junction (m)",
-          consolidatorSettings.getMaximumDistanceSlipLaneCrossingToJunctionMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum distance between crossings side by side (m)",
-          consolidatorSettings.getMaximumDistanceBetweenCrossingsSideBySideMeters(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Include active modes in movements",
-          consolidatorSettings.isIncludeActiveModesInMovements(), consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Nodes to join into one intersection",
-          LoggingUtils.noneIfEmpty(UserOverride.valuesOf(getOsmNodeIdsToJoinIntoOneIntersection())),
-          consolidationLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Nodes to keep in separate intersections",
-          LoggingUtils.noneIfEmpty(UserOverride.valuesOf(getOsmNodeIdsToKeepInSeparateIntersections())),
-          consolidationLevel));
-    }
-    int collapseLevel = level + 2;
-    var collapserSettings = getIntersectionCollapserSettings();
-    LOGGER.info(LoggingUtils.settingsSection("Intersection collapse", level + 1));
-    LOGGER.info(LoggingUtils.settingsValue("Modes collapsed onto one node per intersection",
-        LoggingUtils.noneIfEmpty(collapserSettings.getCollapsedModeTypes().stream().map(PredefinedModeType::value)
-            .collect(Collectors.toList())), collapseLevel));
-    LOGGER.info(LoggingUtils.settingsValue("OSM nodes excluded from collapse",
-        LoggingUtils.noneIfEmpty(collapserSettings.getOsmNodeIdsExcludedFromCollapse().keySet()), collapseLevel));
-    LOGGER.info(LoggingUtils.settingsValue("Compute green ratios and saturation flow factors",
-        isComputeGreenRatiosAndSaturationFlowFactors(), level));
-    if(isComputeGreenRatiosAndSaturationFlowFactors()){
-      int greenRatioLevel = level + 2;
-      var greenRatioSettings = getGreenRatioAndSaturationFlowFactorSettings();
-      LOGGER.info(LoggingUtils.settingsSection("Green ratios and saturation flow factors", level + 1));
-      LOGGER.info(LoggingUtils.settingsValue("Algorithm", greenRatioSettings.getAlgorithmType(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Cycle time (s)",
-          greenRatioSettings.getCycleTimeSeconds(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Lost time per phase change (s)",
-          greenRatioSettings.getLostTimePerPhaseChangeSeconds(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Isolated crossing green ratio",
-          greenRatioSettings.getIsolatedCrossingGreenRatio(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Ramp meter green ratio",
-          greenRatioSettings.getRampMeterGreenRatio(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Same axis approach tolerance (degrees)",
-          greenRatioSettings.getSameAxisApproachToleranceDegrees(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Maximum number of phases",
-          greenRatioSettings.getMaximumNumberOfPhases(), greenRatioLevel));
-      LOGGER.info(LoggingUtils.settingsValue("Approach without signal saturation flow factor",
-          greenRatioSettings.getApproachWithoutSignalSaturationFlowFactor(), greenRatioLevel));
-    }
   }
 
   /** Put every setting back to its default, the consolidation, collapse and green ratio settings included
@@ -203,8 +110,8 @@ public class OsmIntersectionSettings extends OsmIntersectionYamlKeyedSettings {
    * {@link #overrideTrafficSignalKind(long, OsmTrafficSignalKind)}, otherwise as its tags say, see
    * {@link OsmTrafficSignalTags#isVehicleTrafficSignal(Map)},
    * {@link OsmTrafficSignalTags#isCrossingTrafficSignals(Map)}, {@link OsmTrafficSignalTags#isRampMeter(Map)} and, for
-   * no signal, {@link OsmTrafficSignalTags#isTrafficSignals(Map)}. A signal tagged as both a vehicle signal and a crossing signal
-   * is handled as both, unless overridden
+   * no signal, {@link OsmTrafficSignalTags#isTrafficSignals(Map)}. A signal tagged as both a vehicle signal and a
+   * crossing signal is handled as both, unless overridden
    *
    * @param osmNodeId the OSM node id of the node
    * @param tags of the node

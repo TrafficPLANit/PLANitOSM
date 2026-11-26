@@ -189,49 +189,14 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsHeader("OSM Network Reader Settings"));
     super.logSettings(level);
-    LOGGER.info(LoggingUtils.settingsValue("Source CRS",
-        getSourceCRS().getName(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Consolidate equivalent OSM link types",
-        isConsolidateLinkSegmentTypes(), level));
-    /* every activated mode's configuration is logged in full rather than a flag alone, since the thresholds and
-     * the notion of connectivity together decide what a pass actually does and are easily overlooked. The absence
-     * of any activated mode is logged too, so that it is visible rather than merely unstated */
-    if(getRemoveDanglingSubnetworkModes().isEmpty()){
-      LOGGER.info(LoggingUtils.settingsValue("Remove dangling subnetworks", "deactivated for all modes", level));
-    }else{
-      for(var entry : getRemoveDanglingSubnetworkModes().entrySet()){
-        LOGGER.info(LoggingUtils.settingsValue(
-            String.format("Remove dangling subnetworks (%s)", entry.getKey().value()),
-            entry.getValue().toString(), level));
-      }
-    }
-    LOGGER.info(LoggingUtils.settingsValue("Always keep largest subnetwork",
-        isAlwaysKeepLargestSubnetwork(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Maximum ferry distance outside bounding polygon (m)",
-        getMaximumDistanceFerryOutsideBoundingPolygonMeters(), level));
     /* the effective classification is logged in full, defaults and user overrides combined, so that what is
      * reported is what parsing applies rather than requiring the reader to merge the two in their head */
     LOGGER.info(LoggingUtils.settingsValue("Access value tags granting access",
         String.join(", ", getPositiveAccessValueTags()), level));
     LOGGER.info(LoggingUtils.settingsValue("Access value tags denying access",
         String.join(", ", getNegativeAccessValueTags()), level));
-    if(!getAccessValueClassification().isEmpty()){
-      LOGGER.info(LoggingUtils.settingsValue("Access value tags reclassified by user",
-          getAccessValueClassification().entrySet().stream().map(
-              e -> String.format("%s=%s", e.getKey(), e.getValue().name().toLowerCase())).collect(
-                  Collectors.joining(", ")), level));
-    }
-    if(!getOsmWayLaneOverrides().isEmpty()){
-      LOGGER.info(LoggingUtils.settingsValue("Lanes overridden by OSM way id", getOsmWayLaneOverrides(), level));
-    }
-    LOGGER.info(LoggingUtils.settingsSection("Highway", level + 1));
-    getHighwaySettings().logSettings(level + 1);
-    LOGGER.info(LoggingUtils.settingsSection("Railway", level + 1));
-    getRailwaySettings().logSettings(level + 1);
-    LOGGER.info(LoggingUtils.settingsSection("Waterway", level + 1));
-    getWaterwaySettings().logSettings(level + 1);
-    LOGGER.info(LoggingUtils.settingsSection("Intersections", level + 1));
-    getIntersectionSettings().logSettings(level + 1);
+    LOGGER.info(LoggingUtils.settingsValue("Source CRS", getSourceCRS().getName(), level));
+    logNestedSettings(level);
   }
 
   /** activate the parsing of railways

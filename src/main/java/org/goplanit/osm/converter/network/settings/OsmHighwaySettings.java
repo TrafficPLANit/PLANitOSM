@@ -1,7 +1,6 @@
 package org.goplanit.osm.converter.network.settings;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 import org.goplanit.osm.defaults.OsmHighwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
@@ -9,7 +8,6 @@ import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
-import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
@@ -28,9 +26,6 @@ import org.goplanit.utils.settings.annotations.NoSettingsKey;
  */
 public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
   
-  /** the logger to use */
-  private static final Logger LOGGER = Logger.getLogger(OsmHighwaySettings.class.getCanonicalName());
-
   /** immutable default road mode mappings used to initialise each instance */
   private static final Map<String, PredefinedModeType> DEFAULT_OSM_ROAD_MODE_MAPPINGS =
       Collections.unmodifiableMap(createDefaultOsmRoadModeMappings());
@@ -339,9 +334,7 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
   @Override
   @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
-    LOGGER.info(LoggingUtils.settingsValue("Highway (road) parser activated", isParserActive(), level));
-    LOGGER.info(LoggingUtils.settingsValue(
-        "Speed limit defaults based on urban area", isSpeedLimitDefaultsBasedOnUrbanArea(), level));
+    super.logSettings(level);
     logModeMappings(level + 1);
   }
 

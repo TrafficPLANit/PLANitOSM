@@ -3,13 +3,16 @@ package org.goplanit.osm.converter.network.settings;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.logging.Logger;
 
 import org.goplanit.osm.defaults.OsmInfrastructureConfiguration;
 import org.goplanit.osm.defaults.OsmModeAccessDefaultsCategory;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
 import org.goplanit.utils.settings.annotations.SettingsRead;
@@ -26,6 +29,9 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
  * @author markr
  */
 public abstract class OsmRailwayYamlKeyedSettings extends OsmWaySettings {
+
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmRailwayYamlKeyedSettings.class.getCanonicalName());
 
   /** see {@link #setMaximumDistanceTrackSignalToRoadCrossingMeters(double)} */
   private double maximumDistanceTrackSignalToRoadCrossingMeters = DEFAULT_MAX_TRACK_SIGNAL_TO_ROAD_CROSSING_DISTANCE_M;
@@ -204,5 +210,16 @@ public abstract class OsmRailwayYamlKeyedSettings extends OsmWaySettings {
           "the track, in metres")
   public void setMaximumDistanceTrackSignalToRoadCrossingMeters(double distanceMeters) {
     this.maximumDistanceTrackSignalToRoadCrossingMeters = distanceMeters;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  @NoSettingsKey(reason = "logs the settings")
+  public void logSettings(int level) {
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Maximum track signal to road crossing distance (m)",
+        getMaximumDistanceTrackSignalToRoadCrossingMeters(), level));
   }
 }

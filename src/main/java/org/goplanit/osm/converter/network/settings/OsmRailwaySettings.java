@@ -8,7 +8,6 @@ import org.goplanit.osm.defaults.OsmRailwayTypeConfiguration;
 import org.goplanit.osm.defaults.OsmSpeedLimitDefaultsCategory;
 import org.goplanit.osm.tags.OsmRailModeTags;
 import org.goplanit.osm.tags.OsmRailwayTags;
-import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
@@ -272,9 +271,7 @@ public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
   @Override
   @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
-    LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Maximum track signal to road crossing distance (m)",
-        getMaximumDistanceTrackSignalToRoadCrossingMeters(), level));
+    super.logSettings(level);
     logModeMappings(level + 1);
   }
 }

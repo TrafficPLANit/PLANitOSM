@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import org.goplanit.algorithms.intersection.GreenRatioAndSaturationFlowFactorSettings;
@@ -13,10 +14,12 @@ import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
 import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.id.IdMapperType;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.misc.StringUtils;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
 import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
 import org.goplanit.utils.settings.annotations.SettingsRead;
@@ -34,6 +37,9 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
  * @author markr
  */
 public abstract class OsmIntersectionYamlKeyedSettings {
+
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmIntersectionYamlKeyedSettings.class.getCanonicalName());
 
   /**
    * The lists of nodes of the consolidation settings given by external id, as groups of OSM node ids with their
@@ -423,5 +429,45 @@ public abstract class OsmIntersectionYamlKeyedSettings {
   @SettingsRead(key = "trafficSignalKindOverrides")
   public Map<Long, UserOverride<OsmTrafficSignalKind>> getTrafficSignalKindOverrides() {
     return Collections.unmodifiableMap(trafficSignalKindOverrides);
+  }
+
+  /**
+   * Log the settings, the consolidation, collapse and green ratio settings each as a section of its own
+   *
+   * @param level to indent the values at
+   */
+  @NoSettingsKey(reason = "logs the settings")
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Intersection parser activated", isParserActive(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum vehicle signal to junction distance (m)",
+        getMaximumDistanceVehicleSignalToJunctionMeters(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Maximum signalised crossing to junction distance (m)",
+        getMaximumDistanceSignalisedCrossingToJunctionMeters(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Break links at isolated signals",
+        isBreakLinksAtIsolatedSignals(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Traffic signal directions overridden",
+        LoggingUtils.noneIfEmpty(getTrafficSignalDirectionOverrides()), level));
+    LOGGER.info(LoggingUtils.settingsValue("Traffic signal kinds overridden",
+        LoggingUtils.noneIfEmpty(getTrafficSignalKindOverrides()), level));
+    LOGGER.info(LoggingUtils.settingsValue("Consolidate intersections", isConsolidateIntersections(), level));
+    if(isConsolidateIntersections()){
+      int consolidationLevel = level + 2;
+      LOGGER.info(LoggingUtils.settingsSection("Intersection consolidation", level + 1));
+      getIntersectionConsolidatorSettings().logSettings(consolidationLevel);
+      LOGGER.info(LoggingUtils.settingsValue("Nodes to join into one intersection",
+          LoggingUtils.noneIfEmpty(UserOverride.valuesOf(getOsmNodeIdsToJoinIntoOneIntersection())),
+          consolidationLevel));
+      LOGGER.info(LoggingUtils.settingsValue("Nodes to keep in separate intersections",
+          LoggingUtils.noneIfEmpty(UserOverride.valuesOf(getOsmNodeIdsToKeepInSeparateIntersections())),
+          consolidationLevel));
+    }
+    LOGGER.info(LoggingUtils.settingsSection("Intersection collapse", level + 1));
+    getIntersectionCollapserSettings().logSettings(level + 2);
+    LOGGER.info(LoggingUtils.settingsValue("Compute green ratios and saturation flow factors",
+        isComputeGreenRatiosAndSaturationFlowFactors(), level));
+    if(isComputeGreenRatiosAndSaturationFlowFactors()){
+      LOGGER.info(LoggingUtils.settingsSection("Green ratios and saturation flow factors", level + 1));
+      getGreenRatioAndSaturationFlowFactorSettings().logSettings(level + 2);
+    }
   }
 }

@@ -6,10 +6,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import org.goplanit.osm.util.PlanitOsmUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
 import org.goplanit.utils.settings.annotations.SettingsRead;
@@ -26,6 +30,10 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
  * @author markr
  */
 public abstract class OsmIntersectionCollapserYamlKeyedSettings {
+
+  /** logger to use */
+  private static final Logger LOGGER =
+      Logger.getLogger(OsmIntersectionCollapserYamlKeyedSettings.class.getCanonicalName());
 
   /** see {@link #setCollapsedModeTypes(PredefinedModeType...)} */
   private final Set<PredefinedModeType> collapsedModeTypes = new TreeSet<>();
@@ -86,5 +94,19 @@ public abstract class OsmIntersectionCollapserYamlKeyedSettings {
   @SettingsRead(key = "osmNodeIdsExcludedFromCollapse")
   public Map<Long, UserOverride<Long>> getOsmNodeIdsExcludedFromCollapse() {
     return Collections.unmodifiableMap(osmNodeIdsExcludedFromCollapse);
+  }
+
+  /**
+   * Log the settings
+   *
+   * @param level to indent the values at
+   */
+  @NoSettingsKey(reason = "logs the settings")
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsValue("Modes collapsed onto one node per intersection",
+        LoggingUtils.noneIfEmpty(getCollapsedModeTypes().stream().map(PredefinedModeType::value)
+            .collect(Collectors.toList())), level));
+    LOGGER.info(LoggingUtils.settingsValue("OSM nodes excluded from collapse",
+        LoggingUtils.noneIfEmpty(getOsmNodeIdsExcludedFromCollapse().keySet()), level));
   }
 }

@@ -6,6 +6,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import org.goplanit.converter.zoning.AccessEgressInjectionSettings;
 import org.goplanit.converter.zoning.ZoningConverterUtils;
@@ -13,6 +14,7 @@ import org.goplanit.osm.converter.settings.OsmReaderSettings;
 import org.goplanit.osm.util.PlanitOsmUtils;
 import org.goplanit.utils.containers.MapUtils;
 import org.goplanit.utils.exceptions.ExceptionUtils;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.annotations.SettingsKeyEffect;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
@@ -35,6 +37,10 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
  */
 public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReaderSettings {
 
+  /** logger to use */
+  private static final Logger LOGGER =
+      Logger.getLogger(OsmPublicTransportReaderYamlKeyedSettings.class.getCanonicalName());
+
   /** see {@link #activateParser(boolean)} */
   private boolean isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
 
@@ -54,7 +60,8 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
   private double stationToParallelTracksSearchRadiusMeters = DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M;
 
   /** see {@link #setMaxEndNodeToIdealStopPointMeters(Number)} */
-  private double maxEndNodeToIdealStopPointMeters = ZoningConverterUtils.DEFAULT_MAX_END_NODE_TO_IDEAL_STOP_POINT_METERS;
+  private double maxEndNodeToIdealStopPointMeters =
+      ZoningConverterUtils.DEFAULT_MAX_END_NODE_TO_IDEAL_STOP_POINT_METERS;
 
   /** see {@link #setMaxShapePointToIdealStopPointMeters(Number)} */
   private double maxShapePointToIdealStopPointMeters =
@@ -575,5 +582,39 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
       "Linking stops to the nearby network so passengers can reach them, such as ferry stops to the land network")
   public AccessEgressInjectionSettings getAccessEgressInjectionSettings() {
     return accessEgressInjectionSettings;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings(int level) {
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue(
+        "Public transport infrastructure parser activated", isParserActive(), level));
+
+    if(isParserActive()) {
+      LOGGER.info(LoggingUtils.settingsValue("Stop location to waiting area search radius (m)",
+          String.format("%.2f", getStopToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("End node reused within distance of ideal stop point (m)",
+          String.format("%.2f", getMaxEndNodeToIdealStopPointMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Link broken at shape point within distance of ideal stop point (m)",
+          String.format("%.2f", getMaxShapePointToIdealStopPointMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Station location to waiting area search radius (m)",
+          String.format("%.2f", getStationToWaitingAreaSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Station location to parallel tracks search radius (m)",
+          String.format("%.2f", getStationToParallelTracksSearchRadiusMeters()), level));
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zones",
+          isRemoveDanglingZones(), level));
+      LOGGER.info(LoggingUtils.settingsValue("Remove dangling transfer zone groups",
+          isRemoveDanglingTransferZoneGroups(), level));
+      LOGGER.info(LoggingUtils.settingsValue("Connect dangling ferry stops to nearby ferry routes (if present)",
+          isConnectDanglingFerryStopToNearbyFerryRoute(), level));
+      if(isConnectDanglingFerryStopToNearbyFerryRoute()) {
+        LOGGER.info(LoggingUtils.settingsValue("Ferry stop to ferry route search radius (m)",
+            String.format("%.2f", getFerryStopToFerryRouteSearchRadiusMeters()), level));
+      }
+      getAccessEgressInjectionSettings().logSettings(level);
+    }
   }
 }
