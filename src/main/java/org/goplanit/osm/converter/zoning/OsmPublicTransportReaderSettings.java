@@ -39,7 +39,7 @@ public class OsmPublicTransportReaderSettings extends OsmPublicTransportReaderYa
    * connectoids (stop_locations) on for transfer zones. In case multiple candidates are close just selecting
    * the closest can lead to problems.This is only used as a way to exclude clearly inadequate options.
    */
-  public static double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
+  public static final double DEFAULT_CLOSEST_EDGE_SEARCH_BUFFER_DISTANCE_M = 8;
     
   /** Constructor using default (Global) locale
   */

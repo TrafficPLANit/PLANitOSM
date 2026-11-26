@@ -163,10 +163,10 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   }
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
-  public static boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
+  public static final boolean DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES = true;
 
   /** by default we always keep the largest subnetwork */
-  public static boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
+  public static final boolean DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK = true;
 
   /** Default modes for which dangling subnetworks are dealt with after parsing: car only.
    * <p>
@@ -188,7 +188,7 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
    * and {@link #DEFAULT_DANGLING_SUBNETWORK_CONNECTIVITY} leaves a mode with a single network it can route across
    * in full. That is the safest default: anything less leaves subnetworks a trip can enter and then be unable to
    * complete */
-  public static int DEFAULT_MINIMUM_SUBNETWORK_SIZE = Integer.MAX_VALUE;
+  public static final int DEFAULT_MINIMUM_SUBNETWORK_SIZE = Integer.MAX_VALUE;
 
   /** Default notion of connectivity applied when removing dangling subnetworks: strong.
    * <p>

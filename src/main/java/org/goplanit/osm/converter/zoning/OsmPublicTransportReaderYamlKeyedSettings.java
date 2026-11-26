@@ -108,13 +108,13 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
   }
 
   /** by default the transfer parser is activated */
-  public static boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
+  public static final boolean DEFAULT_TRANSFER_PARSER_ACTIVE = true;
 
   /** by default we are removing dangling zones */
-  public static boolean DEFAULT_REMOVE_DANGLING_ZONES = true;
+  public static final boolean DEFAULT_REMOVE_DANGLING_ZONES = true;
 
   /** by default we are removing dangling transfer zone groups */
-  public static boolean DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS = true;
+  public static final boolean DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS = true;
 
   /**
    * default search radius in meters for mapping stops/platforms to stop positions on the networks when they
@@ -131,17 +131,17 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
   /**
    * Default search radius in meters when trying to find parallel lines (tracks) for stand-alone stations
    */
-  public static double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
+  public static final double DEFAULT_SEARCH_RADIUS_STATION_PARALLEL_TRACKS_M = DEFAULT_SEARCH_RADIUS_STATION2PLATFORM_M;
 
   /** by default, we connect dangling ferry stops to the nearest ferry route */
-  public static boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
+  public static final boolean DEFAULT_CONNECT_DANGLING_FERRY_STOP_TO_FERRY_ROUTE = true;
 
   /**
    * default search radius in meters for mapping ferry stops to ferry routes. When found and
    * {@link #isConnectDanglingFerryStopToNearbyFerryRoute()} is true then a new link to the nearest waterway
    * running the ferry is created to avoid the ferry stop to be dangling
    */
-  public static double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
+  public static final double DEFAULT_SEARCH_RADIUS_FERRY_STOP_TO_FERRY_ROUTE_M = 100;
 
   /**
    * Put every key held here back to its default

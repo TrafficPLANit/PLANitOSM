@@ -56,7 +56,7 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
   }
 
   /** by default the ferry parser is deactivated */
-  public static boolean DEFAULT_WATERWAYS_PARSER_ACTIVE = false;
+  public static final boolean DEFAULT_WATERWAYS_PARSER_ACTIVE = false;
 
   /**
    * Constructor

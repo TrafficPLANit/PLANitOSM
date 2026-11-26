@@ -55,7 +55,7 @@ public abstract class OsmHighwayYamlKeyedSettings extends OsmWaySettings {
   }
 
   /**  default value whether speed limits are based on urban area defaults: true */
-  public static boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;
+  public static final boolean DEFAULT_SPEEDLIMIT_BASED_ON_URBAN_AREA = true;
 
   /**
    * Choose to not parse the given highway type, e.g. highway=road.

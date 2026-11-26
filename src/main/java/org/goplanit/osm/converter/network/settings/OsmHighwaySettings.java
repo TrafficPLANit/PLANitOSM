@@ -31,7 +31,7 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
       Collections.unmodifiableMap(createDefaultOsmRoadModeMappings());
 
   /** by default the highway parser is activated */
-  public static boolean DEFAULT_HIGHWAYS_PARSER_ACTIVE = true;  
+  public static final boolean DEFAULT_HIGHWAYS_PARSER_ACTIVE = true;  
 
   /** non-urban speed limit defaults (urban defaults placed on base class) */
   OsmSpeedLimitDefaultsCategory nonUrbanSpeedLimitDefaults;

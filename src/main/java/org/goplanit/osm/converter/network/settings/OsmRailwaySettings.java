@@ -34,7 +34,7 @@ public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
       Collections.unmodifiableMap(createDefaultOsmRailModeMappings());
 
   /** by default the railway parser is deactivated */
-  public static boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
+  public static final boolean DEFAULT_RAILWAYS_PARSER_ACTIVE = false;
     
   /**
    * Create the immutable default OSM rail mode mappings used to initialise each instance.
