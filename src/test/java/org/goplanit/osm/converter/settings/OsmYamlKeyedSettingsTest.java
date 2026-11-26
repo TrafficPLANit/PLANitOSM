@@ -38,8 +38,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests that each settings class the OSM settings reach, such as the consolidation settings of PLANitUtils, whose keys
- * sit in a YAML keyed class keeps them apart: only the key and section
- * methods on the YAML keyed class it extends, everything else on the settings class itself, and no key method
+ * sit in a YAML keyed class keeps them apart: only the key and section methods, with the reset and the logging of
+ * those keys, on the YAML keyed class it extends, everything else on the settings class itself, and no key method
  * overridden.
  * <p>
  * A settings file can set exactly the keys of the YAML keyed classes, so the YAML keyed class of a settings class shows
@@ -71,6 +71,9 @@ public class OsmYamlKeyedSettingsTest {
   /** name of the method putting the keys of a YAML keyed class back to their defaults */
   private static final String RESET = "reset";
 
+  /** name of the method logging the keys of a YAML keyed class, taking the level to indent them at */
+  private static final String LOG_SETTINGS = "logSettings";
+
   /**
    * Each settings class extends its YAML keyed class directly, so its keys are inherited as they are
    */
@@ -91,15 +94,18 @@ public class OsmYamlKeyedSettingsTest {
   }
 
   /**
-   * Every public method a YAML keyed class declares is a key or a section, or its reset, which puts exactly those keys
-   * back to their defaults: plain getters, conveniences and everything else for code are on the settings class
+   * Every public method a YAML keyed class declares is a key or a section, its reset, which puts exactly those keys
+   * back to their defaults, or its logSettings, which logs exactly those keys: plain getters, conveniences and
+   * everything else for code are on the settings class
    */
   @Test
   public void everyPublicMethodOfAYamlKeyedClassIsAKey() {
     YAML_KEYED_CLASS_BY_SETTINGS_CLASS.values().forEach(yamlKeyedClass -> assertEquals(List.of(),
         Arrays.stream(yamlKeyedClass.getDeclaredMethods()).filter(method -> !method.isSynthetic()
             && Modifier.isPublic(method.getModifiers()) && !AnnotationUtils.hasAnyAnnotation(method, KEY_ANNOTATIONS)
-            && !(method.getName().equals(RESET) && method.getParameterCount() == 0))
+            && !(method.getName().equals(RESET) && method.getParameterCount() == 0)
+            && !(method.getName().equals(LOG_SETTINGS) && method.getParameterCount() == 1
+                && method.getParameterTypes()[0] == int.class))
             .collect(Collectors.toList()), yamlKeyedClass.getSimpleName()));
   }
 
