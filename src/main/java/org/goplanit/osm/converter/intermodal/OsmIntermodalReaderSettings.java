@@ -29,7 +29,13 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings, Yam
   
   /** logger to use */
   private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReaderSettings.class.getCanonicalName());
-  
+
+  /** Switch on the railway and waterway parsers, which intermodal reading uses for rail and ferry services */
+  private void activateRailwayAndWaterwayParsers() {
+    getNetworkSettings().getRailwaySettings().activateParser(true);
+    getNetworkSettings().getWaterwaySettings().activateParser(true);
+  }
+
   /** the network settings to use */
   protected final OsmNetworkReaderSettings networkSettings;
   
@@ -75,11 +81,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings, Yam
     this(
         new OsmNetworkReaderSettings(inputSource, countryName),
         new OsmPublicTransportReaderSettings(inputSource, countryName));
-
-    /* default activate rail and ferry when performing intermodal parsing */
-    getNetworkSettings().getRailwaySettings().activateParser(true);
-    getNetworkSettings().getWaterwaySettings().activateParser(true);
-  }  
+    activateRailwayAndWaterwayParsers();
+  }
          
   
   /**
@@ -96,12 +99,13 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings, Yam
   
 
   /**
-   * {@inheritDoc}
+   * Reset each part, then switch the railway and waterway parsers on again, as intermodal settings made new have them
    */
   @Override
   public void reset() {
     networkSettings.reset();
     zoningPtSettings.reset();
+    activateRailwayAndWaterwayParsers();
   }
 
   /**

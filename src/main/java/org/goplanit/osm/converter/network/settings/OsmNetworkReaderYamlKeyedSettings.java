@@ -62,17 +62,17 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   /** all settings specific to parsing intersections from OSM traffic signals */
   private final OsmIntersectionSettings osmIntersectionSettings = new OsmIntersectionSettings();
 
-  /** see {@link #getLaneDefaults()} */
-  private final OsmLaneDefaults laneDefaults = new OsmLaneDefaults();
+  /** see {@link #getLaneDefaults()}, made again by a reset */
+  private OsmLaneDefaults laneDefaults = new OsmLaneDefaults();
 
-  /** all settings specific to osm highway tags*/
-  private final OsmHighwaySettings osmHighwaySettings;
+  /** all settings specific to osm highway tags, made on the defaults of the country, again by a reset */
+  private OsmHighwaySettings osmHighwaySettings;
 
-  /** all settings specific to osm railway tags */
-  private final OsmRailwaySettings osmRailwaySettings;
+  /** all settings specific to osm railway tags, made on the defaults of the country, again by a reset */
+  private OsmRailwaySettings osmRailwaySettings;
 
-  /** all settings specific to OSM waterway (ferry) tags*/
-  private final OsmWaterwaySettings osmWaterwaySettings;
+  /** all settings specific to OSM waterway (ferry) tags, made on the defaults of the country, again by a reset */
+  private OsmWaterwaySettings osmWaterwaySettings;
 
   /** see {@link #registerNewOsmWayType(String, NewOsmWayTypeDefaults)}, by OSM tag key=value, none by default */
   private final Map<String, NewOsmWayTypeDefaults> newOsmWayTypes = new TreeMap<>();
@@ -116,13 +116,12 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
   private double maximumDistanceFerryOutsideBoundingPolygonMeters = DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
 
   /**
-   * Constructor
+   * Make the highway, railway and waterway settings on the speed limit and mode access defaults of the country, as
+   * the constructor does and a reset does again
    *
-   * @param inputSource to use, null when not known yet
-   * @param countryName the full country name to base the defaults on
+   * @param countryName whose defaults to use
    */
-  protected OsmNetworkReaderYamlKeyedSettings(URL inputSource, String countryName) {
-    super(inputSource, countryName);
+  private void createWaySettings(String countryName) {
     var speedLimitDefaults = OsmSpeedLimitDefaultsByCountry.create(countryName);
     var modeAccessDefaults = OsmModeAccessDefaultsByCountry.create(countryName);
     this.osmHighwaySettings = new OsmHighwaySettings(speedLimitDefaults.getUrbanHighwayDefaults(),
@@ -131,6 +130,17 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
         speedLimitDefaults.getRailwayDefaults(), modeAccessDefaults.getRailwayModeAccessDefaults());
     this.osmWaterwaySettings = new OsmWaterwaySettings(
         speedLimitDefaults.getWaterwayDefaults(), modeAccessDefaults.getWaterwayModeAccessDefaults());
+  }
+
+  /**
+   * Constructor
+   *
+   * @param inputSource to use, null when not known yet
+   * @param countryName the full country name to base the defaults on
+   */
+  protected OsmNetworkReaderYamlKeyedSettings(URL inputSource, String countryName) {
+    super(inputSource, countryName);
+    createWaySettings(countryName);
   }
 
   /** by default we always consolidate functionally equivalent OSM types into a single PLANit link segment type */
@@ -597,5 +607,31 @@ public abstract class OsmNetworkReaderYamlKeyedSettings extends OsmReaderSetting
       description = "Furthest a ferry route may run outside the bounding area and still be kept, in metres")
   public void setMaximumDistanceFerryOutsideBoundingPolygonMeters(double distanceMeters) {
     this.maximumDistanceFerryOutsideBoundingPolygonMeters = distanceMeters;
+  }
+
+  /**
+   * Put every key back to its default for the country, which a reset keeps as only a constructor sets it. The highway,
+   * railway and waterway settings and the lane defaults are made again, as the constructor makes them; the
+   * intersection settings reset themselves
+   */
+  @Override
+  public void reset() {
+    super.reset();
+    createWaySettings(getCountryName());
+    this.laneDefaults = new OsmLaneDefaults();
+    osmIntersectionSettings.reset();
+    newOsmWayTypes.clear();
+    osmWayLaneOverrides.clear();
+    osmWaysExcludedFromParsing.clear();
+    osmRelationsExcludedFromParsing.clear();
+    osmWaysKeptOutsideBoundingPolygon.clear();
+    osmNodesKeptOutsideBoundingPolygon.clear();
+    osmWayModeAccessOverrides.clear();
+    accessValueClassification.clear();
+    danglingSubnetworkConfigByMode.clear();
+    danglingSubnetworkConfigByMode.putAll(createDefaultDanglingSubnetworkConfig());
+    this.consolidateLinkSegmentTypes = DEFAULT_CONSOLIDATE_LINK_SEGMENT_TYPES;
+    this.alwaysKeepLargestSubnetwork = DEFAULT_ALWAYS_KEEP_LARGEST_SUBNETWORK;
+    this.maximumDistanceFerryOutsideBoundingPolygonMeters = DEFAULT_MAX_FERRY_DISTANCE_OUTSIDE_BOUNDING_AREA_M;
   }
 }

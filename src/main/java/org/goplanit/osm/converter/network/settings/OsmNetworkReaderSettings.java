@@ -173,11 +173,13 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
   }
         
   /**
-   * {@inheritDoc}
+   * Put back the source coordinate reference system, besides every key the YAML keyed settings put back. The
+   * compiled access value tags follow the classification put back when next asked for
    */
   @Override
   public void reset() {
-    // TODO    
+    super.reset();
+    this.sourceCRS = PlanitJtsCrsUtils.DEFAULT_GEOGRAPHIC_CRS;
   }
 
   /**

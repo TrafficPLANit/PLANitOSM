@@ -1,12 +1,10 @@
 package org.goplanit.osm.converter.settings;
 
 import java.net.URL;
-import java.util.logging.Logger;
 
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.locale.CountryNames;
-import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.settings.SettingsSchema;
 import org.goplanit.utils.settings.YamlWriteSettingsSupport;
@@ -26,8 +24,6 @@ import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
  */
 public abstract class OsmReaderSettings extends OsmReaderYamlKeyedSettings
     implements ConverterReaderSettings, YamlWriteSettingsSupport {
-
-  private static final Logger LOGGER = Logger.getLogger(OsmReaderSettings.class.getCanonicalName());
 
   /**
    * Default constructor with default locale (Global)
@@ -66,17 +62,6 @@ public abstract class OsmReaderSettings extends OsmReaderYamlKeyedSettings
     super(inputSource, countryName);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void logSettings(int level) {
-    super.logSettings(level);
-    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), level));
-    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), level));
-  }
-  
   /** Set the input file to use, which is internally converted into a URL
    * 
    * @param inputFile to use

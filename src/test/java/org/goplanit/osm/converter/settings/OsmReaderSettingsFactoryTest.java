@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.goplanit.logging.Logging;
+import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.OsmNetworkReaderFactory;
 import org.goplanit.osm.converter.network.OsmTrafficSignalDirection;
 import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
@@ -185,6 +186,19 @@ public class OsmReaderSettingsFactoryTest {
   public void fileWrittenAgainBySettingsMadeFromIt() throws Exception {
     SettingsFileAssertionUtils.assertFileWrittenAgainBySettingsMadeFromIt(
         OsmReaderSettingsFactory::createIntermodalReaderSettingsFromYaml, EVERY_KEY_NOT_DEFAULT_FILE, tempDir);
+  }
+
+  /**
+   * Settings made from the file of every key not at its default, then reset, write every key as settings made new for
+   * the file's country do: a reset puts back every key of the network and public transport settings, and keeps the
+   * country, which only a constructor sets
+   */
+  @Test
+  public void resetGivesSettingsAsMadeNewForTheCountry() throws Exception {
+    SettingsFileAssertionUtils.assertResetGivesSettingsAsMadeNew(
+        OsmReaderSettingsFactory::createIntermodalReaderSettingsFromYaml, OsmIntermodalReaderSettings::reset,
+        EVERY_KEY_NOT_DEFAULT_FILE, OsmReaderSettingsFactory.createIntermodalReaderSettings(CountryNames.AUSTRALIA),
+        tempDir);
   }
 
   /** Intermodal settings made of network settings made from text and public transport settings hold those settings */

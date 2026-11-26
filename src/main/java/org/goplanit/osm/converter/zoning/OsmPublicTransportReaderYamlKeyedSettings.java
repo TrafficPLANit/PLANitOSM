@@ -141,6 +141,7 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
    */
   @Override
   public void reset() {
+    super.reset();
     isParserActive = DEFAULT_TRANSFER_PARSER_ACTIVE;
     removeDanglingZones = DEFAULT_REMOVE_DANGLING_ZONES;
     removeDanglingTransferZoneGroups = DEFAULT_REMOVE_DANGLING_TRANSFER_ZONE_GROUPS;

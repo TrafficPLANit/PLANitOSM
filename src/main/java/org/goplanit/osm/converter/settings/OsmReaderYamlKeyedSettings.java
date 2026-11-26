@@ -1,9 +1,11 @@
 package org.goplanit.osm.converter.settings;
 
 import java.net.URL;
+import java.util.logging.Logger;
 
 import org.goplanit.converter.FileBasedConverterReaderSettings;
 import org.goplanit.osm.converter.OsmBoundary;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.settings.annotations.SettingsHeader;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
 import org.goplanit.utils.settings.annotations.SettingsRead;
@@ -24,6 +26,9 @@ import org.goplanit.utils.settings.annotations.SettingsWrite;
  */
 @SettingsHeader(key = "planitOsmConverterSettings", version = 1)
 public abstract class OsmReaderYamlKeyedSettings extends FileBasedConverterReaderSettings {
+
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmReaderYamlKeyedSettings.class.getCanonicalName());
 
   /** OsmBoundary to apply, if null no restriction is applied */
   private OsmBoundary osmBoundary = null;
@@ -125,5 +130,27 @@ public abstract class OsmReaderYamlKeyedSettings extends FileBasedConverterReade
       description = "Keep the OSM tags of each way and node on the links and nodes made from it")
   public void setRetainOsmTags(boolean retainOsmTags) {
     this.retainOsmTags = retainOsmTags;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void logSettings(int level) {
+    super.logSettings(level);
+    LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), level));
+    LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", getBoundingArea() != null, level));
+    LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), level));
+  }
+
+  /**
+   * Clear the bounding area and put back keeping no OSM tags, besides what the reader base puts back. The country
+   * stays, as only a constructor sets it and the defaults of the readers' settings are made for it
+   */
+  @Override
+  public void reset() {
+    super.reset();
+    this.osmBoundary = null;
+    this.retainOsmTags = DEFAULT_RETAIN_OSM_TAGS;
   }
 }
