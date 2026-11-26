@@ -1,12 +1,13 @@
+# The kind of these settings and the version of their keys
 planitOsmConverterSettings: 1
 # The country whose defaults apply, by its full English name, such as Australia
 country: global
 # --- standard ---
+# The OSM file to read, such as data/sydney.osm.pbf, as a path relative to this settings file or a URL
+# inputSource:
 # The area to read, exactly one of: box (west, east, south and north, in degrees), polygon (as WKT, in degrees of
 # longitude and latitude) or osmBoundary (the name, and optionally type and adminLevel, of an OSM boundary)
 # boundingArea:
-# The OSM file to read, such as data/sydney.osm.pbf, as a path relative to this settings file or a URL
-# inputSource:
 # --- uncommon ---
 # Keep the OSM tags of each way and node on the links and nodes made from it
 retainOsmTags: false

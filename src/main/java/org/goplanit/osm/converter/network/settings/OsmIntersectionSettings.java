@@ -16,6 +16,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 
 /**
  * Settings of parsing intersections from the traffic signals of an OSM network: junctions controlled by vehicle
@@ -48,6 +49,7 @@ public class OsmIntersectionSettings extends OsmIntersectionYamlKeyedSettings {
    *
    * @param level to indent the values at
    */
+  @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsValue("Intersection parser activated", isParserActive(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum vehicle signal to junction distance (m)",
@@ -131,6 +133,7 @@ public class OsmIntersectionSettings extends OsmIntersectionYamlKeyedSettings {
   /** Put every setting back to its default, the consolidation, collapse and green ratio settings included
    */
   @Override
+  @NoSettingsKey(reason = "puts every setting back to its default")
   public void reset() {
     super.reset();
   }

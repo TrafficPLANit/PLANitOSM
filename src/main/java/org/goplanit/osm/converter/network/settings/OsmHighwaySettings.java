@@ -13,6 +13,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 
 /**
  * All highway specific settings. The keys a settings file can set are on {@link OsmHighwayYamlKeyedSettings}.
@@ -326,7 +327,8 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
     
   /**
    * Log all de-activated OSM highwayway types
-   */  
+   */
+  @NoSettingsKey(reason = "logs the OSM way types not parsed")
   public void logUnsupportedOsmHighwayTypes() {
     logUnsupportedOsmWayTypes();
   }
@@ -335,6 +337,7 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
    * {@inheritDoc}
    */
   @Override
+  @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsValue("Highway (road) parser activated", isParserActive(), level));
     LOGGER.info(LoggingUtils.settingsValue(

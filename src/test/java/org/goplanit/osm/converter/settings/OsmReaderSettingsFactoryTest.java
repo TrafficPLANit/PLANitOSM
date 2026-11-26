@@ -6,10 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +21,13 @@ import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.settings.override.OsmWayLaneOverride;
 import org.goplanit.osm.tags.OsmHighwayTags;
 import org.goplanit.osm.test.WarningRecorder;
-import org.goplanit.utils.exceptions.SettingsProblemsException;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.settings.SettingsFileContentType;
 import org.goplanit.utils.settings.SettingsSource;
 import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.settings.problem.SettingsProblemKind;
+import org.goplanit.utils.test.SettingsFileAssertionUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,7 +40,7 @@ import org.junit.jupiter.api.io.TempDir;
  * country taken first, changed in code afterwards like settings made in code, one shape of text for the network and
  * intermodal readers, the corrections of the OSM data as keys with optional reasons, the lanes of a way and the
  * kind and direction of a traffic signal, and settings written to a settings file made again from it: the file of
- * every key at its global default, and a file changing every key, both written out unchanged
+ * every key at its global default, and the file of every key not at its default, both written out unchanged
  *
  * @author markr
  */
@@ -53,8 +52,9 @@ public class OsmReaderSettingsFactoryTest {
   /** every key of the intermodal settings at its global default, with descriptions */
   private static final Path GLOBAL_DEFAULTS_FILE = SETTINGS_FILES_DIR.resolve("osm_settings_global_defaults.yaml");
 
-  /** every key of the intermodal settings changed from its default, with descriptions */
-  private static final Path EVERY_KEY_CHANGED_FILE = SETTINGS_FILES_DIR.resolve("osm_settings_every_key_changed.yaml");
+  /** every key of the intermodal settings not at its default, with descriptions */
+  private static final Path EVERY_KEY_NOT_DEFAULT_FILE =
+      SETTINGS_FILES_DIR.resolve("osm_settings_every_key_not_default.yaml");
 
   /** the logger, giving the log output PLANit's format */
   private static Logger LOGGER = null;
@@ -166,47 +166,25 @@ public class OsmReaderSettingsFactoryTest {
   }
 
   /**
-   * Intermodal settings at their global defaults write the file kept of every key with its description, and settings
-   * made from that file write it again
+   * Intermodal settings at their global defaults write the file of the global defaults, every key with its
+   * description, and so do settings made from that file
    */
   @Test
-  public void globalDefaultsWrittenAsTheFileKept() throws Exception {
-    var file = tempDir.resolve("global_defaults.yaml");
-    OsmReaderSettingsFactory.createIntermodalReaderSettings()
-        .writeSettingsFile(file, SettingsFileContentType.ALL_KEYS, true);
-    assertEquals(Files.readAllLines(GLOBAL_DEFAULTS_FILE), Files.readAllLines(file));
-
-    var madeAgain = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(
-        List.of(SettingsSource.ofFile(GLOBAL_DEFAULTS_FILE)));
-    var fileAgain = tempDir.resolve("global_defaults_again.yaml");
-    madeAgain.writeSettingsFile(fileAgain, SettingsFileContentType.ALL_KEYS, true);
-    assertEquals(Files.readAllLines(GLOBAL_DEFAULTS_FILE), Files.readAllLines(fileAgain));
+  public void fileWrittenBySettingsAtTheirDefaults() throws Exception {
+    SettingsFileAssertionUtils.assertFileWrittenBySettingsAtTheirDefaults(
+        OsmReaderSettingsFactory::createIntermodalReaderSettingsFromYaml,
+        OsmReaderSettingsFactory.createIntermodalReaderSettings(), GLOBAL_DEFAULTS_FILE, tempDir);
   }
 
   /**
-   * Settings made from the file kept that changes every key write that file again, with every key and with only the
-   * keys differing from the defaults, as every key differs; written without descriptions, they are made again into
+   * Settings made from the file of every key not at its default write that file again, with every key and with only
+   * the keys differing from the defaults, as every key differs; written without descriptions, they are made again into
    * settings writing the same file
    */
   @Test
-  public void everyKeyChangedWrittenAsTheFileKept() throws Exception {
-    var settings = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(
-        List.of(SettingsSource.ofFile(EVERY_KEY_CHANGED_FILE)));
-    var everyKey = tempDir.resolve("every_key.yaml");
-    settings.writeSettingsFile(everyKey, SettingsFileContentType.ALL_KEYS, true);
-    assertEquals(Files.readAllLines(EVERY_KEY_CHANGED_FILE), Files.readAllLines(everyKey));
-
-    var keysDiffering = tempDir.resolve("keys_differing.yaml");
-    settings.writeSettingsFile(keysDiffering, SettingsFileContentType.KEYS_DIFFERING_FROM_DEFAULTS, true);
-    assertEquals(Files.readAllLines(EVERY_KEY_CHANGED_FILE), Files.readAllLines(keysDiffering));
-
-    var withoutDescriptions = tempDir.resolve("without_descriptions.yaml");
-    settings.writeSettingsFile(withoutDescriptions, SettingsFileContentType.ALL_KEYS, false);
-    var madeAgain = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(
-        List.of(SettingsSource.ofFile(withoutDescriptions)));
-    var fileAgain = tempDir.resolve("every_key_again.yaml");
-    madeAgain.writeSettingsFile(fileAgain, SettingsFileContentType.ALL_KEYS, true);
-    assertEquals(Files.readAllLines(EVERY_KEY_CHANGED_FILE), Files.readAllLines(fileAgain));
+  public void fileWrittenAgainBySettingsMadeFromIt() throws Exception {
+    SettingsFileAssertionUtils.assertFileWrittenAgainBySettingsMadeFromIt(
+        OsmReaderSettingsFactory::createIntermodalReaderSettingsFromYaml, EVERY_KEY_NOT_DEFAULT_FILE, tempDir);
   }
 
   /** Intermodal settings made of network settings made from text and public transport settings hold those settings */
@@ -318,10 +296,9 @@ public class OsmReaderSettingsFactoryTest {
   public void publicTransportSectionForTheNetworkReader() {
     var source = text("country: Australia\nnetwork:\n  osmWayLaneOverrides:\n    1: {lanesForward: 2}\n" +
         "publicTransport: {}\n");
-    var problems = assertThrows(SettingsProblemsException.class,
-        () -> OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(source))).getProblems();
-    assertEquals(1, problems.size());
-    assertEquals("publicTransport", problems.get(0).getKeyPath());
+    var problem = SettingsFileAssertionUtils.assertThrowsOneSettingsProblem(SettingsProblemKind.UNKNOWN_KEY,
+        () -> OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(source)));
+    assertEquals("publicTransport", problem.getKeyPath());
 
     var intermodal = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(List.of(source));
     assertEquals(CountryNames.AUSTRALIA, intermodal.getNetworkSettings().getCountryName());

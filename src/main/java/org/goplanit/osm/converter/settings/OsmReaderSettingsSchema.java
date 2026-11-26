@@ -8,8 +8,8 @@ import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
 import org.goplanit.utils.settings.SettingsSchema;
 
 /**
- * The layout of the OSM reader settings sources: the country and the keys every reader shares at the root, then the
- * sections of the network settings and of the public transport settings
+ * The layout of the OSM reader settings sources: the country and the keys every reader shares at the top level, then
+ * the sections of the network settings and of the public transport settings
  * <p>
  * For example, a source holding all of them:
  * </p>
@@ -25,12 +25,12 @@ import org.goplanit.utils.settings.SettingsSchema;
  *   ...
  * </pre>
  * <p>
- * The header, the keys at the root, the names of the sections and the country are on the settings classes: the header
- * and the keys at the root on {@link OsmReaderYamlKeyedSettings}, the sections on {@link OsmNetworkReaderSettings} and
- * {@link OsmPublicTransportReaderSettings}, and the country on the constructors that take it
- * ({@link OsmReaderYamlKeyedSettings#COUNTRY_KEY}). The bounding area is made by its converter,
- * {@link OsmBoundarySettingsConverter}. One schema serves the network and the intermodal reader settings, so one
- * source serves both readers; the network reader settings take the network section only.
+ * The header, the keys at the top level, the names of the sections and the country are on the settings classes: the
+ * header and the keys at the top level on {@link OsmReaderYamlKeyedSettings}, the sections on
+ * {@link OsmNetworkReaderSettings} and {@link OsmPublicTransportReaderSettings}, and the country on the constructors
+ * that take it ({@link OsmReaderYamlKeyedSettings#COUNTRY_KEY}). The bounding area is made by its converter,
+ * {@link OsmBoundarySettingsConverter}. One schema serves the network and the intermodal reader settings, so one source
+ * serves both readers; the network reader settings take the network section only.
  * </p>
  *
  * @author markr

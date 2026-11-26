@@ -12,6 +12,7 @@ import java.util.TreeSet;
 import org.goplanit.osm.converter.settings.OsmSettingsTestUtils;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.problem.SettingsProblemKind;
+import org.goplanit.utils.test.SettingsFileAssertionUtils;
 import org.junit.jupiter.api.Test;
 
 import de.topobyte.osm4j.core.model.iface.EntityType;
@@ -21,7 +22,7 @@ import de.topobyte.osm4j.core.model.iface.EntityType;
  * {@link OsmPublicTransportReaderYamlKeyedSettings}: each key set by a file reads back through its getter on the
  * public transport reader settings, and a value that makes no sense is refused.
  * <p>
- * The keys at the root of a file have tests of their own; the keys here are those of the public transport section.
+ * The keys at the top level of a file have tests of their own; the keys here are those of the public transport section.
  * Each value set differs from its default, so the test fails when a key does not reach the settings.
  * </p>
  *
@@ -56,7 +57,7 @@ public class OsmPublicTransportReaderYamlKeyedSettingsTest {
    * @param publicTransportSection the lines of the public transport section, each indented by two spaces
    */
   private static void assertOneValueRefused(String publicTransportSection) {
-    OsmSettingsTestUtils.assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED,
+    SettingsFileAssertionUtils.assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED,
         () -> fromPublicTransportSection(publicTransportSection));
   }
 
@@ -103,7 +104,8 @@ public class OsmPublicTransportReaderYamlKeyedSettingsTest {
   @Test
   public void accessEgressInjectionSectionReadsBack() {
     var settings = fromPublicTransportSection("  accessEgressInjection:\n" +
-        "    connectBusBasedStopsToPassengerNetwork: false\n    busBasedStopToPassengerNetworkSearchRadiusMeters: 40\n" +
+        "    connectBusBasedStopsToPassengerNetwork: false\n" +
+        "    busBasedStopToPassengerNetworkSearchRadiusMeters: 40\n" +
         "    ferryStopToLandNetworkSearchRadiusMeters: 300\n");
 
     assertFalse(settings.isConnectBusBasedStopsToPassengerNetwork());
@@ -115,7 +117,8 @@ public class OsmPublicTransportReaderYamlKeyedSettingsTest {
   @Test
   public void resetPutsTheAccessEgressInjectionSectionBack() {
     var settings = fromPublicTransportSection("  accessEgressInjection:\n" +
-        "    connectBusBasedStopsToPassengerNetwork: false\n    busBasedStopToPassengerNetworkSearchRadiusMeters: 40\n");
+        "    connectBusBasedStopsToPassengerNetwork: false\n" +
+        "    busBasedStopToPassengerNetworkSearchRadiusMeters: 40\n");
     settings.reset();
 
     assertTrue(settings.isConnectBusBasedStopsToPassengerNetwork());
@@ -223,8 +226,8 @@ public class OsmPublicTransportReaderYamlKeyedSettingsTest {
   }
 
   /**
-   * A waiting area is an OSM node or way, so a relation is refused, as is an OSM id of zero or less, which no OSM entity
-   * has
+   * A waiting area is an OSM node or way, so a relation is refused, as is an OSM id of zero or less, which no OSM
+   * entity has
    */
   @Test
   public void waitingAreaOverrideOfARelationOrAnIdNotAboveZeroIsRefused() {

@@ -28,6 +28,7 @@ import org.goplanit.utils.graph.directed.Connectivity;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.problem.SettingsProblemKind;
+import org.goplanit.utils.test.SettingsFileAssertionUtils;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -62,7 +63,8 @@ public class OsmNetworkReaderYamlKeyedSettingsTest {
    * @param networkSection the lines of the network section, each indented by two spaces
    */
   private static void assertOneValueRefused(String networkSection) {
-    OsmSettingsTestUtils.assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED, () -> fromNetworkSection(networkSection));
+    SettingsFileAssertionUtils.assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED,
+        () -> fromNetworkSection(networkSection));
   }
 
   /** The keys holding one value each: the two flags off, both on by default, and a ferry distance of 250 m, not 2 km */

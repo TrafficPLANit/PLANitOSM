@@ -17,7 +17,7 @@ import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
 import org.goplanit.utils.settings.annotations.NoSettingsKey;
 import org.goplanit.utils.settings.annotations.SettingsKeyLevel;
-import org.goplanit.utils.settings.annotations.SettingsRootValue;
+import org.goplanit.utils.settings.annotations.SettingsTopLevelValue;
 import org.goplanit.utils.settings.annotations.SettingsSection;
 import org.geotools.api.referencing.crs.CoordinateReferenceSystem;
 
@@ -138,7 +138,7 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
    *                    OsmSpeedLimitDefaultsByCountry class
    */
   public OsmNetworkReaderSettings(
-      @SettingsRootValue(key = COUNTRY_KEY, description = COUNTRY_DESCRIPTION) String countryName) {
+      @SettingsTopLevelValue(key = COUNTRY_KEY, description = COUNTRY_DESCRIPTION) String countryName) {
     this((URL) null, countryName);
   }
 
@@ -758,7 +758,8 @@ public class OsmNetworkReaderSettings extends OsmNetworkReaderYamlKeyedSettings 
 
   /**
    * Log all de-activated OSM way types
-   */  
+   */
+  @NoSettingsKey(reason = "logs the OSM way types not parsed")
   public void logUnsupportedOsmWayTypes() {
     if(isHighwayParserActive()) {
       getHighwaySettings().logUnsupportedOsmHighwayTypes();

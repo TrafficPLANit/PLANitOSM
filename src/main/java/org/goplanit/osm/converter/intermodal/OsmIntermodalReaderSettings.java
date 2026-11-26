@@ -13,7 +13,7 @@ import org.goplanit.utils.misc.UrlUtils;
 import org.goplanit.utils.settings.SettingsSchema;
 import org.goplanit.utils.settings.YamlWriteSettingsSupport;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
-import org.goplanit.utils.settings.annotations.SettingsRootValue;
+import org.goplanit.utils.settings.annotations.SettingsTopLevelValue;
 
 import java.net.URL;
 import java.util.logging.Logger;
@@ -49,7 +49,7 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings, Yam
    * @param countryName to use
    */
   public OsmIntermodalReaderSettings(
-      @SettingsRootValue(key = OsmReaderYamlKeyedSettings.COUNTRY_KEY,
+      @SettingsTopLevelValue(key = OsmReaderYamlKeyedSettings.COUNTRY_KEY,
           description = OsmReaderYamlKeyedSettings.COUNTRY_DESCRIPTION)
       final String countryName) {
     this((URL) null, countryName);

@@ -25,7 +25,7 @@ import org.goplanit.utils.settings.SettingsYamlLoader;
  * <p>
  * It is the one place to find how OSM reader settings are made. Without a country the settings use the global
  * defaults. Settings made from files follow {@link OsmReaderSettingsSchema} and the sources apply in order: the
- * country first, from the key {@code country} at the root, the last source giving one winning, since only a
+ * country first, from the key {@code country} at the top level, the last source giving one winning, since only a
  * constructor sets it; then every other key, a later source winning for a replacing key. A source holds the section
  * {@code network} for the network settings and {@code publicTransport} for the public transport settings, so one
  * source serves both readers; the network reader settings refuse a {@code publicTransport} section. Every problem in

@@ -16,16 +16,17 @@ import org.goplanit.osm.tags.OsmBoundaryTags;
 import org.goplanit.utils.geo.PlanitJtsUtils;
 import org.goplanit.utils.settings.SettingsSource;
 import org.goplanit.utils.settings.problem.SettingsProblemKind;
+import org.goplanit.utils.test.SettingsFileAssertionUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.locationtech.jts.geom.Envelope;
 
 /**
- * Tests the keys at the root of an OSM settings file, those of {@link OsmReaderYamlKeyedSettings}: the bounding area in
- * each of its three forms, the input source and whether OSM tags are kept, each given once and applied to the settings
- * of every reader, and the values the bounding area refuses.
+ * Tests the keys at the top level of an OSM settings file, those of {@link OsmReaderYamlKeyedSettings}: the bounding
+ * area in each of its three forms, the input source and whether OSM tags are kept, each given once and applied to the
+ * settings of every reader, and the values the bounding area refuses.
  * <p>
- * A key at the root applies to the network and the public transport settings alike, so the intermodal reader takes
+ * A key at the top level applies to the network and the public transport settings alike, so the intermodal reader takes
  * one value for both
  * </p>
  *
@@ -37,13 +38,13 @@ public class OsmReaderYamlKeyedSettingsTest {
   private static final String SYDNEY_BOX = "box: {west: 150.5, east: 151.4, south: -34.2, north: -33.5}";
 
   /**
-   * Assert the text given has one problem, of the kind given
+   * Assert making network settings from the text given throws one settings problem, of the kind given
    *
    * @param kind of the problem
    * @param body the lines after the header
    */
-  private static void assertOneProblemOf(SettingsProblemKind kind, String body) {
-    OsmSettingsTestUtils.assertOneProblemOf(kind, () -> networkSettingsOf(body));
+  private static void assertThrowsOneSettingsProblem(SettingsProblemKind kind, String body) {
+    SettingsFileAssertionUtils.assertThrowsOneSettingsProblem(kind, () -> networkSettingsOf(body));
   }
 
   /** folder for the test files */
@@ -76,7 +77,7 @@ public class OsmReaderYamlKeyedSettingsTest {
   }
 
   /**
-   * Given once at the root, the bounding area applies to the network and the public transport settings of an
+   * Given once at the top level, the bounding area applies to the network and the public transport settings of an
    * intermodal reader alike, each holding its own copy
    */
   @Test
@@ -93,40 +94,42 @@ public class OsmReaderYamlKeyedSettingsTest {
   /** Two forms at once are refused: which area is meant is unclear */
   @Test
   public void twoFormsAreRefused() {
-    assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED,
+    assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED,
         "boundingArea:\n  " + SYDNEY_BOX + "\n  osmBoundary: {name: City of Sydney}\n");
   }
 
   /** No form at all is refused */
   @Test
   public void noFormIsRefused() {
-    assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED, "boundingArea: {}\n");
+    assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED, "boundingArea: {}\n");
   }
 
   /** A box without one of its edges is refused */
   @Test
   public void boxWithoutAnEdgeIsRefused() {
-    assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED,
+    assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED,
         "boundingArea:\n  box: {west: 150.5, east: 151.4, south: -34.2}\n");
   }
 
   /** A polygon that is not WKT is refused */
   @Test
   public void badWktIsRefused() {
-    assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED, "boundingArea:\n  polygon: \"POLYGON ((151.1 -33.95\"\n");
+    assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED,
+        "boundingArea:\n  polygon: \"POLYGON ((151.1 -33.95\"\n");
   }
 
   /** A field a form does not have is refused, such as a box with a top, so a misspelt edge is never lost */
   @Test
   public void unknownFieldIsRefused() {
-    assertOneProblemOf(SettingsProblemKind.VALUE_REFUSED,
+    assertThrowsOneSettingsProblem(SettingsProblemKind.VALUE_REFUSED,
         "boundingArea:\n  box: {west: 150.5, east: 151.4, south: -34.2, north: -33.5, top: 1}\n");
   }
 
-  /** The bounding area is no key of the network section: it sits at the root */
+  /** The bounding area is no key of the network section: it sits at the top level */
   @Test
   public void boundingAreaInNetworkSectionIsUnknown() {
-    assertOneProblemOf(SettingsProblemKind.UNKNOWN_KEY, "network:\n  boundingArea:\n    " + SYDNEY_BOX + "\n");
+    assertThrowsOneSettingsProblem(SettingsProblemKind.UNKNOWN_KEY,
+        "network:\n  boundingArea:\n    " + SYDNEY_BOX + "\n");
   }
 
   /**

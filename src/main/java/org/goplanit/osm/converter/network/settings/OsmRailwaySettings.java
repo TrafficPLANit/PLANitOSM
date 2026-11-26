@@ -12,6 +12,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 
 /**
  * Settings specific to railways when parsing OSM files and converting them to a PLANit memory model. The keys a
@@ -169,7 +170,8 @@ public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
   
   /**
    * Log all de-activated OSM railway types
-   */  
+   */
+  @NoSettingsKey(reason = "logs the OSM way types not parsed")
   public void logUnsupportedOsmRailwayTypes() {
     logUnsupportedOsmWayTypes();
   }  
@@ -268,6 +270,7 @@ public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
    * {@inheritDoc}
    */
   @Override
+  @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsValue("Railway parser activated", isParserActive(), level));
     LOGGER.info(LoggingUtils.settingsValue("Maximum track signal to road crossing distance (m)",

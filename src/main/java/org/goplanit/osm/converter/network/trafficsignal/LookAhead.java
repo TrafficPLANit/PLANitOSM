@@ -330,7 +330,7 @@ final class LookAhead {
       return reached;
     }
     TargetReached alongOnlyBranch = null;
-    for (var leaving : LinkSegmentUtils.findContinuations(reached.arriving, travels)) {
+    for (var leaving : LinkSegmentUtils.findAdjacentDownstream(reached.arriving, travels)) {
       var targets = findSegmentsArrivingAtTargetsOnwardFrom(
           leaving, reached.distance + leaving.getParent().getLengthMeters(), maxDistance);
       var alongBranch = targets.isEmpty() ? null : findRoadCrossingOrBranch(targets.get(0), maxDistance);

@@ -100,8 +100,8 @@ public class PlanitLinkOsmUtils {
   }
 
   /**
-   * The segment that continues an OSM way beyond the node a segment arrives at. It is the only allowed continuation,
-   * see {@link LinkSegmentUtils#findOnlySegmentOnward(LinkSegment, boolean, Predicate)}. When
+   * The segment that continues an OSM way beyond the node a segment arrives at. It is the only allowed segment adjacent
+   * downstream, see {@link LinkSegmentUtils#findOnlyAdjacent(LinkSegment, boolean, Predicate)}. When
    * only the same OSM way or name may continue, it must also be on the same OSM way, or on a way with the same name,
    * see {@link #isSameOsmWayOrName(Link, Link)}. When more than one segment qualifies, the way does not continue
    * clearly, and nothing is returned
@@ -115,7 +115,7 @@ public class PlanitLinkOsmUtils {
    */
   public static MacroscopicLinkSegment findContinuingLinkSegment(MacroscopicLinkSegment arriving,
       Predicate<? super MacroscopicLinkSegment> allowedContinuation, boolean sameOsmWayOrNameOnly) {
-    return LinkSegmentUtils.findOnlySegmentOnward(arriving, true,
+    return LinkSegmentUtils.findOnlyAdjacent(arriving, true,
         leaving -> allowedContinuation.test(leaving) && (!sameOsmWayOrNameOnly ||
             isSameOsmWayOrName(leaving.getParent(), arriving.getParent())));
   }

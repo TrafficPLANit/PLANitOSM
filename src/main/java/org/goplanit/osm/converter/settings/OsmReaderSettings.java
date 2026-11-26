@@ -5,7 +5,6 @@ import java.util.logging.Logger;
 
 import org.goplanit.converter.ConverterReaderSettings;
 import org.goplanit.utils.exceptions.PlanItException;
-import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
@@ -18,7 +17,7 @@ import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
  * tags are kept
  * <p>
  * The settings of each OSM reader extend them, so these are given the same way for every reader. Those filling a
- * section of an OSM settings source ({@link OsmReaderSettingsSchema}) share the keys at its root, which are on
+ * section of an OSM settings source ({@link OsmReaderSettingsSchema}) share the keys at its top level, which are on
  * {@link OsmReaderYamlKeyedSettings}.
  * </p>
  *
@@ -72,24 +71,11 @@ public abstract class OsmReaderSettings extends OsmReaderYamlKeyedSettings
    */
   @Override
   public void logSettings(int level) {
-    LOGGER.info(LoggingUtils.settingsValue("Input source", getInputSource(), level));
+    super.logSettings(level);
     LOGGER.info(LoggingUtils.settingsValue("Country", getCountryName(), level));
     LOGGER.info(LoggingUtils.settingsValue("Bounding area defined", hasBoundingBoundary(), level));
     LOGGER.info(LoggingUtils.settingsValue("Retain original OSM tags", isRetainOsmTags(), level));
   }
-  
-  /** Set the input source  to use, we attempt to extract a URL from the String directly here
-   *
-   * @param inputSource to use
-   */
-  @CoveredBySettingsKey("inputSource")
-  public void setInputSource(final String inputSource) {
-    try {
-      setInputSource(UrlUtils.createFrom(inputSource));
-    }catch (Exception e) {
-      throw new PlanItRunTimeException("Unable to extract URL from input source %s",inputSource);
-    }
-  }    
   
   /** Set the input file to use, which is internally converted into a URL
    * 

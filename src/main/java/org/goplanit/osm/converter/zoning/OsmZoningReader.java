@@ -360,15 +360,6 @@ public class OsmZoningReader implements ZoningReader {
     finaliseParsedZoning();
   }
 
-  /**
-   * The network the zoning is built on
-   *
-   * @return the network
-   */
-  protected PlanitOsmNetwork getReferenceNetwork(){
-    return referenceNetwork;
-  }
-
   /** conduct reading of data with given reader and handler
    * 
    * @param osmReader to use
@@ -424,6 +415,14 @@ public class OsmZoningReader implements ZoningReader {
     this.referenceNetwork = referenceNetwork;
     this.zoning = zoningToPopulate;
     this.network2ZoningData = network2ZoningData;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public PlanitOsmNetwork getReferenceNetwork(){
+    return referenceNetwork;
   }
 
   /**

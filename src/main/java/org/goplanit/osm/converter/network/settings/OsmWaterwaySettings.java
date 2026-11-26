@@ -9,6 +9,7 @@ import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -145,6 +146,7 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
   /**
    * Log all de-activated OSM waterway types
    */
+  @NoSettingsKey(reason = "logs the OSM way types not parsed")
   public void logUnsupportedOsmWaterwayTypes() {
     logUnsupportedOsmWayTypes();
   }
@@ -250,6 +252,7 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
    * {@inheritDoc}
    */
   @Override
+  @NoSettingsKey(reason = "logs the settings")
   public void logSettings(int level) {
     LOGGER.info(LoggingUtils.settingsValue("Waterway parser activated", isParserActive(), level));
     logModeMappings(level + 1);
