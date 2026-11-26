@@ -614,7 +614,8 @@ public abstract class OsmPublicTransportReaderYamlKeyedSettings extends OsmReade
         LOGGER.info(LoggingUtils.settingsValue("Ferry stop to ferry route search radius (m)",
             String.format("%.2f", getFerryStopToFerryRouteSearchRadiusMeters()), level));
       }
-      getAccessEgressInjectionSettings().logSettings(level);
+      LOGGER.info(LoggingUtils.settingsSection("Access/egress injection settings", level + 1));
+      getAccessEgressInjectionSettings().logSettings(level + 1);
     }
   }
 }

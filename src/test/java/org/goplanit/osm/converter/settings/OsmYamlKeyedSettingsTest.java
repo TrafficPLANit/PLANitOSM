@@ -1,14 +1,9 @@
 package org.goplanit.osm.converter.settings;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.goplanit.osm.converter.network.settings.OsmHighwaySettings;
 import org.goplanit.osm.converter.network.settings.OsmHighwayYamlKeyedSettings;
@@ -30,10 +25,7 @@ import org.goplanit.osm.defaults.OsmLaneDefaults;
 import org.goplanit.osm.defaults.OsmLaneYamlKeyedDefaults;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorSettings;
 import org.goplanit.utils.network.layer.modifier.consolidator.IntersectionConsolidatorYamlKeyedSettings;
-import org.goplanit.utils.reflection.AnnotationUtils;
-import org.goplanit.utils.settings.annotations.SettingsRead;
-import org.goplanit.utils.settings.annotations.SettingsSection;
-import org.goplanit.utils.settings.annotations.SettingsWrite;
+import org.goplanit.utils.settings.SettingsCoverage;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -64,23 +56,13 @@ public class OsmYamlKeyedSettingsTest {
       Map.entry(IntersectionConsolidatorSettings.class, IntersectionConsolidatorYamlKeyedSettings.class),
       Map.entry(OsmPublicTransportReaderSettings.class, OsmPublicTransportReaderYamlKeyedSettings.class));
 
-  /** the annotations of a key or section */
-  private static final List<Class<? extends Annotation>> KEY_ANNOTATIONS =
-      List.of(SettingsWrite.class, SettingsRead.class, SettingsSection.class);
-
-  /** name of the method putting the keys of a YAML keyed class back to their defaults */
-  private static final String RESET = "reset";
-
-  /** name of the method logging the keys of a YAML keyed class, taking the level to indent them at */
-  private static final String LOG_SETTINGS = "logSettings";
-
   /**
    * Each settings class extends its YAML keyed class directly, so its keys are inherited as they are
    */
   @Test
   public void eachSettingsClassExtendsItsYamlKeyedClass() {
-    YAML_KEYED_CLASS_BY_SETTINGS_CLASS.forEach((settingsClass, yamlKeyedClass) ->
-        assertSame(yamlKeyedClass, settingsClass.getSuperclass(), settingsClass.getSimpleName()));
+    assertEquals(List.of(),
+        SettingsCoverage.findSettingsClassesNotExtendingTheirYamlKeyedClassDirectly(YAML_KEYED_CLASS_BY_SETTINGS_CLASS));
   }
 
   /**
@@ -88,9 +70,8 @@ public class OsmYamlKeyedSettingsTest {
    */
   @Test
   public void keysAreDeclaredOnTheYamlKeyedClassOnly() {
-    YAML_KEYED_CLASS_BY_SETTINGS_CLASS.keySet().forEach(settingsClass -> assertEquals(List.of(),
-        AnnotationUtils.getDeclaredMethodsWithAnyAnnotation(settingsClass, KEY_ANNOTATIONS),
-        settingsClass.getSimpleName()));
+    assertEquals(List.of(),
+        SettingsCoverage.findKeysAndSectionsDeclaredOnSettingsClasses(YAML_KEYED_CLASS_BY_SETTINGS_CLASS));
   }
 
   /**
@@ -100,28 +81,17 @@ public class OsmYamlKeyedSettingsTest {
    */
   @Test
   public void everyPublicMethodOfAYamlKeyedClassIsAKey() {
-    YAML_KEYED_CLASS_BY_SETTINGS_CLASS.values().forEach(yamlKeyedClass -> assertEquals(List.of(),
-        Arrays.stream(yamlKeyedClass.getDeclaredMethods()).filter(method -> !method.isSynthetic()
-            && Modifier.isPublic(method.getModifiers()) && !AnnotationUtils.hasAnyAnnotation(method, KEY_ANNOTATIONS)
-            && !(method.getName().equals(RESET) && method.getParameterCount() == 0)
-            && !(method.getName().equals(LOG_SETTINGS) && method.getParameterCount() == 1
-                && method.getParameterTypes()[0] == int.class))
-            .collect(Collectors.toList()), yamlKeyedClass.getSimpleName()));
+    assertEquals(List.of(),
+        SettingsCoverage.findMethodsOfYamlKeyedClassesNotKeysOrSections(YAML_KEYED_CLASS_BY_SETTINGS_CLASS));
   }
 
   /**
    * No settings class overrides a key or section method of its YAML keyed class, as an override would hide the method's
    * annotations from the settings files
-   *
-   * @throws NoSuchMethodException never, each key method being public
    */
   @Test
-  public void noKeyMethodIsOverridden() throws NoSuchMethodException {
-    for (var entry : YAML_KEYED_CLASS_BY_SETTINGS_CLASS.entrySet()) {
-      for (var keyMethod : AnnotationUtils.getDeclaredMethodsWithAnyAnnotation(entry.getValue(), KEY_ANNOTATIONS)) {
-        var found = entry.getKey().getMethod(keyMethod.getName(), keyMethod.getParameterTypes());
-        assertSame(entry.getValue(), found.getDeclaringClass(), found.toString());
-      }
-    }
+  public void noKeyMethodIsOverridden() {
+    assertEquals(List.of(),
+        SettingsCoverage.findKeysAndSectionsOverriddenBySettingsClasses(YAML_KEYED_CLASS_BY_SETTINGS_CLASS));
   }
 }

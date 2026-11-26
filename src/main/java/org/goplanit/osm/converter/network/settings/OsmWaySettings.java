@@ -15,6 +15,7 @@ import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.Pair;
 import org.goplanit.utils.mode.PredefinedModeType;
+import org.goplanit.utils.settings.annotations.NoSettingsKey;
 
 /**
  * Base class with shared settings across different types of Osm ways (highway, railway). The keys a settings file can
@@ -52,15 +53,6 @@ public abstract class OsmWaySettings extends OsmWayYamlKeyedSettings {
   /** track mapping from OSM mode string to PLANit defined modes */
   private final ExternalToPlanitModeMapping osmModeMapping = new ExternalToPlanitModeMapping();
 
-  /* overwriting of defaults */
-  
-  /**
-   * track overwrite values for OSM way types where we want different defaults for capacity and max density
-   */
-  protected final Map<String, Pair<Double,Double>> overwriteOsmWayTypeCapacityDensityDefaults = new TreeMap<>();
-
-  /* protected */
-
   /** Add a new default the speed limit for a currently unregistered key value way tag value, e.g. railway=typeValue.
    * Only to be used for custom tags that are added on-the-fly by the user, otherwise we should go through the
    * "normal" default initialisation procedure.
@@ -80,6 +72,28 @@ public abstract class OsmWaySettings extends OsmWayYamlKeyedSettings {
     return true;
   }
 
+  /**
+   * Log the active mode mappings for this way category.
+   *
+   * @param level indentation level to apply
+   */
+  private void logModeMappings(int level) {
+    if (isParserActive()) {
+      osmModeMapping.logActiveMapping("Mode mappings", level);
+    } else {
+      LOGGER.info(LoggingUtils.settingsSection("Mode mappings", level));
+      LOGGER.info(LoggingUtils.settingsEntry("Mapping inactive", level + 1));
+    }
+  }
+
+  /* overwriting of defaults */
+
+  /**
+   * track overwrite values for OSM way types where we want different defaults for capacity and max density
+   */
+  protected final Map<String, Pair<Double,Double>> overwriteOsmWayTypeCapacityDensityDefaults = new TreeMap<>();
+
+  /* protected */
 
   /** Constructor
    * 
@@ -529,20 +543,6 @@ public abstract class OsmWaySettings extends OsmWayYamlKeyedSettings {
   
   /* public */
 
-  /**
-   * Log the active mode mappings for this way category.
-   *
-   * @param level indentation level to apply
-   */
-  protected void logModeMappings(int level) {
-    if (isParserActive()) {
-      osmModeMapping.logActiveMapping("Mode mappings", level);
-    } else {
-      LOGGER.info(LoggingUtils.settingsSection("Mode mappings", level));
-      LOGGER.info(LoggingUtils.settingsEntry("Mapping inactive", level + 1));
-    }
-  }
-
   /** Verify if the passed in osmMode is mapped to a mode, i.e., if it is actively included when
    * reading the network. When the parser is not active false is returned in all cases
    * 
@@ -585,6 +585,18 @@ public abstract class OsmWaySettings extends OsmWayYamlKeyedSettings {
    */
   public Stream<PredefinedModeType> getActivatedPlanitModeTypesStream() {
     return osmModeMapping.getActivePlanitModesStream();
+  }
+
+  /**
+   * Log the settings, the mode mappings these settings hold after the keys of the family logged before them
+   *
+   * @param level indentation level to apply
+   */
+  @Override
+  @NoSettingsKey(reason = "logs the settings")
+  public void logSettings(int level) {
+    super.logSettings(level);
+    logModeMappings(level + 1);
   }
 
 }

@@ -328,15 +328,5 @@ public class OsmHighwaySettings extends OsmHighwayYamlKeyedSettings {
     logUnsupportedOsmWayTypes();
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  @NoSettingsKey(reason = "logs the settings")
-  public void logSettings(int level) {
-    super.logSettings(level);
-    logModeMappings(level + 1);
-  }
-
 }
 

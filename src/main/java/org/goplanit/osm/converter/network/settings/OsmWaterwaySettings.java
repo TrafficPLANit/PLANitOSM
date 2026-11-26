@@ -243,15 +243,5 @@ public class OsmWaterwaySettings extends OsmWaterwayYamlKeyedSettings {
         OsmWaterwayTags.getKeyForValueType(
                 osmWaterwayType), osmWaterwayType, OsmWaterModeTags.getSupportedWaterModeTags());
   }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  @NoSettingsKey(reason = "logs the settings")
-  public void logSettings(int level) {
-    super.logSettings(level);
-    logModeMappings(level + 1);
-  }
 }
 

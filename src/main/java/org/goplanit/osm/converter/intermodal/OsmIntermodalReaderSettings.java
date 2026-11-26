@@ -99,7 +99,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings, Yam
   
 
   /**
-   * Reset each part, then switch the railway and waterway parsers on again, as intermodal settings made new have them
+   * Reset each of the nested settings, then switch the railway and waterway parsers on again, as intermodal settings
+   * made new have them
    */
   @Override
   public void reset() {

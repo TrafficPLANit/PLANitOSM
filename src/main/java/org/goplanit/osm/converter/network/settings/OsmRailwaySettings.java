@@ -262,17 +262,7 @@ public class OsmRailwaySettings extends OsmRailwayYamlKeyedSettings {
    * @return allowed OsmModes found
    */
   public Collection<String> collectAllowedOsmRailwayModes(String osmRailwayValueType) {
-    return collectAllowedOsmWayModes(osmRailwayValueType);    
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  @NoSettingsKey(reason = "logs the settings")
-  public void logSettings(int level) {
-    super.logSettings(level);
-    logModeMappings(level + 1);
+    return collectAllowedOsmWayModes(osmRailwayValueType);
   }
 }
 
