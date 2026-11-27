@@ -3,9 +3,8 @@ package org.goplanit.osm.converter.zoning;
 import java.net.URL;
 import java.nio.file.Paths;
 
-import org.goplanit.osm.converter.network.OsmNetworkToZoningReaderData;
+import org.goplanit.osm.converter.network.data.OsmNetworkToZoningReaderData;
 import org.goplanit.osm.physical.network.macroscopic.PlanitOsmNetwork;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
 import org.goplanit.zoning.Zoning;
 
@@ -18,6 +17,9 @@ import org.goplanit.zoning.Zoning;
  *
  */
 public class OsmZoningReaderFactory {   
+
+  /** factory, not to be instantiated */
+  private OsmZoningReaderFactory(){}
 
   /** Create a PLANitOSMReader while providing an OSM network to populate
    * 
@@ -63,7 +65,10 @@ public class OsmZoningReaderFactory {
    * @return created OSM reader
    */
   public static OsmZoningReader create(
-      OsmPublicTransportReaderSettings settings, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
+      OsmPublicTransportReaderSettings settings,
+      Zoning zoningToPopulate,
+      PlanitOsmNetwork referenceNetwork,
+      OsmNetworkToZoningReaderData network2ZoningData){
     return new OsmZoningReader(settings, zoningToPopulate, referenceNetwork, network2ZoningData);
   }
 
@@ -76,10 +81,18 @@ public class OsmZoningReaderFactory {
    * @return created OSM reader
    */
   public static OsmZoningReader create(
-      URL inputSource, String countryName, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
-    PlanItRunTimeException.throwIfNull(referenceNetwork, "No reference network provided to OSM zoning reader factory method");
+      URL inputSource,
+      String countryName,
+      PlanitOsmNetwork referenceNetwork,
+      OsmNetworkToZoningReaderData network2ZoningData){
+    PlanItRunTimeException.throwIfNull(referenceNetwork,
+        "No reference network provided to OSM zoning reader factory method");
     return create(
-        inputSource, countryName, new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork.getNetworkGroupingTokenId()),referenceNetwork, network2ZoningData);
+        inputSource,
+        countryName,
+        new Zoning(referenceNetwork.getIdGroupingToken(), referenceNetwork),
+        referenceNetwork,
+        network2ZoningData);
   }   
   
   /** Create a PLANitOSMReader while providing an OSM network to populate
@@ -92,9 +105,15 @@ public class OsmZoningReaderFactory {
    * @return created OSM reader
    */
   public static OsmZoningReader create(
-      URL inputSource, String countryName, Zoning zoningToPopulate, PlanitOsmNetwork referenceNetwork, OsmNetworkToZoningReaderData network2ZoningData){
-    PlanItRunTimeException.throwIfNull(zoningToPopulate, "No zoning instance provided to OSM zoning reader factory method");
-    PlanItRunTimeException.throwIfNull(referenceNetwork, "No reference network provided to OSM zoning reader factory method");
+      URL inputSource,
+      String countryName,
+      Zoning zoningToPopulate,
+      PlanitOsmNetwork referenceNetwork,
+      OsmNetworkToZoningReaderData network2ZoningData){
+    PlanItRunTimeException.throwIfNull(zoningToPopulate,
+        "No zoning instance provided to OSM zoning reader factory method");
+    PlanItRunTimeException.throwIfNull(referenceNetwork,
+        "No reference network provided to OSM zoning reader factory method");
     return new OsmZoningReader(inputSource, countryName, zoningToPopulate ,referenceNetwork, network2ZoningData);
   }   
   

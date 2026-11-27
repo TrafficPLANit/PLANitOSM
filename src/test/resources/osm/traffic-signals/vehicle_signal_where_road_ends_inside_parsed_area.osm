@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- As vehicle_signal_where_road_ends_outside_parsed_area, but the declared bounds reach past node 5 (east edge at lon 151.2140), so the road ends inside the parsed area -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <bounds minlat="-33.8720" minlon="151.2060" maxlat="-33.8680" maxlon="151.2140"/>
+  <node id="1" lat="-33.8700" lon="151.2090"/>
+  <node id="2" lat="-33.8700" lon="151.2118"/>
+  <node id="4" lat="-33.8690" lon="151.2118"/>
+  <node id="5" lat="-33.8700" lon="151.2122">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <way id="10">
+    <nd ref="1"/><nd ref="2"/><nd ref="5"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="2"/><nd ref="4"/>
+    <tag k="highway" v="secondary"/>
+  </way>
+</osm>

@@ -1,16 +1,22 @@
 package org.goplanit.osm.converter.intermodal;
 
 import org.goplanit.converter.ConverterReaderSettings;
-import org.goplanit.osm.converter.network.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.OsmBoundary;
+import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
+import org.goplanit.osm.converter.settings.OsmReaderSettingsSchema;
+import org.goplanit.osm.converter.settings.OsmReaderYamlKeyedSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
-import org.goplanit.utils.exceptions.PlanItException;
 import org.goplanit.utils.exceptions.PlanItRunTimeException;
-import org.goplanit.utils.geo.PlanitJtsUtils;
+import org.goplanit.utils.locale.CountryNames;
+import org.goplanit.utils.misc.LoggingUtils;
 import org.goplanit.utils.misc.UrlUtils;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.Polygon;
+import org.goplanit.utils.settings.SettingsSchema;
+import org.goplanit.utils.settings.YamlWriteSettingsSupport;
+import org.goplanit.utils.settings.annotations.CoveredBySettingsKey;
+import org.goplanit.utils.settings.annotations.SettingsTopLevelValue;
 
 import java.net.URL;
+import java.util.logging.Logger;
 
 /**
  * Capture all the user configurable settings regarding the OSM intermodal reader, which in turn has a network
@@ -19,20 +25,39 @@ import java.net.URL;
  * @author markr
  *
  */
-public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
+public class OsmIntermodalReaderSettings implements ConverterReaderSettings, YamlWriteSettingsSupport {
   
+  /** logger to use */
+  private static final Logger LOGGER = Logger.getLogger(OsmIntermodalReaderSettings.class.getCanonicalName());
+
+  /** Switch on the railway and waterway parsers, which intermodal reading uses for rail and ferry services */
+  private void activateRailwayAndWaterwayParsers() {
+    getNetworkSettings().getRailwaySettings().activateParser(true);
+    getNetworkSettings().getWaterwaySettings().activateParser(true);
+  }
+
   /** the network settings to use */
   protected final OsmNetworkReaderSettings networkSettings;
   
   /** the zoning PT settings to use */
   protected final OsmPublicTransportReaderSettings zoningPtSettings;
-  
+
+  /**
+   * Constructor without a country, so the defaults are the global ones
+   */
+  public OsmIntermodalReaderSettings() {
+    this(CountryNames.GLOBAL);
+  }
+
   /**
    * Constructor
-   * 
+   *
    * @param countryName to use
    */
-  public OsmIntermodalReaderSettings(final String countryName) {
+  public OsmIntermodalReaderSettings(
+      @SettingsTopLevelValue(key = OsmReaderYamlKeyedSettings.COUNTRY_KEY,
+          description = OsmReaderYamlKeyedSettings.COUNTRY_DESCRIPTION)
+      final String countryName) {
     this((URL) null, countryName);
   }
 
@@ -56,11 +81,8 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
     this(
         new OsmNetworkReaderSettings(inputSource, countryName),
         new OsmPublicTransportReaderSettings(inputSource, countryName));
-
-    /* default activate rail and ferry when performing intermodal parsing */
-    getNetworkSettings().getRailwaySettings().activateParser(true);
-    getNetworkSettings().getWaterwaySettings().activateParser(true);
-  }  
+    activateRailwayAndWaterwayParsers();
+  }
          
   
   /**
@@ -69,28 +91,43 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
    * @param networkSettings to use
    * @param zoningPtSettings to use
    */
-  public OsmIntermodalReaderSettings(final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
+  public OsmIntermodalReaderSettings(
+      final OsmNetworkReaderSettings networkSettings, final OsmPublicTransportReaderSettings zoningPtSettings) {
     this.networkSettings = networkSettings;
     this.zoningPtSettings = zoningPtSettings;
   } 
   
 
   /**
-   * {@inheritDoc}
+   * Reset each of the nested settings, then switch the railway and waterway parsers on again, as intermodal settings
+   * made new have them
    */
   @Override
   public void reset() {
     networkSettings.reset();
     zoningPtSettings.reset();
+    activateRailwayAndWaterwayParsers();
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
-  public void logSettings() {
-    networkSettings.logSettings();
-    zoningPtSettings.logSettings();
+  public void logSettings(int level) {
+    LOGGER.info(LoggingUtils.settingsHeader("OSM Intermodal Reader Settings"));
+    networkSettings.logSettings(level+1);
+    zoningPtSettings.logSettings(level+1);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @return the schema of every OSM reader settings source, whose network and public transport sections these settings
+   *     hold
+   */
+  @Override
+  public SettingsSchema getSettingsSchema() {
+    return OsmReaderSettingsSchema.SCHEMA;
   }
 
   // GETTERS/SETTERS
@@ -111,10 +148,12 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
     return zoningPtSettings;
   }  
   
-  /** Set the inputSource  to use including for both the network and public transport settings (both should use the same source)
+  /** Set the inputSource  to use including for both the network and public transport settings
+   * (both should use the same source)
    * 
    * @param inputSource to use
    */
+  @CoveredBySettingsKey("inputSource")
   public void setInputSource(final URL inputSource) {
     getNetworkSettings().setInputSource(inputSource);
     getPublicTransportSettings().setInputSource(inputSource);
@@ -123,38 +162,22 @@ public class OsmIntermodalReaderSettings implements ConverterReaderSettings {
   /** Set the input file to use, which is internally converted into a URL
    * @param inputFile to use
    */
+  @CoveredBySettingsKey("inputSource")
   public void setInputFile(final String inputFile) {
     try{
-      setInputSource(UrlUtils.createFromLocalPath(inputFile));
+      setInputSource(UrlUtils.createFromLocalAbsoluteOrRelativePath(inputFile));
     }catch(Exception e) {
       throw new PlanItRunTimeException("Unable to extract URL from input file location %s",inputFile);
     }
   }     
-  
-  /** Set a square bounding box based on provided envelope
-   * 
-   * @param x1, first x coordinate
-   * @param y1, first y coordinate
-   * @param x2, second x coordinate
-   * @param y2, second y coordinate
-   */
-  public final void setBoundingBox(Number x1, Number x2, Number y1, Number y2) {
-    setBoundingBox(new Envelope(PlanitJtsUtils.createPoint(x1, y1).getCoordinate(), PlanitJtsUtils.createPoint(x2, y2).getCoordinate()));
-  }
-  
-  /** Set a square bounding box based on provided envelope (which internally is converted to the bounding polygon that happens to be square)
-   * @param boundingBox to use
-   */
-  public final void setBoundingBox(Envelope boundingBox) {
-    setBoundingPolygon(PlanitJtsUtils.create2DPolygon(boundingBox));
-  }
-  
+
   /** Set a polygon based bounding box to restrict parsing to
-   * @param boundingPolygon to use
+   * @param osmBoundary to use
    */
-  public final void setBoundingPolygon(Polygon boundingPolygon) {
-    getNetworkSettings().setBoundingPolygon(boundingPolygon);
-    getPublicTransportSettings().setBoundingPolygon(boundingPolygon);
+  @CoveredBySettingsKey("boundingArea")
+  public final void setBoundingArea(OsmBoundary osmBoundary) {
+    getNetworkSettings().setBoundingArea(osmBoundary.deepClone());
+    getPublicTransportSettings().setBoundingArea(osmBoundary.deepClone());
   }   
   
 }

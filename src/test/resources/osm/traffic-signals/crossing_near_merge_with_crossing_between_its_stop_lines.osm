@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- One-way tertiary way 10 (2-1-31-6-12): vehicle signal 1 (forward) about 5 m before signalised crossing 31, then
+     junction 6 with residential side street way 11 (6-8) about 5 m on, then node 12 where way 10 merges into two-way
+     tertiary way 20, about 22 m from crossing 31. Way 20 (4-7-21-32-22-12-5) has signalised crossing 32 between vehicle
+     signal 21 (forward) and vehicle signal 22 (backward), facing each other across it, about 23 m before node 12, and
+     junction 7 with residential side street way 13 (7-9) about 42 m west of crossing 32 -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.20915">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="4" lat="-33.8701" lon="151.2080"/>
+  <node id="5" lat="-33.8701" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.20925"/>
+  <node id="7" lat="-33.8701" lon="151.20870"/>
+  <node id="8" lat="-33.8697" lon="151.20925"/>
+  <node id="9" lat="-33.8704" lon="151.20870"/>
+  <node id="12" lat="-33.8701" lon="151.20940"/>
+  <node id="21" lat="-33.8701" lon="151.20910">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="22" lat="-33.8701" lon="151.20920">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="backward"/>
+  </node>
+  <node id="31" lat="-33.8700" lon="151.20920">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <node id="32" lat="-33.8701" lon="151.20915">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="6"/><nd ref="12"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="13">
+    <nd ref="7"/><nd ref="9"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="20">
+    <nd ref="4"/><nd ref="7"/><nd ref="21"/><nd ref="32"/><nd ref="22"/><nd ref="12"/><nd ref="5"/>
+    <tag k="highway" v="tertiary"/>
+  </way>
+</osm>

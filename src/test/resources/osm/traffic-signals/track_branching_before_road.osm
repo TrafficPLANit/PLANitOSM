@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two-way primary road 1-2-5-3; tram track 10-11-15-2-12 crossing it at node 2, and a second tram track 15-5-13
+     branching off at node 15 and crossing the road at node 5; tram signal 11 on the track about 10 m before the branch
+     at 15, each branch reaching the road about 22 m beyond it, both within 50 m of the signal -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2080"/>
+  <node id="2" lat="-33.8700" lon="151.2100"/>
+  <node id="5" lat="-33.8700" lon="151.2102"/>
+  <node id="3" lat="-33.8700" lon="151.2120"/>
+  <node id="10" lat="-33.8712" lon="151.2101"/>
+  <node id="11" lat="-33.87027" lon="151.2101">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="15" lat="-33.87018" lon="151.2101"/>
+  <node id="12" lat="-33.8690" lon="151.2100"/>
+  <node id="13" lat="-33.8690" lon="151.2102"/>
+  <way id="30">
+    <nd ref="1"/><nd ref="2"/><nd ref="5"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="31">
+    <nd ref="10"/><nd ref="11"/><nd ref="15"/><nd ref="2"/><nd ref="12"/>
+    <tag k="railway" v="tram"/>
+  </way>
+  <way id="32">
+    <nd ref="15"/><nd ref="5"/><nd ref="13"/>
+    <tag k="railway" v="tram"/>
+  </way>
+</osm>

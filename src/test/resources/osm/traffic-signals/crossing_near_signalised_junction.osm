@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Signalised crossing 10 m before a signalised junction: two-way primary road 2-31-1-3 crossed at junction node 1
+     by two-way secondary road 8-1-9, node 1 tagged with traffic signals; footway 20-31-21 crosses the primary road at
+     node 31, about 10 m before node 1, node 31 tagged as a crossing with traffic signals -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2100">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="31" lat="-33.8700" lon="151.20989">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2089"/>
+  <node id="3" lat="-33.8700" lon="151.2111"/>
+  <node id="8" lat="-33.8691" lon="151.2100"/>
+  <node id="9" lat="-33.8709" lon="151.2100"/>
+  <node id="20" lat="-33.8703" lon="151.20989"/>
+  <node id="21" lat="-33.8697" lon="151.20989"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="31"/><nd ref="1"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="8"/><nd ref="1"/><nd ref="9"/>
+    <tag k="highway" v="secondary"/>
+  </way>
+  <way id="12">
+    <nd ref="20"/><nd ref="31"/><nd ref="21"/>
+    <tag k="highway" v="footway"/>
+  </way>
+</osm>

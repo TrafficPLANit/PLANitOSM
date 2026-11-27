@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A road meeting motorway ramps at node 1. The road is two-way primary: way 20 (11-1, west arm) and way 21 (1-12, east
+     arm). The motorway ramps are one-way: exit ramp way 22 (13 to 1), on-ramp way 23 (1 to 14), motorway way 24 (14 to
+     13) and a second on-ramp way 25 (12 to 14). Three turn restrictions via node 1 leave no allowed turn onto the
+     on-ramp, way 23: relation 101 bans the left turn from the west arm onto it, relation 102 bans the right turn from the
+     east arm onto it, and relation 103 allows only the right turn from the exit ramp onto the west arm. Everything else
+     stays reachable by car, the motorway through the second on-ramp -->
+<osm version="0.6" generator="hand-made for PLANitOSM turn restriction tests">
+  <node id="1" lat="-33.87" lon="151.21"/>
+  <node id="11" lat="-33.87" lon="151.209"/>
+  <node id="12" lat="-33.87" lon="151.211"/>
+  <node id="13" lat="-33.869" lon="151.2095"/>
+  <node id="14" lat="-33.869" lon="151.2105"/>
+  <way id="20">
+    <nd ref="11"/><nd ref="1"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="21">
+    <nd ref="1"/><nd ref="12"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="22">
+    <nd ref="13"/><nd ref="1"/>
+    <tag k="highway" v="motorway_link"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="23">
+    <nd ref="1"/><nd ref="14"/>
+    <tag k="highway" v="motorway_link"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="24">
+    <nd ref="14"/><nd ref="13"/>
+    <tag k="highway" v="motorway"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="25">
+    <nd ref="12"/><nd ref="14"/>
+    <tag k="highway" v="motorway_link"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <relation id="101">
+    <member type="way" ref="20" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="23" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_left_turn"/>
+  </relation>
+  <relation id="102">
+    <member type="way" ref="21" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="23" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_right_turn"/>
+  </relation>
+  <relation id="103">
+    <member type="way" ref="22" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="20" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="only_right_turn"/>
+  </relation>
+</osm>

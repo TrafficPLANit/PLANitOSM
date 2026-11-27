@@ -5,14 +5,12 @@ import java.util.logging.Logger;
 import org.goplanit.utils.locale.CountryNames;
 
 /**
- * Class representing the default mode access restrictions/allowance for modes for a given
- * highway/railway/waterway-like type.
- * 
- * Disallowed modes take precedence over any other setting, allowed modes take precedence over mode category settings
- * and mode category settings define groups of allowed modes (when not present, it is assumed the category is not allowed as a whole)
- * 
- * @author markr
+ * The default mode access restrictions/allowance for a given highway/railway/waterway-like type.
  *
+ * Disallowed modes take precedence over any other setting, and allowed modes over mode category settings. Mode
+ * category settings define groups of allowed modes; a category not present is not allowed as a whole
+ *
+ * @author markr
  */
 public class OsmModeAccessDefaults {
   

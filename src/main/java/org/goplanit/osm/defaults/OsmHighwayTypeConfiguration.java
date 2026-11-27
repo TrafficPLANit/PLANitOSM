@@ -2,6 +2,7 @@ package org.goplanit.osm.defaults;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.goplanit.osm.tags.OsmHighwayTags;
@@ -23,17 +24,17 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationI
   /**
    * the OSM highway types that are marked as activated OSM types, i.e., will be processed when parsing
    */
-  public static final Set<String> DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
+  public static final Set<String> DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES = new TreeSet<>();
   
   /**
    * the OSM highway  types that are marked as deactivated OSM types, i.e., will be ignored when parsing
    */
-  public static final Set<String> DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES = new HashSet<String>();
+  public static final Set<String> DEFAULT_DEACTIVATED_OSM_HIGHWAY_TYPES = new TreeSet<>();
      
     
   /**
-   * Since we are building a macroscopic network based on OSM, we provide a mapping from
-   * the common OSM highway types to macroscopic link segment types that we explicitly do include, i.e., support.
+   * Provide a mapping from the common OSM highway types to macroscopic link segment types that we explicitly do
+   * include, i.e., support.
    * 
    * <ul>
    * <li>MOTORWAY</li>
@@ -46,6 +47,7 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationI
    * <li>SECONDARY_LINK</li>
    * <li>TERTIARY</li>
    * <li>TERTIARY_LINK</li>
+   * <li>BUSWAY</li>
    * <li>UNCLASSIFIED</li>
    * <li>RESIDENTIAL</li>
    * <li>LIVING_STREET</li>
@@ -67,6 +69,7 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationI
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.SECONDARY_LINK);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TERTIARY);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.TERTIARY_LINK);
+    DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.BUSWAY);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.UNCLASSIFIED);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.RESIDENTIAL);
     DEFAULT_ACTIVATED_OSM_HIGHWAY_TYPES.add(OsmHighwayTags.LIVING_STREET);
@@ -77,8 +80,8 @@ public class OsmHighwayTypeConfiguration extends OsmInfrastructureConfigurationI
   }
   
   /**
-   * Since we are building a macroscopic network based on OSM, we provide a mapping from
-   * the common OSM highway types to macroscopic link segment types that we explicitly do not include
+   * Provide a mapping from the common OSM highway types to macroscopic link segment types that we explicitly do not
+   * include
    * 
    * <ul>
    * <li>FOOTWAY</li>

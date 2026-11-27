@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- As vehicle_signal_before_untagged_footway_crossing_near_junction, but way 12 (40-31-41-42-40) is the outline of a
+     plaza, highway=pedestrian and area=yes, closed through node 31 on the road -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.2094">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.2097"/>
+  <node id="7" lat="-33.8691" lon="151.2097"/>
+  <node id="8" lat="-33.8709" lon="151.2097"/>
+  <node id="31" lat="-33.8700" lon="151.2095"/>
+  <node id="40" lat="-33.8697" lon="151.2095"/>
+  <node id="41" lat="-33.8703" lon="151.2095"/>
+  <node id="42" lat="-33.8700" lon="151.2092"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="12">
+    <nd ref="40"/><nd ref="31"/><nd ref="41"/><nd ref="42"/><nd ref="40"/>
+    <tag k="highway" v="pedestrian"/>
+    <tag k="area" v="yes"/>
+  </way>
+</osm>

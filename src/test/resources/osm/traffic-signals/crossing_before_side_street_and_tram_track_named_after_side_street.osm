@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- As crossing_before_side_street_and_tram_track_named_after_road, but tram way 20 (51-41-52) is named Side Street,
+     like the side street way 11 that joins the road about 9 m before the track -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.20900">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="6" lat="-33.8700" lon="151.20915"/>
+  <node id="7" lat="-33.8697" lon="151.20915"/>
+  <node id="31" lat="-33.8700" lon="151.20905">
+    <tag k="highway" v="crossing"/>
+    <tag k="crossing" v="traffic_signals"/>
+  </node>
+  <node id="41" lat="-33.8700" lon="151.20925"/>
+  <node id="51" lat="-33.8697" lon="151.20925"/>
+  <node id="52" lat="-33.8703" lon="151.20925"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="31"/><nd ref="6"/><nd ref="41"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="name" v="Main Street"/>
+  </way>
+  <way id="11">
+    <nd ref="7"/><nd ref="6"/>
+    <tag k="highway" v="residential"/>
+    <tag k="name" v="Side Street"/>
+  </way>
+  <way id="20">
+    <nd ref="51"/><nd ref="41"/><nd ref="52"/>
+    <tag k="railway" v="tram"/>
+    <tag k="name" v="Side Street"/>
+  </way>
+</osm>

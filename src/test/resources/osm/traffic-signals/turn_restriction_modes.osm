@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A four-arm junction at node 1, all ways two-way primary: way 20 (11-1, north arm), way 21 (1-12, south arm),
+     way 22 (13-1, west arm, no pedestrians) and way 23 (1-14, east arm, no heavy goods vehicles). Five turn
+     restrictions via node 1: relation 101 bans the turn from the north arm onto the east arm except for public service
+     vehicles, relation 102 bans the turn from the north arm onto the west arm for heavy goods vehicles only, relation
+     103 bans the U-turn on the south arm, relation 104 bans the turn from the south arm onto the east arm, relation
+     105 bans the U-turn on the west arm -->
+<osm version="0.6" generator="hand-made for PLANitOSM turn restriction tests">
+  <node id="1" lat="-33.87" lon="151.21"/>
+  <node id="11" lat="-33.8692" lon="151.21"/>
+  <node id="12" lat="-33.8708" lon="151.21"/>
+  <node id="13" lat="-33.87" lon="151.20903"/>
+  <node id="14" lat="-33.87" lon="151.21097"/>
+  <way id="20">
+    <nd ref="11"/><nd ref="1"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="21">
+    <nd ref="1"/><nd ref="12"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="22">
+    <nd ref="13"/><nd ref="1"/>
+    <tag k="highway" v="primary"/>
+    <tag k="foot" v="no"/>
+  </way>
+  <way id="23">
+    <nd ref="1"/><nd ref="14"/>
+    <tag k="highway" v="primary"/>
+    <tag k="hgv" v="no"/>
+  </way>
+  <relation id="101">
+    <member type="way" ref="20" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="23" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_left_turn"/>
+    <tag k="except" v="psv"/>
+  </relation>
+  <relation id="102">
+    <member type="way" ref="20" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="22" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction:hgv" v="no_right_turn"/>
+  </relation>
+  <relation id="103">
+    <member type="way" ref="21" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="21" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_u_turn"/>
+  </relation>
+  <relation id="104">
+    <member type="way" ref="21" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="23" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_right_turn"/>
+  </relation>
+  <relation id="105">
+    <member type="way" ref="22" role="from"/>
+    <member type="node" ref="1" role="via"/>
+    <member type="way" ref="22" role="to"/>
+    <tag k="type" v="restriction"/>
+    <tag k="restriction" v="no_u_turn"/>
+  </relation>
+</osm>

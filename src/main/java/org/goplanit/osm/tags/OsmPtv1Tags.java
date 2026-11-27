@@ -7,25 +7,24 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tags related specifically to public transport infrastructure and services for the OSM PTv1 tagging scheme. 
- * this taggin scheme relies on existing railway=* or highway=* keys which is confusing. Here we store and manage
- * those tags used by the Ptv1 scheme, whereas the OsmRailwayTags and OsmHighwayTags classes will extract the value tags identified
- * here to populate some of the larger tagging collections that comprises these tags as well as other (unrelated to public transport)
- * 
- * @author markr
+ * Tags specific to public transport infrastructure and services in the OSM PTv1 tagging scheme. This tagging scheme
+ * relies on the existing railway=* or highway=* keys, which is confusing. This class holds the tags the Ptv1 scheme
+ * uses, while the OsmRailwayTags and OsmHighwayTags classes take the value tags identified here to populate their
+ * larger tag collections, which hold these tags as well as others (unrelated to public transport)
  *
+ * @author markr
  */
 public class OsmPtv1Tags {
   
   /**
    * all highway key related value tags that pertain to public transport and may reflect an area
    */
-  private static final Set<String> AREA_BASED_PT_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+  private static final Set<String> AREA_BASED_PT_HIGHWAY_VALUE_TAGS = new HashSet<>();
   
   /**
    * all highway key related value tags that pertain to public transport
    */
-  private static final Set<String> PT_HIGHWAY_VALUE_TAGS = new HashSet<String>();
+  private static final Set<String> PT_HIGHWAY_VALUE_TAGS = new HashSet<>();
 
   /**
    * all highway key related value tags that pertain to public transport and may reflect an area
@@ -62,7 +61,8 @@ public class OsmPtv1Tags {
     PT_RAILWAY_VALUE_TAGS.add(PLATFORM_EDGE);
     PT_RAILWAY_VALUE_TAGS.add(SUBWAY_ENTRANCE);
     PT_RAILWAY_VALUE_TAGS.addAll(AREA_BASED_PT_RAILWAY_VALUE_TAGS);
-    PT_RAILWAY_VALUE_TAGS.add(OsmRailwayTags.CONSTRUCTION); /* can be any of the above after construction, so should be included */
+    /* can be any of the above after construction, so should be included */
+    PT_RAILWAY_VALUE_TAGS.add(OsmRailwayTags.CONSTRUCTION);
   }    
 
   
@@ -74,7 +74,7 @@ public class OsmPtv1Tags {
   }
   
   /**
-   * populate the available railway area value tags specifically aimed at the public transport aspect of railways. For general railway
+   * populate the available railway area value tags for the public transport aspect of railways. For general railway
    * tags see OsmRailwayTags
    * 
    * <ul>
@@ -89,6 +89,8 @@ public class OsmPtv1Tags {
     AREA_BASED_PT_RAILWAY_VALUE_TAGS.add(TRAM_STOP);    
   }  
   
+  private OsmPtv1Tags(){}
+
   static {
     populateAreaBasedOsmHighwayPublicTransportValueTags();
     populateOsmHighwayPublicTransportValueTags();
@@ -128,6 +130,7 @@ public class OsmPtv1Tags {
     
   /* railway ways that are not tracks and not areas */
     
+  /** value of a railway way along the edge of a platform, {@code railway=platform_edge} */
   public static final String PLATFORM_EDGE = "platform_edge";    
   
   

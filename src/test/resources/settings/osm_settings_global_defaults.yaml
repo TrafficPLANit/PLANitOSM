@@ -1,0 +1,283 @@
+# The kind of these settings and the version of their keys
+planitOsmConverterSettings: 1
+# The country whose defaults apply, by its full English name, such as Australia
+country: global
+# --- standard ---
+# The OSM file to read, such as data/sydney.osm.pbf, as a path relative to this settings file or a URL
+# inputSource:
+# The area to read, exactly one of: box (west, east, south and north, in degrees), polygon (as WKT, in degrees of
+# longitude and latitude) or osmBoundary (the name, and optionally type and adminLevel, of an OSM boundary)
+# boundingArea:
+# --- uncommon ---
+# Keep the OSM tags of each way and node on the links and nodes made from it
+retainOsmTags: false
+network:
+  # The settings of parsing the network: which ways and modes, defaults where tags are missing, and corrections
+  # --- standard ---
+  # Keep a mode's largest subnetwork when removing dangling subnetworks, whatever its size
+  alwaysKeepLargestSubnetwork: true
+  # Give OSM way types that convert to the same link segment type one PLANit link segment type
+  consolidateLinkSegmentTypes: true
+  highway:
+    # The road ways parsed, with their modes, speeds and capacities
+    # --- standard ---
+    # Parse the ways of this kind
+    active: true
+    # The OSM road modes to parse, replacing the defaults, such as [motorcar, bus]
+    modes: [bicycle, bus, foot, goods, hgv, hgv_articulated, motorcar, motorcycle]
+    # The highway types to parse, replacing the defaults, such as [primary, secondary]
+    types: [busway, living_street, motorway, motorway_link, pedestrian, primary, primary_link, residential, road, secondary, secondary_link, service, tertiary, tertiary_link, track, trunk, trunk_link, unclassified]
+    # --- common ---
+    # Use the urban speed limit defaults, rather than those outside urban areas, for highways whose tags give no speed
+    # limit
+    speedLimitDefaultsBasedOnUrbanArea: true
+    # --- uncommon ---
+    # OSM modes to allow by highway type besides those the country defaults allow, such as service: [tram] (adds or
+    # replaces by key)
+    allowedModesByType: {}
+    # Capacity and maximum density per lane by highway type, in place of the defaults, such as residential:
+    # {capacityPerLanePcuH: 1000, maxDensityPerLanePcuKm: 150} (adds or replaces by key)
+    capacityMaxDensity: {}
+    # The PLANit mode each OSM road mode maps to once parsed, such as moped: MOTOR_BIKE; a mode mapped is not switched
+    # on, give it under modes+ after the mapping (adds or replaces by key)
+    # Values: BICYCLE, CUSTOM, CAR, CAR_SHARE, CAR_HIGH_OCCUPANCY, BUS, PEDESTRIAN, MOTOR_BIKE, SUBWAY, TRAIN, TRAM,
+    # LIGHTRAIL, FERRY, GOODS_VEHICLE, HEAVY_GOODS_VEHICLE, LARGE_HEAVY_GOODS_VEHICLE, TAXI, RIDE_SHARE
+    modeMappings: {bicycle: BICYCLE, bus: BUS, coach: BUS, foot: PEDESTRIAN, goods: GOODS_VEHICLE, hgv: HEAVY_GOODS_VEHICLE, hgv_articulated: LARGE_HEAVY_GOODS_VEHICLE, minibus: BUS, motorcar: CAR, motorcycle: MOTOR_BIKE, taxi: TAXI, tourist_bus: BUS}
+  railway:
+    # The rail ways parsed, with their modes and speeds
+    # --- standard ---
+    # Parse the ways of this kind
+    active: true
+    # The OSM rail modes to parse, replacing the defaults, such as [train, tram]
+    modes: [funicular, light_rail, monorail, narrow_gauge, subway, train, tram]
+    # The railway types to parse, replacing the defaults, such as [rail, tram]
+    types: [light_rail, rail, subway, tram]
+    # --- uncommon ---
+    # Capacity and maximum density per track by railway type, in place of the defaults, such as rail:
+    # {capacityPerLanePcuH: 2000, maxDensityPerLanePcuKm: 100} (adds or replaces by key)
+    capacityMaxDensity: {}
+    # The PLANit mode each OSM rail mode maps to once parsed, such as funicular: TRAM; a mode mapped is not switched on,
+    # give it under modes+ after the mapping (adds or replaces by key)
+    # Values: BICYCLE, CUSTOM, CAR, CAR_SHARE, CAR_HIGH_OCCUPANCY, BUS, PEDESTRIAN, MOTOR_BIKE, SUBWAY, TRAIN, TRAM,
+    # LIGHTRAIL, FERRY, GOODS_VEHICLE, HEAVY_GOODS_VEHICLE, LARGE_HEAVY_GOODS_VEHICLE, TAXI, RIDE_SHARE
+    modeMappings: {funicular: TRAM, light_rail: LIGHTRAIL, monorail: TRAM, narrow_gauge: TRAIN, subway: SUBWAY, train: TRAIN, tram: TRAM}
+    # --- rare ---
+    # Furthest a traffic signal on a tram or light rail track may be from the road it crosses, along the track, in
+    # metres
+    maximumDistanceTrackSignalToRoadCrossingMeters: 50.0
+  waterway:
+    # The ferry routes parsed, with their modes and speeds
+    # --- standard ---
+    # Parse the ways of this kind
+    active: true
+    # The OSM water modes to parse, replacing the defaults, such as [ferry]
+    modes: [ferry]
+    # The waterway types to parse, replacing the defaults, such as [ferry]
+    types: [busway, ferry, living_street, motorway, motorway_link, pedestrian, primary, primary_link, residential, road, secondary, secondary_link, service, tertiary, tertiary_link, track, trunk, trunk_link, unclassified]
+    # --- uncommon ---
+    # Capacity and maximum density per lane by waterway type, in place of the defaults, such as ferry:
+    # {capacityPerLanePcuH: 300, maxDensityPerLanePcuKm: 50} (adds or replaces by key)
+    capacityMaxDensity: {}
+    # The PLANit mode each OSM water mode maps to once parsed, such as ferry: FERRY; a mode mapped is not switched on,
+    # give it under modes+ after the mapping (adds or replaces by key)
+    # Values: BICYCLE, CUSTOM, CAR, CAR_SHARE, CAR_HIGH_OCCUPANCY, BUS, PEDESTRIAN, MOTOR_BIKE, SUBWAY, TRAIN, TRAM,
+    # LIGHTRAIL, FERRY, GOODS_VEHICLE, HEAVY_GOODS_VEHICLE, LARGE_HEAVY_GOODS_VEHICLE, TAXI, RIDE_SHARE
+    modeMappings: {ferry: FERRY}
+  # --- common ---
+  intersections:
+    # Parsing intersections: traffic signals, and joining the nodes of one junction into one intersection
+    # --- standard ---
+    # Parse intersections from the traffic signals: junctions controlled by vehicle signals, and signalised pedestrian
+    # crossings
+    active: true
+    # --- common ---
+    # Estimate the green ratios and saturation flow factors of the approaches of signalised intersections from their
+    # layout
+    computeGreenRatiosAndSaturationFlowFactors: false
+    # Join the parsed intersections of one junction into one, with the crossings next to it
+    consolidateIntersections: false
+    # --- uncommon ---
+    # Break links at isolated signals, so each becomes an intersection of its own: crossings away from any signalised
+    # junction, and ramp meters
+    breakLinksAtIsolatedSignals: false
+    greenRatioAndSaturationFlowFactor:
+      # How the green ratio and saturation flow factor of each signalised turn are worked out
+      # --- common ---
+      # How the phases share the green time, such as by their capacity
+      # Values: EQUAL_SPLIT, CAPACITY_WEIGHTED
+      algorithmType: CAPACITY_WEIGHTED
+      # --- uncommon ---
+      # Saturation flow factor of an approach without a signal of its own at a signalised intersection, from 0 to 1
+      approachWithoutSignalSaturationFlowFactor: 0.5
+      # Time in which a signal shows each of its phases once, in seconds
+      cycleTimeSeconds: 90.0
+      # Fixed green ratio of the phase of the rail-based approaches of a junction, from 0 to 1
+      fixedRailBasedPhaseGreenRatio: 0.1
+      # Green ratio of road traffic at a signalised crossing that is no junction, from 0 to 1
+      isolatedCrossingGreenRatio: 0.9
+      # Time lost at each phase change, while the signal shows yellow and all-red, in seconds
+      lostTimePerPhaseChangeSeconds: 5.0
+      # Most phases the road approaches of a junction are given
+      maximumNumberOfPhases: 4
+      # Least green time of a road phase, in seconds, 0 for none
+      minimumGreenTimeSeconds: 5.0
+      # Green ratio of road traffic at a ramp meter, from 0 to 1
+      rampMeterGreenRatio: 0.9
+      # Tolerance for two approaches to count as on the same axis and share a phase, in degrees
+      sameAxisApproachToleranceDegrees: 30.0
+    intersectionCollapser:
+      # The modes whose joined intersections are collapsed into one node, and the nodes never collapsed
+      # --- standard ---
+      # PLANit mode types to collapse onto one node per consolidated intersection, such as [PEDESTRIAN, BICYCLE],
+      # replacing those set before, none by default
+      # Values: BICYCLE, CUSTOM, CAR, CAR_SHARE, CAR_HIGH_OCCUPANCY, BUS, PEDESTRIAN, MOTOR_BIKE, SUBWAY, TRAIN, TRAM,
+      # LIGHTRAIL, FERRY, GOODS_VEHICLE, HEAVY_GOODS_VEHICLE, LARGE_HEAVY_GOODS_VEHICLE, TAXI, RIDE_SHARE
+      collapsedModeTypes: []
+      # --- uncommon ---
+      # OSM nodes whose consolidated intersection is not collapsed, by node id (adds to the list)
+      osmNodeIdsExcludedFromCollapse: []
+    intersectionConsolidator:
+      # How the nodes of one junction are found and joined into one intersection
+      # --- uncommon ---
+      # Store the movements of active modes too, such as pedestrians, which collapsing them needs
+      includeActiveModesInMovements: false
+      # Furthest apart along the road two crossings side by side may be to join into one, in metres
+      maximumDistanceBetweenCrossingsSideBySideMeters: 30.0
+      # How far back along the road a link entering an intersection may be fed only from it, to become internal, in
+      # metres
+      maximumDistanceReachedOnlyThroughIntersectionMeters: 60.0
+      # Factor on an intersection's radius for how far back a link may be fed only from it, when that is further
+      maximumDistanceReachedOnlyThroughIntersectionRadiusFactor: 2.0
+      # Furthest a crossing on a slip lane may be from a member node of the junction it joins, in metres
+      maximumDistanceSlipLaneCrossingToJunctionMeters: 60.0
+      # How far apart along the road the parts of one consolidated intersection may be, in metres
+      maximumJoiningReachMeters: 40.0
+      # Longest connection, over any links, along which a junction is pulled in, in metres
+      maximumPullInConnectionLengthMeters: 80.0
+      # Distance beyond its radius within which a consolidated intersection pulls in other junctions, in metres
+      pullInMarginBeyondRadiusMeters: 30.0
+      # --- rare ---
+      # Margin within which the totals of two subdivisions of a cluster count as a tie
+      coverageTieMargin: 0.05
+      # Length above which an internal link is listed with a warning, in metres
+      internalLinkLengthWarningMeters: 100.0
+      # Largest intersection cluster, in parsed intersections, for which every subdivision is tried
+      maximumParsedIntersectionsToTryEverySubdivision: 10
+      # Least gain in coverage a member must bring to its part of an intersection cluster
+      minimumCoverageGainPerMember: 0.05
+      # Subdivisions kept after each step of the search through a larger cluster, at least one
+      subdivisionsKeptPerSearchStep: 3
+    # Groups of OSM nodes to join into one intersection when consolidating, one group per entry (adds to the list)
+    osmNodeIdsToJoinIntoOneIntersection: []
+    # Groups of OSM nodes to keep in separate intersections when consolidating, one group per entry (adds to the list)
+    osmNodeIdsToKeepInSeparateIntersections: []
+    # Directions traffic signals apply to, by OSM node id, in place of their tags (adds or replaces by key)
+    # Values: FORWARD, BACKWARD
+    trafficSignalDirectionOverrides: {}
+    # Kinds of traffic signal nodes are handled as, by OSM node id, in place of their tags (adds or replaces by key)
+    # Values: VEHICLE_SIGNAL, CROSSING_SIGNAL, RAMP_METER, NOT_A_SIGNAL
+    trafficSignalKindOverrides: {}
+    # --- rare ---
+    # Furthest a signalised pedestrian crossing may be from a signalised junction, along one of its approaches, to count
+    # as part of it, in metres
+    maximumDistanceSignalisedCrossingToJunctionMeters: 30.0
+    # Furthest a vehicle signal may be from the junction it controls, along the road, in metres
+    maximumDistanceVehicleSignalToJunctionMeters: 50.0
+  # The modes whose dangling subnetworks lose the mode's access, replacing the defaults (car only)
+  removeDanglingSubnetworks:
+    CAR: {aboveSize: max, belowSize: max, connectivity: STRONG}
+  # --- uncommon ---
+  # OSM access values read as granting (POSITIVE) or denying (NEGATIVE) access, in place of the defaults (adds or
+  # replaces by key)
+  # Values: POSITIVE, NEGATIVE
+  accessValueClassification: {}
+  laneDefaults:
+    # Lanes per direction of each way type, where the tags give none
+    # --- uncommon ---
+    # Total lanes of a way by highway type, used when its tags give none, in place of the built-in ones (adds or
+    # replaces by key)
+    lanesByHighwayType: {bridleway: 1, busway: 1, cycleway: 1, footway: 1, living_street: 1, motorway: 2, motorway_link: 1, path: 1, pedestrian: 1, primary: 2, primary_link: 1, residential: 1, road: 1, secondary: 2, secondary_link: 1, service: 1, steps: 1, tertiary: 1, tertiary_link: 1, track: 1, trunk: 2, trunk_link: 1, unclassified: 1}
+    # Tracks in each direction of a railway whose tags give none
+    railwayTracksPerDirection: 1
+    # Lanes in each direction of a waterway whose tags give none
+    waterwayLanesPerDirection: 1
+  # OSM way types to parse besides the supported ones, by key=value such as highway=escape, with the defaults for their
+  # ways (adds or replaces by key)
+  newOsmWayTypes: {}
+  # OSM nodes kept where they lie outside the bounding polygon, by node id (adds to the list)
+  osmNodesKeptOutsideBoundingPolygon: []
+  # OSM relations not to parse, such as wrong turn restrictions, by relation id (adds to the list)
+  osmRelationsExcludedFromParsing: []
+  # Lanes forward and backward along OSM ways, by way id, in place of their tags or the defaults (adds or replaces by
+  # key)
+  osmWayLaneOverrides: {}
+  # The only OSM modes allowed on OSM ways, by way id, in place of their tags or the defaults (adds or replaces by key)
+  osmWayModeAccessOverrides: {}
+  # OSM ways not to parse, by way id (adds to the list)
+  osmWaysExcludedFromParsing: []
+  # OSM ways kept whole where they run outside the bounding polygon, by way id (adds to the list)
+  osmWaysKeptOutsideBoundingPolygon: []
+  # --- rare ---
+  # Furthest a ferry route may run outside the bounding area and still be kept, in metres
+  maximumDistanceFerryOutsideBoundingPolygonMeters: 2000.0
+publicTransport:
+  # The settings of parsing public transport: stops, platforms and stations, how they are matched, and corrections
+  # --- standard ---
+  # Parse the public transport infrastructure: stops, platforms and stations
+  active: true
+  # --- common ---
+  # Remove transfer zone groups, such as stations, that hold no transfer zone
+  removeDanglingTransferZoneGroups: true
+  # Remove transfer zones with no connectoid on the network
+  removeDanglingZones: true
+  # --- uncommon ---
+  accessEgressInjection:
+    # Linking stops to the nearby network so passengers can reach them, such as ferry stops to the land network
+    # --- common ---
+    # Connect a bus stop off the road network to the nearest road its passengers can walk on
+    connectBusBasedStopsToPassengerNetwork: true
+    # Connect a ferry stop off the land network to the nearest road its passengers can use
+    connectFerryStopsToNearbyLandNetwork: true
+    # Connect a rail-based stop off the road network to the nearest road its passengers can walk or cycle on
+    connectRailBasedStopsToPassengerNetwork: true
+    # --- uncommon ---
+    # Furthest the road network may be from a bus stop connected to it, in metres
+    busBasedStopToPassengerNetworkSearchRadiusMeters: 25.0
+    # Connect stops by the road modes when no walking or cycling mode is modelled
+    fallbackOnRoadModesWithoutActiveModes: true
+    # Furthest the land network may be from a ferry stop connected to it, in metres
+    ferryStopToLandNetworkSearchRadiusMeters: 500.0
+    # Furthest the road network may be from a rail-based stop connected to it, in metres
+    railBasedStopToPassengerNetworkSearchRadiusMeters: 200.0
+  # Connect a ferry stop on no road or waterway to the nearest ferry route by a new link
+  connectDanglingFerryStopToNearbyFerryRoute: true
+  # Furthest a ferry route may be from a ferry stop it is connected to, in metres
+  ferryStopToFerryRouteSearchRadiusMeters: 100.0
+  # Distance from its ideal stop point within which an end node of a link is used for a stop without a known stop
+  # location, rather than breaking the link, in metres
+  maxEndNodeToIdealStopPointMeters: 10.0
+  # Distance from its ideal stop point within which a shape point of a link is used to break the link for a stop without
+  # a known stop location, in metres
+  maxShapePointToIdealStopPointMeters: 5.0
+  # OSM nodes not to parse as public transport, by node id (adds to the list)
+  osmNodesExcludedFromParsing: []
+  # The OSM way the stop of a waiting area goes on, by waiting area id, under its OSM entity type (adds or replaces by
+  # key)
+  osmWayOfWaitingAreaOverrides: {}
+  # OSM ways not to parse as public transport, by way id (adds to the list)
+  osmWaysExcludedFromParsing: []
+  # Furthest the tracks may be from a station without platforms that they are matched to, in metres
+  stationToParallelTracksSearchRadiusMeters: 35.0
+  # Furthest a waiting area may be from the station it is matched to when OSM does not relate them, in metres
+  stationToWaitingAreaSearchRadiusMeters: 35.0
+  # Furthest a stop location may be from the waiting area, such as a platform, it is matched to when OSM does not relate
+  # them, in metres
+  stopToWaitingAreaSearchRadiusMeters: 25.0
+  # The only OSM modes of waiting areas, by waiting area id, under its OSM entity type (adds or replaces by key)
+  waitingAreaModeAccessOverrides: {}
+  # The waiting area of OSM stop locations, by stop location node id, under the waiting area's OSM entity type (adds or
+  # replaces by key)
+  waitingAreaOfStopLocationOverrides: {}
+  # --- rare ---
+  # OSM stop area relations nothing is logged about, by relation id (adds to the list)
+  suppressStopAreaLoggingOfOsmRelations: []

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vehicle signal on shape node 1 of way 10 (2-1-4-6-3, primary, west to east), tagged
+     traffic_signals:direction=forward, about 5 m before node 4, where residential side street 11 (9-4) ends at way 10,
+     and about 25 m before junction 6, where primary way 12 (7-6-8) crosses; the side street has no signals of its own;
+     all ways two-way -->
+<osm version="0.6" generator="hand-made for PLANitOSM traffic signal tests">
+  <node id="1" lat="-33.8700" lon="151.209230">
+    <tag k="highway" v="traffic_signals"/>
+    <tag k="traffic_signals:direction" v="forward"/>
+  </node>
+  <node id="2" lat="-33.8700" lon="151.2080"/>
+  <node id="3" lat="-33.8700" lon="151.2110"/>
+  <node id="4" lat="-33.8700" lon="151.209284"/>
+  <node id="6" lat="-33.8700" lon="151.2095"/>
+  <node id="7" lat="-33.8691" lon="151.2095"/>
+  <node id="8" lat="-33.8709" lon="151.2095"/>
+  <node id="9" lat="-33.8709" lon="151.209284"/>
+  <way id="10">
+    <nd ref="2"/><nd ref="1"/><nd ref="4"/><nd ref="6"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+  </way>
+  <way id="11">
+    <nd ref="9"/><nd ref="4"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="12">
+    <nd ref="7"/><nd ref="6"/><nd ref="8"/>
+    <tag k="highway" v="primary"/>
+  </way>
+</osm>

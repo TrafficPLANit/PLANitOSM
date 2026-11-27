@@ -3,9 +3,9 @@ package org.goplanit.osm.tags;
 import org.goplanit.osm.util.OsmTagUtils;
 
 /**
- * Commonly used tags in relation to busways
- * 
- * Note that buses and/or public service vehicles have three different possible tagging schemes that are supported by open street maps, namely:
+ * Commonly used tags for busways
+ *
+ * OpenStreetMap supports three tagging schemes for buses and/or public service vehicles:
  * 
  * <ul>
  * <li>busway scheme</li>
@@ -19,6 +19,8 @@ import org.goplanit.osm.util.OsmTagUtils;
  *
  */
 public class OsmBusWayTags {
+
+  private OsmBusWayTags(){}
   
   /* busway scheme */
   
@@ -30,7 +32,8 @@ public class OsmBusWayTags {
    * <li>busway:right</li>
    * </ul>
    */
-  protected static final String[] BUSWAY_SCHEME_KEYTAGS = {OsmBusWayTags.BUSWAY, OsmBusWayTags.BUSWAY_RIGHT, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_BOTH};
+  protected static final String[] BUSWAY_SCHEME_KEYTAGS =
+          {OsmBusWayTags.BUSWAY, OsmBusWayTags.BUSWAY_RIGHT, OsmBusWayTags.BUSWAY_LEFT, OsmBusWayTags.BUSWAY_BOTH};
     
   /*keys*/
   
@@ -38,17 +41,22 @@ public class OsmBusWayTags {
   public static final String BUSWAY = "busway";     
   
   /* busway scheme */
-    
+
+  /** BUSWAY_RIGHT */
   public static final String BUSWAY_RIGHT = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.RIGHT);
-  
+
+  /** BUSWAY_LEFT */
   public static final String BUSWAY_LEFT = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.LEFT);
-  
+
+  /** BUSWAY_BOTH */
   public static final String BUSWAY_BOTH = OsmTagUtils.createCompositeOsmKey(BUSWAY, OsmTags.BOTH);
    
   /* values for the busway scheme */
-      
+
+  /** LANE */
   public static final String LANE = OsmLaneTags.LANE;
-      
+
+  /** OPPOSITE_LANE */
   public static final String OPPOSITE_LANE = OsmLaneTags.OPPOSITE_LANE;
      
  

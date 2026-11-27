@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two bus stops that reach the network only in part once buses and pedestrians keep only their largest network.
+     Main road, primary with foot=no, the largest bus network: ways 10 (1-2), 11 (2-3), 12 (3-4), 13 (3-5) and 14
+     (4-6). Bus stop 101 lies beside way 10; the only walkable way within reach is footway 20 (201-202), a pedestrian
+     network of its own. Side street, residential, about 550 m north and not joined to the main road: ways 30 (11-12),
+     31 (12-13) and 32 (12-14), the largest pedestrian network but a bus network of its own. Bus stop 102 lies beside
+     way 30 -->
+<osm version="0.6" generator="hand-made for PLANitOSM public transport tests">
+  <node id="1" lat="-33.87" lon="151.2"/>
+  <node id="2" lat="-33.87" lon="151.201"/>
+  <node id="3" lat="-33.87" lon="151.202"/>
+  <node id="4" lat="-33.87" lon="151.203"/>
+  <node id="5" lat="-33.871" lon="151.202"/>
+  <node id="6" lat="-33.869" lon="151.203"/>
+  <node id="101" lat="-33.87005" lon="151.2005">
+    <tag k="highway" v="bus_stop"/>
+    <tag k="name" v="Main road stop"/>
+  </node>
+  <node id="201" lat="-33.87014" lon="151.2003"/>
+  <node id="202" lat="-33.87014" lon="151.2007"/>
+  <node id="11" lat="-33.865" lon="151.2"/>
+  <node id="12" lat="-33.865" lon="151.201"/>
+  <node id="13" lat="-33.865" lon="151.202"/>
+  <node id="14" lat="-33.864" lon="151.201"/>
+  <node id="102" lat="-33.86505" lon="151.2005">
+    <tag k="highway" v="bus_stop"/>
+    <tag k="name" v="Side street stop"/>
+  </node>
+  <way id="10">
+    <nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="primary"/>
+    <tag k="foot" v="no"/>
+  </way>
+  <way id="11">
+    <nd ref="2"/><nd ref="3"/>
+    <tag k="highway" v="primary"/>
+    <tag k="foot" v="no"/>
+  </way>
+  <way id="12">
+    <nd ref="3"/><nd ref="4"/>
+    <tag k="highway" v="primary"/>
+    <tag k="foot" v="no"/>
+  </way>
+  <way id="13">
+    <nd ref="3"/><nd ref="5"/>
+    <tag k="highway" v="primary"/>
+    <tag k="foot" v="no"/>
+  </way>
+  <way id="14">
+    <nd ref="4"/><nd ref="6"/>
+    <tag k="highway" v="primary"/>
+    <tag k="foot" v="no"/>
+  </way>
+  <way id="20">
+    <nd ref="201"/><nd ref="202"/>
+    <tag k="highway" v="footway"/>
+  </way>
+  <way id="30">
+    <nd ref="11"/><nd ref="12"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="31">
+    <nd ref="12"/><nd ref="13"/>
+    <tag k="highway" v="residential"/>
+  </way>
+  <way id="32">
+    <nd ref="12"/><nd ref="14"/>
+    <tag k="highway" v="residential"/>
+  </way>
+</osm>

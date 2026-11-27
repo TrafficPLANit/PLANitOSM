@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Four ways tagged with three lanes: way 30 (1-2, two-way primary), way 31 (2-3-4-5-3, two-way residential, ending on
+     its own node 3 so it visits that node twice), way 32 (1-6, one-way primary) and way 33 (1-7, two-way primary with
+     lanes:forward=2) -->
+<osm version="0.6" generator="hand-made for PLANitOSM lanes tests">
+  <node id="1" lat="-33.87" lon="151.21"/>
+  <node id="2" lat="-33.87" lon="151.212"/>
+  <node id="3" lat="-33.87" lon="151.214"/>
+  <node id="4" lat="-33.8695" lon="151.215"/>
+  <node id="5" lat="-33.8705" lon="151.215"/>
+  <node id="6" lat="-33.8685" lon="151.21"/>
+  <node id="7" lat="-33.8715" lon="151.21"/>
+  <way id="30">
+    <nd ref="1"/><nd ref="2"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+  </way>
+  <way id="31">
+    <nd ref="2"/><nd ref="3"/><nd ref="4"/><nd ref="5"/><nd ref="3"/>
+    <tag k="highway" v="residential"/>
+    <tag k="lanes" v="3"/>
+  </way>
+  <way id="32">
+    <nd ref="1"/><nd ref="6"/>
+    <tag k="highway" v="primary"/>
+    <tag k="oneway" v="yes"/>
+    <tag k="lanes" v="3"/>
+  </way>
+  <way id="33">
+    <nd ref="1"/><nd ref="7"/>
+    <tag k="highway" v="primary"/>
+    <tag k="lanes" v="3"/>
+    <tag k="lanes:forward" v="2"/>
+  </way>
+</osm>

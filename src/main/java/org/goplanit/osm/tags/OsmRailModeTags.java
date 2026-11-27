@@ -27,24 +27,33 @@ public class OsmRailModeTags {
     MODE_TAGS.add(OsmRailwayTags.TRAM);
   }
   
+  private OsmRailModeTags(){}
+
   static {
     populateModeTags();
   }
 
   /* NO VEHICLE */
   
+  /** mode of a funicular, an inclined railway pulled by cable */
   public static final String FUNICULAR = OsmRailwayTags.FUNICULAR;
   
+  /** mode of a light rail */
   public static final String LIGHT_RAIL = OsmRailwayTags.LIGHT_RAIL;
   
+  /** mode of a monorail */
   public static final String MONO_RAIL = OsmRailwayTags.MONO_RAIL;
   
+  /** mode of a narrow gauge railway */
   public static final String NARROW_GAUGE = OsmRailwayTags.NARROW_GAUGE;
   
+  /** mode of a subway, a metro */
   public static final String SUBWAY = OsmRailwayTags.SUBWAY;
   
+  /** mode of a train, on a {@code railway=rail} */
   public static final String TRAIN = "train";
   
+  /** mode of a tram */
   public static final String TRAM = OsmRailwayTags.TRAM;
     
   
