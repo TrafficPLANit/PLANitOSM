@@ -23,11 +23,11 @@ import org.goplanit.osm.tags.OsmRailwayTags;
 import org.goplanit.osm.tags.OsmRoadModeTags;
 import org.goplanit.osm.tags.OsmWaterModeTags;
 import org.goplanit.osm.tags.OsmWaterwayTags;
-import org.goplanit.osm.test.WarningRecorder;
 import org.goplanit.utils.graph.directed.Connectivity;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.problem.SettingsProblemKind;
+import org.goplanit.utils.test.LogRecorder;
 import org.goplanit.utils.test.SettingsFileAssertionUtils;
 import org.junit.jupiter.api.Test;
 
@@ -412,7 +412,7 @@ public class OsmNetworkReaderYamlKeyedSettingsTest {
    */
   @Test
   public void registeredNewTypeGetsItsModesWithoutAWarning() {
-    var warnings = new WarningRecorder();
+    var warnings = new LogRecorder();
     var modeAccessLogger = Logger.getLogger(OsmModeAccessDefaultsCategory.class.getCanonicalName());
     modeAccessLogger.addHandler(warnings);
     try {

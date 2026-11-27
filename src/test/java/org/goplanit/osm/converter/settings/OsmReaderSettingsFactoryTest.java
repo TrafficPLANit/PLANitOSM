@@ -21,13 +21,13 @@ import org.goplanit.osm.converter.network.OsmTrafficSignalKind;
 import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.network.settings.override.OsmWayLaneOverride;
 import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.test.WarningRecorder;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.locale.CountryNames;
 import org.goplanit.utils.settings.SettingsFileContentType;
 import org.goplanit.utils.settings.SettingsSource;
 import org.goplanit.utils.settings.UserOverride;
 import org.goplanit.utils.settings.problem.SettingsProblemKind;
+import org.goplanit.utils.test.LogRecorder;
 import org.goplanit.utils.test.SettingsFileAssertionUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -233,7 +233,7 @@ public class OsmReaderSettingsFactoryTest {
    */
   @Test
   public void unknownCountryIsWarnedAbout() {
-    var warnings = new WarningRecorder();
+    var warnings = new LogRecorder();
     var settingsLogger = Logger.getLogger(OsmNetworkReaderSettings.class.getCanonicalName());
     settingsLogger.addHandler(warnings);
     try {
@@ -312,7 +312,7 @@ public class OsmReaderSettingsFactoryTest {
         "publicTransport: {}\n");
     var problem = SettingsFileAssertionUtils.assertThrowsOneSettingsProblem(SettingsProblemKind.UNKNOWN_KEY,
         () -> OsmReaderSettingsFactory.createNetworkReaderSettingsFromYaml(List.of(source)));
-    assertEquals("publicTransport", problem.getKeyPath());
+    assertEquals("publicTransport", problem.getSubject());
 
     var intermodal = OsmReaderSettingsFactory.createIntermodalReaderSettingsFromYaml(List.of(source));
     assertEquals(CountryNames.AUSTRALIA, intermodal.getNetworkSettings().getCountryName());

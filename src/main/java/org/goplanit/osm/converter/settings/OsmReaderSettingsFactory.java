@@ -6,7 +6,7 @@ import java.util.List;
 import org.goplanit.osm.converter.intermodal.OsmIntermodalReaderSettings;
 import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.converter.zoning.OsmPublicTransportReaderSettings;
-import org.goplanit.utils.exceptions.SettingsProblemsException;
+import org.goplanit.utils.exceptions.ProblemsRunTimeException;
 import org.goplanit.utils.settings.SettingsSource;
 import org.goplanit.utils.settings.SettingsYamlLoader;
 
@@ -29,7 +29,7 @@ import org.goplanit.utils.settings.SettingsYamlLoader;
  * constructor sets it; then every other key, a later source winning for a replacing key. A source holds the section
  * {@code network} for the network settings and {@code publicTransport} for the public transport settings, so one
  * source serves both readers; the network reader settings refuse a {@code publicTransport} section. Every problem in
- * the sources is reported together, see {@link SettingsProblemsException}. Either way the settings are ordinary
+ * the sources is reported together, see {@link ProblemsRunTimeException}. Either way the settings are ordinary
  * settings, so nothing that takes settings changes, and code changing them afterwards wins. The constructors of the
  * settings stay public, so code making settings with them keeps working.
  * </p>
@@ -88,7 +88,7 @@ public final class OsmReaderSettingsFactory {
    *
    * @param sources in the order they apply
    * @return the settings
-   * @throws SettingsProblemsException holding every problem found in the sources
+   * @throws ProblemsRunTimeException holding every problem found in the sources
    */
   public static OsmNetworkReaderSettings createNetworkReaderSettingsFromYaml(List<SettingsSource> sources) {
     return new SettingsYamlLoader(OsmReaderSettingsSchema.SCHEMA, sources).create(OsmNetworkReaderSettings.class);
@@ -197,7 +197,7 @@ public final class OsmReaderSettingsFactory {
    *
    * @param sources in the order they apply
    * @return the settings
-   * @throws SettingsProblemsException holding every problem found in the sources
+   * @throws ProblemsRunTimeException holding every problem found in the sources
    */
   public static OsmIntermodalReaderSettings createIntermodalReaderSettingsFromYaml(List<SettingsSource> sources) {
     return new SettingsYamlLoader(OsmReaderSettingsSchema.SCHEMA, sources).create(OsmIntermodalReaderSettings.class);

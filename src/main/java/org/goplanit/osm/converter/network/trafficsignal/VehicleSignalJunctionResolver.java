@@ -3,11 +3,11 @@ package org.goplanit.osm.converter.network.trafficsignal;
 import java.util.List;
 import java.util.function.Predicate;
 
-import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
 import org.goplanit.osm.converter.network.settings.OsmNetworkReaderSettings;
 import org.goplanit.osm.util.PlanitLinkOsmUtils;
 import org.goplanit.utils.graph.Edge;
 import org.goplanit.utils.network.layer.physical.Link;
+import org.goplanit.algorithms.shortest.ShortestPathSearchUtils;
 
 /**
  * Used only by the traffic signal integration, see {@link OsmTrafficSignalIntegrator}: the junction a vehicle signal is
@@ -60,7 +60,7 @@ final class VehicleSignalJunctionResolver {
     double reach =
         settings.getIntersectionSettings().getIntersectionConsolidatorSettings().getMaximumJoiningReachMeters();
     Predicate<Edge> lowestOrderRoad = edge -> edge instanceof Link && lowestOrderRoads.isOnLowestOrderRoad((Link) edge);
-    return MacroscopicNetworkLayerUtils.findShortestConnections(
+    return ShortestPathSearchUtils.findShortestConnections(
             junctionAhead.getTargetNode(), lowestOrderRoad, node -> true, reach).getReached().stream()
         .filter(node -> node != junctionAhead.getTargetNode() && node.getEdges().stream().anyMatch(edge ->
             edge instanceof Link && edge != road && !lowestOrderRoads.isOnLowestOrderRoad((Link) edge) &&

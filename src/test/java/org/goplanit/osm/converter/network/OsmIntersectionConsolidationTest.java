@@ -8,13 +8,13 @@ import org.goplanit.algorithms.intersection.GreenRatioAlgorithmType;
 import org.goplanit.logging.Logging;
 import org.goplanit.osm.converter.diagnostics.OsmPlanitEntityIssue;
 import org.goplanit.osm.tags.OsmHighwayTags;
-import org.goplanit.osm.test.WarningRecorder;
 import org.goplanit.utils.id.IdGenerator;
 import org.goplanit.utils.mode.PredefinedModeType;
 import org.goplanit.utils.network.layer.macroscopic.intersection.CapacityFactorOrigin;
 import org.goplanit.utils.network.layer.macroscopic.intersection.IntersectionSignalSegment;
 import org.goplanit.utils.network.layer.macroscopic.intersection.SpatialIntersection;
 import org.goplanit.utils.settings.UserOverride;
+import org.goplanit.utils.test.LogRecorder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -179,7 +179,7 @@ public class OsmIntersectionConsolidationTest {
   /** Consolidation switched on while intersections are not parsed does not run, and a warning says so */
   @Test
   public void consolidationNeedsParsedIntersections() {
-    var counter = new WarningRecorder();
+    var counter = new LogRecorder();
     var logger = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
     logger.addHandler(counter);
     try {
@@ -342,7 +342,7 @@ public class OsmIntersectionConsolidationTest {
    */
   @Test
   public void greenRatiosWithoutConsolidationAreComputedPerParsedIntersectionWithOneWarning() {
-    var counter = new WarningRecorder();
+    var counter = new LogRecorder();
     var logger = Logger.getLogger(OsmNetworkReader.class.getCanonicalName());
     logger.addHandler(counter);
     try {

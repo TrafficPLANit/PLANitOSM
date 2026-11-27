@@ -12,7 +12,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.goplanit.network.layer.macroscopic.MacroscopicNetworkLayerUtils;
 import org.goplanit.osm.converter.diagnostics.OsmTrafficSignalOutcome;
 import org.goplanit.osm.converter.network.settings.OsmIntersectionSettings;
 import org.goplanit.osm.converter.network.data.OsmNetworkReaderData;
@@ -36,6 +35,7 @@ import org.goplanit.utils.network.layer.physical.Node;
 
 import de.topobyte.osm4j.core.model.iface.OsmNode;
 import de.topobyte.osm4j.core.model.util.OsmModelUtil;
+import org.goplanit.algorithms.shortest.ShortestPathSearchUtils;
 
 /**
  * Used only by the traffic signal integration, see {@link OsmTrafficSignalIntegrator}: finds the isolated signalised
@@ -151,10 +151,10 @@ final class OsmIsolatedSignalisedCrossingFinder {
     var road = LinkUtils.permitsMotorisedRoadModeOnAnySegment();
     Predicate<Edge> offCrossingRoad =
         edge -> road.test(edge) && !PlanitLinkOsmUtils.isSameOsmWayOrName((Link) edge, crossingRoad);
-    var reachedOffCrossingRoad = new HashSet<>(MacroscopicNetworkLayerUtils.findShortestConnections(
+    var reachedOffCrossingRoad = new HashSet<>(ShortestPathSearchUtils.findShortestConnections(
         junction.getTargetNode(), offCrossingRoad, node -> true, reach).getReached());
     var nearby =
-        MacroscopicNetworkLayerUtils.findShortestConnections(junction.getTargetNode(), road, node -> true, reach);
+        ShortestPathSearchUtils.findShortestConnections(junction.getTargetNode(), road, node -> true, reach);
     var passedNodes = passed.stream().map(LookAhead.TargetReached::getTargetNode).collect(Collectors.toSet());
     return nearby.getReached().stream()
         .filter(node -> node == junction.getTargetNode() ||
@@ -180,7 +180,7 @@ final class OsmIsolatedSignalisedCrossingFinder {
     if (junction.getTargetNode().getEdges().stream().noneMatch(isOfRoundabout)) {
       return false;
     }
-    return MacroscopicNetworkLayerUtils.findShortestConnections(
+    return ShortestPathSearchUtils.findShortestConnections(
             junction.getTargetNode(), isOfRoundabout, node -> true, Double.POSITIVE_INFINITY).getReached().stream()
         .anyMatch(node -> evidence.hasVehicleSignalOnOrArrivingAt(node, arriving -> arriving != junction.arriving));
   }
